@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拉午耳定律互動實驗室 (Raoult's Law Lab)</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* --- Slider (Range Input) Styling Fix --- */
+        input[type=range] {
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -5px; 
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            border: 1px solid #ddd;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #374151;
+            border-radius: 3px;
+        }
+        
+        input[type=range]:focus {
+            outline: none;
+        }
+        
+        /* Firefox specific styles */
+        input[type=range]::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            border: none;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #374151;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        // --- Icons (SVG Components) ---
+        const Icons = {
+            Play: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>,
+            Pause: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>,
+            RotateCcw: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"></path><path d="M3 3v9h9"></path></svg>,
+            Beaker: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg>,
+            Activity: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>,
+            Settings: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 1-2-2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73v.2a2 2 0 0 1 1 1h.44a2 2 0 0 1 1-1v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V2.18a2 2 0 0 1-1-1.74z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            ArrowDown: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>,
+            Calculator: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>,
+            Wind: ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+        };
+
+        // --- Constants ---
+        const COLORS = {
+            A: '#60a5fa', // Solvent (Lighter Blue)
+            A_dark: '#2563eb',
+            B: '#fb923c', // Solute (Lighter Orange)
+            B_dark: '#ea580c',
+            Total: '#c084fc', // Purple
+            bg: '#0f172a',
+            grid: '#1e293b',
+            text: '#f1f5f9'
+        };
+
+        const CONSTANTS = {
+            WIDTH: 800,
+            HEIGHT: 500,
+            LIQUID_LEVEL: 350,
+            PARTICLE_RADIUS: 7,
+            LIQUID_PARTICLE_COUNT: 150,
+            MAX_GAS_PARTICLES: 120,
+            GAS_SPEED_FACTOR: 2.5,
+            LIQUID_SPEED_FACTOR: 0.3,
+        };
+
+        const random = (min, max) => Math.random() * (max - min) + min;
+
+        // --- Physics Helper Functions ---
+        const calculateGammas = (xA, mode) => {
+            const xB = 1 - xA;
+            if (mode === 'positive') {
+                return { gammaA: 1 + 0.6 * (xB * xB), gammaB: 1 + 0.6 * (xA * xA) };
+            } else if (mode === 'negative') {
+                return { gammaA: 1 - 0.3 * (xB * xB), gammaB: 1 - 0.3 * (xA * xA) };
+            }
+            return { gammaA: 1, gammaB: 1 };
+        };
+
+        const calculatePressures = (xA, basePA, basePB, mode, isBVolatile) => {
+            const xB = 1 - xA;
+            const { gammaA, gammaB } = calculateGammas(xA, mode);
+            
+            const P_pure_A = basePA;
+            const P_pure_B = isBVolatile ? basePB : 0;
+            
+            const PA = xA * P_pure_A * gammaA;
+            const PB = xB * P_pure_B * gammaB;
+            const P_total = PA + PB;
+            
+            const yA = P_total > 0 ? PA / P_total : 0; 
+            
+            return { PA, PB, P_total, yA };
+        };
+
+        const solveXfromY = (targetY, basePA, basePB, mode, isBVolatile) => {
+            if (!isBVolatile) return targetY > 0.5 ? 1 : 0;
+
+            let low = 0, high = 1;
+            let bestX = 0.5;
+            
+            for (let i = 0; i < 20; i++) {
+                const mid = (low + high) / 2;
+                const { yA } = calculatePressures(mid, basePA, basePB, mode, isBVolatile);
+                
+                if (yA < targetY) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+                bestX = mid;
+            }
+            return bestX;
+        };
+
+        // --- Helper Components ---
+        const PressureDisplay = ({ label, value, color, subLabel }) => (
+            <div className="flex flex-col items-center bg-gray-800 p-2 rounded-lg min-w-[80px] border border-gray-700">
+                <span className="text-xs text-gray-400 font-bold">{label}</span>
+                <span className="text-xl font-mono font-bold my-1" style={{ color: color }}>
+                    {value.toFixed(1)}
+                </span>
+                <span className="text-[10px] text-gray-500">{subLabel}</span>
+            </div>
+        );
+
+        // --- Main Component ---
+        function RaoultLab() {
+            const [isPlaying, setIsPlaying] = useState(true);
+            const [xA, setXA] = useState(0.5);
+            const [deviationMode, setDeviationMode] = useState('ideal');
+            const [isBVolatile, setIsBVolatile] = useState(true);
+            
+            const [basePA, setBasePA] = useState(100); 
+            const [basePB, setBasePB] = useState(80);
+
+            // Animation Refs
+            const requestRef = useRef();
+            const svgRef = useRef(null);
+            const liquidParticlesRef = useRef([]);
+            const gasParticlesRef = useRef([]);
+            
+            // --- Physics Calculations ---
+            const physicsData = useMemo(() => {
+                const xB = 1 - xA;
+                const { gammaA, gammaB } = calculateGammas(xA, deviationMode);
+                
+                const P_pure_A = basePA;
+                const P_pure_B = isBVolatile ? basePB : 0;
+                
+                const PA = xA * P_pure_A * gammaA;
+                const PB = xB * P_pure_B * gammaB;
+                const P_total = PA + PB;
+
+                const yA = P_total > 0 ? PA / P_total : (isBVolatile ? 0 : 1);
+                const yB = P_total > 0 ? PB / P_total : 0;
+                
+                return {
+                    xB, P_pure_A, P_pure_B, PA, PB, P_total, yA, yB, gammaA, gammaB
+                };
+            }, [xA, deviationMode, isBVolatile, basePA, basePB]);
+
+            // --- Handlers ---
+            const handleXChange = (newX) => {
+                setXA(newX);
+            };
+
+            const handleYChange = (newY) => {
+                const newX = solveXfromY(newY, basePA, basePB, deviationMode, isBVolatile);
+                setXA(newX);
+            };
+
+            // --- Animation System ---
+            useEffect(() => {
+                const particles = [];
+                const cols = 15;
+                const rows = Math.ceil(CONSTANTS.LIQUID_PARTICLE_COUNT / cols);
+                for (let i = 0; i < CONSTANTS.LIQUID_PARTICLE_COUNT; i++) {
+                    const r = i % rows;
+                    const c = Math.floor(i / rows);
+                    particles.push({
+                        id: `l-${i}`,
+                        type: 'A',
+                        x: 50 + c * (CONSTANTS.WIDTH / (cols + 2)) + random(-5, 5),
+                        y: CONSTANTS.LIQUID_LEVEL + 20 + r * 12 + random(-2, 2),
+                        vx: random(-1, 1) * CONSTANTS.LIQUID_SPEED_FACTOR,
+                        vy: random(-0.5, 0.5) * CONSTANTS.LIQUID_SPEED_FACTOR
+                    });
+                }
+                liquidParticlesRef.current = particles;
+                
+                const gasPool = [];
+                for (let i = 0; i < CONSTANTS.MAX_GAS_PARTICLES; i++) {
+                    gasPool.push({
+                        id: `g-${i}`,
+                        type: 'A',
+                        visible: false,
+                        x: random(20, CONSTANTS.WIDTH - 20),
+                        y: random(20, CONSTANTS.LIQUID_LEVEL - 20),
+                        vx: random(-2, 2) * CONSTANTS.GAS_SPEED_FACTOR,
+                        vy: random(-2, 2) * CONSTANTS.GAS_SPEED_FACTOR
+                    });
+                }
+                gasParticlesRef.current = gasPool;
+            }, []);
+
+            useEffect(() => {
+                const numA = Math.round(CONSTANTS.LIQUID_PARTICLE_COUNT * xA);
+                liquidParticlesRef.current.forEach((p, i) => {
+                    p.type = i < numA ? 'A' : 'B';
+                    const el = document.getElementById(p.id);
+                    if (el) el.setAttribute('fill', p.type === 'A' ? COLORS.A : COLORS.B);
+                });
+
+                const SCALE = 0.3; // Adjust visual density
+                const targetGasA = Math.min(Math.round(physicsData.PA * SCALE), CONSTANTS.MAX_GAS_PARTICLES);
+                const targetGasB = Math.min(Math.round(physicsData.PB * SCALE), CONSTANTS.MAX_GAS_PARTICLES - targetGasA);
+                
+                gasParticlesRef.current.forEach((p, i) => {
+                    let shouldBeVisible = false;
+                    let type = 'A';
+                    if (i < targetGasA) {
+                        shouldBeVisible = true;
+                        type = 'A';
+                    } else if (i < targetGasA + targetGasB) {
+                        shouldBeVisible = true;
+                        type = 'B';
+                    }
+                    p.visible = shouldBeVisible;
+                    p.type = type;
+                    const el = document.getElementById(p.id);
+                    if (el) {
+                        el.setAttribute('visibility', shouldBeVisible ? 'visible' : 'hidden');
+                        el.setAttribute('fill', type === 'A' ? COLORS.A : COLORS.B);
+                    }
+                });
+            }, [xA, physicsData]);
+
+            const animate = useCallback(() => {
+                if (!isPlaying) return;
+
+                liquidParticlesRef.current.forEach(p => {
+                    p.x += p.vx + random(-0.2, 0.2);
+                    p.y += p.vy + random(-0.2, 0.2);
+                    if (p.x < CONSTANTS.PARTICLE_RADIUS) { p.x = CONSTANTS.PARTICLE_RADIUS; p.vx *= -1; }
+                    if (p.x > CONSTANTS.WIDTH - CONSTANTS.PARTICLE_RADIUS) { p.x = CONSTANTS.WIDTH - CONSTANTS.PARTICLE_RADIUS; p.vx *= -1; }
+                    if (p.y > CONSTANTS.HEIGHT - CONSTANTS.PARTICLE_RADIUS) { p.y = CONSTANTS.HEIGHT - CONSTANTS.PARTICLE_RADIUS; p.vy *= -1; }
+                    if (p.y < CONSTANTS.LIQUID_LEVEL + CONSTANTS.PARTICLE_RADIUS) { p.y = CONSTANTS.LIQUID_LEVEL + CONSTANTS.PARTICLE_RADIUS; p.vy *= -1; }
+                    const el = document.getElementById(p.id);
+                    if (el) { el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); }
+                });
+
+                gasParticlesRef.current.forEach(p => {
+                    if (!p.visible) return;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < CONSTANTS.PARTICLE_RADIUS || p.x > CONSTANTS.WIDTH - CONSTANTS.PARTICLE_RADIUS) p.vx *= -1;
+                    if (p.y < CONSTANTS.PARTICLE_RADIUS) p.vy *= -1;
+                    if (p.y > CONSTANTS.LIQUID_LEVEL - CONSTANTS.PARTICLE_RADIUS) {
+                        p.y = CONSTANTS.LIQUID_LEVEL - CONSTANTS.PARTICLE_RADIUS;
+                        p.vy *= -1;
+                    }
+                    const el = document.getElementById(p.id);
+                    if (el) { el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); }
+                });
+
+                requestRef.current = requestAnimationFrame(animate);
+            }, [isPlaying]);
+
+            useEffect(() => {
+                if (isPlaying) requestRef.current = requestAnimationFrame(animate);
+                else cancelAnimationFrame(requestRef.current);
+                return () => cancelAnimationFrame(requestRef.current);
+            }, [isPlaying, animate]);
+
+            // --- Chart Logic ---
+            const chartW = 320;
+            const chartH = 220;
+            const chartPad = 35;
+            
+            const maxP = useMemo(() => Math.max(basePA, basePB, 200) * 1.1, [basePA, basePB]);
+            
+            const mapX = (val) => chartPad + val * (chartW - 2 * chartPad);
+            const mapY = (val) => (chartH - chartPad) - (val / maxP) * (chartH - 2 * chartPad);
+
+            const cx = mapX(xA);
+            const cyTotal = mapY(physicsData.P_total);
+            const cyA = mapY(physicsData.PA);
+            const cyB = mapY(physicsData.PB);
+
+            const idealLineA = `M ${mapX(0)} ${mapY(0)} L ${mapX(1)} ${mapY(physicsData.P_pure_A)}`;
+            const idealLineB = `M ${mapX(0)} ${mapY(physicsData.P_pure_B)} L ${mapX(1)} ${mapY(0)}`;
+            const idealTotal = `M ${mapX(0)} ${mapY(physicsData.P_pure_B)} L ${mapX(1)} ${mapY(physicsData.P_pure_A)}`;
+            
+            const ticks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(val => ({ val, x: mapX(val) }));
+            const yTicks = [0, 0.25, 0.5, 0.75, 1];
+
+            return (
+                <div className="flex flex-col lg:flex-row h-screen w-full bg-gray-900 text-gray-100 font-sans overflow-hidden">
+                    <div className="flex-1 relative flex flex-col border-b lg:border-b-0 lg:border-r border-gray-700">
+                        <div className="absolute top-0 left-0 z-10 p-4 w-full flex justify-between items-start pointer-events-none bg-gradient-to-b from-gray-900/90 to-transparent">
+                            <div>
+                                <h1 className="text-2xl font-bold text-blue-400 flex items-center gap-2">
+                                    <Icons.Beaker className="w-6 h-6" /> 拉午耳定律互動實驗室
+                                </h1>
+                                <p className="text-sm text-gray-400">Raoult's Law Interactive Lab (定溫)</p>
+                            </div>
+                            <div className="flex gap-2 pointer-events-auto">
+                                <div className="bg-gray-800/80 backdrop-blur px-4 py-2 rounded-lg border border-gray-600 shadow-lg">
+                                    <span className="text-gray-400 text-xs block">總蒸氣壓 (P_total)</span>
+                                    <span className="text-2xl font-mono font-bold text-purple-400">{physicsData.P_total.toFixed(1)} <span className="text-sm">mmHg</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 relative bg-gray-950 w-full overflow-hidden">
+                            <svg 
+                                ref={svgRef}
+                                viewBox={`0 0 ${CONSTANTS.WIDTH} ${CONSTANTS.HEIGHT}`}
+                                preserveAspectRatio="xMidYMid meet"
+                                className="w-full h-full select-none"
+                            >
+                                <defs>
+                                    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke={COLORS.grid} strokeWidth="1"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#grid)" />
+                                <line x1="0" y1={CONSTANTS.LIQUID_LEVEL} x2={CONSTANTS.WIDTH} y2={CONSTANTS.LIQUID_LEVEL} stroke="#475569" strokeWidth="2" strokeDasharray="5 5" />
+                                <text x="20" y={CONSTANTS.LIQUID_LEVEL - 20} fill="#94a3b8" fontSize="16" fontWeight="bold">蒸氣相 (Vapor)</text>
+                                <text x="20" y={CONSTANTS.LIQUID_LEVEL + 40} fill="#64748b" fontSize="16" fontWeight="bold">溶液相 (Solution)</text>
+                                <g id="liquid-layer">
+                                    {liquidParticlesRef.current.map((p) => (
+                                        <circle key={p.id} id={p.id} r={CONSTANTS.PARTICLE_RADIUS} fill={COLORS.A} opacity="0.9" stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
+                                    ))}
+                                </g>
+                                <g id="gas-layer">
+                                    {gasParticlesRef.current.map((p) => (
+                                        <circle key={p.id} id={p.id} r={CONSTANTS.PARTICLE_RADIUS} fill={COLORS.A} opacity="0.9" visibility="hidden" />
+                                    ))}
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div className="absolute bottom-6 right-6 flex gap-3">
+                            <button 
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                className="p-3 bg-blue-600 hover:bg-blue-500 rounded-full shadow-xl text-white transition-all transform hover:scale-105 active:scale-95"
+                            >
+                                {isPlaying ? <Icons.Pause size={24} /> : <Icons.Play size={24} />}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setXA(0.5); setDeviationMode('ideal'); setBasePA(100); setBasePB(80);
+                                }}
+                                className="p-3 bg-gray-700 hover:bg-gray-600 rounded-full shadow-xl text-white transition-all"
+                                title="重置實驗"
+                            >
+                                <Icons.RotateCcw size={24} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="w-full lg:w-[450px] bg-gray-800 flex flex-col shadow-2xl z-20 border-l border-gray-700">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                            <div className="space-y-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                                <h2 className="text-lg font-bold text-blue-200 flex items-center gap-2">
+                                    <Icons.Settings size={18} /> 實驗參數 (蒸氣壓上限 200)
+                                </h2>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-bold" style={{color: COLORS.A}}>純溶劑蒸氣壓 P°A</label>
+                                        <input 
+                                            type="range" min="10" max="200" step="5" 
+                                            value={basePA} onChange={(e) => setBasePA(Number(e.target.value))}
+                                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2 accent-blue-500"
+                                        />
+                                        <div className="text-right font-mono text-sm">{basePA} mmHg</div>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-bold" style={{color: COLORS.B}}>純溶質蒸氣壓 P°B</label>
+                                        <input 
+                                            type="range" min="0" max="200" step="5" disabled={!isBVolatile}
+                                            value={basePB} onChange={(e) => setBasePB(Number(e.target.value))}
+                                            className={`w-full h-2 rounded-lg appearance-none cursor-pointer mt-2 ${!isBVolatile ? 'bg-gray-800' : 'bg-gray-700 accent-orange-500'}`}
+                                        />
+                                        <div className="text-right font-mono text-sm">{isBVolatile ? `${basePB} mmHg` : '不揮發'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 bg-gray-800 p-1 rounded-lg border border-gray-600">
+                                    {['ideal', 'positive', 'negative'].map(m => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setDeviationMode(m)}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${deviationMode === m ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                                        >
+                                            {m === 'ideal' ? '理想溶液' : m === 'positive' ? '正偏差' : '負偏差'}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-800 rounded transition-colors">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={isBVolatile} 
+                                        onChange={(e) => setIsBVolatile(e.target.checked)}
+                                        className="w-5 h-5 rounded border-gray-600 text-orange-500 focus:ring-orange-500 bg-gray-700" 
+                                    />
+                                    <span className="text-sm font-bold text-orange-200">溶質 B 具有揮發性</span>
+                                </label>
+                            </div>
+
+                            <div className="space-y-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                                <h2 className="text-lg font-bold text-green-200 flex items-center gap-2">
+                                    <Icons.Beaker size={18} /> 組成控制 (雙向連動)
+                                </h2>
+
+                                <div className="bg-gray-800 p-4 rounded-lg border border-gray-600 shadow-md">
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-sm font-bold text-gray-300">溶液莫耳分率 (Liquid xA)</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="font-mono text-xs text-gray-500">B ({(1-xA).toFixed(2)})</span>
+                                        <input 
+                                            type="range" min="0" max="1" step="0.005" 
+                                            value={xA} 
+                                            onChange={(e) => handleXChange(parseFloat(e.target.value))}
+                                            className="flex-1 h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                        />
+                                        <span className="font-mono text-xs text-green-400 font-bold">A ({xA.toFixed(2)})</span>
+                                    </div>
+                                </div>
+
+                                <div className={`bg-gray-800 p-4 rounded-lg border border-gray-600 shadow-md transition-opacity ${!isBVolatile ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-sm font-bold text-gray-300 flex items-center gap-2">
+                                            <Icons.Wind size={14}/> 蒸氣莫耳分率 (Vapor yA)
+                                        </span>
+                                        {!isBVolatile && <span className="text-xs text-red-400">(B 不揮發)</span>}
+                                    </div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="font-mono text-xs text-gray-500">B ({(1-physicsData.yA).toFixed(2)})</span>
+                                        <input 
+                                            type="range" min="0" max="1" step="0.005" 
+                                            value={physicsData.yA} 
+                                            onChange={(e) => handleYChange(parseFloat(e.target.value))}
+                                            disabled={!isBVolatile}
+                                            className="flex-1 h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-400"
+                                        />
+                                        <span className="font-mono text-xs text-blue-300 font-bold">A ({physicsData.yA.toFixed(2)})</span>
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 mt-1 text-center">
+                                        * 調整此滑桿會反向推算對應的溶液濃度
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                                <h2 className="text-lg font-bold text-purple-200 flex items-center gap-2">
+                                    <Icons.Activity size={18} /> 實驗數據
+                                </h2>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <PressureDisplay label="PA" value={physicsData.PA} color={COLORS.A} subLabel="xA * P°A" />
+                                    <PressureDisplay label="PB" value={physicsData.PB} color={COLORS.B} subLabel="xB * P°B" />
+                                    <PressureDisplay label="P_total" value={physicsData.P_total} color={COLORS.Total} subLabel="PA + PB" />
+                                </div>
+
+                                <div className="bg-gray-800 p-3 rounded-lg border border-gray-600">
+                                    <h3 className="text-sm font-bold text-gray-300 mb-2 flex items-center gap-2">
+                                        <Icons.Calculator size={14}/> 計算細節
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="bg-gray-900/50 p-2 rounded border border-gray-700">
+                                            <div className="text-xs text-gray-400 mb-1">溶劑 A (yA)</div>
+                                            <div className="font-mono text-base font-bold" style={{color: COLORS.A}}>
+                                                {physicsData.yA.toFixed(3)}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 mt-1 font-mono">
+                                                yA = {physicsData.PA.toFixed(1)} / {physicsData.P_total.toFixed(1)}
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-900/50 p-2 rounded border border-gray-700">
+                                            <div className="text-xs text-gray-400 mb-1">溶質 B (yB)</div>
+                                            <div className="font-mono text-base font-bold" style={{color: COLORS.B}}>
+                                                {physicsData.yB.toFixed(3)}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 mt-1 font-mono">
+                                                yB = {physicsData.PB.toFixed(1)} / {physicsData.P_total.toFixed(1)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 w-full">
+                                    <div className="text-sm font-bold text-gray-300 mb-2 text-center">蒸氣壓 (P) vs 溶液組成 (xA)</div>
+                                    <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto select-none">
+                                        <rect x={chartPad} y={chartPad} width={chartW - 2*chartPad} height={chartH - 2*chartPad} fill="#1e293b" stroke="none"/>
+                                        
+                                        {yTicks.map(t => (
+                                            <line key={t} x1={chartPad} y1={mapY(t*maxP)} x2={chartW-chartPad} y2={mapY(t*maxP)} stroke="#334155" strokeWidth="1" />
+                                        ))}
+                                        
+                                        <line x1={chartPad} y1={chartPad} x2={chartPad} y2={chartH - chartPad} stroke="#94a3b8" strokeWidth="2"/>
+                                        <line x1={chartW - chartPad} y1={chartPad} x2={chartW - chartPad} y2={chartH - chartPad} stroke="#94a3b8" strokeWidth="2"/>
+                                        <line x1={chartPad} y1={chartH - chartPad} x2={chartW - chartPad} y2={chartH - chartPad} stroke="#94a3b8" strokeWidth="2"/>
+
+                                        <path d={idealLineA} stroke={COLORS.A} strokeWidth="1.5" strokeDasharray="4 4" opacity="0.5"/>
+                                        <path d={idealLineB} stroke={COLORS.B} strokeWidth="1.5" strokeDasharray="4 4" opacity="0.5"/>
+                                        <path d={idealTotal} stroke="#fff" strokeWidth="1.5" strokeDasharray="2 2" opacity="0.3"/>
+
+                                        <line x1={mapX(0)} y1={mapY(0)} x2={cx} y2={cyA} stroke={COLORS.A} strokeWidth="2" opacity="0.8" />
+                                        <line x1={cx} y1={cyA} x2={mapX(1)} y2={mapY(physicsData.P_pure_A)} stroke={COLORS.A} strokeWidth="2" opacity="0.8" />
+                                        
+                                        <line x1={mapX(0)} y1={mapY(physicsData.P_pure_B)} x2={cx} y2={cyB} stroke={COLORS.B} strokeWidth="2" opacity="0.8" />
+                                        <line x1={cx} y1={cyB} x2={mapX(1)} y2={mapY(0)} stroke={COLORS.B} strokeWidth="2" opacity="0.8" />
+                                        
+                                        <line x1={mapX(0)} y1={mapY(physicsData.P_pure_B)} x2={cx} y2={cyTotal} stroke={COLORS.Total} strokeWidth="2.5" />
+                                        <line x1={cx} y1={cyTotal} x2={mapX(1)} y2={mapY(physicsData.P_pure_A)} stroke={COLORS.Total} strokeWidth="2.5" />
+
+                                        <line x1={cx} y1={chartPad} x2={cx} y2={chartH - chartPad} stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+
+                                        <circle cx={cx} cy={cyA} r="4" fill={COLORS.A} stroke="white" strokeWidth="1" />
+                                        <circle cx={cx} cy={cyB} r="4" fill={COLORS.B} stroke="white" strokeWidth="1" />
+                                        <circle cx={cx} cy={cyTotal} r="5" fill={COLORS.Total} stroke="white" strokeWidth="2" />
+
+                                        <text x={chartPad - 5} y={mapY(physicsData.P_pure_B)} fill={COLORS.B} fontSize="10" textAnchor="end" fontWeight="bold">{Math.round(physicsData.P_pure_B)}</text>
+                                        <text x={chartW - chartPad + 5} y={mapY(physicsData.P_pure_A)} fill={COLORS.A} fontSize="10" textAnchor="start" fontWeight="bold">{Math.round(physicsData.P_pure_A)}</text>
+                                        
+                                        <text x={10} y={chartPad - 10} fill="#94a3b8" fontSize="10" fontWeight="bold">P</text>
+                                        <text x={chartW - 20} y={chartPad - 10} fill="#94a3b8" fontSize="10" fontWeight="bold">P</text>
+
+                                        {ticks.map(t => (
+                                            <g key={t.val}>
+                                                <line x1={t.x} y1={chartH-chartPad} x2={t.x} y2={chartH-chartPad+5} stroke="#94a3b8" />
+                                                <text x={t.x} y={chartH - chartPad + 15} fill={COLORS.A} fontSize="10" textAnchor="middle" fontWeight="bold">{t.val.toFixed(1)}</text>
+                                                <text x={t.x} y={chartH - chartPad + 28} fill={COLORS.B} fontSize="10" textAnchor="middle" fontWeight="bold">{(1-t.val).toFixed(1)}</text>
+                                            </g>
+                                        ))}
+                                        
+                                        <text x={chartW/2} y={chartH-5} fill={COLORS.B} fontSize="11" textAnchor="middle" fontWeight="bold">xB</text>
+                                    </svg>
+                                    <div className="flex justify-between px-8 -mt-4 mb-2 pointer-events-none">
+                                        <span className="text-xs font-bold" style={{color: COLORS.A}}>xA <Icons.ArrowDown size={10} className="inline"/></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RaoultLab />);
+    </script>
+</body>
+</html>
