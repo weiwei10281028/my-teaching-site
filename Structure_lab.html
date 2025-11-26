@@ -498,6 +498,137 @@
     addMol("C2 2-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0}], [[0,1,"triple"]]);
     addMol("O2 2-", "O", "sp³", ["直線型","Linear"], "180°", [{elem:"O",x:-30,y:0,z:0}, {elem:"O",x:30,y:0,z:0}], [[0,1]]);
 
+ addMol("HNO3", "多中心", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"N",x:0,y:0,z:0, lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:50,y:-35,z:0}, {elem:"O",x:-50,y:-35,z:0}, {elem:"H",x:85,y:-45,z:0}], [[0,1,"double"], [0,2], [0,3], [2,4]]);
+// H2SO4 (硫酸) - 修正版: 正四面體構型
+    // 中心 S 為 sp3，接 4 個 O 形成四面體
+    addMol("H2SO4", "多中心", "sp³", ["四面體","Tetrahedral"], "109.5°", [
+        {elem:"S", x:0, y:0, z:0},          // 中心硫
+        {elem:"O", x:0, y:55, z:0},         // 頂端氧 (雙鍵)
+        {elem:"O", x:0, y:-20, z:50},       // 前端氧 (雙鍵) - 往螢幕前凸出
+        {elem:"O", x:45, y:-20, z:-30},     // 右後氧 (接H) - 往後方延伸
+        {elem:"O", x:-45, y:-20, z:-30},    // 左後氧 (接H) - 往後方延伸
+        {elem:"H", x:70, y:5, z:-30},       // 右H (與O-S鍵成角)
+        {elem:"H", x:-70, y:5, z:-30}       // 左H
+    ], [
+        [0,1,"double"], // S=O
+        [0,2,"double"], // S=O
+        [0,3],          // S-O
+        [0,4],          // S-O
+        [3,5],          // O-H
+        [4,6]           // O-H
+    ]);
+// ==========================================
+    // ====== 修正與新增：磷酸系列 (Phosphorus Acids) ======
+    // ==========================================
+
+    // 1. 磷酸 (Phosphoric Acid) - 修正版: 正四面體
+    // P 接 1個=O 和 3個-OH
+    addMol("H3PO4", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [
+        {elem:"P", x:0, y:0, z:0, lpCount:0},   // 中心 P
+        {elem:"O", x:0, y:55, z:0},             // 頂端 P=O
+        {elem:"O", x:0, y:-20, z:50},           // 前端 P-OH
+        {elem:"O", x:45, y:-20, z:-30},         // 右後 P-OH
+        {elem:"O", x:-45, y:-20, z:-30},        // 左後 P-OH
+        // 氫原子 (接在單鍵氧上)
+        {elem:"H", x:0, y:-5, z:80},            // 前 H
+        {elem:"H", x:70, y:5, z:-30},           // 右後 H
+        {elem:"H", x:-70, y:5, z:-30}           // 左後 H
+    ], [
+        [0,1,"double"], // P=O
+        [0,2], [0,3], [0,4], // P-O
+        [2,5], [3,6], [4,7]  // O-H
+    ]);
+
+    // 2. 亞磷酸 (Phosphorous Acid)
+    // 結構：O=PH(OH)2 -> 有一個 H 直接接在 P 上，非 -OH
+    addMol("H3PO3", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [
+        {elem:"P", x:0, y:0, z:0, lpCount:0},
+        {elem:"O", x:0, y:55, z:0},             // P=O
+        {elem:"H", x:0, y:-25, z:45},           // P-H (直接鍵結!)
+        {elem:"O", x:45, y:-20, z:-30},         // P-OH
+        {elem:"O", x:-45, y:-20, z:-30},        // P-OH
+        // 羥基氫
+        {elem:"H", x:70, y:5, z:-30},
+        {elem:"H", x:-70, y:5, z:-30}
+    ], [
+        [0,1,"double"], // P=O
+        [0,2],          // P-H (特徵)
+        [0,3], [0,4],   // P-O
+        [3,5], [4,6]    // O-H
+    ]);
+
+    // 3. 次磷酸 (Hypophosphorous Acid)
+    // 結構：O=PH2(OH) -> 有兩個 H 直接接在 P 上
+    addMol("H3PO2", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [
+        {elem:"P", x:0, y:0, z:0, lpCount:0},
+        {elem:"O", x:0, y:55, z:0},             // P=O
+        {elem:"H", x:0, y:-25, z:45},           // P-H (1)
+        {elem:"H", x:-45, y:-25, z:-30},        // P-H (2)
+        {elem:"O", x:45, y:-20, z:-30},         // P-OH (只有一個)
+        // 羥基氫
+        {elem:"H", x:70, y:5, z:-30}
+    ], [
+        [0,1,"double"], // P=O
+        [0,2], [0,3],   // P-H
+        [0,4],          // P-O
+        [4,5]           // O-H
+    ]);    addMol("HClO4", "多中心", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"Cl",x:0,y:0,z:0, lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-35,z:30}, {elem:"O",x:-50,y:-35,z:30}, {elem:"O",x:0,y:15,z:-55}, {elem:"H",x:0,y:40,z:-80}], [[0,1,"double"], [0,2,"double"], [0,3,"double"], [0,4], [4,5]]);
+    addMol("C2H6", "C", "sp³", ["四面體連結","Tetrahedral"], "109.5°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-60,y:35,z:0}, {elem:"H",x:-60,y:-25,z:30}, {elem:"H",x:-60,y:-25,z:-30}, {elem:"H",x:60,y:-35,z:0}, {elem:"H",x:60,y:25,z:30}, {elem:"H",x:60,y:25,z:-30}], [[0,1], [0,2], [0,3], [0,4], [1,5], [1,6], [1,7]]);
+    addMol("C2H4", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-65,y:45,z:0}, {elem:"H",x:-65,y:-45,z:0}, {elem:"H",x:65,y:45,z:0}, {elem:"H",x:65,y:-45,z:0}], [[0,1,"double"], [0,2], [0,3], [1,4], [1,5]]);
+    addMol("C2H2", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-75,y:0,z:0}, {elem:"H",x:75,y:0,z:0}], [[0,1,"triple"], [0,2], [1,3]]);
+    addMol("N2H4", "N", "sp³", ["扭轉型","Gauche"], "107°", [{elem:"N",x:-25,y:0,z:0}, {elem:"N",x:25,y:0,z:0}, {elem:"H",x:-50,y:35,z:25}, {elem:"H",x:-50,y:-35,z:25}, {elem:"H",x:50,y:35,z:-25}, {elem:"H",x:50,y:-35,z:-25}], [[0,1], [0,2], [0,3], [1,4], [1,5]]);
+    addMol("CH3COCH3", "C", "sp²", ["平面三角形 (中心)","Trigonal"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"C",x:-45,y:-35,z:0}, {elem:"C",x:45,y:-35,z:0}, {elem:"H",x:-45,y:-70,z:25}, {elem:"H",x:-80,y:-15,z:0}, {elem:"H",x:-45,y:-70,z:-25}, {elem:"H",x:45,y:-70,z:25}, {elem:"H",x:80,y:-15,z:0}, {elem:"H",x:45,y:-70,z:-25}], [[0,1,"double"], [0,2], [0,3], [2,4], [2,5], [2,6], [3,7], [3,8], [3,9]]);
+    addMol("BeCl2", "Be", "sp", ["直線型","Linear"], "180°", getLinear("Be","Cl", 65), [[0,1], [0,2]]);
+    addMol("BCl3", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("B","Cl", 75), [[0,1], [0,2], [0,3]]);
+    addMol("OF2", "O", "sp³", ["角形","Bent"], "103°", [{elem:"O",x:0,y:0,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]},{elem:"F",x:45,y:-35,z:0},{elem:"F",x:-45,y:-35,z:0}], [[0,1],[0,2]]);
+    addMol("SCl2", "S", "sp³", ["角形","Bent"], "103°", [{elem:"S",x:0,y:0,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]},{elem:"Cl",x:55,y:-40,z:0},{elem:"Cl",x:-55,y:-40,z:0}], [[0,1],[0,2]]);
+    addMol("AsF3", "As", "sp³", ["角錐形","Trigonal Pyramidal"], "96°", [{elem:"As",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]},{elem:"F",x:0,y:-35,z:40},{elem:"F",x:35,y:-35,z:-25},{elem:"F",x:-35,y:-35,z:-25}], [[0,1],[0,2],[0,3]]);
+    addMol("SbCl3", "Sb", "sp³", ["角錐形","Trigonal Pyramidal"], "97°", [{elem:"Sb",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]},{elem:"Cl",x:0,y:-40,z:45},{elem:"Cl",x:40,y:-40,z:-30},{elem:"Cl",x:-40,y:-40,z:-30}], [[0,1],[0,2],[0,3]]);
+    addMol("SeF6", "Se", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Se","F", 65), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("TeF6", "Te", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Te","F", 70), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("AsF5", "As", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", [{elem:"As",x:0,y:0,z:0}, {elem:"F",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-30,y:0,z:52}, {elem:"F",x:-30,y:0,z:-52}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
+    addMol("TeF4", "Te", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", [{elem:"Te",x:0,y:0,z:0, lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:70,z:0}, {elem:"F",x:0,y:-70,z:0}, {elem:"F",x:55,y:0,z:40}, {elem:"F",x:55,y:0,z:-40}], [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("XeO3", "Xe", "sp³", ["角錐形","Trigonal Pyramidal"], "103°", [{elem:"Xe",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]]);
+    addMol("XeO4", "Xe", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Xe","O"), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]]);
+    addMol("XeOF4", "Xe", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", [{elem:"Xe",x:0,y:0,z:0, lp3d:[{x:0,y:-1,z:0}]}, {elem:"O",x:0,y:65,z:0}, {elem:"F",x:55,y:0,z:0}, {elem:"F",x:-55,y:0,z:0}, {elem:"F",x:0,y:0,z:55}, {elem:"F",x:0,y:0,z:-55}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5]]);
+    addMol("IOF5", "I", "sp³d²", ["八面體","Octahedral"], "90°", [{elem:"I",x:0,y:0,z:0}, {elem:"O",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-60,y:0,z:0}, {elem:"F",x:0,y:0,z:60}, {elem:"F",x:0,y:0,z:-60}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("NO+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:-25,y:0,z:0, lpCount:1}, {elem:"O",x:25,y:0,z:0, lpCount:1}], [[0,1,"triple"]]);
+    addMol("NO2+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-55,y:0,z:0}, {elem:"O",x:55,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
+    addMol("NH4+", "N", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("N","H"), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("PH4+", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("P","H"), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("H3O+", "O", "sp³", ["角錐形","Trigonal Pyramidal"], "107°", [{elem:"O",x:0,y:10,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-30,z:35}, {elem:"H",x:30,y:-30,z:-20}, {elem:"H",x:-30,y:-30,z:-20}], [[0,1],[0,2],[0,3]]);
+    addMol("BF4-", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("B","F"), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("AlCl4-", "Al", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Al","Cl"), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("BH4-", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("B","H"), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("ICl2-", "I", "sp³d", ["直線型","Linear"], "180°", [{elem:"I",x:0,y:0,z:0, lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]}, {elem:"Cl",x:-60,y:0,z:0}, {elem:"Cl",x:60,y:0,z:0}], [[0,1],[0,2]]);
+    addMol("ICl4-", "I", "sp³d²", ["平面四邊形","Square Planar"], "90°", [{elem:"I",x:0,y:0,z:0, lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"Cl",x:60,y:0,z:0}, {elem:"Cl",x:-60,y:0,z:0}, {elem:"Cl",x:0,y:0,z:60}, {elem:"Cl",x:0,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("SiF6 2-", "Si", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Si","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("PF6-", "P", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("P","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("SbF6-", "Sb", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Sb","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+    addMol("IO3-", "I", "sp³", ["角錐形","Trigonal Pyramidal"], "107°", [{elem:"I",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3]]);
+    addMol("BrO3-", "Br", "sp³", ["角錐形","Trigonal Pyramidal"], "107°", [{elem:"Br",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3]]);
+    addMol("SCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:1}, {elem:"S",x:50,y:0,z:0, lpCount:3}], [[0,1,"triple"],[0,2]]);
+    addMol("N3-", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:2}, {elem:"N",x:40,y:0,z:0, lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
+    addMol("OCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:2}, {elem:"O",x:40,y:0,z:0, lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
+    addMol("NH2-", "N", "sp³", ["角形","Bent"], "104.5°", [{elem:"N",x:0,y:0,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]},{elem:"H",x:35,y:-30,z:0},{elem:"H",x:-35,y:-30,z:0}], [[0,1],[0,2]]);
+    addMol("CH3NH2", "N", "sp³", ["角錐形 (N端)","Pyramidal"], "107°", [{elem:"N",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:30,y:-25,z:20}, {elem:"H",x:-30,y:-25,z:20}, {elem:"C",x:0,y:-25,z:-35}, {elem:"H",x:0,y:5,z:-65}, {elem:"H",x:25,y:-40,z:-55}, {elem:"H",x:-25,y:-40,z:-55}], [[0,1],[0,2],[0,3],[3,4],[3,5],[3,6]]);
+    addMol("CH3OCH3", "O", "sp³", ["角形 (中心)","Bent"], "111°", [{elem:"O",x:0,y:10,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]}, {elem:"C",x:45,y:-25,z:0}, {elem:"C",x:-45,y:-25,z:0}, {elem:"H",x:75,y:-5,z:0}, {elem:"H",x:45,y:-55,z:25}, {elem:"H",x:45,y:-55,z:-25}, {elem:"H",x:-75,y:-5,z:0}, {elem:"H",x:-45,y:-55,z:25}, {elem:"H",x:-45,y:-55,z:-25}], [[0,1],[0,2],[1,3],[1,4],[1,5],[2,6],[2,7],[2,8]]);
+    addMol("HCOOH", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-35,z:0}, {elem:"H",x:-45,y:-35,z:0}, {elem:"H",x:75,y:-15,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4]]);
+    addMol("CH3Cl", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H").map((a,i)=>i===1?{...a,elem:"Cl"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("CH2Cl2", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H").map((a,i)=>i===1||i===2?{...a,elem:"Cl"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("CHCl3", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","Cl").map((a,i)=>i===4?{...a,elem:"H"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+    addMol("HCN", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:55,y:0,z:0, lpCount:1}, {elem:"H",x:-55,y:0,z:0}], [[0,1,"triple"],[0,2]]);
+    addMol("CH3CN", "C", "sp", ["直線型 (CN端)","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:55,y:0,z:0, lpCount:1}, {elem:"C",x:-50,y:0,z:0}, {elem:"H",x:-80,y:25,z:0}, {elem:"H",x:-80,y:-15,z:20}, {elem:"H",x:-80,y:-15,z:-20}], [[0,1,"triple"],[0,2],[2,3],[2,4],[2,5]]);
+    addMol("CO(NH2)2", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"N",x:-40,y:-30,z:0}, {elem:"N",x:40,y:-30,z:0}, {elem:"H",x:-65,y:-15,z:0}, {elem:"H",x:-40,y:-60,z:0}, {elem:"H",x:65,y:-15,z:0}, {elem:"H",x:40,y:-60,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4],[2,5],[3,6],[3,7]]);
+    addMol("SOCl2", "S", "sp³", ["角錐形","Trigonal Pyramidal"], "106°", [{elem:"S",x:0,y:10,z:0, lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"Cl",x:50,y:-35,z:-25}, {elem:"Cl",x:-50,y:-35,z:-25}], [[0,1,"double"],[0,2],[0,3]]);
+    addMol("POCl3", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"Cl",x:45,y:-35,z:35}, {elem:"Cl",x:-45,y:-35,z:35}, {elem:"Cl",x:0,y:0,z:-60}], [[0,1,"double"],[0,2],[0,3],[0,4]]);
+    addMol("S2O3 2-", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:60,z:0}, {elem:"O",x:55,y:-35,z:0}, {elem:"O",x:-55,y:-35,z:0}, {elem:"O",x:0,y:0,z:60}], [[0,1,"double"],[0,2],[0,3],[0,4]]);
+    addMol("CNO-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0}, {elem:"O",x:40,y:0,z:0}], [[0,1,"triple"],[0,2]]);
+    addMol("C2 2-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0}], [[0,1,"triple"]]);
+    addMol("O2 2-", "O", "sp³", ["直線型","Linear"], "180°", [{elem:"O",x:-30,y:0,z:0}, {elem:"O",x:30,y:0,z:0}], [[0,1]]);
+
+
+
     
 // C60 Generator (修正版：包含五邊形/六邊形文字描述)
     (function(){
