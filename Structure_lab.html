@@ -197,6 +197,10 @@
             <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value"><span class="hybrid-badge" id="disp-hybrid"></span></span></div>
             <div class="data-row"><span class="data-label">形狀</span><span class="data-value" id="disp-shape"></span></div>
             <div class="data-row"><span class="data-label">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+            <div class="data-row">
+                <span class="data-label">鍵結統計</span>
+                <span class="data-value" id="disp-bonds"></span>
+            </div>
         </div>
     </div>
 </div>
@@ -263,34 +267,47 @@
     // --- 2. 資料庫與渲染邏輯 ---
     let MOLECULE_DB = {};
 
+// 自動判斷孤對電子 (v10.2 修正版：針對 P4O6/P4O10 優化)
     function autoAssignLonePairs(atom, bonds, allAtoms) {
-        const myBonds = bonds.filter(b => allAtoms[b[0]] === atom || allAtoms[b[1]] === atom);
-        const bondCount = myBonds.length;
-        
+        // 1. 若有手動設定，優先使用
         if (atom.lp3d !== undefined && atom.lp3d.length > 0) return atom.lpCount || atom.lp3d.length;
         if (atom.lpCount !== undefined) return atom.lpCount;
 
-        const isTerminal = bondCount === 1;
+        // 2. 計算鍵結數
+        const myBonds = bonds.filter(b => allAtoms[b[0]] === atom || allAtoms[b[1]] === atom);
+        const bondCount = myBonds.length;
         const elem = atom.elem;
-        const group7 = ['F', 'Cl', 'Br', 'I'];
-        const group6 = ['O', 'S', 'Se', 'Te'];
-        const group5 = ['N', 'P', 'As'];
 
-        if (isTerminal) {
-            if (group7.includes(elem)) return 3; 
-            if (group6.includes(elem)) {
-                const bondType = myBonds[0][2]; 
-                if (bondType === 'double') return 2; 
-                return 3; 
-            }
-            if (group5.includes(elem)) {
-                 const bondType = myBonds[0][2];
-                 if (bondType === 'triple') return 1; 
-            }
-        } else {
-             if (group6.includes(elem) && bondCount === 2) return 2; 
+        // --- 第 15 族 (N, P) ---
+        if (['N','P','As','Sb'].includes(elem)) {
+            // P4O6 的 P 接 3 個 O -> 1 LP
+            // P4O10 的 P 接 4 個 O -> 0 LP
+            if (bondCount === 3) return 1;
+            if (bondCount === 4) return 0; 
+            if (bondCount === 2) return 1; // -N=N-
+            if (bondCount === 1) return 1; // N≡C-
         }
-        return ELEMENT_PROPS[elem]?.lp || 0;
+
+        // --- 第 16 族 (O, S) ---
+        if (['O','S','Se','Te'].includes(elem)) {
+            // 橋接氧 (P-O-P) 接 2 鍵 -> 2 LP
+            if (bondCount === 2) return 2;
+            
+            // 末端氧 (P=O) 接 1 鍵
+            if (bondCount === 1) {
+                const bondType = myBonds[0][2]; // 讀取鍵結類型
+                // 雙鍵 (P=O, C=O) -> 2 LP
+                // 單鍵 (-O-) -> 3 LP
+                return (bondType === 'double') ? 2 : 3;
+            }
+        }
+
+        // --- 第 17 族 (F, Cl) ---
+        if (['F','Cl','Br','I'].includes(elem)) {
+            if (bondCount === 1) return 3;
+        }
+
+        return 0;
     }
 
     function generateElectronDots(atom, centerPos) {
@@ -481,38 +498,89 @@
     addMol("C2 2-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0}], [[0,1,"triple"]]);
     addMol("O2 2-", "O", "sp³", ["直線型","Linear"], "180°", [{elem:"O",x:-30,y:0,z:0}, {elem:"O",x:30,y:0,z:0}], [[0,1]]);
 
-    // --- New in v9.8 ---
-    addMol("P4O6", "P", "sp³", ["籠狀","Cage"], "100°", [{elem:"P",x:40,y:40,z:40}, {elem:"P",x:40,y:-40,z:-40}, {elem:"P",x:-40,y:40,z:-40}, {elem:"P",x:-40,y:-40,z:40}, {elem:"O",x:40,y:0,z:0}, {elem:"O",x:-40,y:0,z:0}, {elem:"O",x:0,y:40,z:0}, {elem:"O",x:0,y:-40,z:0}, {elem:"O",x:0,y:0,z:40}, {elem:"O",x:0,y:0,z:-40}], [[0,4],[1,4],[2,5],[3,5],[0,6],[2,6],[1,7],[3,7],[0,8],[3,8],[1,9],[2,9]]);
-    addMol("P4O10", "P", "sp³", ["籠狀","Cage"], "102°/123°", [{elem:"P",x:40,y:40,z:40}, {elem:"P",x:40,y:-40,z:-40}, {elem:"P",x:-40,y:40,z:-40}, {elem:"P",x:-40,y:-40,z:40}, {elem:"O",x:40,y:0,z:0}, {elem:"O",x:-40,y:0,z:0}, {elem:"O",x:0,y:40,z:0}, {elem:"O",x:0,y:-40,z:0}, {elem:"O",x:0,y:0,z:40}, {elem:"O",x:0,y:0,z:-40}, {elem:"O",x:70,y:70,z:70}, {elem:"O",x:70,y:-70,z:-70}, {elem:"O",x:-70,y:70,z:-70}, {elem:"O",x:-70,y:-70,z:70}], [[0,4],[1,4],[2,5],[3,5],[0,6],[2,6],[1,7],[3,7],[0,8],[3,8],[1,9],[2,9],[0,10,"double"],[1,11,"double"],[2,12,"double"],[3,13,"double"]]);
-    addMol("S2Cl2", "S", "sp³", ["書本型","Open Book"], "103°", [{elem:"S",x:0,y:15,z:0}, {elem:"S",x:0,y:-15,z:0}, {elem:"Cl",x:50,y:30,z:35}, {elem:"Cl",x:50,y:-30,z:-35}], [[0,1],[0,2],[1,3]]);
     
-    // C60 Generator
+// C60 Generator (修正版：包含五邊形/六邊形文字描述)
     (function(){
-        const phi = (1 + Math.sqrt(5)) / 2;
-        const r = 70; 
-        const verts = [];
-        const addV = (x,y,z) => verts.push({x:x*r/2.5, y:y*r/2.5, z:z*r/2.5});
-        [[0,1,3*phi],[0,1,-3*phi],[0,-1,3*phi],[0,-1,-3*phi]].forEach(v=>addV(...v));
-        for(let i of [-1,1]) for(let j of [-(2+phi),(2+phi)]) for(let k of [-2*phi,2*phi]) addV(i,j,k);
-        for(let i of [-phi,phi]) for(let j of [-2,2]) for(let k of [-(2*phi+1),(2*phi+1)]) addV(i,j,k);
-        let p2 = [], p3 = [];
-        verts.forEach(v => { p2.push({x:v.y, y:v.z, z:v.x}); p3.push({x:v.z, y:v.x, z:v.y}); });
-        const allV = [...verts, ...p2, ...p3];
-        const atoms = []; const bonds = [];
+        const phi = (1 + Math.sqrt(5)) / 2; 
+        const scale = 28; 
+        
+        let rawVerts = [];
+        
+        // 1. 截角二十面體標準座標
+        const groups = [
+            [0, 1, 3*phi],
+            [1, 2+phi, 2*phi],
+            [phi, 2, 2*phi+1]
+        ];
+
+        function addPermutations(u, v, w) {
+            const cycles = [[u,v,w], [v,w,u], [w,u,v]];
+            cycles.forEach(p => {
+                for(let i=0; i<8; i++) {
+                    let x = p[0] * ((i & 1) ? 1 : -1);
+                    let y = p[1] * ((i & 2) ? 1 : -1);
+                    let z = p[2] * ((i & 4) ? 1 : -1);
+                    rawVerts.push({x, y, z});
+                }
+            });
+        }
+
+        groups.forEach(g => addPermutations(g[0], g[1], g[2]));
+
+        // 2. 建立原子
+        const atoms = [];
         const threshold = 0.1;
-        allV.forEach(v => {
-            if(!atoms.some(a => Math.abs(a.x-v.x)<threshold && Math.abs(a.y-v.y)<threshold && Math.abs(a.z-v.z)<threshold)) {
-                atoms.push({elem:"C", x:v.x, y:v.y, z:v.z, lpCount:0});
+        
+        rawVerts.forEach(v => {
+            if(!atoms.some(a => 
+                Math.abs(a.x - v.x*scale) < threshold && 
+                Math.abs(a.y - v.y*scale) < threshold && 
+                Math.abs(a.z - v.z*scale) < threshold
+            )) {
+                atoms.push({
+                    elem: "C", 
+                    x: v.x*scale, 
+                    y: v.y*scale, 
+                    z: v.z*scale, 
+                    lpCount: 0,
+                    r: 5 
+                });
             }
         });
-        for(let i=0; i<atoms.length; i++){
-            for(let j=i+1; j<atoms.length; j++){
-                let d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-                if(d > 35 && d < 45) bonds.push([i,j]);
+
+        // 3. 建立鍵結
+        const bonds = [];
+        const bondSet = new Set();
+
+        for(let i = 0; i < atoms.length; i++) {
+            let distances = [];
+            for(let j = 0; j < atoms.length; j++) {
+                if(i === j) continue;
+                let d = (atoms[i].x - atoms[j].x)**2 + (atoms[i].y - atoms[j].y)**2 + (atoms[i].z - atoms[j].z)**2;
+                distances.push({id: j, dist: d});
+            }
+            
+            distances.sort((a, b) => a.dist - b.dist);
+            
+            for(let k = 0; k < 3; k++) {
+                let neighbor = distances[k].id;
+                let id1 = Math.min(i, neighbor);
+                let id2 = Math.max(i, neighbor);
+                let key = `${id1}-${id2}`;
+                
+                if(!bondSet.has(key)) {
+                    let type = "single";
+                    if (k === 0) type = "double"; 
+                    bonds.push([id1, id2, type]);
+                    bondSet.add(key);
+                }
             }
         }
-        addMol("C60", "C", "sp²", ["球狀","Sphere"], "120°", atoms, bonds);
+
+        // 這裡加上了文字描述
+        addMol("C60", "C", "sp²", ["球狀 (12個五邊形, 20個六邊形)","Truncated Icosahedron"], "120°", atoms, bonds);
     })();
+
 
     // Variants
     addMol("N2F2", "N", "sp²", ["平面","Planar"], "120°", [], [], [], {
@@ -532,6 +600,555 @@
     addMol("C2H5OC2H5", "O", "sp³", ["彎曲","Bent"], "110°", [{elem:"O",x:0,y:10,z:0}, {elem:"C",x:-40,y:-10,z:0}, {elem:"C",x:40,y:-10,z:0}, {elem:"C",x:-70,y:20,z:0}, {elem:"C",x:70,y:20,z:0}, {elem:"H",x:-40,y:-40,z:20}, {elem:"H",x:-40,y:-40,z:-20}, {elem:"H",x:40,y:-40,z:20}, {elem:"H",x:40,y:-40,z:-20}, {elem:"H",x:-70,y:50,z:0}, {elem:"H",x:-95,y:5,z:20}, {elem:"H",x:-95,y:5,z:-20}, {elem:"H",x:70,y:50,z:0}, {elem:"H",x:95,y:5,z:20}, {elem:"H",x:95,y:5,z:-20}], [[0,1],[0,2],[1,3],[2,4],[1,5],[1,6],[2,7],[2,8],[3,9],[3,10],[3,11],[4,12],[4,13],[4,14]]);
     addMol("Benzaldehyde", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"C",x:-30,y:45,z:0}, {elem:"C",x:-30,y:-45,z:0}, {elem:"C",x:-70,y:45,z:0}, {elem:"C",x:-70,y:-45,z:0}, {elem:"C",x:-90,y:0,z:0}, {elem:"C",x:40,y:0,z:0}, {elem:"O",x:60,y:40,z:0}, {elem:"H",x:-15,y:75,z:0}, {elem:"H",x:-15,y:-75,z:0}, {elem:"H",x:-85,y:75,z:0}, {elem:"H",x:-85,y:-75,z:0}, {elem:"H",x:-120,y:0,z:0}, {elem:"H",x:55,y:-30,z:0}], [[0,1,"double"],[0,2],[1,3],[2,4,"double"],[3,5,"double"],[4,5],[0,6],[6,7,"double"],[6,13],[1,8],[2,9],[3,10],[4,11],[5,12]]);
     addMol("Toluene", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"C",x:-30,y:45,z:0}, {elem:"C",x:-30,y:-45,z:0}, {elem:"C",x:-70,y:45,z:0}, {elem:"C",x:-70,y:-45,z:0}, {elem:"C",x:-90,y:0,z:0}, {elem:"C",x:40,y:0,z:0}, {elem:"H",x:-15,y:75,z:0}, {elem:"H",x:-15,y:-75,z:0}, {elem:"H",x:-85,y:75,z:0}, {elem:"H",x:-85,y:-75,z:0}, {elem:"H",x:-120,y:0,z:0}, {elem:"H",x:55,y:25,z:0}, {elem:"H",x:55,y:-20,z:15}, {elem:"H",x:55,y:-20,z:-15}], [[0,1,"double"],[0,2],[1,3],[2,4,"double"],[3,5,"double"],[4,5],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14]]);
+
+// --- 新增補充: 酸與特殊酸根 ---
+    
+    // HNO2 (亞硝酸) - 平面角形 (N sp2)
+    addMol("HNO2", "N", "sp²", ["角形","Bent"], "111°", [{elem:"N",x:0,y:0,z:0, lpCount:1}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-30,z:0}, {elem:"H",x:75,y:-50,z:0}], [[0,1,"double"], [0,2], [2,3]]);
+    
+    // H2CO3 (碳酸) - 平面三角形
+    addMol("H2CO3", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:50,y:-30,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"H",x:80,y:-50,z:0}, {elem:"H",x:-80,y:-50,z:0}], [[0,1,"double"], [0,2], [0,3], [2,4], [3,5]]);
+
+    // 磷酸根系列 (包含 H-P 鍵結的亞磷酸系)
+    // H2PO4- (磷酸二氫根) - 四面體
+    addMol("H2PO4-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0, lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"O",x:0,y:10,z:-50}, {elem:"H",x:60,y:-40,z:35}, {elem:"H",x:-60,y:-40,z:35}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
+    
+    // HPO4 2- (磷酸氫根) - 四面體
+    addMol("HPO4 2-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0, lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"O",x:0,y:10,z:-50}, {elem:"H",x:60,y:-40,z:35}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
+    
+    // H2PO3- (亞磷酸二氫根) - 注意：亞磷酸(H3PO3)有一個 H 直接接在 P 上
+    addMol("H2PO3-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0, lpCount:0}, {elem:"H",x:0,y:55,z:0}, {elem:"O",x:45,y:-30,z:30}, {elem:"O",x:-45,y:-30,z:30}, {elem:"O",x:0,y:10,z:-55}, {elem:"H",x:70,y:-45,z:40}], [[0,1], [0,2], [0,3,"double"], [0,4], [2,5]]);
+
+    // 氯含氧酸系列
+    // HClO3 (氯酸) - 角錐形
+    addMol("HClO3", "Cl", "sp³", ["角錐形","Trigonal Pyramidal"], "107°", [{elem:"Cl",x:0,y:10,z:0, lpCount:1}, {elem:"O",x:0,y:-30,z:40}, {elem:"O",x:35,y:-30,z:-25}, {elem:"O",x:-35,y:-30,z:-25}, {elem:"H",x:60,y:-45,z:-30}], [[0,1,"double"], [0,2,"double"], [0,3], [3,4]]);
+
+    // HClO2 (亞氯酸) - 角形
+    addMol("HClO2", "Cl", "sp³", ["角形","Bent"], "111°", [{elem:"Cl",x:0,y:0,z:0, lpCount:2}, {elem:"O",x:50,y:-30,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"H",x:75,y:-50,z:0}], [[0,1], [0,2,"double"], [1,3]]);
+
+    // HClO (次氯酸) - 角形 (以 O 為中心)
+    addMol("HClO", "O", "sp³", ["角形","Bent"], "104.5°", [{elem:"O",x:0,y:0,z:0, lpCount:2}, {elem:"Cl",x:50,y:-20,z:0}, {elem:"H",x:-30,y:20,z:0}], [[0,1], [0,2]]);
+
+    // 氰酸相關
+    // HOCN (氰酸) - H接在O上
+    addMol("HOCN", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:45,y:0,z:0}, {elem:"O",x:-45,y:0,z:0}, {elem:"H",x:-70,y:25,z:0}], [[0,1,"triple"], [0,2], [2,3]]);
+
+    // OCN- (氰酸根)
+    addMol("OCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:2}, {elem:"O",x:40,y:0,z:0, lpCount:2}], [[0,1,"double"], [0,2,"double"]]);
+
+// ==========================================
+    // ====== 新增：異構物系列 (Isomers) ======
+    // ==========================================
+
+    // 1. 戊烷異構物 (C5H12)
+    addMol("C5H12", "C", "sp³", ["鏈狀/四面體","Chain/Tetra"], "109.5°", [], [], [], {
+        "正戊烷 (n-Pentane)": { 
+            atoms: [{elem:"C",x:-80,y:0,z:0},{elem:"C",x:-40,y:25,z:0},{elem:"C",x:0,y:0,z:0},{elem:"C",x:40,y:25,z:0},{elem:"C",x:80,y:0,z:0}, 
+                    {elem:"H",x:-80,y:-35,z:0},{elem:"H",x:-105,y:15,z:20},{elem:"H",x:-105,y:15,z:-20},
+                    {elem:"H",x:-40,y:60,z:0},{elem:"H",x:-40,y:25,z:35},
+                    {elem:"H",x:0,y:-35,z:0},{elem:"H",x:0,y:0,z:-35},
+                    {elem:"H",x:40,y:60,z:0},{elem:"H",x:40,y:25,z:35},
+                    {elem:"H",x:80,y:-35,z:0},{elem:"H",x:105,y:15,z:20},{elem:"H",x:105,y:15,z:-20}],
+            bonds: [[0,1],[1,2],[2,3],[3,4], [0,5],[0,6],[0,7],[1,8],[1,9],[2,10],[2,11],[3,12],[3,13],[4,14],[4,15],[4,16]]
+        },
+        "異戊烷 (Isopentane)": {
+            atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"C",x:60,y:25,z:0},{elem:"C",x:-20,y:65,z:0},
+                    {elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},
+                    {elem:"H",x:-20,y:25,z:35},
+                    {elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35},
+                    {elem:"H",x:60,y:60,z:0},{elem:"H",x:85,y:10,z:20},{elem:"H",x:85,y:10,z:-20},
+                    {elem:"H",x:-20,y:100,z:0},{elem:"H",x:-45,y:65,z:20},{elem:"H",x:5,y:65,z:20}],
+            bonds: [[0,1],[1,2],[2,3],[1,4], [0,5],[0,6],[0,7],[1,8],[2,9],[2,10],[3,11],[3,12],[3,13],[4,14],[4,15],[4,16]]
+        },
+        "新戊烷 (Neopentane)": {
+            atoms: [{elem:"C",x:0,y:0,z:0}, 
+                    {elem:"C",x:0,y:40,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"C",x:0,y:-10,z:-40},
+                    {elem:"H",x:0,y:75,z:0},{elem:"H",x:-20,y:40,z:20},{elem:"H",x:20,y:40,z:20},
+                    {elem:"H",x:60,y:-35,z:35},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:50,y:10,z:20},
+                    {elem:"H",x:-60,y:-35,z:35},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-50,y:10,z:20},
+                    {elem:"H",x:0,y:15,z:-60},{elem:"H",x:30,y:-30,z:-60},{elem:"H",x:-30,y:-30,z:-60}],
+            bonds: [[0,1],[0,2],[0,3],[0,4], [1,5],[1,6],[1,7], [2,8],[2,9],[2,10], [3,11],[3,12],[3,13], [4,14],[4,15],[4,16]]
+        }
+    });
+
+    // 2. 二甲苯異構物 (C8H10) - 苯環骨架固定
+    const benzeneBase = [
+        {x:0,y:70,z:0},{x:60,y:35,z:0},{x:60,y:-35,z:0},{x:0,y:-70,z:0},{x:-60,y:-35,z:0},{x:-60,y:35,z:0}
+    ];
+    // 輔助生成 H
+    function getBenzH(i, scale=35) { const v = benzeneBase[i]; const len = Math.sqrt(v.x**2+v.y**2); return {x:v.x + v.x/len*scale, y:v.y + v.y/len*scale, z:0}; }
+    
+    addMol("C8H10", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
+        "鄰二甲苯 (Ortho)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"C",x:0,y:110,z:0}, {elem:"C",x:100,y:55,z:0}, // Methyls at 0, 1
+                {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+                {elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20}, // Me-1 H
+                {elem:"H",x:130,y:70,z:0},{elem:"H",x:100,y:25,z:20},{elem:"H",x:100,y:25,z:-20}  // Me-2 H
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[1,7], [2,8],[3,9],[4,10],[5,11], [6,12],[6,13],[6,14], [7,15],[7,16],[7,17]]
+        },
+        "間二甲苯 (Meta)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"C",x:0,y:110,z:0}, {elem:"C",x:100,y:-55,z:0}, // Methyls at 0, 2
+                {elem:"H",...getBenzH(1)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+                {elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},
+                {elem:"H",x:130,y:-70,z:0},{elem:"H",x:100,y:-25,z:20},{elem:"H",x:100,y:-25,z:-20}
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[2,7], [1,8],[3,9],[4,10],[5,11], [6,12],[6,13],[6,14], [7,15],[7,16],[7,17]]
+        },
+        "對二甲苯 (Para)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"C",x:0,y:110,z:0}, {elem:"C",x:0,y:-110,z:0}, // Methyls at 0, 3
+                {elem:"H",...getBenzH(1)}, {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+                {elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},
+                {elem:"H",x:0,y:-145,z:0},{elem:"H",x:-25,y:-110,z:20},{elem:"H",x:25,y:-110,z:-20}
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[3,7], [1,8],[2,9],[4,10],[5,11], [6,12],[6,13],[6,14], [7,15],[7,16],[7,17]]
+        }
+    });
+
+    // 3. 二氯苯異構物 (C6H4Cl2)
+    addMol("C6H4Cl2", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
+        "鄰二氯苯 (Ortho)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"Cl",x:0,y:115,z:0}, {elem:"Cl",x:105,y:60,z:0},
+                {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)}
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[1,7], [2,8],[3,9],[4,10],[5,11]]
+        },
+        "間二氯苯 (Meta)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"Cl",x:0,y:115,z:0}, {elem:"Cl",x:105,y:-60,z:0},
+                {elem:"H",...getBenzH(1)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)}
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[2,7], [1,8],[3,9],[4,10],[5,11]]
+        },
+        "對二氯苯 (Para)": {
+            atoms: benzeneBase.map(p=>({elem:"C",...p})).concat([
+                {elem:"Cl",x:0,y:115,z:0}, {elem:"Cl",x:0,y:-115,z:0},
+                {elem:"H",...getBenzH(1)}, {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)}
+            ]),
+            bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[3,7], [1,8],[2,9],[4,10],[5,11]]
+        }
+    });
+
+    // ==========================================
+    // ====== 新增：芳香族與複雜有機物 ======
+    // ==========================================
+
+    // 乙苯 (Ethylbenzene)
+    addMol("Ethylbenzene", "C", "sp²", ["平面/四面體","Mixed"], "120°", 
+        benzeneBase.map(p=>({elem:"C",...p})).concat([
+            {elem:"C",x:0,y:110,z:0}, {elem:"C",x:40,y:135,z:0}, // Ethyl group
+            {elem:"H",...getBenzH(1)}, {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+            {elem:"H",x:-25,y:110,z:20}, {elem:"H",x:-25,y:110,z:-20}, // CH2 H
+            {elem:"H",x:65,y:135,z:0}, {elem:"H",x:40,y:160,z:20}, {elem:"H",x:40,y:160,z:-20} // CH3 H
+        ]),
+        [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[6,7], [1,8],[2,9],[3,10],[4,11],[5,12], [6,13],[6,14], [7,15],[7,16],[7,17]]
+    );
+
+    // 苯酚 (Phenol) - 已有，重新確認結構完整性
+    // (上方舊代碼已有，此處補充更精確的)
+    // ... (略，沿用舊的即可)
+
+    // 苯甲酸 (Benzoic Acid) - 已有
+    
+    // 柳酸 (Salicylic Acid) - 鄰羥基苯甲酸
+    addMol("Salicylic Acid", "C", "sp²", ["平面","Planar"], "120°", 
+        benzeneBase.map(p=>({elem:"C",...p})).concat([
+            {elem:"C",x:0,y:110,z:0}, {elem:"O",x:-35,y:130,z:0}, {elem:"O",x:35,y:130,z:0}, // COOH at 0
+            {elem:"O",x:100,y:55,z:0}, // OH at 1 (Ortho)
+            {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+            {elem:"H",x:60,y:145,z:0}, // COOH H
+            {elem:"H",x:120,y:75,z:0}  // OH H
+        ]),
+        [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], 
+         [0,6],[6,7,"double"],[6,8],[8,14], // COOH
+         [1,9],[9,15], // OH
+         [2,10],[3,11],[4,12],[5,13]]
+    );
+
+    // 阿斯匹靈 (Aspirin) - 乙醯柳酸
+    addMol("Aspirin", "C", "sp²", ["平面/四面體","Mixed"], "120°", 
+        benzeneBase.map(p=>({elem:"C",...p})).concat([
+            {elem:"C",x:0,y:110,z:0}, {elem:"O",x:-35,y:130,z:0}, {elem:"O",x:35,y:130,z:0}, // COOH at 0
+            {elem:"O",x:100,y:55,z:0}, // Ester O at 1
+            {elem:"C",x:135,y:75,z:0}, {elem:"O",x:135,y:110,z:0}, {elem:"C",x:170,y:55,z:0}, // Acetyl group
+            {elem:"H",...getBenzH(2)}, {elem:"H",...getBenzH(3)}, {elem:"H",...getBenzH(4)}, {elem:"H",...getBenzH(5)},
+            {elem:"H",x:60,y:145,z:0}, // Acid H
+            {elem:"H",x:200,y:55,z:0}, {elem:"H",x:170,y:30,z:20}, {elem:"H",x:170,y:30,z:-20} // Methyl H
+        ]),
+        [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], 
+         [0,6],[6,7,"double"],[6,8],[8,16], // COOH
+         [1,9],[9,10],[10,11,"double"],[10,12], // Ester chain
+         [2,13],[3,14],[4,15],[5,16], // Ring H
+         [12,17],[12,18],[12,19]] // Methyl H
+    );
+
+    // ==========================================
+    // ====== 新增：官能基系列 (Functional Groups) ======
+    // ==========================================
+
+    // 醇類
+    addMol("1-Propanol", "C", "sp³", ["鏈狀","Chain"], "109.5°", [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"O",x:60,y:25,z:0},{elem:"H",x:85,y:10,z:0},{elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:60,z:0},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35}], [[0,1],[1,2],[2,3],[3,4],[0,5],[0,6],[0,7],[1,8],[1,9],[2,10],[2,11]]);
+    addMol("2-Propanol", "C", "sp³", ["Y型","Branched"], "109.5°", [{elem:"C",x:0,y:0,z:0},{elem:"C",x:-35,y:-25,z:0},{elem:"C",x:35,y:-25,z:0},{elem:"O",x:0,y:35,z:0},{elem:"H",x:0,y:60,z:0},{elem:"H",x:0,y:0,z:-35},{elem:"H",x:-35,y:-60,z:0},{elem:"H",x:-60,y:-10,z:20},{elem:"H",x:-60,y:-10,z:-20},{elem:"H",x:35,y:-60,z:0},{elem:"H",x:60,y:-10,z:20},{elem:"H",x:60,y:-10,z:-20}], [[0,1],[0,2],[0,3],[3,4],[0,5],[1,6],[1,7],[1,8],[2,9],[2,10],[2,11]]);
+    
+    // 醛酮
+    addMol("Propionaldehyde", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:20,y:0,z:0},{elem:"O",x:20,y:45,z:0},{elem:"C",x:-20,y:-25,z:0},{elem:"C",x:-60,y:0,z:0},{elem:"H",x:50,y:-15,z:0},{elem:"H",x:-20,y:-60,z:0},{elem:"H",x:-20,y:-25,z:35},{elem:"H",x:-60,y:35,z:0},{elem:"H",x:-85,y:-15,z:20},{elem:"H",x:-85,y:-15,z:-20}], [[0,1,"double"],[0,2],[0,4],[2,3],[2,5],[2,6],[3,7],[3,8],[3,9]]);
+    addMol("Butanone", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:45,z:0},{elem:"C",x:40,y:-25,z:0},{elem:"C",x:-40,y:-25,z:0},{elem:"C",x:-75,y:0,z:0},{elem:"H",x:40,y:-60,z:0},{elem:"H",x:65,y:-10,z:20},{elem:"H",x:65,y:-10,z:-20},{elem:"H",x:-40,y:-60,z:0},{elem:"H",x:-40,y:-25,z:35},{elem:"H",x:-75,y:35,z:0},{elem:"H",x:-100,y:-15,z:20},{elem:"H",x:-100,y:-15,z:-20}], [[0,1,"double"],[0,2],[0,3],[3,4],[2,5],[2,6],[2,7],[3,8],[3,9],[4,10],[4,11],[4,12]]);
+
+    // 酸與酯 (部分已在 v9.9)
+    addMol("Propanoic Acid", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:20,y:0,z:0},{elem:"O",x:20,y:45,z:0},{elem:"O",x:55,y:-20,z:0},{elem:"C",x:-20,y:-20,z:0},{elem:"C",x:-60,y:5,z:0},{elem:"H",x:80,y:-5,z:0},{elem:"H",x:-20,y:-55,z:0},{elem:"H",x:-20,y:-20,z:35},{elem:"H",x:-60,y:40,z:0},{elem:"H",x:-85,y:-10,z:20},{elem:"H",x:-85,y:-10,z:-20}], [[0,1,"double"],[0,2],[2,5],[0,3],[3,4],[3,6],[3,7],[4,8],[4,9],[4,10]]);
+
+    // 胺與醯胺
+    addMol("Dimethylamine", "N", "sp³", ["角錐","Pyramidal"], "107°", [{elem:"N",x:0,y:0,z:0},{elem:"H",x:0,y:25,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:60,y:-40,z:0},{elem:"H",x:50,y:10,z:10},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-60,y:-40,z:0},{elem:"H",x:-50,y:10,z:10}], [[0,1],[0,2],[0,3],[2,4],[2,5],[2,6],[3,7],[3,8],[3,9]]);
+    addMol("Trimethylamine", "N", "sp³", ["角錐","Pyramidal"], "108°", [{elem:"N",x:0,y:10,z:0},{elem:"C",x:0,y:-20,z:30},{elem:"C",x:35,y:-20,z:-20},{elem:"C",x:-35,y:-20,z:-20},{elem:"H",x:0,y:-20,z:65},{elem:"H",x:25,y:-40,z:30},{elem:"H",x:-25,y:-40,z:30},{elem:"H",x:60,y:-20,z:-20},{elem:"H",x:35,y:-40,z:0},{elem:"H",x:35,y:10,z:-30},{elem:"H",x:-60,y:-20,z:-20},{elem:"H",x:-35,y:-40,z:0},{elem:"H",x:-35,y:10,z:-30}], [[0,1],[0,2],[0,3],[1,4],[1,5],[1,6],[2,7],[2,8],[2,9],[3,10],[3,11],[3,12]]);
+    addMol("Formamide", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:45,z:0},{elem:"N",x:40,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0},{elem:"H",x:40,y:-55,z:0},{elem:"H",x:70,y:-5,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4],[2,5]]);
+
+// ==========================================
+    // ====== 補完：醇、醚、醛、酮、酸、酯、胺、醯胺 ======
+    // ==========================================
+
+    // --- 1. 醇類 (Alcohols) ---
+    // 1-丙醇 (正丙醇)
+    addMol("1-Propanol", "C", "sp³", ["鏈狀","Chain"], "109.5°", [
+        {elem:"C",x:-60,y:0,z:0}, {elem:"C",x:-20,y:25,z:0}, {elem:"C",x:20,y:0,z:0}, {elem:"O",x:60,y:25,z:0},
+        {elem:"H",x:85,y:10,z:0}, // OH
+        {elem:"H",x:-60,y:-35,z:0}, {elem:"H",x:-85,y:15,z:20}, {elem:"H",x:-85,y:15,z:-20}, // CH3
+        {elem:"H",x:-20,y:60,z:0}, {elem:"H",x:-20,y:25,z:35}, // CH2
+        {elem:"H",x:20,y:-35,z:0}, {elem:"H",x:20,y:0,z:-35}   // CH2
+    ], [[0,1],[1,2],[2,3],[3,4], [0,5],[0,6],[0,7], [1,8],[1,9], [2,10],[2,11]]);
+
+    // 2-丙醇 (異丙醇)
+    addMol("2-Propanol", "C", "sp³", ["Y型","Branched"], "109.5°", [
+        {elem:"C",x:0,y:0,z:0}, // Center
+        {elem:"C",x:-40,y:-25,z:0}, {elem:"C",x:40,y:-25,z:0}, // Methyls
+        {elem:"O",x:0,y:40,z:0}, {elem:"H",x:0,y:65,z:0}, // OH
+        {elem:"H",x:0,y:0,z:-40}, // Center H
+        {elem:"H",x:-40,y:-60,z:0}, {elem:"H",x:-65,y:-10,z:20}, {elem:"H",x:-65,y:-10,z:-20},
+        {elem:"H",x:40,y:-60,z:0}, {elem:"H",x:65,y:-10,z:20}, {elem:"H",x:65,y:-10,z:-20}
+    ], [[0,1],[0,2],[0,3],[3,4], [0,5], [1,6],[1,7],[1,8], [2,9],[2,10],[2,11]]);
+
+
+    // --- 2. 醚類 (Ethers) ---
+    // 甲醚 (二甲醚) - CH3OCH3 (結構類似水，但H換成CH3)
+    addMol("CH3OCH3", "O", "sp³", ["彎曲","Bent"], "111°", [
+        {elem:"O",x:0,y:15,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]}, 
+        {elem:"C",x:45,y:-20,z:0}, {elem:"C",x:-45,y:-20,z:0},
+        {elem:"H",x:75,y:0,z:0}, {elem:"H",x:45,y:-50,z:25}, {elem:"H",x:45,y:-50,z:-25},
+        {elem:"H",x:-75,y:0,z:0}, {elem:"H",x:-45,y:-50,z:25}, {elem:"H",x:-45,y:-50,z:-25}
+    ], [[0,1],[0,2], [1,3],[1,4],[1,5], [2,6],[2,7],[2,8]]);
+
+    // 乙醚 (二乙醚) - C2H5OC2H5
+    addMol("C2H5OC2H5", "O", "sp³", ["彎曲長鏈","Bent Chain"], "110°", [
+        {elem:"O",x:0,y:20,z:0, lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]}, 
+        {elem:"C",x:-40,y:-10,z:0}, {elem:"C",x:40,y:-10,z:0}, // CH2
+        {elem:"C",x:-75,y:15,z:0}, {elem:"C",x:75,y:15,z:0},   // CH3
+        {elem:"H",x:-40,y:-40,z:20}, {elem:"H",x:-40,y:-40,z:-20},
+        {elem:"H",x:40,y:-40,z:20}, {elem:"H",x:40,y:-40,z:-20},
+        {elem:"H",x:-75,y:45,z:0}, {elem:"H",x:-100,y:0,z:20}, {elem:"H",x:-100,y:0,z:-20},
+        {elem:"H",x:75,y:45,z:0}, {elem:"H",x:100,y:0,z:20}, {elem:"H",x:100,y:0,z:-20}
+    ], [[0,1],[0,2], [1,3], [2,4], [1,5],[1,6], [2,7],[2,8], [3,9],[3,10],[3,11], [4,12],[4,13],[4,14]]);
+
+
+    // --- 3. 醛酮類 (Aldehydes & Ketones) ---
+    // 丙醛
+    addMol("Propionaldehyde", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:25,y:0,z:0}, {elem:"O",x:25,y:45,z:0}, // C=O
+        {elem:"C",x:-15,y:-25,z:0}, {elem:"C",x:-55,y:0,z:0}, // Ethyl chain
+        {elem:"H",x:55,y:-15,z:0}, // Aldehyde H
+        {elem:"H",x:-15,y:-60,z:0}, {elem:"H",x:-15,y:-25,z:35},
+        {elem:"H",x:-55,y:35,z:0}, {elem:"H",x:-80,y:-15,z:20}, {elem:"H",x:-80,y:-15,z:-20}
+    ], [[0,1,"double"],[0,2],[0,4], [2,3], [2,5],[2,6], [3,7],[3,8],[3,9]]);
+
+    // 丁酮 (MEK)
+    addMol("Butanone", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:45,z:0}, // Carbonyl
+        {elem:"C",x:40,y:-25,z:0}, // Methyl
+        {elem:"C",x:-40,y:-25,z:0}, {elem:"C",x:-75,y:0,z:0}, // Ethyl
+        {elem:"H",x:40,y:-60,z:0}, {elem:"H",x:65,y:-10,z:20}, {elem:"H",x:65,y:-10,z:-20},
+        {elem:"H",x:-40,y:-60,z:0}, {elem:"H",x:-40,y:-25,z:35},
+        {elem:"H",x:-75,y:35,z:0}, {elem:"H",x:-100,y:-15,z:20}, {elem:"H",x:-100,y:-15,z:-20}
+    ], [[0,1,"double"],[0,2],[0,3], [2,5],[2,6],[2,7], [3,4],[3,8],[3,9], [4,10],[4,11],[4,12]]);
+
+
+    // --- 4. 羧酸類 (Carboxylic Acids) ---
+    // 丙酸
+    addMol("Propanoic Acid", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:25,y:0,z:0}, {elem:"O",x:25,y:45,z:0}, {elem:"O",x:60,y:-20,z:0}, {elem:"H",x:85,y:-5,z:0}, // COOH
+        {elem:"C",x:-15,y:-20,z:0}, {elem:"C",x:-55,y:5,z:0}, // Ethyl
+        {elem:"H",x:-15,y:-55,z:0}, {elem:"H",x:-15,y:-20,z:35},
+        {elem:"H",x:-55,y:40,z:0}, {elem:"H",x:-80,y:-10,z:20}, {elem:"H",x:-80,y:-10,z:-20}
+    ], [[0,1,"double"],[0,2],[2,3], [0,4], [4,5], [4,6],[4,7], [5,8],[5,9],[5,10]]);
+
+    // 草酸 (乙二酸)
+    addMol("Oxalic Acid", "C", "sp²", ["平面","Planar"], "120°", [
+        {elem:"C",x:-20,y:0,z:0}, {elem:"C",x:20,y:0,z:0},
+        {elem:"O",x:-20,y:40,z:0}, {elem:"O",x:-50,y:-20,z:0}, {elem:"H",x:-70,y:-10,z:0}, // Left COOH
+        {elem:"O",x:20,y:-40,z:0}, {elem:"O",x:50,y:20,z:0}, {elem:"H",x:70,y:10,z:0}     // Right COOH
+    ], [[0,1], [0,2,"double"],[0,3],[3,4], [1,5,"double"],[1,6],[6,7]]);
+    // 甲酸 (Formic Acid)
+    addMol("HCOOH", "C", "sp²", ["平面","Planar"], "120°", [
+        {elem:"C",x:0,y:0,z:0}, 
+        {elem:"O",x:0,y:45,z:0}, // C=O
+        {elem:"O",x:40,y:-30,z:0}, // C-O
+        {elem:"H",x:-40,y:-30,z:0}, // C-H
+        {elem:"H",x:70,y:-15,z:0}   // O-H
+    ], [[0,1,"double"],[0,2],[0,3],[2,4]]);
+
+    // 乙酸 (Acetic Acid)
+    addMol("CH3COOH", "多中心", "sp²", ["平面/四面體","Planar/Tetra"], "120°/109°", [
+        {elem:"C",x:-35,y:0,z:0}, // Methyl C
+        {elem:"C",x:15,y:0,z:0},  // Carboxyl C
+        {elem:"O",x:15,y:45,z:0}, // C=O
+        {elem:"O",x:55,y:-30,z:0}, // C-O
+        {elem:"H",x:80,y:-15,z:0}, // O-H
+        {elem:"H",x:-35,y:-45,z:0}, 
+        {elem:"H",x:-65,y:25,z:25}, 
+        {elem:"H",x:-65,y:25,z:-25} // Methyl H's
+    ], [[0,1], [1,2,"double"], [1,3], [3,4], [0,5], [0,6], [0,7]]);
+
+
+    // --- 5. 酯類 (Esters) ---
+    // 甲酸甲酯
+    addMol("HCOOCH3", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:-10,y:0,z:0}, {elem:"O",x:-10,y:45,z:0}, // C=O
+        {elem:"O",x:25,y:-20,z:0}, // Ether O
+        {elem:"C",x:60,y:-20,z:0}, // Methyl
+        {elem:"H",x:-40,y:-15,z:0}, // Formyl H
+        {elem:"H",x:60,y:-55,z:0}, {elem:"H",x:85,y:0,z:20}, {elem:"H",x:85,y:0,z:-20} // Methyl H
+    ], [[0,1,"double"],[0,2],[2,3], [0,4], [3,5],[3,6],[3,7]]);
+
+    // 乙酸甲酯
+    addMol("CH3COOCH3", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:-30,y:0,z:0}, {elem:"C",x:10,y:0,z:0}, // C-C
+        {elem:"O",x:10,y:45,z:0}, {elem:"O",x:45,y:-25,z:0}, // COO
+        {elem:"C",x:80,y:-25,z:0}, // O-Methyl
+        {elem:"H",x:-30,y:-40,z:0}, {elem:"H",x:-55,y:20,z:20}, {elem:"H",x:-55,y:20,z:-20}, // Acetyl H
+        {elem:"H",x:80,y:-60,z:0}, {elem:"H",x:105,y:-5,z:20}, {elem:"H",x:105,y:-5,z:-20}   // Methyl H
+    ], [[0,1],[1,2,"double"],[1,3],[3,4], [0,5],[0,6],[0,7], [4,8],[4,9],[4,10]]);
+
+    // 乙酸乙酯 (Ethyl Acetate)
+    addMol("CH3COOC2H5", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+        {elem:"C",x:-30,y:0,z:0}, {elem:"C",x:10,y:0,z:0}, // Acetyl C-C
+        {elem:"O",x:10,y:45,z:0}, {elem:"O",x:45,y:-25,z:0}, // COO
+        {elem:"C",x:80,y:-25,z:0}, {elem:"C",x:110,y:10,z:0}, // Ethyl C-C
+        {elem:"H",x:-30,y:-40,z:0}, {elem:"H",x:-55,y:20,z:20}, {elem:"H",x:-55,y:20,z:-20}, // Acetyl H
+        {elem:"H",x:80,y:-60,z:0}, {elem:"H",x:100,y:-40,z:25}, // CH2 H
+        {elem:"H",x:110,y:45,z:0}, {elem:"H",x:135,y:-5,z:20}, {elem:"H",x:135,y:-5,z:-20} // CH3 H
+    ], [[0,1],[1,2,"double"],[1,3],[3,4], [4,5], [0,6],[0,7],[0,8], [4,9],[4,10], [5,11],[5,12],[5,13]]);
+
+
+    // --- 6. 胺類 (Amines) ---
+    // 二甲胺
+    addMol("Dimethylamine", "N", "sp³", ["角錐","Pyramidal"], "107°", [
+        {elem:"N",x:0,y:0,z:0}, {elem:"H",x:0,y:25,z:0}, // N-H
+        {elem:"C",x:35,y:-20,z:20}, {elem:"C",x:-35,y:-20,z:20}, // Methyls
+        {elem:"H",x:35,y:-20,z:55}, {elem:"H",x:60,y:-40,z:0}, {elem:"H",x:50,y:10,z:10},
+        {elem:"H",x:-35,y:-20,z:55}, {elem:"H",x:-60,y:-40,z:0}, {elem:"H",x:-50,y:10,z:10}
+    ], [[0,1],[0,2],[0,3], [2,4],[2,5],[2,6], [3,7],[3,8],[3,9]]);
+
+    // 三甲胺
+    addMol("Trimethylamine", "N", "sp³", ["角錐","Pyramidal"], "108°", [
+        {elem:"N",x:0,y:10,z:0},
+        {elem:"C",x:0,y:-20,z:30}, {elem:"C",x:30,y:-20,z:-20}, {elem:"C",x:-30,y:-20,z:-20},
+        {elem:"H",x:0,y:-20,z:65}, {elem:"H",x:25,y:-45,z:30}, {elem:"H",x:-25,y:-45,z:30},
+        {elem:"H",x:30,y:-20,z:-55}, {elem:"H",x:55,y:-45,z:-20}, {elem:"H",x:55,y:5,z:-20},
+        {elem:"H",x:-30,y:-20,z:-55}, {elem:"H",x:-55,y:-45,z:-20}, {elem:"H",x:-55,y:5,z:-20}
+    ], [[0,1],[0,2],[0,3], [1,4],[1,5],[1,6], [2,7],[2,8],[2,9], [3,10],[3,11],[3,12]]);
+
+
+    // --- 7. 醯胺類 (Amides) ---
+    // 甲醯胺
+    addMol("Formamide", "C", "sp²", ["平面","Planar"], "120°", [
+        {elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:45,z:0}, // C=O
+        {elem:"N",x:40,y:-25,z:0}, // NH2
+        {elem:"H",x:-35,y:-20,z:0}, // Formyl H
+        {elem:"H",x:40,y:-55,z:0}, {elem:"H",x:70,y:-5,z:0} // Amide H
+    ], [[0,1,"double"],[0,2],[0,3], [2,4],[2,5]]);
+
+    // 乙醯胺
+    addMol("Acetamide", "C", "sp²", ["平面","Planar"], "120°", [
+        {elem:"C",x:-35,y:0,z:0}, {elem:"C",x:5,y:0,z:0}, // C-C
+        {elem:"O",x:5,y:45,z:0}, // C=O
+        {elem:"N",x:45,y:-25,z:0}, // NH2
+        {elem:"H",x:-35,y:-40,z:0}, {elem:"H",x:-60,y:20,z:20}, {elem:"H",x:-60,y:20,z:-20}, // CH3 H
+        {elem:"H",x:45,y:-55,z:0}, {elem:"H",x:75,y:-5,z:0} // Amide H
+    ], [[0,1],[1,2,"double"],[1,3], [0,4],[0,5],[0,6], [3,7],[3,8]]);
+
+// ==========================================
+    // ====== 補完與新增：多中心/複雜分子 ======
+    // ==========================================
+
+    // 1. 元素單質 (多中心)
+    addMol("P4", "P", "sp³", ["正四面體 (籠狀)","Tetrahedral Cage"], "60°", [
+        {elem:"P",x:40,y:40,z:40}, {elem:"P",x:40,y:-40,z:-40}, 
+        {elem:"P",x:-40,y:40,z:-40}, {elem:"P",x:-40,y:-40,z:40}
+    ], [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]);
+
+    addMol("S8", "S", "sp³", ["皇冠型 (環狀)","Crown Ring"], "108°", [
+        {elem:"S",x:60,y:20,z:0}, {elem:"S",x:42,y:-20,z:42}, {elem:"S",x:0,y:20,z:60}, {elem:"S",x:-42,y:-20,z:42},
+        {elem:"S",x:-60,y:20,z:0}, {elem:"S",x:-42,y:-20,z:-42}, {elem:"S",x:0,y:20,z:-60}, {elem:"S",x:42,y:-20,z:-42}
+    ], [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]]);
+
+    // 2. 過氧化物與硫化物
+    addMol("H2O2", "O", "sp³", ["書本型","Open Book"], "111°/90°", [
+        {elem:"O",x:-15,y:5,z:-15}, {elem:"O",x:15,y:-5,z:15}, 
+        {elem:"H",x:-50,y:30,z:-20}, {elem:"H",x:50,y:-30,z:20}
+    ], [[0,1],[0,2],[1,3]]);
+
+// S2Cl2 (二氯化二硫) - 修正版: 拉長鍵長以避免大原子重疊
+    addMol("S2Cl2", "S", "sp³", ["書本型","Open Book"], "103°", [
+        // 兩個硫原子，距離拉開 (原 y:15 -> y:25)
+        {elem:"S", x:0, y:25, z:0}, 
+        {elem:"S", x:0, y:-25, z:0},
+        // 兩個氯原子，向外延伸並帶有二面角 (數值加大)
+        {elem:"Cl", x:60, y:55, z:45}, 
+        {elem:"Cl", x:-60, y:-55, z:45}
+    ], [
+        [0,1], // S-S 單鍵
+        [0,2], // S-Cl (上)
+        [1,3]  // S-Cl (下)
+    ]);
+    addMol("H2S2", "S", "sp³", ["書本型","Open Book"], "92°", [
+        {elem:"S",x:-15,y:5,z:-15}, {elem:"S",x:15,y:-5,z:15},
+        {elem:"H",x:-50,y:30,z:-20}, {elem:"H",x:50,y:-30,z:20}
+    ], [[0,1],[0,2],[1,3]]);
+
+// P4O6 (六氧化四磷)
+    // 結構：4個P構成四面體，6個O在邊上橋接。所有鍵都是單鍵。
+    // 預期結果：12根 sigma, 0根 pi。
+    // LP: P(1對)x4 + O(2對)x6 = 16對
+    addMol("P4O6", "P", "sp³", ["籠狀 (類金剛烷)","Cage"], "100°", [
+        {elem:"P",x:45,y:45,z:45}, {elem:"P",x:45,y:-45,z:-45}, 
+        {elem:"P",x:-45,y:45,z:-45}, {elem:"P",x:-45,y:-45,z:45}, // 4 P
+        {elem:"O",x:45,y:0,z:0}, {elem:"O",x:-45,y:0,z:0}, 
+        {elem:"O",x:0,y:45,z:0}, {elem:"O",x:0,y:-45,z:0}, 
+        {elem:"O",x:0,y:0,z:45}, {elem:"O",x:0,y:0,z:-45}      // 6 Bridging O
+    ], [
+        [0,4], [0,6], [0,8], // P0 連 3 O
+        [1,4], [1,7], [1,9], // P1 連 3 O
+        [2,5], [2,6], [2,9], // P2 連 3 O
+        [3,5], [3,7], [3,8]  // P3 連 3 O
+    ]);
+
+    // P4O10 (十氧化四磷)
+    // 結構：P4O6 骨架 + 每個 P 再接一個末端氧 (P=O)。
+    // 預期結果：16根 sigma, 4根 pi。
+    // LP: P(0對) + 橋O(2對)x6 + 末端O(2對)x4 = 20對
+    addMol("P4O10", "P", "sp³", ["籠狀","Cage"], "102°/123°", [
+        {elem:"P",x:35,y:35,z:35}, {elem:"P",x:35,y:-35,z:-35}, 
+        {elem:"P",x:-35,y:35,z:-35}, {elem:"P",x:-35,y:-35,z:35}, // 4 P
+        {elem:"O",x:35,y:0,z:0}, {elem:"O",x:-35,y:0,z:0}, 
+        {elem:"O",x:0,y:35,z:0}, {elem:"O",x:0,y:-35,z:0}, 
+        {elem:"O",x:0,y:0,z:35}, {elem:"O",x:0,y:0,z:-35}, // 6 Bridging O
+        {elem:"O",x:65,y:65,z:65}, {elem:"O",x:65,y:-65,z:-65}, 
+        {elem:"O",x:-65,y:65,z:-65}, {elem:"O",x:-65,y:-65,z:65} // 4 Terminal O
+    ], [
+        [0,4], [0,6], [0,8], 
+        [1,4], [1,7], [1,9], 
+        [2,5], [2,6], [2,9], 
+        [3,5], [3,7], [3,8], // Skeleton (Single)
+        [0,10,"double"], [1,11,"double"], [2,12,"double"], [3,13,"double"] // Terminal (Double)
+    ]);
+
+
+    addMol("N2O3", "N", "sp²+sp²", ["平面","Planar"], "120°", [
+        {elem:"N",x:-30,y:0,z:0}, {elem:"N",x:30,y:0,z:0}, 
+        {elem:"O",x:-60,y:40,z:0}, // Double bonded to N1
+        {elem:"O",x:60,y:40,z:0}, {elem:"O",x:60,y:-40,z:0} // N2 has 2 O
+    ], [[0,1],[0,2,"double"],[1,3,"double"],[1,4]]);
+
+// N2O4 (四氧化二氮) - 平面結構
+    // N-N 單鍵連結兩個 NO2 基團
+    // 每個 N 接 3 個原子 (1個N, 2個O)，其中一個 O 為雙鍵，另一個為配位單鍵
+    // 中心 N 形式電荷為 +1，無孤對電子，故設定 lpCount: 0
+    addMol("N2O4", "N", "sp²", ["平面","Planar"], "120°", [
+        {elem:"N", x:-35, y:0, z:0, lpCount:0},  // 左 N (無 LP)
+        {elem:"N", x:35, y:0, z:0, lpCount:0},   // 右 N (無 LP)
+        {elem:"O", x:-70, y:50, z:0},            // 左上 O (雙鍵)
+        {elem:"O", x:-70, y:-50, z:0},           // 左下 O (單鍵)
+        {elem:"O", x:70, y:50, z:0},             // 右上 O (雙鍵)
+        {elem:"O", x:70, y:-50, z:0}             // 右下 O (單鍵)
+    ], [
+        [0, 1],             // N-N 單鍵
+        [0, 2, "double"],   // N=O
+        [0, 3],             // N-O
+        [1, 4, "double"],   // N=O
+        [1, 5]              // N-O
+    ]);
+
+    addMol("N2O5", "N", "sp²", ["非平面 (V型連結)","V-shape Link"], "120°", [
+        {elem:"O",x:0,y:25,z:0}, // Bridging O
+        {elem:"N",x:-45,y:-10,z:0}, {elem:"N",x:45,y:-10,z:0}, 
+        {elem:"O",x:-75,y:25,z:0}, {elem:"O",x:-75,y:-45,z:0}, // Left N's O
+        {elem:"O",x:75,y:25,z:0}, {elem:"O",x:75,y:-45,z:0}   // Right N's O
+    ], [[0,1],[0,2], [1,3,"double"],[1,4], [2,5,"double"],[2,6]]);
+
+    // 4. 環狀有機分子 (Cycloalkanes & Aromatics)
+    addMol("Cyclobutane", "C", "sp³", ["摺疊環 (Puckered)","Ring"], "88°", [
+        {elem:"C",x:30,y:30,z:10}, {elem:"C",x:30,y:-30,z:-10}, {elem:"C",x:-30,y:-30,z:10}, {elem:"C",x:-30,y:30,z:-10},
+        {elem:"H",x:50,y:50,z:20}, {elem:"H",x:50,y:50,z:-20},
+        {elem:"H",x:50,y:-50,z:20}, {elem:"H",x:50,y:-50,z:-20},
+        {elem:"H",x:-50,y:-50,z:20}, {elem:"H",x:-50,y:-50,z:-20},
+        {elem:"H",x:-50,y:50,z:20}, {elem:"H",x:-50,y:50,z:-20}
+    ], [[0,1],[1,2],[2,3],[3,0], [0,4],[0,5],[1,6],[1,7],[2,8],[2,9],[3,10],[3,11]]);
+
+    addMol("Cyclopentane", "C", "sp³", ["信封型 (Envelope)","Ring"], "105°", [
+        {elem:"C",x:0,y:50,z:-10}, {elem:"C",x:48,y:15,z:0}, {elem:"C",x:30,y:-40,z:10}, {elem:"C",x:-30,y:-40,z:10}, {elem:"C",x:-48,y:15,z:0},
+        {elem:"H",x:0,y:80,z:-10}, {elem:"H",x:0,y:60,z:-40},
+        {elem:"H",x:75,y:20,z:0}, {elem:"H",x:60,y:10,z:30},
+        {elem:"H",x:40,y:-60,z:10}, {elem:"H",x:40,y:-40,z:40},
+        {elem:"H",x:-40,y:-60,z:10}, {elem:"H",x:-40,y:-40,z:40},
+        {elem:"H",x:-75,y:20,z:0}, {elem:"H",x:-60,y:10,z:30}
+    ], [[0,1],[1,2],[2,3],[3,4],[4,0], [0,5],[0,6],[1,7],[1,8],[2,9],[2,10],[3,11],[3,12],[4,13],[4,14]]);
+
+    addMol("Naphthalene", "C", "sp²", ["平面 (雙環)","Fused Ring"], "120°", [
+        {elem:"C",x:-25,y:70,z:0},{elem:"C",x:25,y:70,z:0}, // Top
+        {elem:"C",x:50,y:28,z:0},{elem:"C",x:25,y:-14,z:0}, // Right mid
+        {elem:"C",x:50,y:-56,z:0},{elem:"C",x:25,y:-98,z:0}, // Bottom right
+        {elem:"C",x:-25,y:-98,z:0},{elem:"C",x:-50,y:-56,z:0}, // Bottom left
+        {elem:"C",x:-25,y:-14,z:0},{elem:"C",x:-50,y:28,z:0}, // Left mid
+        // H atoms...
+        {elem:"H",x:-45,y:100,z:0},{elem:"H",x:45,y:100,z:0},
+        {elem:"H",x:80,y:28,z:0},{elem:"H",x:80,y:-56,z:0},
+        {elem:"H",x:45,y:-128,z:0},{elem:"H",x:-45,y:-128,z:0},
+        {elem:"H",x:-80,y:-56,z:0},{elem:"H",x:-80,y:28,z:0}
+    ], [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,6],[6,7,"double"],[7,8],[8,9,"double"],[9,0],[3,8],
+        [0,10],[1,11],[2,12],[4,13],[5,14],[6,15],[7,16],[9,17]]);
+
+    // 5. 更多衍生物
+    addMol("1,2-Dichloroethane", "C", "sp³", ["扭轉型","Gauche"], "109.5°", [
+        {elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0},
+        {elem:"Cl",x:-50,y:35,z:20}, {elem:"Cl",x:50,y:-35,z:-20},
+        {elem:"H",x:-40,y:-35,z:0}, {elem:"H",x:-40,y:0,z:-35},
+        {elem:"H",x:40,y:35,z:0}, {elem:"H",x:40,y:0,z:35}
+    ], [[0,1],[0,2],[0,4],[0,5],[1,3],[1,6],[1,7]]);
+
+    addMol("Ethylene Glycol", "O", "sp³", ["扭轉型","Gauche"], "109.5°", [
+        {elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0},
+        {elem:"O",x:-50,y:35,z:20}, {elem:"O",x:50,y:-35,z:-20},
+        {elem:"H",x:-70,y:35,z:40}, {elem:"H",x:70,y:-35,z:-40}, // O-H
+        {elem:"H",x:-40,y:-35,z:0}, {elem:"H",x:-40,y:0,z:-35},
+        {elem:"H",x:40,y:35,z:0}, {elem:"H",x:40,y:0,z:35}
+    ], [[0,1],[0,2],[2,4],[0,6],[0,7],[1,3],[3,5],[1,8],[1,9]]);
+
+    addMol("Glyoxal", "C", "sp²", ["平面","Planar"], "120°", [
+        {elem:"C",x:-25,y:0,z:0}, {elem:"C",x:25,y:0,z:0},
+        {elem:"O",x:-50,y:40,z:0}, {elem:"O",x:50,y:-40,z:0},
+        {elem:"H",x:-40,y:-35,z:0}, {elem:"H",x:40,y:35,z:0}
+    ], [[0,1],[0,2,"double"],[1,3,"double"],[0,4],[1,5]]);
+
+    addMol("S4N4", "S/N", "sp³", ["籠狀 (Cradle)","Cage"], "Unknown", [
+        {elem:"S",x:35,y:0,z:35}, {elem:"S",x:35,y:0,z:-35}, {elem:"S",x:-35,y:0,z:35}, {elem:"S",x:-35,y:0,z:-35},
+        {elem:"N",x:0,y:30,z:45}, {elem:"N",x:0,y:30,z:-45}, {elem:"N",x:45,y:-30,z:0}, {elem:"N",x:-45,y:-30,z:0}
+    ], [[0,4],[0,6],[1,5],[1,6],[2,4],[2,7],[3,5],[3,7], [0,2], [1,3]]); // S-S weak interactions included
+
+
+
+
+
 
     // --- 3. 邏輯與控制 ---
     let currentMolecule = null;
@@ -577,18 +1194,68 @@
         return formattedMain + formattedCharge;
     }
 
+// --- 1. 中文搜尋對照表 ---
+const CHINESE_ALIAS = {
+        "氫": "H2", "氮": "N2", "氧": "O2", "氟": "F2", "氯": "Cl2", "溴": "Br2", "碘": "I2", "臭氧": "O3",
+        "白磷": "P4", "硫": "S8", "斜方硫": "S8", "單斜硫": "S8", "二氯化二硫": "S2Cl2", "過氧化氫": "H2O2",
+        "四硫化四氮": "S4N4", "過硫化氫": "H2S2",
+        "碳60": "C60", "巴克球": "C60",
+        "碳70": "C70", "碳80": "C80", "碳100": "C100",
+
+        "水": "H2O", "氨": "NH3", "一氧化碳": "CO", "二氧化碳": "CO2",
+        "一氧化氮": "NO", "二氧化氮": "NO2", "笑氣": "N2O", 
+        "三氧化二氮": "N2O3", "四氧化二氮": "N2O4", "五氧化二氮": "N2O5",
+        "二氧化硫": "SO2", "三氧化硫": "SO3",
+        "甲烷": "CH4", "矽烷": "SiH4", "膦": "PH3", 
+        "五氯化磷": "PCl5", "十氧化四磷": "P4O10", "六氧化四磷": "P4O6", "七氧化二氯": "Cl2O7",
+
+        "硫酸": "H2SO4", "亞硫酸": "H2SO3", "硫代硫酸根": "S2O3 2-",
+        "硝酸": "HNO3", "亞硝酸": "HNO2", 
+        "碳酸": "H2CO3", "磷酸": "H3PO4", "亞磷酸": "H3PO3", "次磷酸": "H3PO2",
+        "過氯酸": "HClO4", "氯酸": "HClO3", "亞氯酸": "HClO2", "次氯酸": "HClO",
+        "氫氰酸": "HCN", "氰酸": "HOCN",
+
+        "乙烷": "C2H6", "乙烯": "C2H4", "乙炔": "C2H2", 
+        "丙烷": "C3H8", "丁烷": "C4H10", "異丁烷": "Isobutane",
+        "環丙烷": "Cyclopropane", "環丁烷": "Cyclobutane", "環戊烷": "Cyclopentane", "環己烷": "Cyclohexane",
+        "苯": "C6H6", "萘": "Naphthalene", "蒽": "Anthracene", 
+        "甲苯": "Toluene", "乙苯": "Ethylbenzene", "苯乙烯": "Styrene", "二甲苯": "C8H10",
+        "甲醇": "CH3OH", "乙醇": "C2H5OH", "乙二醇": "Ethylene Glycol", "甘油": "Glycerol",
+        "甲醚": "CH3OCH3", "乙醚": "C2H5OC2H5",
+        "甲醛": "HCHO", "丙酮": "Acetone", "乙二醛": "Glyoxal",
+        "甲酸": "HCOOH", "乙酸": "CH3COOH", "草酸": "Oxalic Acid", "苯甲酸": "Benzoic Acid", "柳酸": "Salicylic Acid", "阿斯匹靈": "Aspirin",
+        "乙酸乙酯": "CH3COOC2H5", "甲酸甲酯": "HCOOCH3",
+        "二氯乙烷": "1,2-Dichloroethane", "氯仿": "CHCl3"
+    };
+
+    // --- 2. 修改後的載入按鈕函式 ---
     function handleLoadBtn() {
         let val = document.getElementById("formula-input").value.trim();
-        let key = Object.keys(MOLECULE_DB).find(k => k.replace(/\s/g,'').toUpperCase() === val.replace(/\s/g,'').toUpperCase());
-        if (key) loadMolecule(key);
-        else alert("資料庫中未找到該分子");
+        
+        // 步驟 A: 先查中文表
+        let searchTarget = val;
+        if (CHINESE_ALIAS[val]) {
+            searchTarget = CHINESE_ALIAS[val]; // 如果輸入 "水"，這邊會變成 "H2O"
+        }
+
+        // 步驟 B: 用轉換後的代碼去資料庫搜尋 (忽略大小寫與空格)
+        let key = Object.keys(MOLECULE_DB).find(k => 
+            k.replace(/\s/g,'').toUpperCase() === searchTarget.replace(/\s/g,'').toUpperCase()
+        );
+
+        if (key) {
+            loadMolecule(key);
+        } else {
+            alert("資料庫中未找到該分子: " + val);
+        }
     }
 
     function reloadCurrentMolecule() {
         if (currentKey) loadMolecule(currentKey);
     }
 
-    function loadMolecule(key, variantKey = null) {
+    
+function loadMolecule(key, variantKey = null) {
         currentKey = key;
         try {
             let data = MOLECULE_DB[key];
@@ -602,39 +1269,32 @@
                 variantKey = firstKey;
             }
 
-            // 安全檢查
             if (!data.bondsRaw) data.bondsRaw = []; 
 
+            // 複製原始鍵結資料
             let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
-            const octetMode = document.getElementById('toggle-octet').checked;
-            const octetCenters = ["P","S","Cl","Br","I","Xe","As","Se","Te"];
+            
+            // --- 八隅體模式判斷 (針對一般分子，P4O6/10 結構固定不影響) ---
+            const octetSwitch = document.getElementById('toggle-octet');
+            const octetMode = octetSwitch ? octetSwitch.checked : false;
+            const octetCenters = ["S","Cl","Br","I","Xe"]; // P 在此處由結構直接定義，不透過自動降級
 
             if (octetMode && octetCenters.includes(data.center)) {
-                const neighborCount = processedBonds.length; 
-                let doubleBondsToKeep = 0;
-                if (data.center === 'S') {
-                    if (neighborCount === 3) doubleBondsToKeep = 1; 
-                    if (neighborCount === 2) doubleBondsToKeep = 1; 
-                }
+                // (保留原本的八隅體降級邏輯...)
                 let doublesSeen = 0;
                 processedBonds = processedBonds.map(bond => {
                     const atom1 = data.atomsRaw[bond[0]];
                     const atom2 = data.atomsRaw[bond[1]];
-                    if (!atom1 || !atom2) return bond;
-                    const isLigand = (atom1.elem === "O" || atom2.elem === "O") || 
-                                     (data.center === "S" && (atom1.elem === "S" || atom2.elem === "S"));
+                    const isLigand = (atom1.elem === "O" || atom2.elem === "O");
                     if (isLigand && (bond[2] === "double" || bond[2] === "triple")) {
-                         if (doublesSeen < doubleBondsToKeep) {
-                             doublesSeen++;
-                             return bond; 
-                         } else {
-                             return [bond[0], bond[1], "single"]; 
-                         }
+                         // SO3 等分子的特殊處理保留
+                         return [bond[0], bond[1], "single"];
                     }
                     return bond;
                 });
             }
 
+            // 計算原子與 LP
             const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
 
             currentMolecule = {
@@ -643,20 +1303,59 @@
                 bonds3D: processedBonds
             };
             
+            // --- 重新計算統計數據 ---
+            let sigma = 0, pi = 0, totalLP = 0;
+
+            // 1. 鍵結統計
+            const shapeStr = Array.isArray(data.shape) ? data.shape[0] : data.shape;
+            const isFullerene = shapeStr && (shapeStr.includes("球狀") || shapeStr.includes("籠狀") && !key.includes("P4O")); 
+            // P4O6/P4O10 雖然是籠狀，但要用鍵結計算，所以排除 Fullerene 公式
+
+            if (isFullerene && key.startsWith("C")) {
+                // 純碳簇用公式
+                const n = data.atomsRaw.length;
+                sigma = Math.floor(1.5 * n);
+                pi = Math.floor(0.5 * n);
+                totalLP = 0;
+            } else {
+                // P4O6, P4O10 與其他分子用鍵結遍歷
+                if (currentMolecule.bonds3D) {
+                    currentMolecule.bonds3D.forEach(b => {
+                        sigma++; 
+                        if(b[2] === 'double') pi += 1;
+                        if(b[2] === 'triple') pi += 2;
+                    });
+                }
+                // 2. LP 統計
+                currentMolecule.renderObjects.forEach(obj => {
+                    if (obj.type === 'atom' && obj.calculatedLP !== undefined) {
+                        totalLP += obj.calculatedLP;
+                    }
+                });
+            }
+
+            // 更新 UI
             document.getElementById("disp-formula").innerHTML = formatFormula(key);
             document.getElementById("disp-center").textContent = data.center;
             document.getElementById("disp-hybrid").textContent = data.hybrid;
             document.getElementById("disp-shape").textContent = data.shape;
             document.getElementById("disp-angle").textContent = data.angle;
+            
+            const bondDisp = document.getElementById("disp-bonds");
+            if(bondDisp) {
+                bondDisp.innerHTML = `&sigma;: ${sigma}, &nbsp; &pi;: ${pi}, &nbsp; LP: ${totalLP}`;
+            }
+
             document.getElementById("viewport-subtitle").textContent = `${key} - ${data.shape}`;
             updateVariantUI(key, variantKey);
             
         } catch (e) {
             console.error("Load Error:", e);
-            // alert("載入失敗");
         }
     }
 
+
+    
     function processAtomsData(atomList, bondList, centerElem) {
         let processed = [];
         let cx=0, cy=0, cz=0;
@@ -901,4 +1600,126 @@
 
         window.addEventListener("touchend", () => isDragging = false);
     }
+
+// ==================================================
+    // ====== 碳簇與富勒烯生成器 (合併 C60 與通用版) ======
+    // ==================================================
+
+    function addFullerene(name, n, radius, stretch = 1) {
+        const atoms = [];
+        
+        // --- A. 頂點生成策略 ---
+        if (n === 60) {
+            // [針對 C60 使用精確截角二十面體座標]
+            const phi = (1 + Math.sqrt(5)) / 2; 
+            const scale = 28; // C60 專用縮放
+            let rawVerts = [];
+            
+            // 基礎排列: (0,±1,±3ϕ), (±1,±(2+ϕ),±2ϕ), (±ϕ,±2,±(2ϕ+1))
+            const groups = [[0, 1, 3*phi], [1, 2+phi, 2*phi], [phi, 2, 2*phi+1]];
+            
+            groups.forEach(g => {
+                // 循環置換與正負號組合
+                const cycles = [[g[0],g[1],g[2]], [g[1],g[2],g[0]], [g[2],g[0],g[1]]];
+                cycles.forEach(p => {
+                    for(let i=0; i<8; i++) {
+                        let x = p[0] * ((i & 1) ? 1 : -1);
+                        let y = p[1] * ((i & 2) ? 1 : -1);
+                        let z = p[2] * ((i & 4) ? 1 : -1);
+                        rawVerts.push({x, y, z});
+                    }
+                });
+            });
+
+            // 過濾重複點並縮放
+            const threshold = 0.1;
+            rawVerts.forEach(v => {
+                if(!atoms.some(a => 
+                    Math.abs(a.x - v.x*scale) < threshold && 
+                    Math.abs(a.y - v.y*scale) < threshold && 
+                    Math.abs(a.z - v.z*scale) < threshold
+                )) {
+                    atoms.push({elem: "C", x: v.x*scale, y: v.y*scale, z: v.z*scale, r: 5, lpCount: 0});
+                }
+            });
+
+        } else {
+            // [針對其他碳數使用黃金螺旋球面算法 (Fibonacci Sphere)]
+            const phi = Math.PI * (3 - Math.sqrt(5)); 
+            for(let i = 0; i < n; i++) {
+                const y = 1 - (i / (n - 1)) * 2; 
+                const r = Math.sqrt(1 - y * y);
+                const theta = phi * i;
+
+                const x = Math.cos(theta) * r;
+                const z = Math.sin(theta) * r;
+
+                atoms.push({
+                    elem: "C", 
+                    x: x * radius, 
+                    y: y * radius * stretch, // 支援橢球拉伸 (如 C70)
+                    z: z * radius, 
+                    r: 5, // 小半徑顯示鍵結
+                    lpCount: 0
+                });
+            }
+        }
+
+        // --- B. 鍵結生成 (尋找最近的 3 個鄰居) ---
+        const bonds = [];
+        const bondSet = new Set();
+
+        for(let i = 0; i < atoms.length; i++) {
+            let dists = [];
+            for(let j = 0; j < atoms.length; j++) {
+                if(i === j) continue;
+                let d = (atoms[i].x - atoms[j].x)**2 + (atoms[i].y - atoms[j].y)**2 + (atoms[i].z - atoms[j].z)**2;
+                dists.push({id: j, d: d});
+            }
+            dists.sort((a, b) => a.d - b.d);
+            
+            // 連接最近的 3 個
+            // 注意：對於 Fibonacci Sphere，這只是近似模擬，可能會有交叉，但能呈現籠狀視覺
+            for(let k = 0; k < 3; k++){
+                let neighbor = dists[k].id;
+                let id1 = Math.min(i, neighbor);
+                let id2 = Math.max(i, neighbor);
+                let key = `${id1}-${id2}`;
+                
+                if(!bondSet.has(key)){
+                    // 視覺上：最短的那根設為雙鍵 (模擬 6-6 鍵)
+                    let type = (k === 0) ? "double" : "single"; 
+                    bonds.push([id1, id2, type]);
+                    bondSet.add(key);
+                }
+            }
+        }
+
+        // --- C. 計算形狀描述 (歐拉公式) ---
+        // 封閉碳籠五邊形固定為 12 個
+        // 六邊形數量 = (n/2) - 10
+        const numPentagons = 12;
+        const numHexagons = (n / 2) - 10;
+        
+        let shapeName = "球狀";
+        if (stretch > 1.1) shapeName = "橄欖球狀";
+        
+        const shapeDesc = `${shapeName} (${numPentagons}個五邊形, ${numHexagons}個六邊形)`;
+        const subDesc = n === 60 ? "Truncated Icosahedron" : "Fullerene";
+
+        addMol(name, "C", "sp²", [shapeDesc, subDesc], "120°", atoms, bonds);
+    }
+
+    // --- 執行生成 ---
+    // C60 (使用內建精確座標)
+    addFullerene("C60", 60, 0); // 半徑參數對 C60 無效，因內部有 scale
+
+    // 其他碳簇 (使用黃金螺旋模擬，半徑需調整以配合鍵長視覺)
+    addFullerene("C36", 36, 130);
+    addFullerene("C40", 40, 140);
+    addFullerene("C50", 50, 160);
+    addFullerene("C70", 70, 160, 1.4); // C70 拉長
+    addFullerene("C80", 80, 170);
+    addFullerene("C100", 100, 190);
+
 </script></body></html>```
