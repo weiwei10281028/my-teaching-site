@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構與混成軌域模擬實驗室 v10.0 </title>
+    <title>分子結構與混成軌域模擬實驗室 v10.0</title>
     <style>
         /* --- 基礎設定 --- */
         :root {
@@ -145,7 +145,7 @@
 <div class="app-container">
     <div class="viewport-area composite-mode" id="viewport">
         <div class="viewport-header" style="position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none;">
-            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v9.9</h1>
+            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v10.0</h1>
             <span style="font-size: 1.1rem; color: var(--text-sub);" id="viewport-subtitle"></span>
         </div>
         
@@ -737,6 +737,80 @@
     // ====== 新增：芳香族與複雜有機物 ======
     // ==========================================
 
+// ==========================================
+    // ====== 新增：芳香族烴 (Aromatics) ======
+    // ==========================================
+
+    // 1. 苯 (Benzene) - C6H6
+    // 結構：正六邊形平面
+    addMol("C6H6", "C", "sp²", ["平面六邊形","Planar Hexagon"], "120°", [
+        // 6 Carbons
+        {elem:"C",x:0,y:70,z:0}, {elem:"C",x:60.6,y:35,z:0}, {elem:"C",x:60.6,y:-35,z:0},
+        {elem:"C",x:0,y:-70,z:0}, {elem:"C",x:-60.6,y:-35,z:0}, {elem:"C",x:-60.6,y:35,z:0},
+        // 6 Hydrogens (向外延伸)
+        {elem:"H",x:0,y:120,z:0}, {elem:"H",x:104,y:60,z:0}, {elem:"H",x:104,y:-60,z:0},
+        {elem:"H",x:0,y:-120,z:0}, {elem:"H",x:-104,y:-60,z:0}, {elem:"H",x:-104,y:60,z:0}
+    ], [
+        // 凱庫勒結構 (交替雙鍵)
+        [0,1,"double"], [1,2], [2,3,"double"], [3,4], [4,5,"double"], [5,0],
+        // C-H
+        [0,6], [1,7], [2,8], [3,9], [4,10], [5,11]
+    ]);
+
+    // 2. 萘 (Naphthalene) - C10H8
+    // 結構：兩個苯環並聯 (共用一邊)
+    addMol("Naphthalene", "C", "sp²", ["平面雙環","Fused Ring"], "120°", [
+        // 10 Carbons
+        {elem:"C",x:0,y:35,z:0}, {elem:"C",x:0,y:-35,z:0}, // 共用邊 (Bridge)
+        {elem:"C",x:-30,y:70,z:0}, {elem:"C",x:-60,y:35,z:0}, {elem:"C",x:-60,y:-35,z:0}, {elem:"C",x:-30,y:-70,z:0}, // 左環
+        {elem:"C",x:30,y:70,z:0}, {elem:"C",x:60,y:35,z:0}, {elem:"C",x:60,y:-35,z:0}, {elem:"C",x:30,y:-70,z:0},   // 右環
+        // 8 Hydrogens
+        {elem:"H",x:-30,y:120,z:0}, {elem:"H",x:-95,y:60,z:0}, {elem:"H",x:-95,y:-60,z:0}, {elem:"H",x:-30,y:-120,z:0},
+        {elem:"H",x:30,y:120,z:0}, {elem:"H",x:95,y:60,z:0}, {elem:"H",x:95,y:-60,z:0}, {elem:"H",x:30,y:-120,z:0}
+    ], [
+        // 骨架 (注意雙鍵位置需符合四價)
+        [0,1], // 共用邊 (單鍵)
+        [0,2,"double"], [2,3], [3,4,"double"], [4,5], [5,1,"double"], // 左環
+        [0,6], [6,7,"double"], [7,8], [8,9,"double"], [9,1], // 右環
+        // C-H
+        [2,10], [3,11], [4,12], [5,13], [6,14], [7,15], [8,16], [9,17]
+    ]);
+
+    // 3. 蒽 (Anthracene) - C14H10
+    // 結構：三個苯環線性並聯
+    addMol("Anthracene", "C", "sp²", ["平面三環","Fused Ring"], "120°", [
+        // 14 Carbons
+        // 中間環 (Center Ring)
+        {elem:"C",x:-30,y:35,z:0}, {elem:"C",x:-30,y:-35,z:0}, // 左橋 (Left Bridge)
+        {elem:"C",x:30,y:35,z:0},  {elem:"C",x:30,y:-35,z:0},  // 右橋 (Right Bridge)
+        {elem:"C",x:0,y:70,z:0},   {elem:"C",x:0,y:-70,z:0},   // 上下頂點
+        
+        // 左環 (Left Ring)
+        {elem:"C",x:-60,y:70,z:0}, {elem:"C",x:-90,y:35,z:0}, 
+        {elem:"C",x:-90,y:-35,z:0}, {elem:"C",x:-60,y:-70,z:0},
+
+        // 右環 (Right Ring)
+        {elem:"C",x:60,y:70,z:0}, {elem:"C",x:90,y:35,z:0}, 
+        {elem:"C",x:90,y:-35,z:0}, {elem:"C",x:60,y:-70,z:0},
+
+        // 10 Hydrogens
+        {elem:"H",x:0,y:120,z:0}, {elem:"H",x:0,y:-120,z:0}, // 中間上下 H
+        {elem:"H",x:-60,y:120,z:0}, {elem:"H",x:-125,y:60,z:0}, {elem:"H",x:-125,y:-60,z:0}, {elem:"H",x:-60,y:-120,z:0}, // 左側 H
+        {elem:"H",x:60,y:120,z:0}, {elem:"H",x:125,y:60,z:0}, {elem:"H",x:125,y:-60,z:0}, {elem:"H",x:60,y:-120,z:0}  // 右側 H
+    ], [
+        // 中間環
+        [0,1,"double"], [0,4], [4,2], [2,3,"double"], [3,5], [5,1], 
+        // 左環
+        [0,6], [6,7,"double"], [7,8], [8,9,"double"], [9,1],
+        // 右環
+        [2,10], [10,11,"double"], [11,12], [12,13,"double"], [13,3],
+        
+        // C-H
+        [4,14], [5,15],
+        [6,16], [7,17], [8,18], [9,19],
+        [10,20], [11,21], [12,22], [13,23]
+    ]);
+
     // 乙苯 (Ethylbenzene)
     addMol("Ethylbenzene", "C", "sp²", ["平面/四面體","Mixed"], "120°", 
         benzeneBase.map(p=>({elem:"C",...p})).concat([
@@ -748,12 +822,71 @@
         [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], [0,6],[6,7], [1,8],[2,9],[3,10],[4,11],[5,12], [6,13],[6,14], [7,15],[7,16],[7,17]]
     );
 
-    // 苯酚 (Phenol) - 已有，重新確認結構完整性
-    // (上方舊代碼已有，此處補充更精確的)
-    // ... (略，沿用舊的即可)
+// ==========================================
+    // ====== 新增：苯衍生物 (Benzene Derivatives) ======
+    // ==========================================
 
-    // 苯甲酸 (Benzoic Acid) - 已有
-    
+// 苯酚 (Phenol) - 修正版 (立體結構)
+    // 修正：將 O-H 鍵結改為立體伸展 (Z軸偏移)，避免 H 遮擋住 O 的孤對電子
+    addMol("Phenol", "C", "sp²", ["平面/彎曲","Planar/Bent"], "120°/109°", [
+        // 苯環碳 (0-5) - 位於 Z=0 平面
+        {elem:"C",x:0,y:70,z:0}, 
+        {elem:"C",x:60.6,y:35,z:0}, 
+        {elem:"C",x:60.6,y:-35,z:0},
+        {elem:"C",x:0,y:-70,z:0}, 
+        {elem:"C",x:-60.6,y:-35,z:0}, 
+        {elem:"C",x:-60.6,y:35,z:0},
+        
+        // 羥基氧 (6)
+        {elem:"O",x:0,y:115,z:0, lpCount:2}, 
+        
+        // 羥基氫 (7) - 關鍵修正：往右(X+)且往外(Z+)凸出，形成立體角
+        // 這樣可以模擬電子雲排斥，並讓 LP 顯示在另一側
+        {elem:"H",x:35,y:135,z:35},
+
+        // 苯環氫 (8-12)
+        {elem:"H",x:104,y:60,z:0}, 
+        {elem:"H",x:104,y:-60,z:0},
+        {elem:"H",x:0,y:-120,z:0}, 
+        {elem:"H",x:-104,y:-60,z:0}, 
+        {elem:"H",x:-104,y:60,z:0}
+    ], [
+        // 苯環骨架 (Kekulé)
+        [0,1,"double"], [1,2], [2,3,"double"], [3,4], [4,5,"double"], [5,0],
+        // C-O
+        [0,6], 
+        // O-H
+        [6,7], 
+        // C-H
+        [1,8], [2,9], [3,10], [4,11], [5,12]
+    ]);
+    // 2. 苯甲酸 (Benzoic Acid) - C6H5COOH
+    // 結構：苯環 + 羧基 (-COOH)
+    addMol("Benzoic Acid", "C", "sp²", ["平面","Planar"], "120°", [
+        // 苯環碳 (0-5)
+        {elem:"C",x:0,y:60,z:0}, {elem:"C",x:52,y:30,z:0}, {elem:"C",x:52,y:-30,z:0},
+        {elem:"C",x:0,y:-60,z:0}, {elem:"C",x:-52,y:-30,z:0}, {elem:"C",x:-52,y:30,z:0},
+        // 羧基碳 (6)
+        {elem:"C",x:0,y:105,z:0},
+        // 羧基氧 (7: 雙鍵O, 8: 單鍵O)
+        {elem:"O",x:-35,y:125,z:0}, 
+        {elem:"O",x:35,y:125,z:0},
+        // 酸性氫 (9)
+        {elem:"H",x:60,y:145,z:0},
+        // 苯環氫 (10-14)
+        {elem:"H",x:90,y:52,z:0}, {elem:"H",x:90,y:-52,z:0},
+        {elem:"H",x:0,y:-105,z:0}, {elem:"H",x:-90,y:-52,z:0}, {elem:"H",x:-90,y:52,z:0}
+    ], [
+        // 苯環
+        [0,1,"double"], [1,2], [2,3,"double"], [3,4], [4,5,"double"], [5,0],
+        // 羧基連接
+        [0,6], // Ph-C
+        [6,7,"double"], // C=O
+        [6,8], // C-O
+        [8,9], // O-H
+        // 苯環氫
+        [1,10], [2,11], [3,12], [4,13], [5,14]
+    ]);    
     // 柳酸 (Salicylic Acid) - 鄰羥基苯甲酸
     addMol("Salicylic Acid", "C", "sp²", ["平面","Planar"], "120°", 
         benzeneBase.map(p=>({elem:"C",...p})).concat([
@@ -1223,7 +1356,7 @@ const CHINESE_ALIAS = {
         "甲醇": "CH3OH", "乙醇": "C2H5OH", "乙二醇": "Ethylene Glycol", "甘油": "Glycerol",
         "甲醚": "CH3OCH3", "乙醚": "C2H5OC2H5",
         "甲醛": "HCHO", "丙酮": "Acetone", "乙二醛": "Glyoxal",
-        "甲酸": "HCOOH", "乙酸": "CH3COOH", "草酸": "Oxalic Acid", "苯甲酸": "Benzoic Acid", "柳酸": "Salicylic Acid", "阿斯匹靈": "Aspirin",
+        "甲酸": "HCOOH", "乙酸": "CH3COOH", "草酸": "Oxalic Acid", "苯甲酸": "Benzoic Acid", "柳酸": "Salicylic Acid", "阿斯匹靈": "Aspirin", "苯酚": "Phenol", "酚": "Phenol",
         "乙酸乙酯": "CH3COOC2H5", "甲酸甲酯": "HCOOCH3",
         "二氯乙烷": "1,2-Dichloroethane", "氯仿": "CHCl3"
     };
