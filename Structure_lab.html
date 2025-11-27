@@ -155,9 +155,9 @@
         .controls-area { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--panel-border); }
     }
 
-/* --- 新增：手機版面板收折控制 --- */
+/* --- 手機版面板收折控制 (電腦版隱藏) --- */
     #mobile-panel-handle {
-        display: none; /* 電腦版隱藏 */
+        display: none; 
         width: 100%; height: 30px;
         justify-content: center; align-items: center;
         cursor: pointer;
@@ -170,30 +170,50 @@
         border-radius: 5px; opacity: 0.5;
     }
 
-    /* 手機版樣式覆蓋 */
+    /* --- 手機版樣式覆蓋與優化 (RWD) --- */
     @media (max-width: 768px) {
+        .app-container { flex-direction: column; }
+        .controls-container { display: none !important; } /* 隱藏右上角按鈕 */
         #mobile-panel-handle { display: flex; }
 
-        .controls-area {
-            position: absolute; bottom: 0; left: 0;
-            width: 100%;
-            height: 45vh; /* 預設高度 */
-            border-radius: 20px 20px 0 0;
-            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            background-color: rgba(20, 20, 20, 0.95); /* 不透明一點以免太透 */
-        }
-
-        /* 收折狀態 */
-        .controls-area.minimized {
-            height: 50px; /* 收起後的高度 */
-            overflow: hidden;
-        }
-
-        /* 當面板收折時，讓 3D 視窗變大 */
+        /* 1. 3D 區塊：鎖定瀏覽器預設捲動，讓 JS 獨佔觸控 (解決旋轉卡頓的關鍵) */
         .viewport-area {
-            height: 100vh !important;
-            padding-bottom: 50px;
+            touch-action: none; 
+            height: 100vh !important; /* 佔滿全螢幕 */
+            padding-bottom: 60px; /* 留空間給收折後的把手 */
+            border-bottom: none;
+        }
+
+        /* 2. 面板動畫：改用 Transform (GPU加速，解決下滑卡頓) */
+        .controls-area {
+            width: 100%; 
+            height: 50vh; /* 面板展開時佔螢幕一半 */
+            position: absolute; bottom: 0; left: 0;
+            
+            border-left: none; 
+            border-top: 1px solid var(--panel-border);
+            border-radius: 20px 20px 0 0;
+            
+            background-color: rgba(15, 23, 42, 0.95); /* 深色背景，防止透視干擾 */
+            z-index: 100;
+            
+            /* 關鍵：用 transform 做動畫，不再用 height */
+            transform: translateY(0);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); /* 絲滑的彈性曲線 */
+            will-change: transform; /* 效能優化 */
+        }
+
+        /* 收折狀態：往下位移，只露出把手 (50px) */
+        .controls-area.minimized {
+            transform: translateY(calc(100% - 50px)); 
+        }
+        
+        /* 隱藏收折時的內容，避免誤觸並讓視覺更乾淨 */
+        .controls-area.minimized .card, 
+        .controls-area.minimized .switch-container {
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
     }
 
@@ -1163,37 +1183,61 @@ let currentMolecule = null;
     let lastTouchCenter = { x:0, y:0 };
     let lastTouchAngle = 0; // 新增角度紀錄
 
-    // [新增] 面板收折函式
+ // --- 手機面板控制邏輯 (點擊 + 滑動拖曳) ---
+    const panel = document.getElementById('controls-panel');
+    const handle = document.getElementById('mobile-panel-handle');
+    let panelStartY = 0;
+    let panelCurrentY = 0;
+
+    // 1. 點擊切換 (原本的功能)
     function toggleMobilePanel() {
-        document.getElementById('controls-panel').classList.toggle('minimized');
-    }
-    const sceneRoot = document.getElementById("scene-root");
-    const viewport = document.getElementById("viewport");
-    const modeToggleBtn = document.getElementById("mode-toggle");
-    const variantSelector = document.getElementById("variant-selector");
-
-    function toggleMode() {
-        currentMode = (currentMode + 1) % 3; 
-        const modes = ['平移', '旋轉', '複合'];
-        const classes = ['mode-pan', 'mode-rotate', 'mode-composite'];
-        modeToggleBtn.className = `control-button ${classes[currentMode]} active`;
-        modeToggleBtn.innerHTML = `模式: **${modes[currentMode]}**`;
-        viewport.className = `viewport-area ${classes[currentMode]}`;
+        panel.classList.toggle('minimized');
     }
 
-    window.onload = () => {
-        loadMolecule("P4O6"); 
-        animate();
-        setupInteractions();
-    };
+    // 2. 滑動手勢監聽 (新增)
+    if(handle) {
+        handle.addEventListener('touchstart', (e) => {
+            panelStartY = e.touches[0].clientY;
+            // 暫時移除過渡動畫，讓面板緊跟手指
+            panel.style.transition = 'none';
+        }, {passive: true});
 
-    function formatFormula(str) {
-        let parts = str.split(' ');
-        let main = parts[0];
-        let charge = parts.length > 1 ? parts[1] : '';
-        let formattedMain = main.replace(/(\d+)/g, '<sub>$1</sub>');
-        let formattedCharge = charge ? `<sup>${charge}</sup>` : '';
-        return formattedMain + formattedCharge;
+        handle.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchY - panelStartY;
+            
+            // 限制拖曳範圍 (只能往下拖)
+            if (deltaY > 0) {
+                // 如果已經是收起狀態，不讓它繼續往下拖太遠
+                if (panel.classList.contains('minimized')) return;
+                panel.style.transform = `translateY(${deltaY}px)`;
+            } else {
+                // 往上拖 (展開)
+                if (!panel.classList.contains('minimized')) return;
+                // 計算收起狀態的 offset (CSS中是 calc(100% - 50px))
+                // 這裡簡單模擬手感
+                const offset = panel.offsetHeight - 50; 
+                panel.style.transform = `translateY(${offset + deltaY}px)`;
+            }
+        }, {passive: true});
+
+        handle.addEventListener('touchend', (e) => {
+            // 恢復 CSS 動畫
+            panel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            panel.style.transform = ''; // 清除 inline style，交回給 CSS class 控制
+
+            const touchY = e.changedTouches[0].clientY;
+            const deltaY = touchY - panelStartY;
+
+            // 判斷滑動距離，決定是收起還是展開
+            if (Math.abs(deltaY) > 50) {
+                if (deltaY > 0) {
+                    panel.classList.add('minimized'); // 往下滑 -> 收起
+                } else {
+                    panel.classList.remove('minimized'); // 往上滑 -> 展開
+                }
+            }
+        });
     }
 
 // --- 1. 中文搜尋對照表 ---
@@ -1723,6 +1767,7 @@ function setupInteractions() {
         window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
         document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
 
+        // --- 滑鼠操作 (電腦版) ---
         const handleStart = (x, y) => { isDragging = true; lastMouse = { x, y }; };
         const handleMove = (x, y) => {
             if (!isDragging) return;
@@ -1735,18 +1780,22 @@ function setupInteractions() {
             lastMouse = { x, y };
         };
 
-        // Mouse Events
         viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
         window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY));
         window.addEventListener("mouseup", () => isDragging = false);
         viewport.addEventListener("wheel", e => {
-            scale = Math.max(0.5, Math.min(3, scale - e.deltaY * 0.001));
+            scale = Math.max(0.5, Math.min(4, scale - e.deltaY * 0.001));
         });
 
-        // --- Touch Events (手機雙指操作核心) ---
+        // --- 觸控操作 (手機版核心優化) ---
+        // 使用 passive: false 是為了能呼叫 preventDefault() 禁止瀏覽器畫面捲動
         viewport.addEventListener("touchstart", e => {
+            // 如果點到按鈕，不攔截
             if(e.target.closest('.control-button')) return;
             
+            // 防止瀏覽器預設行為 (如捲動頁面、縮放網頁)
+            e.preventDefault(); 
+
             if(e.touches.length === 1) {
                 isDragging = true;
                 lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -1755,7 +1804,7 @@ function setupInteractions() {
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 
-                // 紀錄初始狀態：距離、中心、角度
+                // 紀錄初始狀態
                 lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                 lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
                 lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
@@ -1765,18 +1814,22 @@ function setupInteractions() {
         window.addEventListener("touchmove", e => {
             if(!isDragging) return;
             
+            // 禁止捲動，保證流暢
+            e.preventDefault(); 
+
             if(e.touches.length === 1) {
-                // 單指：維持原本的旋轉
+                // 單指：X/Y 軸旋轉 (靈敏度 0.008 -> 絲滑感)
                 const dx = e.touches[0].clientX - lastMouse.x;
                 const dy = e.touches[0].clientY - lastMouse.y;
-                rotation.y += dx * 0.005; 
-                rotation.x -= dy * 0.005;
+                rotation.y += dx * 0.008; 
+                rotation.x -= dy * 0.008;
                 lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                
             } else if (e.touches.length === 2) {
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 
-                // A. 平移 (Pan)
+                // A. 平移 (Pan) - 跟隨手指中心
                 const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
                 const dx = center.x - lastTouchCenter.x;
                 const dy = center.y - lastTouchCenter.y;
@@ -1784,29 +1837,27 @@ function setupInteractions() {
                 panOffset.y += dy * 1.5;
                 lastTouchCenter = center;
                 
-                // B. 縮放 (Zoom)
+                // B. 縮放 (Zoom) - 雙指開合
                 const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                 if (lastTouchDist > 0) {
-                    const zoomDelta = (dist - lastTouchDist) * 0.005;
-                    scale = Math.max(0.5, Math.min(3, scale + zoomDelta));
+                    const zoomDelta = (dist - lastTouchDist) * 0.008;
+                    scale = Math.max(0.3, Math.min(5, scale + zoomDelta));
                 }
                 lastTouchDist = dist;
 
-                // C. 旋轉 Z軸 (Rotate Z - 像轉瓶蓋)
+                // C. 旋轉 Z軸 (Rotate Z) - 雙指扭轉
                 const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
                 const angleDelta = angle - lastTouchAngle;
-                // 限制單次變化量，防止 360/-360 跳動
+                // 防止角度跳變 (當跨越 180/-180 度時)
                 if (Math.abs(angleDelta) < 1.0) {
-                    rotation.z += angleDelta; 
+                    rotation.z += angleDelta * 1.5; // 稍微加速 Z 軸旋轉手感
                 }
                 lastTouchAngle = angle;
             }
-            e.preventDefault(); 
         }, { passive: false });
 
         window.addEventListener("touchend", () => isDragging = false);
     }
-
 
 
 
