@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>台灣迷霧探索</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+        #map { width: 100vw; height: 100vh; z-index: 1; }
+        
+        /* 迷霧控制項 UI */
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 30px;
+            color: white;
+            text-align: center;
+            font-family: sans-serif;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 15px #ffd700;
+        }
+        #status { font-size: 14px; margin-bottom: 5px; }
+        button {
+            background: #ffd700; color: #000; border: none;
+            padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    
+    <div id="controls">
+        <div id="status">正在定位 GPS...</div>
+        <button onclick="centerMap()">回到我的位置</button>
+    </div>
+
+    <script>
+        // 1. 初始化地圖
+        // 使用 CartoDB DarkMatter 作為底圖，模擬「未探索」的黑暗世界
+        const map = L.map('map', {
+            zoomControl: false, 
+            attributionControl: false
+        }).fitWorld();
+
+        // 加入深色底圖 (這是迷霧背景)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // 2. 設定變數
+        let userMarker = null;
+        let pathLine = null;
+        let exploredPath = []; // 儲存走過的路徑
+        let firstFix = true;
+
+        // 3. 定義「探索過」的亮光樣式
+        // 這裡我們用一個簡單的邏輯：你走過的地方會被畫上「亮色」的圓圈和線條
+        function addExploredArea(lat, lng) {
+            // 畫出一個圓形，代表視野範圍 (半徑 30 公尺)
+            L.circle([lat, lng], {
+                color: '#ffd700',      // 金色邊框
+                fillColor: '#ffffff',  // 白色填充
+                fillOpacity: 0.3,      // 透明度
+                radius: 30,            // 視野半徑
+                weight: 1
+            }).addTo(map);
+        }
+
+        // 4. GPS 定位成功時的處理
+        function onLocationFound(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            // 更新狀態文字
+            document.getElementById('status').innerText = `已連線: 探索中...`;
+
+            // 如果是第一次定位，將地圖移過去
+            if (firstFix) {
+                map.setView(e.latlng, 16);
+                firstFix = false;
+            }
+
+            // 更新使用者的位置圖示
+            if (!userMarker) {
+                // 創造一個像遊戲主角的圖示
+                userMarker = L.marker(e.latlng).addTo(map);
+            } else {
+                userMarker.setLatLng(e.latlng);
+            }
+
+            // 消除迷霧！(在當前位置畫上亮圈)
+            addExploredArea(lat, lng);
+            
+            // 畫出軌跡線
+            exploredPath.push([lat, lng]);
+            if (!pathLine) {
+                pathLine = L.polyline(exploredPath, {color: '#ffd700', weight: 3}).addTo(map);
+            } else {
+                pathLine.setLatLngs(exploredPath);
+            }
+        }
+
+        function onLocationError(e) {
+            document.getElementById('status').innerText = "找不到 GPS，請開啟權限";
+            alert("無法取得位置，請確認手機已開啟 GPS 並允許瀏覽器存取。");
+        }
+
+        // 5. 開始追蹤位置
+        map.locate({setView: false, maxZoom: 16, watch: true, enableHighAccuracy: true});
+        map.on('locationfound', onLocationFound);
+        map.on('locationerror', onLocationError);
+
+        // 輔助功能：按鈕置中
+        function centerMap() {
+            if (userMarker) {
+                map.setView(userMarker.getLatLng(), 16);
+            } else {
+                alert("尚未取得定位資訊");
+            }
+        }
+    </script>
+</body>
+</html>
