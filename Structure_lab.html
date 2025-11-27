@@ -39,17 +39,18 @@
 
     .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
 
-    /* --- 2. 3D 顯示區 --- */
+/* --- [修改] 3. 3D 顯示區 (加入 touch-action: none 極致順暢關鍵) --- */
     .viewport-area {
         flex: 1; position: relative;
-        /* 網格改為更淡的呼吸感樣式 */
         background-image: 
             linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
             linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
         background-size: 60px 60px; 
         background-position: center center;
         overflow: hidden; cursor: grab;
-        touch-action: none;
+        /* 禁止瀏覽器預設手勢(縮放/捲動)，讓 JS 完全接管 */
+        touch-action: none; 
+        -webkit-user-select: none;
     }
     .viewport-area:active { cursor: grabbing; } 
 
@@ -147,79 +148,64 @@
     }
     .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
 
-/* --- 手機版面板收折控制 (電腦版隱藏) --- */
+   /* --- [修改] 手機版專用樣式與面板滑動優化 --- */
     #mobile-panel-handle {
         display: none; 
-        width: 100%; height: 30px;
+        width: 100%; height: 40px; /* 加大觸控區 */
         justify-content: center; align-items: center;
-        cursor: pointer;
-        padding-bottom: 10px; margin-bottom: 10px;
+        cursor: pointer; flex-shrink: 0;
         border-bottom: 1px solid rgba(255,255,255,0.1);
+        touch-action: none; /* 防止拖曳時觸發頁面捲動 */
     }
     .handle-bar {
-        width: 40px; height: 5px;
+        width: 60px; height: 5px;
         background-color: var(--text-sub);
-        border-radius: 5px; opacity: 0.5;
+        border-radius: 10px; opacity: 0.6;
     }
 
-    /* --- 手機版樣式覆蓋與優化 (RWD 整合版) --- */
+/* --- 手機版專用樣式與優化 (RWD) --- */
     @media (max-width: 768px) {
-        .app-container { flex-direction: column; }
-        .controls-container { display: none !important; } /* 隱藏右上角按鈕 */
+        .app-container { flex-direction: column; height: 100vh; overflow: hidden; }
+        .controls-container { display: none !important; } 
         #mobile-panel-handle { display: flex; }
 
-        /* 1. 3D 區塊：鎖定瀏覽器預設捲動，讓 JS 獨佔觸控 (解決旋轉卡頓的關鍵) */
         .viewport-area {
-            touch-action: none; 
-            height: 100vh !important; /* 佔滿全螢幕 */
-            padding-bottom: 60px; /* 留空間給收折後的把手 */
-            border-bottom: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
         }
 
-/* 2. 面板動畫設定 */
         .controls-area {
-            width: 100%; 
-            height: 50vh; /* 面板高度佔螢幕一半 */
-            position: absolute; bottom: 0; left: 0;
-            
-            border-left: none; 
-            border-top: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px 20px 0 0;
-            
-            background-color: rgba(15, 23, 42, 0.98); /* 加深背景，避免看不清楚 */
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            height: 60vh; /* 面板最大高度 */
+            border-left: none; border-top: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px 24px 0 0;
+            background-color: rgba(15, 23, 42, 0.95);
+            padding: 0 25px 25px 25px;
             z-index: 100;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
             
-            /* 預設狀態：位置在 0 (展開) */
-            transform: translateY(0);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* 物理彈性效果 */
+            /* 預設展開狀態 (由 JS 控制 class 切換) */
+            transform: translateY(0); 
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); /* iOS 風格彈性動畫 */
             will-change: transform;
-            
-            /* 增加陰影讓層次更明顯 */
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
         }
-
-        /* 收折狀態：往下位移，只露出最上面 40px (把手區域) */
-        .controls-area.minimized {
-            transform: translateY(calc(100% - 40px)); 
-        }
-
         
-        /* 隱藏收折時的內容，避免誤觸並讓視覺更乾淨 */
-        .controls-area.minimized .card, 
-        .controls-area.minimized .switch-container {
-            opacity: 0.3;
-            pointer-events: none;
-            transition: opacity 0.3s;
+        /* 收起狀態 class */
+        .controls-area.minimized {
+            transform: translateY(calc(60vh - 40px)); /* 只露出把手 */
         }
 
-        /* 3. 優化手機版輸入框文字大小 */
-        .input-group input {
-            font-size: 16px; /* 防止 iOS 自動縮放 */
-            padding: 12px;
+        /* 內容區塊設為可滾動，避免與拖曳衝突 */
+        .controls-content {
+            overflow-y: auto; height: calc(100% - 40px);
+            padding-top: 10px;
+            /* 隱藏滾動條但保留功能 */
+            -ms-overflow-style: none; scrollbar-width: none;
         }
-        .data-row, .card-title {
-            font-size: 1.1rem; /* 稍微放大文字 */
-        }
+        .controls-content::-webkit-scrollbar { display: none; }
+    }
+        /* 優化文字大小 */
+        .input-group input { font-size: 16px; padding: 14px; }
+        .data-value { font-size: 1.1rem; }
     }
 
 
@@ -249,74 +235,52 @@
         </svg>
     </div>
 
-    <div class="controls-area">
-        <div class="card">
-            <div class="card-title">⚛️ 分子載入</div>
-            <div class="input-group">
-                <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, N2F2, HCOOCH3..." value="P4O6">
-                <button onclick="handleLoadBtn()">載入</button>
-            </div>
-            <div style="font-size:0.85rem; color:var(--text-sub); margin-top:8px;">
-                手機操作: 單指旋轉 / 雙指平移 / 雙指縮放
-            </div>
-        </div>
-
-        <div class="switch-container">
-            <input type="checkbox" id="toggle-lp" checked="" onchange="renderScene()">
-            <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
-        </div>
-
-        <div class="switch-container">
-            <input type="checkbox" id="toggle-octet" onchange="reloadCurrentMolecule()">
-            <label for="toggle-octet" style="cursor: pointer; font-weight: bold; line-height: 1.4;">
-                優先遵循八隅體<br>
-                <span style="font-size:0.85rem; color: var(--text-sub); font-weight:normal;">(適用於第三週期中心)</span>
-            </label>
-        </div>
-
-<div id="variant-selector" style="display: none;"></div>
-
-        <div class="card">
-            <div class="card-title">📊 結構資訊</div>
-            
-            <div class="data-row">
-                <span class="data-label">化學式</span>
-                <span class="data-value" id="disp-formula"></span>
-            </div>
-            
-            <div class="data-row">
-                <span class="data-label">中心原子</span>
-                <span class="data-value" id="disp-center"></span>
-            </div>
-            
-            <div class="data-row">
-                <span class="data-label">混成軌域</span>
-                <span class="data-value"><span class="hybrid-badge" id="disp-hybrid"></span></span>
-            </div>
-            
-            <div class="data-row">
-                <span class="data-label">形狀</span>
-                <span class="data-value" id="disp-shape"></span>
-            </div>
-            
-            <div class="data-row">
-                <span class="data-label">鍵角</span>
-                <span class="data-value" id="disp-angle"></span>
-            </div>
-            
-            <div class="data-row">
-                <span class="data-label">鍵結統計</span>
-                <span class="data-value" id="disp-bonds"></span>
+<div class="controls-area" id="controls-panel">
+        <!-- 拖曳把手區 (固定不滾動) -->
+        <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
+        
+        <!-- 內容滾動區 -->
+        <div class="controls-content">
+            <div class="card">
+                <div class="card-title">⚛️ 分子載入</div>
+                <div class="input-group">
+                    <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
+                    <button onclick="handleLoadBtn()">載入</button>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-highlight); margin-top:10px; line-height:1.4;">
+                    <strong>手機手勢說明:</strong><br>
+                    • 單指滑動: 旋轉 (X/Y軸)<br>
+                    • 雙指旋轉: 旋轉 (Z軸)<br>
+                    • 雙指捏合/移動: 縮放與平移
+                </div>
             </div>
 
-            <!-- 分子量應該獨立一行，不要包在上面的 div 裡 -->
-            <div class="data-row">
-                <span class="data-label">分子量</span>
-                <span class="data-value" id="disp-mass"></span>
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-lp" checked="" onchange="renderScene()">
+                <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
+            </div>
+
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-octet" onchange="reloadCurrentMolecule()">
+                <label for="toggle-octet" style="cursor: pointer; font-weight: bold;">優先遵循八隅體</label>
+            </div>
+
+            <div id="variant-selector" style="display: none;"></div>
+
+            <div class="card">
+                <div class="card-title">📊 結構資訊</div>
+                <div class="data-row"><span class="data-label">化學式</span><span class="data-value" id="disp-formula"></span></div>
+                <div class="data-row"><span class="data-label">中心原子</span><span class="data-value" id="disp-center"></span></div>
+                <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
+                <div class="data-row"><span class="data-label">形狀</span><span class="data-value" id="disp-shape"></span></div>
+                <div class="data-row"><span class="data-label">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+                <div class="data-row"><span class="data-label">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
+                <div class="data-row"><span class="data-label">分子量</span><span class="data-value" id="disp-mass"></span></div>
             </div>
         </div>
     </div>
-</div>
+
+
 
 <script>
 // --- 1. 元素性質 (螢光高亮發光風格) ---
@@ -1169,20 +1133,19 @@ addMol("Acetanilide", "C", "sp²", ["平面/苯環","Planar"], "120°",
 
 // --- 3. 邏輯與控制 ---
     let currentMolecule = null;
-    // [修正] 加入 z 軸以支援雙指旋轉
+// [修改] 加入 z 軸初始值，並新增 touch 相關變數
     let rotation = { x: 0.5, y: 0.5, z: 0 }; 
     let panOffset = { x: 0, y: 0 }; 
-    let scale = 1.6; // Zoom level
+    let scale = 1.6; 
     let isDragging = false; 
     let lastMouse = { x: 0, y: 0 };
     let currentMode = 1;
     let altKeyIsDown = false;
     let currentKey = null; 
     
-    // Touch variables
+    // 手勢操作變數
     let lastTouchDist = 0;
     let lastTouchCenter = { x:0, y:0 };
-    // [新增] 補上這個變數，雙指旋轉才不會報錯
     let lastTouchAngle = 0; 
 
     // --- DOM 元素 ---
@@ -1556,16 +1519,25 @@ function processAtomsData(atomList, bondList, centerElem) {
         }
     }
 
-    function project(p, rotX, rotY, panX, panY) {
+    // [修改] 投影函式：加入 Z 軸旋轉 (Roll) 運算
+    function project(p, rotX, rotY, rotZ, panX, panY) {
+        // 1. Y 軸旋轉 (左右轉)
         let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
         let z1 = p.z * Math.cos(rotY) + p.x * Math.sin(rotY);
+        
+        // 2. X 軸旋轉 (上下轉)
         let y2 = p.y * Math.cos(rotX) - z1 * Math.sin(rotX);
         let z2 = z1 * Math.cos(rotX) + p.y * Math.sin(rotX);
-        // Apply scaling here
-        let s = (600 / (600 - z2)) * scale;
-        return { x: x1 * s + panX, y: y2 * s + panY, z: z2, scale: s };
-    }
 
+        // 3. Z 軸旋轉 (雙指扭轉) - 新增
+        let x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
+        let y3 = x1 * Math.sin(rotZ) + y2 * Math.cos(rotZ);
+
+        // 透視縮放
+        let s = (600 / (600 - z2)) * scale;
+        
+        return { x: x3 * s + panX, y: y3 * s + panY, z: z2, scale: s };
+    }
 
 
 // --- 繪圖核心邏輯 (霓虹發光風格 v11.0) ---
@@ -1623,7 +1595,8 @@ function renderScene() {
         const renderList = [];
         
         const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
-            const p = project(obj, rotation.x, rotation.y, panOffset.x, panOffset.y);
+            // [修改] 傳入 rotation.z
+            const p = project(obj, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
             return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
         });
 
@@ -1817,12 +1790,14 @@ function drawElectron(e) {
     }
 
 function setupInteractions() {
-        // Keyboard
+        // --- 鍵盤與輸入框 ---
         window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
         window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
         document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
 
-        // --- 滑鼠操作 (電腦版) ---
+        // ==========================================
+        //  A. 電腦版滑鼠操作 (Mouse)
+        // ==========================================
         const handleStart = (x, y) => { isDragging = true; lastMouse = { x, y }; };
         const handleMove = (x, y) => {
             if (!isDragging) return;
@@ -1839,81 +1814,148 @@ function setupInteractions() {
         window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY));
         window.addEventListener("mouseup", () => isDragging = false);
         viewport.addEventListener("wheel", e => {
-            scale = Math.max(0.5, Math.min(4, scale - e.deltaY * 0.001));
+            scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
         });
 
-        // --- 觸控操作 (手機版核心優化) ---
-        // 使用 passive: false 是為了能呼叫 preventDefault() 禁止瀏覽器畫面捲動
+        // ==========================================
+        //  B. 手機版 3D 操作 (Touch - 極致滑順版)
+        // ==========================================
         viewport.addEventListener("touchstart", e => {
-            // 如果點到按鈕，不攔截
+            // 如果點到按鈕，不觸發 3D 操作
             if(e.target.closest('.control-button')) return;
             
-            // 防止瀏覽器預設行為 (如捲動頁面、縮放網頁)
-            e.preventDefault(); 
-
+            isDragging = true;
             if(e.touches.length === 1) {
-                isDragging = true;
                 lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             } else if (e.touches.length === 2) {
-                isDragging = true;
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                
-                // 紀錄初始狀態
+                const t1 = e.touches[0], t2 = e.touches[1];
                 lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                 lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+                // 計算初始角度 (用於雙指旋轉)
                 lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
             }
         }, { passive: false });
 
-        window.addEventListener("touchmove", e => {
+        viewport.addEventListener("touchmove", e => {
             if(!isDragging) return;
-            
-            // 禁止捲動，保證流暢
-            e.preventDefault(); 
+            e.preventDefault(); // 禁止瀏覽器預設捲動
 
             if(e.touches.length === 1) {
-                // 單指：X/Y 軸旋轉 (靈敏度 0.008 -> 絲滑感)
+                // 單指: 旋轉 X/Y 軸 (Orbit)
                 const dx = e.touches[0].clientX - lastMouse.x;
                 const dy = e.touches[0].clientY - lastMouse.y;
                 rotation.y += dx * 0.008; 
                 rotation.x -= dy * 0.008;
                 lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                
             } else if (e.touches.length === 2) {
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
+                // 雙指: 平移 + 縮放 + 旋轉 Z 軸
+                const t1 = e.touches[0], t2 = e.touches[1];
                 
-                // A. 平移 (Pan) - 跟隨手指中心
+                // 1. 平移 (Pan)
                 const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
-                const dx = center.x - lastTouchCenter.x;
-                const dy = center.y - lastTouchCenter.y;
-                panOffset.x += dx * 1.5; 
-                panOffset.y += dy * 1.5;
+                panOffset.x += (center.x - lastTouchCenter.x) * 1.5; 
+                panOffset.y += (center.y - lastTouchCenter.y) * 1.5;
                 lastTouchCenter = center;
                 
-                // B. 縮放 (Zoom) - 雙指開合
+                // 2. 縮放 (Zoom)
                 const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                 if (lastTouchDist > 0) {
-                    const zoomDelta = (dist - lastTouchDist) * 0.008;
-                    scale = Math.max(0.3, Math.min(5, scale + zoomDelta));
+                    const zoomDelta = (dist - lastTouchDist) * 0.015; // 增加靈敏度
+                    scale = Math.max(0.3, Math.min(8, scale + zoomDelta));
                 }
                 lastTouchDist = dist;
 
-                // C. 旋轉 Z軸 (Rotate Z) - 雙指扭轉
+                // 3. 旋轉 Z 軸 (Roll / Twist)
                 const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-                const angleDelta = angle - lastTouchAngle;
-                // 防止角度跳變 (當跨越 180/-180 度時)
-                if (Math.abs(angleDelta) < 1.0) {
-                    rotation.z += angleDelta * 1.5; // 稍微加速 Z 軸旋轉手感
-                }
+                let angleDelta = angle - lastTouchAngle;
+                // 處理角度跨越 180/-180 的邊界
+                if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
+                if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+                
+                rotation.z += angleDelta * 1.5; // Z 軸跟手轉動
                 lastTouchAngle = angle;
             }
         }, { passive: false });
 
         window.addEventListener("touchend", () => isDragging = false);
+
+        // ==========================================
+        //  C. 手機版面板滑動控制 (Panel Swipe Logic)
+        // ==========================================
+        const panel = document.getElementById('controls-panel');
+        const handle = document.getElementById('mobile-panel-handle');
+        
+        if(handle && panel) {
+            let panelStartY = 0;
+            let panelStartTrans = 0; // 記錄按下時的 transform 值
+            let isPanelDragging = false;
+            
+            // 取得目前的 translateY 數值
+            const getTranslateY = () => {
+                const style = window.getComputedStyle(panel);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                return matrix.m42;
+            };
+
+            handle.addEventListener('touchstart', (e) => {
+                isPanelDragging = true;
+                panelStartY = e.touches[0].clientY;
+                panelStartTrans = getTranslateY();
+                
+                // 拖曳時移除過渡效果，達到 1:1 跟手
+                panel.style.transition = 'none';
+            }, {passive: true});
+
+            handle.addEventListener('touchmove', (e) => {
+                if(!isPanelDragging) return;
+                e.stopPropagation(); // 防止傳遞給 viewport
+
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - panelStartY;
+                let newTrans = panelStartTrans + deltaY;
+
+                const panelH = panel.offsetHeight; // e.g., 60vh in pixels
+                const minTrans = 0; // 展開狀態 (top)
+                const maxTrans = panelH - 40; // 收起狀態 (bottom, leaving handle)
+
+                // 增加阻尼感：如果拉過頭
+                if (newTrans < minTrans) newTrans = minTrans + (newTrans - minTrans) * 0.3;
+                if (newTrans > maxTrans) newTrans = maxTrans + (newTrans - maxTrans) * 0.3;
+
+                panel.style.transform = `translateY(${newTrans}px)`;
+            }, {passive: true}); // 這裡可設為 true 因為把手區有 touch-action: none
+
+            handle.addEventListener('touchend', (e) => {
+                isPanelDragging = false;
+                // 恢復彈性動畫
+                panel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                
+                const finalY = getTranslateY();
+                const panelH = panel.offsetHeight;
+                const maxTrans = panelH - 40;
+                
+                // 判斷位置決定吸附到哪裡
+                // 如果目前位置超過一半，就收起；否則展開
+                if (finalY > maxTrans / 2) {
+                    panel.classList.add('minimized');
+                    panel.style.transform = ''; // 清除 inline style，回歸 CSS class 控制
+                } else {
+                    panel.classList.remove('minimized');
+                    panel.style.transform = ''; 
+                }
+            });
+
+            // 點擊把手也可切換
+            handle.addEventListener('click', () => {
+                // 如果剛才發生了拖曳位移，click 不觸發 toggle (避免衝突)
+                // 簡單判斷：如果 class 狀態和目前 transform 不符，視為拖曳結束，不做 toggle
+                panel.classList.toggle('minimized');
+            });
+        }
     }
-// ==================================================
+
+
+    // ==================================================
     // ====== 碳簇與富勒烯生成器 (合併 C60 與通用版) ======
     // ==================================================
 
