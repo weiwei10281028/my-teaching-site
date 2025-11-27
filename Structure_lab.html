@@ -7,14 +7,14 @@
 <style>
 /* --- 1. 基礎設定與變數 --- */
     :root {
-        /* 深空色調：中心改為極深的藍黑色，邊緣純黑 */
-        --bg-radial-inner: #0f172a;  /* 原本是 #1a202c，改更深 */
+        /* [修改] 背景改為全黑 */
+        --bg-radial-inner: #000000; 
         --bg-radial-outer: #000000;
         
-        /* 玻璃擬態面板顏色 (帶透明度) */
-        --panel-glass: rgba(23, 31, 46, 0.65);
-        --panel-border: rgba(255, 255, 255, 0.1);
-        --card-glass: rgba(255, 255, 255, 0.03);
+        /* 玻璃擬態面板保持原樣 */
+        --panel-glass: rgba(20, 20, 20, 0.7); /* 面板稍微黑一點配合背景 */
+        --panel-border: rgba(255, 255, 255, 0.15);
+        --card-glass: rgba(255, 255, 255, 0.05);
         
         --text-main: #f0f4f8;
         --text-sub: #94a3b8;
@@ -24,7 +24,6 @@
         --accent-purple: #8b5cf6;
         --accent-green: #10b981;
     }
-
 
 
     * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -252,38 +251,29 @@
 <script>
 // --- 1. 元素性質 (螢光高亮發光風格) ---
 const ELEMENT_PROPS = {
-    // 基礎非金屬 (高亮度)
-    "H":  { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0, mass: 1.008 }, // 純白光
+    "H":  { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0, mass: 1.008 }, 
     "He": { ve: 2, c3d: "#d1d5db", r3d: 10, lp: 1, mass: 4.002 },
-    
-    // Period 2 (鮮豔霓虹色)
-    "Li": { ve: 1, c3d: "#d946ef", r3d: 22, lp: 0, mass: 6.94 }, // 螢光紫
+    "Li": { ve: 1, c3d: "#d946ef", r3d: 22, lp: 0, mass: 6.94 }, 
     "Be": { ve: 2, c3d: "#94a3b8", r3d: 18, lp: 0, mass: 9.012 },
-    "B":  { ve: 3, c3d: "#fbbf24", r3d: 20, lp: 0, mass: 10.81 }, // 亮橘黃
-    "C":  { ve: 4, c3d: "#5D6D7E", r3d: 20, lp: 0, mass: 12.011 },// 藍灰色 (配合截圖質感)
-    "N":  { ve: 5, c3d: "#3b82f6", r3d: 19, lp: 1, mass: 14.007 },// 亮寶藍
-    "O":  { ve: 6, c3d: "#ef4444", r3d: 18, lp: 2, mass: 15.999 },// 亮紅
-    "F":  { ve: 7, c3d: "#84cc16", r3d: 17, lp: 3, mass: 18.998 },// 螢光綠
-    "Ne": { ve: 8, c3d: "#67e8f9", r3d: 16, lp: 4, mass: 20.180 },// 青光
-
-    // Period 3
+    "B":  { ve: 3, c3d: "#fbbf24", r3d: 20, lp: 0, mass: 10.81 }, 
+    "C":  { ve: 4, c3d: "#64748b", r3d: 20, lp: 0, mass: 12.011 }, // 藍灰色 (截圖同款)
+    "N":  { ve: 5, c3d: "#3b82f6", r3d: 19, lp: 1, mass: 14.007 }, 
+    "O":  { ve: 6, c3d: "#ef4444", r3d: 18, lp: 2, mass: 15.999 }, 
+    "F":  { ve: 7, c3d: "#84cc16", r3d: 17, lp: 3, mass: 18.998 }, 
+    "Ne": { ve: 8, c3d: "#67e8f9", r3d: 16, lp: 4, mass: 20.180 },
     "Na": { ve: 1, c3d: "#a855f7", r3d: 24, lp: 0, mass: 22.990 },
     "Mg": { ve: 2, c3d: "#84cc16", r3d: 22, lp: 0, mass: 24.305 },
     "Al": { ve: 3, c3d: "#cbd5e1", r3d: 24, lp: 0, mass: 26.982 },
     "Si": { ve: 4, c3d: "#94a3b8", r3d: 24, lp: 0, mass: 28.085 },
-    "P":  { ve: 5, c3d: "#f97316", r3d: 23, lp: 0, mass: 30.974 }, // 亮橘
-    "S":  { ve: 6, c3d: "#FFFF00", r3d: 22, lp: 0, mass: 32.06 }, // 螢光黃 (截圖同款)
-    "Cl": { ve: 7, c3d: "#22c55e", r3d: 21, lp: 3, mass: 35.45 }, // 亮綠
+    "P":  { ve: 5, c3d: "#f97316", r3d: 23, lp: 0, mass: 30.974 }, 
+    "S":  { ve: 6, c3d: "#FFFF00", r3d: 22, lp: 0, mass: 32.06 }, 
+    "Cl": { ve: 7, c3d: "#22c55e", r3d: 21, lp: 3, mass: 35.45 }, // 亮綠色 (截圖同款)
     "Ar": { ve: 8, c3d: "#38bdf8", r3d: 20, lp: 4, mass: 39.948 },
-
-    // Period 4+
     "K":  { ve: 1, c3d: "#8b5cf6", r3d: 26, lp: 0, mass: 39.098 },
     "Ca": { ve: 2, c3d: "#4ade80", r3d: 26, lp: 0, mass: 40.078 },
-    "Br": { ve: 7, c3d: "#b91c1c", r3d: 25, lp: 3, mass: 79.904 }, // 深紅
-    "I":  { ve: 7, c3d: "#a855f7", r3d: 28, lp: 3, mass: 126.90 }, // 紫光
+    "Br": { ve: 7, c3d: "#b91c1c", r3d: 25, lp: 3, mass: 79.904 }, 
+    "I":  { ve: 7, c3d: "#a855f7", r3d: 28, lp: 3, mass: 126.90 }, 
     "Xe": { ve: 8, c3d: "#818cf8", r3d: 28, lp: 3, mass: 131.29 },
-    
-    // 金屬
     "Mn": { ve: 7, c3d: "#d946ef", r3d: 24, lp: 0, mass: 54.938 },
     "Cr": { ve: 6, c3d: "#64748b", r3d: 24, lp: 0, mass: 51.996 },
     "Fe": { ve: 8, c3d: "#f97316", r3d: 24, lp: 0, mass: 55.845 },
@@ -292,7 +282,6 @@ const ELEMENT_PROPS = {
     "Ag": { ve: 11, c3d: "#e2e8f0", r3d: 26, lp: 0, mass: 107.87 },
     "Au": { ve: 11, c3d: "#fbbf24", r3d: 26, lp: 0, mass: 196.97 }
 };
-
 
 
 // --- 2. 資料庫與邏輯升級版 ---
@@ -1427,29 +1416,48 @@ function renderScene() {
         // 1. 建立 SVG 定義區 (Defs)
         const defs = createSVG("defs");
         
-        // (A) 實體微柔邊 (Core Soften) - 用於原子本體
-        // 模仿太陽邊緣：不是銳利切線，但也絕不模糊
-        const coreFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-        coreFilter.setAttribute("id", "core-soften");
-        coreFilter.setAttribute("x", "-50%"); coreFilter.setAttribute("y", "-50%");
-        coreFilter.setAttribute("width", "200%"); coreFilter.setAttribute("height", "200%");
-        // stdDeviation="0.5" 只有極輕微的柔化，保持實體感
-        coreFilter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />';
-        defs.appendChild(coreFilter);
+        // (A) 柔和光暈濾鏡 (Soft Glow) - 模仿截圖中的發光感
+        const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        filter.setAttribute("id", "soft-glow");
+        filter.setAttribute("x", "-50%"); filter.setAttribute("y", "-50%");
+        filter.setAttribute("width", "200%"); filter.setAttribute("height", "200%");
+        // stdDeviation="3.5" 這個數值能產生截圖中那種邊緣模糊但不過份擴散的效果
+        filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
+        defs.appendChild(filter);
 
-        // (B) 強力光暈 (Strong Glow) - 用於原子和 LP 的外發光
-        // [關鍵修正] 擴大濾鏡範圍，解決"方形光暈"問題
-        const glowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-        glowFilter.setAttribute("id", "strong-glow");
-        glowFilter.setAttribute("x", "-200%"); glowFilter.setAttribute("y", "-200%");
-        glowFilter.setAttribute("width", "500%"); glowFilter.setAttribute("height", "500%");
-        // stdDeviation="5" 足夠的擴散，製造氣場
-        glowFilter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="5" />';
-        defs.appendChild(glowFilter);
+        // (B) 建立球體光澤漸層 (Glossy Gradients)
+        // 這是讓球體看起來立體的關鍵，根據原子顏色動態生成
+        const usedColors = new Set();
+        currentMolecule.renderObjects.forEach(obj => {
+            if (obj.type === 'atom') usedColors.add(obj.color);
+        });
+
+        usedColors.forEach(color => {
+            const cleanColor = color.replace('#','');
+            const gradId = `atom-grad-${cleanColor}`;
+            
+            const grad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+            grad.setAttribute("id", gradId);
+            // 亮點偏左上 (30%, 30%)，製造立體感
+            grad.setAttribute("cx", "30%"); grad.setAttribute("cy", "30%"); 
+            grad.setAttribute("r", "70%");
+            
+            // 漸層：亮白(高光) -> 原子本色 -> 深色(陰影)
+            let startColor = lightenColor(color, 60); // 亮點
+            if (color === '#FFFFFF') startColor = "#FFFFFF";
+            let endColor = darkenColor(color, 40);    // 陰影
+
+            grad.innerHTML = `
+                <stop offset="0%" stop-color="${startColor}" />
+                <stop offset="45%" stop-color="${color}" />
+                <stop offset="100%" stop-color="${endColor}" />
+            `;
+            defs.appendChild(grad);
+        });
 
         sceneRoot.appendChild(defs);
 
-        // ... (以下 renderList 邏輯完全不用動，保持原樣) ...
+        // ... (以下邏輯保持不變) ...
         const showLPs = document.getElementById('toggle-lp').checked;
         const renderList = [];
         
@@ -1495,6 +1503,18 @@ function renderScene() {
             else if (obj.type === "electron") drawElectron(obj);
         });
     }
+
+// 輔助：顏色變亮/變暗 (用於漸層計算)
+    function lightenColor(col, amt) {
+        let usePound = false;
+        if (col[0] == "#") { col = col.slice(1); usePound = true; }
+        let num = parseInt(col,16);
+        let r = (num >> 16) + amt; if (r > 255) r = 255; else if  (r < 0) r = 0;
+        let b = ((num >> 8) & 0x00FF) + amt; if (b > 255) b = 255; else if  (b < 0) b = 0;
+        let g = (num & 0x0000FF) + amt; if (g > 255) g = 255; else if (g < 0) g = 0;
+        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
+    }
+    function darkenColor(col, amt) { return lightenColor(col, -amt); }
 
 
 
@@ -1565,75 +1585,65 @@ function drawAtom(a) {
         
         // H 顏色修正
         const displayColor = (a.elem === "H" && a.color === "#FFFFFF") ? "#FFFFFF" : a.color;
+        const cleanColor = a.color.replace('#','');
+        const gradUrl = `url(#atom-grad-${cleanColor})`;
 
-        // 1. 光暈層 (Corona) - 使用與原子完全一樣的顏色
+        // 1. 背後柔光層 (Glow) - 模仿截圖中的氣場
         const glow = createSVG("circle");
         glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
-        glow.setAttribute("r", a.r * a.scale * 1.4); 
+        glow.setAttribute("r", a.r * a.scale * 1.3); // 比本體大一點
         glow.setAttribute("fill", displayColor); 
-        glow.setAttribute("opacity", "0.15"); // 維持暗淡
-        glow.setAttribute("filter", "url(#strong-glow)"); 
+        glow.setAttribute("opacity", "0.5"); // 適中的亮度
+        glow.setAttribute("filter", "url(#soft-glow)"); // 柔邊
         g.appendChild(glow);
 
-        // 2. 實體層 (Body) - 純色核心
+        // 2. 實體層 (Glossy Sphere) - [修正] 使用漸層，且無邊框
         const circle = createSVG("circle");
         circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); 
         circle.setAttribute("r", a.r * a.scale); 
-        circle.setAttribute("fill", displayColor);
-        circle.setAttribute("opacity", "1"); 
-        // 確保無邊框、無額外濾鏡干擾顏色
-        circle.setAttribute("filter", "url(#core-soften)"); 
+        circle.setAttribute("fill", gradUrl); // 使用上面建立的光澤漸層
+        // [關鍵] 不設定 stroke (無外圈)
         g.appendChild(circle);
-        
-        // [已刪除] 內部亮點 (Inner Flare) - 移除這層，確保顏色一致
 
-        // 3. 文字標籤
+        // 3. 文字標籤 (維持黑色粗體)
         const txt = createSVG("text");
         txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); 
         txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
         txt.setAttribute("class", "atom-label-text"); 
         txt.textContent = a.elem;
         
-        if (a.elem === "H") {
-            txt.style.fill = "#000000"; 
-            txt.style.fontWeight = "900";
-            txt.style.textShadow = "none";
-        } else {
-            txt.style.fill = "#ffffff";
-            txt.style.textShadow = "0 0 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.8)";
-        }
+        // 黑色字體，無陰影
+        txt.style.fill = "#000000"; 
+        txt.style.fontWeight = "900";
+        txt.style.textShadow = "none";
         
         g.appendChild(txt);
         sceneRoot.appendChild(g);
     }
 
-
-
 function drawElectron(e) {
         const g = createSVG("g");
         const r = e.r * e.scale * 0.9;
 
-        // 1. 光暈層 (Glow) - 解決方形問題，並讓它有氛圍
-        const halo = createSVG("circle");
-        halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
-        halo.setAttribute("r", r * 2.0); // 光暈大一點
-        halo.setAttribute("fill", "#ffffff");
-        halo.setAttribute("opacity", "0.3");
-        halo.setAttribute("filter", "url(#strong-glow)"); // 使用修正過的大範圍濾鏡
-        g.appendChild(halo);
+        // 1. 淡淡的光暈
+        const glow = createSVG("circle");
+        glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py);
+        glow.setAttribute("r", r * 1.5);
+        glow.setAttribute("fill", "#ffffff");
+        glow.setAttribute("opacity", "0.3");
+        glow.setAttribute("filter", "url(#soft-glow)");
+        g.appendChild(glow);
 
-        // 2. 實體層 (Core) - 絕對清晰，方便計算
+        // 2. 實體
         const c = createSVG("circle");
         c.setAttribute("cx", e.px); c.setAttribute("cy", e.py);
         c.setAttribute("r", r);
         c.setAttribute("fill", "#ffffff"); // 純白
-        c.setAttribute("opacity", "1");    // 不透明
-        // 不使用任何模糊濾鏡，確保邊緣銳利
+        c.setAttribute("opacity", "1"); 
         
         g.appendChild(c);
         sceneRoot.appendChild(g);
     }
-
     
     function createSVG(type) { return document.createElementNS("http://www.w3.org/2000/svg", type); }
 
