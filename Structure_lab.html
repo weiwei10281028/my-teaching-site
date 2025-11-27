@@ -147,14 +147,6 @@
     }
     .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
 
-    /* RWD */
-    @media (max-width: 768px) {
-        .app-container { flex-direction: column; }
-        .viewport-area { height: 55vh; border-bottom: 1px solid var(--panel-border); }
-        .controls-container { display: none !important; }
-        .controls-area { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--panel-border); }
-    }
-
 /* --- 手機版面板收折控制 (電腦版隱藏) --- */
     #mobile-panel-handle {
         display: none; 
@@ -170,7 +162,7 @@
         border-radius: 5px; opacity: 0.5;
     }
 
-    /* --- 手機版樣式覆蓋與優化 (RWD) --- */
+    /* --- 手機版樣式覆蓋與優化 (RWD 整合版) --- */
     @media (max-width: 768px) {
         .app-container { flex-direction: column; }
         .controls-container { display: none !important; } /* 隱藏右上角按鈕 */
@@ -215,8 +207,16 @@
             pointer-events: none;
             transition: opacity 0.3s;
         }
-    }
 
+        /* 3. 優化手機版輸入框文字大小 */
+        .input-group input {
+            font-size: 16px; /* 防止 iOS 自動縮放 */
+            padding: 12px;
+        }
+        .data-row, .card-title {
+            font-size: 1.1rem; /* 稍微放大文字 */
+        }
+    }
 
 
 
@@ -245,11 +245,7 @@
         </svg>
     </div>
 
-    <div class="controls-area" id="controls-panel">
-        <div id="mobile-panel-handle" onclick="toggleMobilePanel()">
-            <div class="handle-bar"></div>
-        </div>
-
+    <div class="controls-area">
         <div class="card">
             <div class="card-title">⚛️ 分子載入</div>
             <div class="input-group">
@@ -1167,78 +1163,129 @@ addMol("Acetanilide", "C", "sp²", ["平面/苯環","Planar"], "120°",
 
 
 
-    // --- 3. 邏輯與控制 ---
-let currentMolecule = null;
-    let rotation = { x: 0.5, y: 0.5, z: 0 }; // [修改] 新增 z: 0
+// --- 3. 邏輯與控制 ---
+    let currentMolecule = null;
+    // [修正] 加入 z 軸以支援雙指旋轉
+    let rotation = { x: 0.5, y: 0.5, z: 0 }; 
     let panOffset = { x: 0, y: 0 }; 
-    let scale = 1.6; 
+    let scale = 1.6; // Zoom level
     let isDragging = false; 
     let lastMouse = { x: 0, y: 0 };
     let currentMode = 1;
     let altKeyIsDown = false;
     let currentKey = null; 
     
-    // [新增] 觸控變數
+    // Touch variables
     let lastTouchDist = 0;
     let lastTouchCenter = { x:0, y:0 };
-    let lastTouchAngle = 0; // 新增角度紀錄
+    // [新增] 補上這個變數，雙指旋轉才不會報錯
+    let lastTouchAngle = 0; 
 
- // --- 手機面板控制邏輯 (點擊 + 滑動拖曳) ---
+    // --- DOM 元素 ---
+    const sceneRoot = document.getElementById("scene-root");
+    const viewport = document.getElementById("viewport");
+    const modeToggleBtn = document.getElementById("mode-toggle");
+    const variantSelector = document.getElementById("variant-selector");
+
+    // --- 手機面板控制邏輯 (點擊 + 平滑拖曳) ---
     const panel = document.getElementById('controls-panel');
     const handle = document.getElementById('mobile-panel-handle');
     let panelStartY = 0;
-    let panelCurrentY = 0;
+    let isPanelDragging = false;
 
-    // 1. 點擊切換 (原本的功能)
+    // 1. 點擊切換
     function toggleMobilePanel() {
-        panel.classList.toggle('minimized');
+        if(panel) panel.classList.toggle('minimized');
     }
 
-    // 2. 滑動手勢監聽 (新增)
-    if(handle) {
+    // 2. 滑動拖曳邏輯
+    if(handle && panel) {
         handle.addEventListener('touchstart', (e) => {
+            isPanelDragging = true;
             panelStartY = e.touches[0].clientY;
-            // 暫時移除過渡動畫，讓面板緊跟手指
+            // 移除過渡動畫，讓拖曳跟手
             panel.style.transition = 'none';
         }, {passive: true});
 
         handle.addEventListener('touchmove', (e) => {
-            const touchY = e.touches[0].clientY;
-            const deltaY = touchY - panelStartY;
+            if (!isPanelDragging) return;
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - panelStartY;
+            const isClosed = panel.classList.contains('minimized');
             
-            // 限制拖曳範圍 (只能往下拖)
-            if (deltaY > 0) {
-                // 如果已經是收起狀態，不讓它繼續往下拖太遠
-                if (panel.classList.contains('minimized')) return;
-                panel.style.transform = `translateY(${deltaY}px)`;
+            // 計算面板的高度 (扣除把手高度)
+            const panelHeight = panel.offsetHeight; 
+            
+            if (!isClosed) {
+                // --- 狀態：展開中 ---
+                // 只能往下滑 (deltaY > 0)
+                if (deltaY > 0) {
+                    panel.style.transform = `translateY(${deltaY}px)`;
+                }
             } else {
-                // 往上拖 (展開)
-                if (!panel.classList.contains('minimized')) return;
-                // 計算收起狀態的 offset (CSS中是 calc(100% - 50px))
-                // 這裡簡單模擬手感
-                const offset = panel.offsetHeight - 50; 
-                panel.style.transform = `translateY(${offset + deltaY}px)`;
+                // --- 狀態：收起中 ---
+                // 只能往上滑 (deltaY < 0)
+                // 收起狀態的基礎位移量
+                const baseOffset = panelHeight - 50; 
+                if (deltaY < 0) {
+                    panel.style.transform = `translateY(${baseOffset + deltaY}px)`;
+                }
             }
         }, {passive: true});
 
         handle.addEventListener('touchend', (e) => {
-            // 恢復 CSS 動畫
-            panel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            panel.style.transform = ''; // 清除 inline style，交回給 CSS class 控制
+            isPanelDragging = false;
+            // 恢復 CSS 動畫，讓它彈回去
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            panel.style.transform = ''; // 清除 inline style，回歸 class 控制
 
-            const touchY = e.changedTouches[0].clientY;
-            const deltaY = touchY - panelStartY;
+            const endY = e.changedTouches[0].clientY;
+            const deltaY = endY - panelStartY;
+            const threshold = 50; // 滑動超過 50px 就觸發切換
 
-            // 判斷滑動距離，決定是收起還是展開
-            if (Math.abs(deltaY) > 50) {
-                if (deltaY > 0) {
-                    panel.classList.add('minimized'); // 往下滑 -> 收起
-                } else {
-                    panel.classList.remove('minimized'); // 往上滑 -> 展開
+            if (!panel.classList.contains('minimized')) {
+                // 如果原本是展開的，且往下滑超過閾值 -> 收起
+                if (deltaY > threshold) {
+                    panel.classList.add('minimized');
+                }
+            } else {
+                // 如果原本是收起的，且往上滑超過閾值 -> 展開
+                if (deltaY < -threshold) {
+                    panel.classList.remove('minimized');
                 }
             }
         });
     }
+    // ------------------------------------------
+
+    function toggleMode() {
+        currentMode = (currentMode + 1) % 3; 
+        const modes = ['平移', '旋轉', '複合'];
+        const classes = ['mode-pan', 'mode-rotate', 'mode-composite'];
+        modeToggleBtn.className = `control-button ${classes[currentMode]} active`;
+        modeToggleBtn.innerHTML = `模式: **${modes[currentMode]}**`;
+        viewport.className = `viewport-area ${classes[currentMode]}`;
+    }
+
+    window.onload = () => {
+        // 確保資料庫有東西才載入
+        if(Object.keys(MOLECULE_DB).length > 0) {
+            loadMolecule("P4O6"); 
+        }
+        animate();
+        setupInteractions();
+    };
+
+    function formatFormula(str) {
+        let parts = str.split(' ');
+        let main = parts[0];
+        let charge = parts.length > 1 ? parts[1] : '';
+        let formattedMain = main.replace(/(\d+)/g, '<sub>$1</sub>');
+        let formattedCharge = charge ? `<sup>${charge}</sup>` : '';
+        return formattedMain + formattedCharge;
+    }
+
+
 
 // --- 1. 中文搜尋對照表 ---
 const CHINESE_ALIAS = {
@@ -1494,23 +1541,16 @@ function processAtomsData(atomList, bondList, centerElem) {
         }
     }
 
-function project(p, rotX, rotY, panX, panY) {
-        // 1. 原本的 X/Y 軸旋轉
+    function project(p, rotX, rotY, panX, panY) {
         let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
         let z1 = p.z * Math.cos(rotY) + p.x * Math.sin(rotY);
-        
         let y2 = p.y * Math.cos(rotX) - z1 * Math.sin(rotX);
         let z2 = z1 * Math.cos(rotX) + p.y * Math.sin(rotX);
-
-        // 2. [新增] Z 軸旋轉 (雙指扭轉用)
-        const rotZ = rotation.z || 0;
-        let x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
-        let y3 = y2 * Math.cos(rotZ) + x1 * Math.sin(rotZ);
-
-        // 3. 縮放與平移
+        // Apply scaling here
         let s = (600 / (600 - z2)) * scale;
-        return { x: x3 * s + panX, y: y3 * s + panY, z: z2, scale: s };
+        return { x: x1 * s + panX, y: y2 * s + panY, z: z2, scale: s };
     }
+
 
 
 // --- 繪圖核心邏輯 (霓虹發光風格 v11.0) ---
@@ -1858,9 +1898,6 @@ function setupInteractions() {
 
         window.addEventListener("touchend", () => isDragging = false);
     }
-
-
-
 // ==================================================
     // ====== 碳簇與富勒烯生成器 (合併 C60 與通用版) ======
     // ==================================================
