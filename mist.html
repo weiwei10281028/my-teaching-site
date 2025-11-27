@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>台灣迷霧探索</title>
+    <title>台灣迷霧探索 (手動啟動版)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -26,11 +26,13 @@
             font-family: sans-serif;
             border: 2px solid #ffd700;
             box-shadow: 0 0 15px #ffd700;
+            width: 80%; /* 增加寬度以顯示更多文字 */
         }
-        #status { font-size: 14px; margin-bottom: 5px; }
-        button {
+        #status { font-size: 14px; margin-bottom: 10px; line-height: 1.5; }
+        .action-button {
             background: #ffd700; color: #000; border: none;
-            padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 16px;
+            padding: 10px 25px; border-radius: 25px; font-weight: bold; font-size: 18px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -39,13 +41,14 @@
     <div id="map"></div>
     
     <div id="controls">
-        <div id="status">正在定位 GPS...</div>
-        <button onclick="centerMap()">回到我的位置</button>
+        <div id="status">
+            請點擊下方按鈕，App 將嘗試開啟 GPS 定位，並開始記錄您的探索足跡。
+        </div>
+        <button id="startButton" class="action-button" onclick="startTracking()">開始探索 / 開啟定位</button>
     </div>
 
     <script>
         // 1. 初始化地圖
-        // 使用 CartoDB DarkMatter 作為底圖，模擬「未探索」的黑暗世界
         const map = L.map('map', {
             zoomControl: false, 
             attributionControl: false
@@ -59,45 +62,42 @@
         // 2. 設定變數
         let userMarker = null;
         let pathLine = null;
-        let exploredPath = []; // 儲存走過的路徑
-        let firstFix = true;
+        let exploredPath = []; 
+        let isTracking = false; 
 
-        // 3. 定義「探索過」的亮光樣式
-        // 這裡我們用一個簡單的邏輯：你走過的地方會被畫上「亮色」的圓圈和線條
         function addExploredArea(lat, lng) {
-            // 畫出一個圓形，代表視野範圍 (半徑 30 公尺)
+            // 畫出圓形，代表視野範圍
             L.circle([lat, lng], {
-                color: '#ffd700',      // 金色邊框
-                fillColor: '#ffffff',  // 白色填充
-                fillOpacity: 0.3,      // 透明度
-                radius: 30,            // 視野半徑
+                color: '#ffd700',      
+                fillColor: '#ffffff',  
+                fillOpacity: 0.3,      
+                radius: 30,            
                 weight: 1
             }).addTo(map);
         }
 
-        // 4. GPS 定位成功時的處理
+        // 3. GPS 定位成功時的處理
         function onLocationFound(e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
-
-            // 更新狀態文字
-            document.getElementById('status').innerText = `已連線: 探索中...`;
-
-            // 如果是第一次定位，將地圖移過去
-            if (firstFix) {
+            
+            // 首次定位成功後才將地圖置中
+            if (!isTracking) {
                 map.setView(e.latlng, 16);
-                firstFix = false;
+                isTracking = true;
+                document.getElementById('startButton').innerText = '探索中... (點擊地圖置中)';
+                document.getElementById('status').innerText = '已連線，迷霧正在消除中！';
+                document.getElementById('startButton').onclick = centerMap; // 改變按鈕功能
             }
 
             // 更新使用者的位置圖示
             if (!userMarker) {
-                // 創造一個像遊戲主角的圖示
                 userMarker = L.marker(e.latlng).addTo(map);
             } else {
                 userMarker.setLatLng(e.latlng);
             }
 
-            // 消除迷霧！(在當前位置畫上亮圈)
+            // 消除迷霧！
             addExploredArea(lat, lng);
             
             // 畫出軌跡線
@@ -109,22 +109,43 @@
             }
         }
 
+        // 4. GPS 定位失敗時的處理
         function onLocationError(e) {
-            document.getElementById('status').innerText = "找不到 GPS，請開啟權限";
-            alert("無法取得位置，請確認手機已開啟 GPS 並允許瀏覽器存取。");
+            const statusDiv = document.getElementById('status');
+            
+            // 檢查是否是權限被拒絕的錯誤
+            if (e.code === 1 || e.message.includes('permission denied')) {
+                statusDiv.innerHTML = `
+                    ❌ **定位失敗！權限被拒絕。**<br>
+                    瀏覽器記住了您的拒絕選擇，請手動重設：<br>
+                    **Chrome/Android:** 進入 App 資訊 > 權限 > 位置，手動設為「允許」。<br>
+                    **Safari/iPhone:** 進入 設定 > 隱私權與安全性 > 定位服務 > 網站，找到此頁面並手動設為「允許」。
+                `;
+            } else {
+                statusDiv.innerText = `定位錯誤 [${e.code}]: ${e.message}`;
+            }
+            document.getElementById('startButton').innerText = '重新嘗試定位';
+            document.getElementById('startButton').onclick = startTracking; 
         }
 
-        // 5. 開始追蹤位置
-        map.locate({setView: false, maxZoom: 16, watch: true, enableHighAccuracy: true});
+        // 5. 啟動追蹤功能 (綁定給按鈕)
+        function startTracking() {
+            // 在啟動時將按鈕設為禁用，避免重複點擊
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('status').innerText = '正在請求 GPS 權限... 請注意瀏覽器彈出視窗。';
+            
+            // 開始追蹤，如果瀏覽器還沒記錄權限，會彈出詢問視窗
+            map.locate({setView: false, maxZoom: 16, watch: true, enableHighAccuracy: true});
+        }
+        
+        // 6. 地圖事件監聽
         map.on('locationfound', onLocationFound);
         map.on('locationerror', onLocationError);
 
-        // 輔助功能：按鈕置中
+        // 7. 輔助功能：按鈕置中
         function centerMap() {
             if (userMarker) {
                 map.setView(userMarker.getLatLng(), 16);
-            } else {
-                alert("尚未取得定位資訊");
             }
         }
     </script>
