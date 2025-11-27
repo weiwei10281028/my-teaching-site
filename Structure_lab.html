@@ -3,149 +3,166 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構與混成軌域模擬實驗室 v10.0</title>
-    <style>
-        /* --- 基礎設定 --- */
-        :root {
-            --bg-color: #0b101a;
-            --panel-bg: #151b26;
-            --grid-color: #1c2533;
-            --text-main: #ffffff;
-            --text-sub: #a0aec0;
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
-            --border-color: #2d3748;
-            --accent-green: #10b981;
-            --bond-color: #94a3b8; 
-        }
-
-        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color); color: var(--text-main);
-            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
-        }
-
-        /* 預設為電腦版佈局 (Row) */
-        .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
-
-        /* 3D 顯示區 */
-        .viewport-area {
-            flex: 1; position: relative;
-            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 50px 50px; background-position: center center;
-            overflow: hidden; cursor: grab;
-            touch-action: none; /* 禁止瀏覽器預設的捲動行為，交給 JS 處理 */
-        }
-        .viewport-area.rotate-mode { cursor: crosshair; }
-        .viewport-area.composite-mode { cursor: grab; } 
-        .viewport-area:active { cursor: grabbing; } 
+    <title>分子結構與混成軌域模擬實驗室 v11.0</title>
+<style>
+/* --- 1. 基礎設定與變數 --- */
+    :root {
+        /* 深空色調：中心改為極深的藍黑色，邊緣純黑 */
+        --bg-radial-inner: #0f172a;  /* 原本是 #1a202c，改更深 */
+        --bg-radial-outer: #000000;
         
-        #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-
-        /* --- 關鍵修正：讓 SVG 內部元素不攔截滑鼠/觸控事件 --- */
-        /* 這樣點擊原子或鍵結時，事件會穿透到 viewport-area，觸發旋轉/平移 */
-        #molecule-svg * { pointer-events: none; }
+        /* 玻璃擬態面板顏色 (帶透明度) */
+        --panel-glass: rgba(23, 31, 46, 0.65);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --card-glass: rgba(255, 255, 255, 0.03);
         
-        /* 原子標籤 */
-        .atom-label-text {
-            font-family: Arial, sans-serif; font-weight: 800; text-anchor: middle; 
-            dominant-baseline: central; fill: #000000; text-shadow: none;
-        }
-
-        /* 控制項 (右上角按鈕) */
-        .controls-container {
-            position: absolute; top: 25px; right: 25px; z-index: 50; 
-            display: flex; gap: 15px; align-items: center; pointer-events: auto;
-        }
-
-        .control-button {
-            padding: 8px 12px; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
-            border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s;
-            background: rgba(30, 38, 51, 0.8); color: var(--text-main);
-            backdrop-filter: blur(5px);
-        }
-        .control-button.mode-pan { background: var(--accent-blue); }
-        .control-button.mode-rotate { background: var(--accent-purple); border-color: var(--accent-purple); }
-        .control-button.mode-composite { background: var(--accent-green); border-color: var(--accent-green); }
-
-        /* 面板 */
-        .controls-area { 
-            width: 400px; min-width: 320px;
-            background-color: var(--panel-bg); 
-            border-left: 1px solid var(--border-color); 
-            display: flex; flex-direction: column; 
-            padding: 25px; overflow-y: auto; 
-            box-shadow: -5px 0 20px rgba(0,0,0,0.4); 
-            z-index: 20;
-        }
-        .card { background: #1e2633; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--accent-blue); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .data-label { font-size: 1rem; color: var(--text-sub); }
-        .data-value { font-size: 1.15rem; font-weight: bold; font-family: 'Segoe UI', monospace; color: var(--text-main); }
-        .data-value sub { font-size: 0.7em; vertical-align: sub; }
-        .data-value sup { font-size: 0.7em; vertical-align: super; }
-
-        .hybrid-badge { background: rgba(139, 92, 246, 0.25); color: var(--accent-purple); padding: 4px 10px; border-radius: 6px; font-size: 1rem; }
+        --text-main: #f0f4f8;
+        --text-sub: #94a3b8;
+        --text-highlight: #38bdf8;
         
-        .input-group { display: flex; gap: 8px; }
-        .input-group input { flex-grow: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: #0b101a; color: var(--text-main); font-size: 1rem; }
-        .input-group button { padding: 10px 15px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --accent-green: #10b981;
+    }
 
-        /* 結構切換與開關 */
-        #variant-selector {
-            display: none;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--accent-green);
-            padding: 10px; border-radius: 8px; margin-bottom: 15px;
-        }
-        .variant-option { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; cursor: pointer; }
-        
-        .switch-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #2d3748; padding: 10px; border-radius: 8px;}
-        .switch-container input { width: 20px; height: 20px; cursor: pointer; }
 
-        /* --- RWD 手機版設定 (小於 768px) --- */
-        @media (max-width: 768px) {
-            .app-container {
-                flex-direction: column; /* 改為垂直排列 */
-            }
 
-            .viewport-area {
-                flex: none; /* 取消自動伸縮 */
-                width: 100%;
-                height: 60vh; /* 上方顯示佔 60% */
-                border-bottom: 1px solid var(--border-color);
-            }
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-            /* 手機版隱藏右上角的模式切換按鈕 */
-            .controls-container {
-                display: none !important;
-            }
+    body {
+        margin: 0; 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        /* 深邃太空背景 */
+        background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
+        color: var(--text-main);
+        height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+    }
 
-            .controls-area {
-                width: 100%; 
-                flex: 1;
-                height: 40vh; /* 下方操作佔 40% */
-                border-left: none; 
-                border-top: 1px solid var(--border-color); 
-                box-shadow: 0 -5px 20px rgba(0,0,0,0.4); 
-                padding: 15px;
-            }
+    .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
 
-            .viewport-header h1 { font-size: 1.2rem; }
-            .viewport-header span { font-size: 0.9rem; }
-        }
+    /* --- 2. 3D 顯示區 --- */
+    .viewport-area {
+        flex: 1; position: relative;
+        /* 網格改為更淡的呼吸感樣式 */
+        background-image: 
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 60px 60px; 
+        background-position: center center;
+        overflow: hidden; cursor: grab;
+        touch-action: none;
+    }
+    .viewport-area:active { cursor: grabbing; } 
 
-    </style>
+    /* 標題特效 */
+    .viewport-header h1 {
+        margin: 0; font-size: 1.5rem; letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); /* 霓虹光暈 */
+    }
+
+    #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    #molecule-svg * { pointer-events: none; }
+
+    /* 原子標籤 */
+    .atom-label-text {
+        font-family: 'Roboto Mono', monospace; font-weight: 700; 
+        text-anchor: middle; dominant-baseline: central; 
+        fill: #ffffff; 
+        text-shadow: 0 0 4px #000; /* 增加文字可讀性 */
+    }
+
+    /* --- 3. 控制面板 (玻璃擬態) --- */
+    .controls-container {
+        position: absolute; top: 25px; right: 25px; z-index: 50; 
+        display: flex; gap: 15px; align-items: center; pointer-events: auto;
+    }
+
+    .control-button {
+        padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+        border: 1px solid var(--panel-border); cursor: pointer; transition: all 0.3s;
+        background: rgba(0, 0, 0, 0.4); color: var(--text-main);
+        backdrop-filter: blur(4px); box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .control-button:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); border-color: var(--accent-blue); }
+    .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+
+    .controls-area { 
+        width: 400px; min-width: 320px;
+        /* 玻璃擬態核心 */
+        background-color: var(--panel-glass);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-left: 1px solid var(--panel-border);
+        display: flex; flex-direction: column; 
+        padding: 25px; overflow-y: auto; 
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5); 
+        z-index: 20;
+    }
+
+    /* 卡片設計 */
+    .card { 
+        background: var(--card-glass); 
+        border: 1px solid var(--panel-border); 
+        border-radius: 16px; padding: 20px; margin-bottom: 20px; 
+        transition: transform 0.2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.2); }
+
+    .card-title { 
+        font-size: 1rem; font-weight: 700; color: var(--text-highlight); 
+        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* 數據行 - 改用等寬字體顯示數值 */
+    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .data-label { font-size: 0.9rem; color: var(--text-sub); }
+    .data-value { 
+        font-family: 'Roboto Mono', 'Courier New', monospace; /* 科技感字體 */
+        font-size: 1rem; color: var(--text-main); font-weight: 500;
+    }
+    
+    .input-group { display: flex; gap: 8px; }
+    .input-group input { 
+        flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
+        background: rgba(0,0,0,0.3); color: white; font-family: 'Roboto Mono', monospace;
+        transition: border 0.3s; outline: none;
+    }
+    .input-group input:focus { border-color: var(--accent-blue); }
+    .input-group button { 
+        padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
+        cursor: pointer; font-weight: bold; transition: all 0.2s; 
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
+    .input-group button:hover { background: #2563eb; box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+
+    /* 切換開關樣式優化 */
+    .switch-container { 
+        display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
+        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid transparent; transition: border 0.3s;
+    }
+    .switch-container:hover { border-color: var(--panel-border); }
+    .switch-container input { width: 18px; height: 18px; accent-color: var(--accent-green); cursor: pointer; }
+
+    #variant-selector {
+        display: none; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 15px; border-radius: 12px; margin-bottom: 15px;
+    }
+    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
+
+    /* RWD */
+    @media (max-width: 768px) {
+        .app-container { flex-direction: column; }
+        .viewport-area { height: 55vh; border-bottom: 1px solid var(--panel-border); }
+        .controls-container { display: none !important; }
+        .controls-area { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--panel-border); }
+    }
+</style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="viewport-area composite-mode" id="viewport">
         <div class="viewport-header" style="position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none;">
-            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v10.0</h1>
+            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v11.0</h1>
             <span style="font-size: 1.1rem; color: var(--text-sub);" id="viewport-subtitle"></span>
         </div>
         
@@ -188,199 +205,328 @@
             </label>
         </div>
 
-        <div id="variant-selector" style="display: none;"></div>
+<div id="variant-selector" style="display: none;"></div>
 
         <div class="card">
             <div class="card-title">📊 結構資訊</div>
-            <div class="data-row"><span class="data-label">化學式</span><span class="data-value" id="disp-formula"></span></div>
-            <div class="data-row"><span class="data-label">中心原子</span><span class="data-value" id="disp-center"></span></div>
-            <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value"><span class="hybrid-badge" id="disp-hybrid"></span></span></div>
-            <div class="data-row"><span class="data-label">形狀</span><span class="data-value" id="disp-shape"></span></div>
-            <div class="data-row"><span class="data-label">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+            
+            <div class="data-row">
+                <span class="data-label">化學式</span>
+                <span class="data-value" id="disp-formula"></span>
+            </div>
+            
+            <div class="data-row">
+                <span class="data-label">中心原子</span>
+                <span class="data-value" id="disp-center"></span>
+            </div>
+            
+            <div class="data-row">
+                <span class="data-label">混成軌域</span>
+                <span class="data-value"><span class="hybrid-badge" id="disp-hybrid"></span></span>
+            </div>
+            
+            <div class="data-row">
+                <span class="data-label">形狀</span>
+                <span class="data-value" id="disp-shape"></span>
+            </div>
+            
+            <div class="data-row">
+                <span class="data-label">鍵角</span>
+                <span class="data-value" id="disp-angle"></span>
+            </div>
+            
             <div class="data-row">
                 <span class="data-label">鍵結統計</span>
                 <span class="data-value" id="disp-bonds"></span>
+            </div>
+
+            <!-- 分子量應該獨立一行，不要包在上面的 div 裡 -->
+            <div class="data-row">
+                <span class="data-label">分子量</span>
+                <span class="data-value" id="disp-mass"></span>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// --- 1. 元素性質 ---
-    const ELEMENT_PROPS = {
-        "H": { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0 },
-        "He": { ve: 2, c3d: "#d1d5db", r3d: 10, lp: 1 },
-        
-        // Period 2
-        "Li": { ve: 1, c3d: "#CC80FF", r3d: 22, lp: 0 },
-        "Be": { ve: 2, c3d: "#94a3b8", r3d: 18, lp: 0 },
-        "B": { ve: 3, c3d: "#fbbf24", r3d: 20, lp: 0 },
-        "C": { ve: 4, c3d: "#475569", r3d: 20, lp: 0 }, 
-        
-        // --- 顏色修改區 ---
-        "N": { ve: 5, c3d: "#2563eb", r3d: 19, lp: 1 }, // 改為深寶藍
-        "O": { ve: 6, c3d: "#ef4444", r3d: 18, lp: 2 },
-        "F": { ve: 7, c3d: "#84cc16", r3d: 17, lp: 3 }, // 改為萊姆綠
-        // -----------------
+// --- 1. 元素性質 (螢光高亮發光風格) ---
+const ELEMENT_PROPS = {
+    // 基礎非金屬 (高亮度)
+    "H":  { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0, mass: 1.008 }, // 純白光
+    "He": { ve: 2, c3d: "#d1d5db", r3d: 10, lp: 1, mass: 4.002 },
+    
+    // Period 2 (鮮豔霓虹色)
+    "Li": { ve: 1, c3d: "#d946ef", r3d: 22, lp: 0, mass: 6.94 }, // 螢光紫
+    "Be": { ve: 2, c3d: "#94a3b8", r3d: 18, lp: 0, mass: 9.012 },
+    "B":  { ve: 3, c3d: "#fbbf24", r3d: 20, lp: 0, mass: 10.81 }, // 亮橘黃
+    "C":  { ve: 4, c3d: "#5D6D7E", r3d: 20, lp: 0, mass: 12.011 },// 藍灰色 (配合截圖質感)
+    "N":  { ve: 5, c3d: "#3b82f6", r3d: 19, lp: 1, mass: 14.007 },// 亮寶藍
+    "O":  { ve: 6, c3d: "#ef4444", r3d: 18, lp: 2, mass: 15.999 },// 亮紅
+    "F":  { ve: 7, c3d: "#84cc16", r3d: 17, lp: 3, mass: 18.998 },// 螢光綠
+    "Ne": { ve: 8, c3d: "#67e8f9", r3d: 16, lp: 4, mass: 20.180 },// 青光
 
-        "Ne": { ve: 8, c3d: "#b3e5fc", r3d: 16, lp: 4 },
+    // Period 3
+    "Na": { ve: 1, c3d: "#a855f7", r3d: 24, lp: 0, mass: 22.990 },
+    "Mg": { ve: 2, c3d: "#84cc16", r3d: 22, lp: 0, mass: 24.305 },
+    "Al": { ve: 3, c3d: "#cbd5e1", r3d: 24, lp: 0, mass: 26.982 },
+    "Si": { ve: 4, c3d: "#94a3b8", r3d: 24, lp: 0, mass: 28.085 },
+    "P":  { ve: 5, c3d: "#f97316", r3d: 23, lp: 0, mass: 30.974 }, // 亮橘
+    "S":  { ve: 6, c3d: "#FFFF00", r3d: 22, lp: 0, mass: 32.06 }, // 螢光黃 (截圖同款)
+    "Cl": { ve: 7, c3d: "#22c55e", r3d: 21, lp: 3, mass: 35.45 }, // 亮綠
+    "Ar": { ve: 8, c3d: "#38bdf8", r3d: 20, lp: 4, mass: 39.948 },
 
-        // Period 3
-        "Na": { ve: 1, c3d: "#AB5CF2", r3d: 24, lp: 0 },
-        "Mg": { ve: 2, c3d: "#8AFF00", r3d: 22, lp: 0 },
-        "Al": { ve: 3, c3d: "#BFA6A6", r3d: 24, lp: 0 },
-        "Si": { ve: 4, c3d: "#a3a3a3", r3d: 24, lp: 0 },
-        "P": { ve: 5, c3d: "#f97316", r3d: 23, lp: 0 }, 
-        "S": { ve: 6, c3d: "#FFFF00", r3d: 22, lp: 0 }, 
-        "Cl": { ve: 7, c3d: "#22c55e", r3d: 21, lp: 3 }, // Cl 是正綠色，F 是萊姆綠，可以區分
-        "Ar": { ve: 8, c3d: "#80d8ff", r3d: 20, lp: 4 },
+    // Period 4+
+    "K":  { ve: 1, c3d: "#8b5cf6", r3d: 26, lp: 0, mass: 39.098 },
+    "Ca": { ve: 2, c3d: "#4ade80", r3d: 26, lp: 0, mass: 40.078 },
+    "Br": { ve: 7, c3d: "#b91c1c", r3d: 25, lp: 3, mass: 79.904 }, // 深紅
+    "I":  { ve: 7, c3d: "#a855f7", r3d: 28, lp: 3, mass: 126.90 }, // 紫光
+    "Xe": { ve: 8, c3d: "#818cf8", r3d: 28, lp: 3, mass: 131.29 },
+    
+    // 金屬
+    "Mn": { ve: 7, c3d: "#d946ef", r3d: 24, lp: 0, mass: 54.938 },
+    "Cr": { ve: 6, c3d: "#64748b", r3d: 24, lp: 0, mass: 51.996 },
+    "Fe": { ve: 8, c3d: "#f97316", r3d: 24, lp: 0, mass: 55.845 },
+    "Cu": { ve: 11, c3d: "#f59e0b", r3d: 24, lp: 0, mass: 63.546 },
+    "Zn": { ve: 12, c3d: "#94a3b8", r3d: 24, lp: 0, mass: 65.38 }, 
+    "Ag": { ve: 11, c3d: "#e2e8f0", r3d: 26, lp: 0, mass: 107.87 },
+    "Au": { ve: 11, c3d: "#fbbf24", r3d: 26, lp: 0, mass: 196.97 }
+};
 
-        // Period 4+
-        "K":  { ve: 1, c3d: "#8F40D4", r3d: 26, lp: 0 },
-        "Ca": { ve: 2, c3d: "#3dff00", r3d: 26, lp: 0 },
-        "Ga": { ve: 3, c3d: "#C28F8F", r3d: 24, lp: 0 },
-        "Ge": { ve: 4, c3d: "#668f8f", r3d: 24, lp: 0 },
-        "As": { ve: 5, c3d: "#bd80e3", r3d: 24, lp: 0 },
-        "Se": { ve: 6, c3d: "#ffa100", r3d: 24, lp: 0 },
-        "Br": { ve: 7, c3d: "#7f1d1d", r3d: 25, lp: 3 },
-        "Kr": { ve: 8, c3d: "#5cb85c", r3d: 24, lp: 3 },
-        "Sn": { ve: 4, c3d: "#668080", r3d: 26, lp: 0 },
-        "Sb": { ve: 5, c3d: "#9e63b5", r3d: 26, lp: 0 },
-        "Te": { ve: 6, c3d: "#d47a00", r3d: 26, lp: 0 },
-        "I": { ve: 7, c3d: "#a855f7", r3d: 28, lp: 3 },
-        "Xe": { ve: 8, c3d: "#818cf8", r3d: 28, lp: 3 },
-        "Pb": { ve: 4, c3d: "#575961", r3d: 28, lp: 0 },
-        
-        // Transition Metals
-        "Mn": { ve: 7, c3d: "#d946ef", r3d: 24, lp: 0 },
-        "Cr": { ve: 6, c3d: "#607D8B", r3d: 24, lp: 0 },
-        "Fe": { ve: 8, c3d: "#e07a5f", r3d: 24, lp: 0 },
-        "Co": { ve: 9, c3d: "#f2cc8f", r3d: 24, lp: 0 },
-        "Ni": { ve: 10, c3d: "#81b29a", r3d: 24, lp: 0 },
-        "Cu": { ve: 11, c3d: "#e76f51", r3d: 24, lp: 0 },
-        "Zn": { ve: 12, c3d: "#7d8597", r3d: 24, lp: 0 },
-        "Pt": { ve: 10, c3d: "#d0d1d6", r3d: 26, lp: 0 },
-        "Ag": { ve: 11, c3d: "#c0c0c0", r3d: 26, lp: 0 },
-        "Au": { ve: 11, c3d: "#ffd700", r3d: 26, lp: 0 }
-    };
 
-    // --- 2. 資料庫與渲染邏輯 ---
+
+// --- 2. 資料庫與邏輯升級版 ---
     let MOLECULE_DB = {};
 
-// 自動判斷孤對電子 (v10.2 修正版：針對 P4O6/P4O10 優化)
+    // 自動判斷 LP 數量 (邏輯不變，但放在這裡整合)
     function autoAssignLonePairs(atom, bonds, allAtoms) {
-        // 1. 若有手動設定，優先使用
         if (atom.lp3d !== undefined && atom.lp3d.length > 0) return atom.lpCount || atom.lp3d.length;
         if (atom.lpCount !== undefined) return atom.lpCount;
 
-        // 2. 計算鍵結數
         const myBonds = bonds.filter(b => allAtoms[b[0]] === atom || allAtoms[b[1]] === atom);
         const bondCount = myBonds.length;
         const elem = atom.elem;
 
-        // --- 第 15 族 (N, P) ---
+        // Group 15 (N, P)
         if (['N','P','As','Sb'].includes(elem)) {
-            // P4O6 的 P 接 3 個 O -> 1 LP
-            // P4O10 的 P 接 4 個 O -> 0 LP
-            if (bondCount === 3) return 1;
-            if (bondCount === 4) return 0; 
-            if (bondCount === 2) return 1; // -N=N-
-            if (bondCount === 1) return 1; // N≡C-
+            if (bondCount === 3) return 1; // sp3 (NH3)
+            if (bondCount === 2) return 1; // sp2 (-N=)
+            if (bondCount === 1) return 1; // sp (N≡)
         }
-
-        // --- 第 16 族 (O, S) ---
+        // Group 16 (O, S)
         if (['O','S','Se','Te'].includes(elem)) {
-            // 橋接氧 (P-O-P) 接 2 鍵 -> 2 LP
-            if (bondCount === 2) return 2;
-            
-            // 末端氧 (P=O) 接 1 鍵
+            if (bondCount === 2) return 2; // sp3 (H2O)
             if (bondCount === 1) {
-                const bondType = myBonds[0][2]; // 讀取鍵結類型
-                // 雙鍵 (P=O, C=O) -> 2 LP
-                // 單鍵 (-O-) -> 3 LP
-                return (bondType === 'double') ? 2 : 3;
+                // 如果接雙鍵(如C=O)則剩2對LP(sp2)，單鍵(-OH)則剩3對(sp3)
+                const bond = myBonds[0];
+                return (bond[2] === 'double') ? 2 : 3;
             }
         }
-
-        // --- 第 17 族 (F, Cl) ---
+        // Group 17 (F, Cl...)
         if (['F','Cl','Br','I'].includes(elem)) {
-            if (bondCount === 1) return 3;
+            if (bondCount === 1) return 3; 
         }
-
+        // Xe
+        if (elem === 'Xe') {
+             if (bondCount === 2) return 3; // XeF2
+             if (bondCount === 4) return 2; // XeF4
+        }
         return 0;
     }
 
-    function generateElectronDots(atom, centerPos) {
+    // [核心升級] VSEPR 孤對電子生成器
+    function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
         const dots = [];
         let lpCount = atom.calculatedLP;
         if (lpCount <= 0 && !atom.radical) return dots;
 
-        let vx = atom.x - centerPos.x;
-        let vy = atom.y - centerPos.y;
-        let vz = atom.z - centerPos.z;
-        let dist = Math.sqrt(vx*vx + vy*vy + vz*vz);
-
-        if (dist < 2 && atom.lp3d) {
-            atom.lp3d.forEach(lpVector => {
-                let vLen = Math.sqrt(lpVector.x**2 + lpVector.y**2 + lpVector.z**2);
-                if(vLen === 0) vLen = 1;
-                const pushScale = (atom.r * 1.7) / vLen; 
-                addPairToDots(dots, atom, { x: lpVector.x * pushScale, y: lpVector.y * pushScale, z: lpVector.z * pushScale });
-            });
-            return dots;
+        // 1. 如果有手動指定的 LP 向量，優先使用 (並根據原子半徑縮放)
+        if (atom.lp3d && atom.lp3d.length > 0) {
+             const pushDist = atom.r * 1.8; // LP 離原子遠一點
+             atom.lp3d.forEach(v => {
+                 // 正規化向量
+                 const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
+                 addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
+             });
+             return dots;
         }
 
-        if (dist === 0) dist = 1; 
-        vx /= dist; vy /= dist; vz /= dist;
+        // 2. 自動計算 (基於鍵結向量)
+        // 找出所有連接到此原子的鍵結向量
+        const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
+        let bondVectors = [];
+        
+        myBonds.forEach(b => {
+            const otherIdx = (b[0] === atomIndex) ? b[1] : b[0];
+            const other = allAtoms[otherIdx];
+            // 向量: Atom -> Neighbor
+            let vx = other.x - atom.x;
+            let vy = other.y - atom.y;
+            let vz = other.z - atom.z;
+            const len = Math.sqrt(vx*vx + vy*vy + vz*vz) || 1;
+            bondVectors.push({ x: vx/len, y: vy/len, z: vz/len, style: b[2] });
+        });
 
-        let ux = 0, uy = 1, uz = 0;
-        if (Math.abs(vx) < 0.1 && Math.abs(vy) > 0.9) { ux = 1; uy = 0; uz = 0; }
-        let dot = ux*vx + uy*vy + uz*vz;
-        ux -= dot*vx; uy -= dot*vy; uz -= dot*vz;
-        let ulen = Math.sqrt(ux*ux + uy*uy + uz*uz);
-        ux/=ulen; uy/=ulen; uz/=ulen;
-        let wx = vy*uz - vz*uy; let wy = vz*ux - vx*uz; let wz = vx*uy - vy*ux; 
+        // 計算合向量 (Sum Vector) -> LP 應該在反方向
+        let sumX = 0, sumY = 0, sumZ = 0;
+        if (bondVectors.length > 0) {
+            bondVectors.forEach(v => { sumX += v.x; sumY += v.y; sumZ += v.z; });
+        } else {
+            // 單原子或者是中心原子無鍵結 (罕見)，預設朝上
+            sumX = 0; sumY = -1; sumZ = 0; 
+        }
 
-        const lpDist = atom.r * 1.5; 
+        // 反向向量 (Base direction for LPs)
+        let backX = -sumX, backY = -sumY, backZ = -sumZ;
+        let backLen = Math.sqrt(backX*backX + backY*backY + backZ*backZ);
+        if (backLen < 0.001) { backX=0; backY=1; backZ=0; backLen=1; } // 如果剛好抵銷 (如 CO2 的 C)，隨便指一個方向
+        backX /= backLen; backY /= backLen; backZ /= backLen;
 
-        for (let i = 0; i < lpCount; i++) {
-            let finalX, finalY, finalZ;
+        // 建立一組正交基底 (Basis) 用於旋轉計算
+        // u = back vector, v, w are perpendicular
+        let ux = backX, uy = backY, uz = backZ;
+        let tempX = 0, tempY = 1, tempZ = 0;
+        if (Math.abs(ux) < 0.1 && Math.abs(uz) < 0.1) { tempX=1; tempY=0; tempZ=0; } // 避免平行
+        // w = u cross temp
+        let wx = uy*tempZ - uz*tempY;
+        let wy = uz*tempX - ux*tempZ;
+        let wz = ux*tempY - uy*tempX;
+        let wLen = Math.sqrt(wx*wx + wy*wy + wz*wz);
+        wx/=wLen; wy/=wLen; wz/=wLen;
+        // v = w cross u
+        let vx = wy*uz - wz*uy;
+        let vy = wz*ux - wx*uz;
+        let vz = wx*uy - wy*ux;
+
+
+        // 3. 根據 LP 數量與雜化軌域分配位置
+        const lpDist = atom.r * 2.2; // [修改] LP 距離設為半徑的 2.2 倍 (讓它更大更遠)
+        
+        // Helper: 加到 dots
+        const pushLP = (dx, dy, dz) => {
+            addPairToDots(dots, atom, { x: dx*lpDist, y: dy*lpDist, z: dz*lpDist });
+        };
+
+        if (bondVectors.length === 1) {
+            // --- 末端原子 (Terminal) ---
+            const bondType = bondVectors[0].style;
+            
             if (lpCount === 3) {
-                const angle = (i * 120) * (Math.PI / 180); 
-                const tilt = 0.5; const spread = 0.866;
-                const px = ux * Math.cos(angle) + wx * Math.sin(angle);
-                const py = uy * Math.cos(angle) + wy * Math.sin(angle);
-                const pz = uz * Math.cos(angle) + wz * Math.sin(angle);
-                finalX = px * spread + vx * tilt;
-                finalY = py * spread + vy * tilt;
-                finalZ = pz * spread + vz * tilt;
+                // sp3 (如 -Cl, -F, -OH): Tripod shape around back vector
+                // 就像四面體的三個腳
+                const angle = 70 * (Math.PI/180); // 偏離反向軸的角度
+                const sinA = Math.sin(angle);
+                const cosA = Math.cos(angle);
+                
+                for(let i=0; i<3; i++) {
+                    const theta = i * (120 * Math.PI/180);
+                    // Rotate around u axis
+                    const px = cosA * ux + sinA * (Math.cos(theta)*vx + Math.sin(theta)*wx);
+                    const py = cosA * uy + sinA * (Math.cos(theta)*vy + Math.sin(theta)*wy);
+                    const pz = cosA * uz + sinA * (Math.cos(theta)*vz + Math.sin(theta)*wz);
+                    pushLP(px, py, pz);
+                }
             } else if (lpCount === 2) {
-                const spreadAngle = (i===0 ? 1 : -1) * 55 * (Math.PI/180); 
-                finalX = ux * Math.sin(spreadAngle) + vx * Math.cos(spreadAngle);
-                finalY = uy * Math.sin(spreadAngle) + vy * Math.cos(spreadAngle);
-                finalZ = uz * Math.sin(spreadAngle) + vz * Math.cos(spreadAngle);
-            } else {
-                finalX = vx; finalY = vy; finalZ = vz;
+                // sp2 (如 =O, =S): Planar trigonal (120度)
+                // LP 應該在平面上，與鍵結成 120 度
+                const angle = 60 * (Math.PI/180); // 偏離反向軸 60 度 (總共 120)
+                // LP1
+                pushLP(Math.cos(angle)*ux + Math.sin(angle)*vx, Math.cos(angle)*uy + Math.sin(angle)*vy, Math.cos(angle)*uz + Math.sin(angle)*vz);
+                // LP2 (反方向旋轉)
+                pushLP(Math.cos(angle)*ux - Math.sin(angle)*vx, Math.cos(angle)*uy - Math.sin(angle)*vy, Math.cos(angle)*uz - Math.sin(angle)*vz);
+            } else if (lpCount === 1) {
+                // sp (如 -N, ≡N): Linear
+                // 直接在反方向
+                pushLP(ux, uy, uz);
             }
-            let fLen = Math.sqrt(finalX*finalX + finalY*finalY + finalZ*finalZ);
-            finalX /= fLen; finalY /= fLen; finalZ /= fLen;
-            addPairToDots(dots, atom, { x: finalX*lpDist, y: finalY*lpDist, z: finalZ*lpDist });
+        } 
+        else if (bondVectors.length === 2) {
+            // --- 橋接原子 (Bridging) ---
+            // sp3 (如 H2O): 2 Bonds + 2 LPs -> Tetrahedral
+            if (lpCount === 2) {
+                // 反向向量 ux 剛好指向兩個鍵結的中間
+                // LP 應該在垂直於 bond-plane 的平面上打開
+                // 我們已經有 v (垂直於 u 和 w)
+                // 但這裡的 v 必須垂直於 bond plane。
+                // 重新計算 bond plane normal
+                let b1 = bondVectors[0], b2 = bondVectors[1];
+                let nx = b1.y*b2.z - b1.z*b2.y;
+                let ny = b1.z*b2.x - b1.x*b2.z;
+                let nz = b1.x*b2.y - b1.y*b2.x;
+                let nLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+                if (nLen > 0.001) { nx/=nLen; ny/=nLen; nz/=nLen; } 
+                else { nx=vx; ny=vy; nz=vz; } // fallback
+
+                // 兔耳狀 (Rabbit ears): 垂直於鍵結平面，左右打開
+                const tilt = 50 * (Math.PI/180); // 打開角度
+                // LP1
+                pushLP(Math.cos(tilt)*ux + Math.sin(tilt)*nx, Math.cos(tilt)*uy + Math.sin(tilt)*ny, Math.cos(tilt)*uz + Math.sin(tilt)*nz);
+                // LP2
+                pushLP(Math.cos(tilt)*ux - Math.sin(tilt)*nx, Math.cos(tilt)*uy - Math.sin(tilt)*ny, Math.cos(tilt)*uz - Math.sin(tilt)*nz);
+            }
+            else if (lpCount === 1) {
+                // sp2 (如 -N=): Planar
+                // LP 在同一平面上
+                 pushLP(ux, uy, uz);
+            }
         }
+        else {
+            // --- 其他情況 (3 bonds + 1 LP 等) ---
+            if (lpCount === 1) {
+                // sp3 pyramidal (NH3)
+                pushLP(ux, uy, uz);
+            } else {
+                // 剩下的用簡單幾何分佈
+                 pushLP(ux, uy, uz); // Fallback
+            }
+        }
+
         return dots;
     }
 
+
+
+// 輔助：產生兩個電子球 (一對)
     function addPairToDots(dotsArray, atom, vector) {
         let lx = vector.x; let ly = vector.y; let lz = vector.z;
+        
+        // 找一個垂直向量來分開兩個電子
         let ox = -ly, oy = lx, oz = 0;
         if (Math.abs(lx) < 0.1 && Math.abs(ly) < 0.1) { ox = 1; oy = 0; oz = 0; }
         let oLen = Math.sqrt(ox*ox + oy*oy + oz*oz);
-        const separation = 8.0; 
-        ox = (ox/oLen) * (separation/2); oy = (oy/oLen) * (separation/2); oz = (oz/oLen) * (separation/2);
-        dotsArray.push({ x: atom.x + lx + ox, y: atom.y + ly + oy, z: atom.z + lz + oz, isElectron: true });
+        
+        // [修改] 電子對分開距離 (Separation)
+        // 從 7.0 改為 14.0，讓它們分得更開
+        const separation = 14.0; 
+        
+        ox = (ox/oLen) * (separation/2); 
+        oy = (oy/oLen) * (separation/2); 
+        oz = (oz/oLen) * (separation/2);
+        
+        // 電子半徑維持 4.5
+        const eRadius = 4.5;
+
+        // 第一顆電子
+        dotsArray.push({ 
+            x: atom.x + lx + ox, 
+            y: atom.y + ly + oy, 
+            z: atom.z + lz + oz, 
+            isElectron: true, 
+            r: eRadius 
+        });
+
+        // 第二顆電子 (如果是自由基 radical 則不加這顆，但通常 LP 都是成對)
         if (!atom.radical) {
-            dotsArray.push({ x: atom.x + lx - ox, y: atom.y + ly - oy, z: atom.z + lz - oz, isElectron: true });
+            dotsArray.push({ 
+                x: atom.x + lx - ox, 
+                y: atom.y + ly - oy, 
+                z: atom.z + lz - oz, 
+                isElectron: true, 
+                r: eRadius 
+            });
         }
     }
+
 
     const addMol = (key, center, hybrid, shape, angle, atoms, bonds, svgElements, variants = null) => {
         const baseData = {
@@ -819,7 +965,21 @@ addMol("CH3CONH2", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-35,y
 // ========================================================================
 // 14. 多中心與環狀 (P4, S8, P4O6/10, S2Cl2, Cyclics...)
 // ========================================================================
-addMol("P4", "P", "sp³", ["正四面體 (籠狀)","Cage"], "60°", [{elem:"P",x:40,y:40,z:40},{elem:"P",x:40,y:-40,z:-40},{elem:"P",x:-40,y:40,z:-40},{elem:"P",x:-40,y:-40,z:40}], [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]);
+// P4: 正四面體
+addMol("P4", "P", "sp³", ["正四面體 (籠狀)","Tetrahedral Cage"], "60°", [{elem:"P",x:50,y:50,z:50}, {elem:"P",x:50,y:-50,z:-50}, {elem:"P",x:-50,y:50,z:-50}, {elem:"P",x:-50,y:-50,z:50}], [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]);
+
+// P4O6: 橋接氧向外推 (85)，形成彎曲結構 (sp3)
+addMol("P4O6", "P", "sp³", ["籠狀 (類金剛烷)","Cage"], "100°", [
+    {elem:"P",x:55,y:55,z:55}, {elem:"P",x:55,y:-55,z:-55}, {elem:"P",x:-55,y:55,z:-55}, {elem:"P",x:-55,y:-55,z:55}, 
+    {elem:"O",x:85,y:0,z:0}, {elem:"O",x:-85,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"O",x:0,y:-85,z:0}, {elem:"O",x:0,y:0,z:85}, {elem:"O",x:0,y:0,z:-85}
+], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8]]);
+
+// P4O10: 橋接氧向外推 (85)，末端氧更向外 (95)
+addMol("P4O10", "P", "sp³", ["籠狀","Cage"], "102°/123°", [
+    {elem:"P",x:55,y:55,z:55}, {elem:"P",x:55,y:-55,z:-55}, {elem:"P",x:-55,y:55,z:-55}, {elem:"P",x:-55,y:-55,z:55}, 
+    {elem:"O",x:85,y:0,z:0}, {elem:"O",x:-85,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"O",x:0,y:-85,z:0}, {elem:"O",x:0,y:0,z:85}, {elem:"O",x:0,y:0,z:-85}, 
+    {elem:"O",x:95,y:95,z:95}, {elem:"O",x:95,y:-95,z:-95}, {elem:"O",x:-95,y:95,z:-95}, {elem:"O",x:-95,y:-95,z:95}
+], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8], [0,10,"double"], [1,11,"double"], [2,12,"double"], [3,13,"double"]]);
 
 addMol("S8", "S", "sp³", ["皇冠型 (環狀)","Crown Ring"], "108°", [{elem:"S",x:60,y:20,z:0},{elem:"S",x:42,y:-20,z:42},{elem:"S",x:0,y:20,z:60},{elem:"S",x:-42,y:-20,z:42},{elem:"S",x:-60,y:20,z:0},{elem:"S",x:-42,y:-20,z:-42},{elem:"S",x:0,y:20,z:-60},{elem:"S",x:42,y:-20,z:-42}], [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]]);
 
@@ -829,14 +989,6 @@ addMol("H2S2", "S", "sp³", ["書本型","Open Book"], "92°", [{elem:"S",x:-15,
 
 addMol("S2Cl2", "S", "sp³", ["書本型","Open Book"], "103°", [{elem:"S",x:0,y:25,z:0},{elem:"S",x:0,y:-25,z:0},{elem:"Cl",x:60,y:55,z:45},{elem:"Cl",x:-60,y:-55,z:45}], [[0,1],[0,2],[1,3]]);
 
-// ========================================================================
-// 磷的同素異形體與氧化物 (P4, P4O6, P4O10) - 結構拉寬版
-// ========================================================================
-addMol("P4", "P", "sp³", ["正四面體 (籠狀)","Tetrahedral Cage"], "60°", [{elem:"P",x:50,y:50,z:50}, {elem:"P",x:50,y:-50,z:-50}, {elem:"P",x:-50,y:50,z:-50}, {elem:"P",x:-50,y:-50,z:50}], [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]);
-
-addMol("P4O6", "P", "sp³", ["籠狀 (類金剛烷)","Cage"], "100°", [{elem:"P",x:65,y:65,z:65}, {elem:"P",x:65,y:-65,z:-65}, {elem:"P",x:-65,y:65,z:-65}, {elem:"P",x:-65,y:-65,z:65}, {elem:"O",x:65,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:0,y:-65,z:0}, {elem:"O",x:0,y:0,z:65}, {elem:"O",x:0,y:0,z:-65}], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8]]);
-
-addMol("P4O10", "P", "sp³", ["籠狀","Cage"], "102°/123°", [{elem:"P",x:55,y:55,z:55}, {elem:"P",x:55,y:-55,z:-55}, {elem:"P",x:-55,y:55,z:-55}, {elem:"P",x:-55,y:-55,z:55}, {elem:"O",x:55,y:0,z:0}, {elem:"O",x:-55,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:0,y:-55,z:0}, {elem:"O",x:0,y:0,z:55}, {elem:"O",x:0,y:0,z:-55}, {elem:"O",x:90,y:90,z:90}, {elem:"O",x:90,y:-90,z:-90}, {elem:"O",x:-90,y:90,z:-90}, {elem:"O",x:-90,y:-90,z:90}], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8], [0,10,"double"], [1,11,"double"], [2,12,"double"], [3,13,"double"]]);
 addMol("N2O3", "N", "sp²+sp²", ["平面","Planar"], "120°", [{elem:"N",x:-30,y:0,z:0},{elem:"N",x:30,y:0,z:0},{elem:"O",x:-60,y:40,z:0},{elem:"O",x:60,y:40,z:0},{elem:"O",x:60,y:-40,z:0}], [[0,1],[0,2,"double"],[1,3,"double"],[1,4]]);
 
 addMol("N2O4", "N", "sp²", ["平面","Planar"], "120°", [{elem:"N",x:-35,y:0,z:0,lpCount:0},{elem:"N",x:35,y:0,z:0,lpCount:0},{elem:"O",x:-70,y:50,z:0},{elem:"O",x:-70,y:-50,z:0},{elem:"O",x:70,y:50,z:0},{elem:"O",x:70,y:-50,z:0}], [[0,1],[0,2,"double"],[0,3],[1,4,"double"],[1,5]]);
@@ -1160,10 +1312,30 @@ function loadMolecule(key, variantKey = null) {
             document.getElementById("disp-shape").textContent = data.shape;
             document.getElementById("disp-angle").textContent = data.angle;
             
+// --- 更新鍵結統計 UI ---
             const bondDisp = document.getElementById("disp-bonds");
             if(bondDisp) {
                 bondDisp.innerHTML = `&sigma;: ${sigma}, &nbsp; &pi;: ${pi}, &nbsp; LP: ${totalLP}`;
             }
+
+            // --- 新增：計算並更新分子量 ---
+            let totalMass = 0;
+            if (data.atomsRaw) {
+                data.atomsRaw.forEach(a => {
+                    const props = ELEMENT_PROPS[a.elem];
+                    // 確保該元素有定義且有原子量數據
+                    if (props && props.mass) {
+                        totalMass += props.mass;
+                    }
+                });
+            }
+            
+            const massDisp = document.getElementById("disp-mass");
+            if (massDisp) {
+                // 取小數點後兩位，若計算為0則顯示 N/A
+                massDisp.textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
+            }
+            // --------------------------------
 
             document.getElementById("viewport-subtitle").textContent = `${key} - ${data.shape}`;
             updateVariantUI(key, variantKey);
@@ -1174,31 +1346,46 @@ function loadMolecule(key, variantKey = null) {
     }
 
 
+
+
+
     
-    function processAtomsData(atomList, bondList, centerElem) {
+    // 更新資料處理 (傳入 allAtoms 和 bonds)
+function processAtomsData(atomList, bondList, centerElem) {
         let processed = [];
         let cx=0, cy=0, cz=0;
         if(atomList.length > 0) {
             atomList.forEach(a => { cx+=a.x; cy+=a.y; cz+=a.z; });
             cx /= atomList.length; cy /= atomList.length; cz /= atomList.length;
         }
-        const centerPos = {x:cx, y:cy, z:cz};
 
-        atomList.forEach(a => {
+        // 先把所有原子轉成物件
+        const atomObjects = atomList.map(a => {
             const props = ELEMENT_PROPS[a.elem] || { c3d: "#ccc", r3d: 20 };
-            const calcLP = autoAssignLonePairs(a, bondList, atomList);
-            const atomObj = { ...a, color: props.c3d, r: props.r3d, type: 'atom', calculatedLP: calcLP };
+            return { ...a, color: props.c3d, r: props.r3d, type: 'atom' };
+        });
+
+        // 計算 LP 並生成電子點
+        atomObjects.forEach((atomObj, idx) => {
+            // 1. 計算 LP 數量
+            const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
+            atomObj.calculatedLP = calcLP;
             processed.push(atomObj);
-            
-            if(props) {
-                const electronDots = generateElectronDots(atomObj, centerPos);
+
+            // 2. 生成電子點
+            if (ELEMENT_PROPS[atomObj.elem]) { 
+                const electronDots = generateElectronDots(atomObj, idx, atomObjects, bondList);
                 electronDots.forEach(dot => {
-                    processed.push({ ...dot, color: "#ffffff", r: 3.0, type: 'electron' });
+                    // [這裡修改] 將原本的 #fbbf24 改為 #ffffff
+                    processed.push({ ...dot, color: "#ffffff", type: 'electron' }); 
                 });
             }
         });
         return processed;
     }
+
+
+
 
     function updateVariantUI(key, activeVariant) {
         const rootData = MOLECULE_DB[key];
@@ -1229,10 +1416,40 @@ function loadMolecule(key, variantKey = null) {
         return { x: x1 * s + panX, y: y2 * s + panY, z: z2, scale: s };
     }
 
-    function renderScene() {
+
+
+// --- 繪圖核心邏輯 (霓虹發光風格 v11.0) ---
+
+function renderScene() {
         sceneRoot.innerHTML = "";
         if(!currentMolecule) return;
         
+        // 1. 建立 SVG 定義區 (Defs)
+        const defs = createSVG("defs");
+        
+        // (A) 實體微柔邊 (Core Soften) - 用於原子本體
+        // 模仿太陽邊緣：不是銳利切線，但也絕不模糊
+        const coreFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        coreFilter.setAttribute("id", "core-soften");
+        coreFilter.setAttribute("x", "-50%"); coreFilter.setAttribute("y", "-50%");
+        coreFilter.setAttribute("width", "200%"); coreFilter.setAttribute("height", "200%");
+        // stdDeviation="0.5" 只有極輕微的柔化，保持實體感
+        coreFilter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />';
+        defs.appendChild(coreFilter);
+
+        // (B) 強力光暈 (Strong Glow) - 用於原子和 LP 的外發光
+        // [關鍵修正] 擴大濾鏡範圍，解決"方形光暈"問題
+        const glowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        glowFilter.setAttribute("id", "strong-glow");
+        glowFilter.setAttribute("x", "-200%"); glowFilter.setAttribute("y", "-200%");
+        glowFilter.setAttribute("width", "500%"); glowFilter.setAttribute("height", "500%");
+        // stdDeviation="5" 足夠的擴散，製造氣場
+        glowFilter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="5" />';
+        defs.appendChild(glowFilter);
+
+        sceneRoot.appendChild(defs);
+
+        // ... (以下 renderList 邏輯完全不用動，保持原樣) ...
         const showLPs = document.getElementById('toggle-lp').checked;
         const renderList = [];
         
@@ -1243,7 +1460,7 @@ function loadMolecule(key, variantKey = null) {
 
         const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
-        currentMolecule.bonds3D.forEach(bond => {
+        currentMolecule.bonds3D.forEach((bond, index) => { 
             const a1 = atomProjections[bond[0]];
             const a2 = atomProjections[bond[1]];
             if (!a1 || !a2) return;
@@ -1261,14 +1478,15 @@ function loadMolecule(key, variantKey = null) {
                 
                 renderList.push({
                     type: "bond", z: (a1.pz+a2.pz)/2, x1, y1, x2, y2, 
-                    style: bond[2]||"single", scale: (a1.scale+a2.scale)/2
+                    style: bond[2]||"single", scale: (a1.scale+a2.scale)/2,
+                    c1: a1.color, c2: a2.color, bondIdx: index
                 });
             }
         });
 
         projectedObjects.forEach(obj => {
             if (obj.type === 'electron' && !showLPs) return;
-            renderList.push({ ...obj, z: obj.pz });
+            if (obj.type !== 'bond') renderList.push({ ...obj, z: obj.pz });
         });
 
         renderList.sort((a,b) => a.z - b.z).forEach(obj => {
@@ -1278,57 +1496,148 @@ function loadMolecule(key, variantKey = null) {
         });
     }
 
+
+
     function drawBond(b) {
         const g = createSVG("g");
-        const color = "#94a3b8";
-        const w = 4 * b.scale; 
+        // 如果是純白(H)，鍵結稍微灰一點以免太亮
+        let c1 = b.c1 === "#FFFFFF" ? "#cbd5e1" : b.c1;
+        let c2 = b.c2 === "#FFFFFF" ? "#cbd5e1" : b.c2;
+        
+        const gradId = `bond-grad-${b.bondIdx}`;
+        let defs = sceneRoot.querySelector("defs");
+        
+        // 建立漸層
+        const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+        grad.setAttribute("id", gradId);
+        grad.setAttribute("gradientUnits", "userSpaceOnUse");
+        grad.setAttribute("x1", b.x1); grad.setAttribute("y1", b.y1);
+        grad.setAttribute("x2", b.x2); grad.setAttribute("y2", b.y2);
+        
+        // 使用螢光色漸層，讓鍵結也稍微發光
+        grad.innerHTML = `<stop offset="0%" stop-color="${c1}"/><stop offset="40%" stop-color="${c1}"/><stop offset="60%" stop-color="${c2}"/><stop offset="100%" stop-color="${c2}"/>`; 
+        defs.appendChild(grad);
+
+        const strokeUrl = `url(#${gradId})`;
+        const w = 8 * b.scale; 
+
+        // 畫線 helper
+        const drawLine = (ox, oy, width, color, opacity=1, filter="") => {
+            const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            el.setAttribute("x1", b.x1+ox); el.setAttribute("y1", b.y1+oy); 
+            el.setAttribute("x2", b.x2+ox); el.setAttribute("y2", b.y2+oy); 
+            el.setAttribute("stroke", color); 
+            el.setAttribute("stroke-width", width); 
+            el.setAttribute("stroke-linecap", "round");
+            if(opacity < 1) el.setAttribute("opacity", opacity);
+            if(filter) el.setAttribute("filter", filter);
+            return el;
+        };
+        const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
+        const nx = -dy/len, ny = dx/len;
+
+        // 加一層發光底層 (Glow behind bond)
+        g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, "url(#soft-blur)"));
+
         if (b.style === "double") {
-            const off = w * 1.2; const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy); const nx = -dy/len * off, ny = dx/len * off;
-            g.appendChild(createLine(b.x1+nx, b.y1+ny, b.x2+nx, b.y2+ny, w, color)); g.appendChild(createLine(b.x1-nx, b.y1-ny, b.x2-nx, b.y2-ny, w, color));
+            const off = w * 0.55; const subW = w * 0.45;
+            g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl));
+            g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
+            // 高光
+            g.appendChild(drawLine(nx*off, ny*off, subW*0.3, "#fff", 0.5));
+            g.appendChild(drawLine(-nx*off, -ny*off, subW*0.3, "#fff", 0.5));
         } else if (b.style === "triple") {
-            const off = w * 1.8; const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy); const nx = -dy/len * off, ny = dx/len * off;
-            g.appendChild(createLine(b.x1+nx, b.y1+ny, b.x2+nx, b.y2+ny, w*0.8, color)); g.appendChild(createLine(b.x1, b.y1, b.x2, b.y2, w, color)); g.appendChild(createLine(b.x1-nx, b.y1-ny, b.x2-nx, b.y2-ny, w*0.8, color));
+            const off = w * 0.75; const subW = w * 0.35;
+            g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl));
+            g.appendChild(drawLine(0, 0, subW*1.1, strokeUrl));
+            g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
         } else {
-            g.appendChild(createLine(b.x1, b.y1, b.x2, b.y2, w, color));
+            // 單鍵
+            g.appendChild(drawLine(0, 0, w, strokeUrl));
+            // 高光 (讓它像玻璃管)
+            g.appendChild(drawLine(nx*w*0.2, ny*w*0.2, w*0.3, "#ffffff", 0.4));
         }
         sceneRoot.appendChild(g);
     }
-    
-    function createLine(x1, y1, x2, y2, w, c) {
-        const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        el.setAttribute("x1", x1); el.setAttribute("y1", y1); el.setAttribute("x2", x2); el.setAttribute("y2", y2); el.setAttribute("stroke", c); el.setAttribute("stroke-width", w); el.setAttribute("stroke-linecap", "round");
-        return el;
-    }
 
-    function drawElectron(e) {
-        const c = createSVG("circle");
-        c.setAttribute("cx", e.px); c.setAttribute("cy", e.py);
-        c.setAttribute("r", e.r * e.scale);
-        c.setAttribute("fill", "#ffffff");
-        c.setAttribute("opacity", "0.9");
-        sceneRoot.appendChild(c);
-    }
-
-    function drawAtom(a) {
+function drawAtom(a) {
         const g = createSVG("g");
-        const shadow = createSVG("circle");
-        shadow.setAttribute("cx", a.px); shadow.setAttribute("cy", a.py); 
-        shadow.setAttribute("r", a.r * a.scale * 1.3);
-        shadow.setAttribute("fill", a.color); shadow.setAttribute("opacity", "0.5"); shadow.setAttribute("filter", "url(#blur-filter)");
-        g.appendChild(shadow);
-
-        const c1 = createSVG("circle");
-        c1.setAttribute("cx", a.px); c1.setAttribute("cy", a.py); c1.setAttribute("r", a.r*a.scale); c1.setAttribute("fill", a.color);
-        g.appendChild(c1);
         
+        // H 顏色修正
+        const displayColor = (a.elem === "H" && a.color === "#FFFFFF") ? "#FFFFFF" : a.color;
+
+        // 1. 光暈層 (Corona) - 使用與原子完全一樣的顏色
+        const glow = createSVG("circle");
+        glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+        glow.setAttribute("r", a.r * a.scale * 1.4); 
+        glow.setAttribute("fill", displayColor); 
+        glow.setAttribute("opacity", "0.15"); // 維持暗淡
+        glow.setAttribute("filter", "url(#strong-glow)"); 
+        g.appendChild(glow);
+
+        // 2. 實體層 (Body) - 純色核心
+        const circle = createSVG("circle");
+        circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); 
+        circle.setAttribute("r", a.r * a.scale); 
+        circle.setAttribute("fill", displayColor);
+        circle.setAttribute("opacity", "1"); 
+        // 確保無邊框、無額外濾鏡干擾顏色
+        circle.setAttribute("filter", "url(#core-soften)"); 
+        g.appendChild(circle);
+        
+        // [已刪除] 內部亮點 (Inner Flare) - 移除這層，確保顏色一致
+
+        // 3. 文字標籤
         const txt = createSVG("text");
-        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py + a.r*0.1*a.scale); txt.setAttribute("font-size", a.r*0.8*a.scale); txt.setAttribute("class", "atom-label-text"); txt.textContent = a.elem;
-        if (a.elem === "C") txt.setAttribute("fill", "#ffffff"); 
+        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); 
+        txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+        txt.setAttribute("class", "atom-label-text"); 
+        txt.textContent = a.elem;
+        
+        if (a.elem === "H") {
+            txt.style.fill = "#000000"; 
+            txt.style.fontWeight = "900";
+            txt.style.textShadow = "none";
+        } else {
+            txt.style.fill = "#ffffff";
+            txt.style.textShadow = "0 0 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.8)";
+        }
+        
         g.appendChild(txt);
         sceneRoot.appendChild(g);
     }
 
+
+
+function drawElectron(e) {
+        const g = createSVG("g");
+        const r = e.r * e.scale * 0.9;
+
+        // 1. 光暈層 (Glow) - 解決方形問題，並讓它有氛圍
+        const halo = createSVG("circle");
+        halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
+        halo.setAttribute("r", r * 2.0); // 光暈大一點
+        halo.setAttribute("fill", "#ffffff");
+        halo.setAttribute("opacity", "0.3");
+        halo.setAttribute("filter", "url(#strong-glow)"); // 使用修正過的大範圍濾鏡
+        g.appendChild(halo);
+
+        // 2. 實體層 (Core) - 絕對清晰，方便計算
+        const c = createSVG("circle");
+        c.setAttribute("cx", e.px); c.setAttribute("cy", e.py);
+        c.setAttribute("r", r);
+        c.setAttribute("fill", "#ffffff"); // 純白
+        c.setAttribute("opacity", "1");    // 不透明
+        // 不使用任何模糊濾鏡，確保邊緣銳利
+        
+        g.appendChild(c);
+        sceneRoot.appendChild(g);
+    }
+
+    
     function createSVG(type) { return document.createElementNS("http://www.w3.org/2000/svg", type); }
+
+
 
     function animate() {
         if (!isDragging) { rotation.x += 0.003; rotation.y += 0.003; }
