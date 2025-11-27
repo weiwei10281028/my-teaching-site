@@ -176,29 +176,33 @@
             border-bottom: none;
         }
 
-        /* 2. 面板動畫：改用 Transform (GPU加速，解決下滑卡頓) */
+/* 2. 面板動畫設定 */
         .controls-area {
             width: 100%; 
-            height: 50vh; /* 面板展開時佔螢幕一半 */
+            height: 50vh; /* 面板高度佔螢幕一半 */
             position: absolute; bottom: 0; left: 0;
             
             border-left: none; 
-            border-top: 1px solid var(--panel-border);
+            border-top: 1px solid rgba(255,255,255,0.2);
             border-radius: 20px 20px 0 0;
             
-            background-color: rgba(15, 23, 42, 0.95); /* 深色背景，防止透視干擾 */
+            background-color: rgba(15, 23, 42, 0.98); /* 加深背景，避免看不清楚 */
             z-index: 100;
             
-            /* 關鍵：用 transform 做動畫，不再用 height */
+            /* 預設狀態：位置在 0 (展開) */
             transform: translateY(0);
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); /* 絲滑的彈性曲線 */
-            will-change: transform; /* 效能優化 */
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* 物理彈性效果 */
+            will-change: transform;
+            
+            /* 增加陰影讓層次更明顯 */
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
         }
 
-        /* 收折狀態：往下位移，只露出把手 (50px) */
+        /* 收折狀態：往下位移，只露出最上面 40px (把手區域) */
         .controls-area.minimized {
-            transform: translateY(calc(100% - 50px)); 
+            transform: translateY(calc(100% - 40px)); 
         }
+
         
         /* 隱藏收折時的內容，避免誤觸並讓視覺更乾淨 */
         .controls-area.minimized .card, 
@@ -1187,75 +1191,86 @@ addMol("Acetanilide", "C", "sp²", ["平面/苯環","Planar"], "120°",
     const modeToggleBtn = document.getElementById("mode-toggle");
     const variantSelector = document.getElementById("variant-selector");
 
-    // --- 手機面板控制邏輯 (點擊 + 平滑拖曳) ---
+// --- 手機面板控制邏輯 (極致滑順版) ---
     const panel = document.getElementById('controls-panel');
     const handle = document.getElementById('mobile-panel-handle');
-    let panelStartY = 0;
-    let isPanelDragging = false;
+    
+    let startY = 0;       // 手指按下的初始位置
+    let currentY = 0;     // 手指當前位置
+    let isDraggingPanel = false; // 是否正在拖曳面板
 
-    // 1. 點擊切換
+    // 1. 點擊切換 (保留點擊功能，作為備用)
     function toggleMobilePanel() {
         if(panel) panel.classList.toggle('minimized');
     }
 
     // 2. 滑動拖曳邏輯
     if(handle && panel) {
+        // 手指按下
         handle.addEventListener('touchstart', (e) => {
-            isPanelDragging = true;
-            panelStartY = e.touches[0].clientY;
-            // 移除過渡動畫，讓拖曳跟手
+            isDraggingPanel = true;
+            startY = e.touches[0].clientY;
+            // 拖曳時暫時移除過渡動畫，讓反應最即時
             panel.style.transition = 'none';
         }, {passive: true});
 
+        // 手指移動
         handle.addEventListener('touchmove', (e) => {
-            if (!isPanelDragging) return;
-            const currentY = e.touches[0].clientY;
-            const deltaY = currentY - panelStartY;
+            if (!isDraggingPanel) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY; // 移動距離 (正數=往下, 負數=往上)
             const isClosed = panel.classList.contains('minimized');
+            const panelH = panel.offsetHeight;
             
-            // 計算面板的高度 (扣除把手高度)
-            const panelHeight = panel.offsetHeight; 
-            
+            // 限制拖曳行為
             if (!isClosed) {
-                // --- 狀態：展開中 ---
-                // 只能往下滑 (deltaY > 0)
+                // [展開狀態]：只能往下滑 (deltaY > 0)
                 if (deltaY > 0) {
                     panel.style.transform = `translateY(${deltaY}px)`;
                 }
             } else {
-                // --- 狀態：收起中 ---
-                // 只能往上滑 (deltaY < 0)
-                // 收起狀態的基礎位移量
-                const baseOffset = panelHeight - 50; 
-                if (deltaY < 0) {
-                    panel.style.transform = `translateY(${baseOffset + deltaY}px)`;
-                }
+                // [收起狀態]：只能往上滑 (deltaY < 0)
+                // 收起時的基礎偏移量是 (height - 40px)
+                const baseOffset = panelH - 40; 
+                // 往上滑動時，實際位置 = 基礎偏移 + 負的移動量
+                panel.style.transform = `translateY(${baseOffset + deltaY}px)`;
             }
         }, {passive: true});
 
+        // 手指放開
         handle.addEventListener('touchend', (e) => {
-            isPanelDragging = false;
-            // 恢復 CSS 動畫，讓它彈回去
-            panel.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            panel.style.transform = ''; // 清除 inline style，回歸 class 控制
+            isDraggingPanel = false;
+            // 恢復彈性動畫
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            panel.style.transform = ''; // 清除 inline style，讓 class 接手
 
-            const endY = e.changedTouches[0].clientY;
-            const deltaY = endY - panelStartY;
-            const threshold = 50; // 滑動超過 50px 就觸發切換
+            const deltaY = currentY - startY;
+            const threshold = 60; // 滑動超過 60px 就觸發
+
+            // 如果根本沒動 (或是點擊)，視為切換
+            if (Math.abs(deltaY) < 5) {
+                // toggleMobilePanel(); // 如果不想點擊觸發，就把這行註解掉
+                return;
+            }
 
             if (!panel.classList.contains('minimized')) {
-                // 如果原本是展開的，且往下滑超過閾值 -> 收起
+                // [展開狀態] 往下滑動超過閾值 -> 收起
                 if (deltaY > threshold) {
                     panel.classList.add('minimized');
                 }
             } else {
-                // 如果原本是收起的，且往上滑超過閾值 -> 展開
+                // [收起狀態] 往上滑動超過閾值 -> 展開
                 if (deltaY < -threshold) {
                     panel.classList.remove('minimized');
                 }
             }
         });
     }
+
+
+
+
+
     // ------------------------------------------
 
     function toggleMode() {
