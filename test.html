@@ -214,6 +214,18 @@
                 </div>
             </div>
 
+<!-- ▼▼▼ 請插入這段新的 Card (反應演示區) ▼▼▼ -->
+            <div class="card" style="border-color: var(--accent-purple);">
+                <div class="card-title" style="color: var(--accent-purple);">🧪 化學反應模擬</div>
+                <div style="font-size: 0.9rem; margin-bottom: 10px; color: #ddd;">
+                    任務：將 <b>H₂O</b> 拖曳至 <b>C₂H₄</b> 中心以觸發反應。
+                </div>
+                <button class="control-button" style="width:100%; border-color:var(--accent-purple); color:var(--accent-purple);" onclick="startReactionDemo()">
+                    啟動：乙烯水合反應
+                </button>
+            </div>
+
+
             <div class="switch-container">
                 <input type="checkbox" id="toggle-lp" checked="" onchange="renderScene()">
                 <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
@@ -282,6 +294,52 @@ const ELEMENT_PROPS = {
 };
 
 let MOLECULE_DB = {};
+
+// --- 反應模擬邏輯 ---
+function startReactionDemo() {
+    // 1. 載入主分子 (乙烯)
+    loadMolecule("C2H4");
+    
+    // 2. 準備副分子 (水) - 手動建構簡單資料
+    // 注意：這裡直接調用 processAtomsData 來生成 3D 物件
+    const waterData = MOLECULE_DB["H2O"];
+    if(waterData) {
+        reactionPartner = {
+            ...waterData,
+            renderObjects: processAtomsData(waterData.atomsRaw, waterData.bondsRaw, "O")
+        };
+    }
+    
+    // 3. 設定初始狀態
+    isReactionMode = true;
+    partnerOffset = { x: 100, y: -120, z: 50 }; // 水分子初始位置 (右下角)
+    
+    // 4. UI 提示
+    document.getElementById("viewport-subtitle").textContent = "反應模式：拖曳 H2O 靠近 C2H4";
+    // 強制切換到複合模式以便操作
+    currentMode = 2; 
+    document.getElementById("mode-toggle").innerHTML = `模式: **複合**`;
+}
+
+function checkReactionDistance() {
+    // 計算距離 (簡單的 2D 螢幕平面距離估算)
+    // 這裡我們假設主分子在中心 (0,0)，只需檢查 partnerOffset 的大小
+    const dist = Math.sqrt(partnerOffset.x * partnerOffset.x + partnerOffset.y * partnerOffset.y);
+    
+    // 閾值：距離小於 40 單位
+    if (dist < 40) {
+        // 觸發反應！
+        isReactionMode = false;
+        reactionPartner = null;
+        
+        // 播放震動 (如果手機支援)
+        if (navigator.vibrate) navigator.vibrate(50);
+        
+        // 載入產物 (乙醇)
+        loadMolecule("C2H5OH");
+        document.getElementById("viewport-subtitle").textContent = "反應完成！生成乙醇 (Ethanol)";
+    }
+}
 
 // 孤對電子與幾何邏輯
 function autoAssignLonePairs(atom, bonds, allAtoms) {
@@ -764,6 +822,9 @@ const CHINESE_ALIAS = {
 };
 
 let currentMolecule = null;
+let isReactionMode = false;
+let reactionPartner = null; // 儲存第二個分子 (如 H2O)
+let partnerOffset = { x: 80, y: -80, z: 0 }; // 第二個分子的位置
 let rotation = { x: 0.5, y: 0.5, z: 0 }; 
 let panOffset = { x: 0, y: 0 }; 
 let scale = 1.6; 
@@ -980,7 +1041,77 @@ function renderScene() {
 
     const showLPs = document.getElementById('toggle-lp').checked;
     const renderList = [];
-    
+ 
+// 定義一個內部函式來處理投影，避免代碼重複
+    const pushProjectedObjects = (mol, offsetX, offsetY, offsetZ) => {
+        mol.renderObjects.map((obj, i) => {
+            // 將物件本身的座標 + 該分子的偏移量
+            const tempObj = { ...obj, x: obj.x + offsetX, y: obj.y + offsetY, z: obj.z + offsetZ };
+            const p = project(tempObj, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+            
+            // 只有 atom 和 bond 需要放入 renderList
+            if (obj.type === 'electron' && !showLPs) return;
+            renderList.push({ ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, z: p.z });
+        });
+
+        // 處理鍵結 (Bond)
+        if (mol.bonds3D) {
+            mol.bonds3D.forEach((bond, index) => {
+                // 這裡需要重新找到投影後的原子座標，稍微複雜一點，為了效能我們先簡化
+                // 在此架構下，直接重算鍵結兩端比較快
+                const a1 = mol.renderObjects[bond[0]];
+                const a2 = mol.renderObjects[bond[1]];
+                
+                // 暫存位置
+                const t1 = {x:a1.x+offsetX, y:a1.y+offsetY, z:a1.z+offsetZ};
+                const t2 = {x:a2.x+offsetX, y:a2.y+offsetY, z:a2.z+offsetZ};
+                
+                const p1 = project(t1, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+                const p2 = project(t2, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+
+                renderList.push({
+                    type: "bond", z: (p1.z+p2.z)/2, 
+                    x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+                    style: bond[2]||"single", scale: (p1.scale+p2.scale)/2,
+                    c1: a1.color, c2: a2.color, bondIdx: index
+                });
+            });
+        }
+    };
+
+    // 1. 處理主分子 (位於中心 0,0,0)
+    pushProjectedObjects(currentMolecule, 0, 0, 0);
+
+    // 2. 處理反應夥伴 (如果有)
+    if (isReactionMode && reactionPartner) {
+        pushProjectedObjects(reactionPartner, partnerOffset.x, partnerOffset.y, partnerOffset.z);
+        
+        // [視覺特效] 畫一條連接兩者的虛線 (提示反應路徑)
+        // 簡單取主分子中心(平移後) 與 副分子中心(平移後)
+        const centerMain = project({x:0,y:0,z:0}, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+        const centerPartner = project(partnerOffset, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+        
+        const line = createSVG("line");
+        line.setAttribute("x1", centerMain.x); line.setAttribute("y1", centerMain.y);
+        line.setAttribute("x2", centerPartner.x); line.setAttribute("y2", centerPartner.y);
+        line.setAttribute("stroke", "#4ade80"); // 螢光綠
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("stroke-dasharray", "5,5"); // 虛線
+        line.setAttribute("opacity", "0.6");
+        sceneRoot.appendChild(line);
+    }
+
+    // 排序並繪製 (這部分其實原本的代碼也有，但因為我們上面已經重寫了 push 邏輯，
+    // 所以這裡只要單純 sort 和 draw 即可，不需要再 map 一次)
+    renderList.sort((a,b) => a.z - b.z).forEach(obj => {
+        if (obj.type === "bond") drawBond(obj);
+        else if (obj.type === "atom") drawAtom(obj);
+        else if (obj.type === "electron") drawElectron(obj);
+    });
+
+    // 為了避免重複代碼，我們讓函式在這裡結束，請刪除原本下方的 renderList 處理邏輯
+    return; 
+   
     const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
         const p = project(obj, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
         return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
@@ -1171,8 +1302,16 @@ function setupInteractions() {
         if(e.touches.length === 1) {
             const dx = e.touches[0].clientX - lastMouse.x;
             const dy = e.touches[0].clientY - lastMouse.y;
-            rotation.y += dx * ROT_SPEED; 
-            rotation.x -= dy * ROT_SPEED;
+            if (isReactionMode && reactionPartner) {
+                // [反應模式] 拖曳水分子位置
+                partnerOffset.x += dx / scale;
+                partnerOffset.y += dy / scale;
+                checkReactionDistance(); // 檢查是否夠近觸發反應
+            } else {
+                // [一般模式] 旋轉 3D 視角 (原本的功能移到這裡)
+                rotation.y += dx * ROT_SPEED; 
+                rotation.x -= dy * ROT_SPEED;
+            }
             lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.touches.length === 2) {
             const t1 = e.touches[0], t2 = e.touches[1];
@@ -1283,4 +1422,3 @@ function setupMobilePanel() {
 </script>
 </body>
 </html>
-
