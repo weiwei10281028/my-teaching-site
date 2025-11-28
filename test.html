@@ -41,11 +41,13 @@
         background-size: 60px 60px; 
         background-position: center center;
         overflow: hidden; cursor: grab;
-        /* 禁止瀏覽器預設手勢 */
+        
+        /* [修改] 強制 GPU 加速與手勢優化 */
         touch-action: none; 
         -webkit-user-select: none;
-    }
-    .viewport-area:active { cursor: grabbing; } 
+        will-change: transform; /* 告訴瀏覽器這塊會動 */
+        transform: translateZ(0); /* 啟用硬體加速 */
+    } 
 
     .viewport-header h1 {
         margin: 0; font-size: 1.5rem; letter-spacing: 1px;
@@ -144,10 +146,10 @@
             z-index: 100;
             box-shadow: 0 -5px 30px rgba(0,0,0,0.9);
             
-            /* 預設: 展開 */
+            /* [修改] 加入 will-change 讓滑動不掉幀 */
             transform: translateY(0); 
             transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
-            will-change: transform;
+            will-change: transform; 
         }
 
         #mobile-panel-handle {
@@ -243,6 +245,9 @@
 // ==========================================
 // 1. 系統初始化 (必須先定義好)
 // ==========================================
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+
 const ELEMENT_PROPS = {
     "H":  { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0, mass: 1.008 }, 
     "He": { ve: 2, c3d: "#d1d5db", r3d: 10, lp: 1, mass: 4.002 },
@@ -1048,7 +1053,9 @@ function drawBond(b) {
     const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
     const nx = -dy/len, ny = dx/len;
 
-    g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, "url(#soft-glow)"));
+    if (!isMobile) {
+        g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, "url(#soft-glow)"));
+    }
     if (b.style === "double") {
         const off = w * 0.55; const subW = w * 0.45;
         g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
@@ -1068,10 +1075,12 @@ function drawAtom(a) {
     const displayColor = (a.elem === "H" && a.color === "#FFFFFF") ? "#FFFFFF" : a.color;
     const gradUrl = `url(#atom-grad-${a.color.replace('#','')})`;
 
-    const glow = createSVG("circle");
-    glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); glow.setAttribute("r", a.r * a.scale * 1.3);
-    glow.setAttribute("fill", displayColor); glow.setAttribute("opacity", "0.5"); glow.setAttribute("filter", "url(#soft-glow)");
-    g.appendChild(glow);
+    if (!isMobile) {
+        const glow = createSVG("circle");
+        glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); glow.setAttribute("r", a.r * a.scale * 1.3);
+        glow.setAttribute("fill", displayColor); glow.setAttribute("opacity", "0.5"); glow.setAttribute("filter", "url(#soft-glow)");
+        g.appendChild(glow);
+    }
 
     const circle = createSVG("circle");
     circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); circle.setAttribute("r", a.r * a.scale); 
@@ -1089,10 +1098,12 @@ function drawAtom(a) {
 function drawElectron(e) {
     const g = createSVG("g");
     const r = e.r * e.scale * 0.9;
-    const glow = createSVG("circle");
-    glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); glow.setAttribute("r", r * 1.5);
-    glow.setAttribute("fill", "#ffffff"); glow.setAttribute("opacity", "0.3"); glow.setAttribute("filter", "url(#soft-glow)");
-    g.appendChild(glow);
+    if (!isMobile) {
+        const glow = createSVG("circle");
+        glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); glow.setAttribute("r", r * 1.5);
+        glow.setAttribute("fill", "#ffffff"); glow.setAttribute("opacity", "0.3"); glow.setAttribute("filter", "url(#soft-glow)");
+        g.appendChild(glow);
+    }
     const c = createSVG("circle");
     c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
     c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "1"); 
