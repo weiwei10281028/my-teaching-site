@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>分子結構與混成軌域模擬實驗室 v12.1 (Mobile Optimized)</title>
+<style>
+/* --- 1. 基礎設定與變數 --- */
+    :root {
+        --bg-radial-inner: #000000; 
+        --bg-radial-outer: #000000;
+        
+        /* 電腦版面板樣式 */
+        --panel-glass: rgba(20, 20, 20, 0.7); 
+        --panel-border: rgba(255, 255, 255, 0.15);
+        --card-glass: rgba(255, 255, 255, 0.05);
+        
+        --text-main: #f0f4f8;
+        --text-sub: #94a3b8;
+        --text-highlight: #38bdf8;
+        
+        --accent-blue: #3b82f6;
+        --accent-green: #10b981;
+    }
+
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        margin: 0; 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
+        color: var(--text-main);
+        height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
+
+    /* --- 2. 3D 顯示區 --- */
+    .viewport-area {
+        flex: 1; position: relative;
+        background-image: 
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 60px 60px; 
+        background-position: center center;
+        overflow: hidden; cursor: grab;
+        /* [關鍵] 禁止瀏覽器預設手勢，交給 JS */
+        touch-action: none; 
+        -webkit-user-select: none;
+    }
+    .viewport-area:active { cursor: grabbing; } 
+
+    .viewport-header h1 {
+        margin: 0; font-size: 1.5rem; letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    #molecule-svg * { pointer-events: none; }
+
+    .atom-label-text {
+        font-family: 'Roboto Mono', monospace; font-weight: 700; 
+        text-anchor: middle; dominant-baseline: central; 
+        fill: #ffffff; text-shadow: 0 0 4px #000;
+    }
+
+    /* --- 3. 電腦版介面 (預設) --- */
+    .controls-container {
+        position: absolute; top: 25px; right: 25px; z-index: 50; 
+        display: flex; gap: 15px; align-items: center; pointer-events: auto;
+    }
+
+    .control-button {
+        padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+        border: 1px solid var(--panel-border); cursor: pointer; transition: all 0.3s;
+        background: rgba(0, 0, 0, 0.4); color: var(--text-main);
+        backdrop-filter: blur(4px); box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .control-button:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); border-color: var(--accent-blue); }
+    .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+
+    /* 電腦版面板：右側懸浮 */
+    .controls-area { 
+        width: 400px; min-width: 320px;
+        background-color: var(--panel-glass);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-left: 1px solid var(--panel-border);
+        display: flex; flex-direction: column; 
+        padding: 25px; overflow-y: auto; 
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5); 
+        z-index: 20;
+    }
+
+    .card { 
+        background: var(--card-glass); 
+        border: 1px solid var(--panel-border); 
+        border-radius: 16px; padding: 20px; margin-bottom: 20px; 
+        transition: transform 0.2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.2); }
+
+    .card-title { 
+        font-size: 1rem; font-weight: 700; color: var(--text-highlight); 
+        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .data-label { font-size: 0.9rem; color: var(--text-sub); }
+    .data-value { 
+        font-family: 'Roboto Mono', monospace; 
+        font-size: 1rem; color: var(--text-main); font-weight: 500;
+    }
+    
+    .input-group { display: flex; gap: 8px; }
+    .input-group input { 
+        flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
+        background: rgba(0,0,0,0.3); color: white; font-family: 'Roboto Mono', monospace;
+        transition: border 0.3s; outline: none;
+    }
+    .input-group input:focus { border-color: var(--accent-blue); }
+    .input-group button { 
+        padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
+        cursor: pointer; font-weight: bold; transition: all 0.2s; 
+    }
+    .input-group button:hover { background: #2563eb; }
+
+    .switch-container { 
+        display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
+        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid transparent; transition: border 0.3s;
+    }
+    .switch-container:hover { border-color: var(--panel-border); }
+    .switch-container input { width: 18px; height: 18px; accent-color: var(--accent-green); cursor: pointer; }
+
+    #variant-selector {
+        display: none; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 15px; border-radius: 12px; margin-bottom: 15px;
+    }
+    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
+
+    /* 手機版把手 (預設隱藏) */
+    #mobile-panel-handle {
+        display: none; 
+        width: 100%; height: 40px; 
+        justify-content: center; align-items: center;
+        cursor: pointer; flex-shrink: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        touch-action: none;
+    }
+    .handle-bar {
+        width: 60px; height: 5px;
+        background-color: var(--text-sub);
+        border-radius: 10px; opacity: 0.6;
+    }
+
+/* --- 手機版專用 override (只在窄螢幕生效) --- */
+    @media (max-width: 768px) {
+        .app-container { flex-direction: column; height: 100vh; overflow: hidden; }
+        .controls-container { display: none !important; } 
+        #mobile-panel-handle { display: flex; }
+
+        /* 3D 區塊佔滿全螢幕 */
+        .viewport-area {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+        }
+
+        /* 面板改為下方抽屜式 */
+        .controls-area {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            height: 60vh; /* 面板高度 */
+            border-left: none; border-top: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px 24px 0 0;
+            
+            /* 手機版背景稍微深一點，且移除模糊以提升拖曳效能 */
+            background-color: rgba(20, 25, 35, 0.98); 
+            backdrop-filter: none;
+            
+            padding: 0 25px 25px 25px;
+            z-index: 100;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+            
+            transform: translateY(0); /* 預設展開 */
+            will-change: transform;
+            /* 預設的 CSS transition，拖曳時 JS 會暫時移除它 */
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        /* 收起狀態：只露出一點點 */
+        .controls-area.minimized {
+            transform: translateY(calc(100% - 40px)); 
+        }
+
+        /* 內容區塊設為可滾動 */
+        .controls-content {
+            overflow-y: auto; height: calc(100% - 40px);
+            padding-top: 10px;
+            -webkit-overflow-scrolling: touch;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .controls-content::-webkit-scrollbar { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="viewport-area composite-mode" id="viewport">
+        <div class="viewport-header" style="position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none;">
+            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v12.1</h1>
+            <span style="font-size: 1.1rem; color: var(--text-sub);" id="viewport-subtitle"></span>
+        </div>
+        
+        <!-- 電腦版模式切換按鈕 -->
+        <div class="controls-container">
+            <button id="mode-toggle" class="control-button mode-composite active" onclick="toggleMode()">模式: **複合**</button>
+        </div>
+
+        <svg id="molecule-svg" viewBox="-400 -300 800 600" preserveAspectRatio="xMidYMid slice" style="transition: transform 0.1s ease-out; transform: scale(1.7);">
+            <defs>
+                <filter id="blur-filter" x="-50%" y="-50%" width="200%" height="200%">
+                    <fegaussianblur in="SourceGraphic" stdDeviation="5"></fegaussianblur>
+                </filter>
+            </defs>
+            <g id="scene-root"></g>
+        </svg>
+    </div>
+
+    <div class="controls-area" id="controls-panel">
+        <!-- 手機版拖曳把手 -->
+        <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
+        
+        <!-- 內容區 -->
+        <div class="controls-content">
+            <div class="card">
+                <div class="card-title">⚛️ 分子載入</div>
+                <div class="input-group">
+                    <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
+                    <button onclick="handleLoadBtn()">載入</button>
+                </div>
+                <!-- 僅在手機版顯示提示 -->
+                <div style="font-size:0.8rem; color:var(--text-highlight); margin-top:10px; display:none;" id="mobile-hint">
+                    單指旋轉 / 雙指平移縮放 (Z軸旋轉)
+                </div>
+            </div>
+
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-lp" checked="" onchange="renderScene()">
+                <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
+            </div>
+
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-octet" onchange="reloadCurrentMolecule()">
+                <label for="toggle-octet" style="cursor: pointer; font-weight: bold;">優先遵循八隅體</label>
+            </div>
+
+            <div id="variant-selector" style="display: none;"></div>
+
+            <div class="card">
+                <div class="card-title">📊 結構資訊</div>
+                <div class="data-row"><span class="data-label">化學式</span><span class="data-value" id="disp-formula"></span></div>
+                <div class="data-row"><span class="data-label">中心原子</span><span class="data-value" id="disp-center"></span></div>
+                <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
+                <div class="data-row"><span class="data-label">形狀</span><span class="data-value" id="disp-shape"></span></div>
+                <div class="data-row"><span class="data-label">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+                <div class="data-row"><span class="data-label">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
+                <div class="data-row"><span class="data-label">分子量</span><span class="data-value" id="disp-mass"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- 1. 元素性質 ---
+const ELEMENT_PROPS = {
+    "H":  { ve: 1, c3d: "#FFFFFF", r3d: 12, lp: 0, mass: 1.008 }, 
+    "He": { ve: 2, c3d: "#d1d5db", r3d: 10, lp: 1, mass: 4.002 },
+    "Li": { ve: 1, c3d: "#d946ef", r3d: 22, lp: 0, mass: 6.94 }, 
+    "Be": { ve: 2, c3d: "#94a3b8", r3d: 18, lp: 0, mass: 9.012 },
+    "B":  { ve: 3, c3d: "#fbbf24", r3d: 20, lp: 0, mass: 10.81 }, 
+    "C":  { ve: 4, c3d: "#64748b", r3d: 20, lp: 0, mass: 12.011 },
+    "N":  { ve: 5, c3d: "#3b82f6", r3d: 19, lp: 1, mass: 14.007 }, 
+    "O":  { ve: 6, c3d: "#ef4444", r3d: 18, lp: 2, mass: 15.999 }, 
+    "F":  { ve: 7, c3d: "#84cc16", r3d: 17, lp: 3, mass: 18.998 }, 
+    "Ne": { ve: 8, c3d: "#67e8f9", r3d: 16, lp: 4, mass: 20.180 },
+    "Na": { ve: 1, c3d: "#a855f7", r3d: 24, lp: 0, mass: 22.990 },
+    "Mg": { ve: 2, c3d: "#84cc16", r3d: 22, lp: 0, mass: 24.305 },
+    "Al": { ve: 3, c3d: "#cbd5e1", r3d: 24, lp: 0, mass: 26.982 },
+    "Si": { ve: 4, c3d: "#94a3b8", r3d: 24, lp: 0, mass: 28.085 },
+    "P":  { ve: 5, c3d: "#f97316", r3d: 23, lp: 0, mass: 30.974 }, 
+    "S":  { ve: 6, c3d: "#FFFF00", r3d: 22, lp: 0, mass: 32.06 }, 
+    "Cl": { ve: 7, c3d: "#22c55e", r3d: 21, lp: 3, mass: 35.45 },
+    "Ar": { ve: 8, c3d: "#38bdf8", r3d: 20, lp: 4, mass: 39.948 },
+    "K":  { ve: 1, c3d: "#8b5cf6", r3d: 26, lp: 0, mass: 39.098 },
+    "Ca": { ve: 2, c3d: "#4ade80", r3d: 26, lp: 0, mass: 40.078 },
+    "Br": { ve: 7, c3d: "#b91c1c", r3d: 25, lp: 3, mass: 79.904 }, 
+    "I":  { ve: 7, c3d: "#a855f7", r3d: 28, lp: 3, mass: 126.90 }, 
+    "Xe": { ve: 8, c3d: "#818cf8", r3d: 28, lp: 3, mass: 131.29 },
+    "Mn": { ve: 7, c3d: "#d946ef", r3d: 24, lp: 0, mass: 54.938 },
+    "Cr": { ve: 6, c3d: "#64748b", r3d: 24, lp: 0, mass: 51.996 },
+    "Fe": { ve: 8, c3d: "#f97316", r3d: 24, lp: 0, mass: 55.845 },
+    "Cu": { ve: 11, c3d: "#f59e0b", r3d: 24, lp: 0, mass: 63.546 },
+    "Zn": { ve: 12, c3d: "#94a3b8", r3d: 24, lp: 0, mass: 65.38 }, 
+    "Ag": { ve: 11, c3d: "#e2e8f0", r3d: 26, lp: 0, mass: 107.87 },
+    "Au": { ve: 11, c3d: "#fbbf24", r3d: 26, lp: 0, mass: 196.97 }
+};
+
+// --- 2. 數據邏輯 (資料庫) ---
+let MOLECULE_DB = {};
+
+// ... (資料處理函數保持不變) ...
+function autoAssignLonePairs(atom, bonds, allAtoms) {
+    if (atom.lp3d !== undefined && atom.lp3d.length > 0) return atom.lpCount || atom.lp3d.length;
+    if (atom.lpCount !== undefined) return atom.lpCount;
+    const myBonds = bonds.filter(b => allAtoms[b[0]] === atom || allAtoms[b[1]] === atom);
+    const bondCount = myBonds.length;
+    const elem = atom.elem;
+    if (['N','P','As','Sb'].includes(elem)) {
+        if (bondCount === 3) return 1; if (bondCount === 2) return 1; if (bondCount === 1) return 1;
+    }
+    if (['O','S','Se','Te'].includes(elem)) {
+        if (bondCount === 2) return 2; if (bondCount === 1) return (myBonds[0][2] === 'double') ? 2 : 3;
+    }
+    if (['F','Cl','Br','I'].includes(elem) && bondCount === 1) return 3;
+    if (elem === 'Xe') { if (bondCount === 2) return 3; if (bondCount === 4) return 2; }
+    return 0;
+}
+
+function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
+    const dots = [];
+    let lpCount = atom.calculatedLP;
+    if (lpCount <= 0 && !atom.radical) return dots;
+
+    if (atom.lp3d && atom.lp3d.length > 0) {
+         const pushDist = atom.r * 1.8; 
+         atom.lp3d.forEach(v => {
+             const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
+             addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
+         });
+         return dots;
+    }
+
+    const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
+    let bondVectors = [];
+    myBonds.forEach(b => {
+        const otherIdx = (b[0] === atomIndex) ? b[1] : b[0];
+        const other = allAtoms[otherIdx];
+        let vx = other.x - atom.x, vy = other.y - atom.y, vz = other.z - atom.z;
+        const len = Math.sqrt(vx*vx + vy*vy + vz*vz) || 1;
+        bondVectors.push({ x: vx/len, y: vy/len, z: vz/len, style: b[2] });
+    });
+
+    let sumX = 0, sumY = 0, sumZ = 0;
+    if (bondVectors.length > 0) bondVectors.forEach(v => { sumX += v.x; sumY += v.y; sumZ += v.z; });
+    else { sumX = 0; sumY = -1; sumZ = 0; }
+
+    let backX = -sumX, backY = -sumY, backZ = -sumZ;
+    let backLen = Math.sqrt(backX*backX + backY*backY + backZ*backZ);
+    if (backLen < 0.001) { backX=0; backY=1; backZ=0; backLen=1; }
+    backX /= backLen; backY /= backLen; backZ /= backLen;
+
+    let ux = backX, uy = backY, uz = backZ;
+    let tempX = 0, tempY = 1, tempZ = 0;
+    if (Math.abs(ux) < 0.1 && Math.abs(uz) < 0.1) { tempX=1; tempY=0; tempZ=0; }
+    let wx = uy*tempZ - uz*tempY, wy = uz*tempX - ux*tempZ, wz = ux*tempY - uy*tempX;
+    let wLen = Math.sqrt(wx*wx + wy*wy + wz*wz);
+    wx/=wLen; wy/=wLen; wz/=wLen;
+    let vx = wy*uz - wz*uy, vy = wz*ux - wx*uz, vz = wx*uy - wy*ux;
+
+    const lpDist = atom.r * 2.2;
+    const pushLP = (dx, dy, dz) => { addPairToDots(dots, atom, { x: dx*lpDist, y: dy*lpDist, z: dz*lpDist }); };
+
+    if (bondVectors.length === 1) {
+        if (lpCount === 3) {
+            const angle = 70 * (Math.PI/180); const sinA = Math.sin(angle), cosA = Math.cos(angle);
+            for(let i=0; i<3; i++) {
+                const theta = i * (120 * Math.PI/180);
+                const px = cosA * ux + sinA * (Math.cos(theta)*vx + Math.sin(theta)*wx);
+                const py = cosA * uy + sinA * (Math.cos(theta)*vy + Math.sin(theta)*wy);
+                const pz = cosA * uz + sinA * (Math.cos(theta)*vz + Math.sin(theta)*wz);
+                pushLP(px, py, pz);
+            }
+        } else if (lpCount === 2) {
+            const angle = 60 * (Math.PI/180);
+            pushLP(Math.cos(angle)*ux + Math.sin(angle)*vx, Math.cos(angle)*uy + Math.sin(angle)*vy, Math.cos(angle)*uz + Math.sin(angle)*vz);
+            pushLP(Math.cos(angle)*ux - Math.sin(angle)*vx, Math.cos(angle)*uy - Math.sin(angle)*vy, Math.cos(angle)*uz - Math.sin(angle)*vz);
+        } else if (lpCount === 1) pushLP(ux, uy, uz);
+    } else if (bondVectors.length === 2) {
+        if (lpCount === 2) {
+            let b1 = bondVectors[0], b2 = bondVectors[1];
+            let nx = b1.y*b2.z - b1.z*b2.y, ny = b1.z*b2.x - b1.x*b2.z, nz = b1.x*b2.y - b1.y*b2.x;
+            let nLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+            if (nLen > 0.001) { nx/=nLen; ny/=nLen; nz/=nLen; } else { nx=vx; ny=vy; nz=vz; }
+            const tilt = 50 * (Math.PI/180);
+            pushLP(Math.cos(tilt)*ux + Math.sin(tilt)*nx, Math.cos(tilt)*uy + Math.sin(tilt)*ny, Math.cos(tilt)*uz + Math.sin(tilt)*nz);
+            pushLP(Math.cos(tilt)*ux - Math.sin(tilt)*nx, Math.cos(tilt)*uy - Math.sin(tilt)*ny, Math.cos(tilt)*uz - Math.sin(tilt)*nz);
+        } else if (lpCount === 1) pushLP(ux, uy, uz);
+    } else pushLP(ux, uy, uz);
+
+    return dots;
+}
+
+function addPairToDots(dotsArray, atom, vector) {
+    let lx = vector.x, ly = vector.y, lz = vector.z;
+    let ox = -ly, oy = lx, oz = 0;
+    if (Math.abs(lx) < 0.1 && Math.abs(ly) < 0.1) { ox = 1; oy = 0; oz = 0; }
+    let oLen = Math.sqrt(ox*ox + oy*oy + oz*oz);
+    const separation = 14.0;
+    ox = (ox/oLen) * (separation/2); oy = (oy/oLen) * (separation/2); oz = (oz/oLen) * (separation/2);
+    const eRadius = 4.5;
+    dotsArray.push({ x: atom.x + lx + ox, y: atom.y + ly + oy, z: atom.z + lz + oz, isElectron: true, r: eRadius });
+    if (!atom.radical) dotsArray.push({ x: atom.x + lx - ox, y: atom.y + ly - oy, z: atom.z + lz - oz, isElectron: true, r: eRadius });
+}
+
+// ... (Molecule Builders - Standard) ...
+const addMol = (key, center, hybrid, shape, angle, atoms, bonds, svgElements, variants = null) => {
+    const baseData = { center, hybrid: `${hybrid} 混成 (${hybrid})`, shape: `${shape[0]} (${shape[1]})`, angle, atomsRaw: atoms, bondsRaw: bonds };
+    if (variants) {
+        baseData.variants = {};
+        for (let vKey in variants) baseData.variants[vKey] = { ...baseData, atomsRaw: variants[vKey].atoms, bondsRaw: variants[vKey].bonds };
+    }
+    MOLECULE_DB[key] = baseData;
+};
+
+// ... (Geometry Helpers) ...
+const di = (e, dist=60) => [{elem:e,x:-dist,y:0,z:0},{elem:e,x:dist,y:0,z:0}];
+const getLinear = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:r,y:0,z:0} ];
+const getTrigPlanar = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:r*0.866,y:-r*0.5,z:0}, {elem:o,x:-r*0.866,y:-r*0.5,z:0} ];
+const getTetra = (c, o, r=60) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:-r,z:r}, {elem:o,x:-r,y:r,z:r}, {elem:o,x:-r,y:-r,z:-r}, {elem:o,x:r,y:r,z:-r} ];
+const getOcta = (c, o, r=65) => [{elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:0,z:0}, {elem:o,x:-r,y:0,z:0}, 
+/* --- FIX START: 補上缺失的輔助函式與變數 --- */
+const benzBase = [
+    {x:0,y:70,z:0}, {x:60.6,y:35,z:0}, {x:60.6,y:-35,z:0},
+    {x:0,y:-70,z:0}, {x:-60.6,y:-35,z:0}, {x:-60.6,y:35,z:0}
+];
+
+const getBenzH = (i) => {
+    // 簡單計算：取得對應碳原子座標，並向外延伸作為氫原子位置
+    const c = benzBase[i % 6]; 
+    const ratio = 1.7; // 氫原子比碳環半徑遠 (70 * 1.7 ~= 120)
+    return { x: c.x * ratio, y: c.y * ratio, z: c.z };
+};
+
+const addFullerene = (name, n, r, stretch=1) => {
+    // 使用費氏數列球面分佈 (Fibonacci Sphere) 來生成籠狀分子的頂點
+    const atoms = [];
+    const phi = Math.PI * (3 - Math.sqrt(5)); // 黃金角
+    for (let i = 0; i < n; i++) {
+        const y = 1 - (i / (n - 1)) * 2;
+        const radiusAtY = Math.sqrt(1 - y * y);
+        const theta = phi * i;
+        const x = Math.cos(theta) * radiusAtY;
+        const z = Math.sin(theta) * radiusAtY;
+        atoms.push({ 
+            elem: "C", 
+            x: x * r, 
+            y: y * r * stretch, 
+            z: z * r, 
+            lpCount: 0 
+        });
+    }
+    // 簡單距離演算法自動連線 (鍵結)
+    const bonds = [];
+    const threshold = (r < 100 ? 35 : 45) * (stretch > 1 ? 1.2 : 1);
+    const threshSq = threshold * threshold;
+    for(let i=0; i<n; i++){
+        for(let j=i+1; j<n; j++){
+            const dx = atoms[i].x - atoms[j].x;
+            const dy = atoms[i].y - atoms[j].y;
+            const dz = atoms[i].z - atoms[j].z;
+            if (dx*dx + dy*dy + dz*dz < threshSq) {
+                bonds.push([i, j, "single"]);
+            }
+        }
+    }
+    addMol(name, "C", "sp²", ["籠狀/球狀", "Cage"], "-", atoms, bonds);
+};
+/* --- FIX END --- */
+
+
+{elem:o,x:0,y:r,z:0}, {elem:o,x:0,y:-r,z:0}, {elem:o,x:0,y:0,z:r}, {elem:o,x:0,y:0,z:-r}];
+
+// ========================================================================
+// 1. 元素單質 & 雙原子 (鍵長隨原子半徑調整)
+// ========================================================================
+['H','N','O','F','Cl','Br','I'].forEach(e=>{let t=(e==='N')?"triple":(e==='O'?"double":"single"),h=(e==='H')?"s-s":(e==='N'?"sp":(e==='O'?"sp²":"sp³")),d=(e==='H'?21:(e==='I'?42:30));addMol(`${e}2`,"雙原子",h,["直線型","Linear"],"-",[{elem:e,x:-d,y:0,z:0},{elem:e,x:d,y:0,z:0}],[[0,1,t]]);});
+
+// CO (參鍵): C與O孤對電子背對背
+addMol("CO", "雙原子", "sp", ["直線型","Linear"], "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"O",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
+
+// NO (自由基): N上單電子
+addMol("NO", "雙原子", "sp²", ["直線型","Linear"], "-", [{elem:"N",x:-30,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}],radical:true}, {elem:"O",x:30,y:0,z:0}], [[0,1,"double"]]);
+
+// ========================================================================
+// 2. 氫化物系列 (HX) - 鍵長依半徑遞增 (F < Cl < Br < I)
+// ========================================================================
+
+addMol("HF", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"F",x:-22,y:0,z:0}, {elem:"H",x:22,y:0,z:0}], [[0,1]]);
+
+addMol("HCl", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"Cl",x:-30,y:0,z:0}, {elem:"H",x:30,y:0,z:0}], [[0,1]]);
+
+addMol("HBr", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"Br",x:-35,y:0,z:0}, {elem:"H",x:35,y:0,z:0}], [[0,1]]);
+
+addMol("HI", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"I",x:-40,y:0,z:0}, {elem:"H",x:40,y:0,z:0}], [[0,1]]);
+
+// ========================================================================
+// 3. 第16族氫化物 (H2O vs H2S) - 鍵角區分
+// ========================================================================
+
+// H2O (104.5°): 鍵角較大，LP呈兔耳狀
+addMol("H2O", "O", "sp³", ["角形","Bent"], "104.5°", [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:37,y:-25,z:0}, {elem:"H",x:-37,y:-25,z:0}], [[0,1],[0,2]]);
+
+// H2S (92°): 鍵角接近直角，H位置更窄
+addMol("H2S", "S", "sp³", ["角形","Bent"], "92°", [{elem:"S",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:38,y:-35,z:0}, {elem:"H",x:-38,y:-35,z:0}], [[0,1],[0,2]]);
+
+// ========================================================================
+// 4. 第15族氫化物 (NH3 vs PH3) - 鍵角區分
+// ========================================================================
+
+// NH3 (107°): 底座較寬
+addMol("NH3", "N", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-25,z:38}, {elem:"H",x:33,y:-25,z:-19}, {elem:"H",x:-33,y:-25,z:-19}], [[0,1],[0,2],[0,3]]);
+
+// PH3 (93.5°): 金字塔更陡峭，底座內縮
+addMol("PH3", "P", "sp³", ["角錐形","Pyramidal"], "93.5°", [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-35,z:40}, {elem:"H",x:35,y:-35,z:-20}, {elem:"H",x:-35,y:-35,z:-20}], [[0,1],[0,2],[0,3]]);
+
+
+// ========================================================================
+// 1. 四面體氫化物 (CH4, SiH4)
+// ========================================================================
+addMol("CH4", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H", 42), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("SiH4", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Si","H", 55), [[0,1],[0,2],[0,3],[0,4]]);
+
+// ========================================================================
+// 2. 鹵化物生成迴圈 (B, Al, C, Si, N, P 搭配 F, Cl, Br, I)
+// ========================================================================
+const halogens = ['F','Cl','Br','I'];
+halogens.forEach(X => {
+    
+addMol(`B${X}3`, "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("B", X, 75), [[0,1],[0,2],[0,3]]);
+    
+addMol(`Al${X}3`, "Al", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("Al", X, 80), [[0,1],[0,2],[0,3]]);
+    
+addMol(`C${X}4`, "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C", X, 65), [[0,1],[0,2],[0,3],[0,4]]);
+    
+addMol(`Si${X}4`, "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Si", X, 75), [[0,1],[0,2],[0,3],[0,4]]);
+    const lp = [{x:0,y:1,z:0}];
+    
+addMol(`N${X}3`, "N", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"N",x:0,y:15,z:0,lp3d:lp}, {elem:X,x:0,y:-40,z:50}, {elem:X,x:45,y:-40,z:-30}, {elem:X,x:-45,y:-40,z:-30}], [[0,1],[0,2],[0,3]]);
+    if(X!=='I') addMol(`P${X}3`, "P", "sp³", ["角錐形","Pyramidal"], "96-100°", [{elem:"P",x:0,y:15,z:0,lp3d:lp}, {elem:X,x:0,y:-45,z:55}, {elem:X,x:50,y:-45,z:-35}, {elem:X,x:-50,y:-45,z:-35}], [[0,1],[0,2],[0,3]]);
+});
+
+// ========================================================================
+// 3. 第16族鹵化物 (OF2, OCl2, SF2, SCl2)
+// ========================================================================
+['F','Cl'].forEach(X => {
+    const lps = [{x:0,y:1,z:0.8}, {x:0,y:1,z:-0.8}];
+    
+addMol(`O${X}2`, "O", "sp³", ["角形","Bent"], "103°", [{elem:"O",x:0,y:0,z:0,lp3d:lps}, {elem:X,x:55,y:-40,z:0}, {elem:X,x:-55,y:-40,z:0}], [[0,1],[0,2]]);
+    
+addMol(`S${X}2`, "S", "sp³", ["角形","Bent"], "98°", [{elem:"S",x:0,y:0,z:0,lp3d:lps}, {elem:X,x:60,y:-40,z:0}, {elem:X,x:-60,y:-40,z:0}], [[0,1],[0,2]]);
+});
+
+// ========================================================================
+// 4. 簡單分子與氧化物 (CO2, SO2, NOx, BeCl2...)
+// ========================================================================
+addMol("CO2", "C", "sp", ["直線型","Linear"], "180°", getLinear("C","O", 70), [[0,1,"double"],[0,2,"double"]]);
+
+addMol("CS2", "C", "sp", ["直線型","Linear"], "180°", getLinear("C","S", 80), [[0,1,"double"],[0,2,"double"]]);
+
+addMol("BeCl2", "Be", "sp", ["直線型","Linear"], "180°", getLinear("Be","Cl", 65), [[0,1], [0,2]]);
+
+addMol("BCl3", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("B","Cl", 75), [[0,1], [0,2], [0,3]]);
+
+addMol("SO2", "S", "sp²", ["角形","Bent"], "119°", [{elem:"S",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"double"]]);
+
+addMol("SO3", "S", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"S",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]]);
+
+addMol("O3", "O", "sp²", ["角形","Bent"], "117°", [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2]]);
+
+addMol("NO2", "N", "sp²", ["角形","Bent"], "134°", [{elem:"N",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}],radical:true},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2]]);
+
+addMol("N2O", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-60,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:60,y:0,z:0}], [[0,1,"triple"],[0,2]]);
+
+addMol("NO+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:-25,y:0,z:0,lpCount:1}, {elem:"O",x:25,y:0,z:0,lpCount:1}], [[0,1,"triple"]]);
+
+addMol("NO2+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-55,y:0,z:0}, {elem:"O",x:55,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
+
+// ========================================================================
+// 5. 超價分子與複雜鹵化物 (PCl5, SF6, XeF4...)
+// ========================================================================
+addMol("PCl5", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"Cl",x:0,y:70,z:0}, {elem:"Cl",x:0,y:-70,z:0}, {elem:"Cl",x:65,y:0,z:0}, {elem:"Cl",x:-32,y:0,z:55}, {elem:"Cl",x:-32,y:0,z:-55}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
+
+addMol("PBr5", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"Br",x:0,y:75,z:0}, {elem:"Br",x:0,y:-75,z:0}, {elem:"Br",x:70,y:0,z:0}, {elem:"Br",x:-35,y:0,z:60}, {elem:"Br",x:-35,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
+
+addMol("SF6", "S", "sp³d²", ["八面體","Octahedral"], "90°", [{elem:"S",x:0,y:0,z:0,lpCount:0}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-60,y:0,z:0}, {elem:"F",x:0,y:60,z:0}, {elem:"F",x:0,y:-60,z:0}, {elem:"F",x:0,y:0,z:60}, {elem:"F",x:0,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("SF4", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", [{elem:"S",x:0,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:50,y:0,z:38}, {elem:"F",x:50,y:0,z:-38}], [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("ClF3", "Cl", "sp³d", ["T型","T-shaped"], "<90°", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}, {x:-1,y:-0.5,z:0}]}, {elem:"F",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:60,y:0,z:0}], [[0,1],[0,2],[0,3]]);
+
+addMol("XeF2", "Xe", "sp³d", ["直線型","Linear"], "180°", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0.866,y:-0.5,z:0}, {x:-0.866,y:-0.5,z:0}]}, {elem:"F",x:0,y:0,z:75}, {elem:"F",x:0,y:0,z:-75}], [[0,1],[0,2]]);
+
+addMol("XeF4", "Xe", "sp³d²", ["平面四邊形","Square Planar"], "90°", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-60,y:0,z:0}, {elem:"F",x:0,y:0,z:60}, {elem:"F",x:0,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("BrF5", "Br", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", [{elem:"Br",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]}, {elem:"F",x:0,y:65,z:0}, {elem:"F",x:55,y:0,z:0}, {elem:"F",x:-55,y:0,z:0}, {elem:"F",x:0,y:0,z:55}, {elem:"F",x:0,y:0,z:-55}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
+
+addMol("IF7", "I", "sp³d³", ["五角雙錐","Pentagonal Bipyramidal"], "72°, 90°", [{elem:"I",x:0,y:0,z:0,lpCount:0}, {elem:"F",x:0,y:70,z:0}, {elem:"F",x:0,y:-70,z:0}, {elem:"F",x:65,y:0,z:0}, {elem:"F",x:20,y:0,z:62}, {elem:"F",x:20,y:0,z:-62}, {elem:"F",x:-52,y:0,z:38}, {elem:"F",x:-52,y:0,z:-38}], [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]]);
+
+addMol("SeF6", "Se", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Se","F", 65), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("TeF6", "Te", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Te","F", 70), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("AsF5", "As", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", [{elem:"As",x:0,y:0,z:0}, {elem:"F",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-30,y:0,z:52}, {elem:"F",x:-30,y:0,z:-52}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
+
+addMol("TeF4", "Te", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", [{elem:"Te",x:0,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:70,z:0}, {elem:"F",x:0,y:-70,z:0}, {elem:"F",x:55,y:0,z:40}, {elem:"F",x:55,y:0,z:-40}], [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("XeO3", "Xe", "sp³", ["角錐形","Trigonal Pyramidal"], "103°", [{elem:"Xe",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]]);
+
+addMol("XeO4", "Xe", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Xe","O"), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]]);
+
+addMol("XeOF4", "Xe", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]}, {elem:"O",x:0,y:65,z:0}, {elem:"F",x:55,y:0,z:0}, {elem:"F",x:-55,y:0,z:0}, {elem:"F",x:0,y:0,z:55}, {elem:"F",x:0,y:0,z:-55}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5]]);
+
+addMol("IOF5", "I", "sp³d²", ["八面體","Octahedral"], "90°", [{elem:"I",x:0,y:0,z:0}, {elem:"O",x:0,y:65,z:0}, {elem:"F",x:0,y:-65,z:0}, {elem:"F",x:60,y:0,z:0}, {elem:"F",x:-60,y:0,z:0}, {elem:"F",x:0,y:0,z:60}, {elem:"F",x:0,y:0,z:-60}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("AsF3", "As", "sp³", ["角錐形","Pyramidal"], "96°", [{elem:"As",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"F",x:0,y:-35,z:40}, {elem:"F",x:35,y:-35,z:-25}, {elem:"F",x:-35,y:-35,z:-25}], [[0,1],[0,2],[0,3]]);
+
+addMol("SbCl3", "Sb", "sp³", ["角錐形","Pyramidal"], "97°", [{elem:"Sb",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"Cl",x:0,y:-40,z:45}, {elem:"Cl",x:40,y:-40,z:-30}, {elem:"Cl",x:-40,y:-40,z:-30}], [[0,1],[0,2],[0,3]]);
+
+addMol("SiF6 2-", "Si", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Si","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("PF6-", "P", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("P","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+addMol("SbF6-", "Sb", "sp³d²", ["八面體","Octahedral"], "90°", getOcta("Sb","F"), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]);
+
+// ========================================================================
+// 6. 酸、酸根與特殊離子
+// ========================================================================
+// 6.1 一般酸根
+addMol("OH-", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"O",x:-25,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0},{x:-1,y:-0.5,z:0.5},{x:-1,y:-0.5,z:-0.5}]},{elem:"H",x:25,y:0,z:0}], [[0,1]]);
+
+addMol("CN-", "雙原子", "sp", ["直線型","Linear"], "-", [{elem:"C",x:-35,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"N",x:35,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
+
+addMol("NO2-", "N", "sp²", ["角形","Bent"], "115°", [{elem:"N",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2]]);
+
+addMol("NO3-", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("N","O"), [[0,1,"double"],[0,2],[0,3]]);
+
+addMol("H2CO3", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:50,y:-30,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"H",x:85,y:-5,z:0}, {elem:"H",x:-85,y:-5,z:0}], [[0,1,"double"], [0,2], [0,3], [2,4], [3,5]]);
+
+addMol("CO3 2-", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("C","O"), [[0,1,"double"],[0,2],[0,3]]);
+
+addMol("HCO3-", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"C",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:50,y:-35,z:0}, {elem:"O",x:-50,y:-35,z:0}, {elem:"H",x:80,y:-45,z:0}], [[0,1,"double"], [0,2], [0,3], [2,4]]);
+
+addMol("SO3 2-", "S", "sp³", ["角錐形","Pyramidal"], "106°", [{elem:"S",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:0,y:-35,z:40},{elem:"O",x:35,y:-35,z:-25},{elem:"O",x:-35,y:-35,z:-25}], [[0,1],[0,2],[0,3]]);
+
+addMol("SO4 2-", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("S","O"), [[0,1,"double"],[0,2,"double"],[0,3],[0,4]]);
+
+addMol("PO4 3-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("P","O"), [[0,1,"double"],[0,2],[0,3],[0,4]]);
+
+addMol("MnO4-", "Mn", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Mn","O"), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4]]);
+
+addMol("CrO4 2-", "Cr", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Cr","O"), [[0,1,"double"],[0,2,"double"],[0,3],[0,4]]);
+
+addMol("Cr2O7 2-", "多中心", "sp³", ["四面體連結","Linked Tetra"], "109°", [{elem:"O",x:0,y:20,z:0}, {elem:"Cr",x:-50,y:-20,z:0,lpCount:0}, {elem:"Cr",x:50,y:-20,z:0,lpCount:0}, {elem:"O",x:-70,y:-55,z:30}, {elem:"O",x:-70,y:-55,z:-30}, {elem:"O",x:-90,y:20,z:0}, {elem:"O",x:70,y:-55,z:30}, {elem:"O",x:70,y:-55,z:-30}, {elem:"O",x:90,y:20,z:0}], [[0,1],[0,2],[1,3,"double"],[1,4,"double"],[1,5,"double"],[2,6,"double"],[2,7,"double"],[2,8,"double"]]);
+
+addMol("NH4+", "N", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("N","H"), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("PH4+", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("P","H"), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("H3O+", "O", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"O",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-30,z:35}, {elem:"H",x:30,y:-30,z:-20}, {elem:"H",x:-30,y:-30,z:-20}], [[0,1],[0,2],[0,3]]);
+
+addMol("BF4-", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("B","F"), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("AlCl4-", "Al", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Al","Cl"), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("BH4-", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("B","H"), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("IO3-", "I", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"I",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3]]);
+
+addMol("BrO3-", "Br", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"Br",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"O",x:35,y:-35,z:-25}, {elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3]]);
+
+addMol("SCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0,lpCount:1}, {elem:"S",x:50,y:0,z:0,lpCount:3}], [[0,1,"triple"],[0,2]]);
+
+addMol("N3-", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0,lpCount:2}, {elem:"N",x:40,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
+
+addMol("OCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0,lpCount:2}, {elem:"O",x:40,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
+
+addMol("I3-", "I", "sp³d", ["直線型","Linear"], "180°", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]},{elem:"I",x:-80,y:0,z:0},{elem:"I",x:80,y:0,z:0}], [[0,1],[0,2]]);
+
+addMol("ICl2-", "I", "sp³d", ["直線型","Linear"], "180°", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]}, {elem:"Cl",x:-60,y:0,z:0}, {elem:"Cl",x:60,y:0,z:0}], [[0,1],[0,2]]);
+
+addMol("ICl4-", "I", "sp³d²", ["平面四邊形","Square Planar"], "90°", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"Cl",x:60,y:0,z:0}, {elem:"Cl",x:-60,y:0,z:0}, {elem:"Cl",x:0,y:0,z:60}, {elem:"Cl",x:0,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4]]);
+// 6.2 氯含氧酸根
+
+addMol("ClO-", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"Cl",x:-35,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0},{x:-1,y:-0.5,z:0.5},{x:-1,y:-0.5,z:-0.5}]},{elem:"O",x:35,y:0,z:0}], [[0,1]]);
+
+addMol("ClO2-", "Cl", "sp³", ["角形","Bent"], "111°", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0.5},{x:0,y:1,z:-0.5}]},{elem:"O",x:60,y:-40,z:0},{elem:"O",x:-60,y:-40,z:0}], [[0,1],[0,2]]);
+
+addMol("ClO3-", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"Cl",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:0,y:-35,z:40},{elem:"O",x:35,y:-35,z:-25},{elem:"O",x:-35,y:-35,z:-25}], [[0,1,"double"],[0,2,"double"],[0,3]]);
+
+addMol("ClO4-", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Cl","O"), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4]]);
+
+addMol("HClO4", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"Cl",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-35,z:30}, {elem:"O",x:-50,y:-35,z:30}, {elem:"O",x:0,y:15,z:-55}, {elem:"H",x:0,y:40,z:-80}], [[0,1,"double"], [0,2,"double"], [0,3,"double"], [0,4], [4,5]]);
+
+// HClO3 (氯酸): 角錐形，H 角度修正
+addMol("HClO3", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"Cl",x:0,y:10,z:0,lpCount:1}, {elem:"O",x:0,y:-30,z:40}, {elem:"O",x:35,y:-30,z:-25}, {elem:"O",x:-35,y:-30,z:-25}, {elem:"H",x:-65,y:-5,z:-30}], [[0,1,"double"], [0,2,"double"], [0,3], [3,4]]);
+
+// HClO2 (亞氯酸): 角形，H 角度修正
+addMol("HClO2", "Cl", "sp³", ["角形","Bent"], "111°", [{elem:"Cl",x:0,y:0,z:0,lpCount:2}, {elem:"O",x:50,y:-30,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"H",x:80,y:-5,z:0}], [[0,1], [0,2,"double"], [1,3]]);
+
+// HClO (次氯酸): 角形，O 為中心
+addMol("HClO", "O", "sp³", ["角形","Bent"], "104.5°", [{elem:"O",x:0,y:0,z:0,lpCount:2}, {elem:"Cl",x:50,y:-20,z:0}, {elem:"H",x:-30,y:20,z:0}], [[0,1], [0,2]]);
+
+// 6.3 磷酸系列 (全平面化為單行)
+addMol("H3PO4", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:0,y:-20,z:50}, {elem:"O",x:45,y:-20,z:-30}, {elem:"O",x:-45,y:-20,z:-30}, {elem:"H",x:0,y:-5,z:80}, {elem:"H",x:70,y:5,z:-30}, {elem:"H",x:-70,y:5,z:-30}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6], [4,7]]);
+
+addMol("H3PO3", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"H",x:0,y:-25,z:45}, {elem:"O",x:45,y:-20,z:-30}, {elem:"O",x:-45,y:-20,z:-30}, {elem:"H",x:70,y:5,z:-30}, {elem:"H",x:-70,y:5,z:-30}], [[0,1,"double"], [0,2], [0,3], [0,4], [3,5], [4,6]]);
+
+addMol("H3PO2", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"H",x:0,y:-25,z:45}, {elem:"H",x:-45,y:-25,z:-30}, {elem:"O",x:45,y:-20,z:-30}, {elem:"H",x:70,y:5,z:-30}], [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
+
+addMol("HPO4 2-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"O",x:0,y:10,z:-50}, {elem:"H",x:60,y:-40,z:35}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
+
+addMol("H2PO4-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"O",x:0,y:10,z:-50}, {elem:"H",x:60,y:-40,z:35}, {elem:"H",x:-60,y:-40,z:35}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
+
+addMol("H2PO3-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"H",x:0,y:-25,z:45}, {elem:"O",x:45,y:-20,z:-30}, {elem:"O",x:-45,y:-20,z:-30}, {elem:"H",x:-75,y:5,z:-30}], [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
+
+addMol("HPO3 2-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"H",x:0,y:10,z:-50}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
+
+addMol("H2PO2-", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:0,y:-55,z:0}, {elem:"H",x:50,y:0,z:40}, {elem:"H",x:-50,y:0,z:-40}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
+
+addMol("HOCN", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:45,y:0,z:0}, {elem:"O",x:-45,y:0,z:0}, {elem:"H",x:-75,y:25,z:0}], [[0,1,"triple"], [0,2], [2,3]]);
+
+addMol("OCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:2}, {elem:"O",x:40,y:0,z:0, lpCount:2}], [[0,1,"double"], [0,2,"double"]]);
+
+// 6.4 硫與其他酸
+addMol("S2O3 2-", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:55,z:0}, {elem:"O",x:47,y:-25,z:25}, {elem:"O",x:-47,y:-25,z:25}, {elem:"O",x:0,y:-30,z:-50}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
+
+addMol("H2SO4", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"S",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:0,y:-20,z:-45}, {elem:"O",x:50,y:-25,z:30}, {elem:"O",x:-50,y:-25,z:30}, {elem:"H",x:80,y:10,z:30}, {elem:"H",x:-80,y:10,z:30}], [[0,1,"double"], [0,2,"double"], [0,3], [0,4], [3,5], [4,6]]);
+
+addMol("HNO3", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"O",x:50,y:-30,z:0}, {elem:"H",x:75,y:-45,z:40}], [[0,1,"double"], [0,2], [0,3], [3,4]]);
+
+addMol("HNO2", "N", "sp²", ["角形","Bent"], "111°", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-30,z:0}, {elem:"H",x:80,y:-5,z:0}], [[0,1,"double"], [0,2], [2,3]]);
+
+addMol("CNO-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0}, {elem:"O",x:40,y:0,z:0}], [[0,1,"triple"], [0,2]]);
+
+addMol("C2 2-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-22,y:0,z:0}, {elem:"C",x:22,y:0,z:0}], [[0,1,"triple"]]);
+
+addMol("O2 2-", "O", "sp³", ["直線型","Linear"], "180°", [{elem:"O",x:-30,y:0,z:0}, {elem:"O",x:30,y:0,z:0}], [[0,1]]);
+
+// ========================================================================
+// 7. 有機分子與官能基 (C2H6, N2H4, Acetone, Urea...)
+// ========================================================================
+addMol("C2H6", "C", "sp³", ["四面體連結","Tetrahedral"], "109.5°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-60,y:35,z:0}, {elem:"H",x:-60,y:-25,z:30}, {elem:"H",x:-60,y:-25,z:-30}, {elem:"H",x:60,y:-35,z:0}, {elem:"H",x:60,y:25,z:30}, {elem:"H",x:60,y:25,z:-30}], [[0,1], [0,2], [0,3], [0,4], [1,5], [1,6], [1,7]]);
+
+addMol("C2H4", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-65,y:45,z:0}, {elem:"H",x:-65,y:-45,z:0}, {elem:"H",x:65,y:45,z:0}, {elem:"H",x:65,y:-45,z:0}], [[0,1,"double"], [0,2], [0,3], [1,4], [1,5]]);
+
+addMol("C2H2", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-75,y:0,z:0}, {elem:"H",x:75,y:0,z:0}], [[0,1,"triple"], [0,2], [1,3]]);
+
+addMol("N2H4", "N", "sp³", ["扭轉型","Gauche"], "107°", [{elem:"N",x:-25,y:0,z:0}, {elem:"N",x:25,y:0,z:0}, {elem:"H",x:-50,y:35,z:25}, {elem:"H",x:-50,y:-35,z:25}, {elem:"H",x:50,y:35,z:-25}, {elem:"H",x:50,y:-35,z:-25}], [[0,1], [0,2], [0,3], [1,4], [1,5]]);
+
+addMol("CH3COCH3", "C", "sp²", ["平面三角形 (中心)","Trigonal"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"C",x:-45,y:-35,z:0}, {elem:"C",x:45,y:-35,z:0}, {elem:"H",x:-45,y:-70,z:25}, {elem:"H",x:-80,y:-15,z:0}, {elem:"H",x:-45,y:-70,z:-25}, {elem:"H",x:45,y:-70,z:25}, {elem:"H",x:80,y:-15,z:0}, {elem:"H",x:45,y:-70,z:-25}], [[0,1,"double"], [0,2], [0,3], [2,4], [2,5], [2,6], [3,7], [3,8], [3,9]]);
+
+addMol("NH2-", "N", "sp³", ["角形","Bent"], "104.5°", [{elem:"N",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]},{elem:"H",x:35,y:-30,z:0},{elem:"H",x:-35,y:-30,z:0}], [[0,1],[0,2]]);
+
+addMol("CH3NH2", "N", "sp³", ["角錐形 (N端)","Pyramidal"], "107°", [{elem:"N",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:30,y:-25,z:20}, {elem:"H",x:-30,y:-25,z:20}, {elem:"C",x:0,y:-25,z:-35}, {elem:"H",x:0,y:5,z:-65}, {elem:"H",x:25,y:-40,z:-55}, {elem:"H",x:-25,y:-40,z:-55}], [[0,1],[0,2],[0,3],[3,4],[3,5],[3,6]]);
+
+addMol("CH3OCH3", "O", "sp³", ["角形 (中心)","Bent"], "111°", [{elem:"O",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]}, {elem:"C",x:45,y:-25,z:0}, {elem:"C",x:-45,y:-25,z:0}, {elem:"H",x:75,y:-5,z:0}, {elem:"H",x:45,y:-55,z:25}, {elem:"H",x:45,y:-55,z:-25}, {elem:"H",x:-75,y:-5,z:0}, {elem:"H",x:-45,y:-55,z:25}, {elem:"H",x:-45,y:-55,z:-25}], [[0,1],[0,2],[1,3],[1,4],[1,5],[2,6],[2,7],[2,8]]);
+
+addMol("HCOOH", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-35,z:0}, {elem:"H",x:-45,y:-35,z:0}, {elem:"H",x:75,y:-15,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4]]);
+
+addMol("CH3Cl", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H").map((a,i)=>i===1?{...a,elem:"Cl"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("CH2Cl2", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H").map((a,i)=>i===1||i===2?{...a,elem:"Cl"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("CHCl3", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","Cl").map((a,i)=>i===4?{...a,elem:"H"}:a), [[0,1],[0,2],[0,3],[0,4]]);
+
+addMol("HCN", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:55,y:0,z:0,lpCount:1}, {elem:"H",x:-55,y:0,z:0}], [[0,1,"triple"],[0,2]]);
+
+addMol("CH3CN", "C", "sp", ["直線型 (CN端)","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:55,y:0,z:0,lpCount:1}, {elem:"C",x:-50,y:0,z:0}, {elem:"H",x:-80,y:25,z:0}, {elem:"H",x:-80,y:-15,z:20}, {elem:"H",x:-80,y:-15,z:-20}], [[0,1,"triple"],[0,2],[2,3],[2,4],[2,5]]);
+
+addMol("CO(NH2)2", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:50,z:0}, {elem:"N",x:-40,y:-30,z:0}, {elem:"N",x:40,y:-30,z:0}, {elem:"H",x:-65,y:-15,z:0}, {elem:"H",x:-40,y:-60,z:0}, {elem:"H",x:65,y:-15,z:0}, {elem:"H",x:40,y:-60,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4],[2,5],[3,6],[3,7]]);
+
+addMol("SOCl2", "S", "sp³", ["角錐形","Pyramidal"], "106°", [{elem:"S",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:40}, {elem:"Cl",x:50,y:-35,z:-25}, {elem:"Cl",x:-50,y:-35,z:-25}], [[0,1,"double"],[0,2],[0,3]]);
+
+addMol("POCl3", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"P",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"Cl",x:45,y:-35,z:35}, {elem:"Cl",x:-45,y:-35,z:35}, {elem:"Cl",x:0,y:0,z:-60}], [[0,1,"double"],[0,2],[0,3],[0,4]]);
+
+
+
+// ========================================================================
+// 8. C60 富勒烯生成器 (邏輯維持不變)
+// ========================================================================
+(function(){const phi=(1+Math.sqrt(5))/2,scale=28;let rawVerts=[];const groups=[[0,1,3*phi],[1,2+phi,2*phi],[phi,2,2*phi+1]];function addPermutations(u,v,w){const cycles=[[u,v,w],[v,w,u],[w,u,v]];cycles.forEach(p=>{for(let i=0;i<8;i++){let x=p[0]*((i&1)?1:-1),y=p[1]*((i&2)?1:-1),z=p[2]*((i&4)?1:-1);rawVerts.push({x,y,z});}});}groups.forEach(g=>addPermutations(g[0],g[1],g[2]));const atoms=[],threshold=0.1;rawVerts.forEach(v=>{if(!atoms.some(a=>Math.abs(a.x-v.x*scale)<threshold&&Math.abs(a.y-v.y*scale)<threshold&&Math.abs(a.z-v.z*scale)<threshold)){atoms.push({elem:"C",x:v.x*scale,y:v.y*scale,z:v.z*scale,lpCount:0,r:5});}});const bonds=[],bondSet=new Set();for(let i=0;i<atoms.length;i++){let distances=[];for(let j=0;j<atoms.length;j++){if(i===j)continue;let d=(atoms[i].x-atoms[j].x)**2+(atoms[i].y-atoms[j].y)**2+(atoms[i].z-atoms[j].z)**2;distances.push({id:j,dist:d});}distances.sort((a,b)=>a.dist-b.dist);for(let k=0;k<3;k++){let neighbor=distances[k].id,id1=Math.min(i,neighbor),id2=Math.max(i,neighbor),key=`${id1}-${id2}`;if(!bondSet.has(key)){let type=(k===0)?"double":"single";bonds.push([id1,id2,type]);bondSet.add(key);}}}addMol("C60","C","sp²",["球狀 (12個五邊形, 20個六邊形)","Truncated Icosahedron"],"120°",atoms,bonds);})();
+
+
+
+// ========================================================================
+// 9. 幾何異構物 (Variants: Cis/Trans, Isomers)
+// ========================================================================
+addMol("N2F2", "N", "sp²", ["平面","Planar"], "120°", [], [], [], {
+    "Cis": { atoms: [{elem:"N",x:-20,y:0,z:0},{elem:"N",x:20,y:0,z:0},{elem:"F",x:-50,y:35,z:0},{elem:"F",x:50,y:35,z:0}], bonds: [[0,1,"double"],[0,2],[1,3]] },
+    "Trans": { atoms: [{elem:"N",x:-20,y:0,z:0},{elem:"N",x:20,y:0,z:0},{elem:"F",x:-50,y:35,z:0},{elem:"F",x:50,y:-35,z:0}], bonds: [[0,1,"double"],[0,2],[1,3]] }
+});
+
+addMol("C2H2Cl2", "C", "sp²", ["平面","Planar"], "120°", [], [], [], {
+    "Cis-1,2": { atoms: [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"Cl",x:-60,y:45,z:0},{elem:"Cl",x:60,y:45,z:0},{elem:"H",x:-60,y:-45,z:0},{elem:"H",x:60,y:-45,z:0}], bonds: [[0,1,"double"],[0,2],[0,4],[1,3],[1,5]] },
+    "Trans-1,2": { atoms: [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"Cl",x:-60,y:45,z:0},{elem:"Cl",x:60,y:-45,z:0},{elem:"H",x:-60,y:-45,z:0},{elem:"H",x:60,y:45,z:0}], bonds: [[0,1,"double"],[0,2],[0,4],[1,3],[1,5]] },
+    "1,1-Dichloro": { atoms: [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"Cl",x:-60,y:45,z:0},{elem:"Cl",x:-60,y:-45,z:0},{elem:"H",x:60,y:45,z:0},{elem:"H",x:60,y:-45,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[1,4],[1,5]] }
+});
+
+// 10. 烷烴異構物 (C5H12)
+addMol("C5H12", "C", "sp³", ["鏈狀/四面體","Chain/Tetra"], "109.5°", [], [], [], {
+    "正戊烷 (n-Pentane)": { atoms: [{elem:"C",x:-80,y:0,z:0},{elem:"C",x:-40,y:25,z:0},{elem:"C",x:0,y:0,z:0},{elem:"C",x:40,y:25,z:0},{elem:"C",x:80,y:0,z:0}, {elem:"H",x:-80,y:-35,z:0},{elem:"H",x:-105,y:15,z:20},{elem:"H",x:-105,y:15,z:-20},{elem:"H",x:-40,y:60,z:0},{elem:"H",x:-40,y:25,z:35},{elem:"H",x:0,y:-35,z:0},{elem:"H",x:0,y:0,z:-35},{elem:"H",x:40,y:60,z:0},{elem:"H",x:40,y:25,z:35},{elem:"H",x:80,y:-35,z:0},{elem:"H",x:105,y:15,z:20},{elem:"H",x:105,y:15,z:-20}], bonds: [[0,1],[1,2],[2,3],[3,4], [0,5],[0,6],[0,7],[1,8],[1,9],[2,10],[2,11],[3,12],[3,13],[4,14],[4,15],[4,16]] },
+    "異戊烷 (Isopentane)": { atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"C",x:60,y:25,z:0},{elem:"C",x:-20,y:65,z:0}, {elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35},{elem:"H",x:60,y:60,z:0},{elem:"H",x:85,y:10,z:20},{elem:"H",x:85,y:10,z:-20},{elem:"H",x:-20,y:100,z:0},{elem:"H",x:-45,y:65,z:20},{elem:"H",x:5,y:65,z:20}], bonds: [[0,1],[1,2],[2,3],[1,4], [0,5],[0,6],[0,7],[1,8],[2,9],[2,10],[3,11],[3,12],[3,13],[4,14],[4,15],[4,16]] },
+    "新戊烷 (Neopentane)": { atoms: [{elem:"C",x:0,y:0,z:0},{elem:"C",x:0,y:40,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"C",x:0,y:-10,z:-40},{elem:"H",x:0,y:75,z:0},{elem:"H",x:-20,y:40,z:20},{elem:"H",x:20,y:40,z:20},{elem:"H",x:60,y:-35,z:35},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:50,y:10,z:20},{elem:"H",x:-60,y:-35,z:35},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-50,y:10,z:20},{elem:"H",x:0,y:15,z:-60},{elem:"H",x:30,y:-30,z:-60},{elem:"H",x:-30,y:-30,z:-60}], bonds: [[0,1],[0,2],[0,3],[0,4], [1,5],[1,6],[1,7], [2,8],[2,9],[2,10], [3,11],[3,12],[3,13], [4,14],[4,15],[4,16]] }
+});
+
+// 11. 芳香烴異構物 (C8H10, C6H4Cl2) - 苯環骨架輔助
+const benzBase=[{x:0,y:70,z:0},{x:60,y:35,z:0},{x:60,y:-35,z:0},{x:0,y:-70,z:0},{x:-60,y:-35,z:0},{x:-60,y:35,z:0}];
+function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{x:v.x+v.x/l*s,y:v.y+v.y/l*s,z:0};}
+
+addMol("C8H10", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
+    "鄰二甲苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:100,y:55,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},{elem:"H",x:130,y:70,z:0},{elem:"H",x:100,y:25,z:20},{elem:"H",x:100,y:25,z:-20}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14],[7,15],[7,16],[7,17]] },
+    "間二甲苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:100,y:-55,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},{elem:"H",x:130,y:-70,z:0},{elem:"H",x:100,y:-25,z:20},{elem:"H",x:100,y:-25,z:-20}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[2,7],[1,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14],[7,15],[7,16],[7,17]] },
+    "對二甲苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:0,y:-110,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},{elem:"H",x:0,y:-145,z:0},{elem:"H",x:-25,y:-110,z:20},{elem:"H",x:25,y:-110,z:-20}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[3,7],[1,8],[2,9],[4,10],[5,11],[6,12],[6,13],[6,14],[7,15],[7,16],[7,17]] }
+});
+
+addMol("C6H4Cl2", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
+    "鄰二氯苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:115,z:0},{elem:"Cl",x:105,y:60,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]] },
+    "間二氯苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:115,z:0},{elem:"Cl",x:105,y:-60,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[2,7],[1,8],[3,9],[4,10],[5,11]] },
+    "對二氯苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:115,z:0},{elem:"Cl",x:0,y:-115,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[3,7],[1,8],[2,9],[4,10],[5,11]] }
+});
+
+// ========================================================================
+// 12. 芳香族與衍生物 (C6H6, Naphthalene, Phenol...)
+// ========================================================================
+addMol("C6H6", "C", "sp²", ["平面六邊形","Hexagon"], "120°", [{elem:"C",x:0,y:70,z:0},{elem:"C",x:60.6,y:35,z:0},{elem:"C",x:60.6,y:-35,z:0},{elem:"C",x:0,y:-70,z:0},{elem:"C",x:-60.6,y:-35,z:0},{elem:"C",x:-60.6,y:35,z:0},{elem:"H",x:0,y:120,z:0},{elem:"H",x:104,y:60,z:0},{elem:"H",x:104,y:-60,z:0},{elem:"H",x:0,y:-120,z:0},{elem:"H",x:-104,y:-60,z:0},{elem:"H",x:-104,y:60,z:0}], [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]]);
+
+addMol("Naphthalene", "C", "sp²", ["平面雙環","Fused Ring"], "120°", [{elem:"C",x:0,y:35,z:0},{elem:"C",x:0,y:-35,z:0},{elem:"C",x:-30,y:70,z:0},{elem:"C",x:-60,y:35,z:0},{elem:"C",x:-60,y:-35,z:0},{elem:"C",x:-30,y:-70,z:0},{elem:"C",x:30,y:70,z:0},{elem:"C",x:60,y:35,z:0},{elem:"C",x:60,y:-35,z:0},{elem:"C",x:30,y:-70,z:0},{elem:"H",x:-30,y:120,z:0},{elem:"H",x:-95,y:60,z:0},{elem:"H",x:-95,y:-60,z:0},{elem:"H",x:-30,y:-120,z:0},{elem:"H",x:30,y:120,z:0},{elem:"H",x:95,y:60,z:0},{elem:"H",x:95,y:-60,z:0},{elem:"H",x:30,y:-120,z:0}], [[0,1],[0,2,"double"],[2,3],[3,4,"double"],[4,5],[5,1,"double"],[0,6],[6,7,"double"],[7,8],[8,9,"double"],[9,1],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15],[8,16],[9,17]]);
+
+addMol("Anthracene", "C", "sp²", ["平面三環","Fused Ring"], "120°", [{elem:"C",x:-30,y:35,z:0},{elem:"C",x:-30,y:-35,z:0},{elem:"C",x:30,y:35,z:0},{elem:"C",x:30,y:-35,z:0},{elem:"C",x:0,y:70,z:0},{elem:"C",x:0,y:-70,z:0},{elem:"C",x:-60,y:70,z:0},{elem:"C",x:-90,y:35,z:0},{elem:"C",x:-90,y:-35,z:0},{elem:"C",x:-60,y:-70,z:0},{elem:"C",x:60,y:70,z:0},{elem:"C",x:90,y:35,z:0},{elem:"C",x:90,y:-35,z:0},{elem:"C",x:60,y:-70,z:0},{elem:"H",x:0,y:120,z:0},{elem:"H",x:0,y:-120,z:0},{elem:"H",x:-60,y:120,z:0},{elem:"H",x:-125,y:60,z:0},{elem:"H",x:-125,y:-60,z:0},{elem:"H",x:-60,y:-120,z:0},{elem:"H",x:60,y:120,z:0},{elem:"H",x:125,y:60,z:0},{elem:"H",x:125,y:-60,z:0},{elem:"H",x:60,y:-120,z:0}], [[0,1,"double"],[0,4],[4,2],[2,3,"double"],[3,5],[5,1],[0,6],[6,7,"double"],[7,8],[8,9,"double"],[9,1],[2,10],[10,11,"double"],[11,12],[12,13,"double"],[13,3],[4,14],[5,15],[6,16],[7,17],[8,18],[9,19],[10,20],[11,21],[12,22],[13,23]]);
+
+addMol("Ethylbenzene", "C", "sp²", ["平面/四面體","Mixed"], "120°", benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:40,y:135,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:-25,y:110,z:-20},{elem:"H",x:65,y:135,z:0},{elem:"H",x:40,y:160,z:20},{elem:"H",x:40,y:160,z:-20}]), [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[6,7],[1,8],[2,9],[3,10],[4,11],[5,12],[6,13],[6,14],[7,15],[7,16],[7,17]]);
+
+addMol("Benzaldehyde", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"C",x:-30,y:45,z:0},{elem:"C",x:-30,y:-45,z:0},{elem:"C",x:-70,y:45,z:0},{elem:"C",x:-70,y:-45,z:0},{elem:"C",x:-90,y:0,z:0},{elem:"C",x:40,y:0,z:0},{elem:"O",x:60,y:40,z:0},{elem:"H",x:-15,y:75,z:0},{elem:"H",x:-15,y:-75,z:0},{elem:"H",x:-85,y:75,z:0},{elem:"H",x:-85,y:-75,z:0},{elem:"H",x:-120,y:0,z:0},{elem:"H",x:55,y:-30,z:0}], [[0,1,"double"],[0,2],[1,3],[2,4,"double"],[3,5,"double"],[4,5],[0,6],[6,7,"double"],[6,13],[1,8],[2,9],[3,10],[4,11],[5,12]]);
+
+addMol("Toluene", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"C",x:-30,y:45,z:0},{elem:"C",x:-30,y:-45,z:0},{elem:"C",x:-70,y:45,z:0},{elem:"C",x:-70,y:-45,z:0},{elem:"C",x:-90,y:0,z:0},{elem:"C",x:40,y:0,z:0},{elem:"H",x:-15,y:75,z:0},{elem:"H",x:-15,y:-75,z:0},{elem:"H",x:-85,y:75,z:0},{elem:"H",x:-85,y:-75,z:0},{elem:"H",x:-120,y:0,z:0},{elem:"H",x:55,y:25,z:0},{elem:"H",x:55,y:-20,z:15},{elem:"H",x:55,y:-20,z:-15}], [[0,1,"double"],[0,2],[1,3],[2,4,"double"],[3,5,"double"],[4,5],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14]]);
+
+// 苯酚 (Phenol): sp3 氧，H 向上抬升(y:135)以顯示下方LP (同H2SO4修正邏輯)
+addMol("Phenol", "C", "sp²", ["平面/彎曲","Planar/Bent"], "120°", [{elem:"C",x:0,y:70,z:0},{elem:"C",x:60.6,y:35,z:0},{elem:"C",x:60.6,y:-35,z:0},{elem:"C",x:0,y:-70,z:0},{elem:"C",x:-60.6,y:-35,z:0},{elem:"C",x:-60.6,y:35,z:0},{elem:"O",x:0,y:115,z:0,lpCount:2},{elem:"H",x:35,y:135,z:0},{elem:"H",x:104,y:60,z:0},{elem:"H",x:104,y:-60,z:0},{elem:"H",x:0,y:-120,z:0},{elem:"H",x:-104,y:-60,z:0},{elem:"H",x:-104,y:60,z:0}], [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[6,7],[1,8],[2,9],[3,10],[4,11],[5,12]]);
+
+addMol("Benzoic Acid", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:60,z:0},{elem:"C",x:52,y:30,z:0},{elem:"C",x:52,y:-30,z:0},{elem:"C",x:0,y:-60,z:0},{elem:"C",x:-52,y:-30,z:0},{elem:"C",x:-52,y:30,z:0},{elem:"C",x:0,y:105,z:0},{elem:"O",x:-35,y:125,z:0},{elem:"O",x:35,y:125,z:0},{elem:"H",x:60,y:145,z:0},{elem:"H",x:90,y:52,z:0},{elem:"H",x:90,y:-52,z:0},{elem:"H",x:0,y:-105,z:0},{elem:"H",x:-90,y:-52,z:0},{elem:"H",x:-90,y:52,z:0}], [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[6,7,"double"],[6,8],[8,9],[1,10],[2,11],[3,12],[4,13],[5,14]]);
+
+addMol("Salicylic Acid", "C", "sp²", ["平面","Planar"], "120°", benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"O",x:-35,y:130,z:0},{elem:"O",x:35,y:130,z:0},{elem:"O",x:100,y:55,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:60,y:145,z:0},{elem:"H",x:120,y:75,z:0}]), [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[6,7,"double"],[6,8],[8,14],[1,9],[9,15],[2,10],[3,11],[4,12],[5,13]]);
+
+addMol("Aspirin", "C", "sp²", ["平面/四面體","Mixed"], "120°", benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"O",x:-35,y:130,z:0},{elem:"O",x:35,y:130,z:0},{elem:"O",x:100,y:55,z:0},{elem:"C",x:135,y:75,z:0},{elem:"O",x:135,y:110,z:0},{elem:"C",x:170,y:55,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:60,y:145,z:0},{elem:"H",x:200,y:55,z:0},{elem:"H",x:170,y:30,z:20},{elem:"H",x:170,y:30,z:-20}]), [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[6,7,"double"],[6,8],[8,16],[1,9],[9,10],[10,11,"double"],[10,12],[2,13],[3,14],[4,15],[5,16],[12,17],[12,18],[12,19]]);
+
+// ========================================================================
+// 13. 醇、醚、醛、酮、酸、酯、胺、醯胺
+// ========================================================================
+addMol("1-Propanol", "C", "sp³", ["鏈狀","Chain"], "109.5°", [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"O",x:60,y:25,z:0},{elem:"H",x:85,y:10,z:0},{elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:60,z:0},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35}], [[0,1],[1,2],[2,3],[3,4],[0,5],[0,6],[0,7],[1,8],[1,9],[2,10],[2,11]]);
+
+addMol("2-Propanol", "C", "sp³", ["Y型","Branched"], "109.5°", [{elem:"C",x:0,y:0,z:0},{elem:"C",x:-40,y:-25,z:0},{elem:"C",x:40,y:-25,z:0},{elem:"O",x:0,y:40,z:0},{elem:"H",x:25,y:55,z:0},{elem:"H",x:0,y:0,z:-40},{elem:"H",x:-40,y:-60,z:0},{elem:"H",x:-65,y:-10,z:20},{elem:"H",x:-65,y:-10,z:-20},{elem:"H",x:40,y:-60,z:0},{elem:"H",x:65,y:-10,z:20},{elem:"H",x:65,y:-10,z:-20}], [[0,1],[0,2],[0,3],[3,4],[0,5],[1,6],[1,7],[1,8],[2,9],[2,10],[2,11]]);
+
+addMol("C2H5OC2H5", "O", "sp³", ["彎曲長鏈","Bent Chain"], "110°", [{elem:"O",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:1},{x:0,y:1,z:-1}]},{elem:"C",x:-40,y:-10,z:0},{elem:"C",x:40,y:-10,z:0},{elem:"C",x:-75,y:15,z:0},{elem:"C",x:75,y:15,z:0},{elem:"H",x:-40,y:-40,z:20},{elem:"H",x:-40,y:-40,z:-20},{elem:"H",x:40,y:-40,z:20},{elem:"H",x:40,y:-40,z:-20},{elem:"H",x:-75,y:45,z:0},{elem:"H",x:-100,y:0,z:20},{elem:"H",x:-100,y:0,z:-20},{elem:"H",x:75,y:45,z:0},{elem:"H",x:100,y:0,z:20},{elem:"H",x:100,y:0,z:-20}], [[0,1],[0,2],[1,3],[2,4],[1,5],[1,6],[2,7],[2,8],[3,9],[3,10],[3,11],[4,12],[4,13],[4,14]]);
+
+addMol("Propionaldehyde", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:25,y:0,z:0},{elem:"O",x:25,y:45,z:0},{elem:"C",x:-15,y:-25,z:0},{elem:"C",x:-55,y:0,z:0},{elem:"H",x:55,y:-15,z:0},{elem:"H",x:-15,y:-60,z:0},{elem:"H",x:-15,y:-25,z:35},{elem:"H",x:-55,y:35,z:0},{elem:"H",x:-80,y:-15,z:20},{elem:"H",x:-80,y:-15,z:-20}], [[0,1,"double"],[0,2],[0,4],[2,3],[2,5],[2,6],[3,7],[3,8],[3,9]]);
+
+addMol("Butanone", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:45,z:0},{elem:"C",x:40,y:-25,z:0},{elem:"C",x:-40,y:-25,z:0},{elem:"C",x:-75,y:0,z:0},{elem:"H",x:40,y:-60,z:0},{elem:"H",x:65,y:-10,z:20},{elem:"H",x:65,y:-10,z:-20},{elem:"H",x:-40,y:-60,z:0},{elem:"H",x:-40,y:-25,z:35},{elem:"H",x:-75,y:35,z:0},{elem:"H",x:-100,y:-15,z:20},{elem:"H",x:-100,y:-15,z:-20}], [[0,1,"double"],[0,2],[0,3],[2,5],[2,6],[2,7],[3,4],[3,8],[3,9],[4,10],[4,11],[4,12]]);
+
+addMol("Propanoic Acid", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:25,y:0,z:0},{elem:"O",x:25,y:45,z:0},{elem:"O",x:60,y:-20,z:0},{elem:"H",x:85,y:-5,z:0},{elem:"C",x:-15,y:-20,z:0},{elem:"C",x:-55,y:5,z:0},{elem:"H",x:-15,y:-55,z:0},{elem:"H",x:-15,y:-20,z:35},{elem:"H",x:-55,y:40,z:0},{elem:"H",x:-80,y:-10,z:20},{elem:"H",x:-80,y:-10,z:-20}], [[0,1,"double"],[0,2],[2,3],[0,4],[4,5],[4,6],[4,7],[5,8],[5,9],[5,10]]);
+
+addMol("H2C2O4", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-20,y:0,z:0},{elem:"C",x:20,y:0,z:0},{elem:"O",x:-20,y:40,z:0},{elem:"O",x:-50,y:-20,z:0},{elem:"H",x:-70,y:-10,z:0},{elem:"O",x:20,y:-40,z:0},{elem:"O",x:50,y:20,z:0},{elem:"H",x:70,y:10,z:0}], [[0,1],[0,2,"double"],[0,3],[3,4],[1,5,"double"],[1,6],[6,7]]);
+
+addMol("CH3COOH", "S", "sp²", ["平面/四面體","Planar/Tetra"], "120°/109°", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:15,y:0,z:0},{elem:"O",x:15,y:45,z:0},{elem:"O",x:55,y:-30,z:0},{elem:"H",x:80,y:-15,z:0},{elem:"H",x:-35,y:-45,z:0},{elem:"H",x:-65,y:25,z:25},{elem:"H",x:-65,y:25,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[0,5],[0,6],[0,7]]);
+
+addMol("HCOOCH3", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:-10,y:0,z:0},{elem:"O",x:-10,y:45,z:0},{elem:"O",x:25,y:-20,z:0},{elem:"C",x:60,y:-20,z:0},{elem:"H",x:-40,y:-15,z:0},{elem:"H",x:60,y:-55,z:0},{elem:"H",x:85,y:0,z:20},{elem:"H",x:85,y:0,z:-20}], [[0,1,"double"],[0,2],[2,3],[0,4],[3,5],[3,6],[3,7]]);
+
+addMol("CH3COOCH3", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:-30,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:45,z:0},{elem:"O",x:45,y:-25,z:0},{elem:"C",x:80,y:-25,z:0},{elem:"H",x:-30,y:-40,z:0},{elem:"H",x:-55,y:20,z:20},{elem:"H",x:-55,y:20,z:-20},{elem:"H",x:80,y:-60,z:0},{elem:"H",x:105,y:-5,z:20},{elem:"H",x:105,y:-5,z:-20}], [[0,1],[1,2,"double"],[1,3],[3,4],[0,5],[0,6],[0,7],[4,8],[4,9],[4,10]]);
+
+addMol("CH3COOC2H5", "C", "sp²", ["平面/四面體","Mixed"], "120°", [{elem:"C",x:-30,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:45,z:0},{elem:"O",x:45,y:-25,z:0},{elem:"C",x:80,y:-25,z:0},{elem:"C",x:110,y:10,z:0},{elem:"H",x:-30,y:-40,z:0},{elem:"H",x:-55,y:20,z:20},{elem:"H",x:-55,y:20,z:-20},{elem:"H",x:80,y:-60,z:0},{elem:"H",x:100,y:-40,z:25},{elem:"H",x:110,y:45,z:0},{elem:"H",x:135,y:-5,z:20},{elem:"H",x:135,y:-5,z:-20}], [[0,1],[1,2,"double"],[1,3],[3,4],[4,5],[0,6],[0,7],[0,8],[4,9],[4,10],[5,11],[5,12],[5,13]]);
+
+addMol("Dimethylamine", "N", "sp³", ["角錐","Pyramidal"], "107°", [{elem:"N",x:0,y:0,z:0},{elem:"H",x:0,y:25,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:60,y:-40,z:0},{elem:"H",x:50,y:10,z:10},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-60,y:-40,z:0},{elem:"H",x:-50,y:10,z:10}], [[0,1],[0,2],[0,3],[2,4],[2,5],[2,6],[3,7],[3,8],[3,9]]);
+
+addMol("Trimethylamine", "N", "sp³", ["角錐","Pyramidal"], "108°", [{elem:"N",x:0,y:10,z:0},{elem:"C",x:0,y:-20,z:30},{elem:"C",x:30,y:-20,z:-20},{elem:"C",x:-30,y:-20,z:-20},{elem:"H",x:0,y:-20,z:65},{elem:"H",x:25,y:-45,z:30},{elem:"H",x:-25,y:-45,z:30},{elem:"H",x:30,y:-20,z:-55},{elem:"H",x:55,y:-45,z:-20},{elem:"H",x:55,y:5,z:-20},{elem:"H",x:-30,y:-20,z:-55},{elem:"H",x:-55,y:-45,z:-20},{elem:"H",x:-55,y:5,z:-20}], [[0,1],[0,2],[0,3],[1,4],[1,5],[1,6],[2,7],[2,8],[2,9],[3,10],[3,11],[3,12]]);
+
+addMol("HCONH2", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:45,z:0},{elem:"N",x:40,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0},{elem:"H",x:40,y:-55,z:0},{elem:"H",x:70,y:-5,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4],[2,5]]);
+
+addMol("CH3CONH2", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:5,y:0,z:0},{elem:"O",x:5,y:45,z:0},{elem:"N",x:45,y:-25,z:0},{elem:"H",x:-35,y:-40,z:0},{elem:"H",x:-60,y:20,z:20},{elem:"H",x:-60,y:20,z:-20},{elem:"H",x:45,y:-55,z:0},{elem:"H",x:75,y:-5,z:0}], [[0,1],[1,2,"double"],[1,3],[0,4],[0,5],[0,6],[3,7],[3,8]]);
+
+// ========================================================================
+// 14. 多中心與環狀 (P4, S8, P4O6/10, S2Cl2, Cyclics...)
+// ========================================================================
+// P4: 正四面體
+addMol("P4", "P", "sp³", ["正四面體 (籠狀)","Tetrahedral Cage"], "60°", [{elem:"P",x:50,y:50,z:50}, {elem:"P",x:50,y:-50,z:-50}, {elem:"P",x:-50,y:50,z:-50}, {elem:"P",x:-50,y:-50,z:50}], [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]);
+
+// P4O6: 橋接氧向外推 (85)，形成彎曲結構 (sp3)
+addMol("P4O6", "P", "sp³", ["籠狀 (類金剛烷)","Cage"], "100°", [
+    {elem:"P",x:55,y:55,z:55}, {elem:"P",x:55,y:-55,z:-55}, {elem:"P",x:-55,y:55,z:-55}, {elem:"P",x:-55,y:-55,z:55}, 
+    {elem:"O",x:85,y:0,z:0}, {elem:"O",x:-85,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"O",x:0,y:-85,z:0}, {elem:"O",x:0,y:0,z:85}, {elem:"O",x:0,y:0,z:-85}
+], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8]]);
+
+// P4O10: 橋接氧向外推 (85)，末端氧更向外 (95)
+addMol("P4O10", "P", "sp³", ["籠狀","Cage"], "102°/123°", [
+    {elem:"P",x:55,y:55,z:55}, {elem:"P",x:55,y:-55,z:-55}, {elem:"P",x:-55,y:55,z:-55}, {elem:"P",x:-55,y:-55,z:55}, 
+    {elem:"O",x:85,y:0,z:0}, {elem:"O",x:-85,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"O",x:0,y:-85,z:0}, {elem:"O",x:0,y:0,z:85}, {elem:"O",x:0,y:0,z:-85}, 
+    {elem:"O",x:95,y:95,z:95}, {elem:"O",x:95,y:-95,z:-95}, {elem:"O",x:-95,y:95,z:-95}, {elem:"O",x:-95,y:-95,z:95}
+], [[0,4],[0,6],[0,8], [1,4],[1,7],[1,9], [2,5],[2,6],[2,9], [3,5],[3,7],[3,8], [0,10,"double"], [1,11,"double"], [2,12,"double"], [3,13,"double"]]);
+
+addMol("S8", "S", "sp³", ["皇冠型 (環狀)","Crown Ring"], "108°", [{elem:"S",x:60,y:20,z:0},{elem:"S",x:42,y:-20,z:42},{elem:"S",x:0,y:20,z:60},{elem:"S",x:-42,y:-20,z:42},{elem:"S",x:-60,y:20,z:0},{elem:"S",x:-42,y:-20,z:-42},{elem:"S",x:0,y:20,z:-60},{elem:"S",x:42,y:-20,z:-42}], [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]]);
+
+addMol("H2O2", "O", "sp³", ["書本型","Open Book"], "111°", [{elem:"O",x:-15,y:5,z:-15},{elem:"O",x:15,y:-5,z:15},{elem:"H",x:-50,y:30,z:-20},{elem:"H",x:50,y:-30,z:20}], [[0,1],[0,2],[1,3]]);
+
+addMol("H2S2", "S", "sp³", ["書本型","Open Book"], "92°", [{elem:"S",x:-15,y:5,z:-15},{elem:"S",x:15,y:-5,z:15},{elem:"H",x:-50,y:30,z:-20},{elem:"H",x:50,y:-30,z:20}], [[0,1],[0,2],[1,3]]);
+
+addMol("S2Cl2", "S", "sp³", ["書本型","Open Book"], "103°", [{elem:"S",x:0,y:25,z:0},{elem:"S",x:0,y:-25,z:0},{elem:"Cl",x:60,y:55,z:45},{elem:"Cl",x:-60,y:-55,z:45}], [[0,1],[0,2],[1,3]]);
+
+addMol("N2O3", "N", "sp²+sp²", ["平面","Planar"], "120°", [{elem:"N",x:-30,y:0,z:0},{elem:"N",x:30,y:0,z:0},{elem:"O",x:-60,y:40,z:0},{elem:"O",x:60,y:40,z:0},{elem:"O",x:60,y:-40,z:0}], [[0,1],[0,2,"double"],[1,3,"double"],[1,4]]);
+
+addMol("N2O4", "N", "sp²", ["平面","Planar"], "120°", [{elem:"N",x:-35,y:0,z:0,lpCount:0},{elem:"N",x:35,y:0,z:0,lpCount:0},{elem:"O",x:-70,y:50,z:0},{elem:"O",x:-70,y:-50,z:0},{elem:"O",x:70,y:50,z:0},{elem:"O",x:70,y:-50,z:0}], [[0,1],[0,2,"double"],[0,3],[1,4,"double"],[1,5]]);
+
+addMol("N2O5", "N", "sp²", ["非平面","V-shape"], "120°", [{elem:"O",x:0,y:25,z:0},{elem:"N",x:-45,y:-10,z:0},{elem:"N",x:45,y:-10,z:0},{elem:"O",x:-75,y:25,z:0},{elem:"O",x:-75,y:-45,z:0},{elem:"O",x:75,y:25,z:0},{elem:"O",x:75,y:-45,z:0}], [[0,1],[0,2],[1,3,"double"],[1,4],[2,5,"double"],[2,6]]);
+
+addMol("Cyclobutane", "C", "sp³", ["摺疊環","Puckered Ring"], "88°", [{elem:"C",x:30,y:30,z:10},{elem:"C",x:30,y:-30,z:-10},{elem:"C",x:-30,y:-30,z:10},{elem:"C",x:-30,y:30,z:-10},{elem:"H",x:50,y:50,z:20},{elem:"H",x:50,y:50,z:-20},{elem:"H",x:50,y:-50,z:20},{elem:"H",x:50,y:-50,z:-20},{elem:"H",x:-50,y:-50,z:20},{elem:"H",x:-50,y:-50,z:-20},{elem:"H",x:-50,y:50,z:20},{elem:"H",x:-50,y:50,z:-20}], [[0,1],[1,2],[2,3],[3,0],[0,4],[0,5],[1,6],[1,7],[2,8],[2,9],[3,10],[3,11]]);
+
+addMol("Cyclopentane", "C", "sp³", ["信封型","Envelope"], "105°", [{elem:"C",x:0,y:50,z:-10},{elem:"C",x:48,y:15,z:0},{elem:"C",x:30,y:-40,z:10},{elem:"C",x:-30,y:-40,z:10},{elem:"C",x:-48,y:15,z:0},{elem:"H",x:0,y:80,z:-10},{elem:"H",x:0,y:60,z:-40},{elem:"H",x:75,y:20,z:0},{elem:"H",x:60,y:10,z:30},{elem:"H",x:40,y:-60,z:10},{elem:"H",x:40,y:-40,z:40},{elem:"H",x:-40,y:-60,z:10},{elem:"H",x:-40,y:-40,z:40},{elem:"H",x:-75,y:20,z:0},{elem:"H",x:-60,y:10,z:30}], [[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[0,6],[1,7],[1,8],[2,9],[2,10],[3,11],[3,12],[4,13],[4,14]]);
+
+addMol("1,2-Dichloroethane", "C", "sp³", ["扭轉型","Gauche"], "109.5°", [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"Cl",x:-50,y:35,z:20},{elem:"Cl",x:50,y:-35,z:-20},{elem:"H",x:-40,y:-35,z:0},{elem:"H",x:-40,y:0,z:-35},{elem:"H",x:40,y:35,z:0},{elem:"H",x:40,y:0,z:35}], [[0,1],[0,2],[0,4],[0,5],[1,3],[1,6],[1,7]]);
+
+addMol("Ethylene Glycol", "O", "sp³", ["扭轉型","Gauche"], "109.5°", [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"O",x:-50,y:35,z:20},{elem:"O",x:50,y:-35,z:-20},{elem:"H",x:-70,y:35,z:40},{elem:"H",x:70,y:-35,z:-40},{elem:"H",x:-40,y:-35,z:0},{elem:"H",x:-40,y:0,z:-35},{elem:"H",x:40,y:35,z:0},{elem:"H",x:40,y:0,z:35}], [[0,1],[0,2],[2,4],[0,6],[0,7],[1,3],[3,5],[1,8],[1,9]]);
+
+addMol("Glyoxal", "C", "sp²", ["平面","Planar"], "120°", [{elem:"C",x:-25,y:0,z:0},{elem:"C",x:25,y:0,z:0},{elem:"O",x:-50,y:40,z:0},{elem:"O",x:50,y:-40,z:0},{elem:"H",x:-40,y:-35,z:0},{elem:"H",x:40,y:35,z:0}], [[0,1],[0,2,"double"],[1,3,"double"],[0,4],[1,5]]);
+
+// ========================================================================
+// 新增：醇類系列 (甲醇、乙醇、丙醇異構物、丁醇異構物)
+// ========================================================================
+
+addMol("CH3OH", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", [
+{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:45,z:0,lpCount:2}, 
+{elem:"H",x:0,y:-40,z:0}, {elem:"H",x:35,y:10,z:30}, {elem:"H",x:-35,y:10,z:30}, {elem:"H",x:35,y:70,z:0}
+], [[0,1],[0,2],[0,3],[0,4],[1,5]]);
+
+addMol("C2H5OH", "C", "sp³", ["鏈狀","Chain"], "109.5°", [
+{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:20,y:0,z:0}, {elem:"O",x:50,y:35,z:0,lpCount:2},
+{elem:"H",x:-30,y:-40,z:0}, {elem:"H",x:-55,y:20,z:25}, {elem:"H",x:-55,y:20,z:-25},
+{elem:"H",x:20,y:-40,z:0}, {elem:"H",x:20,y:10,z:40}, {elem:"H",x:85,y:25,z:0}
+], [[0,1],[1,2],[0,3],[0,4],[0,5],[1,6],[1,7],[2,8]]);
+
+// 丙醇異構物 (Variants)
+addMol("C3H7OH", "C", "sp³", ["異構物","Isomers"], "109.5°", [], [], [], {
+    "1-Propanol (正丙醇)": { 
+        atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"O",x:60,y:25,z:0,lpCount:2},{elem:"H",x:85,y:10,z:0},{elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:60,z:0},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35}], 
+        bonds: [[0,1],[1,2],[2,3],[3,4],[0,5],[0,6],[0,7],[1,8],[1,9],[2,10],[2,11]] 
+    },
+    "2-Propanol (異丙醇)": { 
+        atoms: [{elem:"C",x:0,y:0,z:0},{elem:"C",x:-40,y:-25,z:0},{elem:"C",x:40,y:-25,z:0},{elem:"O",x:0,y:40,z:0,lpCount:2},{elem:"H",x:25,y:55,z:0},{elem:"H",x:0,y:0,z:-40},{elem:"H",x:-40,y:-60,z:0},{elem:"H",x:-65,y:-10,z:20},{elem:"H",x:-65,y:-10,z:-20},{elem:"H",x:40,y:-60,z:0},{elem:"H",x:65,y:-10,z:20},{elem:"H",x:65,y:-10,z:-20}], 
+        bonds: [[0,1],[0,2],[0,3],[3,4],[0,5],[1,6],[1,7],[1,8],[2,9],[2,10],[2,11]] 
+    }
+});
+
+// 丁醇異構物 (Variants: n, sec, iso, tert)
+addMol("C4H9OH", "C", "sp³", ["異構物","Isomers"], "109.5°", [], [], [], {
+    "n-Butanol (正丁醇)": {
+        atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:30,z:0},{elem:"C",x:20,y:0,z:0},{elem:"C",x:60,y:30,z:0},{elem:"O",x:100,y:0,z:0,lpCount:2},{elem:"H",x:120,y:20,z:0},{elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:20,z:20},{elem:"H",x:-85,y:20,z:-20},{elem:"H",x:-20,y:65,z:0},{elem:"H",x:-20,y:30,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35},{elem:"H",x:60,y:65,z:0},{elem:"H",x:60,y:30,z:35}],
+        bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[0,6],[0,7],[0,8],[1,9],[1,10],[2,11],[2,12],[3,13],[3,14]]
+    },
+    "sec-Butanol (二級丁醇)": {
+        atoms: [{elem:"C",x:-20,y:0,z:0},{elem:"C",x:20,y:30,z:0},{elem:"C",x:60,y:0,z:0},{elem:"C",x:-20,y:-40,z:0},{elem:"O",x:-60,y:20,z:0,lpCount:2},{elem:"H",x:-75,y:0,z:0},{elem:"H",x:-20,y:0,z:35},{elem:"H",x:20,y:65,z:0},{elem:"H",x:20,y:30,z:35},{elem:"H",x:60,y:-35,z:0},{elem:"H",x:85,y:20,z:20},{elem:"H",x:85,y:20,z:-20},{elem:"H",x:-20,y:-75,z:0},{elem:"H",x:-45,y:-40,z:20},{elem:"H",x:5,y:-40,z:20}],
+        bonds: [[0,1],[1,2],[0,3],[0,4],[4,5],[0,6],[1,7],[1,8],[2,9],[2,10],[2,11],[3,12],[3,13],[3,14]]
+    },
+    "Isobutanol (異丁醇)": {
+        atoms: [{elem:"C",x:0,y:0,z:0},{elem:"C",x:40,y:20,z:0},{elem:"O",x:75,y:-10,z:0,lpCount:2},{elem:"C",x:-35,y:25,z:0},{elem:"C",x:-10,y:-40,z:0},{elem:"H",x:95,y:5,z:0},{elem:"H",x:0,y:0,z:35},{elem:"H",x:40,y:55,z:0},{elem:"H",x:40,y:20,z:-35},{elem:"H",x:-35,y:60,z:0},{elem:"H",x:-60,y:10,z:20},{elem:"H",x:-60,y:10,z:-20},{elem:"H",x:-10,y:-75,z:0},{elem:"H",x:-35,y:-40,z:20},{elem:"H",x:15,y:-40,z:20}],
+        bonds: [[0,1],[1,2],[2,5],[0,3],[0,4],[0,6],[1,7],[1,8],[3,9],[3,10],[3,11],[4,12],[4,13],[4,14]]
+    },
+    "tert-Butanol (三級丁醇)": {
+        atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:45,z:0,lpCount:2},{elem:"H",x:25,y:60,z:0},{elem:"C",x:0,y:-30,z:30},{elem:"C",x:35,y:-20,z:-20},{elem:"C",x:-35,y:-20,z:-20},{elem:"H",x:0,y:-20,z:65},{elem:"H",x:25,y:-55,z:30},{elem:"H",x:-25,y:-55,z:30},{elem:"H",x:40,y:-10,z:-55},{elem:"H",x:65,y:-40,z:-20},{elem:"H",x:60,y:10,z:-20},{elem:"H",x:-40,y:-10,z:-55},{elem:"H",x:-65,y:-40,z:-20},{elem:"H",x:-60,y:10,z:-20}],
+        bonds: [[0,1],[1,2],[0,3],[0,4],[0,5],[3,6],[3,7],[3,8],[4,9],[4,10],[4,11],[5,12],[5,13],[5,14]]
+    }
+});
+
+// ========================================================================
+// 新增：醛類補充 (甲醛、乙醛)
+// ========================================================================
+
+addMol("HCHO", "C", "sp²", ["平面","Planar"], "120°", [
+{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:45,z:0,lpCount:2},
+{elem:"H",x:-45,y:-25,z:0}, {elem:"H",x:45,y:-25,z:0}
+], [[0,1,"double"],[0,2],[0,3]]);
+
+addMol("CH3CHO", "C", "sp²", ["平面/四面體","Mixed"], "120°", [
+{elem:"C",x:15,y:0,z:0}, {elem:"O",x:15,y:45,z:0,lpCount:2}, {elem:"H",x:55,y:-25,z:0},
+{elem:"C",x:-25,y:-25,z:0}, {elem:"H",x:-25,y:-60,z:0}, {elem:"H",x:-55,y:-10,z:25}, {elem:"H",x:-55,y:-10,z:-25}
+], [[0,1,"double"],[0,2],[0,3],[3,4],[3,5],[3,6]]);
+
+// ========================================================================
+// 新增：胺、醯胺與衍生物 (乙胺、DMF、乙醯胺苯)
+// ========================================================================
+
+addMol("C2H5NH2", "N", "sp³", ["角錐/四面體","Pyramidal"], "107°", [
+{elem:"N",x:-45,y:15,z:0,lpCount:1}, {elem:"H",x:-45,y:40,z:20}, {elem:"H",x:-45,y:40,z:-20},
+{elem:"C",x:-10,y:-15,z:0}, {elem:"H",x:-10,y:-40,z:30}, {elem:"H",x:-10,y:-40,z:-30},
+{elem:"C",x:35,y:10,z:0}, {elem:"H",x:35,y:45,z:0}, {elem:"H",x:60,y:-10,z:25}, {elem:"H",x:60,y:-10,z:-25}
+], [[0,1],[0,2],[0,3],[3,4],[3,5],[3,6],[6,7],[6,8],[6,9]]);
+
+// DMF: N,N-Dimethylformamide (N為sp2平面結構，具共振)
+addMol("DMF", "C/N", "sp²", ["平面","Planar"], "120°", [
+{elem:"C",x:0,y:10,z:0}, {elem:"O",x:-10,y:55,z:0,lpCount:2}, {elem:"H",x:35,y:25,z:0},
+{elem:"N",x:-15,y:-30,z:0,lpCount:0}, // N 參與共振，設為平面
+{elem:"C",x:-60,y:-45,z:0}, {elem:"C",x:20,y:-60,z:0}, // 兩個甲基
+{elem:"H",x:-60,y:-80,z:0}, {elem:"H",x:-85,y:-30,z:20}, {elem:"H",x:-85,y:-30,z:-20},
+{elem:"H",x:20,y:-95,z:0}, {elem:"H",x:45,y:-45,z:20}, {elem:"H",x:45,y:-45,z:-20}
+], [[0,1,"double"],[0,2],[0,3],[3,4],[3,5],[4,6],[4,7],[4,8],[5,9],[5,10],[5,11]]);
+
+// Acetanilide (乙醯胺苯): 苯環 + 醯胺基
+// 依賴 benzBase (六邊形座標)
+addMol("Acetanilide", "C", "sp²", ["平面/苯環","Planar"], "120°", 
+    benzBase.map(p=>({elem:"C",...p})).concat([
+        {elem:"N",x:0,y:110,z:0,lpCount:1}, {elem:"H",x:-30,y:125,z:0}, // 苯環上方的 N
+        {elem:"C",x:35,y:135,z:0}, // 羰基 C
+        {elem:"O",x:35,y:175,z:0,lpCount:2}, // 羰基 O
+        {elem:"C",x:80,y:110,z:0}, // 甲基 C
+        // 苯環H
+        {elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},
+        // 甲基H
+        {elem:"H",x:80,y:75,z:0}, {elem:"H",x:105,y:125,z:20}, {elem:"H",x:105,y:125,z:-20}
+    ]), 
+    [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0], // 苯環
+     [0,6], [6,7], [6,8], [8,9,"double"], [8,10], // 醯胺連接
+     [1,11],[2,12],[3,13],[4,14],[5,15], // 苯環H
+     [10,16],[10,17],[10,18]] // 甲基H
+);
+
+// --- 3. 邏輯與控制 ---
+let currentMolecule = null;
+let rotation = { x: 0.5, y: 0.5, z: 0 }; 
+let panOffset = { x: 0, y: 0 }; 
+let scale = 1.6; 
+let isDragging = false; 
+let lastMouse = { x: 0, y: 0 };
+let currentMode = 1;
+let altKeyIsDown = false;
+let currentKey = null; 
+
+let lastTouchDist = 0;
+let lastTouchCenter = { x:0, y:0 };
+let lastTouchAngle = 0; 
+
+const sceneRoot = document.getElementById("scene-root");
+const viewport = document.getElementById("viewport");
+const modeToggleBtn = document.getElementById("mode-toggle");
+const variantSelector = document.getElementById("variant-selector");
+
+// 檢測是否為手機模式 (寬度 < 768px)
+function isMobileMode() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function toggleMobilePanel() {
+    const panel = document.getElementById('controls-panel');
+    if(panel) panel.classList.toggle('minimized');
+}
+
+// ------------------------------------------
+
+function toggleMode() {
+    currentMode = (currentMode + 1) % 3; 
+    const modes = ['平移', '旋轉', '複合'];
+    const classes = ['mode-pan', 'mode-rotate', 'mode-composite'];
+    modeToggleBtn.className = `control-button ${classes[currentMode]} active`;
+    modeToggleBtn.innerHTML = `模式: **${modes[currentMode]}**`;
+    viewport.className = `viewport-area ${classes[currentMode]}`;
+}
+
+window.onload = () => {
+    if(Object.keys(MOLECULE_DB).length > 0) {
+        loadMolecule("P4O6"); 
+    }
+    animate();
+    setupInteractions();
+    
+    // 如果是手機，顯示操作提示
+    if(isMobileMode()) {
+        const hint = document.getElementById('mobile-hint');
+        if(hint) hint.style.display = 'block';
+    }
+};
+
+function formatFormula(str) {
+    let parts = str.split(' ');
+    let main = parts[0];
+    let charge = parts.length > 1 ? parts[1] : '';
+    let formattedMain = main.replace(/(\d+)/g, '<sub>$1</sub>');
+    let formattedCharge = charge ? `<sup>${charge}</sup>` : '';
+    return formattedMain + formattedCharge;
+}
+
+// --- 中文搜尋對照表 ---
+const CHINESE_ALIAS = {
+    "氫": "H2", "氫氣": "H2", "氮": "N2", "氮氣": "N2", "氧": "O2", "氧氣": "O2", "氟": "F2", 
+    "氟氣": "F2", "氯": "Cl2", "氯氣": "Cl2", "溴": "Br2", "碘": "I2", "臭氧": "O3",
+    "白磷": "P4", "黃磷": "P4", "磷": "P4", "硫": "S8", "硫磺": "S8", "斜方硫": "S8", 
+    "單斜硫": "S8", "二氯化二硫": "S2Cl2", "過氧化氫": "H2O2", "雙氧水": "H2O2",
+    "過硫化氫": "H2S2", "氟化氫": "HF", "氫氟酸": "HF", "氯化氫": "HCl", "氫氯酸": "HCl",
+    "溴化氫": "HBr", "氫溴酸": "HBr", "碘化氫": "HI", "氫碘酸": "HI",
+    "碳60": "C60", "巴克球": "C60", "富勒烯": "C60", "碳36": "C36", "碳40": "C40", "碳50": "C50", "碳70": "C70", "碳80": "C80", "碳100": "C100",
+    "水": "H2O", "氨": "NH3", "氨氣": "NH3", "一氧化碳": "CO", "二氧化碳": "CO2",
+    "一氧化氮": "NO", "二氧化氮": "NO2", "笑氣": "N2O", "氧化亞氮": "N2O",
+    "三氧化二氮": "N2O3", "四氧化二氮": "N2O4", "五氧化二氮": "N2O5",
+    "二氧化硫": "SO2", "三氧化硫": "SO3",
+    "甲烷": "CH4", "矽烷": "SiH4", "膦": "PH3", "磷化氫": "PH3", 
+    "五氯化磷": "PCl5", "十氧化四磷": "P4O10", "六氧化四磷": "P4O6", "七氧化二氯": "Cl2O7",
+    "硫酸": "H2SO4", "亞硫酸": "H2SO3", "硫代硫酸根": "S2O3 2-",
+    "硝酸": "HNO3", "亞硝酸": "HNO2", 
+    "碳酸": "H2CO3", "磷酸": "H3PO4", "亞磷酸": "H3PO3", "次磷酸": "H3PO2",
+    "過氯酸": "HClO4", "氯酸": "HClO3", "亞氯酸": "HClO2", "次氯酸": "HClO",
+    "氫化氰": "HCN", "氫氰酸": "HCN", "氰酸": "HOCN",
+    "硫酸氫根": "HSO4-", "硫酸根": "SO42-", "碳酸氫根": "HCO3-", "碳酸根": "CO32-", 
+    "硝酸根": "NO3-", "亞硝酸根": "NO2-", "磷酸二氫根": "H2PO4-", "磷酸氫根": "HPO42-",
+    "亞磷酸氫根": "H2PO3-", "亞磷酸根": "HPO32-", "次磷酸根": "H2PO2-",
+    "乙烷": "C2H6", "乙烯": "C2H4", "乙炔": "C2H2", 
+    "丙烷": "C3H8", "丁烷": "C4H10", "異丁烷": "Isobutane",
+    "環丙烷": "Cyclopropane", "環丁烷": "Cyclobutane", "環戊烷": "Cyclopentane", 
+    "環己烷": "Cyclohexane",
+    "苯": "C6H6", "萘": "Naphthalene", "蒽": "Anthracene", 
+    "甲苯": "Toluene", "乙苯": "Ethylbenzene", "苯乙烯": "Styrene", "二甲苯": "C8H10",
+    "甲醇": "CH3OH", "乙醇": "C2H5OH", "乙二醇": "Ethylene Glycol", "甘油": "Glycerol",
+    "甲醚": "CH3OCH3", "乙醚": "C2H5OC2H5", "丙醇": "C3H7OH", "正丙醇": "C3H7OH", 
+    "異丙醇": "C3H7OH", "丁醇": "C4H9OH", "正丁醇": "C4H9OH", "異丁醇": "C4H9OH", 
+    "二級丁醇": "C4H9OH", "三級丁醇": "C4H9OH",
+    "甲醛": "HCHO", "乙醛": "CH3CHO", "丙酮": "CH3COCH3", "乙二醛": "Glyoxal",
+    "甲酸": "HCOOH", "乙酸": "CH3COOH", "草酸": "H2C2O4", "苯甲酸": "Benzoic Acid",
+    "甲胺": "CH3NH2", "乙胺": "C2H5NH2", "N,N-二甲基甲醯胺": "DMF", "乙醯胺苯": "Acetanilide",
+    "乙醯苯胺": "Acetanilide", "乙二酸": "H2C2O4", "甲醯胺": "HCONH2", "乙醯胺": "CH3CONH2",
+    "柳酸": "Salicylic Acid", "阿斯匹靈": "Aspirin", "苯酚": "Phenol", "酚": "Phenol",
+    "乙酸乙酯": "CH3COOC2H5", "甲酸甲酯": "HCOOCH3", "尿素": "CO(NH2)2",
+    "二氯乙烷": "1,2-Dichloroethane", "氯仿": "CHCl3"
+};
+
+function handleLoadBtn() {
+    let val = document.getElementById("formula-input").value.trim();
+    let searchTarget = val;
+    if (CHINESE_ALIAS[val]) {
+        searchTarget = CHINESE_ALIAS[val];
+    }
+    let key = Object.keys(MOLECULE_DB).find(k => 
+        k.replace(/\s/g,'').toUpperCase() === searchTarget.replace(/\s/g,'').toUpperCase()
+    );
+    if (key) {
+        loadMolecule(key);
+    } else {
+        alert("資料庫中未找到該分子: " + val);
+    }
+}
+
+function reloadCurrentMolecule() {
+    if (currentKey) loadMolecule(currentKey);
+}
+
+function loadMolecule(key, variantKey = null) {
+    currentKey = key;
+    try {
+        let data = MOLECULE_DB[key];
+        if (!data) throw new Error("Data missing");
+
+        if (variantKey && data.variants && data.variants[variantKey]) {
+            data = data.variants[variantKey];
+        } else if (data.variants) {
+            const firstKey = Object.keys(data.variants)[0];
+            data = data.variants[firstKey];
+            variantKey = firstKey;
+        }
+
+        if (!data.bondsRaw) data.bondsRaw = []; 
+        let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
+        
+        const octetSwitch = document.getElementById('toggle-octet');
+        const octetMode = octetSwitch ? octetSwitch.checked : false;
+        const octetCenters = ["S","P","Cl","Br","I","Xe"]; 
+
+        if (octetMode && octetCenters.includes(data.center)) {
+            processedBonds = processedBonds.map(bond => {
+                const atom1 = data.atomsRaw[bond[0]];
+                const atom2 = data.atomsRaw[bond[1]];
+                const isLigand = (atom1.elem === "O" || atom2.elem === "O");
+                if (isLigand && (bond[2] === "double" || bond[2] === "triple")) {
+                        return [bond[0], bond[1], "single"];
+                }
+                return bond;
+            });
+        }
+
+        const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
+
+        currentMolecule = {
+            ...data,
+            renderObjects: renderObjects,
+            bonds3D: processedBonds
+        };
+        
+        let sigma = 0, pi = 0, totalLP = 0;
+        const shapeStr = Array.isArray(data.shape) ? data.shape[0] : data.shape;
+        const isFullerene = shapeStr && (shapeStr.includes("球狀") || shapeStr.includes("籠狀") && !key.includes("P4O")); 
+
+        if (isFullerene && key.startsWith("C")) {
+            const n = data.atomsRaw.length;
+            sigma = Math.floor(1.5 * n);
+            pi = Math.floor(0.5 * n);
+            totalLP = 0;
+        } else {
+            if (currentMolecule.bonds3D) {
+                currentMolecule.bonds3D.forEach(b => {
+                    sigma++; 
+                    if(b[2] === 'double') pi += 1;
+                    if(b[2] === 'triple') pi += 2;
+                });
+            }
+            currentMolecule.renderObjects.forEach(obj => {
+                if (obj.type === 'atom' && obj.calculatedLP !== undefined) {
+                    totalLP += obj.calculatedLP;
+                }
+            });
+        }
+
+        document.getElementById("disp-formula").innerHTML = formatFormula(key);
+        document.getElementById("disp-center").textContent = data.center;
+        document.getElementById("disp-hybrid").textContent = data.hybrid;
+        document.getElementById("disp-shape").textContent = data.shape;
+        document.getElementById("disp-angle").textContent = data.angle;
+        
+        const bondDisp = document.getElementById("disp-bonds");
+        if(bondDisp) {
+            bondDisp.innerHTML = `&sigma;: ${sigma}, &nbsp; &pi;: ${pi}, &nbsp; LP: ${totalLP}`;
+        }
+
+        let totalMass = 0;
+        if (data.atomsRaw) {
+            data.atomsRaw.forEach(a => {
+                const props = ELEMENT_PROPS[a.elem];
+                if (props && props.mass) {
+                    totalMass += props.mass;
+                }
+            });
+        }
+        
+        const massDisp = document.getElementById("disp-mass");
+        if (massDisp) {
+            massDisp.textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
+        }
+
+        document.getElementById("viewport-subtitle").textContent = `${key} - ${data.shape}`;
+        updateVariantUI(key, variantKey);
+        
+    } catch (e) {
+        console.error("Load Error:", e);
+    }
+}
+
+function processAtomsData(atomList, bondList, centerElem) {
+    let processed = [];
+    let cx=0, cy=0, cz=0;
+    if(atomList.length > 0) {
+        atomList.forEach(a => { cx+=a.x; cy+=a.y; cz+=a.z; });
+        cx /= atomList.length; cy /= atomList.length; cz /= atomList.length;
+    }
+
+    const atomObjects = atomList.map(a => {
+        const props = ELEMENT_PROPS[a.elem] || { c3d: "#ccc", r3d: 20 };
+        return { ...a, color: props.c3d, r: props.r3d, type: 'atom' };
+    });
+
+    atomObjects.forEach((atomObj, idx) => {
+        const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
+        atomObj.calculatedLP = calcLP;
+        processed.push(atomObj);
+
+        if (ELEMENT_PROPS[atomObj.elem]) { 
+            const electronDots = generateElectronDots(atomObj, idx, atomObjects, bondList);
+            electronDots.forEach(dot => {
+                processed.push({ ...dot, color: "#ffffff", type: 'electron' }); 
+            });
+        }
+    });
+    return processed;
+}
+
+function updateVariantUI(key, activeVariant) {
+    const rootData = MOLECULE_DB[key];
+    variantSelector.innerHTML = ''; 
+    
+    if (rootData.variants) {
+        variantSelector.style.display = 'block';
+        variantSelector.innerHTML = '<div style="font-weight:bold; color:var(--accent-green); margin-bottom:5px;">選擇結構模式:</div>';
+        for (let vKey in rootData.variants) {
+            const div = document.createElement('div');
+            div.className = 'variant-option';
+            div.innerHTML = `<input type="radio" name="v" ${vKey === activeVariant ? 'checked' : ''}> <span>${vKey}</span>`;
+            div.onclick = () => loadMolecule(key, vKey);
+            variantSelector.appendChild(div);
+        }
+    } else {
+        variantSelector.style.display = 'none';
+    }
+}
+
+function project(p, rotX, rotY, rotZ, panX, panY) {
+    // 1. Y 軸旋轉
+    let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
+    let z1 = p.z * Math.cos(rotY) + p.x * Math.sin(rotY);
+    
+    // 2. X 軸旋轉
+    let y2 = p.y * Math.cos(rotX) - z1 * Math.sin(rotX);
+    let z2 = z1 * Math.cos(rotX) + p.y * Math.sin(rotX);
+
+    // 3. Z 軸旋轉
+    let x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
+    let y3 = x1 * Math.sin(rotZ) + y2 * Math.cos(rotZ);
+
+    let s = (600 / (600 - z2)) * scale;
+    return { x: x3 * s + panX, y: y3 * s + panY, z: z2, scale: s };
+}
+
+function renderScene() {
+    sceneRoot.innerHTML = "";
+    if(!currentMolecule) return;
+    
+    const defs = createSVG("defs");
+    const isMobile = isMobileMode(); // 檢測是否為手機
+
+    // [關鍵優化] 只有電腦版才使用 SVG 濾鏡 (Glow)
+    // 手機版關閉此功能以解決卡頓
+    if (!isMobile) {
+        const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        filter.setAttribute("id", "soft-glow");
+        filter.setAttribute("x", "-50%"); filter.setAttribute("y", "-50%");
+        filter.setAttribute("width", "200%"); filter.setAttribute("height", "200%");
+        filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
+        defs.appendChild(filter);
+    }
+
+    const usedColors = new Set();
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type === 'atom') usedColors.add(obj.color);
+    });
+
+    usedColors.forEach(color => {
+        const cleanColor = color.replace('#','');
+        const gradId = `atom-grad-${cleanColor}`;
+        
+        const grad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        grad.setAttribute("id", gradId);
+        grad.setAttribute("cx", "30%"); grad.setAttribute("cy", "30%"); 
+        grad.setAttribute("r", "70%");
+        
+        let startColor = lightenColor(color, 60);
+        if (color === '#FFFFFF') startColor = "#FFFFFF";
+        let endColor = darkenColor(color, 40);
+
+        grad.innerHTML = `
+            <stop offset="0%" stop-color="${startColor}" />
+            <stop offset="45%" stop-color="${color}" />
+            <stop offset="100%" stop-color="${endColor}" />
+        `;
+        defs.appendChild(grad);
+    });
+
+    // 鍵結漸層 (通用)
+    currentMolecule.bonds3D.forEach((bond, index) => {
+        // ... (在 drawBond 動態建立)
+    });
+
+    sceneRoot.appendChild(defs);
+
+    const showLPs = document.getElementById('toggle-lp').checked;
+    const renderList = [];
+    
+    const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
+        const p = project(obj, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+        return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
+    });
+
+    const atomProjections = projectedObjects.filter(o => o.type === 'atom');
+
+    currentMolecule.bonds3D.forEach((bond, index) => { 
+        const a1 = atomProjections[bond[0]];
+        const a2 = atomProjections[bond[1]];
+        if (!a1 || !a2) return;
+
+        const dx = a2.px - a1.px, dy = a2.py - a1.py;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist > 0) {
+            const nx = dx/dist, ny = dy/dist;
+            const bondShorten = 0.6;
+            const x1 = a1.px + nx * a1.r * a1.scale * bondShorten;
+            const y1 = a1.py + ny * a1.r * a1.scale * bondShorten;
+            const x2 = a2.px - nx * a2.r * a2.scale * bondShorten;
+            const y2 = a2.py - ny * a2.r * a2.scale * bondShorten;
+            
+            renderList.push({
+                type: "bond", z: (a1.pz+a2.pz)/2, x1, y1, x2, y2, 
+                style: bond[2]||"single", scale: (a1.scale+a2.scale)/2,
+                c1: a1.color, c2: a2.color, bondIdx: index
+            });
+        }
+    });
+
+    projectedObjects.forEach(obj => {
+        if (obj.type === 'electron' && !showLPs) return;
+        if (obj.type !== 'bond') renderList.push({ ...obj, z: obj.pz });
+    });
+
+    renderList.sort((a,b) => a.z - b.z).forEach(obj => {
+        if (obj.type === "bond") drawBond(obj, isMobile);
+        else if (obj.type === "atom") drawAtom(obj, isMobile);
+        else if (obj.type === "electron") drawElectron(obj, isMobile);
+    });
+}
+
+function lightenColor(col, amt) {
+    let usePound = false;
+    if (col[0] == "#") { col = col.slice(1); usePound = true; }
+    let num = parseInt(col,16);
+    let r = (num >> 16) + amt; if (r > 255) r = 255; else if  (r < 0) r = 0;
+    let b = ((num >> 8) & 0x00FF) + amt; if (b > 255) b = 255; else if  (b < 0) b = 0;
+    let g = (num & 0x0000FF) + amt; if (g > 255) g = 255; else if (g < 0) g = 0;
+    return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
+}
+function darkenColor(col, amt) { return lightenColor(col, -amt); }
+
+function drawBond(b, isMobile) {
+    const g = createSVG("g");
+    let c1 = b.c1 === "#FFFFFF" ? "#cbd5e1" : b.c1;
+    let c2 = b.c2 === "#FFFFFF" ? "#cbd5e1" : b.c2;
+    
+    const gradId = `bond-grad-${b.bondIdx}`;
+    let defs = sceneRoot.querySelector("defs");
+    
+    // 檢查漸層是否已存在 (優化效能)
+    if (!defs.querySelector(`#${gradId}`)) {
+        const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+        grad.setAttribute("id", gradId);
+        grad.setAttribute("gradientUnits", "userSpaceOnUse");
+        // 這裡暫時用 0,0 因為會被 drawLine 覆寫，重點是顏色
+        grad.innerHTML = `<stop offset="0%" stop-color="${c1}"/><stop offset="40%" stop-color="${c1}"/><stop offset="60%" stop-color="${c2}"/><stop offset="100%" stop-color="${c2}"/>`; 
+        defs.appendChild(grad);
+    }
+    
+    // 更新漸層座標
+    const gradEl = defs.querySelector(`#${gradId}`);
+    gradEl.setAttribute("x1", b.x1); gradEl.setAttribute("y1", b.y1);
+    gradEl.setAttribute("x2", b.x2); gradEl.setAttribute("y2", b.y2);
+
+    const strokeUrl = `url(#${gradId})`;
+    const w = 8 * b.scale; 
+
+    const drawLine = (ox, oy, width, color, opacity=1, useFilter=false) => {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        el.setAttribute("x1", b.x1+ox); el.setAttribute("y1", b.y1+oy); 
+        el.setAttribute("x2", b.x2+ox); el.setAttribute("y2", b.y2+oy); 
+        el.setAttribute("stroke", color); 
+        el.setAttribute("stroke-width", width); 
+        el.setAttribute("stroke-linecap", "round");
+        if(opacity < 1) el.setAttribute("opacity", opacity);
+        // [關鍵] 手機版禁用濾鏡
+        if(useFilter && !isMobile) el.setAttribute("filter", "url(#soft-glow)");
+        return el;
+    };
+    const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/len, ny = dx/len;
+
+    // 底層光暈: 手機版不加濾鏡，只是半透明線
+    g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, true));
+
+    if (b.style === "double") {
+        const off = w * 0.55; const subW = w * 0.45;
+        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl));
+        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
+        g.appendChild(drawLine(nx*off, ny*off, subW*0.3, "#fff", 0.5));
+        g.appendChild(drawLine(-nx*off, -ny*off, subW*0.3, "#fff", 0.5));
+    } else if (b.style === "triple") {
+        const off = w * 0.75; const subW = w * 0.35;
+        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl));
+        g.appendChild(drawLine(0, 0, subW*1.1, strokeUrl));
+        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
+    } else {
+        g.appendChild(drawLine(0, 0, w, strokeUrl));
+        g.appendChild(drawLine(nx*w*0.2, ny*w*0.2, w*0.3, "#ffffff", 0.4));
+    }
+    sceneRoot.appendChild(g);
+}
+
+function drawAtom(a, isMobile) {
+    const g = createSVG("g");
+    const displayColor = (a.elem === "H" && a.color === "#FFFFFF") ? "#FFFFFF" : a.color;
+    const cleanColor = a.color.replace('#','');
+    const gradUrl = `url(#atom-grad-${cleanColor})`;
+
+    // 1. 背後光暈層
+    const glow = createSVG("circle");
+    glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+    
+    // [關鍵] 手機版不做濾鏡，改用純透明層疊 (效能優化)
+    if (isMobile) {
+        glow.setAttribute("r", a.r * a.scale * 1.1); // 稍微小一點
+        glow.setAttribute("fill", displayColor); 
+        glow.setAttribute("opacity", "0.3"); // 純半透明
+    } else {
+        // 電腦版維持高品質濾鏡
+        glow.setAttribute("r", a.r * a.scale * 1.3);
+        glow.setAttribute("fill", displayColor); 
+        glow.setAttribute("opacity", "0.5");
+        glow.setAttribute("filter", "url(#soft-glow)");
+    }
+    g.appendChild(glow);
+
+    // 2. 實體層
+    const circle = createSVG("circle");
+    circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); 
+    circle.setAttribute("r", a.r * a.scale); 
+    circle.setAttribute("fill", gradUrl); 
+    g.appendChild(circle);
+
+    // 3. 文字
+    const txt = createSVG("text");
+    txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); 
+    txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+    txt.setAttribute("class", "atom-label-text"); 
+    txt.textContent = a.elem;
+    txt.style.fill = "#000000"; 
+    txt.style.fontWeight = "900";
+    txt.style.textShadow = "none";
+    
+    g.appendChild(txt);
+    sceneRoot.appendChild(g);
+}
+
+function drawElectron(e, isMobile) {
+    const g = createSVG("g");
+    const r = e.r * e.scale * 0.9;
+
+    const glow = createSVG("circle");
+    glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py);
+    glow.setAttribute("r", r * 1.5);
+    glow.setAttribute("fill", "#ffffff");
+    glow.setAttribute("opacity", "0.3");
+    
+    if (!isMobile) {
+        glow.setAttribute("filter", "url(#soft-glow)");
+    }
+    g.appendChild(glow);
+
+    const c = createSVG("circle");
+    c.setAttribute("cx", e.px); c.setAttribute("cy", e.py);
+    c.setAttribute("r", r);
+    c.setAttribute("fill", "#ffffff"); 
+    c.setAttribute("opacity", "1"); 
+    g.appendChild(c);
+    sceneRoot.appendChild(g);
+}
+
+function createSVG(type) { return document.createElementNS("http://www.w3.org/2000/svg", type); }
+
+function animate() {
+    if (!isDragging) { rotation.x += 0.003; rotation.y += 0.003; }
+    renderScene();
+    requestAnimationFrame(animate);
+}
+
+function setupInteractions() {
+    // --- 鍵盤與輸入框 ---
+    window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
+    window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
+    document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
+
+    // ==========================================
+    //  A. 電腦版滑鼠操作 (Mouse) - 維持原速
+    // ==========================================
+    const handleStart = (x, y) => { isDragging = true; lastMouse = { x, y }; };
+    const handleMove = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - lastMouse.x, dy = y - lastMouse.y;
+        if (currentMode === 1 || (currentMode === 2 && altKeyIsDown)) {
+            rotation.y += dx * 0.005; rotation.x -= dy * 0.005;
+        } else {
+            panOffset.x += dx * 0.5; panOffset.y += dy * 0.5;
+        }
+        lastMouse = { x, y };
+    };
+
+    // 只有非觸控裝置才綁定滑鼠事件 (避免衝突)
+    viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
+    window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", () => isDragging = false);
+    viewport.addEventListener("wheel", e => {
+        scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
+    });
+
+    // ==========================================
+    //  B. 手機版 3D 操作 (Touch) - 降速穩健版
+    // ==========================================
+    viewport.addEventListener("touchstart", e => {
+        if(e.target.closest('.control-button')) return;
+        isDragging = true;
+        
+        if(e.touches.length === 1) {
+            lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            const t1 = e.touches[0], t2 = e.touches[1];
+            lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+        }
+    }, { passive: false });
+
+    viewport.addEventListener("touchmove", e => {
+        if(!isDragging) return;
+        e.preventDefault(); 
+
+        if(e.touches.length === 1) {
+            // 單指旋轉 (降低靈敏度)
+            const dx = e.touches[0].clientX - lastMouse.x;
+            const dy = e.touches[0].clientY - lastMouse.y;
+            
+            // [調整] 手機旋轉速度 (比滑鼠慢)
+            rotation.y += dx * 0.006; 
+            rotation.x -= dy * 0.006;
+            lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            // 雙指操作
+            const t1 = e.touches[0], t2 = e.touches[1];
+            
+            // 1. 平移 (Pan) - [調整] 速度 0.8
+            const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            panOffset.x += (center.x - lastTouchCenter.x) * 0.8; 
+            panOffset.y += (center.y - lastTouchCenter.y) * 0.8;
+            lastTouchCenter = center;
+            
+            // 2. 縮放 (Zoom) - [調整] 速度 0.006
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            if (lastTouchDist > 0) {
+                const zoomDelta = (dist - lastTouchDist) * 0.006; 
+                scale = Math.max(0.3, Math.min(8, scale + zoomDelta));
+            }
+            lastTouchDist = dist;
+
+            // 3. Z軸旋轉 - [調整] 速度 1.2
+            const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+            let angleDelta = angle - lastTouchAngle;
+            if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
+            if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+            
+            rotation.z += angleDelta * 1.2;
+            lastTouchAngle = angle;
+        }
+    }, { passive: false });
+
+    window.addEventListener("touchend", () => isDragging = false);
+
+    // ==========================================
+    //  C. 手機版面板滑動控制 (Panel Swipe - 極致優化版)
+    // ==========================================
+    const panel = document.getElementById('controls-panel');
+    const handle = document.getElementById('mobile-panel-handle');
+    
+    // 只有在把手存在且可見時才啟用拖曳邏輯
+    if(handle && panel) {
+        let panelStartY = 0;
+        let panelStartTrans = 0; 
+        let isPanelDragging = false;
+        let animationFrameId = null;
+        let currentTransY = 0;
+
+        const getTranslateY = () => {
+            const style = window.getComputedStyle(panel);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            return matrix.m42;
+        };
+
+        const updatePosition = () => {
+            if(isPanelDragging) {
+                panel.style.transform = `translateY(${currentTransY}px)`;
+                animationFrameId = requestAnimationFrame(updatePosition);
+            }
+        };
+
+        handle.addEventListener('touchstart', (e) => {
+            isPanelDragging = true;
+            panelStartY = e.touches[0].clientY;
+            panelStartTrans = getTranslateY();
+            panel.style.transition = 'none';
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(updatePosition);
+        }, {passive: true});
+
+        window.addEventListener('touchmove', (e) => {
+            if(!isPanelDragging) return;
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - panelStartY;
+            let newTrans = panelStartTrans + deltaY;
+            const panelH = panel.offsetHeight;
+            const minTrans = 0; // 展開
+            const maxTrans = panelH - 40; // 收起
+            if (newTrans < minTrans) newTrans = minTrans + (newTrans - minTrans) * 0.4;
+            if (newTrans > maxTrans) newTrans = maxTrans + (newTrans - maxTrans) * 0.4;
+            currentTransY = newTrans;
+        }, {passive: false});
+
+        window.addEventListener('touchend', (e) => {
+            if(!isPanelDragging) return;
+            isPanelDragging = false;
+            cancelAnimationFrame(animationFrameId);
+            panel.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+            const finalY = currentTransY;
+            const panelH = panel.offsetHeight;
+            const maxTrans = panelH - 40; 
+            const shouldClose = finalY > (maxTrans / 3); 
+            if (shouldClose) {
+                panel.classList.add('minimized');
+                panel.style.transform = ''; 
+            } else {
+                panel.classList.remove('minimized');
+                panel.style.transform = ''; 
+            }
+        });
+
+        handle.addEventListener('click', (e) => {
+            panel.classList.toggle('minimized');
+        });
+    }
+}
+</script>
+</body>
+</html>
