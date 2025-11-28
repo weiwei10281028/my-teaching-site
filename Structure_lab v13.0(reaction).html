@@ -87,14 +87,17 @@
         margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
     }
     .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .data-label { font-size: 0.9rem; color: var(--text-sub); }
-    .data-value { font-family: 'Roboto Mono', monospace; font-size: 1rem; color: var(--text-main); font-weight: 500; }
+    /* [修改 3] 放大物質資料欄位的文字 */
+    .data-label { font-size: 1rem; color: var(--text-sub); }
+    .data-value { font-family: 'Roboto Mono', monospace; font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
         flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
         background: rgba(0,0,0,0.3); color: white; font-family: 'Roboto Mono', monospace;
-        transition: border 0.3s; outline: none; font-size: 16px; 
+        transition: border 0.3s; outline: none; 
+        /* [修改 2] 放大輸入框文字 */
+        font-size: 1.1rem; 
     }
     .input-group button { 
         padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
@@ -114,6 +117,11 @@
     .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
 
     /* 反應按鈕區塊配置 */
+    /* [修改 1] 增加間距，避免與下方的卡片太近 */
+    #reaction-container {
+        margin-bottom: 30px;
+        width: 100%;
+    }
     .reaction-row { display: flex; gap: 10px; width: 100%; }
     
     /* 轉場特效：模糊淡出與淡入 */
@@ -246,7 +254,8 @@
         
         <div class="controls-content">
             <div class="card">
-                <div class="card-title">⚛️ 分子載入</div>
+                <!-- [修改 2] 標題改為 輸入化學式 -->
+                <div class="card-title">⚛️ 輸入化學式</div>
                 <div class="input-group">
                     <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
                     <button onclick="handleLoadBtn()">載入</button>
@@ -257,12 +266,14 @@
             </div>
 
             <div class="switch-container">
-                <input type="checkbox" id="toggle-lp" checked="" onchange="renderScene()">
+                <!-- [修正] 恢復 id="toggle-lp"，事件改回 renderScene() -->
+                <input type="checkbox" id="toggle-lp" checked onchange="renderScene()">
                 <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
             </div>
 
             <div class="switch-container">
-                <input type="checkbox" id="toggle-octet" onchange="reloadCurrentMolecule()">
+                <!-- [修正] 這是第二個開關，保持 id="toggle-octet"，並預設開啟 checked -->
+                <input type="checkbox" id="toggle-octet" checked onchange="reloadCurrentMolecule()">
                 <label for="toggle-octet" style="cursor: pointer; font-weight: bold;">優先遵循八隅體</label>
             </div>
 
@@ -277,7 +288,8 @@
             </div>
 
             <div class="card">
-                <div class="card-title">📊 結構資訊</div>
+                <!-- [修改 3] 標題改為 物質資料 -->
+                <div class="card-title">📊 物質資料</div>
                 <div class="data-row"><span class="data-label">化學式</span><span class="data-value" id="disp-formula"></span></div>
                 <div class="data-row"><span class="data-label">中心原子</span><span class="data-value" id="disp-center"></span></div>
                 <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
@@ -479,19 +491,46 @@ function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{
 // 2. [關鍵] 資料注入 (完整資料區)
 // ==========================================
 
-['H','N','O','F','Cl','Br','I'].forEach(e=>{let t=(e==='N')?"triple":(e==='O'?"double":"single"),h=(e==='H')?"s-s":(e==='N'?"sp":(e==='O'?"sp²":"sp³")),d=(e==='H'?21:(e==='I'?42:30));addMol(`${e}2`,"雙原子",h,["直線型","Linear"],"-",[{elem:e,x:-d,y:0,z:0},{elem:e,x:d,y:0,z:0}],[[0,1,t]]);});
-addMol("CO", "雙原子", "sp", ["直線型","Linear"], "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"O",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
+// 基礎元素與雙原子分子
+['H','N','O','F','Cl','Br','I'].forEach(e=>{
+    let t=(e==='N')?"triple":(e==='O'?"double":"single");
+    let h=(e==='H')?"s-s":(e==='N'?"sp":(e==='O'?"sp²":"sp³")); // F,Cl,Br,I 為 sp3
+    let d=(e==='H'?21:(e==='I'?42:30));
+    addMol(`${e}2`,"雙原子",h,["直線型","Linear"],"-",[{elem:e,x:-d,y:0,z:0},{elem:e,x:d,y:0,z:0}],[[0,1,t]]);
+});
+
+addMol("CO", "雙原子", "sp", ["直線型","Linear"], "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"O",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[1,0,"coordinate_triple"]]);
 addMol("NO", "雙原子", "sp²", ["直線型","Linear"], "-", [{elem:"N",x:-30,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}],radical:true}, {elem:"O",x:30,y:0,z:0}], [[0,1,"double"]]);
+
+// 鹵化氫 (HX)
 addMol("HF", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"F",x:-22,y:0,z:0}, {elem:"H",x:22,y:0,z:0}], [[0,1]]);
 addMol("HCl", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"Cl",x:-30,y:0,z:0}, {elem:"H",x:30,y:0,z:0}], [[0,1]]);
 addMol("HBr", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"Br",x:-35,y:0,z:0}, {elem:"H",x:35,y:0,z:0}], [[0,1]]);
 addMol("HI", "雙原子", "sp³", ["直線型","Linear"], "-", [{elem:"I",x:-40,y:0,z:0}, {elem:"H",x:40,y:0,z:0}], [[0,1]]);
-addMol("H2O", "O", "sp³", ["角形","Bent"], "104.5°", [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:37,y:-25,z:0}, {elem:"H",x:-37,y:-25,z:0}], [[0,1],[0,2]]);
-addMol("H2S", "S", "sp³", ["角形","Bent"], "92°", [{elem:"S",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:38,y:-35,z:0}, {elem:"H",x:-38,y:-35,z:0}], [[0,1],[0,2]]);
-addMol("NH3", "N", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-25,z:38}, {elem:"H",x:33,y:-25,z:-19}, {elem:"H",x:-33,y:-25,z:-19}], [[0,1],[0,2],[0,3]]);
-addMol("PH3", "P", "sp³", ["角錐形","Pyramidal"], "93.5°", [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-35,z:40}, {elem:"H",x:35,y:-35,z:-20}, {elem:"H",x:-35,y:-35,z:-20}], [[0,1],[0,2],[0,3]]);
+
+// 水與硫化氫 (AX2E2)
+addMol("H2O", "O", "sp³", ["角形","Bent"], "104.5°", 
+    [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:37,y:-25,z:0}, {elem:"H",x:-37,y:-25,z:0}], 
+    [[0,1],[0,2]]
+);
+addMol("H2S", "S", "sp³", ["角形","Bent"], "92°", 
+    [{elem:"S",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0.8},{x:0,y:1,z:-0.8}]}, {elem:"H",x:38,y:-35,z:0}, {elem:"H",x:-38,y:-35,z:0}], 
+    [[0,1],[0,2]]
+);
+
+// 氨與膦 (AX3E)
+addMol("NH3", "N", "sp³", ["角錐形","Pyramidal"], "107°", 
+    [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-25,z:38}, {elem:"H",x:33,y:-25,z:-19}, {elem:"H",x:-33,y:-25,z:-19}], 
+    [[0,1],[0,2],[0,3]]
+);
+addMol("PH3", "P", "sp³", ["角錐形","Pyramidal"], "93.5°", 
+    [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-35,z:40}, {elem:"H",x:35,y:-35,z:-20}, {elem:"H",x:-35,y:-35,z:-20}], 
+    [[0,1],[0,2],[0,3]]
+);
+
 addMol("CH4", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("C","H", 42), [[0,1],[0,2],[0,3],[0,4]]);
 addMol("SiH4", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", getTetra("Si","H", 55), [[0,1],[0,2],[0,3],[0,4]]);
+
 const halogens = ['F','Cl','Br','I'];
 halogens.forEach(X => {
     addMol(`B${X}3`, "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("B", X, 75), [[0,1],[0,2],[0,3]]);
@@ -502,20 +541,32 @@ halogens.forEach(X => {
     addMol(`N${X}3`, "N", "sp³", ["角錐形","Pyramidal"], "107°", [{elem:"N",x:0,y:15,z:0,lp3d:lp}, {elem:X,x:0,y:-40,z:50}, {elem:X,x:45,y:-40,z:-30}, {elem:X,x:-45,y:-40,z:-30}], [[0,1],[0,2],[0,3]]);
     if(X!=='I') addMol(`P${X}3`, "P", "sp³", ["角錐形","Pyramidal"], "96-100°", [{elem:"P",x:0,y:15,z:0,lp3d:lp}, {elem:X,x:0,y:-45,z:55}, {elem:X,x:50,y:-45,z:-35}, {elem:X,x:-50,y:-45,z:-35}], [[0,1],[0,2],[0,3]]);
 });
+
 ['F','Cl'].forEach(X => {
     const lps = [{x:0,y:1,z:0.8}, {x:0,y:1,z:-0.8}];
     addMol(`O${X}2`, "O", "sp³", ["角形","Bent"], "103°", [{elem:"O",x:0,y:0,z:0,lp3d:lps}, {elem:X,x:55,y:-40,z:0}, {elem:X,x:-55,y:-40,z:0}], [[0,1],[0,2]]);
     addMol(`S${X}2`, "S", "sp³", ["角形","Bent"], "98°", [{elem:"S",x:0,y:0,z:0,lp3d:lps}, {elem:X,x:60,y:-40,z:0}, {elem:X,x:-60,y:-40,z:0}], [[0,1],[0,2]]);
 });
+
 addMol("CO2", "C", "sp", ["直線型","Linear"], "180°", getLinear("C","O", 70), [[0,1,"double"],[0,2,"double"]]);
 addMol("CS2", "C", "sp", ["直線型","Linear"], "180°", getLinear("C","S", 80), [[0,1,"double"],[0,2,"double"]]);
 addMol("BeCl2", "Be", "sp", ["直線型","Linear"], "180°", getLinear("Be","Cl", 65), [[0,1], [0,2]]);
 addMol("BCl3", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", getTrigPlanar("B","Cl", 75), [[0,1], [0,2], [0,3]]);
+
+// SO2: 預設給兩個雙鍵。因為八隅體開關已預設開啟，程式會自動將其中一個轉為配位鍵
 addMol("SO2", "S", "sp²", ["角形","Bent"], "119°", [{elem:"S",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"double"]]);
+// SO3: 同理
 addMol("SO3", "S", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"S",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]]);
-addMol("O3", "O", "sp²", ["角形","Bent"], "117°", [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2]]);
-addMol("NO2", "N", "sp²", ["角形","Bent"], "134°", [{elem:"N",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}],radical:true},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2]]);
-addMol("N2O", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-60,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:60,y:0,z:0}], [[0,1,"triple"],[0,2]]);
+
+// [修正] O3: O無法擴大八隅體，故強制標記配位鍵 [0,2,"coordinate"]
+addMol("O3", "O", "sp²", ["角形","Bent"], "117°", [{elem:"O",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"coordinate"]]);
+
+// [修正] NO2: N無法擴大八隅體，故強制標記配位鍵
+addMol("NO2", "N", "sp²", ["角形","Bent"], "134°", [{elem:"N",x:0,y:5,z:0,lp3d:[{x:0,y:1,z:0}],radical:true},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], [[0,1,"double"],[0,2,"coordinate"]]);
+
+// [修正] N2O: 中間的 N 提供電子給 O，強制標記配位鍵
+addMol("N2O", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-60,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:60,y:0,z:0}], [[0,1,"triple"],[0,2,"coordinate"]]);
+
 addMol("NO+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:-25,y:0,z:0,lpCount:1}, {elem:"O",x:25,y:0,z:0,lpCount:1}], [[0,1,"triple"]]);
 addMol("NO2+", "N", "sp", ["直線型","Linear"], "180°", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-55,y:0,z:0}, {elem:"O",x:55,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
 addMol("PCl5", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"Cl",x:0,y:70,z:0}, {elem:"Cl",x:0,y:-70,z:0}, {elem:"Cl",x:65,y:0,z:0}, {elem:"Cl",x:-32,y:0,z:55}, {elem:"Cl",x:-32,y:0,z:-55}], [[0,1],[0,2],[0,3],[0,4],[0,5]]);
@@ -587,8 +638,7 @@ addMol("HOCN", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", [{elem
 addMol("OCN-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0, lpCount:2}, {elem:"O",x:40,y:0,z:0, lpCount:2}], [[0,1,"double"], [0,2,"double"]]);
 addMol("S2O3 2-", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:55,z:0}, {elem:"O",x:47,y:-25,z:25}, {elem:"O",x:-47,y:-25,z:25}, {elem:"O",x:0,y:-30,z:-50}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
 addMol("H2SO4", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", [{elem:"S",x:0,y:0,z:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:0,y:-20,z:-45}, {elem:"O",x:50,y:-25,z:30}, {elem:"O",x:-50,y:-25,z:30}, {elem:"H",x:80,y:10,z:30}, {elem:"H",x:-80,y:10,z:30}], [[0,1,"double"], [0,2,"double"], [0,3], [0,4], [3,5], [4,6]]);
-addMol("HNO3", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"O",x:50,y:-30,z:0}, {elem:"H",x:75,y:-45,z:40}], [[0,1,"double"], [0,2], [0,3], [3,4]]);
-addMol("HNO2", "N", "sp²", ["角形","Bent"], "111°", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-30,z:0}, {elem:"H",x:80,y:-5,z:0}], [[0,1,"double"], [0,2], [2,3]]);
+addMol("HNO3", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:55,z:0}, {elem:"O",x:-50,y:-30,z:0}, {elem:"O",x:50,y:-30,z:0}, {elem:"H",x:75,y:-45,z:40}], [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]]);addMol("HNO2", "N", "sp²", ["角形","Bent"], "111°", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:50,z:0}, {elem:"O",x:45,y:-30,z:0}, {elem:"H",x:80,y:-5,z:0}], [[0,1,"double"], [0,2], [2,3]]);
 addMol("CNO-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-40,y:0,z:0}, {elem:"O",x:40,y:0,z:0}], [[0,1,"triple"], [0,2]]);
 addMol("C2 2-", "C", "sp", ["直線型","Linear"], "180°", [{elem:"C",x:-22,y:0,z:0}, {elem:"C",x:22,y:0,z:0}], [[0,1,"triple"]]);
 addMol("O2 2-", "O", "sp³", ["直線型","Linear"], "180°", [{elem:"O",x:-30,y:0,z:0}, {elem:"O",x:30,y:0,z:0}], [[0,1]]);
@@ -1115,13 +1165,28 @@ function loadMolecule(key, variantKey = null) {
         const octetMode = octetSwitch ? octetSwitch.checked : false;
         const octetCenters = ["S","P","Cl","Br","I","Xe"];
 
-        if (octetMode && octetCenters.includes(data.center)) {
+         if (octetMode && octetCenters.includes(data.center)) {
+            let doubleBondCount = 0; 
+
             processedBonds = processedBonds.map(bond => {
                 const atom1 = data.atomsRaw[bond[0]];
                 const atom2 = data.atomsRaw[bond[1]];
-                const isLigand = (atom1.elem === "O" || atom2.elem === "O");
-                if (isLigand && (bond[2] === "double" || bond[2] === "triple")) {
-                     return [bond[0], bond[1], "single"];
+                
+                // 判斷是否為連接氧的雙鍵/參鍵
+                const isOxygenBond = (atom1.elem === "O" || atom2.elem === "O");
+                const isMultiBond = (bond[2] === "double" || bond[2] === "triple");
+
+                if (isOxygenBond && isMultiBond) {
+                    if (doubleBondCount === 0) {
+                        // 保留第一個雙鍵 (S=O)
+                        doubleBondCount++;
+                        return bond;
+                    } else {
+                        // [修正] 第二個以上的雙鍵，降級為配位共價鍵 (S->O)
+                        // 形狀變成 "coordinate" (在 renderScene 會被解析為 single)
+                        // 顏色變成純色
+                        return [bond[0], bond[1], "coordinate"];
+                    }
                 }
                 return bond;
             });
@@ -1165,7 +1230,7 @@ function loadMolecule(key, variantKey = null) {
         document.getElementById("disp-angle").textContent = data.angle;
         
         const bondDisp = document.getElementById("disp-bonds");
-        if(bondDisp) bondDisp.innerHTML = `&sigma;: ${sigma}, &nbsp; &pi;: ${pi}, &nbsp; LP: ${totalLP}`;
+        if(bondDisp) bondDisp.innerHTML = `&sigma;: ${sigma} &nbsp; &pi;: ${pi} &nbsp; LP: ${totalLP}`;
         
         const massDisp = document.getElementById("disp-mass");
         if (massDisp) massDisp.textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
@@ -1281,22 +1346,57 @@ function renderScene() {
             const y1 = a1.py + ny * a1.r * a1.scale * bondShorten;
             const x2 = a2.px - nx * a2.r * a2.scale * bondShorten;
             const y2 = a2.py - ny * a2.r * a2.scale * bondShorten;
+            // [修正] 讀取 bond[3] 作為透明度
             const bondOpacity = (bond[3] !== undefined) ? bond[3] : 1;
-            renderList.push({ type: "bond", z: (a1.pz+a2.pz)/2, x1, y1, x2, y2, style: bond[2]||"single", scale: (a1.scale+a2.scale)/2, c1: a1.color, c2: a2.color, bondIdx: index, opacity: bondOpacity });
+            
+            // [新增] 增強版配位鍵邏輯
+            let rawStyle = bond[2] || "single";
+            let color1 = a1.color;
+            let color2 = a2.color;
+            
+            // 預設傳給 drawBond 的樣式 (幾何形狀)
+            let drawStyle = "single"; 
+
+            // 1. 解析形狀
+            if (rawStyle === "coordinate_triple") drawStyle = "coordinate_triple"; // CO 專用
+            else if (rawStyle.includes("triple")) drawStyle = "triple";
+            else if (rawStyle.includes("double")) drawStyle = "double";
+            else drawStyle = "single";
+
+            // 2. 解析顏色 (如果是配位鍵，強制變色)
+            // 排除 coordinate_triple (因為它要保留雙色)，其他只要含 coordinate 就變純色
+            if (rawStyle.indexOf("coordinate") !== -1 && rawStyle !== "coordinate_triple") {
+                color2 = color1; // 顏色跟隨提供者(a1)，變成純色
+            }
+
+            renderList.push({ 
+                type: "bond", 
+                z: (a1.pz+a2.pz)/2, 
+                x1, y1, x2, y2, 
+                style: drawStyle, 
+                scale: (a1.scale+a2.scale)/2, 
+                c1: color1, 
+                c2: color2, 
+                bondIdx: index, 
+                opacity: bondOpacity 
+            });
         }
     });
 
+    // [補回] 將原子與電子加入繪圖清單 (之前缺了這段導致沒畫面)
     projectedObjects.forEach(obj => {
         if (obj.type === 'electron' && !showLPs) return;
         if (obj.type !== 'bond') renderList.push({ ...obj, z: obj.pz });
     });
 
+    // [補回] 排序並繪製
     renderList.sort((a,b) => a.z - b.z).forEach(obj => {
         if (obj.type === "bond") drawBond(obj);
         else if (obj.type === "atom") drawAtom(obj);
         else if (obj.type === "electron") drawElectron(obj);
     });
 }
+
 
 function lightenColor(col, amt) {
     let usePound = false;
@@ -1345,13 +1445,40 @@ function drawBond(b) {
         g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, "url(#soft-glow)"));
     }
     if (b.style === "double") {
-        const off = w * 0.55; const subW = w * 0.45;
-        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
-        g.appendChild(drawLine(nx*off, ny*off, subW*0.3, "#fff", 0.5)); g.appendChild(drawLine(-nx*off, -ny*off, subW*0.3, "#fff", 0.5));
+        // [雙鍵] 分明的兩根線
+        const off = w * 0.6; 
+        const subW = w * 0.35;
+        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); 
+        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
+        // 高光
+        g.appendChild(drawLine(nx*off, ny*off, subW*0.3, "#fff", 0.5)); 
+        g.appendChild(drawLine(-nx*off, -ny*off, subW*0.3, "#fff", 0.5));
+
     } else if (b.style === "triple") {
-        const off = w * 0.75; const subW = w * 0.35;
-        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); g.appendChild(drawLine(0, 0, subW*1.1, strokeUrl)); g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
+        // [普通參鍵] 分明的三根線
+        const off = w * 0.85;  
+        const subW = w * 0.25; 
+        g.appendChild(drawLine(0, 0, subW, strokeUrl)); // 中
+        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); // 側1
+        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl)); // 側2
+
+    } else if (b.style === "coordinate_triple") {
+        // [CO 專用] 混合型配位參鍵
+        // 2根漸層(一般共價) + 1根純色(配位)
+        const off = w * 0.85;  
+        const subW = w * 0.25; 
+
+        // 1. 中間：一般共價 (漸層)
+        g.appendChild(drawLine(0, 0, subW, strokeUrl)); 
+        
+        // 2. 上側：一般共價 (漸層)
+        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); 
+
+        // 3. 下側：配位共價 (純色 - 使用 b.c1)
+        g.appendChild(drawLine(-nx*off, -ny*off, subW, b.c1)); 
+
     } else {
+        // [單鍵]
         g.appendChild(drawLine(0, 0, w, strokeUrl));
         g.appendChild(drawLine(nx*w*0.2, ny*w*0.2, w*0.3, "#ffffff", 0.4));
     }
