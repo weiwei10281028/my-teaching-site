@@ -282,6 +282,12 @@
                 <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
             </div>
 
+            <!-- [新增] 光暈控制開關 -->
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-glow" checked>
+                <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
+            </div>
+            
             <div class="switch-container">
                 <!-- [修正] 這是第二個開關，保持 id="toggle-octet"，並預設開啟 checked -->
                 <input type="checkbox" id="toggle-octet" checked>
@@ -1784,8 +1790,11 @@ function drawBond(b) {
 function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     
-    // [保留] 原子光暈 (僅在非手機模式顯示)
-    if (!isMobile) {
+    // [修改] 取得介面上開關的狀態
+    const useGlow = document.getElementById('toggle-glow').checked;
+
+    // 如果開關是開啟的，就畫光暈
+    if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
         glow.setAttribute("r", a.r * a.scale * 1.3); 
@@ -1811,8 +1820,10 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
-    // [保留] 電子光暈 (僅在非手機模式顯示)
-    if (!isMobile) {
+    // [修改] 取得介面上開關的狀態
+    const useGlow = document.getElementById('toggle-glow').checked;
+
+    if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
         glow.setAttribute("r", r * 1.8); 
@@ -1862,6 +1873,10 @@ function setupInteractions() {
 
     const toggleLp = document.getElementById('toggle-lp');
     if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
+
+    // [新增] 綁定光暈開關，切換時重新渲染
+    const toggleGlow = document.getElementById('toggle-glow');
+    if (toggleGlow) toggleGlow.addEventListener('change', () => { renderScene(); });
 
     // [八隅體開關] 重要修正：變更時重新載入分子以觸發 loadMolecule 中的判定邏輯
     const toggleOct = document.getElementById('toggle-octet');
