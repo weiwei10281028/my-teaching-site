@@ -176,6 +176,20 @@
     }
     #mobile-panel-handle { display: none; }
 
+    /* Helper classes to replace inline styles in HTML */
+    .viewport-header { position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none; }
+    .viewport-header .title { margin: 0; font-size: 1.5rem; }
+    #molecule-svg { transition: transform 0.1s ease-out; transform: scale(1.7); }
+    .input-note { font-size: 0.8rem; color: var(--text-sub); margin-top: 10px; line-height: 1.4; }
+    .panel-divider { margin-top: 20px; padding: 10px; border-top: 1px solid var(--panel-border); }
+    .spacer-60 { height: 60px; }
+
+    /* Utility classes to replace inline styles */
+    .clickable-label { cursor: pointer; font-weight: bold; }
+    .reaction-cl2-bg { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+    .switch-no-pad { background: transparent; padding: 0; }
+    .mobile-sim-label { cursor: pointer; color: var(--text-sub); font-size: 0.9rem; }
+    .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 /* --- 手機版 (抽屜式面板) --- */
     @media (max-width: 768px) {
         .app-container { flex-direction: column; }
@@ -230,16 +244,16 @@
 
 <div class="app-container">
     <div class="viewport-area" id="viewport">
-        <div class="viewport-header" style="position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none;">
-            <h1 style="margin: 0; font-size: 1.5rem;">MOLECULAR SIMULATOR v13.0</h1>
-            <span style="font-size: 1.1rem; color: var(--text-sub);" id="viewport-subtitle"></span>
+        <div class="viewport-header">
+            <h1 class="title">MOLECULAR SIMULATOR v13.0</h1>
+            <span class="input-note" id="viewport-subtitle"></span>
         </div>
         
         <div class="controls-container">
-            <button id="mode-toggle" class="control-button active" onclick="toggleMode()">模式: **複合**</button>
+            <button id="mode-toggle" class="control-button active">模式: 複合</button>
         </div>
 
-        <svg id="molecule-svg" viewBox="-400 -300 800 600" preserveAspectRatio="xMidYMid slice" style="transition: transform 0.1s ease-out; transform: scale(1.7);">
+        <svg id="molecule-svg" viewBox="-400 -300 800 600" preserveAspectRatio="xMidYMid slice">
             <defs>
                 <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />
@@ -254,38 +268,35 @@
         
         <div class="controls-content">
             <div class="card">
-                <!-- [修改 2] 標題改為 輸入化學式 -->
                 <div class="card-title">⚛️ 輸入化學式</div>
                 <div class="input-group">
                     <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
-                    <button onclick="handleLoadBtn()">載入</button>
+                    <button id="load-btn">載入</button>
                 </div>
-                <div style="font-size:0.8rem; color:var(--text-sub); margin-top:10px; line-height:1.4;">
-                    單指滑動旋轉，雙指縮放/平移
-                </div>
+                <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
             </div>
 
             <div class="switch-container">
-                <!-- [修正] 恢復 id="toggle-lp"，事件改回 renderScene() -->
-                <input type="checkbox" id="toggle-lp" checked onchange="renderScene()">
-                <label for="toggle-lp" style="cursor: pointer; font-weight: bold;">顯示孤對電子 (3D)</label>
+                <!-- [修正] 恢復 id="toggle-lp" -->
+                <input type="checkbox" id="toggle-lp" checked>
+                <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
             </div>
 
             <div class="switch-container">
                 <!-- [修正] 這是第二個開關，保持 id="toggle-octet"，並預設開啟 checked -->
-                <input type="checkbox" id="toggle-octet" checked onchange="reloadCurrentMolecule()">
-                <label for="toggle-octet" style="cursor: pointer; font-weight: bold;">優先遵循八隅體</label>
+                <input type="checkbox" id="toggle-octet" checked>
+                <label for="toggle-octet" class="clickable-label">優先遵循八隅體</label>
             </div>
 
-            <div id="variant-selector" style="display: none;"></div>
+            <div id="variant-selector"></div>
 
             <!-- 反應與重置按鈕 -->
             <div id="reaction-container">
                 <div class="reaction-row">
-                    <button id="reaction-btn" class="reaction-btn" onclick="runEthyleneHydration()">🧪 H₂O 加成反應</button>
+                    <button id="reaction-btn" class="reaction-btn">🧪 H₂O 加成反應</button>
 <!-- [新增] 氯氣加成按鈕 (樣式共用 reaction-btn) -->
-                    <button id="reaction-cl2-btn" class="reaction-btn" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);" onclick="runEthyleneChlorination()">🧪 Cl₂ 加成反應</button>
-                    <button class="reset-btn" onclick="resetReaction()">↺ 重置</button>
+                    <button id="reaction-cl2-btn" class="reaction-btn reaction-cl2-bg">🧪 Cl₂ 加成反應</button>
+                    <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
 
@@ -301,15 +312,15 @@
                 <div class="data-row"><span class="data-label">分子量</span><span class="data-value" id="disp-mass"></span></div>
             </div>
 <!-- 手機版模擬開關 -->
-            <div style="margin-top: 20px; padding: 10px; border-top: 1px solid var(--panel-border);">
-                <div class="switch-container" style="background: transparent; padding: 0;">
-                    <input type="checkbox" id="toggle-mobile-sim" onchange="toggleMobileView()">
-                    <label for="toggle-mobile-sim" style="cursor: pointer; color: var(--text-sub); font-size: 0.9rem;">
+            <div class="panel-divider">
+                <div class="switch-container switch-no-pad">
+                    <input type="checkbox" id="toggle-mobile-sim">
+                    <label for="toggle-mobile-sim" class="mobile-sim-label">
                         📱 模擬手機版介面 (Mobile View)
                     </label>
                 </div>
             </div>
-            <div style="height: 60px;"></div>
+            <div class="spacer-60"></div>
         </div>
     </div>
 </div>
@@ -358,23 +369,47 @@ const ELEMENT_PROPS = {
 
 let MOLECULE_DB = {};
 
-// 孤對電子與幾何邏輯
+// ==========================================
+// [TEST123 移植] 孤對電子計算 (修正配位鍵扣除邏輯)
+// ==========================================
 function autoAssignLonePairs(atom, bonds, allAtoms) {
+    // 1. 優先使用手動指定的 3D 孤對電子
     if (atom.lp3d !== undefined && atom.lp3d.length > 0) return atom.lpCount || atom.lp3d.length;
+    // 2. 其次使用資料庫指定的數量
     if (atom.lpCount !== undefined) return atom.lpCount;
+    
+    // 3. 自動計算
+    const props = ELEMENT_PROPS[atom.elem];
+    if (!props) return 0;
+    
+    const valence = props.ve;
+    let bondElectronCount = 0; 
+    
     const myBonds = bonds.filter(b => allAtoms[b[0]] === atom || allAtoms[b[1]] === atom);
-    const bondCount = myBonds.length;
-    const elem = atom.elem;
-    if (['N','P','As','Sb'].includes(elem)) {
-        if (bondCount === 3) return 1; if (bondCount === 2) return 1; if (bondCount === 1) return 1;
-    }
-    if (['O','S','Se','Te'].includes(elem)) {
-        if (bondCount === 2) return 2;
-        if (bondCount === 1) return (myBonds[0][2] === 'double') ? 2 : 3;
-    }
-    if (['F','Cl','Br','I'].includes(elem)) { if (bondCount === 1) return 3; }
-    if (elem === 'Xe') { if (bondCount === 2) return 3; if (bondCount === 4) return 2; }
-    return 0;
+    
+    myBonds.forEach(b => {
+        let type = b[2] || "single";
+        
+        if (type.includes("triple")) {
+            bondElectronCount += 3;
+        } else if (type.includes("double")) {
+            bondElectronCount += 2;
+        } else if (type === "coordinate") {
+            // [關鍵修正] 如果我是提供者 (中心原子)，配位鍵消耗我 2 顆電子
+            if (["S","P","Cl","Br","I","Xe","N","O"].includes(atom.elem)) {
+                bondElectronCount += 2; 
+            }
+        } else if (type === "coordinate_triple") {
+             // CO 特例：C 提供 2, O 提供 2 (共價) + O 提供 2 (配位)
+             // 這裡簡化處理，視為參鍵
+             bondElectronCount += 3;
+        } else {
+            bondElectronCount += 1; 
+        }
+    });
+
+    let lp = Math.floor((valence - bondElectronCount) / 2);
+    return Math.max(0, lp);
 }
 
 function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
@@ -676,6 +711,212 @@ addMol("C5H12", "C", "sp³", ["鏈狀/四面體","Chain/Tetra"], "109.5°", [], 
     "異戊烷 (Isopentane)": { atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"C",x:60,y:25,z:0},{elem:"C",x:-20,y:65,z:0}, {elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35},{elem:"H",x:60,y:60,z:0},{elem:"H",x:85,y:10,z:20},{elem:"H",x:85,y:10,z:-20},{elem:"H",x:-20,y:100,z:0},{elem:"H",x:-45,y:65,z:20},{elem:"H",x:5,y:65,z:20}], bonds: [[0,1],[1,2],[2,3],[1,4], [0,5],[0,6],[0,7],[1,8],[2,9],[2,10],[3,11],[3,12],[3,13],[4,14],[4,15],[4,16]] },
     "新戊烷 (Neopentane)": { atoms: [{elem:"C",x:0,y:0,z:0},{elem:"C",x:0,y:40,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"C",x:0,y:-10,z:-40},{elem:"H",x:0,y:75,z:0},{elem:"H",x:-20,y:40,z:20},{elem:"H",x:20,y:40,z:20},{elem:"H",x:60,y:-35,z:35},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:50,y:10,z:20},{elem:"H",x:-60,y:-35,z:35},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-50,y:10,z:20},{elem:"H",x:0,y:15,z:-60},{elem:"H",x:30,y:-30,z:-60},{elem:"H",x:-30,y:-30,z:-60}], bonds: [[0,1],[0,2],[0,3],[0,4], [1,5],[1,6],[1,7], [2,8],[2,9],[2,10], [3,11],[3,12],[3,13], [4,14],[4,15],[4,16]] }
 });
+addMol("C3H8", "C", "sp³", ["扭轉型","Staggered"], "109.5°", [{elem:"C",x:-40,y:0,z:0}, {elem:"C",x:0,y:15,z:25}, {elem:"C",x:40,y:-10,z:-30}, {elem:"H",x:-65,y:35,z:0}, {elem:"H",x:-65,y:-35,z:0}, {elem:"H",x:-40,y:0,z:-35}, {elem:"H",x:-15,y:45,z:50}, {elem:"H",x:0,y:15,z:60}, {elem:"H",x:25,y:-30,z:0}, {elem:"H",x:50,y:25,z:-55}, {elem:"H",x:65,y:-40,z:-20}, {elem:"H",x:40,y:-40,z:0}], [[0,1], [1,2], [0,3], [0,4], [0,5], [1,6], [1,7], [1,8], [2,9], [2,10], [2,11]]);
+
+
+addMol("C4H8", "C", "sp²/sp³", ["異構物", "Isomers"], "120° / 109.5°", [], [], [], {
+    "1-Butene (1-丁烯)": {
+        // 結構：CH2=CH-CH2-CH3
+        // C1=C2 為 sp2 平面，C3-C4 為 sp3 立體
+        atoms: [
+            {elem:"C", x:-70, y:0, z:0},   // C1 (=CH2) 端點
+            {elem:"C", x:-30, y:0, z:0},   // C2 (=CH-) 
+            {elem:"C", x:10, y:35, z:0},   // C3 (-CH2-) 與 C1-C2 成 120度
+            {elem:"C", x:55, y:0, z:0},    // C4 (-CH3) 接在 C3 上
+
+            // C1 上的 H (sp2 平面三角形 120度, 延長鍵長)
+            {elem:"H", x:-90, y:35, z:0},
+            {elem:"H", x:-90, y:-35, z:0},
+
+            // C2 上的 H (sp2 平面, 120度指向下方)
+            {elem:"H", x:-20, y:-35, z:0},
+
+            // C3 上的 H (sp3 四面體, Z軸位移)
+            {elem:"H", x:10, y:35, z:38},
+            {elem:"H", x:10, y:35, z:-38},
+
+            // C4 上的 H (sp3 甲基, 延長鍵長)
+            {elem:"H", x:85, y:-10, z:0},
+            {elem:"H", x:50, y:-25, z:30},
+            {elem:"H", x:50, y:-25, z:-30}
+        ],
+        bonds: [
+            [0,1,"double"], // C=C
+            [1,2],          // C-C
+            [2,3],          // C-C
+            [0,4], [0,5],   // C1-H
+            [1,6],          // C2-H
+            [2,7], [2,8],   // C3-H
+            [3,9], [3,10], [3,11] // C4-H
+        ]
+    },
+    "Trans-2-Butene (反-2-丁烯)": {
+        // 結構：CH3-CH=CH-CH3 (反式)
+        // C2=C3 雙鍵長度 40，C-H 鍵長加大，sp2 H 夾角 120度
+        atoms: [
+            {elem:"C", x:-50, y:45, z:0},  // C1 (CH3) 左上
+            {elem:"C", x:-20, y:0, z:0},   // C2 (=CH-)
+            {elem:"C", x:20, y:0, z:0},    // C3 (=CH-)
+            {elem:"C", x:50, y:-45, z:0},  // C4 (CH3) 右下
+
+            // C1 (甲基 H, sp3)
+            {elem:"H", x:-50, y:80, z:0},
+            {elem:"H", x:-75, y:30, z:25},
+            {elem:"H", x:-75, y:30, z:-25},
+
+            // C2 (烯 H, sp2 平面 120度) -> 指向右下
+            {elem:"H", x:-35, y:-32, z:0},
+
+            // C3 (烯 H, sp2 平面 120度) -> 指向左上 (反式)
+            {elem:"H", x:35, y:32, z:0},
+
+            // C4 (甲基 H, sp3)
+            {elem:"H", x:50, y:-80, z:0},
+            {elem:"H", x:75, y:-30, z:25},
+            {elem:"H", x:75, y:-30, z:-25}
+        ],
+        bonds: [
+            [0,1],          // C-C
+            [1,2,"double"], // C=C
+            [2,3],          // C-C
+            [0,4], [0,5], [0,6],
+            [1,7],
+            [2,8],
+            [3,9], [3,10], [3,11]
+        ]
+    },
+    "Cis-2-Butene (順-2-丁烯)": {
+        // 結構：CH3-CH=CH-CH3 (順式)
+        atoms: [
+            {elem:"C", x:-50, y:45, z:0},  // C1 (CH3) 左上
+            {elem:"C", x:-20, y:0, z:0},   // C2 (=CH-)
+            {elem:"C", x:20, y:0, z:0},    // C3 (=CH-)
+            {elem:"C", x:50, y:45, z:0},   // C4 (CH3) 右上 (同側)
+
+            // C1 (甲基 H)
+            {elem:"H", x:-50, y:80, z:0},
+            {elem:"H", x:-75, y:30, z:25},
+            {elem:"H", x:-75, y:30, z:-25},
+
+            // C2 (烯 H, sp2 平面 120度) -> 指向下方
+            {elem:"H", x:-35, y:-32, z:0},
+
+            // C3 (烯 H, sp2 平面 120度) -> 指向下方 (同側)
+            {elem:"H", x:35, y:-32, z:0},
+
+            // C4 (甲基 H)
+            {elem:"H", x:50, y:80, z:0},
+            {elem:"H", x:75, y:30, z:25},
+            {elem:"H", x:75, y:30, z:-25}
+        ],
+        bonds: [
+            [0,1],          // C-C
+            [1,2,"double"], // C=C
+            [2,3],          // C-C
+            [0,4], [0,5], [0,6],
+            [1,7],
+            [2,8],
+            [3,9], [3,10], [3,11]
+        ]
+    },
+    "Isobutene (異丁烯)": {
+        // 結構：CH2=C(CH3)2
+        // 修正：雙鍵長度40，甲基夾角擴大至120度 (X:22, Y:38 比例)，H鍵長加長
+        atoms: [
+            {elem:"C", x:-40, y:0, z:0},   // C1 (=CH2)
+            {elem:"C", x:0, y:0, z:0},     // C2 (中心 C)
+            {elem:"C", x:22, y:38, z:0},   // C3 (上甲基) 夾角修正為 120
+            {elem:"C", x:22, y:-38, z:0},  // C4 (下甲基) 夾角修正為 120
+
+            // C1 上的 H (平面 120度)
+            {elem:"H", x:-65, y:35, z:0},
+            {elem:"H", x:-65, y:-35, z:0},
+
+            // C3 上的 H (甲基, sp3)
+            {elem:"H", x:22+15, y:38+25, z:0}, // 延伸
+            {elem:"H", x:22+10, y:38-10, z:30},
+            {elem:"H", x:22+10, y:38-10, z:-30},
+
+            // C4 上的 H (甲基, sp3)
+            {elem:"H", x:22+15, y:-38-25, z:0}, // 延伸
+            {elem:"H", x:22+10, y:-38+10, z:30},
+            {elem:"H", x:22+10, y:-38+10, z:-30}
+        ],
+        bonds: [
+            [0,1,"double"], [1,2], [1,3],
+            [0,4], [0,5],
+            [2,6], [2,7], [2,8],
+            [3,9], [3,10], [3,11]
+        ]
+    }
+});
+
+addMol("C3H4", "C", "sp", ["直線/四面體", "Linear/Tetra"], "180°/109.5°", [
+    {elem:"C", x:0, y:0, z:0},         // 中間的 C (設為中心)
+    {elem:"C", x:60, y:0, z:0},        // 右邊的 C (參鍵)，距離 60 (同 C2H2 設定)
+    {elem:"C", x:-65, y:0, z:0},       // 左邊的 C (甲基)，距離拉開至 65 以顯示單鍵
+    {elem:"H", x:105, y:0, z:0},       // 右端的 H，距離 45
+    
+    // 左邊甲基 H (參考 C2H6 寬度，放大開展角度以避免重疊)
+    {elem:"H", x:-100, y:40, z:0},     
+    {elem:"H", x:-100, y:-25, z:35},
+    {elem:"H", x:-100, y:-25, z:-35}
+], [
+    [0, 1, "triple"], // 參鍵 (會顯示三條線)
+    [0, 2],           // 單鍵
+    [1, 3],           // 炔端 H
+    [2, 4], [2, 5], [2, 6] // 甲基 H
+]);
+
+// C3H6 異構物：丙烯 (配合去除光暈代碼) vs 環丙烷 (短碳鍵、長氫鍵、大張角)
+addMol("C3H6", "C", "sp²/sp³", ["異構物", "Isomers"], "120°/60°", [], [], [], {
+    "Propene (丙烯)": { 
+        // 恢復標準間距 60 (搭配 drawBond 修改後，中間會非常乾淨)
+        atoms: [
+            {elem:"C", x:-10, y:0, z:0},        
+            {elem:"C", x:50, y:0, z:0},         // C=C 距離 60
+            {elem:"H", x:85, y:35, z:0},        
+            {elem:"H", x:85, y:-35, z:0},       
+            {elem:"H", x:-35, y:-40, z:0},      
+            {elem:"C", x:-55, y:50, z:0},       // 甲基 C
+            {elem:"H", x:-55, y:95, z:0},       
+            {elem:"H", x:-90, y:30, z:25},      
+            {elem:"H", x:-90, y:30, z:-25}      
+        ], 
+        bonds: [
+            [0, 1, "double"], // 現在中間會是透明的
+            [0, 4], [1, 2], [1, 3], 
+            [0, 5], [5, 6], [5, 7], [5, 8]  
+        ] 
+    },
+   "Cyclopropane (環丙烷)": { 
+        // 修正：C-H 鍵縮短 25%，Z軸張角配合比例微調 (±50 -> ±38)
+        atoms: [
+            // --- 碳環 (維持緊湊半徑 32) ---
+            {elem:"C", x:0, y:32, z:0},         
+            {elem:"C", x:28, y:-16, z:0},       
+            {elem:"C", x:-28, y:-16, z:0},      
+            
+            // --- 氫原子 (縮短版) ---
+            // 上方 C 的 H (Y從92縮至77)
+            {elem:"H", x:0, y:77, z:38},  {elem:"H", x:0, y:77, z:-38},
+            
+            // 右下 C 的 H (位置內縮)
+            {elem:"H", x:70, y:-45, z:38}, {elem:"H", x:70, y:-45, z:-38},
+            
+            // 左下 C 的 H (位置內縮)
+            {elem:"H", x:-70, y:-45, z:38},{elem:"H", x:-70, y:-45, z:-38}
+        ], 
+        bonds: [
+            [0, 1], [1, 2], [2, 0], 
+            [0, 3], [0, 4],         
+            [1, 5], [1, 6],         
+            [2, 7], [2, 8]          
+        ] 
+    }
+});
+
+
 addMol("C8H10", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
     "鄰二甲苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:100,y:55,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},{elem:"H",x:130,y:70,z:0},{elem:"H",x:100,y:25,z:20},{elem:"H",x:100,y:25,z:-20}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14],[7,15],[7,16],[7,17]] },
     "間二甲苯": { atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"C",x:0,y:110,z:0},{elem:"C",x:100,y:-55,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)},{elem:"H",x:0,y:145,z:0},{elem:"H",x:-25,y:110,z:20},{elem:"H",x:25,y:110,z:-20},{elem:"H",x:130,y:-70,z:0},{elem:"H",x:100,y:-25,z:20},{elem:"H",x:100,y:-25,z:-20}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[2,7],[1,8],[3,9],[4,10],[5,11],[6,12],[6,13],[6,14],[7,15],[7,16],[7,17]] },
@@ -1325,12 +1566,20 @@ window.onload = () => {
     setupInteractions();
 };
 
+// Centralized event bindings for controls (replaces inline handlers)
+function toggleMobileSim(enabled) {
+    if (enabled) document.body.classList.add('simulate-mobile');
+    else document.body.classList.remove('simulate-mobile');
+}
+
+
+
 function toggleMode() {
     currentMode = (currentMode + 1) % 3; 
     const modes = ['平移', '旋轉', '複合'];
     const classes = ['mode-pan', 'mode-rotate', 'mode-composite'];
     modeToggleBtn.className = `control-button ${classes[currentMode]} active`;
-    modeToggleBtn.innerHTML = `模式: **${modes[currentMode]}**`;
+    modeToggleBtn.innerHTML = `模式: ${modes[currentMode]}`;
 }
 
 function formatFormula(str) {
@@ -1353,12 +1602,16 @@ function reloadCurrentMolecule() {
     if (currentKey) loadMolecule(currentKey);
 }
 
+// ==========================================
+// [TEST123 移植] 分子載入 (含八隅體切換邏輯)
+// ==========================================
 function loadMolecule(key, variantKey = null) {
     currentKey = key;
     try {
         let data = MOLECULE_DB[key];
         if (!data) throw new Error("Data missing");
 
+        // 處理異構物
         if (variantKey && data.variants && data.variants[variantKey]) {
             data = data.variants[variantKey];
         } else if (data.variants) {
@@ -1367,12 +1620,15 @@ function loadMolecule(key, variantKey = null) {
             variantKey = firstKey;
         }
 
+        // 複製鍵結資料，避免汙染原始資料庫
         if (!data.bondsRaw) data.bondsRaw = []; 
         let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
         
+        // --- 八隅體規則 (Octet Rule) 處理邏輯 ---
         const octetSwitch = document.getElementById('toggle-octet');
         const octetMode = octetSwitch ? octetSwitch.checked : false;
-        const octetCenters = ["S","P","Cl","Br","I","Xe"];
+        // 支援的中心原子列表 (包含 N 以支援 NO2)
+        const octetCenters = ["S","P","Cl","Br","I","Xe","N"];
 
          if (octetMode && octetCenters.includes(data.center)) {
             let doubleBondCount = 0; 
@@ -1381,29 +1637,31 @@ function loadMolecule(key, variantKey = null) {
                 const atom1 = data.atomsRaw[bond[0]];
                 const atom2 = data.atomsRaw[bond[1]];
                 
-                // 判斷是否為連接氧的雙鍵/參鍵
+                // 檢查是否為連接氧 (O) 的雙鍵或參鍵
                 const isOxygenBond = (atom1.elem === "O" || atom2.elem === "O");
                 const isMultiBond = (bond[2] === "double" || bond[2] === "triple");
 
                 if (isOxygenBond && isMultiBond) {
                     if (doubleBondCount === 0) {
-                        // 保留第一個雙鍵 (S=O)
+                        // 保留第一個多重鍵 (例如 SO2 的第一個 S=O)
                         doubleBondCount++;
                         return bond;
                     } else {
-                        // [修正] 第二個以上的雙鍵，降級為配位共價鍵 (S->O)
-                        // 形狀變成 "coordinate" (在 renderScene 會被解析為 single)
-                        // 顏色變成純色
+                        // [關鍵] 其餘多重鍵轉為「配位鍵」
+                        // 標記為 "coordinate" 讓渲染器畫成單鍵，讓計算器扣除正確電子
                         return [bond[0], bond[1], "coordinate"];
                     }
                 }
                 return bond;
             });
         }
+        // ----------------------------------------
 
+        // 計算原子與電子點
         const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
         currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
         
+        // 更新 UI 數據
         let sigma = 0, pi = 0, totalLP = 0;
         const shapeStr = Array.isArray(data.shape) ? data.shape[0] : data.shape;
         const isFullerene = shapeStr && (shapeStr.includes("球狀") || shapeStr.includes("籠狀") && !key.includes("P4O")); 
@@ -1446,8 +1704,6 @@ function loadMolecule(key, variantKey = null) {
 
         document.getElementById("viewport-subtitle").textContent = `${key} - ${data.shape}`;
         updateVariantUI(key, variantKey);
-        
-        // 檢查是否有可用的化學反應
         checkReactionAvailable(key);
 
     } catch (e) { console.error("Load Error:", e); }
@@ -1481,18 +1737,29 @@ function updateVariantUI(key, activeVariant) {
     variantSelector.innerHTML = ''; 
     if (rootData.variants) {
         variantSelector.style.display = 'block';
-        variantSelector.innerHTML = '<div style="font-weight:bold; color:var(--accent-green); margin-bottom:5px;">選擇結構模式:</div>';
+        const hdr = document.createElement('div');
+        hdr.className = 'variant-header';
+        hdr.textContent = '選擇結構模式:';
+        variantSelector.appendChild(hdr);
         for (let vKey in rootData.variants) {
             const div = document.createElement('div');
             div.className = 'variant-option';
-            div.innerHTML = `<input type="radio" name="v" ${vKey === activeVariant ? 'checked' : ''}> <span>${vKey}</span>`;
-            div.onclick = () => loadMolecule(key, vKey);
+            const radio = document.createElement('input');
+            radio.type = 'radio'; radio.name = 'v';
+            if (vKey === activeVariant) radio.checked = true;
+            const span = document.createElement('span'); span.textContent = ` ${vKey}`;
+            div.appendChild(radio); div.appendChild(span);
+            div.addEventListener('click', () => loadMolecule(key, vKey));
             variantSelector.appendChild(div);
         }
     } else {
         variantSelector.style.display = 'none';
     }
 }
+
+// ==========================================
+// 4. 渲染引擎 (修正版：鍵結無光暈，原子/LP有光暈)
+// ==========================================
 
 function project(p, rotX, rotY, rotZ, panX, panY) {
     let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
@@ -1501,7 +1768,8 @@ function project(p, rotX, rotY, rotZ, panX, panY) {
     let z2 = z1 * Math.cos(rotX) + p.y * Math.sin(rotX);
     let x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
     let y3 = x1 * Math.sin(rotZ) + y2 * Math.cos(rotZ);
-    let s = (600 / (600 - z2)) * scale;
+    // 修正縮放計算，防止 z2 過大導致錯誤
+    let s = (600 / (600 - Math.min(z2, 590))) * scale;
     return { x: x3 * s + panX, y: y3 * s + panY, z: z2, scale: s };
 }
 
@@ -1509,30 +1777,30 @@ function renderScene() {
     sceneRoot.innerHTML = "";
     if(!currentMolecule) return;
     
-    const defs = createSVG("defs");
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    
+    // 建立柔和光暈濾鏡 (只給原子和電子用)
     const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
     filter.setAttribute("id", "soft-glow");
-    filter.setAttribute("x", "-50%"); filter.setAttribute("y", "-50%");
-    filter.setAttribute("width", "200%"); filter.setAttribute("height", "200%");
     filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
     defs.appendChild(filter);
-
+    
+    // 建立原子顏色漸層
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
-
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
         const grad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         grad.setAttribute("id", `atom-grad-${cleanColor}`);
         grad.setAttribute("cx", "30%"); grad.setAttribute("cy", "30%"); grad.setAttribute("r", "70%");
-        let startColor = lightenColor(color, 60); if (color === '#FFFFFF') startColor = "#FFFFFF";
-        let endColor = darkenColor(color, 40);
+        let startColor = color === '#FFFFFF' ? "#FFFFFF" : adjustColor(color, 60);
+        let endColor = adjustColor(color, -40);
         grad.innerHTML = `<stop offset="0%" stop-color="${startColor}" /><stop offset="45%" stop-color="${color}" /><stop offset="100%" stop-color="${endColor}" />`;
         defs.appendChild(grad);
     });
     sceneRoot.appendChild(defs);
 
-    const showLPs = document.getElementById('toggle-lp').checked;
+    const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
     const renderList = [];
     
     const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
@@ -1542,63 +1810,43 @@ function renderScene() {
 
     const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
+    // 處理鍵結
     currentMolecule.bonds3D.forEach((bond, index) => { 
         const a1 = atomProjections[bond[0]];
         const a2 = atomProjections[bond[1]];
         if (!a1 || !a2) return;
-        const dx = a2.px - a1.px, dy = a2.py - a1.py;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > 0) {
-            const nx = dx/dist, ny = dy/dist;
-            const bondShorten = 0.6;
-            const x1 = a1.px + nx * a1.r * a1.scale * bondShorten;
-            const y1 = a1.py + ny * a1.r * a1.scale * bondShorten;
-            const x2 = a2.px - nx * a2.r * a2.scale * bondShorten;
-            const y2 = a2.py - ny * a2.r * a2.scale * bondShorten;
-            // [修正] 讀取 bond[3] 作為透明度
-            const bondOpacity = (bond[3] !== undefined) ? bond[3] : 1;
-            
-            // [新增] 增強版配位鍵邏輯
-            let rawStyle = bond[2] || "single";
-            let color1 = a1.color;
-            let color2 = a2.color;
-            
-            // 預設傳給 drawBond 的樣式 (幾何形狀)
-            let drawStyle = "single"; 
-
-            // 1. 解析形狀
-            if (rawStyle === "coordinate_triple") drawStyle = "coordinate_triple"; // CO 專用
-            else if (rawStyle.includes("triple")) drawStyle = "triple";
-            else if (rawStyle.includes("double")) drawStyle = "double";
-            else drawStyle = "single";
-
-            // 2. 解析顏色 (如果是配位鍵，強制變色)
-            // 排除 coordinate_triple (因為它要保留雙色)，其他只要含 coordinate 就變純色
-            if (rawStyle.indexOf("coordinate") !== -1 && rawStyle !== "coordinate_triple") {
-                color2 = color1; // 顏色跟隨提供者(a1)，變成純色
-            }
-
-            renderList.push({ 
-                type: "bond", 
-                z: (a1.pz+a2.pz)/2, 
-                x1, y1, x2, y2, 
-                style: drawStyle, 
-                scale: (a1.scale+a2.scale)/2, 
-                c1: color1, 
-                c2: color2, 
-                bondIdx: index, 
-                opacity: bondOpacity 
-            });
+        
+        let drawStyle = "single";
+        let c1 = a1.color, c2 = a2.color;
+        
+        // 判斷鍵型
+        if (bond[2] === "double") drawStyle = "double";
+        else if (bond[2] === "triple") drawStyle = "triple";
+        else if (bond[2] === "coordinate") {
+            drawStyle = "single"; // 配位鍵外觀設為單鍵
+            c2 = c1; // 顏色跟隨提供者
+        } else if (bond[2] === "coordinate_triple") {
+            drawStyle = "coordinate_triple";
         }
+
+        // 讀取透明度 (相容反應動畫)
+        const bondOpacity = (bond[3] !== undefined) ? bond[3] : 1;
+
+        renderList.push({ 
+            type: "bond", z: (a1.pz+a2.pz)/2, 
+            x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, 
+            r1: a1.r*a1.scale, r2: a2.r*a2.scale,
+            style: drawStyle, scale: (a1.scale+a2.scale)/2, 
+            c1: c1, c2: c2, bondIdx: index,
+            opacity: bondOpacity
+        });
     });
 
-    // [補回] 將原子與電子加入繪圖清單 (之前缺了這段導致沒畫面)
     projectedObjects.forEach(obj => {
         if (obj.type === 'electron' && !showLPs) return;
         if (obj.type !== 'bond') renderList.push({ ...obj, z: obj.pz });
     });
 
-    // [補回] 排序並繪製
     renderList.sort((a,b) => a.z - b.z).forEach(obj => {
         if (obj.type === "bond") drawBond(obj);
         else if (obj.type === "atom") drawAtom(obj);
@@ -1606,8 +1854,122 @@ function renderScene() {
     });
 }
 
+function drawBond(b) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    
+    const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
+    if(len === 0) return;
+    const nx = dx/len, ny = dy/len;
+    const px = -ny, py = nx;
+    const w = 8 * b.scale;
+    const shorten = 0.6; 
+    
+    const x1 = b.x1 + nx * b.r1 * shorten;
+    const y1 = b.y1 + ny * b.r1 * shorten;
+    const x2 = b.x2 - nx * b.r2 * shorten;
+    const y2 = b.y2 - ny * b.r2 * shorten;
 
-function lightenColor(col, amt) {
+    const gradId = `bond-grad-${b.bondIdx}`;
+    const defs = sceneRoot.querySelector("defs");
+    const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+    grad.setAttribute("id", gradId); grad.setAttribute("gradientUnits", "userSpaceOnUse");
+    grad.setAttribute("x1", x1); grad.setAttribute("y1", y1); grad.setAttribute("x2", x2); grad.setAttribute("y2", y2);
+    grad.innerHTML = `<stop offset="0%" stop-color="${b.c1}"/><stop offset="40%" stop-color="${b.c1}"/><stop offset="60%" stop-color="${b.c2}"/><stop offset="100%" stop-color="${b.c2}"/>`;
+    defs.appendChild(grad);
+    
+    const stroke = `url(#${gradId})`;
+
+    // 繪製線條工具函數
+    const drawLine = (ox, oy, width, color, filter=null, lineOpacity=1) => {
+        const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l.setAttribute("x1", x1+ox); l.setAttribute("y1", y1+oy); l.setAttribute("x2", x2+ox); l.setAttribute("y2", y2+oy);
+        l.setAttribute("stroke", color); l.setAttribute("stroke-width", width); l.setAttribute("stroke-linecap", "round");
+        
+        const finalOpacity = lineOpacity * b.opacity;
+        if(finalOpacity < 1) l.setAttribute("opacity", finalOpacity);
+        
+        // 只有當明確傳入 filter 時才設定 (鍵結預設不會傳入)
+        if(filter) l.setAttribute("filter", filter);
+        return l;
+    };
+
+    // [注意] 這裡已移除鍵結的光暈繪製代碼，僅繪製實體線條
+
+    if (b.style === "double") {
+        const off = w * 0.6;
+        g.appendChild(drawLine(px*off, py*off, w*0.35, stroke));
+        g.appendChild(drawLine(-px*off, -py*off, w*0.35, stroke));
+        // 高光 (無濾鏡)
+        g.appendChild(drawLine(px*off, py*off, w*0.1, "#ffffff", null, 0.4));
+        g.appendChild(drawLine(-px*off, -py*off, w*0.1, "#ffffff", null, 0.4));
+    } else if (b.style === "triple") {
+        const off = w * 0.85;
+        g.appendChild(drawLine(0, 0, w*0.25, stroke));
+        g.appendChild(drawLine(px*off, py*off, w*0.25, stroke));
+        g.appendChild(drawLine(-px*off, -py*off, w*0.25, stroke));
+    } else if (b.style === "coordinate_triple") {
+        const off = w * 0.85;
+        g.appendChild(drawLine(0, 0, w*0.25, stroke)); 
+        g.appendChild(drawLine(px*off, py*off, w*0.25, stroke));
+        g.appendChild(drawLine(-px*off, -py*off, w*0.25, b.c1)); 
+    } else {
+        // 單鍵
+        g.appendChild(drawLine(0, 0, w, stroke));
+        // 單鍵高光 (無濾鏡)
+        g.appendChild(drawLine(px*w*0.2, py*w*0.2, w*0.3, "#ffffff", null, 0.4));
+    }
+    sceneRoot.appendChild(g);
+}
+
+function drawAtom(a) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    
+    // [保留] 原子光暈 (僅在非手機模式顯示)
+    if (!isMobile) {
+        const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+        glow.setAttribute("r", a.r * a.scale * 1.3); 
+        glow.setAttribute("fill", a.color); 
+        glow.setAttribute("opacity", "0.4");
+        glow.setAttribute("filter", "url(#soft-glow)");
+        g.appendChild(glow);
+    }
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); circle.setAttribute("r", a.r * a.scale); 
+    circle.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`); 
+    
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+    txt.setAttribute("class", "atom-label-text"); txt.textContent = a.elem;
+    
+    g.appendChild(circle); g.appendChild(txt);
+    sceneRoot.appendChild(g);
+}
+
+function drawElectron(e) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const r = e.r * e.scale;
+    
+    // [保留] 電子光暈 (僅在非手機模式顯示)
+    if (!isMobile) {
+        const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
+        glow.setAttribute("r", r * 1.8); 
+        glow.setAttribute("fill", "#ffffff"); 
+        glow.setAttribute("opacity", "0.4");
+        glow.setAttribute("filter", "url(#soft-glow)");
+        g.appendChild(glow);
+    }
+
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
+    c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "0.9");
+    g.appendChild(c);
+    sceneRoot.appendChild(g);
+}
+
+function adjustColor(col, amt) {
     let usePound = false;
     if (col[0] == "#") { col = col.slice(1); usePound = true; }
     let num = parseInt(col,16);
@@ -1616,127 +1978,6 @@ function lightenColor(col, amt) {
     let g = (num & 0x0000FF) + amt; if (g > 255) g = 255; else if (g < 0) g = 0;
     return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
 }
-function darkenColor(col, amt) { return lightenColor(col, -amt); }
-
-function drawBond(b) {
-    const g = createSVG("g");
-    let c1 = b.c1 === "#FFFFFF" ? "#cbd5e1" : b.c1;
-    let c2 = b.c2 === "#FFFFFF" ? "#cbd5e1" : b.c2;
-    const gradId = `bond-grad-${b.bondIdx}`;
-    let defs = sceneRoot.querySelector("defs");
-    const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
-    grad.setAttribute("id", gradId); grad.setAttribute("gradientUnits", "userSpaceOnUse");
-    grad.setAttribute("x1", b.x1); grad.setAttribute("y1", b.y1); grad.setAttribute("x2", b.x2); grad.setAttribute("y2", b.y2);
-    grad.innerHTML = `<stop offset="0%" stop-color="${c1}"/><stop offset="40%" stop-color="${c1}"/><stop offset="60%" stop-color="${c2}"/><stop offset="100%" stop-color="${c2}"/>`; 
-    defs.appendChild(grad);
-    const strokeUrl = `url(#${gradId})`;
-    const w = 8 * b.scale; 
-
-    // [新增] 取得該鍵結的透明度
-    const globalAlpha = b.opacity;
-
-    const drawLine = (ox, oy, width, color, opacity=1, filter="") => {
-        const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        el.setAttribute("x1", b.x1+ox); el.setAttribute("y1", b.y1+oy); el.setAttribute("x2", b.x2+ox); el.setAttribute("y2", b.y2+oy); 
-        el.setAttribute("stroke", color); el.setAttribute("stroke-width", width); el.setAttribute("stroke-linecap", "round");
-        
-        // [修改] 將原本的 opacity 乘上 globalAlpha
-        el.setAttribute("opacity", opacity * globalAlpha);
-        
-        if(filter) el.setAttribute("filter", filter);
-        return el;
-    };
-
-    const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
-    const nx = -dy/len, ny = dx/len;
-
-    if (!isMobile) {
-        g.appendChild(drawLine(0, 0, w*1.2, strokeUrl, 0.4, "url(#soft-glow)"));
-    }
-    if (b.style === "double") {
-        // [雙鍵] 分明的兩根線
-        const off = w * 0.6; 
-        const subW = w * 0.35;
-        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); 
-        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl));
-        // 高光
-        g.appendChild(drawLine(nx*off, ny*off, subW*0.3, "#fff", 0.5)); 
-        g.appendChild(drawLine(-nx*off, -ny*off, subW*0.3, "#fff", 0.5));
-
-    } else if (b.style === "triple") {
-        // [普通參鍵] 分明的三根線
-        const off = w * 0.85;  
-        const subW = w * 0.25; 
-        g.appendChild(drawLine(0, 0, subW, strokeUrl)); // 中
-        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); // 側1
-        g.appendChild(drawLine(-nx*off, -ny*off, subW, strokeUrl)); // 側2
-
-    } else if (b.style === "coordinate_triple") {
-        // [CO 專用] 混合型配位參鍵
-        // 2根漸層(一般共價) + 1根純色(配位)
-        const off = w * 0.85;  
-        const subW = w * 0.25; 
-
-        // 1. 中間：一般共價 (漸層)
-        g.appendChild(drawLine(0, 0, subW, strokeUrl)); 
-        
-        // 2. 上側：一般共價 (漸層)
-        g.appendChild(drawLine(nx*off, ny*off, subW, strokeUrl)); 
-
-        // 3. 下側：配位共價 (純色 - 使用 b.c1)
-        g.appendChild(drawLine(-nx*off, -ny*off, subW, b.c1)); 
-
-    } else {
-        // [單鍵]
-        g.appendChild(drawLine(0, 0, w, strokeUrl));
-        g.appendChild(drawLine(nx*w*0.2, ny*w*0.2, w*0.3, "#ffffff", 0.4));
-    }
-    sceneRoot.appendChild(g);
-}
-
-function drawAtom(a) {
-    const g = createSVG("g");
-    const displayColor = (a.elem === "H" && a.color === "#FFFFFF") ? "#FFFFFF" : a.color;
-    const gradUrl = `url(#atom-grad-${a.color.replace('#','')})`;
-
-    if (!isMobile) {
-        const glow = createSVG("circle");
-        glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); glow.setAttribute("r", a.r * a.scale * 1.3);
-        glow.setAttribute("fill", displayColor); glow.setAttribute("opacity", "0.5"); glow.setAttribute("filter", "url(#soft-glow)");
-        g.appendChild(glow);
-    }
-
-    const circle = createSVG("circle");
-    circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); circle.setAttribute("r", a.r * a.scale); 
-    circle.setAttribute("fill", gradUrl); 
-    g.appendChild(circle);
-
-    const txt = createSVG("text");
-    txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
-    txt.setAttribute("class", "atom-label-text"); txt.textContent = a.elem;
-    txt.style.fill = "#000000"; txt.style.fontWeight = "900"; txt.style.textShadow = "none";
-    g.appendChild(txt);
-    sceneRoot.appendChild(g);
-}
-
-function drawElectron(e) {
-    const g = createSVG("g");
-    const r = e.r * e.scale * 0.9;
-    if (!isMobile) {
-        const glow = createSVG("circle");
-        glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); glow.setAttribute("r", r * 1.5);
-        glow.setAttribute("fill", "#ffffff"); glow.setAttribute("opacity", "0.3"); glow.setAttribute("filter", "url(#soft-glow)");
-        g.appendChild(glow);
-    }
-    const c = createSVG("circle");
-    c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
-    c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "1"); 
-    g.appendChild(c);
-    sceneRoot.appendChild(g);
-}
-
-function createSVG(type) { return document.createElementNS("http://www.w3.org/2000/svg", type); }
-
 function animate() {
     /* --- 取代原本的 if (!isDragging) --- */
     // 只有在「沒拖曳」且「沒在進行反應」時才自動旋轉
@@ -1746,14 +1987,69 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-
-// --- 互動設定 ---
+// ==========================================
+// [最終整合] 互動事件綁定 (合併了 按鈕 + 3D操作 + 八隅體重載)
+// ==========================================
 function setupInteractions() {
+    // ------------------------------------------------
+    // 1. UI 按鈕與開關事件 (原本在底部的功能)
+    // ------------------------------------------------
+    const modeBtn = document.getElementById('mode-toggle');
+    if (modeBtn) modeBtn.addEventListener('click', toggleMode);
+
+    const loadBtn = document.getElementById('load-btn');
+    if (loadBtn) loadBtn.addEventListener('click', handleLoadBtn);
+
+    const toggleLp = document.getElementById('toggle-lp');
+    if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
+
+    // [八隅體開關] 重要修正：變更時重新載入分子以觸發 loadMolecule 中的判定邏輯
+    const toggleOct = document.getElementById('toggle-octet');
+    if (toggleOct) toggleOct.addEventListener('change', () => { 
+        // 確保切換時會重新計算配位鍵/雙鍵
+        if(currentKey) loadMolecule(currentKey); 
+    });
+
+    const toggleMobile = document.getElementById('toggle-mobile-sim');
+    if (toggleMobile) {
+        toggleMobile.addEventListener('change', (e) => { toggleMobileSim(e.target.checked); });
+        // 初始化狀態
+        toggleMobileSim(toggleMobile.checked);
+    }
+
+    const reactBtn = document.getElementById('reaction-btn');
+    if (reactBtn) reactBtn.addEventListener('click', runEthyleneHydration);
+
+    const reactCl2Btn = document.getElementById('reaction-cl2-btn');
+    if (reactCl2Btn) reactCl2Btn.addEventListener('click', runEthyleneChlorination);
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) resetBtn.addEventListener('click', resetReaction);
+
+    // 手機版面板把手點擊
+    const mobileHandle = document.getElementById('mobile-panel-handle');
+    if (mobileHandle) {
+        mobileHandle.addEventListener('click', () => {
+            const body = document.body;
+            body.classList.toggle('simulate-mobile-open');
+            const panel = document.querySelector('.controls-area');
+            if (panel) {
+                if (body.classList.contains('simulate-mobile-open')) panel.style.transform = 'translateY(0)';
+                else panel.style.transform = 'translateY(70vh)';
+            }
+        });
+    }
+
+    // ------------------------------------------------
+    // 2. 3D 場景操作事件 (原本在中間的功能)
+    // ------------------------------------------------
+    
+    // 鍵盤輔助
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
     document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
 
-    // 電腦滑鼠
+    // 滑鼠操作邏輯
     const handleStart = (x, y) => { isDragging = true; lastMouse = { x, y }; };
     const handleMove = (x, y) => {
         if (!isDragging) return;
@@ -1773,7 +2069,7 @@ function setupInteractions() {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
     });
 
-    // 手機觸控 (極致優化參數)
+    // 觸控操作邏輯 (手機優化)
     viewport.addEventListener("touchstart", e => {
         if(e.target.closest('.control-button')) return;
         isDragging = true;
@@ -1791,7 +2087,6 @@ function setupInteractions() {
         if(!isDragging) return;
         e.preventDefault(); 
 
-        // 參數調整：更慢、更穩
         const ROT_SPEED = 0.004; 
         const PAN_SPEED = 0.4;    
         const ZOOM_SPEED = 0.003; 
@@ -1809,7 +2104,6 @@ function setupInteractions() {
             panOffset.y += (center.y - lastTouchCenter.y) * PAN_SPEED;
             lastTouchCenter = center;
             
-            // 縮放邏輯
             const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (lastTouchDist > 0) {
                 const zoomDelta = (dist - lastTouchDist) * ZOOM_SPEED;
@@ -1817,7 +2111,6 @@ function setupInteractions() {
             }
             lastTouchDist = dist;
 
-            // Z 軸旋轉邏輯 (雙指扭轉)
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
             let angleDelta = angle - lastTouchAngle;
             if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
@@ -1829,9 +2122,10 @@ function setupInteractions() {
 
     window.addEventListener("touchend", () => isDragging = false);
 
-    // C. 啟動手機面板滑動控制
+    // 啟動手機面板滑動邏輯
     setupMobilePanel();
 }
+
 
 // --- 手機面板滑動邏輯 (App-like Drawer) ---
 function setupMobilePanel() {
