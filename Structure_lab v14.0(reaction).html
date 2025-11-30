@@ -163,7 +163,7 @@
     .btn-h2  { background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%); }
     .btn-hcl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     
-    /* 轉場特效：模糊淡出與淡入 */
+    /* 轉場特效：模糊淡出與淡入 (修改：時間延長至 1.5s) */
     @keyframes blurOutEffect {
         0% { opacity: 1; filter: blur(0px); transform: scale(1); }
         100% { opacity: 0; filter: blur(8px) brightness(1.5); transform: scale(1.05); }
@@ -173,8 +173,8 @@
         100% { opacity: 1; filter: blur(0px); transform: scale(1); }
     }
     
-    .scene-blur-out { animation: blurOutEffect 0.8s forwards ease-in; }
-    .scene-blur-in { animation: blurInEffect 0.8s forwards ease-out; }
+    .scene-blur-out { animation: blurOutEffect 1.5s forwards ease-in; }
+    .scene-blur-in { animation: blurInEffect 1.5s forwards ease-out; }
 
     .reset-btn {
         flex: 1; /* 佔比較小 */
@@ -218,6 +218,20 @@
     /* Helper classes to replace inline styles in HTML */
     .viewport-header { position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none; }
     .viewport-header .title { margin: 0; font-size: 1.5rem; }
+    /* [修改] 針對說明文字放大字體與行高 */
+    #viewport-subtitle {
+        display: block;
+        font-size: 1.3rem; /* 手機/電腦預設大小加大 */
+        font-weight: bold;
+        color: var(--text-highlight);
+        margin-top: 10px;
+        line-height: 1.6;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        background: rgba(0,0,0,0.4); /* 加個半透明底色讓文字更清楚 */
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 90%;
+    }
     #molecule-svg { transition: transform 0.1s ease-out; transform: scale(1.7); }
     .input-note { font-size: 0.8rem; color: var(--text-sub); margin-top: 10px; line-height: 1.4; }
     .panel-divider { margin-top: 20px; padding: 10px; border-top: 1px solid var(--panel-border); }
@@ -229,54 +243,58 @@
     .switch-no-pad { background: transparent; padding: 0; }
     .mobile-sim-label { cursor: pointer; color: var(--text-sub); font-size: 0.9rem; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
-/* --- 手機版 (抽屜式面板) --- */
+/* --- 手機版 (固定分割：上方 75% 顯示，下方 25% 操作) --- */
     @media (max-width: 768px) {
-        .app-container { flex-direction: column; }
+        /* 改為垂直排列，不使用 fixed 覆蓋，而是佔據空間 */
+        .app-container { 
+            flex-direction: column; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden;
+        }
+        
         .controls-container { display: none !important; } 
 
+        /* 上方顯示區佔 75% */
         .viewport-area {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            position: relative; 
+            width: 100%; 
+            height: 75%; 
+            flex: 0 0 75%; /* 強制固定高度 */
+            z-index: 0;
         }
 
+        /* 下方操作區佔 25% */
         .controls-area {
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            height: 70vh; /* 面板高度 */
-            max-height: 70vh;
-            border-left: none; border-top: 1px solid rgba(255,255,255,0.15);
-            border-radius: 20px 20px 0 0;
+            position: relative; 
+            width: 100%; 
+            height: 25%; 
+            flex: 0 0 25%; /* 強制固定高度 */
+            bottom: auto; left: auto;
+            border-radius: 0;
+            border-top: 1px solid var(--panel-border);
             background-color: #1a1a1a; 
             padding: 0; 
             z-index: 100;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.9);
-            
-            /* [修改] 加入 will-change 讓滑動不掉幀 */
-            transform: translateY(0); 
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
-            will-change: transform; 
+            box-shadow: none;
+            transform: none !important; /* 移除滑動特效 */
+            transition: none;
         }
 
-        #mobile-panel-handle {
-            display: flex; width: 100%; height: 40px; 
-            justify-content: center; align-items: center;
-            cursor: pointer; flex-shrink: 0;
-            background: rgba(255,255,255,0.03);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            touch-action: none;
-        }
-        .handle-bar {
-            width: 50px; height: 5px;
-            background-color: var(--text-sub);
-            border-radius: 10px; opacity: 0.5;
-        }
+        /* 移除手機版的把手，因為是固定分割 */
+        #mobile-panel-handle { display: none; }
 
         .controls-content {
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto; 
-            height: calc(100% - 40px);
+            height: 100%;
             -webkit-overflow-scrolling: touch; 
-            overscroll-behavior: contain;
         }
+        
+        /* 手機版說明文字稍微縮小一點點以免遮住太多 */
+        #viewport-subtitle { font-size: 1.1rem; }
     }
+    
 </style>
 </head>
 <body>
@@ -346,12 +364,13 @@
             <!-- 反應與重置按鈕 -->
             <div id="reaction-container">
                 <div class="reaction-row">
-                    <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 +H₂O (水合)</button>
-                    <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 +H₂ (加氫)</button>
-                    <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 +HCl (氫鹵)</button>
-                    <button id="reaction-cl2-btn" class="reaction-btn btn-cl2">🧪 +Cl₂ (鹵化)</button>
+                    <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
+                    <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
+                    <button id="reaction-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
                     <button id="reaction-sub-btn" class="reaction-btn btn-cl2">🧪 +Cl₂ (光照/取代)</button>
                     <button id="reaction-nitro-btn" class="reaction-btn btn-hcl">🧪 +HNO₃ (高溫/硝化)</button>
+                    <button id="reaction-propene-h2-btn" class="reaction-btn btn-h2">🧪 +H₂ (加氫)</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
@@ -760,8 +779,14 @@ addMol("C5H12", "C", "sp³", ["鏈狀/四面體","Chain/Tetra"], "109.5°", [], 
     "異戊烷 (Isopentane)": { atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"C",x:60,y:25,z:0},{elem:"C",x:-20,y:65,z:0}, {elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35},{elem:"H",x:60,y:60,z:0},{elem:"H",x:85,y:10,z:20},{elem:"H",x:85,y:10,z:-20},{elem:"H",x:-20,y:100,z:0},{elem:"H",x:-45,y:65,z:20},{elem:"H",x:5,y:65,z:20}], bonds: [[0,1],[1,2],[2,3],[1,4], [0,5],[0,6],[0,7],[1,8],[2,9],[2,10],[3,11],[3,12],[3,13],[4,14],[4,15],[4,16]] },
     "新戊烷 (Neopentane)": { atoms: [{elem:"C",x:0,y:0,z:0},{elem:"C",x:0,y:40,z:0},{elem:"C",x:35,y:-20,z:20},{elem:"C",x:-35,y:-20,z:20},{elem:"C",x:0,y:-10,z:-40},{elem:"H",x:0,y:75,z:0},{elem:"H",x:-20,y:40,z:20},{elem:"H",x:20,y:40,z:20},{elem:"H",x:60,y:-35,z:35},{elem:"H",x:35,y:-20,z:55},{elem:"H",x:50,y:10,z:20},{elem:"H",x:-60,y:-35,z:35},{elem:"H",x:-35,y:-20,z:55},{elem:"H",x:-50,y:10,z:20},{elem:"H",x:0,y:15,z:-60},{elem:"H",x:30,y:-30,z:-60},{elem:"H",x:-30,y:-30,z:-60}], bonds: [[0,1],[0,2],[0,3],[0,4], [1,5],[1,6],[1,7], [2,8],[2,9],[2,10], [3,11],[3,12],[3,13], [4,14],[4,15],[4,16]] }
 });
-addMol("C3H8", "C", "sp³", ["扭轉型","Staggered"], "109.5°", [{elem:"C",x:-40,y:0,z:0}, {elem:"C",x:0,y:15,z:25}, {elem:"C",x:40,y:-10,z:-30}, {elem:"H",x:-65,y:35,z:0}, {elem:"H",x:-65,y:-35,z:0}, {elem:"H",x:-40,y:0,z:-35}, {elem:"H",x:-15,y:45,z:50}, {elem:"H",x:0,y:15,z:60}, {elem:"H",x:25,y:-30,z:0}, {elem:"H",x:50,y:25,z:-55}, {elem:"H",x:65,y:-40,z:-20}, {elem:"H",x:40,y:-40,z:0}], [[0,1], [1,2], [0,3], [0,4], [0,5], [1,6], [1,7], [1,8], [2,9], [2,10], [2,11]]);
+addMol("C3H8", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", [{elem:"C",x:0,y:28,z:0},{elem:"C",x:-57,y:-11,z:0},{elem:"C",x:57,y:-11,z:0},{elem:"H",x:0,y:57,z:40},{elem:"H",x:0,y:57,z:-40},{elem:"H",x:-58,y:-39,z:40},{elem:"H",x:-58,y:-39,z:-40},{elem:"H",x:-97,y:18,z:0},{elem:"H",x:97,y:18,z:0},{elem:"H",x:58,y:-39,z:40},{elem:"H",x:58,y:-39,z:-40}], [[0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[1,7],[2,8],[2,9],[2,10]]);
 
+
+// C3H6 異構物：丙烯 (配合去除光暈代碼) vs 環丙烷 (短碳鍵、長氫鍵、大張角)
+addMol("C3H6", "C", "sp3", ["四面體","Tetrahedral"], "109.5", [], [], [], {
+    "丙烯": { atoms: [{elem:"C",x:51,y:6,z:0},{elem:"C",x:-10,y:-23,z:0},{elem:"C",x:-62,y:8,z:0},{elem:"H",x:76,y:-8,z:-40},{elem:"H",x:48,y:55,z:0},{elem:"H",x:76,y:-8,z:40},{elem:"H",x:-11,y:-72,z:0},{elem:"H",x:-104,y:-16,z:0},{elem:"H",x:-63,y:57,z:0}], bonds: [[0,1],[0,3],[0,4],[0,5],[1,2,"double"],[1,6],[2,7],[2,8]] },
+    "環丙烷": { atoms: [{elem:"C",x:14,y:-36,z:0},{elem:"C",x:-39,y:6,z:0},{elem:"C",x:24,y:31,z:0},{elem:"H",x:24,y:-61,z:-41},{elem:"H",x:24,y:-61,z:41},{elem:"H",x:-65,y:10,z:41},{elem:"H",x:-65,y:10,z:-41},{elem:"H",x:41,y:51,z:-41},{elem:"H",x:41,y:51,z:41}], bonds: [[0,1],[0,2],[0,3],[0,4],[1,2],[1,5],[1,6],[2,7],[2,8]] }}
+);
 
 addMol("C4H8", "C", "sp3", ["形狀","Shape"], "N/A", [], [], [], 
 {
@@ -774,10 +799,26 @@ addMol("C4H8", "C", "sp3", ["形狀","Shape"], "N/A", [], [], [],
 }
 );
 
-// C3H6 異構物：丙烯 (配合去除光暈代碼) vs 環丙烷 (短碳鍵、長氫鍵、大張角)
-addMol("C3H6", "C", "sp3", ["四面體","Tetrahedral"], "109.5", [], [], [], {
-    "丙烯": { atoms: [{elem:"C",x:51,y:6,z:0},{elem:"C",x:-10,y:-23,z:0},{elem:"C",x:-62,y:8,z:0},{elem:"H",x:76,y:-8,z:-40},{elem:"H",x:48,y:55,z:0},{elem:"H",x:76,y:-8,z:40},{elem:"H",x:-11,y:-72,z:0},{elem:"H",x:-104,y:-16,z:0},{elem:"H",x:-63,y:57,z:0}], bonds: [[0,1],[0,3],[0,4],[0,5],[1,2,"double"],[1,6],[2,7],[2,8]] },
-    "環丙烷": { atoms: [{elem:"C",x:14,y:-36,z:0},{elem:"C",x:-39,y:6,z:0},{elem:"C",x:24,y:31,z:0},{elem:"H",x:24,y:-61,z:-41},{elem:"H",x:24,y:-61,z:41},{elem:"H",x:-65,y:10,z:41},{elem:"H",x:-65,y:10,z:-41},{elem:"H",x:41,y:51,z:-41},{elem:"H",x:41,y:51,z:41}], bonds: [[0,1],[0,2],[0,3],[0,4],[1,2],[1,5],[1,6],[2,7],[2,8]] }}
+addMol("C3H8O", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", [], [], [], 
+{
+    "1-丙醇": { atoms: [{elem:"O",x:100,y:8,z:-3},{elem:"C",x:-6,y:24,z:-3},{elem:"C",x:44,y:-23,z:-3},{elem:"C",x:-68,y:-6,z:-3},{elem:"H",x:-2,y:53,z:-42},{elem:"H",x:-2,y:53,z:37},{elem:"H",x:42,y:-51,z:-43},{elem:"H",x:42,y:-51,z:37},{elem:"H",x:-74,y:-34,z:-43},{elem:"H",x:-103,y:28,z:-3},{elem:"H",x:-74,y:-34,z:37},{elem:"H",x:102,y:32,z:33}], bonds: [[0,2],[0,11],[1,2],[1,3],[1,4],[1,5],[2,6],[2,7],[3,8],[3,9],[3,10]] },
+    "2-丙醇": { atoms: [{elem:"O",x:0,y:-75,z:-1},{elem:"C",x:0,y:-15,z:20},{elem:"C",x:-57,y:17,z:-1},{elem:"C",x:57,y:17,z:-1},{elem:"H",x:0,y:-17,z:70},{elem:"H",x:-59,y:63,z:16},{elem:"H",x:-97,y:-7,z:14},{elem:"H",x:-59,y:18,z:-50},{elem:"H",x:59,y:63,z:16},{elem:"H",x:97,y:-7,z:14},{elem:"H",x:59,y:18,z:-50},{elem:"H",x:0,y:-74,z:-45}], bonds: [[0,1],[0,11],[1,2],[1,3],[1,4],[2,5],[2,6],[2,7],[3,8],[3,9],[3,10]] }
+}
+);
+addMol("C3H6Cl2", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", [], [], [], 
+{
+    "1,1-二氯丙烷": { atoms: [{elem:"Cl",x:78,y:57,z:-14},{elem:"Cl",x:78,y:-57,z:-14},{elem:"C",x:-13,y:0,z:26},{elem:"C",x:55,y:0,z:19},{elem:"C",x:-49,y:0,z:-33},{elem:"H",x:-27,y:-39,z:52},{elem:"H",x:-27,y:39,z:52},{elem:"H",x:76,y:0,z:63},{elem:"H",x:-40,y:40,z:-60},{elem:"H",x:-98,y:0,z:-22},{elem:"H",x:-40,y:-40,z:-60}], bonds: [[0,3],[1,3],[2,3],[2,4],[2,5],[2,6],[3,7],[4,8],[4,9],[4,10]] },
+    "1,2-二氯丙烷": { atoms: [{elem:"Cl",x:-43,y:-74,z:17},{elem:"Cl",x:89,y:-28,z:28},{elem:"C",x:-20,y:-15,z:-12},{elem:"C",x:47,y:-20,z:-28},{elem:"C",x:-34,y:38,z:29},{elem:"H",x:-45,y:-10,z:-54},{elem:"H",x:63,y:20,z:-51},{elem:"H",x:55,y:-59,z:-57},{elem:"H",x:-14,y:34,z:73},{elem:"H",x:-83,y:43,z:34},{elem:"H",x:-17,y:80,z:9}], bonds: [[0,2],[1,3],[2,3],[2,4],[2,5],[3,6],[3,7],[4,8],[4,9],[4,10]] },
+    "1,3-二氯丙烷": { atoms: [{elem:"Cl",x:85,y:48,z:-11},{elem:"Cl",x:-85,y:48,z:11},{elem:"C",x:0,y:-29,z:0},{elem:"C",x:48,y:7,z:33},{elem:"C",x:-48,y:7,z:-33},{elem:"H",x:-22,y:-59,z:33},{elem:"H",x:22,y:-59,z:-33},{elem:"H",x:80,y:-23,z:55},{elem:"H",x:29,y:36,z:68},{elem:"H",x:-29,y:37,z:-67},{elem:"H",x:-80,y:-23,z:-55}], bonds: [[0,3],[1,4],[2,3],[2,4],[2,5],[2,6],[3,7],[3,8],[4,9],[4,10]] },
+    "2,2-二氯丙烷": { atoms: [{elem:"Cl",x:-57,y:-66,z:0},{elem:"Cl",x:57,y:-66,z:0},{elem:"C",x:0,y:-25,z:0},{elem:"C",x:0,y:14,z:57},{elem:"C",x:0,y:14,z:-57},{elem:"H",x:0,y:-14,z:98},{elem:"H",x:-40,y:43,z:58},{elem:"H",x:40,y:43,z:58},{elem:"H",x:40,y:43,z:-58},{elem:"H",x:0,y:-14,z:-98},{elem:"H",x:-40,y:43,z:-58}], bonds: [[0,2],[1,2],[2,3],[2,4],[3,5],[3,6],[3,7],[4,8],[4,9],[4,10]] }
+}
+);
+
+addMol("C3H7Cl", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", [], [], [], 
+{
+    "1-氯丙烷": { atoms: [{elem:"Cl",x:93,y:26,z:-6},{elem:"C",x:-12,y:-20,z:-17},{elem:"C",x:50,y:-27,z:10},{elem:"C",x:-45,y:37,z:4},{elem:"H",x:-9,y:-19,z:-66},{elem:"H",x:-40,y:-59,z:-5},{elem:"H",x:47,y:-30,z:60},{elem:"H",x:71,y:-69,z:-6},{elem:"H",x:-47,y:38,z:53},{elem:"H",x:-91,y:37,z:-13},{elem:"H",x:-23,y:78,z:-11}], bonds: [[0,2],[1,2],[1,3],[1,4],[1,5],[2,6],[2,7],[3,8],[3,9],[3,10]] },
+    "2-氯丙烷": { atoms: [{elem:"Cl",x:87,y:0,z:-2},{elem:"C",x:20,y:0,z:18},{elem:"C",x:-11,y:57,z:-6},{elem:"C",x:-11,y:-57,z:-6},{elem:"H",x:19,y:0,z:67},{elem:"H",x:11,y:97,z:12},{elem:"H",x:-58,y:58,z:8},{elem:"H",x:-10,y:59,z:-55},{elem:"H",x:11,y:-97,z:12},{elem:"H",x:-58,y:-58,z:8},{elem:"H",x:-10,y:-59,z:-55}], bonds: [[0,1],[1,2],[1,3],[1,4],[2,5],[2,6],[2,7],[3,8],[3,9],[3,10]] }
+}
 );
 
 addMol("C8H10", "C", "sp²", ["平面 (苯環)","Planar"], "120°", [], [], [], {
@@ -850,11 +891,7 @@ addMol("CH3OH", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", [
 {elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:45,z:0,lpCount:2}, 
 {elem:"H",x:0,y:-40,z:0}, {elem:"H",x:35,y:10,z:30}, {elem:"H",x:-35,y:10,z:30}, {elem:"H",x:35,y:70,z:0}
 ], [[0,1],[0,2],[0,3],[0,4],[1,5]]);
-addMol("C2H5OH", "C", "sp³", ["鏈狀","Chain"], "109.5°", [
-{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:20,y:0,z:0}, {elem:"O",x:50,y:35,z:0,lpCount:2},
-{elem:"H",x:-30,y:-40,z:0}, {elem:"H",x:-55,y:20,z:25}, {elem:"H",x:-55,y:20,z:-25},
-{elem:"H",x:20,y:-40,z:0}, {elem:"H",x:20,y:10,z:40}, {elem:"H",x:85,y:25,z:0}
-], [[0,1],[1,2],[0,3],[0,4],[0,5],[1,6],[1,7],[2,8]]);
+addMol("C2H5OH", "C、O", "sp3", ["正四面體","Tetrahedral"], "109.5°", [{elem:"O",x:-69,y:-14,z:-4},{elem:"C",x:-19,y:25,z:-4},{elem:"C",x:38,y:-13,z:-4},{elem:"H",x:-21,y:54,z:36},{elem:"H",x:-21,y:53,z:-44},{elem:"H",x:78,y:16,z:-5},{elem:"H",x:39,y:-42,z:-43},{elem:"H",x:40,y:-41,z:36},{elem:"H",x:-67,y:-38,z:32}], [[0,1],[0,8],[1,2],[1,3],[1,4],[2,5],[2,6],[2,7]]);
 addMol("C3H7OH", "C", "sp³", ["異構物","Isomers"], "109.5°", [], [], [], {
     "1-Propanol (正丙醇)": { 
         atoms: [{elem:"C",x:-60,y:0,z:0},{elem:"C",x:-20,y:25,z:0},{elem:"C",x:20,y:0,z:0},{elem:"O",x:60,y:25,z:0,lpCount:2},{elem:"H",x:85,y:10,z:0},{elem:"H",x:-60,y:-35,z:0},{elem:"H",x:-85,y:15,z:20},{elem:"H",x:-85,y:15,z:-20},{elem:"H",x:-20,y:60,z:0},{elem:"H",x:-20,y:25,z:35},{elem:"H",x:20,y:-35,z:0},{elem:"H",x:20,y:0,z:-35}], 
@@ -1003,6 +1040,17 @@ function checkReactionAvailable(key) {
         document.getElementById("reaction-hcl-btn").style.display = "flex";
         document.getElementById("reaction-cl2-btn").style.display = "flex";
         resetBtn.style.display = "block";
+    } else if (key === "C3H6") {
+        // 只有當結構中有 "double" (雙鍵) 時才顯示按鈕，排除環丙烷
+        let hasDoubleBond = false;
+        if(currentMolecule.bonds3D) hasDoubleBond = currentMolecule.bonds3D.some(b => b[2] === "double");
+        
+        if (hasDoubleBond) {
+            btnContainer.style.display = "block";
+            document.getElementById("reaction-propene-h2-btn").style.display = "flex";
+            resetBtn.style.display = "block";
+        }
+
     } else if (key === "CH4") {
         // [修改] 甲烷現在有兩個反應：氯化 與 硝化
         btnContainer.style.display = "block";
@@ -1014,378 +1062,130 @@ function checkReactionAvailable(key) {
         if(nitroBtn) nitroBtn.style.display = "flex"; // +HNO3
 
         resetBtn.style.display = "block";
-    } else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2"].includes(key) && isReactionFinished) {
-        // [修改] 加入 CH3NO2
+    } else if (key === "C3H6") {
+        // [新增] 只有當結構中有雙鍵(丙烯)才顯示按鈕
+        let hasDoubleBond = false;
+        if(currentMolecule.bonds3D) hasDoubleBond = currentMolecule.bonds3D.some(b => b[2] === "double");
+        
+        if (hasDoubleBond) {
+            btnContainer.style.display = "block";
+            const propBtn = document.getElementById("reaction-propene-h2-btn");
+            if(propBtn) propBtn.style.display = "flex";
+            resetBtn.style.display = "block";
+        }
+    } else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8"].includes(key) && isReactionFinished) {
+        // [修改] 加入 CH3NO2 與 C3H8
         btnContainer.style.display = "block";
         resetBtn.style.display = "block"; 
     }
 }
 
 function resetReaction() {
-    isReactionRunning = false; 
+    isReactionRunning = false; // 這行很重要，會立刻停止動畫
     isReactionFinished = false; 
     
     // [修改] 加入 CH3NO2 的判斷
     if (currentKey === "CH3Cl" || currentKey === "CH3NO2" || currentKey === "CH4") {
         loadMolecule("CH4");
+    } else if (currentKey === "C3H8" || currentKey === "C3H6") {
+        // [新增] 丙烷或丙烯一律重置回「丙烯」
+        loadMolecule("C3H6", "丙烯"); 
     } else {
         loadMolecule("C2H4");
     }     
 }
+
 
 function hideAllReactionBtns() {
     const btns = document.querySelectorAll(".reaction-btn");
     btns.forEach(b => b.style.display = "none");
 }
 
-// [修正] 增加 variantName 參數，解決 Cl2 產物異構物問題
-function finishReaction(nextKey, nextTitle, variantName = null) {
+// [修正] 轉場時間延長至 1500ms
+function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
     const svg = document.getElementById("scene-root");
+    
+    // 1. 開始模糊淡出 (1.5s)
     svg.classList.add("scene-blur-out");
+    
+    // 2. 等待 1500ms 後切換分子
     setTimeout(() => {
-        loadMolecule(nextKey, variantName); // 載入時指定變體
-        const subtitle = document.getElementById("viewport-subtitle");
-        if(subtitle) subtitle.textContent = "反應完成：" + nextTitle;
+        loadMolecule(nextKey, variantName); 
         
+        const subtitle = document.getElementById("viewport-subtitle");
+        if(subtitle) {
+            subtitle.textContent = description ? description : ("反應完成：" + nextTitle);
+        }
+        
+        // 3. 移除淡出，開始淡入
         svg.classList.remove("scene-blur-out");
         svg.classList.add("scene-blur-in");
+        
+        // 4. 淡入動畫也是 1500ms
         setTimeout(() => {
             svg.classList.remove("scene-blur-in");
             isReactionRunning = false;
             isReactionFinished = true;
-            checkReactionAvailable(nextKey);
-        }, 800);
-    }, 800);
+            checkReactionAvailable(nextKey); 
+        }, 1500); // 改為 1500
+    }, 1500); // 改為 1500
 }
 
-// 1. 乙烯 + H2O -> 乙醇
+// 1. 乙烯 + H2O -> 乙醇 (直接轉場版)
 function runEthyleneHydration() {
     hideAllReactionBtns();
     if (!MOLECULE_DB["C2H5OH"]) return;
 
-    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 }; 
-
-    // 強制設定 Carbon LP 為 0
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { if(a.elem === 'C') a.lpCount = 0; a.y += 20; });
-
-    // [修正] 水分子 O 的 calculatedLP 設為 0
-    const waterAtoms = [
-        {elem:"O", x:0, y:-250, z:0, color:"#ef4444", r:18, type:'atom', calculatedLP:0}, 
-        {elem:"H", x:-30, y:-225, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}, 
-        {elem:"H", x:30, y:-225, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}  
-    ];
-    let activeAtoms = [...reactantAtoms, ...waterAtoms];
-
-    const midCoords = [];
-    reactantAtoms.forEach((a, i) => midCoords[i] = {x:a.x, y:a.y, z:a.z}); 
-    midCoords[6] = {x:0, y:-40, z:0}; midCoords[7] = {x:-30, y:-15, z:0}; midCoords[8] = {x:30, y:-15, z:0};   
-
-    const flatCoords = [
-        {x:-30, y:20, z:0}, {x:30, y:20, z:0}, 
-        {x:-30, y:60, z:0}, {x:-65, y:20, z:0}, {x:30, y:60, z:0}, {x:65, y:20, z:0},
-        {x:30, y:-30, z:0}, {x:-30, y:-30, z:0}, {x:60, y:-45, z:0}
-    ];
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionH2O"); 
-    currentMolecule.renderObjects.forEach(obj => {
-        if (obj.type === 'electron' && obj.parentAtom) {
-            obj.offsetX = obj.x - obj.parentAtom.x;
-            obj.offsetY = obj.y - obj.parentAtom.y;
-            obj.offsetZ = obj.z - obj.parentAtom.z;
-        }
-    });
-
-    let progress = 0; const duration = 600; // 統一為 600
-    function step() {
-        progress++; const t = progress / duration;
-        let dynamicBonds = [[0,2,"single",1], [0,3,"single",1], [1,4,"single",1], [1,5,"single",1], [6,8,"single",1]]; 
-        
-        let doubleOpacity = t < 0.45 ? 1 : (t < 0.65 ? 1 - (t - 0.45)/0.2 : 0);
-        let singleOpacity = t < 0.45 ? 0 : (t < 0.65 ? (t - 0.45)/0.2 : 1);
-        if(doubleOpacity>0) dynamicBonds.push([0,1,"double", doubleOpacity]);
-        if(singleOpacity>0) dynamicBonds.push([0,1,"single", singleOpacity]);
-
-        let breakOpacity = t < 0.45 ? 1 : (t < 0.65 ? 1 - (t - 0.45)/0.2 : 0);
-        if(breakOpacity>0) dynamicBonds.push([6,7,"single", breakOpacity]);
-
-        let formOpacity = t > 0.85 ? (t - 0.85)/0.15 : 0; if(formOpacity>1) formOpacity=1;
-        if(formOpacity>0) { dynamicBonds.push([0,7,"single", formOpacity]); dynamicBonds.push([1,6,"single", formOpacity]); }
-        currentMolecule.bonds3D = dynamicBonds;
-
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) sub.textContent = t < 0.4 ? "水分子 (H₂O) 接近中..." : (t < 0.8 ? "反應中..." : "完成");
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy, cz;
-            if (t < 0.4) {
-                let wt = t / 0.4;
-                const start = (i < 6) ? reactantAtoms[i] : waterAtoms[i-6];
-                cx = start.x + (midCoords[i].x - start.x) * wt;
-                cy = start.y + (midCoords[i].y - start.y) * wt;
-                cz = start.z + (midCoords[i].z - start.z) * wt;
-            } else {
-                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
-                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
-                const start = midCoords[i], dest = flatCoords[i];  
-                cx = start.x + (dest.x - start.x) * rt;
-                cy = start.y + (dest.y - start.y) * rt;
-                cz = start.z + (dest.z - start.z) * rt;
-            }
-            atom.x = cx; atom.y = cy; atom.z = cz;
-        });
-
-        currentMolecule.renderObjects.forEach(obj => {
-            if (obj.type === 'atom' && obj.originalIndex !== undefined) {
-                const s = activeAtoms[obj.originalIndex]; obj.x = s.x; obj.y = s.y; obj.z = s.z;
-            } else if (obj.type === 'electron' && obj.parentAtom) {
-                obj.x = obj.parentAtom.x + obj.offsetX; obj.y = obj.parentAtom.y + obj.offsetY; obj.z = obj.parentAtom.z + obj.offsetZ;
-            }
-        });
-
-        if (progress < duration) requestAnimationFrame(step);
-        else finishReaction("C2H5OH", "乙醇 (C₂H₅OH)");
-    }
-    step();
+    finishReaction(
+        "C2H5OH", 
+        "乙醇", 
+        null, 
+        "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接OH，轉變成乙醇"
+    );
 }
 
-// 2. 乙烯 + Cl2 -> 1,2-二氯乙烷
+// 2. 乙烯 + Cl2 -> 1,2-二氯乙烷 (直接轉場版)
 function runEthyleneChlorination() {
     hideAllReactionBtns();
-    let productData = MOLECULE_DB["C2H4Cl2"]; 
-    if (!productData) return;
+    if (!MOLECULE_DB["C2H4Cl2"]) return;
 
-    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 }; 
-    
-    // 強制設定 Carbon LP 為 0
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { if(a.elem === 'C') a.lpCount = 0; a.y += 20; });
-
-    const reagentAtoms = [
-        {elem:"Cl", x:-25, y:-250, z:0, color:"#22c55e", r:21, type:'atom', calculatedLP:3}, 
-        {elem:"Cl", x:25, y:-250, z:0, color:"#22c55e", r:21, type:'atom', calculatedLP:3}   
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    const midCoords = [];
-    reactantAtoms.forEach((a, i) => midCoords[i] = {x:a.x, y:a.y, z:a.z}); 
-    midCoords[6] = {x:-25, y:-50, z:0}; midCoords[7] = {x:25, y:-50, z:0};  
-
-    const flatCoords = [
-        {x:-30, y:20, z:0}, {x:30, y:20, z:0},
-        {x:-30, y:60, z:0}, {x:-65, y:20, z:0}, {x:30, y:60, z:0}, {x:65, y:20, z:0},  
-        {x:-30, y:-40, z:0}, {x:30, y:-40, z:0}
-    ];
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionCl2"); 
-    
-    let progress = 0; const duration = 600; 
-    function step() {
-        progress++; const t = progress / duration;
-        let dynamicBonds = [[0,2,"single",1], [0,3,"single",1], [1,4,"single",1], [1,5,"single",1]]; 
-
-        let doubleOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        let singleOpacity = t < 0.4 ? 0 : (t < 0.6 ? (t - 0.4)/0.2 : 1);
-        if(doubleOpacity>0) dynamicBonds.push([0,1,"double", doubleOpacity]);
-        if(singleOpacity>0) dynamicBonds.push([0,1,"single", singleOpacity]);
-
-        let clBondOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        if(clBondOpacity>0) dynamicBonds.push([6,7,"single", clBondOpacity]);
-
-        let formOpacity = t > 0.8 ? (t - 0.8)/0.2 : 0; if(formOpacity>1) formOpacity=1;
-        if(formOpacity>0) { dynamicBonds.push([0,6,"single", formOpacity]); dynamicBonds.push([1,7,"single", formOpacity]); }
-        currentMolecule.bonds3D = dynamicBonds;
-
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) sub.textContent = t < 0.4 ? "氯氣 (Cl₂) 接近中..." : (t < 0.8 ? "親電加成..." : "完成");
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy;
-            if (t < 0.4) {
-                let wt = t / 0.4;
-                const start = (i < 6) ? reactantAtoms[i] : reagentAtoms[i-6];
-                cx = start.x + (midCoords[i].x - start.x) * wt;
-                cy = start.y + (midCoords[i].y - start.y) * wt;
-            } else {
-                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
-                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
-                cx = midCoords[i].x + (flatCoords[i].x - midCoords[i].x) * rt;
-                cy = midCoords[i].y + (flatCoords[i].y - midCoords[i].y) * rt;
-            }
-            atom.x = cx; atom.y = cy; atom.z = 0;
-        });
-        
-        currentMolecule.renderObjects.forEach(obj => {
-             if(obj.type==='atom' && obj.originalIndex!==undefined) {
-                 obj.x = activeAtoms[obj.originalIndex].x; obj.y = activeAtoms[obj.originalIndex].y; obj.z = 0;
-             }
-        });
-
-        if (progress < duration) requestAnimationFrame(step);
-        // [修正] 明確指定 Variant: "1,2-Dichloroethane"
-        else finishReaction("C2H4Cl2", "1,2-二氯乙烷", "1,2-Dichloroethane");
-    }
-    step();
+    // 指定變體為 "1,2-二氯乙烷" (對應 MOLECULE_DB 中的 key)
+    finishReaction(
+        "C2H4Cl2", 
+        "1,2-二氯乙烷", 
+        "1,2-二氯乙烷", 
+        "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個Cl，轉變成1,2-二氯乙烷，亦為氧化反應(C氧化數上升)"
+    );
 }
 
-// 3. 乙烯 + H2 -> 乙烷 (修正：節奏與 Cl2 一致)
+// 3. 乙烯 + H2 -> 乙烷 (直接轉場版)
 function runEthyleneHydrogenation() {
     hideAllReactionBtns();
-    if(!MOLECULE_DB["C2H6"]) { console.error("Missing C2H6 data"); return; }
-
-    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 };
+    if(!MOLECULE_DB["C2H6"]) return;
     
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { if(a.elem === 'C') a.lpCount = 0; a.y += 20; });
-
-    const reagentAtoms = [
-        {elem:"H", x:-15, y:-250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}, 
-        {elem:"H", x:15,  y:-250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    const midCoords = [];
-    reactantAtoms.forEach((a, i) => midCoords[i] = {x:a.x, y:a.y, z:a.z});
-    midCoords[6] = {x:-20, y:-50, z:0}; midCoords[7] = {x:20, y:-50, z:0};
-
-    const flatCoords = [
-        {x:-35, y:20, z:0}, {x:35, y:20, z:0}, 
-        {x:-35, y:60, z:0}, {x:-70, y:20, z:0}, {x:35, y:60, z:0}, {x:70, y:20, z:0}, 
-        {x:-35, y:-40, z:0}, {x:35, y:-40, z:0} 
-    ];
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionH2");
-    
-    let progress = 0; const duration = 600; // 修正 duration = 600
-    function step() {
-        progress++; const t = progress / duration;
-        let dynamicBonds = [[0,2,"single",1], [0,3,"single",1], [1,4,"single",1], [1,5,"single",1]];
-        
-        // 修正：依照 Cl2 的透明度曲線
-        let doubleOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        let singleOpacity = t < 0.4 ? 0 : (t < 0.6 ? (t - 0.4)/0.2 : 1);
-        if(doubleOpacity>0) dynamicBonds.push([0,1,"double", doubleOpacity]);
-        if(singleOpacity>0) dynamicBonds.push([0,1,"single", singleOpacity]);
-
-        // 試劑鍵斷裂
-        let breakOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        if(breakOpacity>0) dynamicBonds.push([6,7,"single", breakOpacity]);
-
-        // 新鍵生成
-        let formOpacity = t > 0.8 ? (t - 0.8)/0.2 : 0; if(formOpacity>1) formOpacity=1;
-        if(formOpacity>0) { dynamicBonds.push([0,6,"single", formOpacity]); dynamicBonds.push([1,7,"single", formOpacity]); }
-        currentMolecule.bonds3D = dynamicBonds;
-
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) sub.textContent = t < 0.4 ? "氫氣 (H₂) 接近中..." : "形成乙烷 (C₂H₆)";
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy;
-            if (t < 0.4) {
-                let wt = t / 0.4;
-                const start = (i < 6) ? reactantAtoms[i] : reagentAtoms[i-6];
-                cx = start.x + (midCoords[i].x - start.x) * wt;
-                cy = start.y + (midCoords[i].y - start.y) * wt;
-            } else {
-                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
-                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
-                cx = midCoords[i].x + (flatCoords[i].x - midCoords[i].x) * rt;
-                cy = midCoords[i].y + (flatCoords[i].y - midCoords[i].y) * rt;
-            }
-            atom.x = cx; atom.y = cy; atom.z = 0;
-        });
-        
-        currentMolecule.renderObjects.forEach(obj => {
-             if(obj.type==='atom' && obj.originalIndex!==undefined) {
-                 obj.x = activeAtoms[obj.originalIndex].x; obj.y = activeAtoms[obj.originalIndex].y; obj.z = 0;
-             }
-        });
-
-        if(progress < duration) requestAnimationFrame(step);
-        else finishReaction("C2H6", "乙烷 (Ethane)");
-    }
-    step();
+    // 直接呼叫轉場，傳入詳細說明
+    finishReaction(
+        "C2H6", 
+        "乙烷", 
+        null, 
+        "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個H，轉變成乙烷，亦為還原反應(C氧化數下降)"
+    );
 }
 
-// 4. 乙烯 + HCl -> 氯乙烷 (修正：節奏與 Cl2 一致)
+// 4. 乙烯 + HCl -> 氯乙烷 (直接轉場版)
 function runEthyleneHydrohalogenation() {
     hideAllReactionBtns();
-    if(!MOLECULE_DB["C2H5Cl"]) { console.error("Missing C2H5Cl data"); return; }
+    if(!MOLECULE_DB["C2H5Cl"]) return;
 
-    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 };
-    
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { if(a.elem === 'C') a.lpCount = 0; a.y += 20; });
-
-    const reagentAtoms = [
-        {elem:"H", x:-15, y:-250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}, 
-        {elem:"Cl", x:25, y:-250, z:0, color:"#22c55e", r:21, type:'atom', calculatedLP:3}
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    const midCoords = [];
-    reactantAtoms.forEach((a, i) => midCoords[i] = {x:a.x, y:a.y, z:a.z});
-    midCoords[6] = {x:-20, y:-50, z:0}; 
-    midCoords[7] = {x:30,  y:-50, z:0}; 
-
-    const flatCoords = [
-        {x:-35, y:20, z:0}, {x:35, y:20, z:0}, 
-        {x:-35, y:60, z:0}, {x:-70, y:20, z:0}, {x:35, y:60, z:0}, {x:70, y:20, z:0}, 
-        {x:-35, y:-40, z:0}, {x:35, y:-50, z:0} 
-    ];
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionHCl");
-    
-    let progress = 0; const duration = 600; // 修正 duration = 600
-    function step() {
-        progress++; const t = progress / duration;
-        let dynamicBonds = [[0,2,"single",1], [0,3,"single",1], [1,4,"single",1], [1,5,"single",1]];
-        
-        // 修正：依照 Cl2 的透明度曲線
-        let doubleOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        let singleOpacity = t < 0.4 ? 0 : (t < 0.6 ? (t - 0.4)/0.2 : 1);
-        if(doubleOpacity>0) dynamicBonds.push([0,1,"double", doubleOpacity]);
-        if(singleOpacity>0) dynamicBonds.push([0,1,"single", singleOpacity]);
-
-        // 試劑鍵斷裂
-        let breakOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        if(breakOpacity>0) dynamicBonds.push([6,7,"single", breakOpacity]);
-
-        // 新鍵生成
-        let formOpacity = t > 0.8 ? (t - 0.8)/0.2 : 0; if(formOpacity>1) formOpacity=1;
-        if(formOpacity>0) { dynamicBonds.push([0,6,"single", formOpacity]); dynamicBonds.push([1,7,"single", formOpacity]); }
-        currentMolecule.bonds3D = dynamicBonds;
-        
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) sub.textContent = t < 0.4 ? "氯化氫 (HCl) 接近中..." : "形成氯乙烷";
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy;
-            if (t < 0.4) {
-                let wt = t / 0.4;
-                const start = (i < 6) ? reactantAtoms[i] : reagentAtoms[i-6];
-                cx = start.x + (midCoords[i].x - start.x) * wt;
-                cy = start.y + (midCoords[i].y - start.y) * wt;
-            } else {
-                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
-                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
-                cx = midCoords[i].x + (flatCoords[i].x - midCoords[i].x) * rt;
-                cy = midCoords[i].y + (flatCoords[i].y - midCoords[i].y) * rt;
-            }
-            atom.x = cx; atom.y = cy; atom.z = 0;
-        });
-
-        currentMolecule.renderObjects.forEach(obj => {
-             if(obj.type==='atom' && obj.originalIndex!==undefined) {
-                 obj.x = activeAtoms[obj.originalIndex].x; obj.y = activeAtoms[obj.originalIndex].y; obj.z = 0;
-             }
-        });
-
-        if(progress < duration) requestAnimationFrame(step);
-        else finishReaction("C2H5Cl", "氯乙烷 (Chloroethane)");
-    }
-    step();
+    finishReaction(
+        "C2H5Cl", 
+        "氯乙烷", 
+        null, 
+        "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接Cl，轉變成氯乙烷"
+    );
 }
+
+
 
 function runMethaneSubstitution() {
     hideAllReactionBtns();
@@ -1683,6 +1483,134 @@ function runMethaneNitration() {
     step();
 }
 
+function runPropeneHydrogenation() {
+    hideAllReactionBtns();
+    if (!MOLECULE_DB["C3H8"]) return;
+
+    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 }; 
+
+    // 1. 準備原子 (強制去除 LP)
+    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
+    reactantAtoms.forEach(a => { a.lpCount = 0; if(a.calculatedLP) a.calculatedLP = 0; });
+
+    // H2 放在上方 (配合下方 C1, C2 的位置)
+    // C1 x=-30, C2 x=30. H2 放在 y=-250 準備下降
+    const reagentAtoms = [
+        {elem:"H", x: -30, y: -250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}, 
+        {elem:"H", x:  30, y: -250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}
+    ];
+    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
+
+    // 2. 定義座標路徑 (平面化)
+    // 結構: C0(甲基) --- C1(中) === C2(右)
+    const midCoords = [];
+    
+    // [C 骨架座標] (保持較短間距 60)
+    // C0: -90, C1: -30, C2: 30
+    midCoords[0] = {x: -90, y: 10, z: 0};  // 甲基 C0
+    midCoords[1] = {x: -30, y: 10, z: 0};  // 中間 C1 (雙鍵起點)
+    midCoords[2] = {x:  30, y: 10, z: 0};  // 右側 C2 (雙鍵終點)
+    
+    // [H 座標] (C-H 鍵長拉長至約 70)
+    
+    // --- 左邊 C0 (CH3) ---
+    midCoords[3] = {x: -160, y: 10,  z: 0}; // 左
+    midCoords[4] = {x: -90,  y: -60, z: 0}; // 上
+    midCoords[5] = {x: -90,  y: 80,  z: 0}; // 下
+    
+    // --- 中間 C1 (CH) ---
+    midCoords[6] = {x: -30,  y: 80,  z: 0}; // 下 (讓出上方給 H2)
+    
+    // --- 右邊 C2 (CH2) ---
+    // 您的要求：右邊和下面
+    midCoords[7] = {x:  30,  y: 80,  z: 0}; // 下
+    midCoords[8] = {x:  100, y: 10,  z: 0}; // 右
+
+    // [H2 試劑降落位置] (對應 C1, C2 上方，距離也是約 70)
+    midCoords[9]  = {x: -30, y: -60, z: 0}; // 準備接 C1
+    midCoords[10] = {x:  30, y: -60, z: 0}; // 準備接 C2
+
+    // [Stage 2: 產物展開]
+    const flatCoords = JSON.parse(JSON.stringify(midCoords));
+    // 產物 C-C 稍微拉鬆一點點
+    flatCoords[1].x = -32; 
+    flatCoords[2].x =  32; 
+    
+    // H 接上後的位置 (變成 C-H)
+    flatCoords[9]  = {x: -32, y: -60, z: 0}; // H-C1
+    flatCoords[10] = {x:  32, y: -60, z: 0}; // H-C2
+    
+    // 微調右側 H 的位置跟隨 C2
+    flatCoords[7].x = 32; 
+    flatCoords[8].x = 102;
+
+    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionPropene"); 
+    
+    let progress = 0; const duration = 600; 
+    function step() {
+        // [重置檢查點]
+        if (!isReactionRunning) return;
+
+        progress++; const t = progress / duration;
+        
+        // 定義鍵結 (注意索引對應)
+        // C0=0, C1=1, C2=2
+        // H on C0: 3,4,5
+        // H on C1: 6
+        // H on C2: 7,8
+        // H from H2: 9,10
+        let dynamicBonds = [
+            [0,1,"single",1], 
+            [0,3,"single",1], [0,4,"single",1], [0,5,"single",1], 
+            [1,6,"single",1], 
+            [2,7,"single",1], [2,8,"single",1]
+        ]; 
+
+        // 1. 雙鍵變單鍵 (C1=C2)
+        let doubleOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
+        let singleOpacity = t < 0.4 ? 0 : (t < 0.6 ? (t - 0.4)/0.2 : 1);
+        if(doubleOpacity>0) dynamicBonds.push([1,2,"double", doubleOpacity]);
+        if(singleOpacity>0) dynamicBonds.push([1,2,"single", singleOpacity]);
+
+        // 2. H-H 斷裂 (9-10)
+        let breakOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
+        if(breakOpacity>0) dynamicBonds.push([9,10,"single", breakOpacity]);
+
+        // 3. 新鍵生成 (C1-H9, C2-H10)
+        let formOpacity = t > 0.8 ? (t - 0.8)/0.2 : 0; if(formOpacity>1) formOpacity=1;
+        if(formOpacity>0) { dynamicBonds.push([1,9,"single", formOpacity]); dynamicBonds.push([2,10,"single", formOpacity]); }
+        
+        currentMolecule.bonds3D = dynamicBonds;
+        const sub = document.getElementById("viewport-subtitle");
+        if(sub) sub.textContent = t < 0.4 ? "氫氣 (H₂) 接近..." : "形成丙烷 (C₃H₈)";
+
+        activeAtoms.forEach((atom, i) => {
+            let cx, cy;
+            if (t < 0.4) {
+                let wt = t / 0.4;
+                const start = (i < 9) ? reactantAtoms[i] : reagentAtoms[i-9];
+                cx = start.x + (midCoords[i].x - start.x) * wt;
+                cy = start.y + (midCoords[i].y - start.y) * wt;
+            } else {
+                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
+                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
+                cx = midCoords[i].x + (flatCoords[i].x - midCoords[i].x) * rt;
+                cy = midCoords[i].y + (flatCoords[i].y - midCoords[i].y) * rt;
+            }
+            atom.x = cx; atom.y = cy; atom.z = 0;
+        });
+        
+        currentMolecule.renderObjects.forEach(obj => {
+             if(obj.type==='atom' && obj.originalIndex!==undefined) {
+                 obj.x = activeAtoms[obj.originalIndex].x; obj.y = activeAtoms[obj.originalIndex].y; obj.z = 0;
+             }
+        });
+
+        if(progress < duration) requestAnimationFrame(step);
+        else finishReaction("C3H8", "丙烷 (Propane)");
+    }
+    step();
+}
 
 // ==========================================
 // 3. 結尾邏輯與初始化
@@ -2082,12 +2010,13 @@ function drawBond(b) {
 function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     
-    // [修改] 取得介面上開關的狀態
-    const useGlow = document.getElementById('toggle-glow').checked;
+    // [修改] 只有在「非手機版 (!isMobile)」且「開關開啟」時才顯示光暈
+    const useGlow = !isMobile && document.getElementById('toggle-glow').checked;
 
-    // 如果開關是開啟的，就畫光暈
+    // 如果符合條件，就畫光暈
     if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        // ... (光暈繪製代碼保持不變) ...
         glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
         glow.setAttribute("r", a.r * a.scale * 1.3); 
         glow.setAttribute("fill", a.color); 
@@ -2112,11 +2041,12 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
-    // [修改] 取得介面上開關的狀態
-    const useGlow = document.getElementById('toggle-glow').checked;
+    // [修改] 只有在「非手機版 (!isMobile)」且「開關開啟」時才顯示光暈
+    const useGlow = !isMobile && document.getElementById('toggle-glow').checked;
 
     if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        // ... (光暈繪製代碼保持不變) ...
         glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
         glow.setAttribute("r", r * 1.8); 
         glow.setAttribute("fill", "#ffffff"); 
@@ -2199,6 +2129,9 @@ function setupInteractions() {
     // [新增] 綁定硝化反應
     const reactNitroBtn = document.getElementById('reaction-nitro-btn');
     if (reactNitroBtn) reactNitroBtn.addEventListener('click', runMethaneNitration);
+
+    const reactPropH2Btn = document.getElementById('reaction-propene-h2-btn');
+    if (reactPropH2Btn) reactPropH2Btn.addEventListener('click', runPropeneHydrogenation);
 
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', resetReaction);
