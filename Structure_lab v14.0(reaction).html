@@ -368,9 +368,13 @@
                     <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
                     <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
                     <button id="reaction-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
-                    <button id="reaction-sub-btn" class="reaction-btn btn-cl2">🧪 +Cl₂ (光照/取代)</button>
-                    <button id="reaction-nitro-btn" class="reaction-btn btn-hcl">🧪 +HNO₃ (高溫/硝化)</button>
-                    <button id="reaction-propene-h2-btn" class="reaction-btn btn-h2">🧪 +H₂ (加氫)</button>
+                    <button id="reaction-sub-btn" class="reaction-btn btn-cl2">🧪 鹵素取代</button>
+                    <button id="reaction-nitro-btn" class="reaction-btn btn-hcl">🧪 硝酸取代</button>
+                    <!-- 丙烯專用按鈕組 -->
+                    <button id="reaction-propene-h2-btn"  class="reaction-btn btn-h2">🧪 氫氣加成</button>
+                    <button id="reaction-propene-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
+                    <button id="reaction-propene-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
+                    <button id="reaction-propene-h2o-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
@@ -1041,13 +1045,17 @@ function checkReactionAvailable(key) {
         document.getElementById("reaction-cl2-btn").style.display = "flex";
         resetBtn.style.display = "block";
     } else if (key === "C3H6") {
-        // 只有當結構中有 "double" (雙鍵) 時才顯示按鈕，排除環丙烷
+        // [新增] 只有當結構中有雙鍵(丙烯)才顯示按鈕
         let hasDoubleBond = false;
         if(currentMolecule.bonds3D) hasDoubleBond = currentMolecule.bonds3D.some(b => b[2] === "double");
         
         if (hasDoubleBond) {
             btnContainer.style.display = "block";
+            // 顯示所有丙烯反應按鈕
             document.getElementById("reaction-propene-h2-btn").style.display = "flex";
+            document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
+            document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
+            document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
             resetBtn.style.display = "block";
         }
 
@@ -1069,12 +1077,14 @@ function checkReactionAvailable(key) {
         
         if (hasDoubleBond) {
             btnContainer.style.display = "block";
-            const propBtn = document.getElementById("reaction-propene-h2-btn");
-            if(propBtn) propBtn.style.display = "flex";
+            document.getElementById("reaction-propene-h2-btn").style.display = "flex";
+            document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
+            document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
+            document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
             resetBtn.style.display = "block";
         }
-    } else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8"].includes(key) && isReactionFinished) {
-        // [修改] 加入 CH3NO2 與 C3H8
+    // [修正] 在下方列表中加入丙烯的所有產物
+    } else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(key) && isReactionFinished) {
         btnContainer.style.display = "block";
         resetBtn.style.display = "block"; 
     }
@@ -1087,8 +1097,8 @@ function resetReaction() {
     // [修改] 加入 CH3NO2 的判斷
     if (currentKey === "CH3Cl" || currentKey === "CH3NO2" || currentKey === "CH4") {
         loadMolecule("CH4");
-    } else if (currentKey === "C3H8" || currentKey === "C3H6") {
-        // [新增] 丙烷或丙烯一律重置回「丙烯」
+    // [修正] 丙烯系列：無論是反應中還是產物(丙烷, 二氯丙烷, 氯丙烷, 丙醇)，一律重置回「丙烯」
+    } else if (["C3H6", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(currentKey)) {
         loadMolecule("C3H6", "丙烯"); 
     } else {
         loadMolecule("C2H4");
@@ -1185,432 +1195,80 @@ function runEthyleneHydrohalogenation() {
     );
 }
 
-
-
 function runMethaneSubstitution() {
     hideAllReactionBtns();
     if(!MOLECULE_DB["CH3Cl"]) { console.error("Missing CH3Cl data"); return; }
 
-    isReactionRunning = true; 
-    rotation = { x: 0, y: 0, z: 0 };
-    
-    // 1. 準備
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { a.lpCount = 0; });
-    
-    const reagentAtoms = [
-        {elem:"Cl", x: 150, y: -25, z:0, color:"#22c55e", r:21, type:'atom', lpCount: 0}, 
-        {elem:"Cl", x: 150, y: 25,  z:0, color:"#22c55e", r:21, type:'atom', lpCount: 0}
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    // 2. 座標路徑
-    
-    // [Stage 1: 平面]
-    const flatStartCoords = [];
-    flatStartCoords[0] = {x: -100, y: 0,   z: 0}; // C
-    flatStartCoords[1] = {x: -100, y: -64, z: 0}; // H
-    flatStartCoords[2] = {x: -100, y: 64,  z: 0}; // H
-    flatStartCoords[3] = {x: -164, y: 0,   z: 0}; // H
-    flatStartCoords[4] = {x:  -36, y: 0,   z: 0}; // H (斷)
-
-    flatStartCoords[5] = {x:  100, y: 0,   z: 0}; // Cl (進攻)
-    flatStartCoords[6] = {x:  100, y: 50,  z: 0}; // Cl (離去) Note: Cl-Cl鍵長約50
-
-    // [Stage 2: 垂直分流]
-    const splitCoords = [];
-    const upY = -55;   // 上層
-    const downY = 55;  // 下層
-
-    // 上層: CH3 ... Cl
-    splitCoords[0] = {x: -100, y: upY,    z: 0}; 
-    splitCoords[1] = {x: -100, y: upY-64, z: 0};
-    splitCoords[2] = {x: -100, y: upY+64, z: 0};
-    splitCoords[3] = {x: -164, y: upY,    z: 0};
-    splitCoords[5] = {x:  100, y: upY,    z: 0}; // Cl
-
-    // 下層: H ... Cl
-    splitCoords[4] = {x: -36,  y: downY,  z: 0}; // H
-    splitCoords[6] = {x:  100, y: downY,  z: 0}; // Cl (垂直下來)
-
-    // [Stage 3: 產物結合]
-    const productCoords = [];
-    // CH3-Cl
-    productCoords[0] = {x: -40, y: upY,    z: 0}; // C 右移
-    productCoords[1] = {x: -40, y: upY-64, z: 0};
-    productCoords[2] = {x: -40, y: upY+64, z: 0};
-    productCoords[3] = {x: -104,y: upY,    z: 0};
-    productCoords[5] = {x:  20, y: upY,    z: 0}; // Cl 左移接C (C-Cl鍵長約60)
-
-    // H-Cl
-    productCoords[4] = {x: -5,  y: downY,  z: 0}; // H
-    productCoords[6] = {x:  35, y: downY,  z: 0}; // Cl
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionSub");
-    currentMolecule.bonds3D = []; 
-
-    let progress = 0; 
-    const duration = 700; // 快速
-    
-    function step() {
-        progress++; 
-        const t = progress / duration;
-        
-        let dynamicBonds = [];
-        dynamicBonds.push([0,1,"single", 1], [0,2,"single", 1], [0,3,"single", 1]); // CH3 骨架
-
-        // 斷鍵 (0.25 ~ 0.45)
-        let breakOpacity = 1;
-        if (t > 0.25) breakOpacity = 1 - (t - 0.25) / 0.2;
-        if (breakOpacity > 0) {
-            dynamicBonds.push([0,4,"single", breakOpacity]); // C-H
-            dynamicBonds.push([5,6,"single", breakOpacity]); // Cl-Cl
-        }
-
-        // 成鍵 (0.8 ~ 1.0) - 先接近再顯示
-        let formOpacity = 0;
-        if (t > 0.8) {
-            formOpacity = (t - 0.8) / 0.2;
-            if (formOpacity > 1) formOpacity = 1;
-        }
-        if (formOpacity > 0) {
-            dynamicBonds.push([0,5,"single", formOpacity]); // C-Cl
-            dynamicBonds.push([4,6,"single", formOpacity]); // H-Cl
-        }
-
-        currentMolecule.bonds3D = dynamicBonds;
-        
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) {
-            if (t < 0.25) sub.textContent = "Cl₂ 接近...";
-            else if (t < 0.6) sub.textContent = "光照斷鍵 (上層:主體 / 下層:副產物)...";
-            else if (t < 0.8) sub.textContent = "自由基相互接近...";
-            else sub.textContent = "鍵結形成：一氯甲烷 + HCl";
-        }
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy, cz;
-            if (t < 0.25) { 
-                let wt = t / 0.25; wt = 1 - Math.pow(1 - wt, 2); 
-                const s = (i<5)?reactantAtoms[i]:reagentAtoms[i-5]; const d = flatStartCoords[i];
-                cx = s.x + (d.x - s.x)*wt; cy = s.y + (d.y - s.y)*wt; cz = s.z + (d.z - s.z)*wt;
-            } else if (t < 0.55) { 
-                let st = (t - 0.25) / 0.3; st = st<.5 ? 2*st*st : -1+(4-2*st)*st;
-                const s = flatStartCoords[i]; const d = splitCoords[i];
-                cx = s.x + (d.x - s.x)*st; cy = s.y + (d.y - s.y)*st; cz = 0;
-            } else { 
-                let pt = (t - 0.55) / 0.45; pt = pt<.5 ? 2*pt*pt : -1+(4-2*pt)*pt;
-                const s = splitCoords[i]; const d = productCoords[i];
-                cx = s.x + (d.x - s.x)*pt; cy = s.y + (d.y - s.y)*pt; cz = 0;
-            }
-            atom.x = cx; atom.y = cy; atom.z = cz;
-        });
-
-        currentMolecule.renderObjects.forEach(obj => {
-             if(obj.type==='atom' && obj.originalIndex!==undefined) {
-                 const src = activeAtoms[obj.originalIndex]; obj.x = src.x; obj.y = src.y; obj.z = src.z;
-             }
-             if (obj.type === 'electron') obj.x = -9999;
-        });
-
-        if(progress < duration) requestAnimationFrame(step);
-        else finishReaction("CH3Cl", "一氯甲烷 (Chloromethane)");
-    }
-    step();
+    finishReaction(
+        "CH3Cl", 
+        "一氯甲烷", 
+        null,
+        "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl"
+    );
 }
 
-// 6. 甲烷 + HNO3 -> 硝基甲烷 + H2O (V3.0: 快速、緊湊、先接近後成鍵)
 function runMethaneNitration() {
     hideAllReactionBtns();
+    
+    // 確保有硝基甲烷的資料 (防止資料庫缺失)
     if(!MOLECULE_DB["CH3NO2"]) {
-        // 補救措施：若無數據則建立臨時數據
         addMol("CH3NO2", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", 
             [{elem:"C",x:0,y:0,z:0},{elem:"N",x:40,y:0,z:0},{elem:"O",x:65,y:35,z:0},{elem:"O",x:65,y:-35,z:0},{elem:"H",x:-25,y:35,z:0},{elem:"H",x:-25,y:-35,z:0},{elem:"H",x:-40,y:0,z:-35}], 
             [[0,1],[1,2,"double"],[1,3,"coordinate"],[0,4],[0,5],[0,6]]
         );
     }
 
-    isReactionRunning = true;   
-    rotation = { x: 0, y: 0, z: 0 }; 
-
-    // --- 1. 準備原子 ---
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { a.lpCount = 0; }); 
-    
-    // HNO3 (HO-NO2)
-    const startX = 180; 
-    const reagentAtoms = [
-        {elem:"N", x: startX,    y: 0,   z:0, color:"#3b82f6", r:19, type:'atom', lpCount: 0}, // 5
-        {elem:"O", x: startX+30, y:-35,  z:0, color:"#ef4444", r:18, type:'atom', lpCount: 0}, // 6
-        {elem:"O", x: startX+30, y: 35,  z:0, color:"#ef4444", r:18, type:'atom', lpCount: 0}, // 7
-        {elem:"O", x: startX-35, y: 0,   z:0, color:"#ef4444", r:18, type:'atom', lpCount: 0}, // 8 (OH)
-        {elem:"H", x: startX-60, y: 0,   z:0, color:"#FFFFFF", r:12, type:'atom', lpCount: 0}  // 9 (OH)
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    // --- 2. 座標系統 ---
-    
-    // [Stage 1: 平面展開] (縮短鍵長版)
-    const flatStartCoords = [];
-    // CH4 (-100)
-    flatStartCoords[0] = {x: -100, y: 0,   z: 0}; 
-    flatStartCoords[1] = {x: -100, y: -64, z: 0}; 
-    flatStartCoords[2] = {x: -100, y: 64,  z: 0}; 
-    flatStartCoords[3] = {x: -164, y: 0,   z: 0}; 
-    flatStartCoords[4] = {x:  -36, y: 0,   z: 0}; // H (將斷裂)
-
-    // HNO3 (+100)
-    flatStartCoords[5] = {x:  100, y: 0,   z: 0}; 
-    flatStartCoords[6] = {x:  145, y:-54,  z: 0}; 
-    flatStartCoords[7] = {x:  145, y: 54,  z: 0}; 
-    flatStartCoords[8] = {x:   28, y: 0,   z: 0}; // O (將斷裂)
-    flatStartCoords[9] = {x:   28, y:-45,  z: 0}; 
-
-    // [Stage 2: 垂直分流] (保持水平距離，但在Y軸分開)
-    const splitCoords = [];
-    const upY = -55;   // [修改] 上移距離減少，更緊湊
-    const downY = 55;  // [修改] 下移距離減少，不跑出畫面
-
-    // 上層: CH3 ... NO2 (水平距離仍遠)
-    splitCoords[0] = {x: -100, y: upY,    z: 0}; 
-    splitCoords[1] = {x: -100, y: upY-64, z: 0};
-    splitCoords[2] = {x: -100, y: upY+64, z: 0};
-    splitCoords[3] = {x: -164, y: upY,    z: 0};
-    
-    splitCoords[5] = {x:  100, y: upY,    z: 0}; 
-    splitCoords[6] = {x:  145, y: upY-54, z: 0}; 
-    splitCoords[7] = {x:  145, y: upY+54, z: 0}; 
-
-    // 下層: H ... O-H (轉橫向，水平距離仍遠)
-    splitCoords[4] = {x: -36,  y: downY,  z: 0}; // H
-    splitCoords[8] = {x:  28,  y: downY,  z: 0}; // O
-    splitCoords[9] = {x:  58,  y: downY,  z: 0}; // H (橫向)
-
-    // [Stage 3: 產物結合] (水平靠近)
-    const productCoords = [];
-    
-    // 上層產物: CH3-NO2
-    productCoords[0] = {x: -40, y: upY,    z: 0}; // C 右移
-    productCoords[1] = {x: -40, y: upY-64, z: 0}; 
-    productCoords[2] = {x: -40, y: upY+64, z: 0}; 
-    productCoords[3] = {x: -104,y: upY,    z: 0}; 
-    
-    productCoords[5] = {x:  30, y: upY,    z: 0}; // N 左移
-    productCoords[6] = {x:  75, y: upY-54, z: 0}; 
-    productCoords[7] = {x:  75, y: upY+54, z: 0}; 
-
-    // 下層產物: H-O-H
-    productCoords[4] = {x: -5,  y: downY,  z: 0}; // H 右移
-    productCoords[8] = {x:  25, y: downY,  z: 0}; // O 左移
-    productCoords[9] = {x:  55, y: downY,  z: 0}; 
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionNitro"); 
-
-    let progress = 0;
-    const duration = 700; // [修改] 加快速度
-    
-    function step() {
-        progress++;
-        const t = progress / duration;
-
-        // I. 鍵結
-        let dynamicBonds = [];
-        // 骨架
-        dynamicBonds.push([0,1,"single", 1], [0,2,"single", 1], [0,3,"single", 1]);
-        dynamicBonds.push([5,6,"double", 1], [5,7,"coordinate", 1], [8,9,"single", 1]); 
-
-        // 斷鍵 (0.25 ~ 0.45)
-        let breakOpacity = 1;
-        if (t > 0.25) breakOpacity = 1 - (t - 0.25) / 0.2;
-        if (breakOpacity > 0) {
-            dynamicBonds.push([0,4,"single", breakOpacity]); 
-            dynamicBonds.push([5,8,"single", breakOpacity]); 
-        }
-
-        // 成鍵 (0.8 ~ 1.0) -> [關鍵] 很晚才顯示，模擬先接近後結合
-        let formOpacity = 0;
-        if (t > 0.8) {
-            formOpacity = (t - 0.8) / 0.2;
-            if (formOpacity > 1) formOpacity = 1;
-        }
-        if (formOpacity > 0) {
-            dynamicBonds.push([0,5,"single", formOpacity]); 
-            dynamicBonds.push([4,8,"single", formOpacity]); 
-        }
-        
-        currentMolecule.bonds3D = dynamicBonds;
-
-        // II. 字幕
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) {
-            if (t < 0.25) sub.textContent = "轉為平面結構...";
-            else if (t < 0.6) sub.textContent = "斷鍵與分流 (上層:主體 / 下層:副產物)...";
-            else if (t < 0.8) sub.textContent = "基團相互接近...";
-            else sub.textContent = "鍵結形成：硝基甲烷 + 水";
-        }
-
-        // III. 移動
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy, cz; 
-            
-            if (t < 0.25) { // Start -> Flat
-                let wt = t / 0.25; wt = 1 - Math.pow(1 - wt, 2); 
-                const s = (i<5)?reactantAtoms[i]:reagentAtoms[i-5];
-                const d = flatStartCoords[i];
-                cx = s.x + (d.x - s.x)*wt; cy = s.y + (d.y - s.y)*wt; cz = s.z + (d.z - s.z)*wt;
-            } else if (t < 0.55) { // Flat -> Split (斷鍵分開)
-                let st = (t - 0.25) / 0.3; st = st<.5 ? 2*st*st : -1+(4-2*st)*st;
-                const s = flatStartCoords[i]; const d = splitCoords[i];
-                cx = s.x + (d.x - s.x)*st; cy = s.y + (d.y - s.y)*st; cz = 0;
-            } else { // Split -> Product (水平接近)
-                let pt = (t - 0.55) / 0.45; pt = pt<.5 ? 2*pt*pt : -1+(4-2*pt)*pt;
-                const s = splitCoords[i]; const d = productCoords[i];
-                cx = s.x + (d.x - s.x)*pt; cy = s.y + (d.y - s.y)*pt; cz = 0;
-            }
-            atom.x = cx; atom.y = cy; atom.z = cz;
-        });
-
-        currentMolecule.renderObjects.forEach(obj => {
-            if (obj.type === 'atom' && obj.originalIndex !== undefined) {
-                const s = activeAtoms[obj.originalIndex]; obj.x = s.x; obj.y = s.y; obj.z = s.z;
-            }
-            if (obj.type === 'electron') obj.x = -9999;
-        });
-        
-        if (progress < duration) requestAnimationFrame(step);
-        else finishReaction("CH3NO2", "硝基甲烷 (Nitromethane)");
-    }
-    step();
+    finishReaction(
+        "CH3NO2", 
+        "硝基甲烷", 
+        null,
+        "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O"
+    );
 }
 
+// ==========================================
+// 丙烯 (C3H6) 系列反應 - 直接轉場版
+// ==========================================
+
+// 1. 氫氣加成 -> 丙烷
 function runPropeneHydrogenation() {
     hideAllReactionBtns();
     if (!MOLECULE_DB["C3H8"]) return;
-
-    isReactionRunning = true; rotation = { x: 0, y: 0, z: 0 }; 
-
-    // 1. 準備原子 (強制去除 LP)
-    const reactantAtoms = JSON.parse(JSON.stringify(currentMolecule.atomsRaw));
-    reactantAtoms.forEach(a => { a.lpCount = 0; if(a.calculatedLP) a.calculatedLP = 0; });
-
-    // H2 放在上方 (配合下方 C1, C2 的位置)
-    // C1 x=-30, C2 x=30. H2 放在 y=-250 準備下降
-    const reagentAtoms = [
-        {elem:"H", x: -30, y: -250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}, 
-        {elem:"H", x:  30, y: -250, z:0, color:"#FFFFFF", r:12, type:'atom', calculatedLP:0}
-    ];
-    let activeAtoms = [...reactantAtoms, ...reagentAtoms];
-
-    // 2. 定義座標路徑 (平面化)
-    // 結構: C0(甲基) --- C1(中) === C2(右)
-    const midCoords = [];
-    
-    // [C 骨架座標] (保持較短間距 60)
-    // C0: -90, C1: -30, C2: 30
-    midCoords[0] = {x: -90, y: 10, z: 0};  // 甲基 C0
-    midCoords[1] = {x: -30, y: 10, z: 0};  // 中間 C1 (雙鍵起點)
-    midCoords[2] = {x:  30, y: 10, z: 0};  // 右側 C2 (雙鍵終點)
-    
-    // [H 座標] (C-H 鍵長拉長至約 70)
-    
-    // --- 左邊 C0 (CH3) ---
-    midCoords[3] = {x: -160, y: 10,  z: 0}; // 左
-    midCoords[4] = {x: -90,  y: -60, z: 0}; // 上
-    midCoords[5] = {x: -90,  y: 80,  z: 0}; // 下
-    
-    // --- 中間 C1 (CH) ---
-    midCoords[6] = {x: -30,  y: 80,  z: 0}; // 下 (讓出上方給 H2)
-    
-    // --- 右邊 C2 (CH2) ---
-    // 您的要求：右邊和下面
-    midCoords[7] = {x:  30,  y: 80,  z: 0}; // 下
-    midCoords[8] = {x:  100, y: 10,  z: 0}; // 右
-
-    // [H2 試劑降落位置] (對應 C1, C2 上方，距離也是約 70)
-    midCoords[9]  = {x: -30, y: -60, z: 0}; // 準備接 C1
-    midCoords[10] = {x:  30, y: -60, z: 0}; // 準備接 C2
-
-    // [Stage 2: 產物展開]
-    const flatCoords = JSON.parse(JSON.stringify(midCoords));
-    // 產物 C-C 稍微拉鬆一點點
-    flatCoords[1].x = -32; 
-    flatCoords[2].x =  32; 
-    
-    // H 接上後的位置 (變成 C-H)
-    flatCoords[9]  = {x: -32, y: -60, z: 0}; // H-C1
-    flatCoords[10] = {x:  32, y: -60, z: 0}; // H-C2
-    
-    // 微調右側 H 的位置跟隨 C2
-    flatCoords[7].x = 32; 
-    flatCoords[8].x = 102;
-
-    currentMolecule.renderObjects = processAtomsData(activeAtoms, [], "ReactionPropene"); 
-    
-    let progress = 0; const duration = 600; 
-    function step() {
-        // [重置檢查點]
-        if (!isReactionRunning) return;
-
-        progress++; const t = progress / duration;
-        
-        // 定義鍵結 (注意索引對應)
-        // C0=0, C1=1, C2=2
-        // H on C0: 3,4,5
-        // H on C1: 6
-        // H on C2: 7,8
-        // H from H2: 9,10
-        let dynamicBonds = [
-            [0,1,"single",1], 
-            [0,3,"single",1], [0,4,"single",1], [0,5,"single",1], 
-            [1,6,"single",1], 
-            [2,7,"single",1], [2,8,"single",1]
-        ]; 
-
-        // 1. 雙鍵變單鍵 (C1=C2)
-        let doubleOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        let singleOpacity = t < 0.4 ? 0 : (t < 0.6 ? (t - 0.4)/0.2 : 1);
-        if(doubleOpacity>0) dynamicBonds.push([1,2,"double", doubleOpacity]);
-        if(singleOpacity>0) dynamicBonds.push([1,2,"single", singleOpacity]);
-
-        // 2. H-H 斷裂 (9-10)
-        let breakOpacity = t < 0.4 ? 1 : (t < 0.6 ? 1 - (t - 0.4)/0.2 : 0);
-        if(breakOpacity>0) dynamicBonds.push([9,10,"single", breakOpacity]);
-
-        // 3. 新鍵生成 (C1-H9, C2-H10)
-        let formOpacity = t > 0.8 ? (t - 0.8)/0.2 : 0; if(formOpacity>1) formOpacity=1;
-        if(formOpacity>0) { dynamicBonds.push([1,9,"single", formOpacity]); dynamicBonds.push([2,10,"single", formOpacity]); }
-        
-        currentMolecule.bonds3D = dynamicBonds;
-        const sub = document.getElementById("viewport-subtitle");
-        if(sub) sub.textContent = t < 0.4 ? "氫氣 (H₂) 接近..." : "形成丙烷 (C₃H₈)";
-
-        activeAtoms.forEach((atom, i) => {
-            let cx, cy;
-            if (t < 0.4) {
-                let wt = t / 0.4;
-                const start = (i < 9) ? reactantAtoms[i] : reagentAtoms[i-9];
-                cx = start.x + (midCoords[i].x - start.x) * wt;
-                cy = start.y + (midCoords[i].y - start.y) * wt;
-            } else {
-                let rt = (t - 0.4) / 0.6; rt = rt < 0.1 ? 0 : (rt - 0.1)/0.9;
-                rt = rt < .5 ? 2*rt*rt : -1+(4-2*rt)*rt;
-                cx = midCoords[i].x + (flatCoords[i].x - midCoords[i].x) * rt;
-                cy = midCoords[i].y + (flatCoords[i].y - midCoords[i].y) * rt;
-            }
-            atom.x = cx; atom.y = cy; atom.z = 0;
-        });
-        
-        currentMolecule.renderObjects.forEach(obj => {
-             if(obj.type==='atom' && obj.originalIndex!==undefined) {
-                 obj.x = activeAtoms[obj.originalIndex].x; obj.y = activeAtoms[obj.originalIndex].y; obj.z = 0;
-             }
-        });
-
-        if(progress < duration) requestAnimationFrame(step);
-        else finishReaction("C3H8", "丙烷 (Propane)");
-    }
-    step();
+    finishReaction("C3H8", "丙烷", null, 
+        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個H，轉變成丙烷，亦為還原反應(C氧化數下降)");
 }
+
+// 2. 鹵素加成 -> 1,2-二氯丙烷
+function runPropeneChlorination() {
+    hideAllReactionBtns();
+    if (!MOLECULE_DB["C3H6Cl2"]) return;
+    // 指定變體 "1,2-二氯丙烷"
+    finishReaction("C3H6Cl2", "1,2-二氯丙烷", "1,2-二氯丙烷", 
+        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個Cl，轉變成1,2-二氯丙烷，亦為氧化反應(C氧化數上升)");
+}
+
+// 3. 鹵化氫加成 -> 2-氯丙烷 (依照馬氏規則: 中間C接Cl)
+function runPropeneHydrohalogenation() {
+    hideAllReactionBtns();
+    if (!MOLECULE_DB["C3H7Cl"]) return;
+    // 指定變體 "2-氯丙烷"
+    finishReaction("C3H7Cl", "2-氯丙烷", "2-氯丙烷", 
+        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
+}
+
+// 4. 水加成 -> 異丙醇 (2-丙醇) (依照馬氏規則: 中間C接OH)
+function runPropeneHydration() {
+    hideAllReactionBtns();
+    // C3H6 + H2O -> C3H7OH (不是乙醇C2H5OH，原子數需守恆)
+    if (!MOLECULE_DB["C3H7OH"]) return;
+    // 指定變體 "2-Propanol (異丙醇)"
+    finishReaction("C3H7OH", "異丙醇", "2-Propanol (異丙醇)", 
+        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
+}
+
+
+
+
 
 // ==========================================
 // 3. 結尾邏輯與初始化
@@ -2130,8 +1788,18 @@ function setupInteractions() {
     const reactNitroBtn = document.getElementById('reaction-nitro-btn');
     if (reactNitroBtn) reactNitroBtn.addEventListener('click', runMethaneNitration);
 
-    const reactPropH2Btn = document.getElementById('reaction-propene-h2-btn');
-    if (reactPropH2Btn) reactPropH2Btn.addEventListener('click', runPropeneHydrogenation);
+    // [新增] 綁定丙烯系列按鈕
+    const p1 = document.getElementById('reaction-propene-h2-btn');
+    if(p1) p1.addEventListener('click', runPropeneHydrogenation);
+    
+    const p2 = document.getElementById('reaction-propene-cl2-btn');
+    if(p2) p2.addEventListener('click', runPropeneChlorination);
+    
+    const p3 = document.getElementById('reaction-propene-hcl-btn');
+    if(p3) p3.addEventListener('click', runPropeneHydrohalogenation);
+    
+    const p4 = document.getElementById('reaction-propene-h2o-btn');
+    if(p4) p4.addEventListener('click', runPropeneHydration);
 
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', resetReaction);
