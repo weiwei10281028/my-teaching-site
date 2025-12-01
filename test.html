@@ -1844,19 +1844,42 @@ function adjustColor(col, amt) {
     return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
 }
 function animate() {
-    // [修改 4] 動畫迴圈改用矩陣旋轉
     if (!isDragging && !isReactionRunning) {
-        // 1. 慣性減速
-        rotVelocity.x *= 0.95;
-        rotVelocity.y *= 0.95;
-        rotVelocity.z *= 0.95;
+        // 1. 慣性阻尼 (慢慢減速)
+        // 數值 0.96 代表摩擦力，越接近 1 滑得越久
+        rotVelocity.x *= 0.96;
+        rotVelocity.y *= 0.96;
+        rotVelocity.z *= 0.96;
 
-        // 2. 自動旋轉 (當手放開且速度很慢時，自動慢慢轉)
-        if (Math.abs(rotVelocity.x) < 0.0005 && Math.abs(rotVelocity.y) < 0.0005 && Math.abs(rotVelocity.z) < 0.0005) {
-             applyRotation(0.002, 0, 0); // 給一點點 Y 軸(水平)旋轉
+        // 2. 計算當前速度向量的長度 (Speed Magnitude)
+        let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
+        
+        // 3. 設定最低維持速度 (您希望它永遠依照您的方向轉，不要停)
+        const MIN_SPEED = 0.002; 
+
+        // 4. 自動轉動邏輯
+        if (speed > 0.00001) { 
+            // 如果還有在動 (代表使用者有撥動過)
+            
+            if (speed < MIN_SPEED) {
+                // 當慣性慢到低於最低速限時，不要停下來，也不要切換方向
+                // 而是直接把當前的方向「放大」回最低速度
+                // 這樣就能達成「沿著剛剛的方向繼續轉」的效果
+                let scaleFactor = MIN_SPEED / speed;
+                rotVelocity.x *= scaleFactor;
+                rotVelocity.y *= scaleFactor;
+                rotVelocity.z *= scaleFactor;
+            }
+            
+            // [重要修正] 這裡修復了「方向亂跑」的 BUG
+            // applyRotation 的定義是 (dx, dy, dz) -> (繞Y軸/左右, 繞X軸/上下, 繞Z軸)
+            // 所以必須傳入 (rotVelocity.y, rotVelocity.x, rotVelocity.z)
+            // 上一版這裡寫反了，導致放開手後 X 與 Y 軸互換
+            applyRotation(rotVelocity.y, rotVelocity.x, rotVelocity.z);
+
         } else {
-            // 3. 應用慣性
-            applyRotation(rotVelocity.x, rotVelocity.y, rotVelocity.z);
+            // 只有在「完全靜止」狀態 (例如剛載入，或剛點了一下讓它停住)，才給預設旋轉
+            applyRotation(0.002, 0, 0); 
         }
     }
     
