@@ -294,7 +294,31 @@
         /* 手機版說明文字稍微縮小一點點以免遮住太多 */
         #viewport-subtitle { font-size: 1.1rem; }
     }
-    
+
+/* --- [新增] 混成軌域標籤樣式 --- */
+    .hybrid-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--accent-green);
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.9rem;
+        font-weight: bold;
+        pointer-events: none; /* 讓滑鼠穿透，不影響操作 */
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 1000;
+        transform: translate(-50%, -150%); /* 顯示在上方 */
+        white-space: pre-line; /* 支援換行 */
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .hybrid-tooltip.show { opacity: 1; }
+
+
+
 </style>
 </head>
 <body>
@@ -326,6 +350,8 @@
             <!-- 這是繪製原子與鍵結的容器，絕對不能刪除，否則畫面會空白 -->
             <g id="scene-root"></g>
         </svg>
+        <!-- [新增] 混成軌域顯示標籤 -->
+        <div id="hybrid-label" class="hybrid-tooltip"></div>
     </div>
 
     <div class="controls-area" id="controls-panel">
@@ -1405,6 +1431,154 @@ window.onload = () => {
     setupInteractions();
 };
 
+// ==========================================
+// [新增] 混成軌域計算與顯示邏輯 (請將這段新函式貼在 setupInteractions 的大括號 } 之後)
+// ==========================================
+
+function checkAtomClick(screenX, screenY) {
+    if (!currentMolecule || !currentMolecule.renderObjects) return;
+
+    let clickedAtom = null;
+    let minDistance = 30; // 點擊容許半徑 (pixel)
+
+    // 找出目前畫面上的所有原子 (透過 DOM 元素位置反查)
+    const circles = document.querySelectorAll("#scene-root circle");
+    
+    circles.forEach(circle => {
+        // 排除光暈 (opacity < 0.5 通常是光暈)
+        if(circle.getAttribute("opacity") && parseFloat(circle.getAttribute("opacity")) < 0.5) return;
+        
+        const bbox = circle.getBoundingClientRect();
+        const cx = bbox.left + bbox.width / 2;
+        const cy = bbox.top + bbox.height / 2;
+        
+        const dist = Math.hypot(cx - screenX, cy - screenY);
+        
+        // 判斷距離是否在半徑內 (稍微放寬一點方便點擊)
+        if (dist < (bbox.width / 2 + 15) && dist < minDistance) {
+            // 找到了最接近的點擊對象
+            // 我們需要反查這是哪個原子資料
+            const bestMatch = findAtomByScreenPos(screenX, screenY);
+            if (bestMatch) {
+                clickedAtom = bestMatch;
+                minDistance = dist;
+            }
+        }
+    });
+
+    if (clickedAtom) {
+        showHybridInfo(clickedAtom, screenX, screenY);
+    } else {
+        hideHybridTooltip();
+    }
+}
+
+function findAtomByScreenPos(screenX, screenY) {
+    if (!currentMolecule) return null;
+    
+    // 重新計算一次所有原子的螢幕座標 (邏輯與 renderScene 相同)
+    // 這裡需要模擬 project 函數的投影結果並轉換為螢幕座標
+    
+    // 由於我們在 renderScene 中已經計算了 px, py (SVG 座標)
+    // 但這些值是每一幀更新的，我們可以直接用它們嗎？
+    // 是的，只要 renderScene 有在跑，currentMolecule.renderObjects 裡的 px, py 就是最新的
+    
+    const rect = viewport.getBoundingClientRect();
+    const viewW = 800; // SVG ViewBox 寬度
+    const viewH = 600; // SVG ViewBox 高度
+    
+    // 計算 SVG 到 螢幕 的縮放比 (preserveAspectRatio="xMidYMid slice")
+    const scaleX = rect.width / viewW;
+    const scaleY = rect.height / viewH;
+    const k = Math.max(scaleX, scaleY); // slice 模式取大值
+    
+    // 計算偏移量 (置中)
+    const offsetX = (rect.width - viewW * k) / 2;
+    const offsetY = (rect.height - viewH * k) / 2;
+    
+    let bestAtom = null;
+    let minD = 1000;
+
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type !== 'atom') return;
+        
+        // obj.px, obj.py 是 SVG 座標 (相對於 ViewBox 左上角? 不，project 傳回的是相對於 ViewBox 中心的偏移 + panOffset)
+        // 讓我們看 project 函式：return { x: x3 * s + panOffset.x, y: y3 * s + panOffset.y ... }
+        // 這裡的 x, y 是相對於 SVG 中心的像素值
+        // SVG ViewBox 是 -400 -300 800 600，中心是 (0,0)
+        
+        // 轉換公式：
+        // SVG X = obj.px
+        // SVG Y = obj.py
+        // 螢幕 X = rect.left + (obj.px - (-400)) * k + offsetX? 
+        // 不對，因為 viewBox 是 centered，所以 obj.px=0 代表正中心
+        
+        const screenPx = rect.left + rect.width/2 + obj.px * k; 
+        const screenPy = rect.top + rect.height/2 + obj.py * k;
+        
+        const dist = Math.hypot(screenPx - screenX, screenPy - screenY);
+        const radiusPx = (obj.r * obj.scale) * k;
+
+        if (dist < (radiusPx + 20) && dist < minD) {
+            minD = dist;
+            bestAtom = obj;
+        }
+    });
+    
+    return bestAtom;
+}
+
+function showHybridInfo(atomObj, x, y) {
+    const tooltip = document.getElementById('hybrid-label');
+    const atomIdx = atomObj.originalIndex;
+    
+    // 1. 計算 Sigma 鍵數 (鄰居數)
+    let sigmaCount = 0;
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                sigmaCount++;
+            }
+        });
+    }
+
+    // 規則 1: 只有周圍有兩個原子(或以上)才需要判斷
+    if (sigmaCount < 2) {
+        // [修改] 如果是末端原子，不顯示任何東西 (隱藏 Tooltip)
+        hideHybridTooltip();
+        return; 
+        // 如果您希望顯示 "末端原子"，請取消註解下面這行：
+        // tooltip.innerHTML = `${atomObj.elem}<br/><span style="font-size:0.8em;color:#aaa">末端原子</span>`;
+    } else {
+        // 規則 2: σ + lp
+        const lpCount = atomObj.calculatedLP || 0;
+        const sum = sigmaCount + lpCount;
+        
+        let hybrid = "";
+        if (sum === 2) hybrid = "sp";
+        else if (sum === 3) hybrid = "sp²";
+        else if (sum === 4) hybrid = "sp³";
+        else if (sum === 5) hybrid = "sp³d";
+        else if (sum === 6) hybrid = "sp³d²";
+        else hybrid = "-";
+
+        tooltip.innerHTML = `
+            <span style="color:var(--accent-blue);font-size:1.1em">${atomObj.elem}</span><br/>
+            混成: <span style="color:var(--accent-green)">${hybrid}</span><br/>
+            <span style="font-size:0.8em;color:#ccc">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
+        `;
+        
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = (y - 40) + 'px'; // 往上移一點避免手指遮住
+        tooltip.classList.add('show');
+    }
+}
+
+function hideHybridTooltip() {
+    const tooltip = document.getElementById('hybrid-label');
+    if (tooltip) tooltip.classList.remove('show');
+}
+
 // Centralized event bindings for controls (replaces inline handlers)
 function toggleMobileSim(enabled) {
     if (enabled) document.body.classList.add('simulate-mobile');
@@ -1949,36 +2123,46 @@ function setupInteractions() {
     }
 
     // ------------------------------------------------
-    // 2. 3D 操作核心修正區 (包含鍵盤/滑鼠/觸控)
+    // 2. 3D 操作核心修正區 (包含鍵盤/滑鼠/觸控/點擊)
     // ------------------------------------------------
     
-    // [修改 5] 全新的軌跡球操作邏輯
+    // [修改] 鍵盤輔助
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
     document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
 
     const MOUSE_SENSITIVITY = 0.005; 
     const TOUCH_SENSITIVITY = 0.004;
+    
+    // [新增] 點擊判定變數
+    let startClickPos = { x: 0, y: 0 };
+    let isClickCandidate = false;
+    const CLICK_THRESHOLD = 5; // 移動小於 5px 視為點擊
 
     const handleStart = (x, y) => { 
         isDragging = true; 
+        isClickCandidate = true; // 假設可能是點擊
+        startClickPos = { x, y };
         lastMouse = { x, y }; 
-        rotVelocity = { x: 0, y: 0, z: 0 }; // 按下瞬間歸零慣性
+        rotVelocity = { x: 0, y: 0, z: 0 }; 
+        hideHybridTooltip(); // 操作時隱藏標籤
     };
 
     const handleMove = (x, y, sensitivity) => {
         if (!isDragging) return;
+        
         const dx = x - lastMouse.x;
         const dy = y - lastMouse.y;
         
+        // 如果移動距離超過閾值，就不是點擊，是拖曳
+        if (Math.abs(x - startClickPos.x) > CLICK_THRESHOLD || Math.abs(y - startClickPos.y) > CLICK_THRESHOLD) {
+            isClickCandidate = false;
+        }
+
         if (currentMode === 1 || (currentMode === 2 && altKeyIsDown)) {
-            // [關鍵] 軌跡球邏輯：
-            // dx (水平滑動) -> 繞 Y 軸旋轉
-            // dy (垂直滑動) -> 繞 X 軸旋轉 (取負值，讓上滑=球上緣往後倒=向上轉)
+            // 軌跡球邏輯 (dx->y, dy->-x)
             rotVelocity.y = dx * sensitivity; 
             rotVelocity.x = -dy * sensitivity; 
-            
-            // 立即更新矩陣
             applyRotation(rotVelocity.y, rotVelocity.x, 0);
         } else {
             // 平移
@@ -1988,12 +2172,21 @@ function setupInteractions() {
         lastMouse = { x, y };
     };
 
+    const handleEnd = (x, y) => {
+        isDragging = false;
+        // 如果判定為點擊
+        if (isClickCandidate) {
+            checkAtomClick(x, y); // 觸發檢查原子點擊
+        }
+    };
+
     // 滑鼠監聽
     viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
     window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
-    window.addEventListener("mouseup", () => isDragging = false);
+    window.addEventListener("mouseup", e => handleEnd(e.clientX, e.clientY));
     viewport.addEventListener("wheel", e => {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
+        hideHybridTooltip();
     });
 
     // 觸控監聽
@@ -2003,13 +2196,17 @@ function setupInteractions() {
         rotVelocity = { x: 0, y: 0, z: 0 }; 
 
         if(e.touches.length === 1) {
+            isClickCandidate = true;
+            startClickPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.touches.length === 2) {
+            isClickCandidate = false; // 兩指操作絕對不是點擊
             const t1 = e.touches[0], t2 = e.touches[1];
             lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
             lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
         }
+        hideHybridTooltip();
     }, { passive: false });
 
     viewport.addEventListener("touchmove", e => {
@@ -2020,19 +2217,16 @@ function setupInteractions() {
         const ZOOM_SPEED = 0.003; 
 
         if(e.touches.length === 1) {
-            // 單指操作：旋轉
             handleMove(e.touches[0].clientX, e.touches[0].clientY, TOUCH_SENSITIVITY);
         } else if (e.touches.length === 2) {
-            // 雙指操作
+            isClickCandidate = false; // 確保雙指不會觸發點擊
             const t1 = e.touches[0], t2 = e.touches[1];
             const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
             
-            // 平移
             panOffset.x += (center.x - lastTouchCenter.x) * PAN_SPEED;
             panOffset.y += (center.y - lastTouchCenter.y) * PAN_SPEED;
             lastTouchCenter = center;
             
-            // 縮放
             const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (lastTouchDist > 0) {
                 const zoomDelta = (dist - lastTouchDist) * ZOOM_SPEED;
@@ -2040,7 +2234,6 @@ function setupInteractions() {
             }
             lastTouchDist = dist;
 
-            // Z 軸旋轉
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
             let angleDelta = angle - lastTouchAngle;
             if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
@@ -2052,11 +2245,137 @@ function setupInteractions() {
         }
     }, { passive: false });
 
-    window.addEventListener("touchend", () => {
+    window.addEventListener("touchend", (e) => {
+        if(isDragging && isClickCandidate) {
+             // 使用最後一次記錄的位置
+             checkAtomClick(lastMouse.x, lastMouse.y);
+        }
         isDragging = false; 
     });
 
     setupMobilePanel();
+}
+
+// ==========================================
+// [新增] 混成軌域計算與顯示邏輯
+// ==========================================
+
+function checkAtomClick(screenX, screenY) {
+    if (!currentMolecule || !currentMolecule.renderObjects) return;
+
+    let clickedAtom = null;
+    let minDistance = 1000; 
+    const HIT_RADIUS = 35; // 點擊判定半徑 (px)
+
+    // 反查最接近的原子
+    const bestMatch = findAtomByScreenPos(screenX, screenY);
+    
+    if (bestMatch && bestMatch.dist < HIT_RADIUS) {
+        showHybridInfo(bestMatch.atom, screenX, screenY);
+    } else {
+        hideHybridTooltip();
+    }
+}
+
+function findAtomByScreenPos(screenX, screenY) {
+    if (!currentMolecule) return null;
+    
+    const rect = viewport.getBoundingClientRect();
+    const viewW = 800; 
+    const viewH = 600; 
+    
+    // 計算 SVG 到 螢幕 的縮放比
+    const scaleX = rect.width / viewW;
+    const scaleY = rect.height / viewH;
+    const k = Math.max(scaleX, scaleY); // preserveAspectRatio="xMidYMid slice"
+    
+    let bestAtom = null;
+    let minD = 1000;
+
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type !== 'atom') return;
+        
+        // 1. 獲取當前渲染座標 (SVG 空間)
+        // 注意：這裡必須使用與 renderScene 相同的投影邏輯
+        // 因為 renderScene 已經跑過了，我們可以信任 obj.px, obj.py 是最新的
+        // 但如果 obj.px 是 undefined (剛載入時)，則需重算
+        
+        let svgPx = obj.px;
+        let svgPy = obj.py;
+        
+        if (svgPx === undefined || svgPy === undefined) {
+             const p = project(obj);
+             svgPx = p.x;
+             svgPy = p.y;
+        }
+
+        // 2. 轉換為螢幕座標
+        // SVG (0,0) 對應螢幕中心
+        // 由於 slice 模式，SVG 中心永遠對齊 Viewport 中心
+        const screenPx = rect.left + rect.width/2 + svgPx * k;
+        const screenPy = rect.top + rect.height/2 + svgPy * k;
+        
+        const dist = Math.hypot(screenPx - screenX, screenPy - screenY);
+        
+        // 優先選最上層的原子 (Z軸最大的)
+        // 但為了簡化，先選最近的
+        if (dist < minD) {
+            minD = dist;
+            bestAtom = { atom: obj, dist: dist };
+        }
+    });
+    
+    return bestAtom;
+}
+
+function showHybridInfo(atomObj, x, y) {
+    const tooltip = document.getElementById('hybrid-label');
+    if(!tooltip) return;
+
+    const atomIdx = atomObj.originalIndex;
+    
+    // 1. 計算 Sigma 鍵數 (鄰居數)
+    let sigmaCount = 0;
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                sigmaCount++;
+            }
+        });
+    }
+
+    // 規則 1: 只有周圍有兩個原子(或以上)才需要判斷
+    if (sigmaCount < 2) {
+        hideHybridTooltip();
+        return;
+    } 
+
+    // 規則 2: σ + lp
+    const lpCount = atomObj.calculatedLP || 0;
+    const sum = sigmaCount + lpCount;
+    
+    let hybrid = "";
+    if (sum === 2) hybrid = "sp";
+    else if (sum === 3) hybrid = "sp²";
+    else if (sum === 4) hybrid = "sp³";
+    else if (sum === 5) hybrid = "sp³d";
+    else if (sum === 6) hybrid = "sp³d²";
+    else hybrid = "-";
+
+    tooltip.innerHTML = `
+        <span style="color:var(--accent-blue);font-size:1.1em">${atomObj.elem}</span><br/>
+        混成: <span style="color:var(--accent-green)">${hybrid}</span><br/>
+        <span style="font-size:0.8em;color:#ccc">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
+    `;
+    
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = (y - 50) + 'px'; // 顯示在手指上方
+    tooltip.classList.add('show');
+}
+
+function hideHybridTooltip() {
+    const tooltip = document.getElementById('hybrid-label');
+    if (tooltip) tooltip.classList.remove('show');
 }
 
 
