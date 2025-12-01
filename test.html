@@ -293,27 +293,30 @@
         
         /* 手機版說明文字稍微縮小一點點以免遮住太多 */
         #viewport-subtitle { font-size: 1.1rem; }
+       /* [新增] 手機版隱藏光暈開關 (因為手機不支援光暈渲染) */
+        #glow-switch-wrap { display: none !important; }
     }
 
-/* --- [新增] 混成軌域標籤樣式 --- */
+/* --- [修改] 混成軌域標籤樣式 (放大版) --- */
     .hybrid-tooltip {
         position: absolute;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         color: #fff;
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid var(--accent-green);
+        padding: 12px 20px;          /* [修改] 加大內距 */
+        border-radius: 8px;
+        border: 2px solid var(--accent-green); /* [修改] 邊框加粗 */
         font-family: 'Roboto Mono', monospace;
-        font-size: 0.9rem;
+        font-size: 1.3rem;           /* [修改] 字體大幅加大 */
         font-weight: bold;
-        pointer-events: none; /* 讓滑鼠穿透，不影響操作 */
+        pointer-events: none; 
         opacity: 0;
         transition: opacity 0.2s;
         z-index: 1000;
-        transform: translate(-50%, -150%); /* 顯示在上方 */
-        white-space: pre-line; /* 支援換行 */
+        transform: translate(-50%, -140%); /* 稍微調整位置 */
+        white-space: pre-line; 
         text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+        text-shadow: 0 2px 4px #000; /* [修改] 增加文字陰影更清晰 */
     }
     .hybrid-tooltip.show { opacity: 1; }
 
@@ -375,8 +378,8 @@
                 <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
             </div>
 
-            <!-- [新增] 光暈控制開關 -->
-            <div class="switch-container">
+            <!-- [新增] 光暈控制開關 (加上 ID 以便手機版隱藏) -->
+            <div class="switch-container" id="glow-switch-wrap">
                 <input type="checkbox" id="toggle-glow" checked>
                 <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
             </div>
@@ -385,6 +388,10 @@
                 <!-- [修正] 這是第二個開關，保持 id="toggle-octet"，並預設開啟 checked -->
                 <input type="checkbox" id="toggle-octet" checked>
                 <label for="toggle-octet" class="clickable-label">優先遵循八隅體</label>
+            </div>
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-auto-rotate" checked>
+                <label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label>
             </div>
 
             <div id="variant-selector"></div>
@@ -1369,6 +1376,8 @@ let currentMolecule = null;
 let currentMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1]; // 3x3 單位矩陣
 let rotVelocity = { x: 0, y: 0, z: 0 }; 
 let panOffset = { x: 0, y: 0 }; 
+// [新增] 用來判斷是否正在長按中
+let isLongPressActive = false;
 let scale = 1.6; 
 let isDragging = false; 
 let lastMouse = { x: 0, y: 0 };
@@ -1956,6 +1965,9 @@ function drawBond(b) {
 function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     
+    // [修正] 加入這個屬性，讓點擊偵測能精準找到它
+    g.setAttribute("data-atom-idx", a.idx); 
+    
     // [修改] 只有在「非手機版 (!isMobile)」且「開關開啟」時才顯示光暈
     const useGlow = !isMobile && document.getElementById('toggle-glow').checked;
 
@@ -2018,42 +2030,33 @@ function adjustColor(col, amt) {
     return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
 }
 function animate() {
-    if (!isDragging && !isReactionRunning) {
-        // 1. 慣性阻尼 (慢慢減速)
-        // 數值 0.96 代表摩擦力，越接近 1 滑得越久
+    // [修改] 加入 !isLongPressActive，確保長按時不會自動旋轉
+    if (!isDragging && !isReactionRunning && !isLongPressActive) {
+        // 1. 慣性阻尼
         rotVelocity.x *= 0.96;
         rotVelocity.y *= 0.96;
         rotVelocity.z *= 0.96;
 
-        // 2. 計算當前速度向量的長度 (Speed Magnitude)
         let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
-        
-        // 3. 設定最低維持速度 (您希望它永遠依照您的方向轉，不要停)
         const MIN_SPEED = 0.002; 
+        
+        const autoRotateEl = document.getElementById('toggle-auto-rotate');
+        const isAutoRotateOn = autoRotateEl ? autoRotateEl.checked : true;
 
-        // 4. 自動轉動邏輯
         if (speed > 0.00001) { 
-            // 如果還有在動 (代表使用者有撥動過)
-            
             if (speed < MIN_SPEED) {
-                // 當慣性慢到低於最低速限時，不要停下來，也不要切換方向
-                // 而是直接把當前的方向「放大」回最低速度
-                // 這樣就能達成「沿著剛剛的方向繼續轉」的效果
-                let scaleFactor = MIN_SPEED / speed;
-                rotVelocity.x *= scaleFactor;
-                rotVelocity.y *= scaleFactor;
-                rotVelocity.z *= scaleFactor;
+                if (isAutoRotateOn) {
+                    let scaleFactor = MIN_SPEED / speed;
+                    rotVelocity.x *= scaleFactor;
+                    rotVelocity.y *= scaleFactor;
+                    rotVelocity.z *= scaleFactor;
+                }
             }
-            
-            // [重要修正] 這裡修復了「方向亂跑」的 BUG
-            // applyRotation 的定義是 (dx, dy, dz) -> (繞Y軸/左右, 繞X軸/上下, 繞Z軸)
-            // 所以必須傳入 (rotVelocity.y, rotVelocity.x, rotVelocity.z)
-            // 上一版這裡寫反了，導致放開手後 X 與 Y 軸互換
             applyRotation(rotVelocity.y, rotVelocity.x, rotVelocity.z);
-
         } else {
-            // 只有在「完全靜止」狀態 (例如剛載入，或剛點了一下讓它停住)，才給預設旋轉
-            applyRotation(0.002, 0, 0); 
+            if (isAutoRotateOn) {
+                applyRotation(0.002, 0, 0); 
+            }
         }
     }
     
@@ -2099,9 +2102,13 @@ function setupInteractions() {
     const mobileHandle = document.getElementById('mobile-panel-handle');
     if (mobileHandle) {
         mobileHandle.addEventListener('click', () => {
-            document.body.classList.toggle('simulate-mobile-open');
+            const body = document.body;
+            body.classList.toggle('simulate-mobile-open');
             const panel = document.querySelector('.controls-area');
-            if (panel) panel.style.transform = document.body.classList.contains('simulate-mobile-open') ? 'translateY(0)' : 'translateY(70vh)';
+            if (panel) {
+                if (body.classList.contains('simulate-mobile-open')) panel.style.transform = 'translateY(0)';
+                else panel.style.transform = 'translateY(70vh)';
+            }
         });
     }
 
@@ -2109,6 +2116,7 @@ function setupInteractions() {
     // 2. 3D 操作核心 (改為雙擊觸發混成軌域)
     // ------------------------------------------------
     
+    // [修改] 鍵盤輔助
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
     document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
@@ -2116,15 +2124,38 @@ function setupInteractions() {
     const MOUSE_SENSITIVITY = 0.005; 
     const TOUCH_SENSITIVITY = 0.004;
     
-    // [修改] 移除單擊判定，改用純拖曳邏輯
+    // [長按設定]
+    let longPressTimer = null;
+    let startX = 0, startY = 0;
+    const LONG_PRESS_MS = 500; 
+    const MOVE_TOLERANCE = 5;  
+
     const handleStart = (x, y) => { 
         isDragging = true; 
+        isLongPressActive = false; // 重置長按狀態
+        startX = x; startY = y;
         lastMouse = { x, y }; 
         rotVelocity = { x: 0, y: 0, z: 0 }; 
-        hideHybridTooltip(); // 操作時隱藏標籤
+        hideHybridTooltip(); 
+
+        // [長按邏輯]
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+            // 時間到！觸發長按
+            isDragging = false;       // 停止手動拖曳
+            isLongPressActive = true; // [關鍵] 啟動長按鎖定，禁止自動旋轉
+            
+            checkAtomClick(x, y); 
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, LONG_PRESS_MS);
     };
 
     const handleMove = (x, y, sensitivity) => {
+        // 移動超過範圍，取消長按計時
+        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) {
+            clearTimeout(longPressTimer);
+        }
+
         if (!isDragging) return;
         const dx = x - lastMouse.x;
         const dy = y - lastMouse.y;
@@ -2140,42 +2171,23 @@ function setupInteractions() {
         lastMouse = { x, y };
     };
 
-    const handleEnd = () => { isDragging = false; };
+    const handleEnd = () => {
+        clearTimeout(longPressTimer);
+        isDragging = false;
+        isLongPressActive = false; // [關鍵] 手指離開後，解除鎖定，允許自動旋轉
+    };
 
-    // --- 電腦版滑鼠事件 ---
+    // --- 滑鼠/觸控 統一綁定 ---
     viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
-    window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
-    window.addEventListener("mouseup", handleEnd);
+    viewport.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
+    viewport.addEventListener("mouseup", handleEnd);
     
-    // [關鍵修改] 電腦版：雙擊 (Double Click) 觸發
-    viewport.addEventListener("dblclick", e => {
-        checkAtomClick(e.clientX, e.clientY);
-    });
-
-    viewport.addEventListener("wheel", e => {
-        scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
-        hideHybridTooltip();
-    });
-
-    // --- 手機版觸控事件 ---
-    let lastTapTime = 0; // 記錄上次點擊時間
-
     viewport.addEventListener("touchstart", e => {
         if(e.target.closest('.control-button')) return;
-        
-        // [關鍵修改] 手機版：雙擊判定 (Double Tap)
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        
-        if (tapLength < 300 && tapLength > 0) { // 300ms 內連續點擊
-            e.preventDefault(); // 防止放大
-            checkAtomClick(e.touches[0].clientX, e.touches[0].clientY);
-        } else {
+        if (e.touches.length === 1) {
             handleStart(e.touches[0].clientX, e.touches[0].clientY);
-        }
-        lastTapTime = currentTime;
-
-        if (e.touches.length === 2) {
+        } else if (e.touches.length === 2) {
+            clearTimeout(longPressTimer); 
             const t1 = e.touches[0], t2 = e.touches[1];
             lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
@@ -2184,38 +2196,36 @@ function setupInteractions() {
     }, { passive: false });
 
     viewport.addEventListener("touchmove", e => {
-        if(!isDragging) return;
         e.preventDefault(); 
-
         if(e.touches.length === 1) {
             handleMove(e.touches[0].clientX, e.touches[0].clientY, TOUCH_SENSITIVITY);
         } else if (e.touches.length === 2) {
             const t1 = e.touches[0], t2 = e.touches[1];
             const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
-            
             panOffset.x += (center.x - lastTouchCenter.x) * 0.4;
             panOffset.y += (center.y - lastTouchCenter.y) * 0.4;
             lastTouchCenter = center;
-            
             const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (lastTouchDist > 0) {
                 const zoomDelta = (dist - lastTouchDist) * 0.003;
                 scale = Math.max(0.3, Math.min(8, scale + zoomDelta));
             }
             lastTouchDist = dist;
-
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
             let angleDelta = angle - lastTouchAngle;
             if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
             if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
-            
             rotVelocity.z = angleDelta;
             applyRotation(0, 0, rotVelocity.z);
             lastTouchAngle = angle;
         }
     }, { passive: false });
 
-    window.addEventListener("touchend", handleEnd);
+    viewport.addEventListener("touchend", handleEnd);
+    viewport.addEventListener("wheel", e => {
+        scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
+        hideHybridTooltip();
+    });
 
     setupMobilePanel();
 }
@@ -2238,54 +2248,43 @@ function checkAtomClick(screenX, screenY) {
 }
 
 function findAtomByScreenPos(screenX, screenY) {
-    if (!currentMolecule) return null;
-    
-    const rect = viewport.getBoundingClientRect();
-    const viewW = 800; 
-    const viewH = 600; 
-    
-    // 計算縮放比
-    const scaleX = rect.width / viewW;
-    const scaleY = rect.height / viewH;
-    const k = Math.max(scaleX, scaleY); 
-    
-    // 候選名單
+    // 1. 找出畫面上所有帶有 data-atom-idx 屬性的群組 (也就是原子)
+    // 這比純數學計算準確，因為它抓的是瀏覽器實際畫出來的位置
+    const atomGroups = document.querySelectorAll("g[data-atom-idx]");
     let candidates = [];
-    const HIT_RADIUS = 40; // 點擊半徑加大，比較好點
+    
+    atomGroups.forEach(g => {
+        const idx = parseInt(g.getAttribute("data-atom-idx"));
+        const atomData = currentMolecule.renderObjects[idx];
+        if (!atomData) return;
 
-    currentMolecule.renderObjects.forEach(obj => {
-        if (obj.type !== 'atom') return;
+        // 2. 取得該原子圓球的螢幕座標
+        const circle = g.querySelector("circle");
+        if (!circle) return;
         
-        let svgPx = obj.px;
-        let svgPy = obj.py;
-        let svgPz = obj.pz; // Z 深度
+        const rect = circle.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
         
-        // 防呆：如果尚未渲染過，手動計算一次
-        if (svgPx === undefined) {
-             const p = project(obj);
-             svgPx = p.x; svgPy = p.y; svgPz = p.z;
-        }
-
-        // 轉換為螢幕座標
-        const screenPx = rect.left + rect.width/2 + svgPx * k;
-        const screenPy = rect.top + rect.height/2 + svgPy * k;
+        // 3. 計算滑鼠與圓心的距離
+        const dist = Math.hypot(screenX - cx, screenY - cy);
         
-        const dist = Math.hypot(screenPx - screenX, screenPy - screenY);
-        const visualRadius = (obj.r * obj.scale) * k;
-
-        // 只要距離在「視覺半徑 + 容許值」內，都算候選
-        if (dist < (visualRadius + 15)) {
-            candidates.push({ atom: obj, z: svgPz, dist: dist });
+        // 4. 判定：如果在圓球半徑範圍內 (加一點寬容度)
+        // rect.width/2 就是該原子在螢幕上的實際半徑
+        if (dist < (rect.width / 2 + 10)) {
+            // 為了做 Z 軸排序，我們需要 atomData.pz
+            // 但 atomData.pz 可能沒更新，我們重新 project 一次確保準確
+            const p = project(atomData);
+            candidates.push({ atom: atomData, z: p.z, dist: dist });
         }
     });
-    
+
+    // 5. 排序：Z 值越大代表越靠近使用者 (蓋在上面)
+    // 解決丙烷中間碳原子被氫原子擋住無法點擊的問題
     if (candidates.length === 0) return null;
-
-    // [關鍵修正] 根據 Z 軸排序 (Z 越大代表越靠近鏡頭)
-    // 這樣即使 H 離滑鼠比較近，但如果 C 在 H 前面，就會選到 C
+    
     candidates.sort((a, b) => b.z - a.z);
-
-    // 回傳最上層的原子
+    
     return candidates[0].atom;
 }
 
@@ -2318,22 +2317,38 @@ function showHybridInfo(atomObj, x, y) {
     const sum = sigmaCount + lpCount;
     
     let hybrid = "";
-    if (sum === 2) hybrid = "sp";
-    else if (sum === 3) hybrid = "sp²";
-    else if (sum === 4) hybrid = "sp³";
-    else if (sum === 5) hybrid = "sp³d";
-    else if (sum === 6) hybrid = "sp³d²";
-    else hybrid = "-";
+    let hybridColor = "#ffffff"; // 預設白色
 
+    // 根據總數決定名稱與顏色
+    if (sum === 2) { 
+        hybrid = "sp"; 
+        hybridColor = "#22d3ee"; // 青色 (Cyan)
+    } else if (sum === 3) { 
+        hybrid = "sp²"; 
+        hybridColor = "#a3e635"; // 萊姆綠 (Lime)
+    } else if (sum === 4) { 
+        hybrid = "sp³"; 
+        hybridColor = "#fbbf24"; // 琥珀黃 (Amber)
+    } else if (sum === 5) { 
+        hybrid = "sp³d"; 
+        hybridColor = "#f472b6"; // 粉紅色 (Pink)
+    } else if (sum === 6) { 
+        hybrid = "sp³d²"; 
+        hybridColor = "#818cf8"; // 靛藍色 (Indigo)
+    } else { 
+        hybrid = "-"; 
+    }
+
+    // [修改] 將 hybridColor 變數帶入 style 中
     tooltip.innerHTML = `
-        <span style="color:var(--accent-blue);font-size:1.1em">${atomObj.elem}</span><br/>
-        混成: <span style="color:var(--accent-green)">${hybrid}</span><br/>
-        <span style="font-size:0.8em;color:#ccc">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
+        <span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2">${atomObj.elem}</span><br/>
+        混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span><br/>
+        <span style="font-size:0.75em;color:#ddd;font-weight:normal">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
     `;
     
     // 顯示位置微調
     tooltip.style.left = x + 'px';
-    tooltip.style.top = (y - 60) + 'px'; 
+    tooltip.style.top = (y - 70) + 'px'; 
     tooltip.classList.add('show');
 }
 
