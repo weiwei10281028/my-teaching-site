@@ -333,13 +333,15 @@
         
         <div class="controls-content">
             <div class="card">
-                <div class="card-title"⚛️ 輸入化學式</div>
-                <div class="input-group">
-                    <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
-                    <button id="load-btn">載入</button>
-                </div>
-                <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
-            </div>
+    <div class="card-title">⚛️ 輸入化學式</div>
+    <!-- [修正] 輸入框獨立一排 -->
+    <div class="input-group">
+        <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
+        <button id="load-btn">載入</button>
+    </div>
+    <!-- [修正] 說明文字放在 input-group 外面，確保換行顯示 -->
+    <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
+</div>
 
             <div class="switch-container">
                 <!-- [修正] 恢復 id="toggle-lp" -->
@@ -1337,7 +1339,9 @@ function runPropeneHydration() {
 
 
 let currentMolecule = null;
-let rotation = { x: 0.5, y: 0.5, z: 0 }; 
+// --- [修改 1] 改用矩陣取代 rotation 角度 ---
+let currentMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1]; // 3x3 單位矩陣
+let rotVelocity = { x: 0, y: 0, z: 0 }; 
 let panOffset = { x: 0, y: 0 }; 
 let scale = 1.6; 
 let isDragging = false; 
@@ -1345,13 +1349,47 @@ let lastMouse = { x: 0, y: 0 };
 let currentMode = 1;
 let altKeyIsDown = false;
 let currentKey = null; 
-// [新增] 旋轉速度 (慣性用) 與 最後互動時間
-let rotVelocity = { x: 0, y: 0 };
 let lastInteractTime = 0; 
-
 let lastTouchDist = 0;
 let lastTouchCenter = { x:0, y:0 };
 let lastTouchAngle = 0; 
+
+// --- [新增] 矩陣運算函式 (必須加入) ---
+function multiplyMatrix(a, b) {
+    const out = [];
+    for (let i = 0; i < 3; i++) { 
+        for (let j = 0; j < 3; j++) { 
+            let sum = 0;
+            for (let k = 0; k < 3; k++) sum += a[i * 3 + k] * b[k * 3 + j];
+            out.push(sum);
+        }
+    }
+    return out;
+}
+
+function normalizeMatrix(m) {
+    let x = [m[0], m[3], m[6]], y = [m[1], m[4], m[7]];
+    const lenX = Math.sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+    x = x.map(v => v / lenX);
+    const dot = x[0]*y[0] + x[1]*y[1] + x[2]*y[2];
+    y = [y[0]-x[0]*dot, y[1]-x[1]*dot, y[2]-x[2]*dot];
+    const lenY = Math.sqrt(y[0]*y[0] + y[1]*y[1] + y[2]*y[2]);
+    y = y.map(v => v / lenY);
+    const z = [x[1]*y[2]-x[2]*y[1], x[2]*y[0]-x[0]*y[2], x[0]*y[1]-x[1]*y[0]];
+    return [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]];
+}
+
+function applyRotation(dx, dy, dz) {
+    const cx = Math.cos(dy), sx = Math.sin(dy);
+    const rotX = [1,0,0, 0,cx,-sx, 0,sx,cx];
+    const cy = Math.cos(dx), sy = Math.sin(dx);
+    const rotY = [cy,0,sy, 0,1,0, -sy,0,cy];
+    const cz = Math.cos(dz), sz = Math.sin(dz);
+    const rotZ = [cz,-sz,0, sz,cz,0, 0,0,1];
+    let rot = multiplyMatrix(rotY, multiplyMatrix(rotX, rotZ));
+    currentMatrix = multiplyMatrix(rot, currentMatrix);
+    currentMatrix = normalizeMatrix(currentMatrix);
+}
 
 const sceneRoot = document.getElementById("scene-root");
 const viewport = document.getElementById("viewport");
@@ -1580,16 +1618,16 @@ function updateVariantUI(key, activeVariant) {
 // 4. 渲染引擎 (修正版：鍵結無光暈，原子/LP有光暈)
 // ==========================================
 
-function project(p, rotX, rotY, rotZ, panX, panY) {
-    let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
-    let z1 = p.z * Math.cos(rotY) + p.x * Math.sin(rotY);
-    let y2 = p.y * Math.cos(rotX) - z1 * Math.sin(rotX);
-    let z2 = z1 * Math.cos(rotX) + p.y * Math.sin(rotX);
-    let x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
-    let y3 = x1 * Math.sin(rotZ) + y2 * Math.cos(rotZ);
+function project(p) {
+    // [修改 2] 改用矩陣運算，不再接收 rotX, rotY 等參數
+    const m = currentMatrix;
+    let x3 = p.x * m[0] + p.y * m[1] + p.z * m[2];
+    let y3 = p.x * m[3] + p.y * m[4] + p.z * m[5];
+    let z3 = p.x * m[6] + p.y * m[7] + p.z * m[8];
+    
     // 修正縮放計算，防止 z2 過大導致錯誤
-    let s = (600 / (600 - Math.min(z2, 590))) * scale;
-    return { x: x3 * s + panX, y: y3 * s + panY, z: z2, scale: s };
+    let s = (600 / (600 - Math.min(z3, 590))) * scale;
+    return { x: x3 * s + panOffset.x, y: y3 * s + panOffset.y, z: z3, scale: s };
 }
 
 function renderScene() {
@@ -1622,8 +1660,9 @@ function renderScene() {
     const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
     const renderList = [];
     
+    // [修改 3] 呼叫 project 時不傳入角度參數
     const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
-        const p = project(obj, rotation.x, rotation.y, rotation.z, panOffset.x, panOffset.y);
+        const p = project(obj); 
         return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
     });
 
@@ -1805,22 +1844,19 @@ function adjustColor(col, amt) {
     return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
 }
 function animate() {
-    // 只有在「非拖曳」且「非反應中」時才計算慣性與自動旋轉
+    // [修改 4] 動畫迴圈改用矩陣旋轉
     if (!isDragging && !isReactionRunning) {
-        // 1. 慣性效果：將殘餘的速度應用到旋轉上
-        rotation.x += rotVelocity.x;
-        rotation.y += rotVelocity.y;
-
-        // 2. 摩擦力阻尼：讓速度慢慢歸零 (數值越小停得越快，0.95 是很滑順的數值)
+        // 1. 慣性減速
         rotVelocity.x *= 0.95;
         rotVelocity.y *= 0.95;
+        rotVelocity.z *= 0.95;
 
-        // 3. 自動展示：只有當慣性幾乎停止，且距離上次操作超過 3 秒，才恢復極慢速旋轉
-        if (Math.abs(rotVelocity.x) < 0.0001 && Math.abs(rotVelocity.y) < 0.0001) {
-            if (Date.now() - lastInteractTime > 3000) {
-                rotation.x += 0.001; // 速度由 0.003 降為 0.001，避免頭暈
-                rotation.y += 0.001;
-            }
+        // 2. 自動旋轉 (當手放開且速度很慢時，自動慢慢轉)
+        if (Math.abs(rotVelocity.x) < 0.0005 && Math.abs(rotVelocity.y) < 0.0005 && Math.abs(rotVelocity.z) < 0.0005) {
+             applyRotation(0.002, 0, 0); // 給一點點 Y 軸(水平)旋轉
+        } else {
+            // 3. 應用慣性
+            applyRotation(rotVelocity.x, rotVelocity.y, rotVelocity.z);
         }
     }
     
@@ -1828,12 +1864,13 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+
 // ==========================================
 // [最終整合] 互動事件綁定 (合併了 按鈕 + 3D操作 + 八隅體重載)
 // ==========================================
 function setupInteractions() {
     // ------------------------------------------------
-    // 1. UI 按鈕與開關事件 (原本在底部的功能)
+    // 1. UI 按鈕與開關事件 (保持不變)
     // ------------------------------------------------
     const modeBtn = document.getElementById('mode-toggle');
     if (modeBtn) modeBtn.addEventListener('click', toggleMode);
@@ -1844,57 +1881,37 @@ function setupInteractions() {
     const toggleLp = document.getElementById('toggle-lp');
     if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
 
-    // [新增] 綁定光暈開關，切換時重新渲染
     const toggleGlow = document.getElementById('toggle-glow');
     if (toggleGlow) toggleGlow.addEventListener('change', () => { renderScene(); });
 
-    // [八隅體開關] 重要修正：變更時重新載入分子以觸發 loadMolecule 中的判定邏輯
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct) toggleOct.addEventListener('change', () => { 
-        // 確保切換時會重新計算配位鍵/雙鍵
         if(currentKey) loadMolecule(currentKey); 
     });
 
-
-
-    // 反應按鈕事件綁定 (包含新增的 H2 與 HCl)
+    // 反應按鈕綁定 (保持不變)
     const reactBtn = document.getElementById('reaction-btn');
     if (reactBtn) reactBtn.addEventListener('click', runEthyleneHydration);
-
     const reactCl2Btn = document.getElementById('reaction-cl2-btn');
     if (reactCl2Btn) reactCl2Btn.addEventListener('click', runEthyleneChlorination);
-
     const reactH2Btn = document.getElementById('reaction-h2-btn');
     if (reactH2Btn) reactH2Btn.addEventListener('click', runEthyleneHydrogenation);
-
     const reactHClBtn = document.getElementById('reaction-hcl-btn');
     if (reactHClBtn) reactHClBtn.addEventListener('click', runEthyleneHydrohalogenation);
-
-    // [新增] 綁定甲烷取代反應
     const reactSubBtn = document.getElementById('reaction-sub-btn');
     if (reactSubBtn) reactSubBtn.addEventListener('click', runMethaneSubstitution);
-
-    // [新增] 綁定硝化反應
     const reactNitroBtn = document.getElementById('reaction-nitro-btn');
     if (reactNitroBtn) reactNitroBtn.addEventListener('click', runMethaneNitration);
-
-    // [新增] 綁定丙烯系列按鈕
-    const p1 = document.getElementById('reaction-propene-h2-btn');
-    if(p1) p1.addEventListener('click', runPropeneHydrogenation);
     
-    const p2 = document.getElementById('reaction-propene-cl2-btn');
-    if(p2) p2.addEventListener('click', runPropeneChlorination);
-    
-    const p3 = document.getElementById('reaction-propene-hcl-btn');
-    if(p3) p3.addEventListener('click', runPropeneHydrohalogenation);
-    
-    const p4 = document.getElementById('reaction-propene-h2o-btn');
-    if(p4) p4.addEventListener('click', runPropeneHydration);
+    // 丙烯按鈕 (保持不變)
+    const p1 = document.getElementById('reaction-propene-h2-btn'); if(p1) p1.addEventListener('click', runPropeneHydrogenation);
+    const p2 = document.getElementById('reaction-propene-cl2-btn'); if(p2) p2.addEventListener('click', runPropeneChlorination);
+    const p3 = document.getElementById('reaction-propene-hcl-btn'); if(p3) p3.addEventListener('click', runPropeneHydrohalogenation);
+    const p4 = document.getElementById('reaction-propene-h2o-btn'); if(p4) p4.addEventListener('click', runPropeneHydration);
 
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', resetReaction);
 
-    // 手機版面板把手點擊
     const mobileHandle = document.getElementById('mobile-panel-handle');
     if (mobileHandle) {
         mobileHandle.addEventListener('click', () => {
@@ -1909,26 +1926,21 @@ function setupInteractions() {
     }
 
     // ------------------------------------------------
-    // 2. 3D 場景操作事件 (原本在中間的功能)
+    // 2. 3D 操作核心修正區 (包含鍵盤/滑鼠/觸控)
     // ------------------------------------------------
     
-        // 鍵盤輔助
+    // [修改 5] 全新的軌跡球操作邏輯
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
     document.getElementById("formula-input").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLoadBtn(); });
 
-    // --- [修正] 優化後的滑鼠/觸控邏輯 ---
-
-    // 定義靈敏度 (數值越小越慢)
-    const MOUSE_SENSITIVITY = 0.003; 
-    const TOUCH_SENSITIVITY = 0.0025; // 手機版特別調慢
+    const MOUSE_SENSITIVITY = 0.005; 
+    const TOUCH_SENSITIVITY = 0.004;
 
     const handleStart = (x, y) => { 
         isDragging = true; 
         lastMouse = { x, y }; 
-        // 按下瞬間歸零慣性，避免暴衝
-        rotVelocity = { x: 0, y: 0 };
-        lastInteractTime = Date.now();
+        rotVelocity = { x: 0, y: 0, z: 0 }; // 按下瞬間歸零慣性
     };
 
     const handleMove = (x, y, sensitivity) => {
@@ -1936,40 +1948,36 @@ function setupInteractions() {
         const dx = x - lastMouse.x;
         const dy = y - lastMouse.y;
         
-        lastInteractTime = Date.now();
-
         if (currentMode === 1 || (currentMode === 2 && altKeyIsDown)) {
-            // 模式：旋轉
-            // 計算當下的「速度」，animate() 會繼續執行這個速度造成慣性
-            rotVelocity.y = dx * sensitivity;
-            rotVelocity.x = -dy * sensitivity; // Y軸移動對應 X軸旋轉 (上下翻)
+            // [關鍵] 軌跡球邏輯：
+            // dx (水平滑動) -> 繞 Y 軸旋轉
+            // dy (垂直滑動) -> 繞 X 軸旋轉 (取負值，讓上滑=球上緣往後倒=向上轉)
+            rotVelocity.y = dx * sensitivity; 
+            rotVelocity.x = -dy * sensitivity; 
             
-            // 立即應用一次，避免延遲感
-            rotation.y += rotVelocity.y;
-            rotation.x += rotVelocity.x;
+            // 立即更新矩陣
+            applyRotation(rotVelocity.y, rotVelocity.x, 0);
         } else {
-            // 模式：平移
+            // 平移
             panOffset.x += dx * 0.5; 
             panOffset.y += dy * 0.5;
         }
         lastMouse = { x, y };
     };
 
-    // 滑鼠事件
+    // 滑鼠監聽
     viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
     window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
-    window.addEventListener("mouseup", () => { isDragging = false; });
+    window.addEventListener("mouseup", () => isDragging = false);
     viewport.addEventListener("wheel", e => {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
     });
 
-    // 觸控事件 (手機優化)
+    // 觸控監聽
     viewport.addEventListener("touchstart", e => {
         if(e.target.closest('.control-button')) return;
         isDragging = true;
-        // 觸控開始也歸零慣性
-        rotVelocity = { x: 0, y: 0 }; 
-        lastInteractTime = Date.now();
+        rotVelocity = { x: 0, y: 0, z: 0 }; 
 
         if(e.touches.length === 1) {
             lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -1989,10 +1997,10 @@ function setupInteractions() {
         const ZOOM_SPEED = 0.003; 
 
         if(e.touches.length === 1) {
-            // 單指旋轉 (使用新的 handleMove 邏輯)
+            // 單指操作：旋轉
             handleMove(e.touches[0].clientX, e.touches[0].clientY, TOUCH_SENSITIVITY);
         } else if (e.touches.length === 2) {
-            // 雙指平移/縮放/Z軸旋轉
+            // 雙指操作
             const t1 = e.touches[0], t2 = e.touches[1];
             const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
             
@@ -2009,25 +2017,22 @@ function setupInteractions() {
             }
             lastTouchDist = dist;
 
-            // Z軸旋轉 (像轉方向盤一樣)
+            // Z 軸旋轉
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
             let angleDelta = angle - lastTouchAngle;
-            // 修正角度跳變
             if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
             if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
             
-            rotation.z += angleDelta;
+            rotVelocity.z = angleDelta;
+            applyRotation(0, 0, rotVelocity.z);
             lastTouchAngle = angle;
-            lastInteractTime = Date.now();
         }
     }, { passive: false });
 
     window.addEventListener("touchend", () => {
-        // 手指離開時不歸零 rotVelocity，讓 animate() 接手處理慣性
         isDragging = false; 
     });
 
-    // 啟動手機面板滑動邏輯
     setupMobilePanel();
 }
 
