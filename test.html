@@ -297,32 +297,34 @@
         #glow-switch-wrap { display: none !important; }
     }
 
-/* --- [修改] 混成軌域標籤樣式 (放大版) --- */
+/* --- [修改] 混成軌域標籤樣式 (固定中央版) --- */
     .hybrid-tooltip {
-        position: absolute;
-        background: rgba(0, 0, 0, 0.85);
+        position: fixed; /* 改為固定定位，無視原子位置 */
+        top: 40%;        /* 垂直位置：畫面高度的 40% (稍微偏上，避開下方操作區) */
+        left: 50%;       /* 水平位置：畫面中央 */
+        transform: translate(-50%, -50%); /* 精準置中修正 */
+        
+        background: rgba(0, 0, 0, 0.9); /* 背景深一點，避免與後方原子混淆 */
         color: #fff;
-        padding: 12px 20px;          /* [修改] 加大內距 */
-        border-radius: 8px;
-        border: 2px solid var(--accent-green); /* [修改] 邊框加粗 */
+        padding: 15px 25px;
+        border-radius: 12px;
+        border: 2px solid var(--accent-green);
         font-family: 'Roboto Mono', monospace;
-        font-size: 1.3rem;           /* [修改] 字體大幅加大 */
+        font-size: 1.4rem; /* 字體大而清晰 */
         font-weight: bold;
         pointer-events: none; 
         opacity: 0;
         transition: opacity 0.2s;
-        z-index: 1000;
-        transform: translate(-50%, -110%); /* [修改] 往下降，靠近點擊點 */
-        white-space: pre-line; 
+        z-index: 9999; /* 確保在最上層 */
+        white-space: nowrap; /* 防止文字換行 */
         text-align: center;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.6);
-        text-shadow: 0 2px 4px #000; /* [修改] 增加文字陰影更清晰 */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); /* 強烈陰影，增加立體感 */
+        text-shadow: 0 2px 4px #000;
+        
+        /* 確保不會超出螢幕寬度 */
+        max-width: 90vw; 
     }
     .hybrid-tooltip.show { opacity: 1; }
-    /* [新增] 當點擊位置太靠上時，強制往下顯示的樣式 */
-    .hybrid-tooltip.force-down {
-        transform: translate(-50%, 20%); /* 往下移，避開上方邊界 */
-    }
 
 
 
@@ -2346,27 +2348,13 @@ function showHybridInfo(atomObj, x, y) {
     // [修改] 將 hybridColor 變數帶入 style 中
     tooltip.innerHTML = `
         <span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2">${atomObj.elem}</span><br/>
-        混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span><br/>
-        <span style="font-size:0.75em;color:#ddd;font-weight:normal">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
+        混成: <span style="color:${hybridColor};font-size:1.3em">${hybrid}</span><br/>
+        <span style="font-size:0.8em;color:#ddd;font-weight:normal">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
     `;
     
-    // [修改] 智慧定位邏輯
-    // 如果點擊位置在螢幕上方 30% 區域內 (例如 y < 250px)，就改為往下顯示
-    const safeZoneTop = 250; 
-
-    if (y < safeZoneTop) {
-        // 太靠上了 -> 往下顯示
-        tooltip.classList.add('force-down');
-        tooltip.style.top = y + 'px'; // 基準點設在點擊處，CSS負責往下推
-    } else {
-        // 正常情況 -> 往上顯示
-        tooltip.classList.remove('force-down');
-        const yOffset = isMobile ? 25 : 50; 
-        tooltip.style.top = (y - yOffset) + 'px'; 
-    }
-
-    // 水平位置設定
-    tooltip.style.left = x + 'px';
+    // [重要] 移除 style.left 與 style.top 的設定
+    // 因為 CSS 已經設定好固定在螢幕中央了
+    
     tooltip.classList.add('show');
 }
 
