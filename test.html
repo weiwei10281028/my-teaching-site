@@ -312,7 +312,7 @@
         opacity: 0;
         transition: opacity 0.2s;
         z-index: 1000;
-        transform: translate(-50%, -140%); /* 稍微調整位置 */
+        transform: translate(-50%, -110%); /* [修改] 往下降，靠近點擊點 */
         white-space: pre-line; 
         text-align: center;
         box-shadow: 0 6px 16px rgba(0,0,0,0.6);
@@ -2347,8 +2347,11 @@ function showHybridInfo(atomObj, x, y) {
     `;
     
     // 顯示位置微調
+    // [修改] 判斷裝置：手機版位移 25px，電腦版位移 50px (原本是 70px 太高)
+    const yOffset = isMobile ? 25 : 50; 
+    
     tooltip.style.left = x + 'px';
-    tooltip.style.top = (y - 70) + 'px'; 
+    tooltip.style.top = (y - yOffset) + 'px'; 
     tooltip.classList.add('show');
 }
 
