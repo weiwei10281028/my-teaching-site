@@ -319,6 +319,10 @@
         text-shadow: 0 2px 4px #000; /* [修改] 增加文字陰影更清晰 */
     }
     .hybrid-tooltip.show { opacity: 1; }
+    /* [新增] 當點擊位置太靠上時，強制往下顯示的樣式 */
+    .hybrid-tooltip.force-down {
+        transform: translate(-50%, 20%); /* 往下移，避開上方邊界 */
+    }
 
 
 
@@ -2346,12 +2350,23 @@ function showHybridInfo(atomObj, x, y) {
         <span style="font-size:0.75em;color:#ddd;font-weight:normal">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
     `;
     
-    // 顯示位置微調
-    // [修改] 判斷裝置：手機版位移 25px，電腦版位移 50px (原本是 70px 太高)
-    const yOffset = isMobile ? 25 : 50; 
-    
+    // [修改] 智慧定位邏輯
+    // 如果點擊位置在螢幕上方 30% 區域內 (例如 y < 250px)，就改為往下顯示
+    const safeZoneTop = 250; 
+
+    if (y < safeZoneTop) {
+        // 太靠上了 -> 往下顯示
+        tooltip.classList.add('force-down');
+        tooltip.style.top = y + 'px'; // 基準點設在點擊處，CSS負責往下推
+    } else {
+        // 正常情況 -> 往上顯示
+        tooltip.classList.remove('force-down');
+        const yOffset = isMobile ? 25 : 50; 
+        tooltip.style.top = (y - yOffset) + 'px'; 
+    }
+
+    // 水平位置設定
     tooltip.style.left = x + 'px';
-    tooltip.style.top = (y - yOffset) + 'px'; 
     tooltip.classList.add('show');
 }
 
