@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v15.4 (Full Fixed)</title>
+    <title>分子結構模擬實驗室 v15.5 (Full Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -247,57 +247,116 @@
     .switch-no-pad { background: transparent; padding: 0; }
     .mobile-sim-label { cursor: pointer; color: var(--text-sub); font-size: 0.9rem; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
-/* --- 手機版 (固定分割：上方 75% 顯示，下方 25% 操作) --- */
-    @media (max-width: 768px) {
-        /* 改為垂直排列，不使用 fixed 覆蓋，而是佔據空間 */
+
+    /* --- [CSS 重大修正] 手機版：全螢幕畫布 + 浮動面板 --- */
+    @media (max-width: 768px), (max-height: 500px) { 
+        /* 
+           加入 max-height: 500px 是為了確保手機橫放時也能觸發此模式 
+           這樣橫放時右邊就不會黑掉，而是全螢幕顯示
+        */
+
         .app-container { 
             flex-direction: column; 
             height: 100vh; 
             width: 100vw;
             overflow: hidden;
+            position: relative;
         }
         
+        /* 隱藏桌面版按鈕，改用面板內操作，或視需求保留 */
         .controls-container { display: none !important; } 
 
-        /* 上方顯示區佔 75% */
+        /* [關鍵修正] 3D 顯示區：強制滿版，作為背景 */
         .viewport-area {
-            position: relative; 
+            position: fixed; /* 改為 fixed 確保永遠填滿視窗 */
+            top: 0; 
+            left: 0;
             width: 100%; 
-            height: 75%; 
-            flex: 0 0 75%; /* 強制固定高度 */
-            z-index: 0;
+            height: 100%; /* 佔滿 100% 高度 */
+            z-index: 0;   /* 在最底層 */
+            flex: none;   /* 移除 flex 限制 */
         }
 
-        /* 下方操作區佔 25% */
+        /* [關鍵修正] 下方操作區：浮動在畫布之上 (Drawer) */
         .controls-area {
-            position: relative; 
+            position: absolute; 
+            bottom: 0; 
+            left: 0;
             width: 100%; 
-            height: 25%; 
-            flex: 0 0 25%; /* 強制固定高度 */
-            bottom: auto; left: auto;
-            border-radius: 0;
-            border-top: 1px solid var(--panel-border);
-            background-color: #1a1a1a; 
+            
+            /* 高度設定 */
+            height: 40vh;    /* 預設高度 */
+            max-height: 95vh; /* 最大高度 */
+            min-height: 30px; /* 最小高度 (把手) */
+
+            /* 外觀 */
+            border-radius: 20px 20px 0 0; 
+            border-top: 1px solid rgba(255,255,255,0.2);
+            border-left: none;
+            
+            /* 背景半透明一點點，讓使用者感覺到底下有東西，但要夠深以防文字看不清 */
+            background-color: rgba(26, 26, 26, 0.95); 
+            backdrop-filter: blur(10px); /* 毛玻璃特效增加質感 */
+            
             padding: 0; 
-            z-index: 100;
-            box-shadow: none;
-            transform: none !important; /* 移除滑動特效 */
-            transition: none;
+            z-index: 100; /* 在畫布之上 */
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
+            
+            display: flex;
+            flex-direction: column;
+            
+            /* 移除 CSS transition，完全交給 JS 控制以確保跟手性 */
         }
 
-        /* 移除手機版的把手，因為是固定分割 */
-        #mobile-panel-handle { display: none; }
+        /* 把手區域 */
+        #mobile-panel-handle { 
+            display: flex; 
+            width: 100%; 
+            height: 30px; 
+            justify-content: center; 
+            align-items: center;
+            cursor: grab; 
+            flex-shrink: 0; 
+            /* 漸層背景增加立體感 */
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px 20px 0 0;
+            touch-action: none; /* 禁止瀏覽器預設行為 */
+        }
+        
+        /* 把手橫條 */
+        .handle-bar {
+            width: 45px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.4); 
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        /* 按下時的回饋 */
+        #mobile-panel-handle:active .handle-bar {
+            background-color: rgba(255, 255, 255, 0.8);
+            width: 55px;
+        }
 
         .controls-content {
             padding: 15px;
             overflow-y: auto; 
-            height: 100%;
+            flex: 1; 
             -webkit-overflow-scrolling: touch; 
+            overscroll-behavior: contain; 
+            /* 增加底部留白，避免內容被螢幕圓角遮住 */
+            padding-bottom: 40px; 
         }
         
-        /* 手機版說明文字稍微縮小一點點以免遮住太多 */
-        #viewport-subtitle { font-size: 1.1rem; }
-       /* [新增] 手機版隱藏光暈開關 (因為手機不支援光暈渲染) */
+        #viewport-subtitle { 
+            font-size: 1.1rem; 
+            /* 確保文字不會被把手擋住，雖然現在是浮動的 */
+            text-shadow: 0 2px 4px rgba(0,0,0,1); 
+        }
+        
+        /* 手機版隱藏不需要的開關 */
         #glow-switch-wrap { display: none !important; }
     }
 
@@ -338,7 +397,7 @@
 <div class="app-container">
     <div class="viewport-area" id="viewport">
         <div class="viewport-header">
-            <h1 class="title">MOLECULAR SIMULATOR v15.4</h1>
+            <h1 class="title">MOLECULAR SIMULATOR v15.5</h1>
             <span class="input-note" id="viewport-subtitle"></span>
         </div>
         
@@ -796,22 +855,21 @@ halogens.forEach(X => {
     p = halideProps[`Al${X}3`] || ["-", "-"];
     addMol(`Al${X}3|三${hn}化鋁`, "Al", "sp²", ["平面三角形","Trigonal Planar"], "120°", p[0], p[1], getTrigPlanar("Al", X, 80), [[0,1],[0,2],[0,3]]);
     
-    // CX4
-    p = halideProps[`C${X}4`] || ["-", "-"];
-    addMol(`C${X}4|四${hn}化碳|四${hn}甲烷`, "C", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("C", X, 65), [[0,1],[0,2],[0,3],[0,4]]);
+    // CX4 (鍵長縮短至 55)
+    p = halideProps[`C${X}4`] || ["-", "-"]; 
+    addMol(`C${X}4|四${hn}化碳|四${hn}甲烷`, "C", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("C", X, 55), [[0,1],[0,2],[0,3],[0,4]]);
     
-    // SiX4
-    p = halideProps[`Si${X}4`] || ["-", "-"];
-    addMol(`Si${X}4|四${hn}化矽`, "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("Si", X, 75), [[0,1],[0,2],[0,3],[0,4]]);
-    
+    // SiX4 (鍵長縮短至 65)
+    p = halideProps[`Si${X}4`] || ["-", "-"]; 
+    addMol(`Si${X}4|四${hn}化矽`, "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("Si", X, 65), [[0,1],[0,2],[0,3],[0,4]]);
+
     // NX3
     p = halideProps[`N${X}3`] || ["-", "-"];
     if(X!=='I') addMol(`N${X}3|三${hn}化氮`, "N", "sp³", ["角錐形","Pyramidal"], "107°", p[0], p[1], [{elem:"N",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:X,x:0,y:-40,z:50}, {elem:X,x:45,y:-40,z:-30}, {elem:X,x:-45,y:-40,z:-30}], [[0,1],[0,2],[0,3]]);
     
     // PX3
     p = halideProps[`P${X}3`] || ["-", "-"];
-    if(X!=='I') addMol(`P${X}3|三${hn}化磷`, "P", "sp³", ["角錐形","Pyramidal"], "96-100°", p[0], p[1], [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:X,x:0,y:-45,z:55}, {elem:X,x:50,y:-45,z:-35}, {elem:X,x:-50,y:-45,z:-35}], [[0,1],[0,2],[0,3]]);
-});
+    if(X!=='I') addMol(`P${X}3|三${hn}化磷`, "P", "sp³", ["角錐形","Pyramidal"], "96-100°", p[0], p[1], [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:X,x:0,y:-45,z:55}, {elem:X,x:50,y:-45,z:-35}, {elem:X,x:-50,y:-45,z:-35}], [[0,1],[0,2],[0,3]]);});
 
 ['F','Cl'].forEach(X => {
     const hn = haloNames[X];
@@ -819,8 +877,7 @@ halogens.forEach(X => {
     addMol(`O${X}2|二${hn}化氧`, "O", "sp³", ["角形","Bent"], "103°", pO[0], pO[1], [{elem:"O",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0.8}, {x:0,y:1,z:-0.8}]}, {elem:X,x:55,y:-40,z:0}, {elem:X,x:-55,y:-40,z:0}], [[0,1],[0,2]]);
     
     let pS = halideProps[`S${X}2`] || ["-", "-"];
-    addMol(`S${X}2|二${hn}化硫`, "S", "sp³", ["角形","Bent"], "98°", pS[0], pS[1], [{elem:"S",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0.8}, {x:0,y:1,z:-0.8}]}, {elem:X,x:60,y:-40,z:0}, {elem:X,x:-60,y:-40,z:0}], [[0,1],[0,2]]);
-});
+    addMol(`S${X}2|二${hn}化硫`, "S", "sp³", ["角形","Bent"], "98°", pS[0], pS[1], [{elem:"S",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0.8}, {x:0,y:1,z:-0.8}]}, {elem:X,x:60,y:-40,z:0}, {elem:X,x:-60,y:-40,z:0}], [[0,1],[0,2]]);});
 
 // --- 5. 碳與其他氧化物 (直線型/平面型) ---
 addMol("CO2|二氧化碳", "C", "sp", ["直線型","Linear"], "180°", "-78.5 (昇華)", "-56.6", getLinear("C","O", 70), [[0,1,"double"],[0,2,"double"]]);
@@ -885,110 +942,32 @@ addMol("H2S2O3|硫代硫酸|大蘇打|海波", "S", "sp³", ["四面體","Tetrah
 addMol("S2O3 2-|S2O32-|硫代硫酸根", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:75,z:0}, {elem:"O",x:0,y:-25,z:-55}, {elem:"O",x:52,y:-30,z:32}, {elem:"O",x:-52,y:-30,z:32}], [[0,1,"double"],[0,2],[0,3],[0,4,"double"]]);
 addMol("HNO3|硝酸", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:-56,y:-32,z:0}, {elem:"O",x:56,y:-32,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:30}], [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]]);
 addMol("HNO2|亞硝酸", "N", "sp²", ["角形","Bent"], "111°", "-", "-", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:55,y:-35,z:0,lpCount:2}, {elem:"H",x:85,y:-10,z:35}], [[0,1,"double"], [0,2], [2,3]]);
-
-
-
-
-// PO4 3- 四面體
-addMol("PO43-|PO4 3-|磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","O", 65), [[0,1,"double"],[0,2],[0,3],[0,4]]);
-
-// H3PO4 四面體結構調整，H 原子方向調整
-addMol("H3PO4|磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:0,y:-25,z:60,lpCount:2}, {elem:"O",x:55,y:-25,z:-35,lpCount:2}, {elem:"O",x:-55,y:-25,z:-35,lpCount:2}, 
-     {elem:"H",x:0,y:10,z:90}, {elem:"H",x:80,y:10,z:-50}, {elem:"H",x:-80,y:10,z:-50}], // H 均勻分布且彎曲
-    [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6], [4,7]]);
-
-// H3PO3 四面體結構調整 (注意有一個 H 直接連 P)
-addMol("H3PO3|亞磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"H",x:0,y:-30,z:55}, 
-     {elem:"O",x:55,y:-25,z:-35,lpCount:2}, {elem:"O",x:-55,y:-25,z:-35,lpCount:2}, 
-     {elem:"H",x:80,y:10,z:-50}, {elem:"H",x:-80,y:10,z:-50}], // H 連 O 的部分調整
-    [[0,1,"double"], [0,2], [0,3], [0,4], [3,5], [4,6]]);
-
-// H3PO2 四面體結構調整 (注意有兩個 H 直接連 P)
-addMol("H3PO2|次磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"H",x:0,y:-30,z:55}, {elem:"H",x:-55,y:-30,z:-35}, 
-     {elem:"O",x:55,y:-25,z:-35,lpCount:2}, {elem:"H",x:80,y:10,z:-50}], // H 連 O 的部分調整
-    [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
-
-// HPO4 2- 四面體結構調整
-addMol("HPO42-|HPO4 2-|磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:50,y:-35,z:35}, {elem:"O",x:-50,y:-35,z:35}, 
-     {elem:"O",x:0,y:15,z:-60,lpCount:2}, {elem:"H",x:0,y:50,z:-80}], // H 調整
-    [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
-
-// H2PO4- 四面體結構調整
-addMol("H2PO4-|磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:50,y:-35,z:35,lpCount:2}, {elem:"O",x:-50,y:-35,z:35,lpCount:2}, {elem:"O",x:0,y:15,z:-60}, 
-     {elem:"H",x:75,y:-5,z:50}, {elem:"H",x:-75,y:-5,z:50}], // H 調整
-    [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
-
-// H2PO3- 四面體結構調整
-addMol("H2PO3-|亞磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", 
-    [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"H",x:0,y:-30,z:55}, 
-     {elem:"O",x:55,y:-25,z:-35,lpCount:2}, {elem:"O",x:-55,y:-25,z:-35,lpCount:2}, 
-     {elem:"H",x:80,y:10,z:-50}, {elem:"H",x:-80,y:10,z:-50}], // H 調整 (修正錯誤的 H 數量)
-    [[0,1,"double"], [0,2], [0,3], [0,4], [3,5], [4,6]]); // 修正鍵結
-
-// HPO3 2- 四面體結構調整
-addMol("HPO32-|HPO3 2-|亞磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:40,y:-30,z:30}, {elem:"O",x:-40,y:-30,z:30}, {elem:"H",x:0,y:15,z:-60}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
-
-// H2PO2- 四面體結構調整
-addMol("H2PO2-|次磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:0,y:-65,z:0}, {elem:"H",x:60,y:0,z:50}, {elem:"H",x:-60,y:0,z:-50}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
-
-// IO3- 角錐形
-addMol("IO3-|碘酸根", "I", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"I",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-40,z:50}, {elem:"O",x:45,y:-40,z:-30}, {elem:"O",x:-45,y:-40,z:-30}], [[0,1,"double"],[0,2,"double"],[0,3]]);
-
-// BrO3- 角錐形
-addMol("BrO3-|溴酸根", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Br",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-40,z:50}, {elem:"O",x:45,y:-40,z:-30}, {elem:"O",x:-45,y:-40,z:-30}], [[0,1,"double"],[0,2,"double"],[0,3]]);
-
-// ClO2- 角形
-addMol("ClO2-|亞氯酸根", "Cl", "sp³", ["角形","Bent"], "111°", "-", "-", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0.5},{x:0,y:1,z:-0.5}]},{elem:"O",x:65,y:-45,z:0},{elem:"O",x:-65,y:-45,z:0}], [[0,1],[0,2]]);
-
-// ClO3- 角錐形
-addMol("ClO3-|氯酸根", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Cl",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:45,y:-40,z:-30},{elem:"O",x:-45,y:-40,z:-30}], [[0,1,"double"],[0,2,"double"],[0,3]]);
-
-// ClO4- 四面體
-addMol("ClO4-|過氯酸根", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("Cl","O", 65), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4]]);
-
-// HClO4 四面體結構調整，H 原子方向調整
-addMol("HClO4|過氯酸", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", 
-    [{elem:"Cl",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:55,y:-40,z:35}, {elem:"O",x:-55,y:-40,z:35}, 
-     {elem:"O",x:0,y:15,z:-60,lpCount:2}, {elem:"H",x:0,y:50,z:-80}], // H 調整
-    [[0,1,"double"], [0,2,"double"], [0,3,"double"], [0,4], [4,5]]);
-
-// HClO3 角錐形結構調整，H 原子方向調整
-addMol("HClO3|氯酸", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", 
-    [{elem:"Cl",x:0,y:15,z:0,lpCount:1}, {elem:"O",x:0,y:-40,z:50}, {elem:"O",x:45,y:-40,z:-30}, 
-     {elem:"O",x:-45,y:-40,z:-30,lpCount:2}, {elem:"H",x:-70,y:-15,z:-10}], // H 調整
-    [[0,1,"double"], [0,2,"double"], [0,3], [3,4]]);
-
-// HClO2 角形結構調整，H 原子方向調整
-addMol("HClO2|亞氯酸", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", 
-    [{elem:"Cl",x:0,y:0,z:0,lpCount:2}, {elem:"O",x:60,y:-35,z:0}, 
-     {elem:"O",x:-60,y:-35,z:0,lpCount:2}, {elem:"H",x:-85,y:-10,z:10}], // H 調整
-    [[0,1], [0,2,"double"], [2,3]]);
-
-// HClO 角形結構調整，H 原子方向調整
-addMol("HClO|次氯酸", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", 
-    [{elem:"O",x:0,y:0,z:0,lpCount:2}, {elem:"Cl",x:60,y:-25,z:0}, {elem:"H",x:-30,y:30,z:0}], // H 調整
-    [[0,1], [0,2]]);
-
-
-
-
-
-
-
-
-
+addMol("PO43-|PO4 3-|磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","O", 60), [[0,1,"double"],[0,2],[0,3],[0,4]]);
+addMol("H3PO4|磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32,lpCount:2}, {elem:"O",x:-50,y:-28,z:32,lpCount:2}, {elem:"O",x:0,y:-28,z:-55,lpCount:2}, {elem:"H",x:80,y:-8,z:52}, {elem:"H",x:-80,y:-8,z:52}, {elem:"H",x:0,y:-8,z:-85}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6], [4,7]]);
+addMol("H3PO3|亞磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32,lpCount:2}, {elem:"O",x:-50,y:-28,z:32,lpCount:2}, {elem:"H",x:0,y:-35,z:-55}, {elem:"H",x:80,y:-8,z:52}, {elem:"H",x:-80,y:-8,z:52}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
+addMol("H3PO2|次磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:0,y:-28,z:-55,lpCount:2}, {elem:"H",x:50,y:-30,z:32}, {elem:"H",x:-50,y:-30,z:32}, {elem:"H",x:0,y:-8,z:-85}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
+addMol("HPO42-|HPO4 2-|磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32}, {elem:"O",x:-50,y:-28,z:32}, {elem:"O",x:0,y:-28,z:-55,lpCount:2}, {elem:"H",x:0,y:-8,z:-85}], [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
+addMol("H2PO4-|磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32,lpCount:2}, {elem:"O",x:-50,y:-28,z:32,lpCount:2}, {elem:"O",x:0,y:-28,z:-55}, {elem:"H",x:80,y:-8,z:52}, {elem:"H",x:-80,y:-8,z:52}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
+addMol("H2PO3-|亞磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32,lpCount:2}, {elem:"O",x:-50,y:-28,z:32}, {elem:"H",x:0,y:-35,z:-55}, {elem:"H",x:80,y:-8,z:52}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
+addMol("HPO32-|HPO3 2-|亞磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:50,y:-28,z:32}, {elem:"O",x:-50,y:-28,z:32}, {elem:"H",x:0,y:-35,z:-55}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
+addMol("H2PO2-|次磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:60,z:0}, {elem:"O",x:0,y:-28,z:-55}, {elem:"H",x:50,y:-30,z:32}, {elem:"H",x:-50,y:-30,z:32}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
+addMol("ClO4-|過氯酸根", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("Cl","O", 55), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4]]);
+addMol("HClO4|過氯酸", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", [{elem:"Cl", x:0, y:0, z:0, lpCount:0}, {elem:"O", x:0, y:60, z:0},{elem:"O", x:56, y:-20, z:30, lpCount:2},{elem:"O", x:-52, y:-20, z:30, lpCount:2},{elem:"O", x:0, y:-20, z:-55, lpCount:2},{elem:"H", x:30, y:85, z:0}], [[0,1,"single"], [0,2,"double"], [0,3,"double"], [0,4,"double"], [1,5]] );
+addMol("ClO3-|氯酸根", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Cl", x:0, y:12, z:0, lpCount:1},{elem:"O", x:0, y:-40, z:50},{elem:"O", x:45, y:-40, z:-30},{elem:"O", x:-45, y:-40, z:-30}], [[0,1,"double"], [0,2,"double"], [0,3,"single"]] );
+addMol("HClO3|氯酸", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", [{elem:"Cl",x:0,y:15,z:0,lpCount:1}, {elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28,lpCount:2},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"], [0,2,"double"], [0,3,"single"], [3,4]]);
+addMol("ClO2-|亞氯酸根", "Cl", "sp³", ["角形","Bent"], "111°", "-", "-", [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0}], [[0,1,"double"],[0,2,"single"]]);
+addMol("HClO2|亞氯酸", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0,lpCount:2},{elem:"H",x:-90,y:-20,z:0}], [[0,1,"double"],[0,2,"single"],[2,3]]);
+addMol("HClO|次氯酸", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", [{elem:"O",x:0,y:10,z:0,lpCount:2},{elem:"Cl",x:60,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0}], [[0,1],[0,2]]);
+addMol("ClO-|OCl-|次氯酸根", "O", "sp³", ["直線型","Linear"], "-", "-", "-", [{elem:"Cl",x:-28,y:0,z:0,lpCount:3},{elem:"O",x:28,y:0,z:0,lpCount:3}], [[0,1]]);
+addMol("HBrO3|溴酸", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "不穩定", [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28,lpCount:2},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]]);
+addMol("BrO3-|溴酸根", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-45,z:55},{elem:"O",x:50,y:-45,z:-32},{elem:"O",x:-50,y:-45,z:-32}], [[0,1,"double"],[0,2,"double"],[0,3,"single"]]);
+addMol("HIO3|碘酸", "I", "sp³", ["角錐形","Pyramidal"], "107°", "110", "分解", [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28,lpCount:2},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]]);
+addMol("IO3-|碘酸根", "I", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-45,z:55},{elem:"O",x:50,y:-45,z:-32},{elem:"O",x:-50,y:-45,z:-32}], [[0,1,"double"],[0,2,"double"],[0,3,"single"]]);
 
 // --- 10. 陽離子 ---
-addMol("NH4+|銨根|銨離子", "N", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("N","H"), [[0,1],[0,2],[0,3],[0,4]]);
-addMol("PH4+|鏻根|鏻離子", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","H"), [[0,1],[0,2],[0,3],[0,4]]);
-addMol("H3O+|水合氫離子", "O", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"O",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-30,z:35}, {elem:"H",x:30,y:-30,z:-20}, {elem:"H",x:-30,y:-30,z:-20}], [[0,1],[0,2],[0,3]]);
-
-
+addMol("NH4+|銨根|銨離子", "N", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("N","H", 40), [[0,1],[0,2],[0,3],[0,4]]);
+addMol("PH4+|鏻根|鏻離子", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","H", 48), [[0,1],[0,2],[0,3],[0,4]]);
+addMol("H3O+|水合氫離子", "O", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"O",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], [[0,1],[0,2],[0,3]]);
 // --- 11. 簡單有機分子與衍生物 ---
 addMol("CH3NO2|硝基甲烷", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", "-29", "101.2", [{elem:"O",x:-64,y:49,z:0,lpCount:3},{elem:"O",x:-63,y:-50,z:0},{elem:"N",x:-37,y:0,z:0,lpCount:0},{elem:"C",x:29,y:0,z:0},{elem:"H",x:45,y:-38,z:-26},{elem:"H",x:45,y:42,z:-21},{elem:"H",x:44,y:-2,z:47}], [[2,0,"coordinate"],[1,2,"double"],[2,3],[3,4],[3,5],[3,6]]);
 addMol("C2H6|乙烷", "C", "sp³", ["四面體連結","Tetrahedral"], "109.5°", "-182.8", "-88.6", [{elem:"C",x:-30,y:0,z:0}, {elem:"C",x:30,y:0,z:0}, {elem:"H",x:-60,y:35,z:0}, {elem:"H",x:-60,y:-25,z:30}, {elem:"H",x:-60,y:-25,z:-30}, {elem:"H",x:60,y:-35,z:0}, {elem:"H",x:60,y:25,z:30}, {elem:"H",x:60,y:25,z:-30}], [[0,1], [0,2], [0,3], [0,4], [1,5], [1,6], [1,7]]);
@@ -1819,9 +1798,20 @@ function loadMolecule(key, variantKey = null) {
             });
 
             // 2. 決定允許保留的雙鍵數量
-            // 如果配位數 >= 4 (如 SO4, S2O3, PO4)，為了符合八隅體(8e)，應該全部轉為配位鍵(單鍵)
-            // 如果配位數 < 4 (如 SO2, SO3)，為了符合八隅體，通常需要保留 1 個雙鍵
-            let allowedDoubleBonds = (coordinationNum >= 4) ? 0 : 1;
+            // [修正邏輯]：原本 (coordinationNum >= 4) ? 0 : 1 會導致 ClO3- (配位數3) 保留一根雙鍵。
+            // 修正後：如果是鹵素(Cl,Br,I)中心，無論配位數多少，滿足八隅體時通常都是全單鍵(配位鍵)。
+            // 對於 S, P, N 等非鹵素，維持配位數 < 4 時保留 1 根雙鍵 (如 SO3, NO3-)。
+            
+            const isHalogen = ["Cl", "Br", "I"].includes(data.center);
+            let allowedDoubleBonds = 0;
+
+            if (isHalogen) {
+                // 鹵素含氧酸(根)在八隅體模式下，應全部降為單鍵/配位鍵 (如 ClO3-, ClO2-, HClO3)
+                allowedDoubleBonds = 0;
+            } else {
+                // 非鹵素 (S, P, N...)，如 SO4(4配位->0雙), SO3(3配位->1雙)
+                allowedDoubleBonds = (coordinationNum >= 4) ? 0 : 1;
+            }
             
             let doubleBondCount = 0; 
 
@@ -2517,79 +2507,80 @@ function hideHybridTooltip() {
 }
 
 
-// --- 手機面板滑動邏輯 (App-like Drawer) ---
+// --- [JS 修改] 手機版面板滑動邏輯 (可完全收起) ---
 function setupMobilePanel() {
-    const panel = document.getElementById('controls-panel');
+    const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
-    if(!handle || !panel) return;
+    
+    // 確保元素存在且是手機版才執行
+    if(!handle || !panel || !isMobile) return;
 
     let startY = 0;
-    let startTransformY = 0;
-    let isPanelDragging = false;
+    let startHeight = 0;
+    let isDragging = false;
+    
+    // 狀態高度定義 (像素)
+    const MIN_H = 30; // 收起高度 (把手高度)
+    const MID_H = window.innerHeight * 0.4; // 預設 40%
+    const MAX_H = window.innerHeight * 0.95; // 最大 95%
 
-    // 取得目前的 translateY 數值
-    const getTransformY = () => {
-        const style = window.getComputedStyle(panel);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        return matrix.m42;
-    };
-
+    // 1. 觸控開始
     handle.addEventListener('touchstart', (e) => {
-        isPanelDragging = true;
+        isDragging = true;
         startY = e.touches[0].clientY;
-        startTransformY = getTransformY();
-        // 拖曳時移除過渡動畫，確保跟手性
+        startHeight = panel.offsetHeight;
+        
+        // 拖曳時移除過渡動畫，確保跟手性極佳
         panel.style.transition = 'none';
-    }, {passive: true});
+    }, {passive: false});
 
-    handle.addEventListener('touchmove', (e) => {
-        if(!isPanelDragging) return;
-        e.stopPropagation(); // 防止傳遞給底下的 3D 場景
+    // 2. 觸控移動 (綁定在 window 以免手指滑太快出界)
+    window.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        
+        // [關鍵] 阻止瀏覽器預設捲動 (例如下拉刷新)，讓 JS 完全控制面板
+        if(e.cancelable) e.preventDefault();
         
         const currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY;
-        let newY = startTransformY + deltaY;
-        
-        const panelHeight = panel.offsetHeight;
-        const maxHidden = panelHeight - 40; // 留 40px 把手在底部
-        
-        // 增加阻尼感 (Rubber banding effect)
-        if (newY < 0) newY = newY * 0.3; // 往上拉過頭
-        if (newY > maxHidden) newY = maxHidden + (newY - maxHidden) * 0.3; // 往下拉過頭
+        const deltaY = startY - currentY; // 往上拉 deltaY > 0
+        let newHeight = startHeight + deltaY;
 
-        panel.style.transform = `translateY(${newY}px)`;
-    }, {passive: true});
+        // 限制範圍與阻尼
+        if (newHeight < MIN_H) newHeight = MIN_H + (newHeight - MIN_H) * 0.2;
+        if (newHeight > MAX_H) newHeight = MAX_H + (newHeight - MAX_H) * 0.2;
 
-    handle.addEventListener('touchend', (e) => {
-        isPanelDragging = false;
+        panel.style.height = `${newHeight}px`;
+    }, {passive: false});
+
+     // 3. 觸控結束
+    window.addEventListener('touchend', (e) => {
+        if(!isDragging) return;
+        isDragging = false;
+        
         // 恢復彈性動畫
-        panel.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1)';
+        panel.style.transition = 'height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+        const currentHeight = panel.offsetHeight;
+        const moved = currentHeight - startHeight;
         
-        const finalY = getTransformY();
-        const panelHeight = panel.offsetHeight;
-        const maxHidden = panelHeight - 40;
-
-        // 判斷位置決定吸附到哪裡
-        // 如果拉超過面板高度的 30%，就自動收到底部
-        if (finalY > panelHeight * 0.3) {
-            panel.style.transform = `translateY(${maxHidden}px)`;
-        } else {
-            panel.style.transform = `translateY(0px)`;
-        }
-    });
-
-    // 點擊把手也能切換 (如果移動距離很小視為點擊)
-    handle.addEventListener('click', () => {
-            const finalY = getTransformY();
-            const panelHeight = panel.offsetHeight;
-            const maxHidden = panelHeight - 40;
-            
-            // 如果目前是展開的 (Y接近0) -> 收起
-            if (Math.abs(finalY) < 50) {
-                panel.style.transform = `translateY(${maxHidden}px)`;
+        // 判斷吸附位置
+        if (Math.abs(moved) < 5) {
+            // 視為「點擊」：在 最小 <-> 中間 之間切換
+            if (currentHeight < 100) { // 如果現在是收起的
+                panel.style.height = `${MID_H}px`; // 彈出
             } else {
-                panel.style.transform = `translateY(0px)`;
+                panel.style.height = `${MIN_H}px`; // 收起
             }
+        } else {
+            // 視為「拖曳」：根據放手時的高度吸附
+            if (currentHeight > window.innerHeight * 0.6) {
+                panel.style.height = `${MAX_H}px`; // 拉很高 -> 滿版
+            } else if (currentHeight > window.innerHeight * 0.25) {
+                panel.style.height = `${MID_H}px`; // 拉中間 -> 40%
+            } else {
+                panel.style.height = `${MIN_H}px`; // 拉很低 -> 完全收起
+            }
+        }
     });
 }
 </script>
