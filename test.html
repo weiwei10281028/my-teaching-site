@@ -260,12 +260,12 @@
         
         .controls-container { display: none !important; } 
 
-        /* 上方顯示區佔 75% */
+        /* 上方顯示區固定佔 60% */
         .viewport-area {
             position: relative; 
             width: 100%; 
-            height: 75%; 
-            flex: 0 0 75%; /* 強制固定高度 */
+            height: 60%; 
+            flex: 0 0 60%; /* 強制固定 */
             z-index: 0;
         }
 
@@ -279,30 +279,61 @@
             /* 初始高度：佔螢幕 40% */
             height: 40%; 
             
-            /* 最大高度 */
+            /* 最大高度：幾乎滿版 */
             max-height: 95vh;
             
-            /* [修改這裡] 最小高度改為 30px (只留把手高度，讓它可以完全收起來) */
+            /* [關鍵] 最小高度設為 30px，讓它可以完全收起來只剩把手 */
             min-height: 30px; 
 
             border-radius: 20px 20px 0 0; 
-            border-top: 1px solid var(--panel-border);
+            border-top: 1px solid rgba(255,255,255,0.2);
             border-left: none;
             background-color: #1a1a1a; 
             
             padding: 0; 
             z-index: 100;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-            
-            transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-            will-change: height; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.6);
             
             display: flex;
             flex-direction: column;
+            
+            /* 注意：移除 CSS transition，改由 JS 控制以確保拖曳跟手 */
         }
 
-        /* 移除手機版的把手，因為是固定分割 */
-        #mobile-panel-handle { display: none; }
+        /* 手機版把手區域 */
+        #mobile-panel-handle { 
+            display: flex; 
+            width: 100%; 
+            height: 30px; /* 固定高度 */
+            justify-content: center; 
+            align-items: center;
+            cursor: grab; 
+            flex-shrink: 0; 
+            background: rgba(255,255,255,0.08); 
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            touch-action: none; /* [關鍵] 禁止瀏覽器預設捲動，讓 JS 接管 */
+        }
+        
+        /* 把手橫條 */
+        .handle-bar {
+            width: 40px;
+            height: 5px;
+            background-color: #38bdf8; /* 亮藍色，明顯提示 */
+            border-radius: 3px;
+            position: relative;
+        }
+        
+        /* [新增] 增加一個向上箭頭的視覺提示，讓開關更明顯 */
+        .handle-bar::after {
+            content: '';
+            position: absolute;
+            top: -8px; left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #38bdf8; /* 三角形 */
+            opacity: 0.7;
+        }
 
         .controls-content {
             padding: 15px;
@@ -2535,67 +2566,76 @@ function hideHybridTooltip() {
 
 // --- [JS 修改] 手機版面板滑動邏輯 (可完全收起) ---
 function setupMobilePanel() {
-    const panel = document.getElementById('controls-panel');
+    const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
-    if(!handle || !panel) return;
+    
+    // 確保元素存在且是手機版才執行
+    if(!handle || !panel || !isMobile) return;
 
     let startY = 0;
     let startHeight = 0;
-    let isPanelDragging = false;
+    let isDragging = false;
     
-    // [修改] 面板狀態定義
-    const STATE_COLLAPSED = 30; // 完全收起 (只留 30px 把手)
-    const STATE_DEFAULT = window.innerHeight * 0.4; // 預設 40%
-    const STATE_EXPANDED = window.innerHeight * 0.95; // 最大 95%
+    // 狀態高度定義 (像素)
+    const MIN_H = 30; // 收起高度 (把手高度)
+    const MID_H = window.innerHeight * 0.4; // 預設 40%
+    const MAX_H = window.innerHeight * 0.95; // 最大 95%
 
+    // 1. 觸控開始
     handle.addEventListener('touchstart', (e) => {
-        isPanelDragging = true;
+        isDragging = true;
         startY = e.touches[0].clientY;
         startHeight = panel.offsetHeight;
-        panel.style.transition = 'none'; // 拖曳時移除動畫，確保跟手
+        
+        // 拖曳時移除過渡動畫，確保跟手性極佳
+        panel.style.transition = 'none';
     }, {passive: false});
 
-    handle.addEventListener('touchmove', (e) => {
-        if(!isPanelDragging) return;
-        e.preventDefault(); // 防止畫面捲動
-        e.stopPropagation();
+    // 2. 觸控移動 (綁定在 window 以免手指滑太快出界)
+    window.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        
+        // [關鍵] 阻止瀏覽器預設捲動 (例如下拉刷新)，讓 JS 完全控制面板
+        if(e.cancelable) e.preventDefault();
         
         const currentY = e.touches[0].clientY;
-        const deltaY = startY - currentY; // 往上拉 deltaY 為正
+        const deltaY = startY - currentY; // 往上拉 deltaY > 0
         let newHeight = startHeight + deltaY;
-        
-        // 限制高度範圍 (增加一點阻尼感)
-        if (newHeight < STATE_COLLAPSED) newHeight = STATE_COLLAPSED + (newHeight - STATE_COLLAPSED) * 0.2;
-        if (newHeight > STATE_EXPANDED) newHeight = STATE_EXPANDED + (newHeight - STATE_EXPANDED) * 0.2;
+
+        // 限制範圍與阻尼
+        if (newHeight < MIN_H) newHeight = MIN_H + (newHeight - MIN_H) * 0.2;
+        if (newHeight > MAX_H) newHeight = MAX_H + (newHeight - MAX_H) * 0.2;
 
         panel.style.height = `${newHeight}px`;
     }, {passive: false});
 
-    handle.addEventListener('touchend', (e) => {
-        isPanelDragging = false;
-        panel.style.transition = 'height 0.35s cubic-bezier(0.2, 0.9, 0.2, 1)'; // 設定回彈動畫
+     // 3. 觸控結束
+    window.addEventListener('touchend', (e) => {
+        if(!isDragging) return;
+        isDragging = false;
         
+        // 恢復彈性動畫
+        panel.style.transition = 'height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
         const currentHeight = panel.offsetHeight;
+        const moved = currentHeight - startHeight;
         
         // 判斷吸附位置
-        if (Math.abs(currentHeight - startHeight) < 10) {
-            // 如果是點擊 (移動很小)：在 收起/預設 之間切換
-            if (currentHeight < STATE_DEFAULT - 50) {
-                panel.style.height = `${STATE_DEFAULT}px`;
+        if (Math.abs(moved) < 5) {
+            // 視為「點擊」：在 最小 <-> 中間 之間切換
+            if (currentHeight < 100) { // 如果現在是收起的
+                panel.style.height = `${MID_H}px`; // 彈出
             } else {
-                panel.style.height = `${STATE_COLLAPSED}px`;
+                panel.style.height = `${MIN_H}px`; // 收起
             }
         } else {
-            // 拖曳結束判定
+            // 視為「拖曳」：根據放手時的高度吸附
             if (currentHeight > window.innerHeight * 0.6) {
-                // 拉很高 -> 吸附到最大
-                panel.style.height = `${STATE_EXPANDED}px`;
-            } else if (currentHeight > window.innerHeight * 0.2) {
-                // 拉到中間 -> 吸附到預設 40%
-                panel.style.height = `${STATE_DEFAULT}px`;
+                panel.style.height = `${MAX_H}px`; // 拉很高 -> 滿版
+            } else if (currentHeight > window.innerHeight * 0.25) {
+                panel.style.height = `${MID_H}px`; // 拉中間 -> 40%
             } else {
-                // 拉很低 -> 完全收起
-                panel.style.height = `${STATE_COLLAPSED}px`;
+                panel.style.height = `${MIN_H}px`; // 拉很低 -> 完全收起
             }
         }
     });
