@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v15.3 (Full Fixed)</title>
+    <title>分子結構模擬實驗室 v15.4 (Full Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -23,7 +23,7 @@
 
     body {
         margin: 0; 
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif; /* 全域預設 */
         background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
         color: var(--text-main);
         height: 100vh; overflow: hidden; display: flex; flex-direction: column;
@@ -58,7 +58,8 @@
     #molecule-svg * { pointer-events: none; }
 
     .atom-label-text {
-        font-family: 'Roboto Mono', monospace; font-weight: 700; 
+        font-family: 'Segoe UI', 'Arial', sans-serif; /* 改用 Segoe UI */
+        font-weight: 700; 
         text-anchor: middle; dominant-baseline: central; 
         fill: #ffffff; text-shadow: 0 0 4px #000;
     }
@@ -89,14 +90,17 @@
     .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     /* [修改 3] 放大物質資料欄位的文字 */
     .data-label { font-size: 1rem; color: var(--text-sub); }
-    .data-value { font-family: 'Roboto Mono', monospace; font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
+    .data-value { 
+        font-family: 'Segoe UI', 'Arial', sans-serif; /* 改用 Segoe UI */
+        font-size: 1.15rem; color: var(--text-main); font-weight: 500; 
+    }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
         flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
-        background: rgba(0,0,0,0.3); color: white; font-family: 'Roboto Mono', monospace;
+        background: rgba(0,0,0,0.3); color: white; 
+        font-family: 'Segoe UI', 'Arial', sans-serif; /* 改用 Segoe UI */
         transition: border 0.3s; outline: none; 
-        /* [修改 2] 放大輸入框文字 */
         font-size: 1.1rem; 
     }
     .input-group button { 
@@ -299,29 +303,28 @@
 
 /* --- [修改] 混成軌域標籤樣式 (固定中央版) --- */
     .hybrid-tooltip {
-        position: fixed; /* 改為固定定位，無視原子位置 */
-        top: 40%;        /* 垂直位置：畫面高度的 40% (稍微偏上，避開下方操作區) */
-        left: 50%;       /* 水平位置：畫面中央 */
-        transform: translate(-50%, -50%); /* 精準置中修正 */
+        position: fixed; 
+        top: 40%;        
+        left: 50%;       
+        transform: translate(-50%, -50%); 
         
-        background: rgba(0, 0, 0, 0.9); /* 背景深一點，避免與後方原子混淆 */
+        background: rgba(0, 0, 0, 0.9); 
         color: #fff;
         padding: 15px 25px;
         border-radius: 12px;
         border: 2px solid var(--accent-green);
-        font-family: 'Roboto Mono', monospace;
-        font-size: 1.4rem; /* 字體大而清晰 */
+        font-family: 'Segoe UI', 'Arial', sans-serif; /* 改用 Segoe UI */
+        font-size: 1.4rem; 
         font-weight: bold;
         pointer-events: none; 
         opacity: 0;
         transition: opacity 0.2s;
-        z-index: 9999; /* 確保在最上層 */
-        white-space: nowrap; /* 防止文字換行 */
+        z-index: 9999; 
+        white-space: nowrap; 
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8); /* 強烈陰影，增加立體感 */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
         text-shadow: 0 2px 4px #000;
         
-        /* 確保不會超出螢幕寬度 */
         max-width: 90vw; 
     }
     .hybrid-tooltip.show { opacity: 1; }
@@ -335,7 +338,7 @@
 <div class="app-container">
     <div class="viewport-area" id="viewport">
         <div class="viewport-header">
-            <h1 class="title">MOLECULAR SIMULATOR v15.3</h1>
+            <h1 class="title">MOLECULAR SIMULATOR v15.4</h1>
             <span class="input-note" id="viewport-subtitle"></span>
         </div>
         
