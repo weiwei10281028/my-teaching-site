@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.1 (Layout Fixed)</title>
+    <title>分子結構模擬實驗室 v16.2 (Layout Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -241,6 +241,22 @@
         padding: 15px; border-radius: 12px; margin-bottom: 15px;
     }
     .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
+
+    /* --- 酸鹼系列專用面板樣式 (琥珀橙色) --- */
+    #variant-selector.acid-theme {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    #variant-selector.acid-theme .variant-header {
+    color: #fbbf24; /* 亮橙色標題 */
+    }
+    #variant-selector.acid-theme .variant-option {
+    color: #fbbf24; /* 亮橙色選項 */
+    }
+    #variant-selector.acid-theme .variant-option:hover {
+    background: rgba(245, 158, 11, 0.15);
+    }
+
 
     /* 反應按鈕區塊 */
     #reaction-container { margin-bottom: 30px; width: 100%; }
@@ -571,7 +587,50 @@ let isReactionFinished = false;
  ★ 視覺鍵長標準參考表 (Visual Bond Length Standards) v14.0
  ==========================================================================
  基準：以 1,2-二氯丙烷為錨點 (C-C ~ 70, C-H ~ 50, C-Cl ~ 75)
+ 
+ [1] 原子視覺半徑貢獻 (Base Radius Contribution)
+ --------------------------------------------------------------------------
+  - H (氫) .................... 15  (最小，確保緊湊)
+  - Row 2 (C, N, O, F) ........ 35  (基準)
+  - Row 3 (Si, P, S, Cl) ...... 40  (略大)
+  - Row 4 (Br) ................ 45
+  - Row 5 (I, Xe) ............. 50  (最大)
+
+ [2] 鍵級修正係數 (Bond Order Multiplier)
+ --------------------------------------------------------------------------
+  - 單鍵 (Single) ............. x 1.00
+  - 雙鍵 (Double) ............. x 0.90
+  - 參鍵 (Triple) ............. x 0.85
+
+ [3] 常見鍵長計算範例 (Calculated Examples)
+ --------------------------------------------------------------------------
+  Type      Calc (R1 + R2) * Multiplier      Final Value
+  -------   ---------------------------      -----------
+  H-H       (15 + 15) * 1.0                  30
+  C-H       (35 + 15) * 1.0                  50  (基準)
+  N-H       (35 + 15) * 1.0                  50
+  O-H       (35 + 15) * 1.0                  50
+  P-H       (40 + 15) * 1.0                  55
+
+  C-C       (35 + 35) * 1.0                  70  (基準)
+  C=C       (35 + 35) * 0.9                  63
+  C≡C       (35 + 35) * 0.85                 60
+  
+  C-O       (35 + 35) * 1.0                  70
+  C=O       (35 + 35) * 0.9                  63
+
+  S-O       (40 + 35) * 1.0                  75
+  S=O       (40 + 35) * 0.9                  68  (SO4, SO3)
+  
+  P-Cl      (40 + 40) * 1.0                  80  (PCl3)
+  Xe=O      (50 + 35) * 0.9                  76  (XeO3)
+  
+  F-F       (35 + 35) * 1.0                  70
+  Cl-Cl     (40 + 40) * 1.0                  80
+  I-I       (50 + 50) * 1.0                  100
+ ==========================================================================
 */
+
 
 const ELEMENT_PROPS = {
     "H":  { ve: 1, c3d: "#F0F0F0", r3d: 12, lp: 0, mass: 1.008, en: 2.20 },
@@ -725,25 +784,27 @@ const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, var
     const mainKey = keys[0].trim();
     keys.forEach(k => { MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; });
     
-    // 將 desc 存入 baseData
-    const baseData = { center, hybrid: `${hybrid} 混成 (${hybrid})`, shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, angle, mp: mp, bp: bp, atomsRaw: atoms, bondsRaw: bonds, desc: desc };
+    // 將 desc 存入 baseData，並儲存原始 keyStr
+    const baseData = { center, hybrid: `${hybrid} 混成 (${hybrid})`, shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, angle, mp: mp, bp: bp, atomsRaw: atoms, bondsRaw: bonds, desc: desc, fullKey: keysStr };
     
     if (variants) {
         baseData.variants = {};
         for (let vKeyRaw in variants) {
             const vKeys = vKeyRaw.split('|');
-            const primaryVName = vKeys[0].trim();
+            const primaryVName = vKeys[0].trim(); // 這是選單上顯示的名稱
             const vObj = variants[vKeyRaw];
             baseData.variants[primaryVName] = { 
-                ...baseData, atomsRaw: vObj.atoms, bondsRaw: vObj.bonds,
+                ...baseData, 
+                atomsRaw: vObj.atoms, 
+                bondsRaw: vObj.bonds,
                 mp: vObj.mp !== undefined ? vObj.mp : baseData.mp,
                 bp: vObj.bp !== undefined ? vObj.bp : baseData.bp,
-                desc: vObj.desc !== undefined ? vObj.desc : baseData.desc // 變體也可以有自己的描述
+                desc: vObj.desc !== undefined ? vObj.desc : baseData.desc,
+                fullKey: vKeyRaw // [修正] 強制讓變體擁有自己的標題 Key
             };
             vKeys.forEach(vk => { MOLECULE_INDEX[vk.trim().toUpperCase()] = { key: mainKey, variant: primaryVName }; });
         }
     }
-    baseData.fullKey = keysStr; 
     MOLECULE_DB[mainKey] = baseData;
 };
 
@@ -990,26 +1051,90 @@ addMol("HNO3|硝酸", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°
 );
 
 addMol("HNO2|亞硝酸", "N", "sp²", ["角形","Bent"], "111°", "-", "-", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:60,y:-35,z:0,lpCount:2}, {elem:"H",x:90,y:-10,z:0}], [[0,1,"double"], [0,2], [2,3]]);
-addMol("PO43-|PO4 3-|磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","O", 68), [[0,1,"double"],[0,2],[0,3],[0,4]]);
-addMol("H3PO4|磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35,lpCount:2}, {elem:"O",x:-55,y:-30,z:35,lpCount:2}, {elem:"O",x:0,y:-30,z:-60,lpCount:2}, {elem:"H",x:80,y:-10,z:55}, {elem:"H",x:-80,y:-10,z:55}, {elem:"H",x:0,y:-10,z:-90}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6], [4,7]]);
-addMol("H3PO3|亞磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35,lpCount:2}, {elem:"O",x:-55,y:-30,z:35,lpCount:2}, {elem:"H",x:0,y:-40,z:-60}, {elem:"H",x:80,y:-10,z:55}, {elem:"H",x:-80,y:-10,z:55}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
-addMol("H3PO2|次磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:0,y:-30,z:-60,lpCount:2}, {elem:"H",x:55,y:-35,z:35}, {elem:"H",x:-55,y:-35,z:35}, {elem:"H",x:0,y:-10,z:-90}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
-addMol("HPO42-|HPO4 2-|磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35}, {elem:"O",x:-55,y:-30,z:35}, {elem:"O",x:0,y:-30,z:-60,lpCount:2}, {elem:"H",x:0,y:-10,z:-90}], [[0,1,"double"], [0,2], [0,3], [0,4], [4,5]]);
-addMol("H2PO4-|磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35,lpCount:2}, {elem:"O",x:-55,y:-30,z:35,lpCount:2}, {elem:"O",x:0,y:-30,z:-60}, {elem:"H",x:80,y:-10,z:55}, {elem:"H",x:-80,y:-10,z:55}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6]]);
-addMol("H2PO3-|亞磷酸二氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35,lpCount:2}, {elem:"O",x:-55,y:-30,z:35}, {elem:"H",x:0,y:-40,z:-60}, {elem:"H",x:80,y:-10,z:55}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5]]);
-addMol("HPO32-|HPO3 2-|亞磷酸氫根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35}, {elem:"O",x:-55,y:-30,z:35}, {elem:"H",x:0,y:-40,z:-60}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
-addMol("H2PO2-|次磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:0,y:-30,z:-60}, {elem:"H",x:55,y:-35,z:35}, {elem:"H",x:-55,y:-35,z:35}], [[0,1,"double"], [0,2], [0,3], [0,4]]);
-addMol("ClO4-|過氯酸根", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("Cl","O", 68), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4]]);
-addMol("HClO4|過氯酸", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", [{elem:"Cl", x:0, y:0, z:0, lpCount:0}, {elem:"O", x:0, y:68, z:0},{elem:"O", x:58, y:-25, z:35, lpCount:2},{elem:"O", x:-58, y:-25, z:35, lpCount:2},{elem:"O", x:0, y:-25, z:-65, lpCount:2},{elem:"H", x:30, y:95, z:0}], [[0,1,"single"], [0,2,"double"], [0,3,"double"], [0,4,"double"], [1,5]] );
-addMol("ClO3-|氯酸根", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Cl", x:0, y:12, z:0, lpCount:1},{elem:"O", x:0, y:-40, z:50},{elem:"O", x:45, y:-40, z:-30},{elem:"O", x:-45, y:-40, z:-30}], [[0,1,"double"], [0,2,"double"], [0,3,"single"]] );
-addMol("HClO3|氯酸", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", [{elem:"Cl",x:0,y:15,z:0}, {elem:"O",x:0,y:-40,z:50}, {elem:"O",x:48,y:-40,z:-28}, {elem:"O",x:-48,y:-40,z:-28}, {elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"], [0,2,"double"], [0,3,"single"], [3,4]]);addMol("ClO2-|亞氯酸根", "Cl", "sp³", ["角形","Bent"], "111°", "-", "-", [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0}], [[0,1,"double"],[0,2,"single"]]);
-addMol("HClO2|亞氯酸", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0,lpCount:2},{elem:"H",x:-90,y:-20,z:0}], [[0,1,"double"],[0,2,"single"],[2,3]]);
-addMol("HClO|次氯酸", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", [{elem:"O",x:0,y:10,z:0,lpCount:2},{elem:"Cl",x:65,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0}], [[0,1],[0,2]]);
-addMol("ClO-|OCl-|次氯酸根", "O", "sp³", ["直線型","Linear"], "-", "-", "-", [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3}], [[0,1]]);
-addMol("HBrO3|溴酸", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "不穩定", [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28,lpCount:2},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]]);
-addMol("BrO3-|溴酸根", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-45,z:55},{elem:"O",x:50,y:-45,z:-32},{elem:"O",x:-50,y:-45,z:-32}], [[0,1,"double"],[0,2,"double"],[0,3,"single"]]);
-addMol("HIO3|碘酸", "I", "sp³", ["角錐形","Pyramidal"], "107°", "110", "分解", [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28,lpCount:2},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-75,y:-25,z:-40}], [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]]);
-addMol("IO3-|碘酸根", "I", "sp³", ["角錐形","Pyramidal"], "107°", "-", "-", [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-45,z:55},{elem:"O",x:50,y:-45,z:-32},{elem:"O",x:-50,y:-45,z:-32}], [[0,1,"double"],[0,2,"double"],[0,3,"single"]]);
+
+
+
+addMol("H3PO4|磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [], [], {
+        "磷酸 H<sub>3</sub>PO<sub>4</sub>|H<sub>3</sub>PO<sub>4</sub>|磷酸": { 
+            mp: "42.4", bp: "213 (分解)", 
+            desc: "<strong>磷酸 (Phosphoric Acid)</strong><br>三質子酸，含三個 -OH 基團與一個 P=O 雙鍵。", 
+            atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55},{elem:"H",x:0,y:-10,z:-90}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6],[4,7]] },
+        "磷酸二氫根 H<sub>2</sub>PO<sub>4</sub><sup>-</sup>|H<sub>2</sub>PO<sub>4</sub><sup>-</sup>|磷酸二氫根": { 
+            mp: "-", bp: "-", 
+            desc: "<strong>磷酸二氫根 (Dihydrogen Phosphate)</strong><br>失去一個質子，帶 -1 價電荷。", 
+            atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
+        "磷酸氫根 HPO<sub>4</sub><sup>2-</sup>|HPO<sub>4</sub><sup>2-</sup>|磷酸氫根": { 
+            mp: "-", bp: "-", 
+            desc: "<strong>磷酸氫根 (Hydrogen Phosphate)</strong><br>失去兩個質子，帶 -2 價電荷。", 
+            atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
+        "磷酸根 PO<sub>4</sub><sup>3-</sup>|PO<sub>4</sub><sup>3-</sup>|磷酸根": { 
+            mp: "-", bp: "-", 
+            desc: "<strong>磷酸根 (Phosphate)</strong><br>三個質子全數解離，帶 -3 價電荷，具共振結構。", 
+            atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }});
+
+// ==========================================
+// 磷的含氧酸系列 (特殊結構：P-H鍵)
+// ==========================================
+
+addMol("H3PO3|亞磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", [], [], {
+    "亞磷酸 H<sub>3</sub>PO<sub>3</sub>|H<sub>3</sub>PO<sub>3</sub>|亞磷酸": { mp: "73.6", bp: "200 (分解)", desc: "<strong>亞磷酸</strong><br>二質子酸，含一個 P-H 鍵，兩個 -OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60},{elem:"H",x:-90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
+    "亞磷酸二氫根 H<sub>2</sub>PO<sub>3</sub><sup>-</sup>|H<sub>2</sub>PO<sub>3</sub><sup>-</sup>|亞磷酸二氫根": { mp: "-", bp: "-", desc: "<strong>亞磷酸二氫根</strong><br>帶 -1 價電荷，P-H 鍵保留。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
+    "亞磷酸氫根 HPO<sub>3</sub><sup>2-</sup>|HPO<sub>3</sub><sup>2-</sup>|亞磷酸氫根": { mp: "-", bp: "-", desc: "<strong>亞磷酸氫根</strong><br>帶 -2 價電荷，P-H 鍵極難解離。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"H",x:0,y:-40,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
+});
+
+addMol("H3PO2|次磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", [], [], {
+    "次磷酸 H<sub>3</sub>PO<sub>2</sub>|H<sub>3</sub>PO<sub>2</sub>|次磷酸": { mp: "26.5", bp: "130 (分解)", desc: "<strong>次磷酸</strong><br>單質子酸，含兩個 P-H 鍵，僅一個 -OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35},{elem:"H",x:0,y:-10,z:-100}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
+    "次磷酸根 H<sub>2</sub>PO<sub>2</sub><sup>-</sup>|H<sub>2</sub>PO<sub>2</sub><sup>-</sup>|次磷酸根": { mp: "-", bp: "-", desc: "<strong>次磷酸根</strong><br>帶 -1 價電荷，兩個 P-H 鍵保留。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
+});
+
+// ==========================================
+// 氯的含氧酸系列 (Cl均為中心，預設雙鍵以配合八隅體切換)
+// ==========================================
+
+addMol("HClO4|過氯酸系列", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", [], [], {
+    "過氯酸 HClO<sub>4</sub>|HClO<sub>4</sub>|過氯酸": { mp: "-112", bp: "19 (分解)", desc: "<strong>過氯酸</strong><br>最強無機酸之一，正四面體結構。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35,lpCount:2},{elem:"O",x:-58,y:-25,z:35,lpCount:2},{elem:"O",x:0,y:-25,z:-65,lpCount:2},{elem:"H",x:0,y:-5,z:-105}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"],[4,5]] },
+    "過氯酸根 ClO<sub>4</sub><sup>-</sup>|ClO<sub>4</sub><sup>-</sup>|過氯酸根": { mp: "-", bp: "-", desc: "<strong>過氯酸根</strong><br>化學性質穩定，鍵長均等(共振)。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"]] }
+});
+
+addMol("HClO3|氯酸系列", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", [], [], {
+    "氯酸 HClO<sub>3</sub>|HClO<sub>3</sub>|氯酸": { mp: "-20", bp: "分解", desc: "<strong>氯酸</strong><br>強酸，具有強氧化性，中心有一對孤對電子。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
+    "氯酸根 ClO<sub>3</sub><sup>-</sup>|ClO<sub>3</sub><sup>-</sup>|氯酸根": { mp: "-", bp: "-", desc: "<strong>氯酸根</strong><br>三角錐形結構，常用於火藥與炸藥。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
+});
+
+addMol("HClO2|亞氯酸系列", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
+    "亞氯酸 HClO<sub>2</sub>|HClO<sub>2</sub>|亞氯酸": { mp: "-", bp: "不穩定", desc: "<strong>亞氯酸</strong><br>弱酸，結構呈V型，中心有兩對孤對電子。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0,lpCount:2},{elem:"H",x:-90,y:-20,z:0}], bonds: [[0,1,"double"],[0,2,"single"],[2,3]] },
+    "亞氯酸根 ClO<sub>2</sub><sup>-</sup>|ClO<sub>2</sub><sup>-</sup>|亞氯酸根": { mp: "-", bp: "-", desc: "<strong>亞氯酸根</strong><br>V型結構，常用於漂白劑。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0}], bonds: [[0,1,"double"],[0,2,"single"]] }
+});
+
+addMol("HClO|次氯酸系列", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", [], [], {
+    "次氯酸 HClO|HClO|次氯酸": { mp: "-", bp: "不穩定", desc: "<strong>次氯酸</strong><br>弱酸，殺菌力強，結構 H-O-Cl。", atoms: [{elem:"O",x:0,y:10,z:0,lpCount:2},{elem:"Cl",x:65,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0}], bonds: [[0,1],[0,2]] },
+    "次氯酸根 ClO<sup>-</sup>|ClO<sup>-</sup>|次氯酸根": { mp: "-", bp: "-", desc: "<strong>次氯酸根</strong><br>漂白水有效成分。", atoms: [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3}], bonds: [[0,1]] }
+});
+
+// ==========================================
+// 溴與碘的含氧酸系列
+// ==========================================
+
+addMol("HBrO3|溴酸系列", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "不穩定", [], [], {
+    "溴酸 HBrO<sub>3</sub>|HBrO<sub>3</sub>|溴酸": { mp: "-", bp: "不穩定", desc: "<strong>溴酸</strong><br>強酸，僅存在水溶液中，中心有一對孤對電子。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
+    "溴酸根 BrO<sub>3</sub><sup>-</sup>|BrO<sub>3</sub><sup>-</sup>|溴酸根": { mp: "-", bp: "-", desc: "<strong>溴酸根</strong><br>三角錐形結構，常用氧化劑。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
+});
+
+addMol("HIO3|碘酸系列", "I", "sp³", ["角錐形","Pyramidal"], "107°", "110", "分解", [], [], {
+    "碘酸 HIO<sub>3</sub>|HIO<sub>3</sub>|碘酸": { mp: "110", bp: "分解", desc: "<strong>碘酸</strong><br>穩定的白色固體，強酸。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
+    "碘酸根 IO<sub>3</sub><sup>-</sup>|IO<sub>3</sub><sup>-</sup>|碘酸根": { mp: "-", bp: "-", desc: "<strong>碘酸根</strong><br>三角錐形結構，碘鐘反應試劑。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
+});
+
+
+
+
+
+
+
+
+
+
+
 
 // --- 10. 陽離子 (鍵長修正: NH4=50, PH4=55, H3O=50) ---
 addMol("NH4+|銨根|銨離子", "N", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("N","H", 50), [[0,1],[0,2],[0,3],[0,4]]);
@@ -1546,6 +1671,7 @@ let lastMouse = { x: 0, y: 0 };
 let currentMode = 2; // [修正] 預設改為 2 (複合模式)，這樣單指才能旋轉
 let altKeyIsDown = false;
 let currentKey = null; 
+let currentVariantKey = null; // [新增這一行] 用來記錄當前選中的變體
 let lastInteractTime = 0; 
 let lastTouchDist = 0;
 let lastTouchCenter = { x:0, y:0 };
@@ -1560,11 +1686,23 @@ function toggleMode() {
     modeToggleBtn.innerHTML = `模式: ${modes[currentMode]}`;
 }
 
+// [最終修正版] 化學式格式化工具 (支援手動 HTML 模式)
 function formatFormula(str) {
-    let parts = str.split(' ');
-    let main = parts[0];
-    let charge = parts.length > 1 ? parts[1] : '';
-    return main.replace(/(\d+)/g, '<sub>$1</sub>') + (charge ? `<sup>${charge}</sup>` : '');
+    if (!str) return "";
+    
+    // 1. 【手動模式】檢查是否包含 HTML 標籤 (例如 <sub> 或 <sup>)
+    // 如果有，代表你已經手動排版好了，程式直接回傳，不進行自動運算
+    if (str.includes('<') && str.includes('>')) {
+        return str;
+    }
+
+    // 2. 【自動模式】(僅作為簡單分子的備案)
+    // 簡單的處理：把結尾的 "數字+正負號" 轉上標，其餘數字轉下標
+    // 但這個對複雜離子 (如 H2PO4-) 不準確，所以複雜的請用上方的手動模式
+    let formatted = str.replace(/(\d*[+-])$/, '<sup>$1</sup>');
+    let parts = formatted.split('<sup>');
+    parts[0] = parts[0].replace(/(\d+)/g, '<sub>$1</sub>');
+    return parts.join('<sup>');
 }
 
 function handleLoadBtn() {
@@ -1702,8 +1840,8 @@ window.onload = () => {
 // 分子載入與資料處理
 // ==========================================
 function loadMolecule(key, variantKey = null) {
-    // 嘗試從 MOLECULE_INDEX 反查
     let targetData = MOLECULE_DB[key];
+    // 處理索引搜尋 (例如輸入 H2O 找到 H2O|水)
     if (!targetData && MOLECULE_INDEX[key.toUpperCase()]) {
         const idx = MOLECULE_INDEX[key.toUpperCase()];
         targetData = MOLECULE_DB[idx.key];
@@ -1711,87 +1849,105 @@ function loadMolecule(key, variantKey = null) {
         if (!variantKey) variantKey = idx.variant;
     }
 
-    if (!targetData) {
-        console.error("Data missing for:", key);
-        return;
-    }
+    if (!targetData) { console.error("Data missing for:", key); return; }
     
+    // =========================================================
+    // [關鍵修正] 智慧變體保持邏輯
+    // 如果沒有指定 variantKey，但載入的是當前同一個分子
+    // 則自動沿用上一次選擇的變體 (currentVariantKey)
+    // 解決切換八隅體開關時，會跳回預設含氧酸的問題
+    // =========================================================
+    if (!variantKey && currentKey === key && typeof currentVariantKey !== 'undefined' && currentVariantKey) {
+        variantKey = currentVariantKey;
+    }
+    // =========================================================
+
     // 重置旋轉速度
     rotVelocity = { x: 0.004, y: 0.004, z: 0 }; 
     currentKey = key;
     
-    // 1. 處理資料與變體
     let data = targetData;
+    // 處理變體 (同分異構物或酸根)
     if (variantKey && data.variants && data.variants[variantKey]) {
         data = data.variants[variantKey];
     } else if (data.variants && !variantKey) {
+        // 若無指定且無法沿用，則載入第一個 (預設)
         const firstKey = Object.keys(data.variants)[0];
         data = data.variants[firstKey];
         variantKey = firstKey;
     }
 
-    // 2. 複製鍵結資料
+    // 更新全域變數，記住這次選的變體
+    currentVariantKey = variantKey;
+
     if (!data.bondsRaw) data.bondsRaw = []; 
+    // 深拷貝鍵結資料
     let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
-    
-    // 3. 八隅體規則邏輯 (自動配位鍵轉換)
-    const octetSwitch = document.getElementById('toggle-octet');
-    const octetMode = octetSwitch ? octetSwitch.checked : false;
-    const octetCenters = ["S","P","Cl","Br","I","Xe","N"]; 
 
-     if (octetMode && octetCenters.includes(data.center)) {
-        const centerIdx = 0;
-        let coordinationNum = 0;
-        processedBonds.forEach(b => {
-            if (b[0] === centerIdx || b[1] === centerIdx) coordinationNum++;
-        });
+    // =========================================================
+    // [八隅體邏輯] 動態將 P=O, S=O, Cl=O 等雙鍵轉為配位鍵
+    // =========================================================
+    const toggleOct = document.getElementById('toggle-octet');
+    if (toggleOct && toggleOct.checked) {
+        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te', 'N'];
 
-        const isHalogen = ["Cl", "Br", "I"].includes(data.center);
-        let allowedDoubleBonds = 0;
-        if (isHalogen) {
-            allowedDoubleBonds = 0;
-        } else {
-            allowedDoubleBonds = (coordinationNum >= 4) ? 0 : 1;
-        }
-        
-        let doubleBondCount = 0; 
-        processedBonds = processedBonds.map(bond => {
-            const atom1 = data.atomsRaw[bond[0]];
-            const atom2 = data.atomsRaw[bond[1]];
-            const isChalcogen = (["O", "S"].includes(atom1.elem) || ["O", "S"].includes(atom2.elem));
-            const isMultiBond = (bond[2] === "double" || bond[2] === "triple");
-            const isConnectedToCenter = (bond[0] === centerIdx || bond[1] === centerIdx);
+        processedBonds.forEach(bond => {
+            if (bond[2] === 'double') {
+                const idx1 = bond[0];
+                const idx2 = bond[1];
+                const atom1 = data.atomsRaw[idx1];
+                const atom2 = data.atomsRaw[idx2];
 
-            if (isConnectedToCenter && isChalcogen && isMultiBond) {
-                if (doubleBondCount < allowedDoubleBonds) {
-                    doubleBondCount++;
-                    return bond;
-                } else {
-                    return [bond[0], bond[1], "coordinate"];
+                let centerIdx = -1;
+                let termOIdx = -1;
+
+                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') {
+                    centerIdx = idx1; termOIdx = idx2;
+                } else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') {
+                    centerIdx = idx2; termOIdx = idx1;
+                }
+
+                if (centerIdx !== -1) {
+                    let connectionCount = 0;
+                    processedBonds.forEach(b => {
+                        if (b[0] === termOIdx || b[1] === termOIdx) connectionCount++;
+                    });
+
+                    if (connectionCount === 1) {
+                        bond[2] = 'coordinate';
+                        bond[0] = centerIdx;
+                        bond[1] = termOIdx;
+                    }
                 }
             }
-            return bond;
         });
     }
+    // =========================================================
 
-    // 4. 計算並生成渲染物件
     const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
     currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
     
-    // 5. 更新上方顯示區
+    // === UI 更新區 ===
     const formulaEl = document.getElementById('info-formula');
     const nameEl = document.getElementById('info-name');
 
     const keyString = data.fullKey || key; 
     const keyParts = keyString.split('|');
     
-    let formulaText = keyParts[0];
-    let nameText = keyParts.length > 1 ? keyParts[keyParts.length - 1] : "";
+    let formulaText = "";
+    let nameText = "";
 
-    if(formulaEl) formulaEl.innerHTML = formulaText.replace(/(\d+)/g, '<sub>$1</sub>');
+    if (keyParts.length >= 3) {
+        formulaText = keyParts[1];
+        nameText = keyParts[2];
+    } else {
+        formulaText = keyParts[0];
+        nameText = keyParts.length > 1 ? keyParts[keyParts.length - 1] : "";
+    }
+
+    if(formulaEl) formulaEl.innerHTML = formatFormula(formulaText);
     if(nameEl) nameEl.textContent = nameText;
 
-    // 更新知識小百科
     const knowledgeCard = document.getElementById('knowledge-card');
     const knowledgeText = document.getElementById('knowledge-text');
     
@@ -1809,12 +1965,10 @@ function loadMolecule(key, variantKey = null) {
         }
     }
 
-    // 6. 更新「猜你想看」
     updateSuggestions();
 
-    // 7. 更新面板數據 (熔沸點、鍵結統計)
     const dispFormula = document.getElementById("disp-formula");
-    if(dispFormula) dispFormula.innerHTML = formulaText.replace(/(\d+)/g, '<sub>$1</sub>');
+    if(dispFormula) dispFormula.innerHTML = formatFormula(formulaText);
     
     const dispCenter = document.getElementById("disp-center");
     if(dispCenter) dispCenter.textContent = data.center;
@@ -1858,7 +2012,7 @@ function loadMolecule(key, variantKey = null) {
     if (massDisp) massDisp.textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
 
     const subtitle = document.getElementById("viewport-subtitle");
-    if(subtitle) subtitle.textContent = `${key} - ${data.shape}`;
+    if(subtitle) subtitle.textContent = `${nameText} (${formulaText}) - ${data.shape}`; 
     
     updateVariantUI(key, variantKey);
     checkReactionAvailable(key);
@@ -1888,19 +2042,47 @@ function processAtomsData(atomList, bondList, centerElem) {
 function updateVariantUI(key, activeVariant) {
     const rootData = MOLECULE_DB[key];
     variantSelector.innerHTML = ''; 
+    
+    variantSelector.classList.remove('acid-theme');
+
     if (rootData.variants) {
         variantSelector.style.display = 'block';
+
+        const isAcidKey = key.includes("酸") || key.includes("Acid") || key.includes("COOH");
+        const hasRadicalVariant = Object.keys(rootData.variants).some(vKey => 
+            vKey.includes("根") || vKey.includes("ate") || vKey.includes("ite") || vKey.includes("離子")
+        );
+        const isAcidSeries = isAcidKey || hasRadicalVariant;
+
+        if (isAcidSeries) {
+            variantSelector.classList.add('acid-theme');
+        }
+
         const hdr = document.createElement('div');
         hdr.className = 'variant-header';
-        hdr.textContent = '選擇結構模式:';
+        
+        // [修改 2] 更改標題文字
+        if (isAcidSeries) {
+            hdr.textContent = '選擇解離狀態 (分子/離子):';
+        } else {
+            hdr.textContent = '選擇結構模式 (同分異構):';
+        }
+        
         variantSelector.appendChild(hdr);
+
         for (let vKey in rootData.variants) {
             const div = document.createElement('div');
             div.className = 'variant-option';
             const radio = document.createElement('input');
             radio.type = 'radio'; radio.name = 'v';
             if (vKey === activeVariant) radio.checked = true;
-            const span = document.createElement('span'); span.textContent = ` ${vKey}`;
+            
+            const span = document.createElement('span'); 
+            
+            // [修改 3] 這裡改用 innerHTML 並呼叫 formatFormula
+            // 讓選單裡的 "H3PO4", "PO43-" 也能顯示正確的上下標
+            span.innerHTML = ` ${formatFormula(vKey)}`; 
+            
             div.appendChild(radio); div.appendChild(span);
             div.addEventListener('click', () => loadMolecule(key, vKey));
             variantSelector.appendChild(div);
