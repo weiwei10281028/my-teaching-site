@@ -100,42 +100,61 @@
         .info-name { font-size: 1rem; }
     }
 
-    /* [修改 4] 新增：猜你想看 (標籤區) */
-    .suggestions-container {
-        margin-top: 15px;
-        pointer-events: auto;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        max-width: 350px;
-    }
+/* [修改 4] 猜你想看 - 響應式佈局 (電腦左側 / 手機右上) */
+.suggestions-container {
+    position: absolute;
+    z-index: 60;
+    pointer-events: auto;
+    
+    /* 網格佈局 (2x2 田字型) */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 180px;
 
-    .suggestion-label {
-        font-size: 0.85rem;
-        color: #888;
-        width: 100%;
-        margin-bottom: 2px;
-        font-weight: bold;
-    }
+    /* --- 電腦版位置設定 (紅色框框處) --- */
+    top: 160px;   /* 往下移，避開上方的標題與化學式 */
+    left: 25px;   /* 靠左對齊，與標題切齊 */
+    right: auto;  /* 確保右邊設定被清除 */
+}
 
-    .suggestion-tag {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #ddd;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        backdrop-filter: blur(2px);
-    }
+/* 標籤標題文字 */
+.suggestion-label {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    font-weight: bold;
+    
+    /* 電腦版文字靠左 */
+    text-align: left; 
+}
 
-    .suggestion-tag:hover {
-        background: var(--accent-blue);
-        color: #fff;
-        border-color: var(--accent-blue);
-        transform: translateY(-2px);
-    }
+/* 按鈕本體樣式 */
+.suggestion-tag {
+    background: rgba(40, 40, 40, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #eee;
+    padding: 6px 0;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.suggestion-tag:hover {
+    background: var(--accent-blue);
+    color: #fff;
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
 
     /* 原本的說明文字 (隱藏或保留作為備註) */
     #viewport-subtitle {
@@ -364,13 +383,64 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* 手機版字體微調 */
+/* --- 手機版專用設定 (螢幕小於 768px 時觸發) --- */
 @media (max-width: 768px) {
-    .knowledge-content {
-        font-size: 0.9rem;
+    .suggestions-container {
+        /* 手機版改回右上角，避免擋住中間分子 */
+        top: 60px;
+        right: 10px;
+        left: auto; /* 清除電腦版的左側設定 */
+        width: 160px;
+    }
+
+    .suggestion-label {
+        /* 手機版文字靠右，符合角落視覺 */
+        text-align: right;
+    }
+    
+    .suggestion-tag {
+        font-size: 0.75rem;
+        padding: 5px 0;
     }
 }
 
+/* [修改] 知識小百科內文排版樣式 - 3.0 簡約配色版 */
+.info-section {
+    margin-bottom: 15px; /* 增加間距，讓長文好閱讀 */
+}
+
+/* 內層區塊標題 (例如：物質性質) - 改為翠綠色 */
+.info-title {
+    font-weight: bold;
+    color: #4ade80; /* 舒適的翠綠色 */
+    margin-bottom: 8px;
+    font-size: 1.05rem;
+    border-left: 3px solid #4ade80;
+    padding-left: 10px;
+    letter-spacing: 1px;
+}
+
+.info-body {
+    padding-left: 6px;
+    font-size: 0.95rem;
+    color: #f1f5f9; /* 接近純白，適合閱讀長文 */
+    line-height: 1.7; /* 增加行高，提升閱讀體驗 */
+    text-align: justify;
+}
+
+/* [關鍵] 內文重點僅加粗，不變色，保持畫面乾淨 */
+.info-body strong {
+    color: inherit; 
+    font-weight: 700;
+}
+
+/* 條列標題 (例如：1. 立體結構) - 改為天藍色 */
+.highlight-title {
+    color: #38bdf8; /* 天藍色 */
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 4px;
+}
 
     .hybrid-tooltip.show { opacity: 1; }
 
@@ -467,7 +537,7 @@
             <!-- [新增] 知識小百科卡片 -->
             <div class="card knowledge-card" id="knowledge-card" style="display: none;">
             <div class="card-title" onclick="toggleKnowledge()">
-            <span>💡 結構小知識</span>
+            <span>💡 小知識</span>
             <span class="toggle-icon">▼</span>
             </div>
             <div class="knowledge-content" id="knowledge-text">
@@ -771,12 +841,22 @@ addMol("H2S|硫化氫", "S", "sp³", ["角形","Bent"], "92°", "-85.5", "-60.3"
 addMol("NH3|氨|氨氣|阿摩尼亞", "N", "sp³", ["角錐形","Pyramidal"], "107°", "-77.7", "-33.3", [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], [[0,1],[0,2],[0,3]]);
 addMol("PH3|磷化氫|膦", "P", "sp³", ["角錐形","Pyramidal"], "93.5°", "-133.8", "-87.7", [{elem:"P",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"H",x:0,y:-30,z:45}, {elem:"H",x:39,y:-30,z:-22}, {elem:"H",x:-39,y:-30,z:-22}], [[0,1],[0,2],[0,3]]);
 addMol("CH4|甲烷|沼氣", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", "-182.5", "-161.5", getTetra("C","H", 50), [[0,1],[0,2],[0,3],[0,4]], null, 
-    `<strong>1. 最簡單的有機物：</strong><br>
-    甲烷是結構最簡單的烷類，天然氣的主要成分。由一個碳原子與四個氫原子以共價鍵結合。<br><br>
-    <strong>2. 立體結構 (VSEPR)：</strong><br>
-    中心碳原子為 <strong>sp³ 混成</strong>。因無孤對電子，四個鍵斥力均等，形成完美的<strong>正四面體</strong>，鍵角 <strong>109.5°</strong>。<br><br>
-    <strong>3. 性質與應用：</strong><br>
-    非極性分子，難溶於水。是重要的燃料與溫室氣體。`
+    `<div class="info-section">
+        <div class="info-title">⚗️ 物質性質</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 立體結構：</span>中心碳原子採取 <strong>sp³ 混成軌域</strong>。由於周圍連接四個相同的氫原子且無孤對電子，四個 C-H 鍵之間的電子斥力完全均等，構成了完美的<strong>正四面體</strong>結構，鍵角為 <strong>109.5°</strong>。<br>
+            <span class="highlight-title">2. 物理性質：</span>常溫常壓下為無色、無味、無毒的氣體（家用天然氣的臭味是為了安全而添加的硫醇）。屬於完全對稱的<strong>非極性分子</strong>，難溶於水。由於分子量小且分子間僅有微弱的<strong>凡得瓦力</strong>（倫敦分散力），因此熔沸點極低。<br>
+            <span class="highlight-title">3. 化學性質：</span>化學性質相當穩定，在一般條件下不與強酸、強鹼或強氧化劑反應。具有可燃性，在空氣中完全燃燒生成二氧化碳與水；在紫外線光照下，可與鹵素（如氯氣）發生連鎖的<strong>自由基取代反應</strong>。
+        </div>
+    </div>
+    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+        <div class="info-title">🏭 生活應用</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 潔淨能源 (天然氣)：</span>甲烷是<strong>天然氣</strong>的主要成分 (含量約 90% 以上)。其氫碳比 (H/C ratio) 是所有烴類中最高的，因此燃燒時產生的單位熱值極高，且碳排放量遠低於煤炭與石油，是現代發電與家庭烹飪的重要燃料。<br>
+            <span class="highlight-title">2. 未來能源 (可燃冰)：</span>在深海高壓低溫的環境下，甲烷分子會被水分子包覆，形成籠狀結晶結構的<strong>「甲烷水合物」</strong>。外觀晶瑩剔透像冰塊，卻可以直接點火燃燒，其蘊藏量極大，被視為未來最具潛力的戰略能源。<br>
+            <span class="highlight-title">3. 溫室氣體效應：</span>雖然大氣中含量遠低於二氧化碳，但甲烷的<strong>全球暖化潛勢 (GWP)</strong> 約是 CO₂ 的 25 倍。這是因為其分子結構中 C-H 鍵的特定震動模式，能非常有效地吸收地表反射的紅外線輻射熱，是造成氣候變遷的關鍵氣體之一。
+        </div>
+    </div>`
 );
 addMol("SiH4|矽烷|四氫化矽", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-185", "-112", getTetra("Si","H", 55), [[0,1],[0,2],[0,3],[0,4]]);
 
@@ -833,6 +913,44 @@ const haloNames = {'F':'氟', 'Cl':'氯', 'Br':'溴', 'I':'碘'};
     let dS = 40+rX;
     addMol(`S${X}2|二${hn}化硫`, "S", "sp³", ["角形","Bent"], "98°", p[0], p[1], [{elem:"S",x:0,y:0,z:0,lpCount:2},{elem:X,x:dS*0.85,y:-dS*0.55,z:0},{elem:X,x:-dS*0.85,y:-dS*0.55,z:0}], [[0,1],[0,2]]);
 });
+
+addMol("SiCl4|四氯化矽", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-70", "57.7", getTetra("Si", "Cl", 80), [[0,1],[0,2],[0,3],[0,4]], null,
+    `<div class="info-section">
+        <div class="info-title">⚗️ 物質性質</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 立體結構：</span>中心矽原子採取 <strong>sp³ 混成</strong>，與同族的四氯化碳 (CCl₄) 具有相同的<strong>正四面體</strong>幾何結構，鍵角為 <strong>109.5°</strong>。<br>
+            <span class="highlight-title">2. 物理性質：</span>常溫下為無色、易揮發的液體，具有強烈的刺鼻氣味。雖然 Si-Cl 鍵是極性共價鍵，但由於分子對稱性高，偶極矩互相抵銷，整體為<strong>非極性分子</strong>。<br>
+            <span class="highlight-title">3. 化學性質：</span>與化學性質安定的 CCl₄ 不同，SiCl₄ 極易發生<strong>水解反應</strong>。這是因為矽原子的原子半徑較大，且擁有<strong>空 d 軌域</strong>，能接受水分子的氧原子進行親核攻擊，反應後生成矽酸並產生大量的氯化氫 (HCl) 白煙。
+        </div>
+    </div>
+    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+        <div class="info-title">🏭 生活應用</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 晶片製造 (多晶矽)：</span>它是半導體產業的基石。透過<strong>西門子法 (Siemens process)</strong>，將高純度的 SiCl₄ 與氫氣在 1100°C 高溫下反應還原，可製造出純度高達 99.9999999% (9N) 的<strong>電子級多晶矽</strong>，用於生產電腦晶片與太陽能電池。<br>
+            <span class="highlight-title">2. 光纖通訊核心：</span>在光纖製程中，SiCl₄ 是最關鍵的原料。透過氣相沉積法將其高溫氧化，能生成折射率極高且無雜質的二氧化矽 (SiO₂)，構成光纖內層傳輸訊號的玻璃核心。<br>
+            <span class="highlight-title">3. 軍事煙霧彈：</span>早期軍事上利用其「極易水解」的特性製作煙霧彈。當液態 SiCl₄ 炸開接觸空氣中的水氣時，會瞬間產生極濃密的白色酸霧 (HCl)，能有效遮蔽視線，但因具有毒性與腐蝕性，現代已較少使用。
+        </div>
+    </div>`
+);
+
+addMol("PCl3|三氯化磷", "P", "sp³", ["角錐形","Pyramidal"], "96-100°", "-93.6", "76.1", [{elem:"P",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"Cl",x:0,y:-15,z:68},{elem:"Cl",x:59,y:-15,z:-34},{elem:"Cl",x:-59,y:-15,z:-34}], [[0,1],[0,2],[0,3]], null,
+    `<div class="info-section">
+        <div class="info-title">⚗️ 物質性質</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 立體結構：</span>中心磷原子採取 <strong>sp³ 混成</strong>。由於具有一對未共用電子對 (Lone Pair)，其對鍵結電子的斥力較大，導致 P-Cl 鍵角被壓縮至約 <strong>100°</strong>，形成<strong>三角錐形</strong>結構。<br>
+            <span class="highlight-title">2. 物理性質：</span>常溫下為無色或微黃色的液體，會發煙。具有較低的沸點與強烈刺鼻味，可溶於苯、氯仿等有機溶劑。<br>
+            <span class="highlight-title">3. 化學性質：</span>P-Cl 鍵極性大且反應性極高，遇水會劇烈<strong>水解</strong>並放熱，生成亞磷酸 (H₃PO₃) 與鹽酸霧。因磷原子上有一對孤對電子，可作為<strong>路易斯鹼</strong>參與配位反應。
+        </div>
+    </div>
+    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+        <div class="info-title">🏭 生活應用</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 除草劑原料 (嘉磷塞)：</span>工業上最大宗的用途是作為中間體，用於合成廣效性除草劑<strong>嘉磷塞 (Glyphosate)</strong>，這是目前全球農業使用量最大的農藥之一。<br>
+            <span class="highlight-title">2. 有機合成 (氯化劑)：</span>在製藥與有機化學實驗室中，它是不可或缺的試劑。專門用來將有機分子中的<strong>羥基 (-OH)</strong> 取代為氯原子，或是將羧酸轉化為活性極高的醯氯，是合成染料與藥物的重要步驟。<br>
+            <span class="highlight-title">3. 塑膠添加劑：</span>可用於製造含磷的<strong>阻燃劑</strong>與塑化劑。這些添加劑能讓電子產品的塑膠外殼在受熱時不易燃燒，大幅提升產品安全性。
+        </div>
+    </div>`
+);
 
 
 // --- 5. 碳與其他氧化物 (直線型/平面型) ---
@@ -901,7 +1019,25 @@ addMol("SO4 2-|SO42-|硫酸根", "S", "sp³", ["四面體","Tetrahedral"], "109.
 addMol("H2SO4|硫酸", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "10.3", "337", [{elem:"S",x:0,y:0,z:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:0,y:-25,z:-63}, {elem:"O",x:60,y:-30,z:35,lpCount:2}, {elem:"O",x:-60,y:-30,z:35,lpCount:2}, {elem:"H",x:85,y:5,z:60}, {elem:"H",x:-85,y:5,z:60}], [[0,1,"double"], [0,2,"double"], [0,3], [0,4], [3,5], [4,6]]);
 addMol("H2S2O3|硫代硫酸|大蘇打|海波", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-78 (分解)", "-", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:80,z:0}, {elem:"O",x:0,y:-25,z:-63}, {elem:"O",x:60,y:-30,z:35,lpCount:2}, {elem:"O",x:-60,y:-30,z:35,lpCount:2}, {elem:"H",x:85,y:5,z:60}, {elem:"H",x:-85,y:5,z:60}], [[0,1,"double"],[0,2],[0,3],[0,4,"double"],[3,5],[4,6]]);
 addMol("S2O3 2-|S2O32-|硫代硫酸根", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", [{elem:"S",x:0,y:0,z:0}, {elem:"S",x:0,y:80,z:0}, {elem:"O",x:0,y:-25,z:-63}, {elem:"O",x:55,y:-30,z:32}, {elem:"O",x:-55,y:-30,z:32}], [[0,1,"double"],[0,2],[0,3],[0,4,"double"]]);
-addMol("HNO3|硝酸", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]]);
+addMol("HNO3|硝酸", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]], null,
+    `<div class="info-section">
+        <div class="info-title">⚗️ 物質性質</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 立體結構：</span>中心氮原子採取 <strong>sp² 混成</strong>，分子呈現<strong>平面結構</strong>。在硝酸根離子 (NO₃⁻) 中存在<strong>共振結構</strong>，使得三個 N-O 鍵的鍵長均等，介於單鍵與雙鍵之間，結構相當穩定。<br>
+            <span class="highlight-title">2. 物理性質：</span>純硝酸為無色液體，但在光照或受熱下極易分解產生二氧化氮 (NO₂)，氣體溶於酸中會使溶液呈現黃褐色。易溶於水且極易揮發。<br>
+            <span class="highlight-title">3. 化學性質：</span>為強酸及<strong>強氧化劑</strong>。與金屬反應時，通常<strong>不產生氫氣</strong>，而是依濃度不同生成 NO₂ (濃硝酸) 或 NO (稀硝酸)。若不慎接觸皮膚，會與蛋白質發生<strong>黃蛋白反應</strong>，使皮膚變黃且難以洗去。
+        </div>
+    </div>
+    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+        <div class="info-title">🏭 生活應用</div>
+        <div class="info-body">
+            <span class="highlight-title">1. 肥料工業 (氮肥)：</span>工業上最重要的用途是與氨氣反應製造<strong>硝酸銨</strong>。它是農業不可或缺的優良氮肥來源，能有效促進植物枝葉生長。<br>
+            <span class="highlight-title">2. 國防工業 (炸藥)：</span>硝酸是製造炸藥的核心原料，著名的 TNT (黃色炸藥) 與硝化甘油皆由此製成。透過<strong>硝化反應</strong>將硝基 (-NO₂) 引入有機分子中，能使物質變得極不穩定且具爆炸性。<br>
+            <span class="highlight-title">3. 冶金 (王水溶金)：</span>將濃硝酸與濃鹽酸以 1:3 體積比混合即為<strong>王水</strong>。利用硝酸強大的氧化力將金原子氧化，再由鹽酸提供氯離子形成穩定的<strong>四氯金錯離子 ([AuCl₄]⁻)</strong>，藉此降低還原電位，成功溶解最不活潑的黃金。
+        </div>
+    </div>`
+);
+
 addMol("HNO2|亞硝酸", "N", "sp²", ["角形","Bent"], "111°", "-", "-", [{elem:"N",x:0,y:0,z:0,lpCount:1}, {elem:"O",x:0,y:65,z:0}, {elem:"O",x:60,y:-35,z:0,lpCount:2}, {elem:"H",x:90,y:-10,z:0}], [[0,1,"double"], [0,2], [2,3]]);
 addMol("PO43-|PO4 3-|磷酸根", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("P","O", 68), [[0,1,"double"],[0,2],[0,3],[0,4]]);
 addMol("H3PO4|磷酸", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [{elem:"P",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:55,y:-30,z:35,lpCount:2}, {elem:"O",x:-55,y:-30,z:35,lpCount:2}, {elem:"O",x:0,y:-30,z:-60,lpCount:2}, {elem:"H",x:80,y:-10,z:55}, {elem:"H",x:-80,y:-10,z:55}, {elem:"H",x:0,y:-10,z:-90}], [[0,1,"double"], [0,2], [0,3], [0,4], [2,5], [3,6], [4,7]]);
