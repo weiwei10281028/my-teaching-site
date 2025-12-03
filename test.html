@@ -110,24 +110,24 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        width: 170px; /* 寬度 */
+        width: 170px; /* 限制寬度，讓標籤會擠成兩排 */
 
         /* === 預設設定：手機版 (右上角) === */
         /* 這樣寫保證所有手機預設都在右上，不會跑版 */
         top: 65px;    
         right: 15px;  
-        left: auto;   
+        left: auto;   /* 強制清除左側定位，避免衝突 */
     }
 
     /* 標籤標題文字 */
     .suggestion-label {
-        grid-column: 1 / -1;
+        grid-column: 1 / -1; /* 讓標題橫跨整個網格上方 */
         font-size: 0.85rem;
         color: rgba(255,255,255,0.7);
         margin-bottom: 2px;
         text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         font-weight: bold;
-        text-align: right; /* 預設靠右 */
+        text-align: right; /* 手機預設靠右對齊 */
     }
 
     /* 按鈕本體樣式 */
@@ -142,6 +142,8 @@
         transition: all 0.2s;
         backdrop-filter: blur(4px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        
+        /* 確保內容置中 */
         display: flex;
         justify-content: center;
         align-items: center;
@@ -156,21 +158,22 @@
     }
 
     /* === 電腦版專用設定 (只有螢幕寬度 > 1024px 才移到左邊) === */
-    /* 這裡使用 min-width: 1024px，確保一般手機絕對不會觸發 */
+    /* 這裡使用 min-width: 1024px，確保一般手機絕對不會觸發此設定 */
     @media (min-width: 1024px) {
         .suggestions-container {
             top: 160px;
             left: 25px;
-            right: auto;
+            right: auto; /* 清除右側定位，恢復左側定位 */
+            width: 170px;
         }
         .suggestion-label {
-            text-align: left;
+            text-align: left; /* 電腦版改回靠左 */
         }
     }
 
     /* 原本的說明文字 (隱藏或保留作為備註) */
     #viewport-subtitle {
-        display: none; /* 我們改用新的顯示區，原本的隱藏 */
+        display: none; 
     }
 
     #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
