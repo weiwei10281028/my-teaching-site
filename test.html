@@ -104,7 +104,6 @@
        [修正重點] 猜你想看標籤 - 樣式與定位徹底分離邏輯
        ========================================================= */
     
-    /* 1. 基礎外觀 (共用)：只設定長相、Grid，絕對不寫 top/left/right */
     .suggestions-container {
         position: absolute;
         z-index: 60;
@@ -114,9 +113,15 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
+        width: 170px;
+
+        /* === 統一位置：右上角 === */
+        top: 65px;    
+        right: 25px;  
+        left: auto;   /* 強制清除左側設定，防止干擾 */
     }
 
-    /* 標題文字 */
+    /* 標題文字 - 靠右對齊 */
     .suggestion-label {
         grid-column: 1 / -1; /* 橫跨兩格 */
         font-size: 0.85rem;
@@ -124,9 +129,10 @@
         margin-bottom: 2px;
         text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         font-weight: bold;
+        text-align: right; /* 配合右上角位置，文字靠右 */
     }
 
-    /* 按鈕本體 */
+    /* 按鈕樣式 */
     .suggestion-tag {
         background: rgba(40, 40, 40, 0.85);
         border: 1px solid rgba(255, 255, 255, 0.25);
@@ -151,29 +157,11 @@
         transform: translateY(-2px);
     }
 
-    /* 2. 電腦版定位規則 (螢幕 > 768px) */
-    /* 只在這裡寫 Left，手機完全看不到這段 */
-    @media (min-width: 769px) {
-        .suggestions-container {
-            top: 160px;
-            left: 25px;
-            width: 170px;
-        }
-        .suggestion-label {
-            text-align: left;
-        }
-    }
-
-    /* 3. 手機版定位規則 (螢幕 <= 768px) */
-    /* 只在這裡寫 Right，電腦完全看不到這段 */
+    /* 手機版微調 (只調整大小，不調整位置) */
     @media (max-width: 768px) {
         .suggestions-container {
-            top: 65px;
-            right: 15px; /* 強制靠右 */
+            right: 15px; /* 手機版稍微靠邊一點 */
             width: 160px;
-        }
-        .suggestion-label {
-            text-align: right; /* 文字靠右 */
         }
         .suggestion-tag {
             font-size: 0.75rem;
