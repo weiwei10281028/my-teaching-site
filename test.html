@@ -104,8 +104,9 @@
        [修正重點] 猜你想看標籤 - 樣式與定位徹底分離邏輯
        ========================================================= */
     
-    .suggestions-container {
-        position: absolute;
+     .suggestions-container {
+        /* 改用 fixed，強制脫離 viewport-header 的範圍限制，對齊視窗 */
+        position: fixed;
         z-index: 60;
         pointer-events: auto;
         
@@ -115,10 +116,11 @@
         gap: 8px;
         width: 170px;
 
-        /* === 統一位置：右上角 === */
-        top: 65px;    
+        /* === 電腦版位置 === */
+        /* 因為電腦版右上角有「模式」按鈕 (top:25px)，所以這裡往下挪到 80px 避開 */
+        top: 80px;    
         right: 25px;  
-        left: auto;   /* 強制清除左側設定，防止干擾 */
+        left: auto;   /* 強制清除左側設定 */
     }
 
     /* 標題文字 - 靠右對齊 */
@@ -157,10 +159,12 @@
         transform: translateY(-2px);
     }
 
-    /* 手機版微調 (只調整大小，不調整位置) */
+    /* === 手機版特別設定 === */
     @media (max-width: 768px) {
         .suggestions-container {
-            right: 15px; /* 手機版稍微靠邊一點 */
+            /* 手機版右上角沒有按鈕，所以可以往上移，與左側標題平行 */
+            top: 20px; 
+            right: 15px; 
             width: 160px;
         }
         .suggestion-tag {
