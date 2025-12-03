@@ -100,79 +100,88 @@
         .info-name { font-size: 1rem; }
     }
 
-/* [修改 4] 猜你想看 - 基礎設定 (電腦版預設位置：左邊) */
-.suggestions-container {
-    position: absolute;
-    z-index: 60;
-    pointer-events: auto;
-    
-    /* === 2x2 田字型網格設定 === */
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 左右各佔 50% */
-    gap: 8px;                       /* 間距 */
-    width: 170px;
+/* [修改 4] 猜你想看 - 樣式與定位分離邏輯 */
 
-    /* === 電腦版位置 (左側) === */
-    top: 160px;
-    left: 25px;   
-    right: auto;  /* 電腦版不設定 right */
-}
+    /* 1. 基礎外觀 (只設定顏色、網格、結構，不設定位置) */
+    .suggestions-container {
+        position: absolute;
+        z-index: 60;
+        pointer-events: auto;
+        
+        /* 網格佈局 (2x2 田字型) */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
 
-/* 標題文字 */
-.suggestion-label {
-    grid-column: span 2; /* 讓標題橫跨兩格 */
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.7);
-    margin-bottom: 2px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    font-weight: bold;
-    text-align: left; /* 電腦版靠左 */
-}
+    /* 標題文字 */
+    .suggestion-label {
+        grid-column: 1 / -1; /* 橫跨兩格 */
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.7);
+        margin-bottom: 2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        font-weight: bold;
+    }
 
-/* 按鈕樣式 */
-.suggestion-tag {
-    background: rgba(40, 40, 40, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #eee;
-    padding: 6px 0;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    
-    /* 內容置中 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
+    /* 按鈕樣式 */
+    .suggestion-tag {
+        background: rgba(40, 40, 40, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #eee;
+        padding: 6px 0;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
 
-.suggestion-tag:hover {
-    background: var(--accent-blue);
-    color: #fff;
-    border-color: var(--accent-blue);
-    transform: translateY(-2px);
-}
+    .suggestion-tag:hover {
+        background: var(--accent-blue);
+        color: #fff;
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
 
-    /* === 電腦版專用設定 (只有螢幕寬度 > 1024px 才移到左邊) === */
-    /* 這裡使用 min-width: 1024px，確保一般手機絕對不會觸發此設定 */
-    @media (min-width: 1024px) {
+    /* 2. 電腦版專用定位 (僅在螢幕大於 768px 時生效) */
+    /* 在這裡設定 "Left"，手機版完全讀不到這段，就不會被干擾 */
+    @media (min-width: 769px) {
         .suggestions-container {
             top: 160px;
             left: 25px;
-            right: auto; /* 清除右側定位，恢復左側定位 */
             width: 170px;
         }
         .suggestion-label {
-            text-align: left; /* 電腦版改回靠左 */
+            text-align: left;
         }
     }
 
-    /* 原本的說明文字 (隱藏或保留作為備註) */
+    /* 3. 手機版專用定位 (僅在螢幕小於等於 768px 時生效) */
+    /* 在這裡設定 "Right"，電腦版完全讀不到這段 */
+    @media (max-width: 768px) {
+        .suggestions-container {
+            top: 65px;
+            right: 15px; /* 明確指定靠右 */
+            width: 160px;
+        }
+        .suggestion-label {
+            text-align: right; /* 文字靠右對齊 */
+        }
+        .suggestion-tag {
+            font-size: 0.75rem; /* 字體稍小 */
+            padding: 5px 0;
+        }
+    }
+
+    /* 原本的說明文字 (隱藏) */
     #viewport-subtitle {
-        display: none; 
+        display: none;
     }
 
     #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
