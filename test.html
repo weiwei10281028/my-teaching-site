@@ -100,62 +100,61 @@
         .info-name { font-size: 1rem; }
     }
 
- /* [修改 4] 猜你想看 - 手機優先 (預設右上，電腦才改左) */
-    .suggestions-container {
-        position: absolute;
-        z-index: 60;
-        pointer-events: auto;
-        
-        /* 網格佈局 (2x2 田字型) */
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        width: 170px; /* 限制寬度，讓標籤會擠成兩排 */
+/* [修改 4] 猜你想看 - 基礎設定 (電腦版預設位置：左邊) */
+.suggestions-container {
+    position: absolute;
+    z-index: 60;
+    pointer-events: auto;
+    
+    /* === 2x2 田字型網格設定 === */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 左右各佔 50% */
+    gap: 8px;                       /* 間距 */
+    width: 170px;
 
-        /* === 預設設定：手機版 (右上角) === */
-        /* 這樣寫保證所有手機預設都在右上，不會跑版 */
-        top: 65px;    
-        right: 15px;  
-        left: auto;   /* 強制清除左側定位，避免衝突 */
-    }
+    /* === 電腦版位置 (左側) === */
+    top: 160px;
+    left: 25px;   
+    right: auto;  /* 電腦版不設定 right */
+}
 
-    /* 標籤標題文字 */
-    .suggestion-label {
-        grid-column: 1 / -1; /* 讓標題橫跨整個網格上方 */
-        font-size: 0.85rem;
-        color: rgba(255,255,255,0.7);
-        margin-bottom: 2px;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        font-weight: bold;
-        text-align: right; /* 手機預設靠右對齊 */
-    }
+/* 標題文字 */
+.suggestion-label {
+    grid-column: span 2; /* 讓標題橫跨兩格 */
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    font-weight: bold;
+    text-align: left; /* 電腦版靠左 */
+}
 
-    /* 按鈕本體樣式 */
-    .suggestion-tag {
-        background: rgba(40, 40, 40, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #eee;
-        padding: 6px 0;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        backdrop-filter: blur(4px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-        
-        /* 確保內容置中 */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
+/* 按鈕樣式 */
+.suggestion-tag {
+    background: rgba(40, 40, 40, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #eee;
+    padding: 6px 0;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    
+    /* 內容置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
 
-    .suggestion-tag:hover {
-        background: var(--accent-blue);
-        color: #fff;
-        border-color: var(--accent-blue);
-        transform: translateY(-2px);
-    }
+.suggestion-tag:hover {
+    background: var(--accent-blue);
+    color: #fff;
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
 
     /* === 電腦版專用設定 (只有螢幕寬度 > 1024px 才移到左邊) === */
     /* 這裡使用 min-width: 1024px，確保一般手機絕對不會觸發此設定 */
@@ -398,21 +397,28 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- 手機版專用設定 (螢幕小於 768px 時觸發) --- */
+/* 手機版專用：強制移到右上角 */
 @media (max-width: 768px) {
     .suggestions-container {
-        /* 手機版改回右上角，避免擋住中間分子 */
-        top: 60px;
-        right: 10px;
-        left: auto; /* 清除電腦版的左側設定 */
+        /* 強制覆蓋電腦版的 top 設定 */
+        top: 65px !important;    
+        
+        /* [關鍵] 強制把左邊距歸零，瀏覽器才不會兩邊拉扯 */
+        left: auto !important;   
+        
+        /* 強制設定靠右距離 */
+        right: 15px !important;  
+        
+        /* 手機版稍微縮窄一點，避免太寬 */
         width: 160px;
     }
 
+    /* 手機版標題改為靠右對齊，符合視覺動線 */
     .suggestion-label {
-        /* 手機版文字靠右，符合角落視覺 */
-        text-align: right;
+        text-align: right !important;
     }
     
+    /* 手機版按鈕字體微調 */
     .suggestion-tag {
         font-size: 0.75rem;
         padding: 5px 0;
