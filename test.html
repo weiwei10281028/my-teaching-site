@@ -1984,16 +1984,21 @@ function renderScene() {
     
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     
-    const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-    filter.setAttribute("id", "soft-glow");
-    filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
-    defs.appendChild(filter);
+    // 電腦版保留濾鏡，手機版不需要定義濾鏡 (節省資源)
+    if (!isMobile) {
+        const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        filter.setAttribute("id", "soft-glow");
+        filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
+        defs.appendChild(filter);
+    }
     
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
     
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
+        
+        // 1. 原子本體的立體漸層 (原本的邏輯)
         const grad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         grad.setAttribute("id", `atom-grad-${cleanColor}`);
         grad.setAttribute("cx", "50%"); 
@@ -2001,9 +2006,11 @@ function renderScene() {
         grad.setAttribute("r", "50%");
         grad.setAttribute("fx", "35%");
         grad.setAttribute("fy", "35%");
+        
         let highlight = "#FFFFFF"; 
         let baseColor = color;
         let shadowColor = adjustColor(color, -80); 
+        
         grad.innerHTML = `
             <stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/>
             <stop offset="15%" stop-color="${adjustColor(color, 60)}" stop-opacity="1"/>
@@ -2011,7 +2018,29 @@ function renderScene() {
             <stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>
         `;
         defs.appendChild(grad);
+
+        // 2. [新增] 手機版專用的「光暈漸層」 (用漸層模擬模糊)
+        if (isMobile) {
+            const mobileGlowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+            mobileGlowGrad.setAttribute("id", `mobile-glow-${cleanColor}`);
+            mobileGlowGrad.innerHTML = `
+                <stop offset="0%" stop-color="${color}" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+            `;
+            defs.appendChild(mobileGlowGrad);
+        }
     });
+
+    // [新增] 手機版專用：白色的光暈漸層 (給電子用)
+    if (isMobile) {
+        const whiteGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        whiteGlow.setAttribute("id", "mobile-glow-white");
+        whiteGlow.innerHTML = `
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        `;
+        defs.appendChild(whiteGlow);
+    }
 
     sceneRoot.appendChild(defs);
 
@@ -2128,17 +2157,25 @@ function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("data-atom-idx", a.idx); 
     
-    // [修改] 移除 !isMobile 檢查，讓手機也能顯示光暈
     const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
 
     if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
-        glow.setAttribute("r", a.r * a.scale * 1.3); 
-        glow.setAttribute("fill", a.color); 
-        // [修改] 降低原子光暈不透明度 (原0.4 -> 0.36, 降低10%)
-        glow.setAttribute("opacity", "0.36");
-        glow.setAttribute("filter", "url(#soft-glow)");
+        
+        if (isMobile) {
+            // [手機版優化]：使用 Radial Gradient，不使用 Filter
+            // 半徑稍微加大以模擬擴散效果
+            glow.setAttribute("r", a.r * a.scale * 1.5); 
+            glow.setAttribute("fill", `url(#mobile-glow-${a.color.replace('#','')})`);
+            // 手機版不設定 opacity (由漸層控制) 或 filter
+        } else {
+            // [電腦版]：使用高斯模糊濾鏡
+            glow.setAttribute("r", a.r * a.scale * 1.3); 
+            glow.setAttribute("fill", a.color); 
+            glow.setAttribute("opacity", "0.36"); // 降低深度 10%
+            glow.setAttribute("filter", "url(#soft-glow)");
+        }
         g.appendChild(glow);
     }
 
@@ -2158,17 +2195,23 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
-    // [修改] 移除 !isMobile 檢查
     const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
 
     if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
-        glow.setAttribute("r", r * 1.8); 
-        glow.setAttribute("fill", "#ffffff"); 
-        // [修改] 大幅降低孤對電子光暈不透明度 (原0.4 -> 0.28, 降低30%)
-        glow.setAttribute("opacity", "0.28");
-        glow.setAttribute("filter", "url(#soft-glow)");
+        
+        if (isMobile) {
+            // [手機版優化]：使用白色漸層
+            glow.setAttribute("r", r * 2.2); 
+            glow.setAttribute("fill", "url(#mobile-glow-white)");
+        } else {
+            // [電腦版]：使用濾鏡
+            glow.setAttribute("r", r * 1.8); 
+            glow.setAttribute("fill", "#ffffff"); 
+            glow.setAttribute("opacity", "0.28"); // 降低 30%
+            glow.setAttribute("filter", "url(#soft-glow)");
+        }
         g.appendChild(glow);
     }
 
