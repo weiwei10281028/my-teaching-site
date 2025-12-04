@@ -2110,52 +2110,56 @@ function renderScene() {
     
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     
+    // --- 1. 電腦版專用濾鏡 (高品質能量光暈) ---
+    // 使用 feGaussianBlur 配合顏色矩陣增強亮度，讓光暈更像"光"
+    const glowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    glowFilter.setAttribute("id", "energy-glow");
+    glowFilter.setAttribute("x", "-50%");
+    glowFilter.setAttribute("y", "-50%");
+    glowFilter.setAttribute("width", "200%");
+    glowFilter.setAttribute("height", "200%");
+    glowFilter.innerHTML = `
+        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="over" />
+    `;
+    // 備用簡單濾鏡 (舊版兼容)
+    const simpleBlur = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    simpleBlur.setAttribute("id", "soft-glow");
+    simpleBlur.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3" />';
+    
+    defs.appendChild(glowFilter);
+    defs.appendChild(simpleBlur);
+    
+    // --- 2. 顏色定義 (原子本體漸層 + 手機版光暈漸層) ---
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
     
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
-        const darkColor = adjustColor(color, -80); // 陰影色
         
-        // -----------------------------------------------------
-        // ★ 風格 #12：柔和球體 (Soft Sphere) -> 用於 [原子本體]
-        // 特色：焦點偏移 (fx, fy)，模擬光照的高光點，製造 3D 質感
-        // -----------------------------------------------------
+        // A. 原子本體立體感漸層
         const atomGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         atomGrad.setAttribute("id", `atom-grad-${cleanColor}`);
-        atomGrad.setAttribute("cx", "50%"); 
-        atomGrad.setAttribute("cy", "50%"); 
-        atomGrad.setAttribute("r", "50%");
-        atomGrad.setAttribute("fx", "35%"); // 高光點向左上偏移
-        atomGrad.setAttribute("fy", "35%"); 
+        atomGrad.setAttribute("cx", "40%"); atomGrad.setAttribute("cy", "40%"); atomGrad.setAttribute("r", "60%");
         atomGrad.innerHTML = `
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/> <!-- 高光 -->
-            <stop offset="45%" stop-color="${color}" stop-opacity="1"/>  <!-- 本色 -->
-            <stop offset="100%" stop-color="${darkColor}" stop-opacity="1"/> <!-- 陰影 -->
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+            <stop offset="20%" stop-color="${color}" stop-opacity="1"/>
+            <stop offset="100%" stop-color="${adjustColor(color, -60)}" stop-opacity="1"/>
         `;
         defs.appendChild(atomGrad);
 
-        // -----------------------------------------------------
-        // ★ 風格 #4：軟日冕 (Soft Corona) -> 用於 [外部光暈]
-        // 特色：中心亮白，向外快速擴散，無邊界感
-        // -----------------------------------------------------
+        // B. 手機版高效能光暈漸層 (High Performance Glow)
+        // 中心半透明顏色 -> 外圍全透明，模擬發光而不使用濾鏡
         const glowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         glowGrad.setAttribute("id", `glow-grad-${cleanColor}`);
-        glowGrad.setAttribute("cx", "50%"); 
-        glowGrad.setAttribute("cy", "50%"); 
-        glowGrad.setAttribute("r", "50%");
+        glowGrad.setAttribute("cx", "50%"); glowGrad.setAttribute("cy", "50%"); atomGrad.setAttribute("r", "50%");
         glowGrad.innerHTML = `
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/> <!-- 核心熱點 (半透明白) -->
-            <stop offset="15%" stop-color="${color}" stop-opacity="0.6"/> <!-- 高能區 -->
-            <stop offset="50%" stop-color="${color}" stop-opacity="0.2"/> <!-- 擴散區 -->
-            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>   <!-- 完全消失 -->
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.6"/>
+            <stop offset="50%" stop-color="${color}" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
         `;
         defs.appendChild(glowGrad);
-    });
-
-    // 鍵結的漸層 (保持不變)
-    currentMolecule.bonds3D.forEach((bond, index) => {
-        // ... (這部分稍後在繪製時動態生成，此處僅需確保 defs 存在)
     });
 
     sceneRoot.appendChild(defs);
@@ -2170,7 +2174,6 @@ function renderScene() {
 
     const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
-    // 處理鍵結投影
     currentMolecule.bonds3D.forEach((bond, index) => { 
         const a1 = atomProjections[bond[0]];
         const a2 = atomProjections[bond[1]];
@@ -2270,45 +2273,48 @@ function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("data-atom-idx", a.idx); 
     
+    // 檢查開關，手機版只要不是強制關閉，我們都顯示光暈(因為現在有效能版了)
+    // 您可以決定是否在手機上強制開啟，這裡依據 toggle-glow 狀態
     const toggleGlowEl = document.getElementById('toggle-glow');
     const useGlow = toggleGlowEl ? toggleGlowEl.checked : true;
 
-    // --- 繪製光暈 (Layer 1: Back) ---
-    // 使用 #4 軟日冕漸層
     if (useGlow) {
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         glow.setAttribute("cx", a.px); 
         glow.setAttribute("cy", a.py); 
-        // 半徑設為原子本體的 1.6 倍，模擬氣體擴散
-        glow.setAttribute("r", a.r * a.scale * 1.6); 
-        glow.setAttribute("fill", `url(#glow-grad-${a.color.replace('#','')})`);
-        // 稍微降低整體透明度，讓疊加更自然
-        glow.setAttribute("opacity", "0.85");
+        
+        if (isMobile) {
+            // --- 手機版邏輯：使用漸層 (無濾鏡) ---
+            // 半徑稍微大一點，模擬擴散
+            glow.setAttribute("r", a.r * a.scale * 1.5); 
+            // 使用上面生成的透明度漸層
+            glow.setAttribute("fill", `url(#glow-grad-${a.color.replace('#','')})`);
+            // 不設置 filter 屬性，確保效能
+        } else {
+            // --- 電腦版邏輯：使用能量濾鏡 ---
+            glow.setAttribute("r", a.r * a.scale * 1.2); 
+            glow.setAttribute("fill", a.color); 
+            glow.setAttribute("opacity", "0.6");
+            // 使用高級濾鏡
+            glow.setAttribute("filter", "url(#energy-glow)");
+        }
+        
         g.appendChild(glow);
     }
 
-    // --- 繪製原子本體 (Layer 2: Front) ---
-    // 使用 #12 柔和球體漸層 (帶高光)
+    // 繪製原子本體
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", a.px); 
-    circle.setAttribute("cy", a.py); 
-    circle.setAttribute("r", a.r * a.scale); 
+    circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); circle.setAttribute("r", a.r * a.scale); 
     circle.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`); 
-    
-    // 移除黑色描邊 (Stroke)，讓邊緣與光暈完美融合
-    // 這是達到「邊界感薄弱」的關鍵
+    // 增加原子邊框，讓它在光暈中更突出
+    circle.setAttribute("stroke", "rgba(0,0,0,0.3)");
+    circle.setAttribute("stroke-width", "1");
     
     const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    txt.setAttribute("x", a.px); 
-    txt.setAttribute("y", a.py); 
-    txt.setAttribute("font-size", a.r * 0.7 * a.scale); // 字稍微縮小一點點，配合立體感
-    txt.setAttribute("class", "atom-label-text"); 
-    // 增加文字陰影，確保在高亮背景上也能看清
-    txt.setAttribute("style", "text-shadow: 0px 1px 3px rgba(0,0,0,0.8);");
-    txt.textContent = a.elem;
+    txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+    txt.setAttribute("class", "atom-label-text"); txt.textContent = a.elem;
     
-    g.appendChild(circle); 
-    g.appendChild(txt);
+    g.appendChild(circle); g.appendChild(txt);
     sceneRoot.appendChild(g);
 }
 
