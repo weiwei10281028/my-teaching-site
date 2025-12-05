@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.4 (Glow Tuned)</title>
+    <title>分子結構模擬實驗室 v16.6 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -44,11 +44,10 @@
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
-        will-change: transform; /* 優化渲染效能 */
+        will-change: transform;
         transform: translateZ(0);
     } 
 
-    /* 標題區域 */
     .viewport-header { 
         position: absolute; top: 20px; left: 25px; z-index: 10; pointer-events: none; 
         max-width: 80%;
@@ -61,12 +60,6 @@
         margin-bottom: 5px;
     }
 
-    @media (max-width: 768px) {
-        .viewport-header { top: 15px; left: 15px; }
-        .viewport-header h1 { font-size: 0.9rem; letter-spacing: 0.5px; }
-    }
-
-    /* 資訊顯示區 */
     .molecule-display-info {
         margin-top: 5px;
         background: rgba(0, 0, 0, 0.6);
@@ -81,7 +74,6 @@
     .info-formula {
         font-size: 2.2rem;
         font-weight: 700;
-        font-family: 'Segoe UI', sans-serif;
         color: #fff;
         line-height: 1.1;
         text-shadow: 0 2px 10px rgba(0,0,0,0.5);
@@ -94,85 +86,53 @@
         margin-top: 4px;
     }
 
-    @media (max-width: 768px) {
-        .molecule-display-info { padding: 8px 12px; }
-        .info-formula { font-size: 1.8rem; }
-        .info-name { font-size: 1rem; }
-    }
-
-    /* 猜你想看標籤 */
      .suggestions-container {
-        position: fixed;
-        z-index: 60;
-        pointer-events: auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        width: 170px;
-        top: 80px;    
-        right: 25px;  
-        left: auto;   
+        position: fixed; z-index: 60; pointer-events: auto;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 170px;
+        top: 80px; right: 25px; left: auto;   
     }
 
     .suggestion-label {
         grid-column: 1 / -1; 
-        font-size: 0.85rem;
-        color: rgba(255,255,255,0.7);
-        margin-bottom: 2px;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        font-weight: bold;
-        text-align: right; 
+        font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-weight: bold; text-align: right; 
     }
 
     .suggestion-tag {
         background: rgba(40, 40, 40, 0.85);
         border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #eee;
-        padding: 6px 0;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        backdrop-filter: blur(4px);
+        color: #eee; padding: 6px 0; border-radius: 12px; font-size: 0.85rem;
+        cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
+        display: flex; justify-content: center; align-items: center; width: 100%;
     }
 
     .suggestion-tag:hover {
-        background: var(--accent-blue);
-        color: #fff;
-        border-color: var(--accent-blue);
+        background: var(--accent-blue); color: #fff; border-color: var(--accent-blue);
         transform: translateY(-2px);
     }
 
     @media (max-width: 768px) {
-        .suggestions-container {
-            top: 20px; 
-            right: 15px; 
-            width: 160px;
-        }
-        .suggestion-tag {
-            font-size: 0.75rem;
-            padding: 5px 0;
-        }
+        .suggestions-container { top: 20px; right: 15px; width: 160px; }
+        .suggestion-tag { font-size: 0.75rem; padding: 5px 0; }
+        .viewport-header { top: 15px; left: 15px; }
+        .viewport-header h1 { font-size: 0.9rem; letter-spacing: 0.5px; }
+        .molecule-display-info { padding: 8px 12px; }
+        .info-formula { font-size: 1.8rem; }
+        .info-name { font-size: 1rem; }
     }
 
     #viewport-subtitle { display: none; }
-
     #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     #molecule-svg * { pointer-events: none; }
 
     .atom-label-text {
-        font-family: 'Segoe UI', 'Arial', sans-serif;
-        font-weight: 700; 
+        font-family: 'Segoe UI', 'Arial', sans-serif; font-weight: 700; 
         text-anchor: middle; dominant-baseline: central; 
         fill: #ffffff; text-shadow: 0 0 4px #000;
     }
 
-/* --- 控制面板通用 --- */
+/* --- 控制面板 --- */
     .controls-container {
         position: absolute; top: 25px; right: 25px; z-index: 50; 
         display: flex; gap: 15px; align-items: center; pointer-events: auto;
@@ -187,8 +147,7 @@
     .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
 
     .card { 
-        background: var(--card-glass); 
-        border: 1px solid var(--panel-border); 
+        background: var(--card-glass); border: 1px solid var(--panel-border); 
         border-radius: 16px; padding: 20px; margin-bottom: 20px; 
     }
     .card-title { 
@@ -197,18 +156,12 @@
     }
     .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .data-label { font-size: 1rem; color: var(--text-sub); }
-    .data-value { 
-        font-family: 'Segoe UI', 'Arial', sans-serif;
-        font-size: 1.15rem; color: var(--text-main); font-weight: 500; 
-    }
+    .data-value { font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
         flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
-        background: rgba(0,0,0,0.3); color: white; 
-        font-family: 'Segoe UI', 'Arial', sans-serif;
-        transition: border 0.3s; outline: none; 
-        font-size: 1.1rem; 
+        background: rgba(0,0,0,0.3); color: white; transition: border 0.3s; outline: none; font-size: 1.1rem; 
     }
     .input-group button { 
         padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
@@ -227,17 +180,11 @@
     }
     .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
 
-    /* --- 酸鹼系列專用面板樣式 --- */
-    #variant-selector.acid-theme {
-    background: rgba(245, 158, 11, 0.05);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    }
+    #variant-selector.acid-theme { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); }
     #variant-selector.acid-theme .variant-header { color: #fbbf24; }
     #variant-selector.acid-theme .variant-option { color: #fbbf24; }
     #variant-selector.acid-theme .variant-option:hover { background: rgba(245, 158, 11, 0.15); }
 
-
-    /* 反應按鈕區塊 */
     #reaction-container { margin-bottom: 30px; width: 100%; }
     .reaction-row { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; }
     .reaction-btn {
@@ -256,14 +203,8 @@
     .btn-hcl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     .btn-kmno4 { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
     
-    @keyframes blurOutEffect {
-        0% { opacity: 1; filter: blur(0px); transform: scale(1); }
-        100% { opacity: 0; filter: blur(8px) brightness(1.5); transform: scale(1.05); }
-    }
-    @keyframes blurInEffect {
-        0% { opacity: 0; filter: blur(8px); transform: scale(0.95); }
-        100% { opacity: 1; filter: blur(0px); transform: scale(1); }
-    }
+    @keyframes blurOutEffect { 0% { opacity: 1; filter: blur(0px); transform: scale(1); } 100% { opacity: 0; filter: blur(8px) brightness(1.5); transform: scale(1.05); } }
+    @keyframes blurInEffect { 0% { opacity: 0; filter: blur(8px); transform: scale(0.95); } 100% { opacity: 1; filter: blur(0px); transform: scale(1); } }
     .scene-blur-out { animation: blurOutEffect 1.5s forwards ease-in; }
     .scene-blur-in { animation: blurInEffect 1.5s forwards ease-out; }
 
@@ -305,7 +246,6 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-    /* 手機版 (Small Screens) 設定 */
     @media (max-width: 768px), (max-height: 500px) { 
         .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
         .controls-container { display: none !important; } 
@@ -331,9 +271,6 @@
         }
         #mobile-panel-handle:active .handle-bar { background-color: rgba(255, 255, 255, 0.8); width: 55px; }
         .controls-content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: 40px; }
-        
-        /* [修正] 移除此行，讓手機版也能顯示光暈開關 */
-        /* #glow-switch-wrap { display: none !important; } */
     }
 
     .hybrid-tooltip {
@@ -355,83 +292,31 @@
     }
 
     .knowledge-card .card-title {
-        color: #fbbf24; /* 金黃色文字 */
-        cursor: pointer;
-        justify-content: space-between;
-        margin-bottom: 0; 
+        color: #fbbf24; cursor: pointer; justify-content: space-between; margin-bottom: 0; 
     }
 
-    .toggle-icon {
-        font-size: 0.8rem;
-        transition: transform 0.3s;
-        color: #fbbf24;
-    }
+    .toggle-icon { font-size: 0.8rem; transition: transform 0.3s; color: #fbbf24; }
+    .knowledge-card.expanded .toggle-icon { transform: rotate(180deg); }
+    .knowledge-card.expanded .card-title { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(251, 191, 36, 0.2); }
+    .knowledge-content { display: none; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; text-align: justify; }
+    .knowledge-content strong { color: #38bdf8; }
+    .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
-    .knowledge-card.expanded .toggle-icon {
-        transform: rotate(180deg);
-    }
-
-    .knowledge-card.expanded .card-title {
-        margin-bottom: 15px; /* 展開時恢復間距 */
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-    }
-
-    .knowledge-content {
-        display: none; 
-        font-size: 0.95rem;
-        line-height: 1.6;
-        color: #e2e8f0;
-        text-align: justify;
-    }
-
-    .knowledge-content strong {
-        color: #38bdf8; 
-    }
-
-    .knowledge-card.expanded .knowledge-content {
-        display: block;
-        animation: fadeIn 0.4s ease;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
     .info-section { margin-bottom: 15px; }
-
-    .info-title {
-        font-weight: bold;
-        color: #4ade80; 
-        margin-bottom: 8px;
-        font-size: 1.05rem;
-        border-left: 3px solid #4ade80;
-        padding-left: 10px;
-        letter-spacing: 1px;
-    }
-
-    .info-body {
-        padding-left: 6px;
-        font-size: 0.95rem;
-        color: #f1f5f9; 
-        line-height: 1.7; 
-        text-align: justify;
-    }
-
-    .info-body strong {
-        color: inherit; 
-        font-weight: 700;
-    }
-
-    .highlight-title {
-        color: #38bdf8; 
-        font-weight: bold;
-        display: inline-block;
-        margin-right: 4px;
-    }
-
+    .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
+    .info-body { padding-left: 6px; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; text-align: justify; }
+    .info-body strong { color: inherit; font-weight: 700; }
+    .highlight-title { color: #38bdf8; font-weight: bold; display: inline-block; margin-right: 4px; }
     .hybrid-tooltip.show { opacity: 1; }
+
+    /* 電子閃爍動畫 */
+    @keyframes spark-flicker {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.6); }
+    }
+    .electron-spark { animation: spark-flicker 0.15s linear infinite; }
 
 </style>
 </head>
@@ -451,7 +336,6 @@
             <!-- 猜你想看功能 -->
             <div class="suggestions-container" id="suggestions-container">
                 <div class="suggestion-label">你可能還想看：</div>
-                <!-- JS 動態生成標籤 -->
             </div>
 
             <span class="input-note" id="viewport-subtitle"></span>
@@ -505,6 +389,11 @@
             </div>
 
             <div id="variant-selector"></div>
+            
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-plasma">
+                <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; text-shadow:0 0 5px #a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+            </div>
 
             <div id="reaction-container">
                 <div class="reaction-row">
@@ -551,14 +440,13 @@
 </div>
 
 <script>
-
-
 // ==========================================
-// 1. 系統初始化 (變數宣告區)
+// 1. 系統初始化
 // ==========================================
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 let isReactionRunning = false; 
-let isReactionFinished = false;  
+let isReactionFinished = false; 
+let isPlasmaMode = false; // [修復] 確保變數存在
 
 /*
  ==========================================================================
@@ -1617,7 +1505,7 @@ let isLongPressActive = false;
 let scale = 1.6; 
 let isDragging = false; 
 let lastMouse = { x: 0, y: 0 };
-let currentMode = 2; // 預設改為 2 (複合模式)
+let currentMode = 2; 
 let altKeyIsDown = false;
 let currentKey = null; 
 let currentVariantKey = null; 
@@ -1636,9 +1524,7 @@ function toggleMode() {
 
 function formatFormula(str) {
     if (!str) return "";
-    if (str.includes('<') && str.includes('>')) {
-        return str;
-    }
+    if (str.includes('<') && str.includes('>')) return str;
     let formatted = str.replace(/(\d*[+-])$/, '<sup>$1</sup>');
     let parts = formatted.split('<sup>');
     parts[0] = parts[0].replace(/(\d+)/g, '<sub>$1</sub>');
@@ -1781,47 +1667,6 @@ function loadMolecule(key, variantKey = null) {
 
     if (!data.bondsRaw) data.bondsRaw = []; 
     let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
-
-    const toggleOct = document.getElementById('toggle-octet');
-    if (toggleOct && toggleOct.checked) {
-        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te', 'N'];
-        processedBonds.forEach(bond => {
-            if (bond[2] === 'double') {
-                const idx1 = bond[0];
-                const idx2 = bond[1];
-                const atom1 = data.atomsRaw[idx1];
-                const atom2 = data.atomsRaw[idx2];
-                let centerIdx = -1;
-                let termIdx = -1;
-                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') {
-                    centerIdx = idx1; termIdx = idx2;
-                } else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') {
-                    centerIdx = idx2; termIdx = idx1;
-                }
-                else if (atom1.elem === 'S' && atom2.elem === 'S') {
-                    let d1 = 0, d2 = 0;
-                    processedBonds.forEach(b => {
-                        if(b[0]===idx1 || b[1]===idx1) d1++;
-                        if(b[0]===idx2 || b[1]===idx2) d2++;
-                    });
-                    if (d1 > 1 && d2 === 1) { centerIdx = idx1; termIdx = idx2; }
-                    else if (d2 > 1 && d1 === 1) { centerIdx = idx2; termIdx = idx1; }
-                }
-                if (centerIdx !== -1) {
-                    let connectionCount = 0;
-                    processedBonds.forEach(b => {
-                        if (b[0] === termIdx || b[1] === termIdx) connectionCount++;
-                    });
-                    if (connectionCount === 1) {
-                        bond[2] = 'coordinate';
-                        bond[0] = centerIdx;
-                        bond[1] = termIdx;
-                    }
-                }
-            }
-        });
-    }
-
     const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
     currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
     
@@ -1841,23 +1686,7 @@ function loadMolecule(key, variantKey = null) {
     if(formulaEl) formulaEl.innerHTML = formatFormula(formulaText);
     if(nameEl) nameEl.textContent = nameText;
 
-    const knowledgeCard = document.getElementById('knowledge-card');
-    const knowledgeText = document.getElementById('knowledge-text');
-    if (knowledgeCard && knowledgeText) {
-        if (data.desc) {
-            knowledgeText.innerHTML = data.desc;
-            knowledgeCard.style.display = 'block';
-            if(window.innerWidth < 768) {
-                knowledgeCard.classList.remove('expanded'); 
-            } else {
-                knowledgeCard.classList.add('expanded');
-            }
-        } else {
-            knowledgeCard.style.display = 'none';
-        }
-    }
     updateSuggestions();
-
     const dispFormula = document.getElementById("disp-formula");
     if(dispFormula) dispFormula.innerHTML = formatFormula(formulaText);
     const dispCenter = document.getElementById("disp-center");
@@ -1901,7 +1730,6 @@ function loadMolecule(key, variantKey = null) {
     if(subtitle) subtitle.textContent = `${nameText} (${formulaText}) - ${data.shape}`; 
     
     updateVariantUI(key, variantKey);
-    // [省略 reaction check 函式呼叫，保持原樣]
 }
 
 function processAtomsData(atomList, bondList, centerElem) {
@@ -1978,19 +1806,31 @@ function project(p) {
     return { x: x3 * s + panOffset.x, y: y3 * s + panOffset.y, z: z3, scale: s };
 }
 
-function renderScene() {
+// ========== [請替換 renderScene] ==========
+function renderScene(time = 0) {
     sceneRoot.innerHTML = "";
     if(!currentMolecule) return;
     
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     
-    // 電腦版保留濾鏡
-    if (!isMobile) {
+    // 電腦版且非電漿模式保留濾鏡
+    if (!isMobile && !isPlasmaMode) {
         const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
         filter.setAttribute("id", "soft-glow");
         filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
         defs.appendChild(filter);
     }
+    
+    // 電子光暈定義
+    const whiteGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    whiteGlow.setAttribute("id", "mobile-glow-white");
+    whiteGlow.setAttribute("cx", "50%"); whiteGlow.setAttribute("cy", "50%"); whiteGlow.setAttribute("r", "50%");
+    whiteGlow.innerHTML = `
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+        <stop offset="30%" stop-color="#ffffff" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    `;
+    defs.appendChild(whiteGlow);
     
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
@@ -1998,31 +1838,27 @@ function renderScene() {
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
         
-        // 1. 原子本體立體漸層 (維持不變)
-        const grad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-        grad.setAttribute("id", `atom-grad-${cleanColor}`);
-        grad.setAttribute("cx", "50%"); grad.setAttribute("cy", "50%"); 
-        grad.setAttribute("r", "50%"); grad.setAttribute("fx", "35%"); grad.setAttribute("fy", "35%");
-        
+        // 1. [正常模式] 立體原子漸層
+        const atomGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        atomGrad.setAttribute("id", `atom-grad-${cleanColor}`);
+        atomGrad.setAttribute("cx", "50%"); atomGrad.setAttribute("cy", "50%"); 
+        atomGrad.setAttribute("r", "50%"); atomGrad.setAttribute("fx", "35%"); atomGrad.setAttribute("fy", "35%");
         let highlight = "#FFFFFF"; 
         let baseColor = color;
         let shadowColor = adjustColor(color, -80); 
-        
-        grad.innerHTML = `
+        atomGrad.innerHTML = `
             <stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/>
             <stop offset="15%" stop-color="${adjustColor(color, 60)}" stop-opacity="1"/>
             <stop offset="50%" stop-color="${baseColor}" stop-opacity="1"/>
             <stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>
         `;
-        defs.appendChild(grad);
+        defs.appendChild(atomGrad);
 
-        // 2. 手機版原子光暈 (維持上個版本的設定，確保可見)
-        if (isMobile) {
-            const mobileGlowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        // 2. [正常模式] 手機版光暈
+        if (isMobile && !isPlasmaMode) {
+             const mobileGlowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
             mobileGlowGrad.setAttribute("id", `mobile-glow-${cleanColor}`);
             mobileGlowGrad.setAttribute("cx", "50%"); mobileGlowGrad.setAttribute("cy", "50%"); mobileGlowGrad.setAttribute("r", "50%");
-            
-            // 維持原子光暈的亮度與範圍
             mobileGlowGrad.innerHTML = `
                 <stop offset="0%" stop-color="${color}" stop-opacity="0.6"/>
                 <stop offset="65%" stop-color="${color}" stop-opacity="0.4"/>
@@ -2030,31 +1866,37 @@ function renderScene() {
             `;
             defs.appendChild(mobileGlowGrad);
         }
-    });
 
-    // [修正] 手機版電子光暈 (調弱、調小)
-    if (isMobile) {
-        const whiteGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-        whiteGlow.setAttribute("id", "mobile-glow-white");
-        whiteGlow.setAttribute("cx", "50%"); whiteGlow.setAttribute("cy", "50%"); whiteGlow.setAttribute("r", "50%");
-        // 降低起始不透明度 (0.8 -> 0.5)，移除中間節點，讓視覺範圍變小
-        whiteGlow.innerHTML = `
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-        `;
-        defs.appendChild(whiteGlow);
-    }
+        // 3. [電漿模式] 高濃度能量漸層 (Deep Plasma)
+        // 修改重點：不透明度提高，顏色更早出現，讓視覺更紮實
+        if (isPlasmaMode) {
+            const plasmaGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+            plasmaGrad.setAttribute("id", `plasma-grad-${cleanColor}`);
+            plasmaGrad.setAttribute("cx", "50%"); plasmaGrad.setAttribute("cy", "50%"); 
+            plasmaGrad.setAttribute("r", "50%");
+            plasmaGrad.innerHTML = `
+                <!-- 0%: 核心極亮白 -->
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+                
+                <!-- 25%: 快速轉為高濃度的原子本色 (opacity 0.9) -->
+                <!-- 這樣能確保原子看起來有"實體感" -->
+                <stop offset="25%" stop-color="${color}" stop-opacity="0.9"/>
+                
+                <!-- 100%: 邊緣平滑消融 -->
+                <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+            `;
+            defs.appendChild(plasmaGrad);
+        }
+    });
 
     sceneRoot.appendChild(defs);
 
     const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
     const renderList = [];
-    
     const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
         const p = project(obj); 
         return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
     });
-
     const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
     currentMolecule.bonds3D.forEach((bond, index) => { 
@@ -2065,12 +1907,13 @@ function renderScene() {
         let drawStyle = "single";
         let c1 = a1.color, c2 = a2.color;
         
+        // 電漿模式：鍵結稍微明顯一點點 (0.3)，幫助辨識結構
+        const bondOpacity = (bond[3] !== undefined) ? bond[3] : (isPlasmaMode ? 0.3 : 1);
+
         if (bond[2] === "double") drawStyle = "double";
         else if (bond[2] === "triple") drawStyle = "triple";
         else if (bond[2] === "coordinate") { drawStyle = "single"; c2 = c1; } 
         else if (bond[2] === "coordinate_triple") { drawStyle = "coordinate_triple"; }
-
-        const bondOpacity = (bond[3] !== undefined) ? bond[3] : 1;
 
         renderList.push({ 
             type: "bond", z: (a1.pz+a2.pz)/2, 
@@ -2096,7 +1939,6 @@ function renderScene() {
 
 function drawBond(b) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    
     const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
     if(len === 0) return;
     const nx = dx/len, ny = dy/len;
@@ -2152,70 +1994,124 @@ function drawBond(b) {
     sceneRoot.appendChild(g);
 }
 
+// ========== [請替換 drawAtom] ==========
 function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("data-atom-idx", a.idx); 
     
-    const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+    // --- [電漿模式：緊實能量球] ---
+    if (isPlasmaMode) {
+        g.setAttribute("style", "mix-blend-mode: screen;"); 
 
-    if (useGlow) {
-        const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+        const baseR = a.r * a.scale;
         
-        if (isMobile) {
-            // [修正] 手機版半徑加大至 1.85 倍 (原本 1.5 倍可能被遮住)
-            glow.setAttribute("r", a.r * a.scale * 1.85); 
-            glow.setAttribute("fill", `url(#mobile-glow-${a.color.replace('#','')})`);
-        } else {
-            // 電腦版設定維持不變
-            glow.setAttribute("r", a.r * a.scale * 1.3); 
-            glow.setAttribute("fill", a.color); 
-            glow.setAttribute("opacity", "0.36");
-            glow.setAttribute("filter", "url(#soft-glow)");
-        }
-        g.appendChild(glow);
-    }
+        const gasCloud = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        gasCloud.setAttribute("cx", a.px); 
+        gasCloud.setAttribute("cy", a.py);
+        
+        // [關鍵修正] 縮小範圍：從 3.0 改為 1.6
+        // 1.6倍足夠產生柔邊，但不會大到把隔壁原子吃掉
+        gasCloud.setAttribute("r", baseR * 1.6); 
+        
+        // 使用高濃度漸層
+        gasCloud.setAttribute("fill", `url(#plasma-grad-${a.color.replace('#','')})`);
+        
+        g.appendChild(gasCloud);
 
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); circle.setAttribute("r", a.r * a.scale); 
-    circle.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`); 
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py);
+        txt.setAttribute("font-size", baseR * 0.85); 
+        txt.setAttribute("class", "atom-label-text");
+        txt.style.textShadow = "0 0 3px #000, 0 0 5px #000"; 
+        txt.style.fill = "#fff";
+        txt.textContent = a.elem;
+        g.appendChild(txt);
+
+    } else {
+        // --- [正常模式：維持原版] ---
+        const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+        
+        if (useGlow) {
+            const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+            if (isMobile) {
+                glow.setAttribute("r", a.r * a.scale * 1.85); 
+                glow.setAttribute("fill", `url(#mobile-glow-${a.color.replace('#','')})`);
+            } else {
+                glow.setAttribute("r", a.r * a.scale * 1.3); 
+                glow.setAttribute("fill", a.color); 
+                glow.setAttribute("opacity", "0.36");
+                glow.setAttribute("filter", "url(#soft-glow)");
+            }
+            g.appendChild(glow);
+        }
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); 
+        circle.setAttribute("r", a.r * a.scale); 
+        circle.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`); 
+        
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); 
+        txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+        txt.setAttribute("class", "atom-label-text"); 
+        txt.textContent = a.elem;
+        
+        g.appendChild(circle); g.appendChild(txt);
+    }
     
-    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
-    txt.setAttribute("class", "atom-label-text"); txt.textContent = a.elem;
-    
-    g.appendChild(circle); g.appendChild(txt);
     sceneRoot.appendChild(g);
 }
 
+// ========== [請替換 drawElectron] ==========
 function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
-    const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+    if (isPlasmaMode) {
+        g.setAttribute("style", "mix-blend-mode: screen;"); 
 
-    if (useGlow) {
-        const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
-        
-        if (isMobile) {
-            // [修正] 手機版電子光暈縮小 (3.0 -> 2.2)
-            glow.setAttribute("r", r * 2.2); 
-            glow.setAttribute("fill", "url(#mobile-glow-white)");
-        } else {
-            // 電腦版維持不變
-            glow.setAttribute("r", r * 1.8); 
-            glow.setAttribute("fill", "#ffffff"); 
-            glow.setAttribute("opacity", "0.28");
-            glow.setAttribute("filter", "url(#soft-glow)");
+        // 1. 光暈：縮小到 2.0 倍 (原本 3.0)
+        const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
+        halo.setAttribute("r", r * 2.0); 
+        halo.setAttribute("fill", "url(#mobile-glow-white)");
+        halo.setAttribute("opacity", "0.6"); // 稍微亮一點
+        g.appendChild(halo);
+
+        // 2. 核心
+        const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        core.setAttribute("cx", e.px); core.setAttribute("cy", e.py);
+        core.setAttribute("r", r * 1.0);
+        core.setAttribute("fill", "#ffffff");
+        core.setAttribute("class", "electron-spark"); 
+        g.appendChild(core);
+
+    } else {
+        // [正常模式]
+        const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+        if (useGlow) {
+            const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
+            
+            if (isMobile) {
+                glow.setAttribute("r", r * 2.2); 
+                glow.setAttribute("fill", "url(#mobile-glow-white)");
+            } else {
+                glow.setAttribute("r", r * 1.8); 
+                glow.setAttribute("fill", "#ffffff"); 
+                glow.setAttribute("opacity", "0.28");
+                glow.setAttribute("filter", "url(#soft-glow)");
+            }
+            g.appendChild(glow);
         }
-        g.appendChild(glow);
-    }
 
-    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
-    c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "0.9");
-    g.appendChild(c);
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
+        c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "0.9");
+        g.appendChild(c);
+    }
+    
     sceneRoot.appendChild(g);
 }
 
@@ -2230,14 +2126,11 @@ function adjustColor(col, amt) {
 }
 
 function animate() {
+    const time = performance.now(); 
     if (!isDragging && !isReactionRunning && !isLongPressActive) {
-        rotVelocity.x *= 0.96;
-        rotVelocity.y *= 0.96;
-        rotVelocity.z *= 0.96;
-
+        rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
         let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
         const MIN_SPEED = 0.004; 
-        
         const autoRotateEl = document.getElementById('toggle-auto-rotate');
         const isAutoRotateOn = autoRotateEl ? autoRotateEl.checked : true;
 
@@ -2245,60 +2138,44 @@ function animate() {
             if (speed < MIN_SPEED) {
                 if (isAutoRotateOn) {
                     let scaleFactor = MIN_SPEED / speed;
-                    rotVelocity.x *= scaleFactor;
-                    rotVelocity.y *= scaleFactor;
-                    rotVelocity.z *= scaleFactor;
+                    rotVelocity.x *= scaleFactor; rotVelocity.y *= scaleFactor; rotVelocity.z *= scaleFactor;
                 }
             }
             applyRotation(rotVelocity.y, rotVelocity.x, rotVelocity.z);
         } else {
-            if (isAutoRotateOn) {
-                applyRotation(0.004, 0, 0); 
-            }
+            if (isAutoRotateOn) applyRotation(0.004, 0, 0); 
         }
     }
-    renderScene();
+    renderScene(time);
     requestAnimationFrame(animate);
 }
 
 function setupInteractions() {
     const modeBtn = document.getElementById('mode-toggle');
     if (modeBtn) modeBtn.addEventListener('click', toggleMode);
-
     const loadBtn = document.getElementById('load-btn');
     if (loadBtn) loadBtn.addEventListener('click', handleLoadBtn);
-
     const inputField = document.getElementById('formula-input');
     if (inputField) {
         inputField.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleLoadBtn();
         });
     }
-
     const toggleLp = document.getElementById('toggle-lp');
     if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
-
     const toggleGlow = document.getElementById('toggle-glow');
     if (toggleGlow) toggleGlow.addEventListener('change', () => { renderScene(); });
-
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct) toggleOct.addEventListener('change', () => { 
         if(currentKey) loadMolecule(currentKey); 
     });
-
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', () => {
-        isReactionRunning = false; 
-        isReactionFinished = false; 
-        if (currentKey === "CH3Cl" || currentKey === "CH3NO2" || currentKey === "CH4") {
-            loadMolecule("CH4");
-        } else if (["C3H6", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(currentKey)) {
-            loadMolecule("C3H6", "丙烯"); 
-        } else {
-            loadMolecule("C2H4");
-        }     
+        isReactionRunning = false; isReactionFinished = false; 
+        if (currentKey === "CH3Cl" || currentKey === "CH3NO2" || currentKey === "CH4") loadMolecule("CH4");
+        else if (["C3H6", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(currentKey)) loadMolecule("C3H6", "丙烯"); 
+        else loadMolecule("C2H4");
     });
-
     const mobileHandle = document.getElementById('mobile-panel-handle');
     if (mobileHandle) {
         mobileHandle.addEventListener('click', () => {
@@ -2311,61 +2188,38 @@ function setupInteractions() {
             }
         });
     }
-
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
 
-    const MOUSE_SENSITIVITY = 0.005; 
-    const TOUCH_SENSITIVITY = 0.004;
-    
-    let longPressTimer = null;
-    let startX = 0, startY = 0;
-    const LONG_PRESS_MS = 500; 
-    const MOVE_TOLERANCE = 10;
+    const MOUSE_SENSITIVITY = 0.005; const TOUCH_SENSITIVITY = 0.004;
+    let longPressTimer = null; let startX = 0, startY = 0;
+    const LONG_PRESS_MS = 500; const MOVE_TOLERANCE = 10;
 
     const handleStart = (x, y) => { 
-        isDragging = true; 
-        isLongPressActive = false; 
-        startX = x; startY = y;
-        lastMouse = { x, y }; 
-        rotVelocity = { x: 0, y: 0, z: 0 }; 
-        hideHybridTooltip(); 
-
+        isDragging = true; isLongPressActive = false; 
+        startX = x; startY = y; lastMouse = { x, y }; 
+        rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
         clearTimeout(longPressTimer);
         longPressTimer = setTimeout(() => {
-            isDragging = false;
-            isLongPressActive = true; 
-            
+            isDragging = false; isLongPressActive = true; 
             checkAtomClick(x, y); 
             if (navigator.vibrate) navigator.vibrate(40);
         }, LONG_PRESS_MS);
     };
 
     const handleMove = (x, y, sensitivity) => {
-        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) {
-            clearTimeout(longPressTimer);
-        }
-
+        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) clearTimeout(longPressTimer);
         if (!isDragging) return;
-        const dx = x - lastMouse.x;
-        const dy = y - lastMouse.y;
-        
+        const dx = x - lastMouse.x; const dy = y - lastMouse.y;
         if (currentMode === 1 || (currentMode === 2 && !altKeyIsDown)) {
-            rotVelocity.y = dx * sensitivity; 
-            rotVelocity.x = -dy * sensitivity; 
+            rotVelocity.y = dx * sensitivity; rotVelocity.x = -dy * sensitivity; 
             applyRotation(rotVelocity.y, rotVelocity.x, 0);
         } else {
-            panOffset.x += dx * 0.5; 
-            panOffset.y += dy * 0.5;
+            panOffset.x += dx * 0.5; panOffset.y += dy * 0.5;
         }
         lastMouse = { x, y };
     };
-
-    const handleEnd = () => {
-        clearTimeout(longPressTimer);
-        isDragging = false;
-        isLongPressActive = false;
-    };
+    const handleEnd = () => { clearTimeout(longPressTimer); isDragging = false; isLongPressActive = false; };
 
     viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
     viewport.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
@@ -2415,6 +2269,14 @@ function setupInteractions() {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
         hideHybridTooltip();
     });
+    
+    const togglePlasma = document.getElementById('toggle-plasma');
+    if (togglePlasma) {
+        togglePlasma.addEventListener('change', (e) => {
+            isPlasmaMode = e.target.checked;
+            renderScene();
+        });
+    }
 
     setupMobilePanel();
 }
@@ -2432,26 +2294,21 @@ function checkAtomClick(screenX, screenY) {
 function findAtomByScreenPos(screenX, screenY) {
     const atomGroups = document.querySelectorAll("g[data-atom-idx]");
     let candidates = [];
-    
     atomGroups.forEach(g => {
         const idx = parseInt(g.getAttribute("data-atom-idx"));
         const atomData = currentMolecule.renderObjects[idx];
         if (!atomData) return;
-
         const circle = g.querySelector("circle");
         if (!circle) return;
-        
         const rect = circle.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dist = Math.hypot(screenX - cx, screenY - cy);
-        
         if (dist < (rect.width / 2 + 10)) {
             const p = project(atomData);
             candidates.push({ atom: atomData, z: p.z, dist: dist });
         }
     });
-
     if (candidates.length === 0) return null;
     candidates.sort((a, b) => b.z - a.z);
     return candidates[0].atom;
@@ -2460,7 +2317,6 @@ function findAtomByScreenPos(screenX, screenY) {
 function showHybridInfo(atomObj, x, y) {
     const tooltip = document.getElementById('hybrid-label');
     if(!tooltip) return;
-
     const atomIdx = atomObj.originalIndex;
     let sigmaCount = 0;
     if (currentMolecule.bonds3D) {
@@ -2470,25 +2326,20 @@ function showHybridInfo(atomObj, x, y) {
             }
         });
     }
-
     if (sigmaCount < 2) {
         hideHybridTooltip();
         return;
     } 
-
     const lpCount = atomObj.calculatedLP || 0;
     const sum = sigmaCount + lpCount;
-    
     let hybrid = "";
     let hybridColor = "#ffffff"; 
-
     if (sum === 2) { hybrid = "sp"; hybridColor = "#22d3ee"; } 
     else if (sum === 3) { hybrid = "sp²"; hybridColor = "#a3e635"; } 
     else if (sum === 4) { hybrid = "sp³"; hybridColor = "#fbbf24"; } 
     else if (sum === 5) { hybrid = "sp³d"; hybridColor = "#f472b6"; } 
     else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
     else { hybrid = "-"; }
-
     tooltip.innerHTML = `
         <span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2">${atomObj.elem}</span><br/>
         混成: <span style="color:${hybridColor};font-size:1.3em">${hybrid}</span><br/>
@@ -2505,57 +2356,28 @@ function hideHybridTooltip() {
 function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
-    
     if(!handle || !panel || !isMobile) return;
-
-    let startY = 0;
-    let startHeight = 0;
-    let isDragging = false;
-    let hasMoved = false; 
-    
-    const MIN_H = 30; 
-    const MID_H = window.innerHeight * 0.4;
-    const MAX_H = window.innerHeight * 0.95;
-
-    panel.addEventListener('click', (e) => {
-        if (hasMoved) {
-            e.preventDefault();
-            e.stopPropagation(); 
-            return false;
-        }
-    }, true);
-
-    handle.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        hasMoved = false; 
-        startY = e.touches[0].clientY;
-        startHeight = panel.offsetHeight;
-        panel.style.transition = 'none';
-    }, {passive: false});
-
+    let startY = 0; let startHeight = 0; let isDragging = false; let hasMoved = false; 
+    const MIN_H = 30; const MID_H = window.innerHeight * 0.4; const MAX_H = window.innerHeight * 0.95;
+    panel.addEventListener('click', (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return false; } }, true);
+    handle.addEventListener('touchstart', (e) => { isDragging = true; hasMoved = false; startY = e.touches[0].clientY; startHeight = panel.offsetHeight; panel.style.transition = 'none'; }, {passive: false});
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
         if(e.cancelable) e.preventDefault();
-        
         const currentY = e.touches[0].clientY;
         const deltaY = startY - currentY; 
         if (Math.abs(deltaY) > 5) hasMoved = true;
-
         let newHeight = startHeight + deltaY;
         if (newHeight < MIN_H) newHeight = MIN_H + (newHeight - MIN_H) * 0.2;
         if (newHeight > MAX_H) newHeight = MAX_H + (newHeight - MAX_H) * 0.2;
-
         panel.style.height = `${newHeight}px`;
     }, {passive: false});
-
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
         panel.style.transition = 'height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-
         const currentHeight = panel.offsetHeight;
         const moved = currentHeight - startHeight;
-        
         if (Math.abs(moved) < 5 && !hasMoved) {
             if (currentHeight < 100) panel.style.height = `${MID_H}px`;
             else panel.style.height = `${MIN_H}px`;
@@ -2564,7 +2386,6 @@ function setupMobilePanel() {
             else if (currentHeight > window.innerHeight * 0.25) panel.style.height = `${MID_H}px`;
             else panel.style.height = `${MIN_H}px`;
         }
-
         setTimeout(() => { hasMoved = false; }, 100);
     });
 }
