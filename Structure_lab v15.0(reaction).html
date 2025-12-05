@@ -1308,10 +1308,7 @@ function resetReaction() {
 }
 
 
-function hideAllReactionBtns() {
-    const btns = document.querySelectorAll(".reaction-btn");
-    btns.forEach(b => b.style.display = "none");
-}
+
 
 // ========== [請替換 finishReaction 函式] ==========
 function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
@@ -1325,25 +1322,23 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
         loadMolecule(nextKey, variantName); 
         
         // 3. 處理文字描述
-        if (description) {
-            // --- A. 只針對標題旁的文字做樣式修改 ---
-            const subtitle = document.getElementById("viewport-subtitle");
+        const subtitle = document.getElementById("viewport-subtitle");
             if (subtitle) {
                 subtitle.textContent = description;
                 subtitle.style.display = "block"; 
                 
-                // [修改] 顏色改為亮黃色
+                // 樣式設定
                 subtitle.style.color = "#ffff00"; 
-                
-                // [修改] 字體加大 (原本約 0.8rem，改為 1.3rem)
-                subtitle.style.fontSize = "1.3rem"; 
-                
-                // [修改] 增加黑色陰影，確保亮字在黑底上看得很清楚
+                subtitle.style.fontSize = "1.2rem"; 
                 subtitle.style.textShadow = "0 2px 5px #000000";
                 
-                // 確保文字置中且不斷行(如果太長會自動換行)
+                // [關鍵修改] 強制換行設定
+                subtitle.style.whiteSpace = "normal";      // 允許自動換行
+                subtitle.style.maxWidth = "85vw";          // 限制寬度在螢幕內 (留邊距)
+                subtitle.style.wordBreak = "break-word";   // 防止長單字撐開
+                subtitle.style.lineHeight = "1.4";         // 調整行高
+                subtitle.style.marginTop = "10px";
                 subtitle.style.textAlign = "left"; 
-                subtitle.style.marginTop = "8px";
             }
 
             // --- B. 知識小百科 (內容更新，但樣式保持原樣，不變大也不變黃) ---
