@@ -1125,6 +1125,13 @@ addMol("C8H10|二甲苯|乙苯", "C", "sp²", ["平面 (苯環)","Planar"], "120
     }
 );
 
+addMol("C2H4Cl2|二氯乙烷", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", "-96.9", "57.3", [], [], 
+    {
+        "1,1-二氯乙烷": { mp: "-96.9", bp: "57.3", atoms: [{elem:"Cl",x:66,y:68,z:-9},{elem:"Cl",x:-66,y:68,z:-9},{elem:"C",x:0,y:28,z:15},{elem:"C",x:0,y:-35,z:-10},{elem:"H",x:0,y:27,z:64},{elem:"H",x:0,y:-35,z:-60},{elem:"H",x:-40,y:-60,z:5},{elem:"H",x:40,y:-60,z:5}], bonds: [[0,2],[1,2],[2,3],[2,4],[3,5],[3,6],[3,7]] },
+        "1,2-二氯乙烷": { mp: "-35.7", bp: "83.5", atoms: [{elem:"Cl",x:74,y:58,z:6},{elem:"Cl",x:-74,y:58,z:-6},{elem:"C",x:31,y:-6,z:-15},{elem:"C",x:-31,y:-6,z:15},{elem:"H",x:27,y:-6,z:-64},{elem:"H",x:56,y:-46,z:-2},{elem:"H",x:-56,y:-46,z:2},{elem:"H",x:-27,y:-6,z:64}], bonds: [[0,2],[1,3],[2,3],[2,4],[2,5],[3,6],[3,7]] }
+    }
+);
+
 addMol("C6H4Cl2|二氯苯", "C", "sp²", ["平面 (苯環)","Planar"], "120°", "-17", "180.5", [], [], 
     {
         "鄰二氯苯": { mp: "-17", bp: "180.5", atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:135,z:0},{elem:"Cl",x:117,y:67,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]] },
@@ -1323,18 +1330,41 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
             const subtitle = document.getElementById("viewport-subtitle");
             if (subtitle) {
                 subtitle.textContent = description;
+                
+                // [關鍵修正] 
+                // 1. 改為 block 確保它會換行，跑到下方
+                // 2. 設定 fit-content 讓邊框只包住文字，不要撐滿整排
                 subtitle.style.display = "block"; 
+                subtitle.style.width = "fit-content";
                 
-                // [樣式修改] 亮黃色 + 大字體
-                subtitle.style.color = "#ffff00"; 
-                subtitle.style.fontSize = "1.3rem"; 
-                subtitle.style.textShadow = "0 2px 5px #000000";
+                // --- 自定義主題色 (螢光萊姆綠) ---
+                const themeColor = "#fb923c"; 
+
+                // [邊框盒子樣式]
+                subtitle.style.border = `1px solid ${themeColor}`;   
+                subtitle.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; 
+                subtitle.style.borderRadius = "12px";                
+                subtitle.style.padding = "10px 14px";                
+                subtitle.style.backdropFilter = "blur(4px)";         
+                subtitle.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)"; 
+
+                // [文字樣式]
+                subtitle.style.color = themeColor;                   
+                subtitle.style.fontSize = "1.1rem"; 
+                subtitle.style.fontWeight = "600";                   
+                subtitle.style.textShadow = "0 2px 4px #000000";     
+
+                // [排版與分行]
+                // 電腦版約 12em，手機版視窗窄時會自動適應
+                subtitle.style.maxWidth = "12em"; 
+                subtitle.style.whiteSpace = "normal";                
+                subtitle.style.wordBreak = "break-word";             
+                subtitle.style.lineHeight = "1.5";  
                 
-                // [關鍵修改] 強制換行設定，防止超出手機畫面
-                subtitle.style.whiteSpace = "normal";    // 允許自動換行
-                subtitle.style.maxWidth = "90vw";        // 限制最大寬度為螢幕的 90%
-                subtitle.style.lineHeight = "1.5";       // 增加行高，讓多行文字好閱讀
-                subtitle.style.marginTop = "10px";       // 增加頂部間距
+                // [位置微調]
+                // 確保與上方元素的間距，且清除浮動影響
+                subtitle.style.marginTop = "15px";
+                subtitle.style.clear = "both";
                 subtitle.style.textAlign = "left"; 
             }
 
