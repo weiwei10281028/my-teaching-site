@@ -1246,60 +1246,47 @@ function checkReactionAvailable(key) {
     const resetBtn = document.querySelector(".reset-btn");
     const btns = document.querySelectorAll(".reaction-btn"); 
     
+    // 1. 先隱藏所有按鈕
     btns.forEach(b => b.style.display = "none");
     btnContainer.style.display = "none";
     resetBtn.style.display = "none";
 
+    // 2. 乙烯 (C2H4) 專屬反應
     if (key === "C2H4") {
-        // ... (乙烯原有邏輯保持不變) ...
         btnContainer.style.display = "block";
-        document.getElementById("reaction-btn").style.display = "flex";
-        document.getElementById("reaction-h2-btn").style.display = "flex";
-        document.getElementById("reaction-hcl-btn").style.display = "flex";
-        document.getElementById("reaction-cl2-btn").style.display = "flex";
-        document.getElementById("reaction-kmno4-btn").style.display = "flex";
+        document.getElementById("reaction-btn").style.display = "flex";      // +H2O
+        document.getElementById("reaction-h2-btn").style.display = "flex";   // +H2
+        document.getElementById("reaction-hcl-btn").style.display = "flex";  // +HCl
+        document.getElementById("reaction-cl2-btn").style.display = "flex";  // +Cl2
+        document.getElementById("reaction-kmno4-btn").style.display = "flex";// KMnO4
         resetBtn.style.display = "block";
-    } else if (key === "C3H6") {
-        // [新增] 只有當結構中有雙鍵(丙烯)才顯示按鈕
+    } 
+    // 3. 丙烯 (C3H6) 專屬反應
+    else if (key === "C3H6") {
+        // 只有真的載入丙烯時才顯示 (避免同分異構物環丙烷誤判)
         let hasDoubleBond = false;
         if(currentMolecule.bonds3D) hasDoubleBond = currentMolecule.bonds3D.some(b => b[2] === "double");
         
         if (hasDoubleBond) {
             btnContainer.style.display = "block";
-            // 顯示所有丙烯反應按鈕
-            document.getElementById("reaction-propene-h2-btn").style.display = "flex";
-            document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
-            document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
-            document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
+            document.getElementById("reaction-propene-h2-btn").style.display = "flex";  // +H2
+            document.getElementById("reaction-propene-cl2-btn").style.display = "flex"; // +Cl2
+            document.getElementById("reaction-propene-hcl-btn").style.display = "flex"; // +HCl
+            document.getElementById("reaction-propene-h2o-btn").style.display = "flex"; // +H2O
             resetBtn.style.display = "block";
         }
-
-    } else if (key === "CH4") {
-        // [修改] 甲烷現在有兩個反應：氯化 與 硝化
+    } 
+    // 4. 甲烷 (CH4) 專屬反應
+    else if (key === "CH4") {
         btnContainer.style.display = "block";
-        
         const subBtn = document.getElementById("reaction-sub-btn");
-        if(subBtn) subBtn.style.display = "flex"; // +Cl2
-        
+        if(subBtn) subBtn.style.display = "flex"; // +Cl2 (取代)
         const nitroBtn = document.getElementById("reaction-nitro-btn");
-        if(nitroBtn) nitroBtn.style.display = "flex"; // +HNO3
-
+        if(nitroBtn) nitroBtn.style.display = "flex"; // +HNO3 (硝化)
         resetBtn.style.display = "block";
-    } else if (key === "C3H6") {
-        // [新增] 只有當結構中有雙鍵(丙烯)才顯示按鈕
-        let hasDoubleBond = false;
-        if(currentMolecule.bonds3D) hasDoubleBond = currentMolecule.bonds3D.some(b => b[2] === "double");
-        
-        if (hasDoubleBond) {
-            btnContainer.style.display = "block";
-            document.getElementById("reaction-propene-h2-btn").style.display = "flex";
-            document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
-            document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
-            document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
-            resetBtn.style.display = "block";
-        }
-    // [修正] 在下方列表中加入丙烯的所有產物
-    } else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(key) && isReactionFinished) {
+    } 
+    // 5. 產物顯示重置按鈕
+    else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH", "C2H6O2"].includes(key) && isReactionFinished) {
         btnContainer.style.display = "block";
         resetBtn.style.display = "block"; 
     }
@@ -1329,166 +1316,72 @@ function hideAllReactionBtns() {
 // [修正] 轉場時間延長至 1500ms
 function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
     const svg = document.getElementById("scene-root");
+    
+    // 視覺特效：模糊淡出
     svg.classList.add("scene-blur-out");
     
     setTimeout(() => {
-        // [修改 3] 直接載入目標分子，loadMolecule 會處理名稱顯示
+        // 載入新分子 (loadMolecule 會負責更新畫面與檢查按鈕)
         loadMolecule(nextKey, variantName); 
         
-        // 更新描述（如果有）
+        // 更新下方文字描述
         const subtitle = document.getElementById("viewport-subtitle");
         if(subtitle && description) subtitle.textContent = description;
         
+        // 視覺特效：模糊淡入
         svg.classList.remove("scene-blur-out");
         svg.classList.add("scene-blur-in");
         
         setTimeout(() => {
             svg.classList.remove("scene-blur-in");
-            isReactionRunning = false;
-            isReactionFinished = true;
+            isReactionRunning = false; // 標記反應結束
+            isReactionFinished = true; // 標記已產生產物
+            
+            // 強制再次檢查按鈕狀態，確保"重置"按鈕出現
             checkReactionAvailable(nextKey); 
         }, 1500);
     }, 1500);
 }
 
-// 1. 乙烯 + H2O -> 乙醇 (直接轉場版)
+// 2. 乙烯 (C2H4) 系列反應
 function runEthyleneHydration() {
-    hideAllReactionBtns();
-    if (!MOLECULE_DB["C2H5OH"]) return;
-
-    finishReaction(
-        "C2H5OH", 
-        "乙醇", 
-        null, 
-        "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接OH，轉變成乙醇"
-    );
+    finishReaction("C2H5OH", "乙醇", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接OH，轉變成乙醇");
 }
-
-// 2. 乙烯 + Cl2 -> 1,2-二氯乙烷 (直接轉場版)
 function runEthyleneChlorination() {
-    hideAllReactionBtns();
-    if (!MOLECULE_DB["C2H4Cl2"]) return;
-
-    // 指定變體為 "1,2-二氯乙烷" (對應 MOLECULE_DB 中的 key)
-    finishReaction(
-        "C2H4Cl2", 
-        "1,2-二氯乙烷", 
-        "1,2-二氯乙烷", 
-        "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個Cl，轉變成1,2-二氯乙烷，亦為氧化反應(C氧化數上升)"
-    );
+    finishReaction("C2H4Cl2", "1,2-二氯乙烷", "1,2-二氯乙烷", "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個Cl，轉變成1,2-二氯乙烷，亦為氧化反應(C氧化數上升)");
 }
-
-// 3. 乙烯 + H2 -> 乙烷 (直接轉場版)
 function runEthyleneHydrogenation() {
-    hideAllReactionBtns();
-    if(!MOLECULE_DB["C2H6"]) return;
-    
-    // 直接呼叫轉場，傳入詳細說明
-    finishReaction(
-        "C2H6", 
-        "乙烷", 
-        null, 
-        "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個H，轉變成乙烷，亦為還原反應(C氧化數下降)"
-    );
+    finishReaction("C2H6", "乙烷", null, "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個H，轉變成乙烷，亦為還原反應(C氧化數下降)");
 }
-
-// 4. 乙烯 + HCl -> 氯乙烷 (直接轉場版)
 function runEthyleneHydrohalogenation() {
-    hideAllReactionBtns();
-    if(!MOLECULE_DB["C2H5Cl"]) return;
-
-    finishReaction(
-        "C2H5Cl", 
-        "氯乙烷", 
-        null, 
-        "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接Cl，轉變成氯乙烷"
-    );
+    finishReaction("C2H5Cl", "氯乙烷", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接Cl，轉變成氯乙烷");
 }
-
-function runMethaneSubstitution() {
-    hideAllReactionBtns();
-    if(!MOLECULE_DB["CH3Cl"]) { console.error("Missing CH3Cl data"); return; }
-
-    finishReaction(
-        "CH3Cl", 
-        "一氯甲烷", 
-        null,
-        "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl"
-    );
-}
-
-function runMethaneNitration() {
-    hideAllReactionBtns();
-    
-    // 確保有硝基甲烷的資料 (防止資料庫缺失)
-    if(!MOLECULE_DB["CH3NO2"]) {
-        addMol("CH3NO2", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", 
-            [{elem:"C",x:0,y:0,z:0},{elem:"N",x:40,y:0,z:0},{elem:"O",x:65,y:35,z:0},{elem:"O",x:65,y:-35,z:0},{elem:"H",x:-25,y:35,z:0},{elem:"H",x:-25,y:-35,z:0},{elem:"H",x:-40,y:0,z:-35}], 
-            [[0,1],[1,2,"double"],[1,3,"coordinate"],[0,4],[0,5],[0,6]]
-        );
-    }
-
-    finishReaction(
-        "CH3NO2", 
-        "硝基甲烷", 
-        null,
-        "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O"
-    );
-}
-
-// ==========================================
-// 丙烯 (C3H6) 系列反應 - 直接轉場版
-// ==========================================
-
-// 1. 氫氣加成 -> 丙烷
-function runPropeneHydrogenation() {
-    hideAllReactionBtns();
-    if (!MOLECULE_DB["C3H8"]) return;
-    finishReaction("C3H8", "丙烷", null, 
-        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個H，轉變成丙烷，亦為還原反應(C氧化數下降)");
-}
-
-// 2. 鹵素加成 -> 1,2-二氯丙烷
-function runPropeneChlorination() {
-    hideAllReactionBtns();
-    if (!MOLECULE_DB["C3H6Cl2"]) return;
-    // 指定變體 "1,2-二氯丙烷"
-    finishReaction("C3H6Cl2", "1,2-二氯丙烷", "1,2-二氯丙烷", 
-        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個Cl，轉變成1,2-二氯丙烷，亦為氧化反應(C氧化數上升)");
-}
-
-// 3. 鹵化氫加成 -> 2-氯丙烷 (依照馬氏規則: 中間C接Cl)
-function runPropeneHydrohalogenation() {
-    hideAllReactionBtns();
-    if (!MOLECULE_DB["C3H7Cl"]) return;
-    // 指定變體 "2-氯丙烷"
-    finishReaction("C3H7Cl", "2-氯丙烷", "2-氯丙烷", 
-        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
-}
-
-// 4. 水加成 -> 異丙醇 (2-丙醇) (依照馬氏規則: 中間C接OH)
-function runPropeneHydration() {
-    hideAllReactionBtns();
-    // C3H6 + H2O -> C3H7OH (不是乙醇C2H5OH，原子數需守恆)
-    if (!MOLECULE_DB["C3H7OH"]) return;
-    // 指定變體 "2-Propanol (異丙醇)"
-    finishReaction("C3H7OH", "異丙醇", "2-Propanol (異丙醇)", 
-        "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
-}
-
-// 5. 乙烯 + KMnO4 (冷稀/中性或微鹼性) -> 乙二醇 (氧化反應/順式加成)
 function runEthyleneOxidation() {
-    hideAllReactionBtns();
-    // 檢查是否有乙二醇資料 (C2H6O2)
-    if (!MOLECULE_DB["C2H6O2"]) return;
-
-    finishReaction(
-        "C2H6O2", 
-        "乙二醇", 
-        null, // 使用主結構，無需指定變體
-        "乙烯通入冷稀、中性或微鹼性的過錳酸鉀溶液中，碳碳雙鍵斷裂，發生氧化反應，雙鍵的兩個C接上OH，生成乙二醇，溶液紫色褪去並轉變成黃褐色，並有懸浮MnO₂沉澱。"
-    );
+    finishReaction("C2H6O2", "乙二醇", null, "乙烯通入冷稀、中性或微鹼性的過錳酸鉀溶液中，碳碳雙鍵斷裂，發生氧化反應，雙鍵的兩個C接上OH，生成乙二醇，溶液紫色褪去並轉變成黃褐色，並有懸浮MnO₂沉澱。");
 }
+
+// 3. 甲烷 (CH4) 系列反應
+function runMethaneSubstitution() {
+    finishReaction("CH3Cl", "一氯甲烷", null, "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl");
+}
+function runMethaneNitration() {
+    finishReaction("CH3NO2", "硝基甲烷", null, "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O");
+}
+
+// 4. 丙烯 (C3H6) 系列反應
+function runPropeneHydrogenation() {
+    finishReaction("C3H8", "丙烷", null, "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個H，轉變成丙烷，亦為還原反應(C氧化數下降)");
+}
+function runPropeneChlorination() {
+    finishReaction("C3H6Cl2", "1,2-二氯丙烷", "1,2-二氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個Cl，轉變成1,2-二氯丙烷，亦為氧化反應(C氧化數上升)");
+}
+function runPropeneHydrohalogenation() {
+    finishReaction("C3H7Cl", "2-氯丙烷", "2-氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
+}
+function runPropeneHydration() {
+    finishReaction("C3H7OH", "異丙醇", "2-Propanol (異丙醇)", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
+}
+
 
 
 
@@ -1648,6 +1541,7 @@ function loadMolecule(key, variantKey = null) {
     }
     if (!targetData) { console.error("Data missing for:", key); return; }
     
+    // 智慧變體保持邏輯
     if (!variantKey && currentKey === key && typeof currentVariantKey !== 'undefined' && currentVariantKey) {
         variantKey = currentVariantKey;
     }
@@ -1667,9 +1561,52 @@ function loadMolecule(key, variantKey = null) {
 
     if (!data.bondsRaw) data.bondsRaw = []; 
     let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
+
+    // 八隅體擴展邏輯
+    const toggleOct = document.getElementById('toggle-octet');
+    if (toggleOct && toggleOct.checked) {
+        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te', 'N'];
+        processedBonds.forEach(bond => {
+            if (bond[2] === 'double') {
+                const idx1 = bond[0];
+                const idx2 = bond[1];
+                const atom1 = data.atomsRaw[idx1];
+                const atom2 = data.atomsRaw[idx2];
+                let centerIdx = -1;
+                let termIdx = -1;
+                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') {
+                    centerIdx = idx1; termIdx = idx2;
+                } else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') {
+                    centerIdx = idx2; termIdx = idx1;
+                }
+                else if (atom1.elem === 'S' && atom2.elem === 'S') {
+                    let d1 = 0, d2 = 0;
+                    processedBonds.forEach(b => {
+                        if(b[0]===idx1 || b[1]===idx1) d1++;
+                        if(b[0]===idx2 || b[1]===idx2) d2++;
+                    });
+                    if (d1 > 1 && d2 === 1) { centerIdx = idx1; termIdx = idx2; }
+                    else if (d2 > 1 && d1 === 1) { centerIdx = idx2; termIdx = idx1; }
+                }
+                if (centerIdx !== -1) {
+                    let connectionCount = 0;
+                    processedBonds.forEach(b => {
+                        if (b[0] === termIdx || b[1] === termIdx) connectionCount++;
+                    });
+                    if (connectionCount === 1) {
+                        bond[2] = 'coordinate';
+                        bond[0] = centerIdx;
+                        bond[1] = termIdx;
+                    }
+                }
+            }
+        });
+    }
+
     const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
     currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
     
+    // 更新 UI 資訊
     const formulaEl = document.getElementById('info-formula');
     const nameEl = document.getElementById('info-name');
     const keyString = data.fullKey || key; 
@@ -1686,7 +1623,25 @@ function loadMolecule(key, variantKey = null) {
     if(formulaEl) formulaEl.innerHTML = formatFormula(formulaText);
     if(nameEl) nameEl.textContent = nameText;
 
+    // 更新知識卡片
+    const knowledgeCard = document.getElementById('knowledge-card');
+    const knowledgeText = document.getElementById('knowledge-text');
+    if (knowledgeCard && knowledgeText) {
+        if (data.desc) {
+            knowledgeText.innerHTML = data.desc;
+            knowledgeCard.style.display = 'block';
+            if(window.innerWidth < 768) {
+                knowledgeCard.classList.remove('expanded'); 
+            } else {
+                knowledgeCard.classList.add('expanded');
+            }
+        } else {
+            knowledgeCard.style.display = 'none';
+        }
+    }
     updateSuggestions();
+
+    // 更新數據顯示
     const dispFormula = document.getElementById("disp-formula");
     if(dispFormula) dispFormula.innerHTML = formatFormula(formulaText);
     const dispCenter = document.getElementById("disp-center");
@@ -1730,6 +1685,8 @@ function loadMolecule(key, variantKey = null) {
     if(subtitle) subtitle.textContent = `${nameText} (${formulaText}) - ${data.shape}`; 
     
     updateVariantUI(key, variantKey);
+
+    checkReactionAvailable(key);
 }
 
 function processAtomsData(atomList, bondList, centerElem) {
@@ -2151,31 +2108,95 @@ function animate() {
 }
 
 function setupInteractions() {
+    // 1. 基礎按鈕綁定
     const modeBtn = document.getElementById('mode-toggle');
     if (modeBtn) modeBtn.addEventListener('click', toggleMode);
+
     const loadBtn = document.getElementById('load-btn');
     if (loadBtn) loadBtn.addEventListener('click', handleLoadBtn);
+
     const inputField = document.getElementById('formula-input');
     if (inputField) {
         inputField.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleLoadBtn();
         });
     }
+
+    // 2. 顯示設定開關
     const toggleLp = document.getElementById('toggle-lp');
     if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
+
     const toggleGlow = document.getElementById('toggle-glow');
     if (toggleGlow) toggleGlow.addEventListener('change', () => { renderScene(); });
+
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct) toggleOct.addEventListener('change', () => { 
         if(currentKey) loadMolecule(currentKey); 
     });
+
+    const togglePlasma = document.getElementById('toggle-plasma');
+    if (togglePlasma) {
+        togglePlasma.addEventListener('change', (e) => {
+            isPlasmaMode = e.target.checked;
+            renderScene();
+        });
+    }
+
+    // 3. [關鍵修復] 反應按鈕事件綁定
+    // 必須一一對應 HTML ID 與上面定義的函式
+    
+    // 乙烯反應
+    const btnH2O = document.getElementById('reaction-btn');
+    if(btnH2O) btnH2O.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydration(); });
+
+    const btnH2 = document.getElementById('reaction-h2-btn');
+    if(btnH2) btnH2.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydrogenation(); });
+
+    const btnHCl = document.getElementById('reaction-hcl-btn');
+    if(btnHCl) btnHCl.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydrohalogenation(); });
+
+    const btnCl2 = document.getElementById('reaction-cl2-btn');
+    if(btnCl2) btnCl2.addEventListener('click', () => { isReactionRunning = true; runEthyleneChlorination(); });
+
+    const btnKMnO4 = document.getElementById('reaction-kmno4-btn');
+    if(btnKMnO4) btnKMnO4.addEventListener('click', () => { isReactionRunning = true; runEthyleneOxidation(); });
+
+    // 甲烷反應
+    const btnSub = document.getElementById('reaction-sub-btn');
+    if(btnSub) btnSub.addEventListener('click', () => { isReactionRunning = true; runMethaneSubstitution(); });
+
+    const btnNitro = document.getElementById('reaction-nitro-btn');
+    if(btnNitro) btnNitro.addEventListener('click', () => { isReactionRunning = true; runMethaneNitration(); });
+
+    // 丙烯反應
+    const btnPropH2 = document.getElementById('reaction-propene-h2-btn');
+    if(btnPropH2) btnPropH2.addEventListener('click', () => { isReactionRunning = true; runPropeneHydrogenation(); });
+
+    const btnPropCl2 = document.getElementById('reaction-propene-cl2-btn');
+    if(btnPropCl2) btnPropCl2.addEventListener('click', () => { isReactionRunning = true; runPropeneChlorination(); });
+
+    const btnPropHCl = document.getElementById('reaction-propene-hcl-btn');
+    if(btnPropHCl) btnPropHCl.addEventListener('click', () => { isReactionRunning = true; runPropeneHydrohalogenation(); });
+
+    const btnPropH2O = document.getElementById('reaction-propene-h2o-btn');
+    if(btnPropH2O) btnPropH2O.addEventListener('click', () => { isReactionRunning = true; runPropeneHydration(); });
+
+    // 4. 重置按鈕
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', () => {
-        isReactionRunning = false; isReactionFinished = false; 
-        if (currentKey === "CH3Cl" || currentKey === "CH3NO2" || currentKey === "CH4") loadMolecule("CH4");
-        else if (["C3H6", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(currentKey)) loadMolecule("C3H6", "丙烯"); 
-        else loadMolecule("C2H4");
+        isReactionRunning = false; 
+        isReactionFinished = false; 
+        // 簡單判斷重置回哪個原料
+        if (currentKey.startsWith("C3") || ["C3H8","C3H6Cl2","C3H7Cl","C3H7OH"].includes(currentKey)) {
+            loadMolecule("C3H6", "丙烯"); 
+        } else if (currentKey === "CH4" || currentKey === "CH3Cl" || currentKey === "CH3NO2") {
+            loadMolecule("CH4");
+        } else {
+            loadMolecule("C2H4"); // 預設乙烯
+        }     
     });
+
+    // 5. 手機面板與鍵盤
     const mobileHandle = document.getElementById('mobile-panel-handle');
     if (mobileHandle) {
         mobileHandle.addEventListener('click', () => {
@@ -2191,6 +2212,7 @@ function setupInteractions() {
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
 
+    // 6. 3D 拖曳控制
     const MOUSE_SENSITIVITY = 0.005; const TOUCH_SENSITIVITY = 0.004;
     let longPressTimer = null; let startX = 0, startY = 0;
     const LONG_PRESS_MS = 500; const MOVE_TOLERANCE = 10;
@@ -2269,14 +2291,6 @@ function setupInteractions() {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
         hideHybridTooltip();
     });
-    
-    const togglePlasma = document.getElementById('toggle-plasma');
-    if (togglePlasma) {
-        togglePlasma.addEventListener('change', (e) => {
-            isPlasmaMode = e.target.checked;
-            renderScene();
-        });
-    }
 
     setupMobilePanel();
 }
