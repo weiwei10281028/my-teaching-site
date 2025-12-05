@@ -1313,31 +1313,48 @@ function hideAllReactionBtns() {
     btns.forEach(b => b.style.display = "none");
 }
 
-// [修正] 轉場時間延長至 1500ms
+// ========== [請替換 finishReaction 函式] ==========
+// 修復：強制顯示反應文字，避免被隱藏
 function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
     const svg = document.getElementById("scene-root");
     
-    // 視覺特效：模糊淡出
+    // 1. 視覺特效：模糊淡出
     svg.classList.add("scene-blur-out");
     
     setTimeout(() => {
-        // 載入新分子 (loadMolecule 會負責更新畫面與檢查按鈕)
+        // 2. 載入新分子
         loadMolecule(nextKey, variantName); 
         
-        // 更新下方文字描述
-        const subtitle = document.getElementById("viewport-subtitle");
-        if(subtitle && description) subtitle.textContent = description;
+        // 3. [關鍵修復] 強制顯示反應描述文字
+        if (description) {
+            // A. 顯示在副標題 (強制解除 display:none)
+            const subtitle = document.getElementById("viewport-subtitle");
+            if (subtitle) {
+                subtitle.textContent = description;
+                subtitle.style.display = "block"; // 強制顯示
+                subtitle.style.color = "#fbbf24"; // 醒目黃色
+            }
+
+            // B. 顯示在知識小百科卡片 (強制展開)
+            const kCard = document.getElementById("knowledge-card");
+            const kText = document.getElementById("knowledge-text");
+            if (kCard && kText) {
+                kText.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">[反應發生]</span> ${description}`;
+                kCard.style.display = "block"; // 確保卡片存在
+                kCard.classList.add("expanded"); // 強制展開
+            }
+        }
         
-        // 視覺特效：模糊淡入
+        // 4. 視覺特效：模糊淡入
         svg.classList.remove("scene-blur-out");
         svg.classList.add("scene-blur-in");
         
         setTimeout(() => {
             svg.classList.remove("scene-blur-in");
-            isReactionRunning = false; // 標記反應結束
-            isReactionFinished = true; // 標記已產生產物
+            isReactionRunning = false; 
+            isReactionFinished = true; 
             
-            // 強制再次檢查按鈕狀態，確保"重置"按鈕出現
+            // 確保重置按鈕出現
             checkReactionAvailable(nextKey); 
         }, 1500);
     }, 1500);
