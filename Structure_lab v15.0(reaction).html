@@ -1307,9 +1307,6 @@ function resetReaction() {
     }     
 }
 
-
-
-
 // ========== [請替換 finishReaction 函式] ==========
 function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
     const svg = document.getElementById("scene-root");
@@ -1322,32 +1319,30 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
         loadMolecule(nextKey, variantName); 
         
         // 3. 處理文字描述
-        const subtitle = document.getElementById("viewport-subtitle");
+        if (description) {
+            const subtitle = document.getElementById("viewport-subtitle");
             if (subtitle) {
                 subtitle.textContent = description;
                 subtitle.style.display = "block"; 
                 
-                // 樣式設定
+                // [樣式修改] 亮黃色 + 大字體
                 subtitle.style.color = "#ffff00"; 
-                subtitle.style.fontSize = "1.2rem"; 
+                subtitle.style.fontSize = "1.3rem"; 
                 subtitle.style.textShadow = "0 2px 5px #000000";
                 
-                // [關鍵修改] 強制換行設定
-                subtitle.style.whiteSpace = "normal";      // 允許自動換行
-                subtitle.style.maxWidth = "85vw";          // 限制寬度在螢幕內 (留邊距)
-                subtitle.style.wordBreak = "break-word";   // 防止長單字撐開
-                subtitle.style.lineHeight = "1.4";         // 調整行高
-                subtitle.style.marginTop = "10px";
+                // [關鍵修改] 強制換行設定，防止超出手機畫面
+                subtitle.style.whiteSpace = "normal";    // 允許自動換行
+                subtitle.style.maxWidth = "90vw";        // 限制最大寬度為螢幕的 90%
+                subtitle.style.lineHeight = "1.5";       // 增加行高，讓多行文字好閱讀
+                subtitle.style.marginTop = "10px";       // 增加頂部間距
                 subtitle.style.textAlign = "left"; 
             }
 
-            // --- B. 知識小百科 (內容更新，但樣式保持原樣，不變大也不變黃) ---
+            // 知識小百科內容更新 (保持原樣)
             const kCard = document.getElementById("knowledge-card");
             const kText = document.getElementById("knowledge-text");
             if (kCard && kText) {
-                // 僅更新內容，不更動 style
                 kText.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">[反應發生]</span> ${description}`;
-                
                 kCard.style.display = "block";
                 kCard.classList.add("expanded");
             }
