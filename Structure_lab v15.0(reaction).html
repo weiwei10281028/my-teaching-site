@@ -1314,7 +1314,6 @@ function hideAllReactionBtns() {
 }
 
 // ========== [請替換 finishReaction 函式] ==========
-// 修復：強制顯示反應文字，避免被隱藏
 function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
     const svg = document.getElementById("scene-root");
     
@@ -1325,23 +1324,37 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
         // 2. 載入新分子
         loadMolecule(nextKey, variantName); 
         
-        // 3. [關鍵修復] 強制顯示反應描述文字
+        // 3. 處理文字描述
         if (description) {
-            // A. 顯示在副標題 (強制解除 display:none)
+            // --- A. 只針對標題旁的文字做樣式修改 ---
             const subtitle = document.getElementById("viewport-subtitle");
             if (subtitle) {
                 subtitle.textContent = description;
-                subtitle.style.display = "block"; // 強制顯示
-                subtitle.style.color = "#fbbf24"; // 醒目黃色
+                subtitle.style.display = "block"; 
+                
+                // [修改] 顏色改為亮黃色
+                subtitle.style.color = "#ffff00"; 
+                
+                // [修改] 字體加大 (原本約 0.8rem，改為 1.3rem)
+                subtitle.style.fontSize = "1.3rem"; 
+                
+                // [修改] 增加黑色陰影，確保亮字在黑底上看得很清楚
+                subtitle.style.textShadow = "0 2px 5px #000000";
+                
+                // 確保文字置中且不斷行(如果太長會自動換行)
+                subtitle.style.textAlign = "left"; 
+                subtitle.style.marginTop = "8px";
             }
 
-            // B. 顯示在知識小百科卡片 (強制展開)
+            // --- B. 知識小百科 (內容更新，但樣式保持原樣，不變大也不變黃) ---
             const kCard = document.getElementById("knowledge-card");
             const kText = document.getElementById("knowledge-text");
             if (kCard && kText) {
+                // 僅更新內容，不更動 style
                 kText.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">[反應發生]</span> ${description}`;
-                kCard.style.display = "block"; // 確保卡片存在
-                kCard.classList.add("expanded"); // 強制展開
+                
+                kCard.style.display = "block";
+                kCard.classList.add("expanded");
             }
         }
         
@@ -1354,7 +1367,6 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
             isReactionRunning = false; 
             isReactionFinished = true; 
             
-            // 確保重置按鈕出現
             checkReactionAvailable(nextKey); 
         }, 1500);
     }, 1500);
