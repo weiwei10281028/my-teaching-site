@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.7 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.6 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -1094,7 +1094,7 @@ addMol("C4H8|丁烯", "C", "sp3", ["形狀","Shape"], "N/A", "-185.3", "-6.3", [
 
 addMol("C3H8O", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", "-126", "97.2", [], [], 
     {
-        "1-丙醇|正丙醇|CH3CH2CH2OH": { mp: "-126", bp: "97.2", atoms: [{elem:"O",x:115,y:10,z:-5},{elem:"C",x:-5,y:25,z:-5},{elem:"C",x:55,y:-25,z:-5},{elem:"C",x:-70,y:-10,z:-5},{elem:"H",x:0,y:55,z:-45},{elem:"H",x:0,y:55,z:40},{elem:"H",x:50,y:-55,z:-45},{elem:"H",x:50,y:-55,z:40},{elem:"H",x:-75,y:-40,z:-45},{elem:"H",x:-110,y:25,z:-5},{elem:"H",x:-75,y:-40,z:40},{elem:"H",x:120,y:40,z:35}], bonds: [[0,2],[0,11],[1,2],[1,3],[1,4],[1,5],[2,6],[2,7],[3,8],[3,9],[3,10]] },
+        "1-丙醇|正丙醇|CH3CH2CH2OH|C3H7OH": { mp: "-126", bp: "97.2", atoms: [{elem:"O",x:115,y:10,z:-5},{elem:"C",x:-5,y:25,z:-5},{elem:"C",x:55,y:-25,z:-5},{elem:"C",x:-70,y:-10,z:-5},{elem:"H",x:0,y:55,z:-45},{elem:"H",x:0,y:55,z:40},{elem:"H",x:50,y:-55,z:-45},{elem:"H",x:50,y:-55,z:40},{elem:"H",x:-75,y:-40,z:-45},{elem:"H",x:-110,y:25,z:-5},{elem:"H",x:-75,y:-40,z:40},{elem:"H",x:120,y:40,z:35}], bonds: [[0,2],[0,11],[1,2],[1,3],[1,4],[1,5],[2,6],[2,7],[3,8],[3,9],[3,10]] },
         "2-丙醇|異丙醇|CH3CH(OH)CH3": { mp: "-89", bp: "82.3", atoms: [{elem:"O",x:0,y:-80,z:-5},{elem:"C",x:0,y:-15,z:25},{elem:"C",x:-60,y:20,z:0},{elem:"C",x:60,y:20,z:0},{elem:"H",x:0,y:-15,z:75},{elem:"H",x:-60,y:70,z:20},{elem:"H",x:-100,y:-10,z:20},{elem:"H",x:-60,y:20,z:-50},{elem:"H",x:60,y:70,z:20},{elem:"H",x:100,y:-10,z:20},{elem:"H",x:60,y:20,z:-50},{elem:"H",x:0,y:-80,z:-55}], bonds: [[0,1],[0,11],[1,2],[1,3],[1,4],[2,5],[2,6],[2,7],[3,8],[3,9],[3,10]] },
         "甲乙醚|CH3OC2H5": { mp: "-113", bp: "7.4", atoms: [{elem:"O",x:0,y:20,z:0},{elem:"C",x:-50,y:-15,z:0},{elem:"C",x:50,y:-15,z:0},{elem:"C",x:95,y:20,z:0},{elem:"H",x:-50,y:-45,z:25},{elem:"H",x:-50,y:-45,z:-25},{elem:"H",x:-85,y:5,z:0},{elem:"H",x:50,y:-45,z:25},{elem:"H",x:50,y:-45,z:-25},{elem:"H",x:95,y:50,z:0},{elem:"H",x:130,y:0,z:25},{elem:"H",x:130,y:0,z:-25}], bonds: [[0,1],[0,2],[1,4],[1,5],[1,6],[2,3],[2,7],[2,8],[3,9],[3,10],[3,11]] }
     }
@@ -1428,7 +1428,7 @@ function runPropeneHydrohalogenation() {
     finishReaction("C3H7Cl", "2-氯丙烷", "2-氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
 }
 function runPropeneHydration() {
-    finishReaction("C3H7OH", "異丙醇", "2-Propanol (異丙醇)", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
+    finishReaction("C3H8O", "2-丙醇", "2-丙醇", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
 }
 
 
@@ -2481,14 +2481,20 @@ function showHybridInfo(atomObj, x, y) {
         else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
         else { hybrid = "-"; }
 
+        // 1. 顯示混成
         contentHtml += `<div style="margin-top:4px;">混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span></div>`;
-        contentHtml += `<div>電荷: <span style="color:${fcColor};font-size:1.2em;font-weight:bold">${fcStr}</span></div>`;
-        contentHtml += `<div style="font-size:0.8em;color:#888;">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
         
-        // [修改] 計算過程放在最後
+        // 2. 顯示 Sigma + LP 計算 (移到混成下方)
+        contentHtml += `<div style="font-size:0.8em;color:#888;margin-top:2px;margin-bottom:6px;">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
+        
+        // 3. 顯示形式電荷 (文字改為 "形式電荷")
+        contentHtml += `<div>形式電荷: <span style="color:${fcColor};font-size:1.2em;font-weight:bold">${fcStr}</span></div>`;
+        
+        // 4. 顯示形式電荷計算公式 (放在最下方)
         contentHtml += calcStr;
-        
-    } else { 
+        // =====================================
+
+    } else {  
         contentHtml += `<div style="margin-top:4px;">電荷: <span style="color:${fcColor};font-size:1.4em;font-weight:bold">${fcStr}</span></div>`;
         if(atomObj.elem === 'H') contentHtml += `<div style="font-size:0.8em;color:#888;">(1s)</div>`;
         
