@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.6 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.7 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -1581,6 +1581,11 @@ window.onload = () => {
 };
 
 function loadMolecule(key, variantKey = null) {
+    const subEl = document.getElementById("viewport-subtitle");
+    if(subEl) {
+        subEl.style.display = 'none'; // 預設隱藏，只有反應觸發時才打開
+        subEl.textContent = "";
+    }
     let targetData = MOLECULE_DB[key];
     if (!targetData && MOLECULE_INDEX[key.toUpperCase()]) {
         const idx = MOLECULE_INDEX[key.toUpperCase()];
@@ -1614,7 +1619,7 @@ function loadMolecule(key, variantKey = null) {
     // 八隅體擴展邏輯
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct && toggleOct.checked) {
-        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te', 'N'];
+        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
         processedBonds.forEach(bond => {
             if (bond[2] === 'double') {
                 const idx1 = bond[0];
@@ -1748,6 +1753,23 @@ function processAtomsData(atomList, bondList, centerElem) {
     atomObjects.forEach((atomObj, idx) => {
         const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
         atomObj.calculatedLP = calcLP;
+        // ========== [插入] 計算形式電荷 ==========
+        let bondLines = 0;
+        bondList.forEach(b => {
+            if (b[0] === idx || b[1] === idx) {
+                let type = b[2] || "single";
+                if (type.includes("triple")) bondLines += 3;
+                else if (type.includes("double")) bondLines += 2;
+                else bondLines += 1;
+            }
+        });
+        const props = ELEMENT_PROPS[atomObj.elem];
+        if (props) {
+            const dots = (calcLP * 2) + (atomObj.radical ? 1 : 0);
+            atomObj.formalCharge = props.ve - dots - bondLines;
+        } else {
+            atomObj.formalCharge = 0;
+        }
         processed.push(atomObj);
         if (ELEMENT_PROPS[atomObj.elem]) { 
             const electronDots = generateElectronDots(atomObj, idx, atomObjects, bondList);
@@ -1943,20 +1965,31 @@ function renderScene(time = 0) {
     });
 }
 
+// ========== [請替換 drawBond 函式] ==========
 function drawBond(b) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    
     const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
     if(len === 0) return;
     const nx = dx/len, ny = dy/len;
     const px = -ny, py = nx;
-    const w = 8 * b.scale;
-    const shorten = 0.6; 
+    
+    // [參數設定]
+    // 1. 稍微加大總寬度 (16 -> 20)，避免多重鍵太擠
+    const w = 20 * b.scale;    
+    
+    // 2. [修改] 粗細加倍 (原本約 0.25 -> 改為 0.45)
+    // 這樣單鍵、雙鍵、參鍵的每一根線都會變得很粗壯有質感
+    const strokeW = w * 0.45;  
+    
+    const shorten = 0.75;      // 維持較長的鍵結
     
     const x1 = b.x1 + nx * b.r1 * shorten;
     const y1 = b.y1 + ny * b.r1 * shorten;
     const x2 = b.x2 - nx * b.r2 * shorten;
     const y2 = b.y2 - ny * b.r2 * shorten;
 
+    // 定義漸層 (本體色)
     const gradId = `bond-grad-${b.bondIdx}`;
     const defs = sceneRoot.querySelector("defs");
     const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
@@ -1964,39 +1997,54 @@ function drawBond(b) {
     grad.setAttribute("x1", x1); grad.setAttribute("y1", y1); grad.setAttribute("x2", x2); grad.setAttribute("y2", y2);
     grad.innerHTML = `<stop offset="0%" stop-color="${b.c1}"/><stop offset="40%" stop-color="${b.c1}"/><stop offset="60%" stop-color="${b.c2}"/><stop offset="100%" stop-color="${b.c2}"/>`;
     defs.appendChild(grad);
-    
     const stroke = `url(#${gradId})`;
 
-    const drawLine = (ox, oy, width, color, filter=null, lineOpacity=1) => {
+    // [繪圖輔助] 畫一條線
+    const drawLine = (ox, oy, width, color, opacity=1) => {
         const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        l.setAttribute("x1", x1+ox); l.setAttribute("y1", y1+oy); l.setAttribute("x2", x2+ox); l.setAttribute("y2", y2+oy);
-        l.setAttribute("stroke", color); l.setAttribute("stroke-width", width); l.setAttribute("stroke-linecap", "round");
-        const finalOpacity = lineOpacity * b.opacity;
+        l.setAttribute("x1", x1+ox); l.setAttribute("y1", y1+oy); 
+        l.setAttribute("x2", x2+ox); l.setAttribute("y2", y2+oy);
+        l.setAttribute("stroke", color); 
+        l.setAttribute("stroke-width", width); 
+        l.setAttribute("stroke-linecap", "round");
+        const finalOpacity = opacity * b.opacity;
         if(finalOpacity < 1) l.setAttribute("opacity", finalOpacity);
-        if(filter) l.setAttribute("filter", filter);
         return l;
     };
 
+    // [繪製圓柱體] 包含底層顏色與頂層高光
+    const drawCylinder = (ox, oy) => {
+        // 1. 底層顏色線 (粗)
+        g.appendChild(drawLine(ox, oy, strokeW, stroke));
+        // 2. 頂層高光線 (細白線，模擬光澤)
+        g.appendChild(drawLine(ox, oy, strokeW * 0.25, "#ffffff", 0.5));
+    };
+
+    // --- 繪製邏輯 ---
     if (b.style === "double") {
-        const off = w * 0.6;
-        g.appendChild(drawLine(px*off, py*off, w*0.35, stroke));
-        g.appendChild(drawLine(-px*off, -py*off, w*0.35, stroke));
-        g.appendChild(drawLine(px*off, py*off, w*0.1, "#ffffff", null, 0.4));
-        g.appendChild(drawLine(-px*off, -py*off, w*0.1, "#ffffff", null, 0.4));
-    } else if (b.style === "triple") {
-        const off = w * 0.85;
-        g.appendChild(drawLine(0, 0, w*0.25, stroke));
-        g.appendChild(drawLine(px*off, py*off, w*0.25, stroke));
-        g.appendChild(drawLine(-px*off, -py*off, w*0.25, stroke));
-    } else if (b.style === "coordinate_triple") {
-        const off = w * 0.85;
-        g.appendChild(drawLine(0, 0, w*0.25, stroke)); 
-        g.appendChild(drawLine(px*off, py*off, w*0.25, stroke));
-        g.appendChild(drawLine(-px*off, -py*off, w*0.25, b.c1)); 
-    } else {
-        g.appendChild(drawLine(0, 0, w, stroke));
-        g.appendChild(drawLine(px*w*0.2, py*w*0.2, w*0.3, "#ffffff", null, 0.4));
+        // 雙鍵：稍微拉開間距
+        const off = w * 0.38; 
+        drawCylinder(px*off, py*off);  
+        drawCylinder(-px*off, -py*off); 
+    } 
+    else if (b.style === "triple") {
+        // 參鍵：間距拉大
+        const off = w * 0.75; 
+        drawCylinder(0, 0);             
+        drawCylinder(px*off, py*off);   
+        drawCylinder(-px*off, -py*off); 
+    } 
+    else if (b.style === "coordinate_triple") {
+        const off = w * 0.75;
+        drawCylinder(0, 0); 
+        drawCylinder(px*off, py*off);
+        g.appendChild(drawLine(-px*off, -py*off, strokeW, b.c1)); 
+    } 
+    else {
+        // 單鍵
+        drawCylinder(0, 0); 
     }
+    
     sceneRoot.appendChild(g);
 }
 
@@ -2377,9 +2425,11 @@ function findAtomByScreenPos(screenX, screenY) {
     return candidates[0].atom;
 }
 
+// ========== [請替換 showHybridInfo 函式] ==========
 function showHybridInfo(atomObj, x, y) {
     const tooltip = document.getElementById('hybrid-label');
     if(!tooltip) return;
+
     const atomIdx = atomObj.originalIndex;
     let sigmaCount = 0;
     if (currentMolecule.bonds3D) {
@@ -2389,25 +2439,64 @@ function showHybridInfo(atomObj, x, y) {
             }
         });
     }
-    if (sigmaCount < 2) {
-        hideHybridTooltip();
-        return;
-    } 
+    
     const lpCount = atomObj.calculatedLP || 0;
     const sum = sigmaCount + lpCount;
-    let hybrid = "";
-    let hybridColor = "#ffffff"; 
-    if (sum === 2) { hybrid = "sp"; hybridColor = "#22d3ee"; } 
-    else if (sum === 3) { hybrid = "sp²"; hybridColor = "#a3e635"; } 
-    else if (sum === 4) { hybrid = "sp³"; hybridColor = "#fbbf24"; } 
-    else if (sum === 5) { hybrid = "sp³d"; hybridColor = "#f472b6"; } 
-    else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
-    else { hybrid = "-"; }
-    tooltip.innerHTML = `
-        <span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2">${atomObj.elem}</span><br/>
-        混成: <span style="color:${hybridColor};font-size:1.3em">${hybrid}</span><br/>
-        <span style="font-size:0.8em;color:#ddd;font-weight:normal">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</span>
-    `;
+    
+    // 計算形式電荷數據
+    const props = ELEMENT_PROPS[atomObj.elem];
+    const ve = props ? props.ve : "?";
+    const dots = (lpCount * 2) + (atomObj.radical ? 1 : 0);
+    let bondLines = 0;
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                let type = b[2] || "single";
+                if (type.includes("triple")) bondLines += 3;
+                else if (type.includes("double")) bondLines += 2;
+                else if (type === "coordinate") bondLines += 1; 
+                else if (type === "coordinate_triple") bondLines += 3;
+                else bondLines += 1;
+            }
+        });
+    }
+
+    const fc = atomObj.formalCharge || 0;
+    let fcStr = fc > 0 ? `+${fc}` : `${fc}`;
+    let fcColor = fc === 0 ? "#9ca3af" : (fc > 0 ? "#f87171" : "#60a5fa");
+
+    // [修改] 計算過程字串：線 -> 鍵
+    const calcStr = `<div style="font-size:0.8em; color:#bbb; margin-top:4px; border-top:1px solid #444; padding-top:2px;">(價${ve} - 點${dots} - 鍵${bondLines})</div>`;
+
+    let contentHtml = `<span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2;font-weight:bold;">${atomObj.elem}</span>`;
+    
+    // [修改] 調整顯示順序
+    if (sigmaCount >= 2) { 
+        let hybrid = "";
+        let hybridColor = "#ffffff"; 
+        if (sum === 2) { hybrid = "sp"; hybridColor = "#22d3ee"; } 
+        else if (sum === 3) { hybrid = "sp²"; hybridColor = "#a3e635"; } 
+        else if (sum === 4) { hybrid = "sp³"; hybridColor = "#fbbf24"; } 
+        else if (sum === 5) { hybrid = "sp³d"; hybridColor = "#f472b6"; } 
+        else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
+        else { hybrid = "-"; }
+
+        contentHtml += `<div style="margin-top:4px;">混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span></div>`;
+        contentHtml += `<div>電荷: <span style="color:${fcColor};font-size:1.2em;font-weight:bold">${fcStr}</span></div>`;
+        contentHtml += `<div style="font-size:0.8em;color:#888;">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
+        
+        // [修改] 計算過程放在最後
+        contentHtml += calcStr;
+        
+    } else { 
+        contentHtml += `<div style="margin-top:4px;">電荷: <span style="color:${fcColor};font-size:1.4em;font-weight:bold">${fcStr}</span></div>`;
+        if(atomObj.elem === 'H') contentHtml += `<div style="font-size:0.8em;color:#888;">(1s)</div>`;
+        
+        // [修改] 計算過程放在最後
+        contentHtml += calcStr;
+    }
+
+    tooltip.innerHTML = contentHtml;
     tooltip.classList.add('show');
 }
 
