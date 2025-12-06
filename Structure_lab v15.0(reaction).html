@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.6 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.7 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -317,6 +317,52 @@
         50% { opacity: 0.4; transform: scale(0.6); }
     }
     .electron-spark { animation: spark-flicker 0.15s linear infinite; }
+    /* ========== [請插入這段 CSS] 電子組態表樣式 ========== */
+    #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
+    .config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 500px; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @media (max-width: 600px) { .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; } }
+    
+    .config-header { padding: 15px; background: rgba(30,41,59,0.9); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; }
+    .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
+    .config-search { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #475569; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
+    .config-list { flex: 1; overflow-y: auto; padding: 15px; }
+    
+    .element-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #22d3ee; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
+    .ec-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .ec-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .ec-sym-box { display: flex; align-items: center; gap: 12px; }
+    .ec-sym { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; min-width: 40px; }
+    .ec-info { display: flex; flex-direction: column; gap: 2px; }
+    .ec-name { font-size: 0.95rem; font-weight: bold; color: #fff; }
+    .ec-meta { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+    .ec-tag { font-size: 0.75rem; color: #a78bfa; font-weight: 500; background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139, 92, 246, 0.3); width: fit-content; }
+    
+    .ec-config-row { width: 100%; display: flex; justify-content: flex-end; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 6px; }
+    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px; white-space: nowrap; }
+    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
+    /* [修改] 開啟水平捲軸並美化樣式 */
+    .ec-scroll { 
+        width: 100%; 
+        overflow-x: auto; /* 允許橫向捲動 */
+        padding-top: 5px; 
+        padding-bottom: 8px; /* 增加底部空間給捲軸 */
+        border-top: 1px solid rgba(255,255,255,0.05); 
+        scrollbar-width: thin; /* Firefox: 細捲軸 */
+        scrollbar-color: #475569 #0f172a; /* Firefox: 顏色 */
+    }
+    
+    /* Chrome/Edge/Safari 捲軸樣式 */
+    .ec-scroll::-webkit-scrollbar { height: 6px; display: block; } /* 設定高度並顯示 */
+    .ec-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
+    .ec-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    .ec-scroll::-webkit-scrollbar-thumb:hover { background: #22d3ee; } /* 滑鼠移過去變亮藍色 */
+
+    .ec-row { display: flex; gap: 8px; width: max-content; padding-right: 10px; }
+    .ec-sub { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+    .ec-boxes { display: flex; gap: 2px; }
+    .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
+    .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
 
 </style>
 </head>
@@ -354,6 +400,15 @@
             <g id="scene-root"></g>
         </svg>
         <div id="hybrid-label" class="hybrid-tooltip"></div>
+    </div>
+    <div id="config-modal">
+        <div class="config-panel">
+            <div class="config-header">
+                <button class="config-close" onclick="closeConfigModal()">✕</button>
+                <input type="text" class="config-search" id="configSearchInput" placeholder="搜尋元素 (Ex: Fe, 26, Carbon)..." onkeyup="renderConfigList()">
+            </div>
+            <div class="config-list" id="configListContainer"></div>
+        </div>
     </div>
 
     <div class="controls-area" id="controls-panel">
@@ -420,6 +475,9 @@
             <div class="knowledge-content" id="knowledge-text">
             </div>
         </div>
+        <button id="btn-open-config" class="control-button" style="width:100%; margin-bottom:15px; background:rgba(34, 211, 238, 0.1); border:1px solid #22d3ee; color:#22d3ee; font-weight:bold;">
+            ⚛️ 查詢電子組態 (1-36)
+        </button>
             
             
             <div class="card">
@@ -2293,6 +2351,10 @@ function setupInteractions() {
         }     
     });
 
+    const btnConfig = document.getElementById('btn-open-config');
+    if(btnConfig) btnConfig.addEventListener('click', openConfigModal);
+
+
     // 5. 手機面板與鍵盤
     const mobileHandle = document.getElementById('mobile-panel-handle');
     if (mobileHandle) {
@@ -2391,6 +2453,96 @@ function setupInteractions() {
 
     setupMobilePanel();
 }
+// ========== [請插入這段 JS] 電子組態邏輯 ==========
+const ELECTRON_DATA = [
+    { z: 1, s: "H", n: "Hydrogen", p: 1, g: "1A", iupac: 1, c: "1s1", noble: "1s1" },
+    { z: 2, s: "He", n: "Helium", p: 1, g: "8A", iupac: 18, c: "1s2", noble: "1s2" },
+    { z: 3, s: "Li", n: "Lithium", p: 2, g: "1A", iupac: 1, c: "1s2 2s1", noble: "[He] 2s1" },
+    { z: 4, s: "Be", n: "Beryllium", p: 2, g: "2A", iupac: 2, c: "1s2 2s2", noble: "[He] 2s2" },
+    { z: 5, s: "B", n: "Boron", p: 2, g: "3A", iupac: 13, c: "1s2 2s2 2p1", noble: "[He] 2s2 2p1" },
+    { z: 6, s: "C", n: "Carbon", p: 2, g: "4A", iupac: 14, c: "1s2 2s2 2p2", noble: "[He] 2s2 2p2" },
+    { z: 7, s: "N", n: "Nitrogen", p: 2, g: "5A", iupac: 15, c: "1s2 2s2 2p3", noble: "[He] 2s2 2p3" },
+    { z: 8, s: "O", n: "Oxygen", p: 2, g: "6A", iupac: 16, c: "1s2 2s2 2p4", noble: "[He] 2s2 2p4" },
+    { z: 9, s: "F", n: "Fluorine", p: 2, g: "7A", iupac: 17, c: "1s2 2s2 2p5", noble: "[He] 2s2 2p5" },
+    { z: 10, s: "Ne", n: "Neon", p: 2, g: "8A", iupac: 18, c: "1s2 2s2 2p6", noble: "[He] 2s2 2p6" },
+    { z: 11, s: "Na", n: "Sodium", p: 3, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s1", noble: "[Ne] 3s1" },
+    { z: 12, s: "Mg", n: "Magnesium", p: 3, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2", noble: "[Ne] 3s2" },
+    { z: 13, s: "Al", n: "Aluminium", p: 3, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p1", noble: "[Ne] 3s2 3p1" },
+    { z: 14, s: "Si", n: "Silicon", p: 3, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p2", noble: "[Ne] 3s2 3p2" },
+    { z: 15, s: "P", n: "Phosphorus", p: 3, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p3", noble: "[Ne] 3s2 3p3" },
+    { z: 16, s: "S", n: "Sulfur", p: 3, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p4", noble: "[Ne] 3s2 3p4" },
+    { z: 17, s: "Cl", n: "Chlorine", p: 3, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p5", noble: "[Ne] 3s2 3p5" },
+    { z: 18, s: "Ar", n: "Argon", p: 3, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6", noble: "[Ne] 3s2 3p6" },
+    { z: 19, s: "K", n: "Potassium", p: 4, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 4s1", noble: "[Ar] 4s1" },
+    { z: 20, s: "Ca", n: "Calcium", p: 4, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 4s2", noble: "[Ar] 4s2" },
+    { z: 21, s: "Sc", n: "Scandium", p: 4, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d1 4s2", noble: "[Ar] 3d1 4s2" },
+    { z: 22, s: "Ti", n: "Titanium", p: 4, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d2 4s2", noble: "[Ar] 3d2 4s2" },
+    { z: 23, s: "V", n: "Vanadium", p: 4, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d3 4s2", noble: "[Ar] 3d3 4s2" },
+    { z: 24, s: "Cr", n: "Chromium", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1" }, 
+    { z: 25, s: "Mn", n: "Manganese", p: 4, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s2", noble: "[Ar] 3d5 4s2" },
+    { z: 26, s: "Fe", n: "Iron", p: 4, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d6 4s2", noble: "[Ar] 3d6 4s2" },
+    { z: 27, s: "Co", n: "Cobalt", p: 4, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d7 4s2", noble: "[Ar] 3d7 4s2" },
+    { z: 28, s: "Ni", n: "Nickel", p: 4, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d8 4s2", noble: "[Ar] 3d8 4s2" },
+    { z: 29, s: "Cu", n: "Copper", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1" }, 
+    { z: 30, s: "Zn", n: "Zinc", p: 4, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2", noble: "[Ar] 3d10 4s2" },
+    { z: 31, s: "Ga", n: "Gallium", p: 4, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1", noble: "[Ar] 3d10 4s2 4p1" },
+    { z: 32, s: "Ge", n: "Germanium", p: 4, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2", noble: "[Ar] 3d10 4s2 4p2" },
+    { z: 33, s: "As", n: "Arsenic", p: 4, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3", noble: "[Ar] 3d10 4s2 4p3" },
+    { z: 34, s: "Se", n: "Selenium", p: 4, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4", noble: "[Ar] 3d10 4s2 4p4" },
+    { z: 35, s: "Br", n: "Bromine", p: 4, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5", noble: "[Ar] 3d10 4s2 4p5" },
+    { z: 36, s: "Kr", n: "Krypton", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6" }
+];
+
+function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
+
+function generateEcViz(configStr) {
+    const parts = configStr.split(' ');
+    let html = '';
+    parts.forEach(part => {
+        const match = part.match(/(\d)([spdf])(\d+)/);
+        if(match) {
+            const level = match[1]; const type = match[2]; const count = parseInt(match[3]);
+            const boxCount = {s:1, p:3, d:5, f:7}[type];
+            let arrows = []; let e = count;
+            for(let i=0; i<boxCount; i++) arrows[i] = "";
+            for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "↑";
+            for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "⇅";
+            let boxes = '';
+            arrows.forEach(a => { boxes += `<div class="ec-box">${a || ''}</div>`; });
+            html += `<div class="ec-sub"><div class="ec-boxes">${boxes}</div><div class="ec-label">${level}${type}<sup>${count}</sup></div></div>`;
+        }
+    });
+    return html;
+}
+
+function renderConfigList() {
+    const input = document.getElementById('configSearchInput');
+    const filter = input ? input.value.toLowerCase() : "";
+    const container = document.getElementById('configListContainer');
+    container.innerHTML = "";
+    ELECTRON_DATA.forEach(el => {
+        if (filter && !el.s.toLowerCase().includes(filter) && !el.n.toLowerCase().includes(filter) && !el.z.toString().includes(filter)) return;
+        const card = document.createElement('div');
+        card.className = 'element-card';
+        let nobleHtml = el.noble.replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+        const vizHtml = generateEcViz(el.c);
+        const periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
+        card.innerHTML = `
+            <div class="ec-header">
+                <div class="ec-top-row">
+                    <div class="ec-sym-box"><div class="ec-sym">${el.s}</div><div class="ec-info"><span class="ec-name">${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span><span class="ec-tag">${periodGroupStr}</span></div></div>
+                </div>
+                <div class="ec-config-row"><div class="ec-config">${nobleHtml}</div></div>
+            </div>
+            <div class="ec-scroll"><div class="ec-row">${vizHtml}</div></div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
+function closeConfigModal() { const modal = document.getElementById('config-modal'); if(modal) modal.style.display = 'none'; }
+
 
 function checkAtomClick(screenX, screenY) {
     if (!currentMolecule || !currentMolecule.renderObjects) return;
