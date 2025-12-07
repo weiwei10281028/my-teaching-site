@@ -476,7 +476,7 @@
             </div>
         </div>
         <button id="btn-open-config" class="control-button" style="width:100%; margin-bottom:15px; background:rgba(34, 211, 238, 0.1); border:1px solid #22d3ee; color:#22d3ee; font-weight:bold;">
-            ⚛️ 查詢電子組態 (1-36)
+            ⚛️ 查詢電子組態 (1-118)
         </button>
             
             
@@ -2454,9 +2454,11 @@ function setupInteractions() {
     setupMobilePanel();
 }
 // ========== [請插入這段 JS] 電子組態邏輯 ==========
-const ELECTRON_DATA = [
+    const ELECTRON_DATA = [
+    // Period 1
     { z: 1, s: "H", n: "Hydrogen", p: 1, g: "1A", iupac: 1, c: "1s1", noble: "1s1" },
     { z: 2, s: "He", n: "Helium", p: 1, g: "8A", iupac: 18, c: "1s2", noble: "1s2" },
+    // Period 2
     { z: 3, s: "Li", n: "Lithium", p: 2, g: "1A", iupac: 1, c: "1s2 2s1", noble: "[He] 2s1" },
     { z: 4, s: "Be", n: "Beryllium", p: 2, g: "2A", iupac: 2, c: "1s2 2s2", noble: "[He] 2s2" },
     { z: 5, s: "B", n: "Boron", p: 2, g: "3A", iupac: 13, c: "1s2 2s2 2p1", noble: "[He] 2s2 2p1" },
@@ -2465,6 +2467,7 @@ const ELECTRON_DATA = [
     { z: 8, s: "O", n: "Oxygen", p: 2, g: "6A", iupac: 16, c: "1s2 2s2 2p4", noble: "[He] 2s2 2p4" },
     { z: 9, s: "F", n: "Fluorine", p: 2, g: "7A", iupac: 17, c: "1s2 2s2 2p5", noble: "[He] 2s2 2p5" },
     { z: 10, s: "Ne", n: "Neon", p: 2, g: "8A", iupac: 18, c: "1s2 2s2 2p6", noble: "[He] 2s2 2p6" },
+    // Period 3
     { z: 11, s: "Na", n: "Sodium", p: 3, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s1", noble: "[Ne] 3s1" },
     { z: 12, s: "Mg", n: "Magnesium", p: 3, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2", noble: "[Ne] 3s2" },
     { z: 13, s: "Al", n: "Aluminium", p: 3, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p1", noble: "[Ne] 3s2 3p1" },
@@ -2473,27 +2476,233 @@ const ELECTRON_DATA = [
     { z: 16, s: "S", n: "Sulfur", p: 3, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p4", noble: "[Ne] 3s2 3p4" },
     { z: 17, s: "Cl", n: "Chlorine", p: 3, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p5", noble: "[Ne] 3s2 3p5" },
     { z: 18, s: "Ar", n: "Argon", p: 3, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6", noble: "[Ne] 3s2 3p6" },
+    // Period 4
     { z: 19, s: "K", n: "Potassium", p: 4, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 4s1", noble: "[Ar] 4s1" },
     { z: 20, s: "Ca", n: "Calcium", p: 4, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 4s2", noble: "[Ar] 4s2" },
     { z: 21, s: "Sc", n: "Scandium", p: 4, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d1 4s2", noble: "[Ar] 3d1 4s2" },
     { z: 22, s: "Ti", n: "Titanium", p: 4, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d2 4s2", noble: "[Ar] 3d2 4s2" },
     { z: 23, s: "V", n: "Vanadium", p: 4, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d3 4s2", noble: "[Ar] 3d3 4s2" },
-    { z: 24, s: "Cr", n: "Chromium", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1" }, 
+    { z: 24, s: "Cr", n: "Chromium", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1", ex: true },    
     { z: 25, s: "Mn", n: "Manganese", p: 4, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s2", noble: "[Ar] 3d5 4s2" },
     { z: 26, s: "Fe", n: "Iron", p: 4, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d6 4s2", noble: "[Ar] 3d6 4s2" },
     { z: 27, s: "Co", n: "Cobalt", p: 4, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d7 4s2", noble: "[Ar] 3d7 4s2" },
     { z: 28, s: "Ni", n: "Nickel", p: 4, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d8 4s2", noble: "[Ar] 3d8 4s2" },
-    { z: 29, s: "Cu", n: "Copper", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1" }, 
+    { z: 29, s: "Cu", n: "Copper", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1", ex: true },
     { z: 30, s: "Zn", n: "Zinc", p: 4, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2", noble: "[Ar] 3d10 4s2" },
     { z: 31, s: "Ga", n: "Gallium", p: 4, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1", noble: "[Ar] 3d10 4s2 4p1" },
     { z: 32, s: "Ge", n: "Germanium", p: 4, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2", noble: "[Ar] 3d10 4s2 4p2" },
     { z: 33, s: "As", n: "Arsenic", p: 4, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3", noble: "[Ar] 3d10 4s2 4p3" },
     { z: 34, s: "Se", n: "Selenium", p: 4, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4", noble: "[Ar] 3d10 4s2 4p4" },
     { z: 35, s: "Br", n: "Bromine", p: 4, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5", noble: "[Ar] 3d10 4s2 4p5" },
-    { z: 36, s: "Kr", n: "Krypton", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6" }
+    { z: 36, s: "Kr", n: "Krypton", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6" },
+    // Period 5
+    { z: 37, s: "Rb", n: "Rubidium", p: 5, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1", noble: "[Kr] 5s1" },
+    { z: 38, s: "Sr", n: "Strontium", p: 5, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2", noble: "[Kr] 5s2" },
+    { z: 39, s: "Y", n: "Yttrium", p: 5, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2", noble: "[Kr] 4d1 5s2" },
+    { z: 40, s: "Zr", n: "Zirconium", p: 5, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2", noble: "[Kr] 4d2 5s2" },
+    { z: 41, s: "Nb", n: "Niobium", p: 5, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1", noble: "[Kr] 4d4 5s1", ex: true },    
+    { z: 42, s: "Mo", n: "Molybdenum", p: 5, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1", noble: "[Kr] 4d5 5s1", ex: true },    
+    { z: 43, s: "Tc", n: "Technetium", p: 5, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2", noble: "[Kr] 4d5 5s2" },
+    { z: 44, s: "Ru", n: "Ruthenium", p: 5, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1", noble: "[Kr] 4d7 5s1" },
+    { z: 45, s: "Rh", n: "Rhodium", p: 5, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1", noble: "[Kr] 4d8 5s1", ex: true },    
+    { z: 46, s: "Pd", n: "Palladium", p: 5, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10", noble: "[Kr] 4d10", ex: true },    
+    { z: 47, s: "Ag", n: "Silver", p: 5, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1", noble: "[Kr] 4d10 5s1", ex: true },    
+    { z: 48, s: "Cd", n: "Cadmium", p: 5, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2", noble: "[Kr] 4d10 5s2" },
+    { z: 49, s: "In", n: "Indium", p: 5, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1", noble: "[Kr] 4d10 5s2 5p1" },
+    { z: 50, s: "Sn", n: "Tin", p: 5, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2", noble: "[Kr] 4d10 5s2 5p2" },
+    { z: 51, s: "Sb", n: "Antimony", p: 5, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3", noble: "[Kr] 4d10 5s2 5p3" },
+    { z: 52, s: "Te", n: "Tellurium", p: 5, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4", noble: "[Kr] 4d10 5s2 5p4" },
+    { z: 53, s: "I", n: "Iodine", p: 5, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5", noble: "[Kr] 4d10 5s2 5p5" },
+    { z: 54, s: "Xe", n: "Xenon", p: 5, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6", noble: "[Kr] 4d10 5s2 5p6" },
+    // Period 6
+    { z: 55, s: "Cs", n: "Cesium", p: 6, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1", noble: "[Xe] 6s1" },
+    { z: 56, s: "Ba", n: "Barium", p: 6, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2", noble: "[Xe] 6s2" },
+    { z: 57, s: "La", n: "Lanthanum", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2", noble: "[Xe] 5d1 6s2", ex: true },    
+    { z: 58, s: "Ce", n: "Cerium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2", noble: "[Xe] 4f1 5d1 6s2", ex: true },    
+    { z: 59, s: "Pr", n: "Praseodymium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f3 6s2", noble: "[Xe] 4f3 6s2" },
+    { z: 60, s: "Nd", n: "Neodymium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f4 6s2", noble: "[Xe] 4f4 6s2" },
+    { z: 61, s: "Pm", n: "Promethium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f5 6s2", noble: "[Xe] 4f5 6s2" },
+    { z: 62, s: "Sm", n: "Samarium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f6 6s2", noble: "[Xe] 4f6 6s2" },
+    { z: 63, s: "Eu", n: "Europium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 6s2", noble: "[Xe] 4f7 6s2" },
+    { z: 64, s: "Gd", n: "Gadolinium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2", noble: "[Xe] 4f7 5d1 6s2", ex: true },    
+    { z: 65, s: "Tb", n: "Terbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f9 6s2", noble: "[Xe] 4f9 6s2" },
+    { z: 66, s: "Dy", n: "Dysprosium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f10 6s2", noble: "[Xe] 4f10 6s2" },
+    { z: 67, s: "Ho", n: "Holmium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f11 6s2", noble: "[Xe] 4f11 6s2" },
+    { z: 68, s: "Er", n: "Erbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f12 6s2", noble: "[Xe] 4f12 6s2" },
+    { z: 69, s: "Tm", n: "Thulium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f13 6s2", noble: "[Xe] 4f13 6s2" },
+    { z: 70, s: "Yb", n: "Ytterbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 6s2", noble: "[Xe] 4f14 6s2" },
+    { z: 71, s: "Lu", n: "Lutetium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d1 6s2", noble: "[Xe] 4f14 5d1 6s2" },
+    { z: 72, s: "Hf", n: "Hafnium", p: 6, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d2 6s2", noble: "[Xe] 4f14 5d2 6s2" },
+    { z: 73, s: "Ta", n: "Tantalum", p: 6, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d3 6s2", noble: "[Xe] 4f14 5d3 6s2" },
+    { z: 74, s: "W", n: "Tungsten", p: 6, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d4 6s2", noble: "[Xe] 4f14 5d4 6s2" },
+    { z: 75, s: "Re", n: "Rhenium", p: 6, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d5 6s2", noble: "[Xe] 4f14 5d5 6s2" },
+    { z: 76, s: "Os", n: "Osmium", p: 6, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d6 6s2", noble: "[Xe] 4f14 5d6 6s2" },
+    { z: 77, s: "Ir", n: "Iridium", p: 6, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d7 6s2", noble: "[Xe] 4f14 5d7 6s2" },
+    { z: 78, s: "Pt", n: "Platinum", p: 6, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1", noble: "[Xe] 4f14 5d9 6s1", ex: true },    
+    { z: 79, s: "Au", n: "Gold", p: 6, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1", noble: "[Xe] 4f14 5d10 6s1", ex: true },    
+    { z: 80, s: "Hg", n: "Mercury", p: 6, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2", noble: "[Xe] 4f14 5d10 6s2" },
+    { z: 81, s: "Tl", n: "Thallium", p: 6, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p1", noble: "[Xe] 4f14 5d10 6s2 6p1" },
+    { z: 82, s: "Pb", n: "Lead", p: 6, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p2", noble: "[Xe] 4f14 5d10 6s2 6p2" },
+    { z: 83, s: "Bi", n: "Bismuth", p: 6, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p3", noble: "[Xe] 4f14 5d10 6s2 6p3" },
+    { z: 84, s: "Po", n: "Polonium", p: 6, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p4", noble: "[Xe] 4f14 5d10 6s2 6p4" },
+    { z: 85, s: "At", n: "Astatine", p: 6, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p5", noble: "[Xe] 4f14 5d10 6s2 6p5" },
+    { z: 86, s: "Rn", n: "Radon", p: 6, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6", noble: "[Xe] 4f14 5d10 6s2 6p6" },
+    // Period 7
+    { z: 87, s: "Fr", n: "Francium", p: 7, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s1", noble: "[Rn] 7s1" },
+    { z: 88, s: "Ra", n: "Radium", p: 7, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s2", noble: "[Rn] 7s2" },
+    { z: 89, s: "Ac", n: "Actinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d1 7s2", noble: "[Rn] 6d1 7s2", ex: true },
+    { z: 90, s: "Th", n: "Thorium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d2 7s2", noble: "[Rn] 6d2 7s2", ex: true },
+    { z: 91, s: "Pa", n: "Protactinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f2 6d1 7s2", noble: "[Rn] 5f2 6d1 7s2", ex: true },
+    { z: 92, s: "U", n: "Uranium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f3 6d1 7s2", noble: "[Rn] 5f3 6d1 7s2", ex: true },
+    { z: 93, s: "Np", n: "Neptunium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f4 6d1 7s2", noble: "[Rn] 5f4 6d1 7s2", ex: true },
+    { z: 94, s: "Pu", n: "Plutonium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f6 7s2", noble: "[Rn] 5f6 7s2" },
+    { z: 95, s: "Am", n: "Americium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 7s2", noble: "[Rn] 5f7 7s2" },
+    { z: 96, s: "Cm", n: "Curium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 6d1 7s2", noble: "[Rn] 5f7 6d1 7s2", ex: true },    
+    { z: 97, s: "Bk", n: "Berkelium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f9 7s2", noble: "[Rn] 5f9 7s2" },
+    { z: 98, s: "Cf", n: "Californium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f10 7s2", noble: "[Rn] 5f10 7s2" },
+    { z: 99, s: "Es", n: "Einsteinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f11 7s2", noble: "[Rn] 5f11 7s2" },
+    { z: 100, s: "Fm", n: "Fermium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f12 7s2", noble: "[Rn] 5f12 7s2" },
+    { z: 101, s: "Md", n: "Mendelevium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f13 7s2", noble: "[Rn] 5f13 7s2" },
+    { z: 102, s: "No", n: "Nobelium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2", noble: "[Rn] 5f14 7s2" },
+    { z: 103, s: "Lr", n: "Lawrencium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2 7p1", noble: "[Rn] 5f14 7s2 7p1" },
+    { z: 104, s: "Rf", n: "Rutherfordium", p: 7, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d2 7s2", noble: "[Rn] 5f14 6d2 7s2" },
+    { z: 105, s: "Db", n: "Dubnium", p: 7, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d3 7s2", noble: "[Rn] 5f14 6d3 7s2" },
+    { z: 106, s: "Sg", n: "Seaborgium", p: 7, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d4 7s2", noble: "[Rn] 5f14 6d4 7s2" },
+    { z: 107, s: "Bh", n: "Bohrium", p: 7, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d5 7s2", noble: "[Rn] 5f14 6d5 7s2" },
+    { z: 108, s: "Hs", n: "Hassium", p: 7, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d6 7s2", noble: "[Rn] 5f14 6d6 7s2" },
+    { z: 109, s: "Mt", n: "Meitnerium", p: 7, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d7 7s2", noble: "[Rn] 5f14 6d7 7s2" },
+    { z: 110, s: "Ds", n: "Darmstadtium", p: 7, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d8 7s2", noble: "[Rn] 5f14 6d8 7s2" },
+    { z: 111, s: "Rg", n: "Roentgenium", p: 7, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d9 7s2", noble: "[Rn] 5f14 6d9 7s2" },
+    { z: 112, s: "Cn", n: "Copernicium", p: 7, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2", noble: "[Rn] 5f14 6d10 7s2" },
+    { z: 113, s: "Nh", n: "Nihonium", p: 7, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p1", noble: "[Rn] 5f14 6d10 7s2 7p1" },
+    { z: 114, s: "Fl", n: "Flerovium", p: 7, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p2", noble: "[Rn] 5f14 6d10 7s2 7p2" },
+    { z: 115, s: "Mc", n: "Moscovium", p: 7, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p3", noble: "[Rn] 5f14 6d10 7s2 7p3" },
+    { z: 116, s: "Lv", n: "Livermorium", p: 7, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p4", noble: "[Rn] 5f14 6d10 7s2 7p4" },
+    { z: 117, s: "Ts", n: "Tennessine", p: 7, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p5", noble: "[Rn] 5f14 6d10 7s2 7p5" },
+    { z: 118, s: "Og", n: "Oganesson", p: 7, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6", noble: "[Rn] 5f14 6d10 7s2 7p6" }
 ];
 
 function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
+// ========== [請插入這段 JS] 離子計算邏輯 ==========
+// ========== [請插入這段 JS] 1. 標準軌域順序 & 2. 縮寫轉換器 ==========
+const ORBITAL_ORDER = ['1s','2s','2p','3s','3p','4s','3d','4p','5s','4d','5p','6s','4f','5d','6p','7s','5f','6d','7p'];
+
+// 將完整組態轉為惰性氣體縮寫 (例如: 1s2 2s2 2p6 -> [Ne])
+function toNobleNotation(fullConfig) {
+    // 定義惰性氣體核心
+    const nobles = [
+        { sym: '[Rn]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6" },
+        { sym: '[Xe]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6" },
+        { sym: '[Kr]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6" },
+        { sym: '[Ar]', conf: "1s2 2s2 2p6 3s2 3p6" },
+        { sym: '[Ne]', conf: "1s2 2s2 2p6" },
+        { sym: '[He]', conf: "1s2" }
+    ];
+
+    for (let gas of nobles) {
+        if (fullConfig.startsWith(gas.conf)) {
+            // 移除核心部分，保留剩下的
+            let rest = fullConfig.replace(gas.conf, "").trim();
+            // 如果剛好完全匹配 (例如就是 Ar)，則回傳 [Ar]
+            if (rest === "") return `<span class="noble">${gas.sym}</span>`;
+            return `<span class="noble">${gas.sym}</span> ${rest}`;
+        }
+    }
+    // 如果比 He 還小 (例如 H)，直接回傳
+    return fullConfig;
+}
+function calculateIonConfig(baseConfigStr, charge) {
+    if (charge === 0) return baseConfigStr;
+
+    const parts = baseConfigStr.split(' ');
+    let orbitals = [];
+    const typeVal = { 's':0, 'p':1, 'd':2, 'f':3 };
+    // 定義各軌域容量
+    const capacity = { 's':2, 'p':6, 'd':10, 'f':14 };
+
+    parts.forEach(p => {
+        const match = p.match(/(\d)([spdf])(\d+)/);
+        if (match) {
+            orbitals.push({
+                n: parseInt(match[1]),
+                type: match[2],
+                l: typeVal[match[2]],
+                count: parseInt(match[3]),
+                name: match[1] + match[2] // e.g., "1s"
+            });
+        }
+    });
+
+    // --- CASE A: 陽離子 (失去電子) ---
+    if (charge > 0) {
+        let removeCount = charge;
+        while (removeCount > 0) {
+            let candidates = orbitals.filter(o => o.count > 0);
+            if (candidates.length === 0) break;
+
+            // 排序：先拔 n 最大，n 相同拔 l 最大
+            candidates.sort((a, b) => {
+                if (b.n !== a.n) return b.n - a.n;
+                return b.l - a.l;
+            });
+
+            let target = candidates[0];
+            if (target.count >= removeCount) {
+                target.count -= removeCount;
+                removeCount = 0;
+            } else {
+                removeCount -= target.count;
+                target.count = 0;
+            }
+        }
+    } 
+    // --- CASE B: 陰離子 (得到電子) ---
+    else {
+        let addCount = Math.abs(charge);
+        
+        // 1. 先嘗試填滿現有的最後一個軌域
+        // 依照能量排序 (原本的字串順序通常就是能量順序，除了例外，但這邊我們簡單處理)
+        // 為了保險，我們直接看最後一個軌域
+        while (addCount > 0) {
+            let lastOrbital = orbitals[orbitals.length - 1];
+            let maxCap = capacity[lastOrbital.type];
+
+            if (lastOrbital.count < maxCap) {
+                let space = maxCap - lastOrbital.count;
+                let fill = Math.min(space, addCount);
+                lastOrbital.count += fill;
+                addCount -= fill;
+            } else {
+                // 當前軌域已滿，尋找下一個軌域
+                let currentName = lastOrbital.name; // e.g. "2p"
+                let idx = ORBITAL_ORDER.indexOf(currentName);
+                
+                if (idx !== -1 && idx < ORBITAL_ORDER.length - 1) {
+                    let nextName = ORBITAL_ORDER[idx + 1]; // e.g. "3s"
+                    let nextMatch = nextName.match(/(\d)([spdf])/);
+                    
+                    // 新增一個空軌域到陣列中
+                    let newOrb = {
+                        n: parseInt(nextMatch[1]),
+                        type: nextMatch[2],
+                        l: typeVal[nextMatch[2]],
+                        count: 0, // 初始為0，下一輪迴圈會填入
+                        name: nextName
+                    };
+                    orbitals.push(newOrb);
+                } else {
+                    break; // 超出範圍或找不到，停止 (避免無窮迴圈)
+                }
+            }
+        }
+    }
+
+    // 重組字串
+    return orbitals
+        .filter(o => o.count > 0)
+        .map(o => `${o.n}${o.type}${o.count}`)
+        .join(' ');
+}
 
 function generateEcViz(configStr) {
     const parts = configStr.split(' ');
@@ -2520,24 +2729,142 @@ function renderConfigList() {
     const filter = input ? input.value.toLowerCase() : "";
     const container = document.getElementById('configListContainer');
     container.innerHTML = "";
+
     ELECTRON_DATA.forEach(el => {
-        if (filter && !el.s.toLowerCase().includes(filter) && !el.n.toLowerCase().includes(filter) && !el.z.toString().includes(filter)) return;
+        if (filter && !el.s.toLowerCase().includes(filter) && 
+            !el.n.toLowerCase().includes(filter) && 
+            !el.z.toString().includes(filter)) {
+            return;
+        }
+
         const card = document.createElement('div');
         card.className = 'element-card';
-        let nobleHtml = el.noble.replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+        
+        // 預設顯示：縮寫版
+        // 我們將 "完整組態" 存在 data-full-config 屬性中
+        // 將 "當前電荷" 存在 data-charge 屬性中 (預設0)
+        // 將 "顯示模式" 存在 data-mode 屬性中 (預設 'noble')
+        
+        let nobleHtml = el.noble.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
+                                .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
         const vizHtml = generateEcViz(el.c);
-        const periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
+        
+        let periodGroupStr = "";
+        if (el.g === "鑭系" || el.g === "錒系") {
+            periodGroupStr = `第${toChineseNum(el.p)}週期 <span style="color:#f472b6;">${el.g}</span>`;
+        } else {
+            periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
+        }
+
+        const cardId = `card-${el.s}`;
+
         card.innerHTML = `
             <div class="ec-header">
                 <div class="ec-top-row">
-                    <div class="ec-sym-box"><div class="ec-sym">${el.s}</div><div class="ec-info"><span class="ec-name">${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span><span class="ec-tag">${periodGroupStr}</span></div></div>
+                    <div class="ec-sym-box">
+                        <div class="ec-sym">${el.s}</div>
+                        <div class="ec-info">
+                            <span class="ec-name">${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span>
+                            <span class="ec-tag">${periodGroupStr}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 顯示模式切換按鈕 -->
+                    <button onclick="toggleConfigMode('${el.s}', '${el.c}')" style="font-size:0.75rem; background:rgba(255,255,255,0.1); border:1px solid #555; color:#aaa; border-radius:4px; padding:2px 6px; cursor:pointer;" id="${cardId}-mode-btn">
+                        切換顯示: 縮寫
+                    </button>
                 </div>
-                <div class="ec-config-row"><div class="ec-config">${nobleHtml}</div></div>
+                
+                <!-- 離子控制 -->
+                <div style="display:flex; gap:5px; margin:10px 0; flex-wrap:wrap;">
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', 0)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #444; border-radius:4px; color:#fff; background:#222; cursor:pointer;">中性</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', 1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', 2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', 3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', -1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', -2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
+                    <button onclick="updateIonViz('${el.s}', '${el.c}', -3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
+                </div>
+
+                <!-- 隱藏欄位：儲存當前電荷與模式 -->
+                <input type="hidden" id="${cardId}-charge" value="0">
+                <input type="hidden" id="${cardId}-mode" value="noble">
+
+                <div class="ec-config-row" id="${cardId}-text">
+                    <div class="ec-config">${nobleHtml}</div>
+                </div>
             </div>
-            <div class="ec-scroll"><div class="ec-row">${vizHtml}</div></div>
+            <div class="ec-scroll">
+                <div class="ec-row" id="${cardId}-viz">
+                    ${vizHtml}
+                </div>
+            </div>
         `;
         container.appendChild(card);
     });
+}
+// ========== [請替換 updateIonViz 並新增 toggleConfigMode] ==========
+function updateIonViz(symbol, baseConfig, charge) {
+    // 1. 計算離子組態
+    const newConfig = calculateIonConfig(baseConfig, charge);
+    
+    // 2. 取得當前顯示模式 (noble:縮寫 / full:完整)
+    const modeInput = document.getElementById(`card-${symbol}-mode`);
+    const currentMode = modeInput ? modeInput.value : 'noble';
+    
+    // 3. 儲存當前電荷 (給切換按鈕用)
+    const chargeInput = document.getElementById(`card-${symbol}-charge`);
+    if(chargeInput) chargeInput.value = charge;
+
+    // 4. 決定顯示字串
+    let displayHtml = "";
+    if (currentMode === 'noble') {
+        // 如果是縮寫模式，呼叫轉換函式
+        displayHtml = formatConfigHtml(toNobleNotation(newConfig));
+    } else {
+        // 如果是完整模式，直接顯示並上標化
+        displayHtml = formatConfigHtml(newConfig);
+    }
+    
+    // 5. 更新文字區
+    const textEl = document.getElementById(`card-${symbol}-text`);
+    // 根據電荷變色：正(紅) 負(藍) 中性(藍綠)
+    const color = charge > 0 ? '#f87171' : (charge < 0 ? '#60a5fa' : '#a5f3fc');
+    if(textEl) textEl.innerHTML = `<div class="ec-config" style="color:${color}">${displayHtml}</div>`;
+    
+    // 6. 更新軌域圖
+    const vizEl = document.getElementById(`card-${symbol}-viz`);
+    if(vizEl) vizEl.innerHTML = generateEcViz(newConfig);
+}
+
+// 切換顯示模式 (縮寫 <-> 完整)
+function toggleConfigMode(symbol, baseConfig) {
+    const modeInput = document.getElementById(`card-${symbol}-mode`);
+    const btn = document.getElementById(`card-${symbol}-mode-btn`);
+    const chargeInput = document.getElementById(`card-${symbol}-charge`);
+    
+    if (modeInput && btn && chargeInput) {
+        // 切換狀態
+        if (modeInput.value === 'noble') {
+            modeInput.value = 'full';
+            btn.textContent = "切換顯示: 完整";
+            btn.style.color = "#fff";
+        } else {
+            modeInput.value = 'noble';
+            btn.textContent = "切換顯示: 縮寫";
+            btn.style.color = "#aaa";
+        }
+        
+        // 讀取當前電荷，重新刷新顯示
+        const currentCharge = parseInt(chargeInput.value);
+        updateIonViz(symbol, baseConfig, currentCharge);
+    }
+}
+
+// 輔助：HTML 格式化 (將 [Ar] 變色，將數字變上標)
+function formatConfigHtml(str) {
+    return str.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
+              .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
 }
 
 function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
