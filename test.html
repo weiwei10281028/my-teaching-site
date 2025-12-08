@@ -321,7 +321,7 @@
     #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
     .config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 500px; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    @media (max-width: 600px) { .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; } }
+    @media (max-width: 600px) {.ec-config {font-size: 0.9rem;}}
     
     .config-header { padding: 15px; background: rgba(30,41,59,0.9); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; }
     .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
@@ -376,13 +376,9 @@
     /* [關鍵修正] 離子按鈕容器 */
     .ion-btn-group {display: flex; gap: 6px; flex-wrap: wrap; /* 允許換行 */width: 100%;padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.05);}
 
-    /* 電子組態文字區 */
-    .ec-config-row { 
-        width: 100%; display: flex; justify-content: flex-end; 
-        background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; 
-    }
-    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.1rem; letter-spacing: 0.5px; white-space: nowrap; }
-    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
+    /* --- [修正] 電子組態文字區容器 --- */
+    .ec-config-row {width: 100%;display: flex; justify-content: flex-end; /* 內容靠右對齊 */background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; height: auto;min-height: 38px;}
+    .ec-config {font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px;white-space: normal;word-break: break-word;text-align: right;line-height: 1.5;}    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
     /* [修改] 開啟水平捲軸並美化樣式 */
     .ec-scroll { 
         width: 100%; 
@@ -2657,8 +2653,9 @@ const ORBITAL_ORDER = ['1s','2s','2p','3s','3p','4s','3d','4p','5s','4d','5p','6
 
 // 將完整組態轉為惰性氣體縮寫 (例如: 1s2 2s2 2p6 -> [Ne])
 function toNobleNotation(fullConfig) {
-    // 定義惰性氣體核心
+    // 定義惰性氣體核心 (順序必須從大到小 Rn -> He)
     const nobles = [
+        { sym: '[Og]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6" },
         { sym: '[Rn]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6" },
         { sym: '[Xe]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6" },
         { sym: '[Kr]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6" },
@@ -2671,12 +2668,20 @@ function toNobleNotation(fullConfig) {
         if (fullConfig.startsWith(gas.conf)) {
             // 移除核心部分，保留剩下的
             let rest = fullConfig.replace(gas.conf, "").trim();
-            // 如果剛好完全匹配 (例如就是 Ar)，則回傳 [Ar]
-            if (rest === "") return `<span class="noble">${gas.sym}</span>`;
+            
+            // [修正邏輯]
+            // 如果剩下的字串是空的，代表輸入的組態「完全等於」這個惰性氣體本身。
+            // 這種情況下，我們不應該回傳 [Ar]，而應該跳過它，繼續往下找 [Ne]，
+            // 這樣才能顯示出 [Ne] 3s2 3p6。
+            if (rest === "") {
+                continue; 
+            }
+            
             return `<span class="noble">${gas.sym}</span> ${rest}`;
         }
     }
-    // 如果比 He 還小 (例如 H)，直接回傳
+    
+    // 如果比 He 還小 (例如 H)，或者正好是 He (因為 He 上面沒有更小的核心了)，直接回傳
     return fullConfig;
 }
 function calculateIonConfig(baseConfigStr, charge) {
