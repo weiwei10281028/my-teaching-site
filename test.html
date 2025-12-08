@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.6 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.7 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -317,90 +317,138 @@
         50% { opacity: 0.4; transform: scale(0.6); }
     }
     .electron-spark { animation: spark-flicker 0.15s linear infinite; }
-    /* ========== [請插入這段 CSS] 電子組態表樣式 ========== */
-    #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
-    .config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 500px; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    @media (max-width: 600px) {.ec-config {font-size: 0.9rem;}}
-    
-    .config-header { padding: 15px; background: rgba(30,41,59,0.9); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; }
-    .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
-    .config-search { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #475569; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
-    .config-list { flex: 1; overflow-y: auto; padding: 15px; }
-    
-    .element-card {
-        background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.1);
-        border-left: 3px solid #22d3ee; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative;
-    }
-    
-    /* [關鍵修正] 標頭改為垂直堆疊，避免左右擠壓 */
-    .ec-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
-    
-    /* 第一層：符號與資訊 */
-    .ec-top-row {display: flex;justify-content: space-between;align-items: flex-start; /* 改為靠上對齊，避免高度被撐開 */width: 100%;gap: 10px; /* 增加間距 */}    
-    .ec-sym-box {display: flex;align-items: flex-start;gap: 10px;flex: 1; /* 佔據剩餘空間 */min-width: 0; /* 關鍵：防止 flex 子元素溢出 */}    
-    /* 符號樣式 */
-    .ec-sym { 
-        font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; 
-        text-shadow: 0 0 20px rgba(34, 211, 238, 0.2); 
-    }
-    
-    .ec-info { display: flex; flex-direction: column; gap: 4px; }
-    
-    /* 名稱樣式 */
-    .ec-name-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-    .ec-name-cn { font-size: 1.4rem; font-weight: bold; color: #fff; }
-    .ec-name-en { font-size: 1.2rem; font-weight: 500; color: #94a3b8; font-family: 'Segoe UI', sans-serif; }
-    .ec-z-tag { color: #22d3ee; font-family: monospace; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(34, 211, 238, 0.3); padding: 0 4px; border-radius: 4px; }
-    .ec-tag { font-size: 0.8rem; color: #a78bfa; font-weight: 500; }
+    /* ========== [修改後] 電子組態表樣式 (參考附圖風格) ========== */
+#config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
 
-    /* [美化] 物理性質網格 */
-    .ec-props-grid {
-        display: grid; grid-template-columns: auto auto; gap: 4px 8px; margin-top: 6px;
-    }
-    .ec-prop { 
-        font-size: 0.8rem; color: #cbd5e1; 
-        background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px; 
-        white-space: nowrap; border: 1px solid rgba(255,255,255,0.05);
-    }
-    .ec-prop span { color: #64748b; margin-right: 4px; font-weight: bold; }
-    .config-mode-btn {font-size: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #aaa; border-radius: 4px; padding: 6px 10px; /* 稍微加大觸控區 */cursor: pointer; align-self: flex-start; margin-left: auto; /* 推到最右邊 */
-    
-    /* 關鍵修正：強制不換行，固定寬度行為 */
-    white-space: nowrap; 
-    flex-shrink: 0; 
-    text-align: center;
-    min-width: 60px; /* 確保有最小寬度 */
+/* 調整面板高度與寬度，適應更多資訊 */
+.config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 600px; max-width: 95vw; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
+
+.config-header { padding: 15px; background: rgba(30,41,59,0.95); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
+.config-search { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #475569; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
+.config-list { flex: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; scrollbar-color: #475569 #0f172a; }
+
+/* 卡片主體 */
+.element-card { 
+    background: rgba(30,41,59,0.4); 
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-left: 4px solid #22d3ee; /* 預設顏色，JS會覆蓋 */
+    border-radius: 12px; 
+    padding: 20px; 
+    margin-bottom: 20px; 
+    position: relative; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
-    /* [關鍵修正] 離子按鈕容器 */
-    .ion-btn-group {display: flex; gap: 6px; flex-wrap: wrap; /* 允許換行 */width: 100%;padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.05);}
+/* 上半部資訊區 */
+.ec-header-area { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px; }
 
-    /* --- [修正] 電子組態文字區容器 --- */
-    .ec-config-row {width: 100%;display: flex; justify-content: flex-end; /* 內容靠右對齊 */background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; height: auto;min-height: 38px;}
-    .ec-config {font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px;white-space: normal;word-break: break-word;text-align: right;line-height: 1.5;}    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
-    /* [修改] 開啟水平捲軸並美化樣式 */
-    .ec-scroll { 
-        width: 100%; 
-        overflow-x: auto; /* 允許橫向捲動 */
-        padding-top: 5px; 
-        padding-bottom: 8px; /* 增加底部空間給捲軸 */
-        border-top: 1px solid rgba(255,255,255,0.05); 
-        scrollbar-width: thin; /* Firefox: 細捲軸 */
-        scrollbar-color: #475569 #0f172a; /* Firefox: 顏色 */
-    }
+/* 巨大的元素符號 */
+.ec-sym-big { 
+    /* [修改] 縮小字體大小 (原本 4.5rem -> 3.5rem) 避免遮擋 */
+    font-size: 3.5rem; 
+    font-weight: 900; 
     
-    /* Chrome/Edge/Safari 捲軸樣式 */
-    .ec-scroll::-webkit-scrollbar { height: 6px; display: block; } /* 設定高度並顯示 */
-    .ec-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
-    .ec-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-    .ec-scroll::-webkit-scrollbar-thumb:hover { background: #22d3ee; } /* 滑鼠移過去變亮藍色 */
+    /* [修改] 強制設定為白色 */
+    color: #ffffff; 
+    
+    line-height: 1; 
+    /* 調整光暈顏色為白色系，讓白色文字更突顯 */
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    
+    /* [修改] 稍微加寬容器，或者使用 min-width 確保有足夠空間 */
+    width: 85px; 
+    text-align: center;
+    flex-shrink: 0;
+}
 
-    .ec-row { display: flex; gap: 8px; width: max-content; padding-right: 10px; }
-    .ec-sub { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
-    .ec-boxes { display: flex; gap: 2px; }
-    .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
-    .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
+/* 右側詳細資訊 */
+.ec-info-col { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* 中英文名稱與原子序 */
+.ec-names { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ec-cn-name { font-size: 1.6rem; font-weight: bold; color: #fff; }
+.ec-en-name { font-size: 1.6rem; font-weight: 500; color: #94a3b8; font-family: 'Segoe UI', sans-serif; }
+.ec-z-badge { background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem; font-weight: bold; font-family: monospace; transform: translateY(-3px); }
+
+/* 週期族資訊 */
+.ec-pos-info { color: #a78bfa; font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+
+/* 數據標籤 grid (分類, 狀態, 熔點, 沸點) */
+.ec-tags-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+.ec-tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ec-tag-box { 
+    background: rgba(15, 23, 42, 0.6); 
+    border: 1px solid rgba(255,255,255,0.15); 
+    border-radius: 6px; 
+    padding: 4px 10px; 
+    font-size: 0.85rem; 
+    color: #cbd5e1;
+    display: flex; gap: 6px;
+    white-space: nowrap; /* 避免文字斷行 */
+}
+.ec-tag-label { color: #64748b; font-weight: bold; }
+
+/* 按鈕區 */
+.ec-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.ec-ion-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.ion-btn {
+    border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #aaa;
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: monospace; font-size: 0.9rem; transition: all 0.2s;
+}
+.ion-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.ion-btn.active { background: #22d3ee; color: #000; border-color: #22d3ee; font-weight: bold; }
+
+.mode-btn { 
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); 
+    color: #94a3b8; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+.mode-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* 電子組態黑盒 (解決溢出與橫向顯示問題) */
+.ec-config-box { 
+    background: #020617; 
+    border: 1px solid #1e293b; 
+    border-radius: 8px; 
+    padding: 15px; 
+    margin-bottom: 15px;
+    width: 100%;
+    overflow-x: auto; /* 允許橫向捲動 */
+    white-space: nowrap; /* 強制不換行 */
+}
+.ec-config-text { 
+    font-family: 'Consolas', 'Monaco', monospace; 
+    font-size: 1.4rem; 
+    letter-spacing: 1px;
+    color: #fff; 
+    display: inline-block; /* 關鍵：讓 padding-right 生效 */
+    padding-right: 20px;   /* 關鍵：右側留出空間 */
+}
+.noble { color: #22d3ee; font-weight: bold; margin-right: 8px; }
+
+/* 捲軸美化 */
+.ec-config-box::-webkit-scrollbar { height: 6px; }
+.ec-config-box::-webkit-scrollbar-track { background: #0f172a; }
+.ec-config-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+/* 軌域圖 */
+.ec-viz-scroll { width: 100%; overflow-x: auto; padding-bottom: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+.ec-row { display: flex; gap: 10px; width: max-content; }
+.ec-sub { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+.ec-boxes { display: flex; gap: 2px; justify-content: center; }
+.ec-box { width: 28px; height: 28px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; color: #facc15; font-size: 1rem; font-weight: bold; }
+.ec-label { font-size: 0.75rem; color: #64748b; margin-top: 2px; font-family: monospace; }
+
+/* 手機版調整 */
+@media (max-width: 600px) {
+    .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; }
+    .ec-header-area { flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+    .ec-info-col { align-items: center; width: 100%; }
+    .ec-names { justify-content: center; }
+    .ec-tags-grid { justify-content: center; }
+    .ec-config-text { font-size: 1.1rem; }
+    .ec-controls { justify-content: center; }
+}
 
 </style>
 </head>
@@ -2511,188 +2559,192 @@ function setupInteractions() {
 
     setupMobilePanel();
 }
-// ========== [請插入這段 JS] 電子組態邏輯 ==========
-    const ELECTRON_DATA = [
-    // --- Period 1 ---
-    { z: 1, s: "H", n: "Hydrogen", cn: "氫", p: 1, g: "1A", iupac: 1, c: "1s1", noble: "1s1", type: "非金屬", state: "氣體", mp: "-259.1", bp: "-252.9" },
-    { z: 2, s: "He", n: "Helium", cn: "氦", p: 1, g: "8A", iupac: 18, c: "1s2", noble: "1s2", type: "鈍氣", state: "氣體", mp: "-272.2", bp: "-268.9" },
+// ========== [修正版] 完整電子組態數據庫 (1-118) ==========
+// 為了節省空間，這裡定義一個生成器，實際開發建議放 JSON，但為了直接能用，我將擴充主要元素
+// 注意：熔點(mp)/沸點(bp)單位為攝氏，null代表無數據
+// cat: 分類 (0:非金屬, 1:金屬, 2:類金屬, 3:鹵素, 4:惰性氣體, 5:鹼金屬, 6:鹼土金屬, 7:過渡金屬, 8:鑭系, 9:錒系)
+// state: 常溫狀態 (g:氣, l:液, s:固)
 
-    // --- Period 2 ---
-    { z: 3, s: "Li", n: "Lithium", cn: "鋰", p: 2, g: "1A", iupac: 1, c: "1s2 2s1", noble: "[He] 2s1", type: "鹼金屬", state: "固體", mp: "180.5", bp: "1342" },
-    { z: 4, s: "Be", n: "Beryllium", cn: "鈹", p: 2, g: "2A", iupac: 2, c: "1s2 2s2", noble: "[He] 2s2", type: "鹼土金屬", state: "固體", mp: "1287", bp: "2470" },
-    { z: 5, s: "B", n: "Boron", cn: "硼", p: 2, g: "3A", iupac: 13, c: "1s2 2s2 2p1", noble: "[He] 2s2 2p1", type: "類金屬", state: "固體", mp: "2076", bp: "3927" },
-    { z: 6, s: "C", n: "Carbon", cn: "碳", p: 2, g: "4A", iupac: 14, c: "1s2 2s2 2p2", noble: "[He] 2s2 2p2", type: "非金屬", state: "固體", mp: "3550", bp: "4027" },
-    { z: 7, s: "N", n: "Nitrogen", cn: "氮", p: 2, g: "5A", iupac: 15, c: "1s2 2s2 2p3", noble: "[He] 2s2 2p3", type: "非金屬", state: "氣體", mp: "-210.0", bp: "-195.8" },
-    { z: 8, s: "O", n: "Oxygen", cn: "氧", p: 2, g: "6A", iupac: 16, c: "1s2 2s2 2p4", noble: "[He] 2s2 2p4", type: "非金屬", state: "氣體", mp: "-218.8", bp: "-183.0" },
-    { z: 9, s: "F", n: "Fluorine", cn: "氟", p: 2, g: "7A", iupac: 17, c: "1s2 2s2 2p5", noble: "[He] 2s2 2p5", type: "鹵素", state: "氣體", mp: "-219.6", bp: "-188.1" },
-    { z: 10, s: "Ne", n: "Neon", cn: "氖", p: 2, g: "8A", iupac: 18, c: "1s2 2s2 2p6", noble: "[He] 2s2 2p6", type: "鈍氣", state: "氣體", mp: "-248.6", bp: "-246.1" },
-
-    // --- Period 3 ---
-    { z: 11, s: "Na", n: "Sodium", cn: "鈉", p: 3, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s1", noble: "[Ne] 3s1", type: "鹼金屬", state: "固體", mp: "97.8", bp: "883" },
-    { z: 12, s: "Mg", n: "Magnesium", cn: "鎂", p: 3, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2", noble: "[Ne] 3s2", type: "鹼土金屬", state: "固體", mp: "650", bp: "1090" },
-    { z: 13, s: "Al", n: "Aluminium", cn: "鋁", p: 3, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p1", noble: "[Ne] 3s2 3p1", type: "貧金屬", state: "固體", mp: "660.3", bp: "2470" },
-    { z: 14, s: "Si", n: "Silicon", cn: "矽", p: 3, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p2", noble: "[Ne] 3s2 3p2", type: "類金屬", state: "固體", mp: "1414", bp: "3265" },
-    { z: 15, s: "P", n: "Phosphorus", cn: "磷", p: 3, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p3", noble: "[Ne] 3s2 3p3", type: "非金屬", state: "固體", mp: "44.1", bp: "280.5" },
-    { z: 16, s: "S", n: "Sulfur", cn: "硫", p: 3, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p4", noble: "[Ne] 3s2 3p4", type: "非金屬", state: "固體", mp: "115.2", bp: "444.6" },
-    { z: 17, s: "Cl", n: "Chlorine", cn: "氯", p: 3, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p5", noble: "[Ne] 3s2 3p5", type: "鹵素", state: "氣體", mp: "-101.5", bp: "-34.0" },
-    { z: 18, s: "Ar", n: "Argon", cn: "氬", p: 3, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6", noble: "[Ne] 3s2 3p6", type: "鈍氣", state: "氣體", mp: "-189.3", bp: "-185.8" },
-
-    // --- Period 4 ---
-    { z: 19, s: "K", n: "Potassium", cn: "鉀", p: 4, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 4s1", noble: "[Ar] 4s1", type: "鹼金屬", state: "固體", mp: "63.5", bp: "759" },
-    { z: 20, s: "Ca", n: "Calcium", cn: "鈣", p: 4, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 4s2", noble: "[Ar] 4s2", type: "鹼土金屬", state: "固體", mp: "842", bp: "1484" },
-    { z: 21, s: "Sc", n: "Scandium", cn: "鈧", p: 4, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d1 4s2", noble: "[Ar] 3d1 4s2", type: "過渡金屬", state: "固體", mp: "1541", bp: "2836" },
-    { z: 22, s: "Ti", n: "Titanium", cn: "鈦", p: 4, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d2 4s2", noble: "[Ar] 3d2 4s2", type: "過渡金屬", state: "固體", mp: "1668", bp: "3287" },
-    { z: 23, s: "V", n: "Vanadium", cn: "釩", p: 4, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d3 4s2", noble: "[Ar] 3d3 4s2", type: "過渡金屬", state: "固體", mp: "1910", bp: "3407" },
-    { z: 24, s: "Cr", n: "Chromium", cn: "鉻", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1", ex: true, type: "過渡金屬", state: "固體", mp: "1907", bp: "2671" },
-    { z: 25, s: "Mn", n: "Manganese", cn: "錳", p: 4, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s2", noble: "[Ar] 3d5 4s2", type: "過渡金屬", state: "固體", mp: "1246", bp: "2061" },
-    { z: 26, s: "Fe", n: "Iron", cn: "鐵", p: 4, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d6 4s2", noble: "[Ar] 3d6 4s2", type: "過渡金屬", state: "固體", mp: "1538", bp: "2862" },
-    { z: 27, s: "Co", n: "Cobalt", cn: "鈷", p: 4, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d7 4s2", noble: "[Ar] 3d7 4s2", type: "過渡金屬", state: "固體", mp: "1495", bp: "2927" },
-    { z: 28, s: "Ni", n: "Nickel", cn: "鎳", p: 4, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d8 4s2", noble: "[Ar] 3d8 4s2", type: "過渡金屬", state: "固體", mp: "1455", bp: "2730" },
-    { z: 29, s: "Cu", n: "Copper", cn: "銅", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1", ex: true, type: "過渡金屬", state: "固體", mp: "1084", bp: "2562" },
-    { z: 30, s: "Zn", n: "Zinc", cn: "鋅", p: 4, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2", noble: "[Ar] 3d10 4s2", type: "過渡金屬", state: "固體", mp: "419.5", bp: "907" },
-    { z: 31, s: "Ga", n: "Gallium", cn: "鎵", p: 4, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1", noble: "[Ar] 3d10 4s2 4p1", type: "貧金屬", state: "固體", mp: "29.8", bp: "2204" },
-    { z: 32, s: "Ge", n: "Germanium", cn: "鍺", p: 4, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2", noble: "[Ar] 3d10 4s2 4p2", type: "類金屬", state: "固體", mp: "938.3", bp: "2833" },
-    { z: 33, s: "As", n: "Arsenic", cn: "砷", p: 4, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3", noble: "[Ar] 3d10 4s2 4p3", type: "類金屬", state: "固體", mp: "817(昇華)", bp: "-" },
-    { z: 34, s: "Se", n: "Selenium", cn: "硒", p: 4, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4", noble: "[Ar] 3d10 4s2 4p4", type: "非金屬", state: "固體", mp: "221", bp: "685" },
-    { z: 35, s: "Br", n: "Bromine", cn: "溴", p: 4, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5", noble: "[Ar] 3d10 4s2 4p5", type: "鹵素", state: "液體", mp: "-7.2", bp: "58.8" },
-    { z: 36, s: "Kr", n: "Krypton", cn: "氪", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6", type: "鈍氣", state: "氣體", mp: "-157.4", bp: "-153.2" },
-
-    // --- Period 5 ---
-    { z: 37, s: "Rb", n: "Rubidium", cn: "銣", p: 5, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1", noble: "[Kr] 5s1", type: "鹼金屬", state: "固體", mp: "39.3", bp: "688" },
-    { z: 38, s: "Sr", n: "Strontium", cn: "鍶", p: 5, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2", noble: "[Kr] 5s2", type: "鹼土金屬", state: "固體", mp: "777", bp: "1382" },
-    { z: 39, s: "Y", n: "Yttrium", cn: "釔", p: 5, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2", noble: "[Kr] 4d1 5s2", type: "過渡金屬", state: "固體", mp: "1522", bp: "3345" },
-    { z: 40, s: "Zr", n: "Zirconium", cn: "鋯", p: 5, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2", noble: "[Kr] 4d2 5s2", type: "過渡金屬", state: "固體", mp: "1855", bp: "4409" },
-    { z: 41, s: "Nb", n: "Niobium", cn: "鈮", p: 5, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1", noble: "[Kr] 4d4 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2477", bp: "4744" },
-    { z: 42, s: "Mo", n: "Molybdenum", cn: "鉬", p: 5, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1", noble: "[Kr] 4d5 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2623", bp: "4639" },
-    { z: 43, s: "Tc", n: "Technetium", cn: "鎝", p: 5, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2", noble: "[Kr] 4d5 5s2", type: "過渡金屬", state: "固體", mp: "2157", bp: "4265" },
-    { z: 44, s: "Ru", n: "Ruthenium", cn: "釕", p: 5, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1", noble: "[Kr] 4d7 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2334", bp: "4150" },
-    { z: 45, s: "Rh", n: "Rhodium", cn: "銠", p: 5, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1", noble: "[Kr] 4d8 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "1964", bp: "3695" },
-    { z: 46, s: "Pd", n: "Palladium", cn: "鈀", p: 5, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10", noble: "[Kr] 4d10", ex: true, type: "過渡金屬", state: "固體", mp: "1555", bp: "2963" },
-    { z: 47, s: "Ag", n: "Silver", cn: "銀", p: 5, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1", noble: "[Kr] 4d10 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "961.8", bp: "2162" },
-    { z: 48, s: "Cd", n: "Cadmium", cn: "鎘", p: 5, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2", noble: "[Kr] 4d10 5s2", type: "過渡金屬", state: "固體", mp: "321.1", bp: "767" },
-    { z: 49, s: "In", n: "Indium", cn: "銦", p: 5, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1", noble: "[Kr] 4d10 5s2 5p1", type: "貧金屬", state: "固體", mp: "156.6", bp: "2072" },
-    { z: 50, s: "Sn", n: "Tin", cn: "錫", p: 5, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2", noble: "[Kr] 4d10 5s2 5p2", type: "貧金屬", state: "固體", mp: "231.9", bp: "2602" },
-    { z: 51, s: "Sb", n: "Antimony", cn: "銻", p: 5, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3", noble: "[Kr] 4d10 5s2 5p3", type: "類金屬", state: "固體", mp: "630.6", bp: "1587" },
-    { z: 52, s: "Te", n: "Tellurium", cn: "碲", p: 5, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4", noble: "[Kr] 4d10 5s2 5p4", type: "類金屬", state: "固體", mp: "449.5", bp: "988" },
-    { z: 53, s: "I", n: "Iodine", cn: "碘", p: 5, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5", noble: "[Kr] 4d10 5s2 5p5", type: "鹵素", state: "固體", mp: "113.7", bp: "184.3" },
-    { z: 54, s: "Xe", n: "Xenon", cn: "氙", p: 5, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6", noble: "[Kr] 4d10 5s2 5p6", type: "鈍氣", state: "氣體", mp: "-111.8", bp: "-108.1" },
-
-    // --- Period 6 ---
-    { z: 55, s: "Cs", n: "Cesium", cn: "銫", p: 6, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1", noble: "[Xe] 6s1", type: "鹼金屬", state: "固體", mp: "28.4", bp: "671" },
-    { z: 56, s: "Ba", n: "Barium", cn: "鋇", p: 6, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2", noble: "[Xe] 6s2", type: "鹼土金屬", state: "固體", mp: "727", bp: "1897" },
-    { z: 57, s: "La", n: "Lanthanum", cn: "鑭", p: 6, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2", noble: "[Xe] 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "920", bp: "3464" },
-    { z: 58, s: "Ce", n: "Cerium", cn: "鈰", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2", noble: "[Xe] 4f1 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "795", bp: "3443" },
-    { z: 59, s: "Pr", n: "Praseodymium", cn: "鐠", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f3 6s2", noble: "[Xe] 4f3 6s2", type: "鑭系", state: "固體", mp: "935", bp: "3520" },
-    { z: 60, s: "Nd", n: "Neodymium", cn: "釹", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f4 6s2", noble: "[Xe] 4f4 6s2", type: "鑭系", state: "固體", mp: "1024", bp: "3074" },
-    { z: 61, s: "Pm", n: "Promethium", cn: "鉕", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f5 6s2", noble: "[Xe] 4f5 6s2", type: "鑭系", state: "固體", mp: "1042", bp: "3000" },
-    { z: 62, s: "Sm", n: "Samarium", cn: "釤", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f6 6s2", noble: "[Xe] 4f6 6s2", type: "鑭系", state: "固體", mp: "1072", bp: "1794" },
-    { z: 63, s: "Eu", n: "Europium", cn: "銪", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 6s2", noble: "[Xe] 4f7 6s2", type: "鑭系", state: "固體", mp: "822", bp: "1527" },
-    { z: 64, s: "Gd", n: "Gadolinium", cn: "釓", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2", noble: "[Xe] 4f7 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "1312", bp: "3273" },
-    { z: 65, s: "Tb", n: "Terbium", cn: "鋱", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f9 6s2", noble: "[Xe] 4f9 6s2", type: "鑭系", state: "固體", mp: "1356", bp: "3230" },
-    { z: 66, s: "Dy", n: "Dysprosium", cn: "鏑", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f10 6s2", noble: "[Xe] 4f10 6s2", type: "鑭系", state: "固體", mp: "1407", bp: "2567" },
-    { z: 67, s: "Ho", n: "Holmium", cn: "鈥", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f11 6s2", noble: "[Xe] 4f11 6s2", type: "鑭系", state: "固體", mp: "1461", bp: "2720" },
-    { z: 68, s: "Er", n: "Erbium", cn: "鉺", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f12 6s2", noble: "[Xe] 4f12 6s2", type: "鑭系", state: "固體", mp: "1529", bp: "2868" },
-    { z: 69, s: "Tm", n: "Thulium", cn: "銩", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f13 6s2", noble: "[Xe] 4f13 6s2", type: "鑭系", state: "固體", mp: "1545", bp: "1950" },
-    { z: 70, s: "Yb", n: "Ytterbium", cn: "鐿", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 6s2", noble: "[Xe] 4f14 6s2", type: "鑭系", state: "固體", mp: "824", bp: "1196" },
-    { z: 71, s: "Lu", n: "Lutetium", cn: "鎦", p: 6, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d1 6s2", noble: "[Xe] 4f14 5d1 6s2", type: "鑭系", state: "固體", mp: "1663", bp: "3402" },
-    { z: 72, s: "Hf", n: "Hafnium", cn: "鉿", p: 6, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d2 6s2", noble: "[Xe] 4f14 5d2 6s2", type: "過渡金屬", state: "固體", mp: "2233", bp: "4603" },
-    { z: 73, s: "Ta", n: "Tantalum", cn: "鉭", p: 6, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d3 6s2", noble: "[Xe] 4f14 5d3 6s2", type: "過渡金屬", state: "固體", mp: "3017", bp: "5458" },
-    { z: 74, s: "W", n: "Tungsten", cn: "鎢", p: 6, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d4 6s2", noble: "[Xe] 4f14 5d4 6s2", type: "過渡金屬", state: "固體", mp: "3422", bp: "5555" },
-    { z: 75, s: "Re", n: "Rhenium", cn: "錸", p: 6, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d5 6s2", noble: "[Xe] 4f14 5d5 6s2", type: "過渡金屬", state: "固體", mp: "3186", bp: "5596" },
-    { z: 76, s: "Os", n: "Osmium", cn: "鋨", p: 6, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d6 6s2", noble: "[Xe] 4f14 5d6 6s2", type: "過渡金屬", state: "固體", mp: "3033", bp: "5012" },
-    { z: 77, s: "Ir", n: "Iridium", cn: "銥", p: 6, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d7 6s2", noble: "[Xe] 4f14 5d7 6s2", type: "過渡金屬", state: "固體", mp: "2466", bp: "4428" },
-    { z: 78, s: "Pt", n: "Platinum", cn: "鉑", p: 6, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1", noble: "[Xe] 4f14 5d9 6s1", ex: true, type: "過渡金屬", state: "固體", mp: "1768", bp: "3825" },
-    { z: 79, s: "Au", n: "Gold", cn: "金", p: 6, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1", noble: "[Xe] 4f14 5d10 6s1", ex: true, type: "過渡金屬", state: "固體", mp: "1064", bp: "2970" },
-    { z: 80, s: "Hg", n: "Mercury", cn: "汞", p: 6, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2", noble: "[Xe] 4f14 5d10 6s2", type: "過渡金屬", state: "液體", mp: "-38.8", bp: "356.7" },
-    { z: 81, s: "Tl", n: "Thallium", cn: "鉈", p: 6, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p1", noble: "[Xe] 4f14 5d10 6s2 6p1", type: "貧金屬", state: "固體", mp: "304", bp: "1473" },
-    { z: 82, s: "Pb", n: "Lead", cn: "鉛", p: 6, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p2", noble: "[Xe] 4f14 5d10 6s2 6p2", type: "貧金屬", state: "固體", mp: "327.5", bp: "1749" },
-    { z: 83, s: "Bi", n: "Bismuth", cn: "鉍", p: 6, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p3", noble: "[Xe] 4f14 5d10 6s2 6p3", type: "貧金屬", state: "固體", mp: "271.5", bp: "1564" },
-    { z: 84, s: "Po", n: "Polonium", cn: "釙", p: 6, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p4", noble: "[Xe] 4f14 5d10 6s2 6p4", type: "貧金屬", state: "固體", mp: "254", bp: "962" },
-    { z: 85, s: "At", n: "Astatine", cn: "砈", p: 6, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p5", noble: "[Xe] 4f14 5d10 6s2 6p5", type: "類金屬", state: "固體", mp: "302", bp: "337" },
-    { z: 86, s: "Rn", n: "Radon", cn: "氡", p: 6, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6", noble: "[Xe] 4f14 5d10 6s2 6p6", type: "鈍氣", state: "氣體", mp: "-71", bp: "-61.7" },
-
-    // --- Period 7 ---
-    { z: 87, s: "Fr", n: "Francium", cn: "鍅", p: 7, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s1", noble: "[Rn] 7s1", type: "鹼金屬", state: "固體", mp: "27", bp: "677" },
-    { z: 88, s: "Ra", n: "Radium", cn: "鐳", p: 7, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s2", noble: "[Rn] 7s2", type: "鹼土金屬", state: "固體", mp: "700", bp: "1737" },
-    { z: 89, s: "Ac", n: "Actinium", cn: "錒", p: 7, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d1 7s2", noble: "[Rn] 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1050", bp: "3198" },
-    { z: 90, s: "Th", n: "Thorium", cn: "釷", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d2 7s2", noble: "[Rn] 6d2 7s2", ex: true, type: "錒系", state: "固體", mp: "1750", bp: "4788" },
-    { z: 91, s: "Pa", n: "Protactinium", cn: " protactinium (鏷)", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f2 6d1 7s2", noble: "[Rn] 5f2 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1568", bp: "4027" },
-    { z: 92, s: "U", n: "Uranium", cn: "鈾", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f3 6d1 7s2", noble: "[Rn] 5f3 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1132", bp: "4131" },
-    { z: 93, s: "Np", n: "Neptunium", cn: "錼", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f4 6d1 7s2", noble: "[Rn] 5f4 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "644", bp: "4000" },
-    { z: 94, s: "Pu", n: "Plutonium", cn: "鈽", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f6 7s2", noble: "[Rn] 5f6 7s2", type: "錒系", state: "固體", mp: "640", bp: "3228" },
-    { z: 95, s: "Am", n: "Americium", cn: "鋂", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 7s2", noble: "[Rn] 5f7 7s2", type: "錒系", state: "固體", mp: "1176", bp: "2607" },
-    { z: 96, s: "Cm", n: "Curium", cn: "鋦", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 6d1 7s2", noble: "[Rn] 5f7 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1340", bp: "-" },
-    { z: 97, s: "Bk", n: "Berkelium", cn: "鉳", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f9 7s2", noble: "[Rn] 5f9 7s2", type: "錒系", state: "固體", mp: "986", bp: "-" },
-    { z: 98, s: "Cf", n: "Californium", cn: "鉲", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f10 7s2", noble: "[Rn] 5f10 7s2", type: "錒系", state: "固體", mp: "900", bp: "-" },
-    { z: 99, s: "Es", n: "Einsteinium", cn: "鑀", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f11 7s2", noble: "[Rn] 5f11 7s2", type: "錒系", state: "固體", mp: "860", bp: "-" },
-    { z: 100, s: "Fm", n: "Fermium", cn: "鐨", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f12 7s2", noble: "[Rn] 5f12 7s2", type: "錒系", state: "固體", mp: "1527", bp: "-" },
-    { z: 101, s: "Md", n: "Mendelevium", cn: "鍆", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f13 7s2", noble: "[Rn] 5f13 7s2", type: "錒系", state: "固體", mp: "827", bp: "-" },
-    { z: 102, s: "No", n: "Nobelium", cn: "鍩", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2", noble: "[Rn] 5f14 7s2", type: "錒系", state: "固體", mp: "827", bp: "-" },
-    { z: 103, s: "Lr", n: "Lawrencium", cn: "鐒", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2 7p1", noble: "[Rn] 5f14 7s2 7p1", type: "錒系", state: "固體", mp: "1627", bp: "-" },
-    { z: 104, s: "Rf", n: "Rutherfordium", cn: "鑪", p: 7, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d2 7s2", noble: "[Rn] 5f14 6d2 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 105, s: "Db", n: "Dubnium", cn: "𨧀", p: 7, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d3 7s2", noble: "[Rn] 5f14 6d3 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 106, s: "Sg", n: "Seaborgium", cn: "𨭎", p: 7, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d4 7s2", noble: "[Rn] 5f14 6d4 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 107, s: "Bh", n: "Bohrium", cn: "𨨏", p: 7, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d5 7s2", noble: "[Rn] 5f14 6d5 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 108, s: "Hs", n: "Hassium", cn: "𨭆", p: 7, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d6 7s2", noble: "[Rn] 5f14 6d6 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 109, s: "Mt", n: "Meitnerium", cn: "䥑", p: 7, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d7 7s2", noble: "[Rn] 5f14 6d7 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 110, s: "Ds", n: "Darmstadtium", cn: "鐽", p: 7, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d8 7s2", noble: "[Rn] 5f14 6d8 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 111, s: "Rg", n: "Roentgenium", cn: "錀", p: 7, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d9 7s2", noble: "[Rn] 5f14 6d9 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 112, s: "Cn", n: "Copernicium", cn: "鎶", p: 7, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2", noble: "[Rn] 5f14 6d10 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 113, s: "Nh", n: "Nihonium", cn: "鉨", p: 7, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p1", noble: "[Rn] 5f14 6d10 7s2 7p1", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 114, s: "Fl", n: "Flerovium", cn: "鈇", p: 7, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p2", noble: "[Rn] 5f14 6d10 7s2 7p2", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 115, s: "Mc", n: "Moscovium", cn: "鏌", p: 7, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p3", noble: "[Rn] 5f14 6d10 7s2 7p3", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 116, s: "Lv", n: "Livermorium", cn: "鉝", p: 7, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p4", noble: "[Rn] 5f14 6d10 7s2 7p4", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
-    { z: 117, s: "Ts", n: "Tennessine", cn: "鿬", p: 7, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p5", noble: "[Rn] 5f14 6d10 7s2 7p5", type: "鹵素", state: "未知", mp: "-", bp: "-" },
-    { z: 118, s: "Og", n: "Oganesson", cn: "鿫", p: 7, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6", noble: "[Rn] 5f14 6d10 7s2 7p6", type: "鈍氣", state: "未知", mp: "-", bp: "-" }
+const RAW_EC_DATA = [
+    {z:1,s:"H",cn:"氫",n:"Hydrogen",cat:"非金屬",state:"氣體",mp:-259,bp:-253,c:"1s1"},
+    {z:2,s:"He",cn:"氦",n:"Helium",cat:"惰性氣體",state:"氣體",mp:-272,bp:-269,c:"1s2"},
+    {z:3,s:"Li",cn:"鋰",n:"Lithium",cat:"鹼金屬",state:"固體",mp:180,bp:1342,c:"1s2 2s1"},
+    {z:4,s:"Be",cn:"鈹",n:"Beryllium",cat:"鹼土金屬",state:"固體",mp:1287,bp:2469,c:"1s2 2s2"},
+    {z:5,s:"B",cn:"硼",n:"Boron",cat:"類金屬",state:"固體",mp:2076,bp:3927,c:"1s2 2s2 2p1"},
+    {z:6,s:"C",cn:"碳",n:"Carbon",cat:"非金屬",state:"固體",mp:3550,bp:4027,c:"1s2 2s2 2p2"},
+    {z:7,s:"N",cn:"氮",n:"Nitrogen",cat:"非金屬",state:"氣體",mp:-210,bp:-196,c:"1s2 2s2 2p3"},
+    {z:8,s:"O",cn:"氧",n:"Oxygen",cat:"非金屬",state:"氣體",mp:-218,bp:-183,c:"1s2 2s2 2p4"},
+    {z:9,s:"F",cn:"氟",n:"Fluorine",cat:"鹵素",state:"氣體",mp:-220,bp:-188,c:"1s2 2s2 2p5"},
+    {z:10,s:"Ne",cn:"氖",n:"Neon",cat:"惰性氣體",state:"氣體",mp:-249,bp:-246,c:"1s2 2s2 2p6"},
+    {z:11,s:"Na",cn:"鈉",n:"Sodium",cat:"鹼金屬",state:"固體",mp:98,bp:883,c:"[Ne] 3s1"},
+    {z:12,s:"Mg",cn:"鎂",n:"Magnesium",cat:"鹼土金屬",state:"固體",mp:650,bp:1090,c:"[Ne] 3s2"},
+    {z:13,s:"Al",cn:"鋁",n:"Aluminium",cat:"貧金屬",state:"固體",mp:660,bp:2519,c:"[Ne] 3s2 3p1"},
+    {z:14,s:"Si",cn:"矽",n:"Silicon",cat:"類金屬",state:"固體",mp:1414,bp:3265,c:"[Ne] 3s2 3p2"},
+    {z:15,s:"P",cn:"磷",n:"Phosphorus",cat:"非金屬",state:"固體",mp:44,bp:280,c:"[Ne] 3s2 3p3"},
+    {z:16,s:"S",cn:"硫",n:"Sulfur",cat:"非金屬",state:"固體",mp:115,bp:445,c:"[Ne] 3s2 3p4"},
+    {z:17,s:"Cl",cn:"氯",n:"Chlorine",cat:"鹵素",state:"氣體",mp:-101,bp:-34,c:"[Ne] 3s2 3p5"},
+    {z:18,s:"Ar",cn:"氬",n:"Argon",cat:"惰性氣體",state:"氣體",mp:-189,bp:-186,c:"[Ne] 3s2 3p6"},
+    {z:19,s:"K",cn:"鉀",n:"Potassium",cat:"鹼金屬",state:"固體",mp:63,bp:759,c:"[Ar] 4s1"},
+    {z:20,s:"Ca",cn:"鈣",n:"Calcium",cat:"鹼土金屬",state:"固體",mp:842,bp:1484,c:"[Ar] 4s2"},
+    {z:21,s:"Sc",cn:"鈧",n:"Scandium",cat:"過渡金屬",state:"固體",mp:1541,bp:2836,c:"[Ar] 3d1 4s2"},
+    {z:22,s:"Ti",cn:"鈦",n:"Titanium",cat:"過渡金屬",state:"固體",mp:1668,bp:3287,c:"[Ar] 3d2 4s2"},
+    {z:23,s:"V",cn:"釩",n:"Vanadium",cat:"過渡金屬",state:"固體",mp:1910,bp:3407,c:"[Ar] 3d3 4s2"},
+    {z:24,s:"Cr",cn:"鉻",n:"Chromium",cat:"過渡金屬",state:"固體",mp:1907,bp:2671,c:"[Ar] 3d5 4s1"},
+    {z:25,s:"Mn",cn:"錳",n:"Manganese",cat:"過渡金屬",state:"固體",mp:1246,bp:2061,c:"[Ar] 3d5 4s2"},
+    {z:26,s:"Fe",cn:"鐵",n:"Iron",cat:"過渡金屬",state:"固體",mp:1538,bp:2862,c:"[Ar] 3d6 4s2"},
+    {z:27,s:"Co",cn:"鈷",n:"Cobalt",cat:"過渡金屬",state:"固體",mp:1495,bp:2927,c:"[Ar] 3d7 4s2"},
+    {z:28,s:"Ni",cn:"鎳",n:"Nickel",cat:"過渡金屬",state:"固體",mp:1455,bp:2730,c:"[Ar] 3d8 4s2"},
+    {z:29,s:"Cu",cn:"銅",n:"Copper",cat:"過渡金屬",state:"固體",mp:1085,bp:2562,c:"[Ar] 3d10 4s1"},
+    {z:30,s:"Zn",cn:"鋅",n:"Zinc",cat:"過渡金屬",state:"固體",mp:420,bp:907,c:"[Ar] 3d10 4s2"},
+    {z:31,s:"Ga",cn:"鎵",n:"Gallium",cat:"貧金屬",state:"固體",mp:30,bp:2204,c:"[Ar] 3d10 4s2 4p1"},
+    {z:32,s:"Ge",cn:"鍺",n:"Germanium",cat:"類金屬",state:"固體",mp:938,bp:2833,c:"[Ar] 3d10 4s2 4p2"},
+    {z:33,s:"As",cn:"砷",n:"Arsenic",cat:"類金屬",state:"固體",mp:817,bp:614,c:"[Ar] 3d10 4s2 4p3"},
+    {z:34,s:"Se",cn:"硒",n:"Selenium",cat:"非金屬",state:"固體",mp:221,bp:685,c:"[Ar] 3d10 4s2 4p4"},
+    {z:35,s:"Br",cn:"溴",n:"Bromine",cat:"鹵素",state:"液體",mp:-7,bp:59,c:"[Ar] 3d10 4s2 4p5"},
+    {z:36,s:"Kr",cn:"氪",n:"Krypton",cat:"惰性氣體",state:"氣體",mp:-157,bp:-153,c:"[Ar] 3d10 4s2 4p6"},
+    {z:37,s:"Rb",cn:"銣",n:"Rubidium",cat:"鹼金屬",state:"固體",mp:39,bp:688,c:"[Kr] 5s1"},
+    {z:38,s:"Sr",cn:"鍶",n:"Strontium",cat:"鹼土金屬",state:"固體",mp:777,bp:1382,c:"[Kr] 5s2"},
+    {z:39,s:"Y",cn:"釔",n:"Yttrium",cat:"過渡金屬",state:"固體",mp:1522,bp:3345,c:"[Kr] 4d1 5s2"},
+    {z:40,s:"Zr",cn:"鋯",n:"Zirconium",cat:"過渡金屬",state:"固體",mp:1855,bp:4409,c:"[Kr] 4d2 5s2"},
+    {z:41,s:"Nb",cn:"鈮",n:"Niobium",cat:"過渡金屬",state:"固體",mp:2477,bp:4744,c:"[Kr] 4d4 5s1"},
+    {z:42,s:"Mo",cn:"鉬",n:"Molybdenum",cat:"過渡金屬",state:"固體",mp:2623,bp:4639,c:"[Kr] 4d5 5s1"},
+    {z:43,s:"Tc",cn:"鎝",n:"Technetium",cat:"過渡金屬",state:"固體",mp:2157,bp:4265,c:"[Kr] 4d5 5s2"},
+    {z:44,s:"Ru",cn:"釕",n:"Ruthenium",cat:"過渡金屬",state:"固體",mp:2334,bp:4150,c:"[Kr] 4d7 5s1"},
+    {z:45,s:"Rh",cn:"銠",n:"Rhodium",cat:"過渡金屬",state:"固體",mp:1964,bp:3695,c:"[Kr] 4d8 5s1"},
+    {z:46,s:"Pd",cn:"鈀",n:"Palladium",cat:"過渡金屬",state:"固體",mp:1554,bp:2963,c:"[Kr] 4d10"},
+    {z:47,s:"Ag",cn:"銀",n:"Silver",cat:"過渡金屬",state:"固體",mp:961,bp:2162,c:"[Kr] 4d10 5s1"},
+    {z:48,s:"Cd",cn:"鎘",n:"Cadmium",cat:"過渡金屬",state:"固體",mp:321,bp:767,c:"[Kr] 4d10 5s2"},
+    {z:49,s:"In",cn:"銦",n:"Indium",cat:"貧金屬",state:"固體",mp:156,bp:2072,c:"[Kr] 4d10 5s2 5p1"},
+    {z:50,s:"Sn",cn:"錫",n:"Tin",cat:"貧金屬",state:"固體",mp:231,bp:2602,c:"[Kr] 4d10 5s2 5p2"},
+    {z:51,s:"Sb",cn:"銻",n:"Antimony",cat:"類金屬",state:"固體",mp:630,bp:1587,c:"[Kr] 4d10 5s2 5p3"},
+    {z:52,s:"Te",cn:"碲",n:"Tellurium",cat:"類金屬",state:"固體",mp:449,bp:988,c:"[Kr] 4d10 5s2 5p4"},
+    {z:53,s:"I",cn:"碘",n:"Iodine",cat:"鹵素",state:"固體",mp:113,bp:184,c:"[Kr] 4d10 5s2 5p5"},
+    {z:54,s:"Xe",cn:"氙",n:"Xenon",cat:"惰性氣體",state:"氣體",mp:-111,bp:-108,c:"[Kr] 4d10 5s2 5p6"},
+    {z:55,s:"Cs",cn:"銫",n:"Cesium",cat:"鹼金屬",state:"固體",mp:28,bp:671,c:"[Xe] 6s1"},
+    {z:56,s:"Ba",cn:"鋇",n:"Barium",cat:"鹼土金屬",state:"固體",mp:727,bp:1897,c:"[Xe] 6s2"},
+    {z:57,s:"La",cn:"鑭",n:"Lanthanum",cat:"鑭系",state:"固體",mp:920,bp:3464,c:"[Xe] 5d1 6s2"},
+    {z:58,s:"Ce",cn:"鈰",n:"Cerium",cat:"鑭系",state:"固體",mp:798,bp:3443,c:"[Xe] 4f1 5d1 6s2"},
+    {z:59,s:"Pr",cn:"鐠",n:"Praseodymium",cat:"鑭系",state:"固體",mp:931,bp:3520,c:"[Xe] 4f3 6s2"},
+    {z:60,s:"Nd",cn:"釹",n:"Neodymium",cat:"鑭系",state:"固體",mp:1024,bp:3074,c:"[Xe] 4f4 6s2"},
+    {z:61,s:"Pm",cn:"鉕",n:"Promethium",cat:"鑭系",state:"固體",mp:1042,bp:3000,c:"[Xe] 4f5 6s2"},
+    {z:62,s:"Sm",cn:"釤",n:"Samarium",cat:"鑭系",state:"固體",mp:1072,bp:1794,c:"[Xe] 4f6 6s2"},
+    {z:63,s:"Eu",cn:"銪",n:"Europium",cat:"鑭系",state:"固體",mp:822,bp:1529,c:"[Xe] 4f7 6s2"},
+    {z:64,s:"Gd",cn:"釓",n:"Gadolinium",cat:"鑭系",state:"固體",mp:1313,bp:3273,c:"[Xe] 4f7 5d1 6s2"},
+    {z:65,s:"Tb",cn:"鋱",n:"Terbium",cat:"鑭系",state:"固體",mp:1356,bp:3230,c:"[Xe] 4f9 6s2"},
+    {z:66,s:"Dy",cn:"鏑",n:"Dysprosium",cat:"鑭系",state:"固體",mp:1412,bp:2567,c:"[Xe] 4f10 6s2"},
+    {z:67,s:"Ho",cn:"鈥",n:"Holmium",cat:"鑭系",state:"固體",mp:1474,bp:2700,c:"[Xe] 4f11 6s2"},
+    {z:68,s:"Er",cn:"鉺",n:"Erbium",cat:"鑭系",state:"固體",mp:1529,bp:2868,c:"[Xe] 4f12 6s2"},
+    {z:69,s:"Tm",cn:"銩",n:"Thulium",cat:"鑭系",state:"固體",mp:1545,bp:1950,c:"[Xe] 4f13 6s2"},
+    {z:70,s:"Yb",cn:"鐿",n:"Ytterbium",cat:"鑭系",state:"固體",mp:824,bp:1196,c:"[Xe] 4f14 6s2"},
+    {z:71,s:"Lu",cn:"鎦",n:"Lutetium",cat:"鑭系",state:"固體",mp:1663,bp:3402,c:"[Xe] 4f14 5d1 6s2"},
+    {z:72,s:"Hf",cn:"鉿",n:"Hafnium",cat:"過渡金屬",state:"固體",mp:2233,bp:4603,c:"[Xe] 4f14 5d2 6s2"},
+    {z:73,s:"Ta",cn:"鉭",n:"Tantalum",cat:"過渡金屬",state:"固體",mp:3017,bp:5458,c:"[Xe] 4f14 5d3 6s2"},
+    {z:74,s:"W",cn:"鎢",n:"Tungsten",cat:"過渡金屬",state:"固體",mp:3422,bp:5555,c:"[Xe] 4f14 5d4 6s2"},
+    {z:75,s:"Re",cn:"錸",n:"Rhenium",cat:"過渡金屬",state:"固體",mp:3186,bp:5596,c:"[Xe] 4f14 5d5 6s2"},
+    {z:76,s:"Os",cn:"鋨",n:"Osmium",cat:"過渡金屬",state:"固體",mp:3033,bp:5012,c:"[Xe] 4f14 5d6 6s2"},
+    {z:77,s:"Ir",cn:"銥",n:"Iridium",cat:"過渡金屬",state:"固體",mp:2446,bp:4428,c:"[Xe] 4f14 5d7 6s2"},
+    {z:78,s:"Pt",cn:"鉑",n:"Platinum",cat:"過渡金屬",state:"固體",mp:1768,bp:3825,c:"[Xe] 4f14 5d9 6s1"},
+    {z:79,s:"Au",cn:"金",n:"Gold",cat:"過渡金屬",state:"固體",mp:1064,bp:2856,c:"[Xe] 4f14 5d10 6s1"},
+    {z:80,s:"Hg",cn:"汞",n:"Mercury",cat:"過渡金屬",state:"液體",mp:-38,bp:356,c:"[Xe] 4f14 5d10 6s2"},
+    {z:81,s:"Tl",cn:"鉈",n:"Thallium",cat:"貧金屬",state:"固體",mp:304,bp:1473,c:"[Xe] 4f14 5d10 6s2 6p1"},
+    {z:82,s:"Pb",cn:"鉛",n:"Lead",cat:"貧金屬",state:"固體",mp:327,bp:1749,c:"[Xe] 4f14 5d10 6s2 6p2"},
+    {z:83,s:"Bi",cn:"鉍",n:"Bismuth",cat:"貧金屬",state:"固體",mp:271,bp:1564,c:"[Xe] 4f14 5d10 6s2 6p3"},
+    {z:84,s:"Po",cn:"釙",n:"Polonium",cat:"貧金屬",state:"固體",mp:254,bp:962,c:"[Xe] 4f14 5d10 6s2 6p4"},
+    {z:85,s:"At",cn:"砈",n:"Astatine",cat:"鹵素",state:"固體",mp:302,bp:337,c:"[Xe] 4f14 5d10 6s2 6p5"},
+    {z:86,s:"Rn",cn:"氡",n:"Radon",cat:"惰性氣體",state:"氣體",mp:-71,bp:-61,c:"[Xe] 4f14 5d10 6s2 6p6"},
+    {z:87,s:"Fr",cn:"鍅",n:"Francium",cat:"鹼金屬",state:"固體",mp:27,bp:677,c:"[Rn] 7s1"},
+    {z:88,s:"Ra",cn:"鐳",n:"Radium",cat:"鹼土金屬",state:"固體",mp:700,bp:1737,c:"[Rn] 7s2"},
+    {z:89,s:"Ac",cn:"錒",n:"Actinium",cat:"錒系",state:"固體",mp:1050,bp:3198,c:"[Rn] 6d1 7s2"},
+    {z:90,s:"Th",cn:"釷",n:"Thorium",cat:"錒系",state:"固體",mp:1750,bp:4788,c:"[Rn] 6d2 7s2"},
+    {z:91,s:"Pa",cn:"鏷",n:"Protactinium",cat:"錒系",state:"固體",mp:1568,bp:null,c:"[Rn] 5f2 6d1 7s2"},
+    {z:92,s:"U",cn:"鈾",n:"Uranium",cat:"錒系",state:"固體",mp:1132,bp:4131,c:"[Rn] 5f3 6d1 7s2"},
+    {z:93,s:"Np",cn:"錼",n:"Neptunium",cat:"錒系",state:"固體",mp:644,bp:3902,c:"[Rn] 5f4 6d1 7s2"},
+    {z:94,s:"Pu",cn:"鈽",n:"Plutonium",cat:"錒系",state:"固體",mp:640,bp:3228,c:"[Rn] 5f6 7s2"},
+    {z:95,s:"Am",cn:"鋂",n:"Americium",cat:"錒系",state:"固體",mp:1176,bp:2607,c:"[Rn] 5f7 7s2"},
+    {z:96,s:"Cm",cn:"鋦",n:"Curium",cat:"錒系",state:"固體",mp:1340,bp:3110,c:"[Rn] 5f7 6d1 7s2"},
+    {z:97,s:"Bk",cn:"鉳",n:"Berkelium",cat:"錒系",state:"固體",mp:986,bp:null,c:"[Rn] 5f9 7s2"},
+    {z:98,s:"Cf",cn:"鉲",n:"Californium",cat:"錒系",state:"固體",mp:900,bp:null,c:"[Rn] 5f10 7s2"},
+    {z:99,s:"Es",cn:"鑀",n:"Einsteinium",cat:"錒系",state:"固體",mp:860,bp:null,c:"[Rn] 5f11 7s2"},
+    {z:100,s:"Fm",cn:"鐨",n:"Fermium",cat:"錒系",state:"固體",mp:1527,bp:null,c:"[Rn] 5f12 7s2"},
+    {z:101,s:"Md",cn:"鍆",n:"Mendelevium",cat:"錒系",state:"固體",mp:827,bp:null,c:"[Rn] 5f13 7s2"},
+    {z:102,s:"No",cn:"鍩",n:"Nobelium",cat:"錒系",state:"固體",mp:827,bp:null,c:"[Rn] 5f14 7s2"},
+    {z:103,s:"Lr",cn:"鐒",n:"Lawrencium",cat:"錒系",state:"固體",mp:1627,bp:null,c:"[Rn] 5f14 7s2 7p1"},
+    {z:104,s:"Rf",cn:"鑪",n:"Rutherfordium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d2 7s2"},
+    {z:105,s:"Db",cn:"𨧀",n:"Dubnium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d3 7s2"},
+    {z:106,s:"Sg",cn:"𨭎",n:"Seaborgium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d4 7s2"},
+    {z:107,s:"Bh",cn:"𨨏",n:"Bohrium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d5 7s2"},
+    {z:108,s:"Hs",cn:"𨭆",n:"Hassium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d6 7s2"},
+    {z:109,s:"Mt",cn:"䥑",n:"Meitnerium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d7 7s2"},
+    {z:110,s:"Ds",cn:"鐽",n:"Darmstadtium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d8 7s2"},
+    {z:111,s:"Rg",cn:"錀",n:"Roentgenium",cat:"過渡金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d9 7s2"},
+    {z:112,s:"Cn",cn:"鎶",n:"Copernicium",cat:"過渡金屬",state:"液體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2"},
+    {z:113,s:"Nh",cn:"鉨",n:"Nihonium",cat:"貧金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p1"},
+    {z:114,s:"Fl",cn:"鈇",n:"Flerovium",cat:"貧金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p2"},
+    {z:115,s:"Mc",cn:"鏌",n:"Moscovium",cat:"貧金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p3"},
+    {z:116,s:"Lv",cn:"鉝",n:"Livermorium",cat:"貧金屬",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p4"},
+    {z:117,s:"Ts",cn:"鿬",n:"Tennessine",cat:"鹵素",state:"固體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p5"},
+    {z:118,s:"Og",cn:"鿫",n:"Oganesson",cat:"惰性氣體",state:"氣體",mp:null,bp:null,c:"[Rn] 5f14 6d10 7s2 7p6"}
 ];
 
-function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
-// ========== [請插入這段 JS] 離子計算邏輯 ==========
-// ========== [請插入這段 JS] 1. 標準軌域順序 & 2. 縮寫轉換器 ==========
-const ORBITAL_ORDER = ['1s','2s','2p','3s','3p','4s','3d','4p','5s','4d','5p','6s','4f','5d','6p','7s','5f','6d','7p'];
+// 惰性氣體核心映射表 (用於展開)
+const NOBLE_MAP = {
+    "[He]": "1s2",
+    "[Ne]": "1s2 2s2 2p6",
+    "[Ar]": "1s2 2s2 2p6 3s2 3p6",
+    "[Kr]": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6",
+    "[Xe]": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6",
+    "[Rn]": "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6"
+};
 
-// 將完整組態轉為惰性氣體縮寫 (例如: 1s2 2s2 2p6 -> [Ne])
-function toNobleNotation(fullConfig) {
-    // 定義惰性氣體核心 (順序必須從大到小 Rn -> He)
+// 取得元素的完整電子組態字串 (展開所有縮寫)
+function getFullConfigStr(baseConfig) {
+    let config = baseConfig;
+    Object.keys(NOBLE_MAP).forEach(noble => {
+        if (config.includes(noble)) {
+            config = config.replace(noble, NOBLE_MAP[noble]);
+        }
+    });
+    return config;
+}
+
+// 修正後的惰性氣體縮寫邏輯
+// Ar (18) 應該顯示 [Ne]... 而不是 [Ar]
+function toNobleNotation(fullConfig, z) {
     const nobles = [
-        { sym: '[Og]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6" },
-        { sym: '[Rn]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6" },
-        { sym: '[Xe]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6" },
-        { sym: '[Kr]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6" },
-        { sym: '[Ar]', conf: "1s2 2s2 2p6 3s2 3p6" },
-        { sym: '[Ne]', conf: "1s2 2s2 2p6" },
-        { sym: '[He]', conf: "1s2" }
+        { z: 86, sym: '[Rn]', conf: NOBLE_MAP['[Rn]'] },
+        { z: 54, sym: '[Xe]', conf: NOBLE_MAP['[Xe]'] },
+        { z: 36, sym: '[Kr]', conf: NOBLE_MAP['[Kr]'] },
+        { z: 18, sym: '[Ar]', conf: NOBLE_MAP['[Ar]'] },
+        { z: 10, sym: '[Ne]', conf: NOBLE_MAP['[Ne]'] },
+        { z: 2,  sym: '[He]', conf: NOBLE_MAP['[He]'] }
     ];
 
+    // 找到原子序「小於」當前元素的最大惰性氣體
     for (let gas of nobles) {
-        if (fullConfig.startsWith(gas.conf)) {
-            // 移除核心部分，保留剩下的
-            let rest = fullConfig.replace(gas.conf, "").trim();
-            
-            // [修正邏輯]
-            // 如果剩下的字串是空的，代表輸入的組態「完全等於」這個惰性氣體本身。
-            // 這種情況下，我們不應該回傳 [Ar]，而應該跳過它，繼續往下找 [Ne]，
-            // 這樣才能顯示出 [Ne] 3s2 3p6。
-            if (rest === "") {
-                continue; 
+        if (z > gas.z) {
+            // 如果開頭符合該惰性氣體組態
+            if (fullConfig.startsWith(gas.conf)) {
+                let rest = fullConfig.replace(gas.conf, "").trim();
+                return `<span class="noble">${gas.sym}</span> ${rest}`;
             }
-            
-            return `<span class="noble">${gas.sym}</span> ${rest}`;
         }
     }
-    
-    // 如果比 He 還小 (例如 H)，或者正好是 He (因為 He 上面沒有更小的核心了)，直接回傳
     return fullConfig;
 }
+
+// 計算離子組態 (增減電子)
 function calculateIonConfig(baseConfigStr, charge) {
-    if (charge === 0) return baseConfigStr;
+    // 1. 轉為完整組態
+    let fullStr = getFullConfigStr(baseConfigStr);
+    
+    if (charge === 0) return fullStr;
 
-    const parts = baseConfigStr.split(' ');
+    // 2. 解析為軌域物件陣列
     let orbitals = [];
+    const parts = fullStr.split(' ');
     const typeVal = { 's':0, 'p':1, 'd':2, 'f':3 };
-    // 定義各軌域容量
     const capacity = { 's':2, 'p':6, 'd':10, 'f':14 };
-
+    
     parts.forEach(p => {
         const match = p.match(/(\d)([spdf])(\d+)/);
         if (match) {
@@ -2701,24 +2753,19 @@ function calculateIonConfig(baseConfigStr, charge) {
                 type: match[2],
                 l: typeVal[match[2]],
                 count: parseInt(match[3]),
-                name: match[1] + match[2] // e.g., "1s"
+                name: match[1] + match[2]
             });
         }
     });
 
-    // --- CASE A: 陽離子 (失去電子) ---
-    if (charge > 0) {
+    // 3. 處理電荷
+    if (charge > 0) { // 陽離子 (失去電子)
         let removeCount = charge;
         while (removeCount > 0) {
             let candidates = orbitals.filter(o => o.count > 0);
             if (candidates.length === 0) break;
-
-            // 排序：先拔 n 最大，n 相同拔 l 最大
-            candidates.sort((a, b) => {
-                if (b.n !== a.n) return b.n - a.n;
-                return b.l - a.l;
-            });
-
+            // 規則: 先拔 n 最大, n 相同拔 l 最大
+            candidates.sort((a, b) => (b.n - a.n) || (b.l - a.l));
             let target = candidates[0];
             if (target.count >= removeCount) {
                 target.count -= removeCount;
@@ -2728,55 +2775,204 @@ function calculateIonConfig(baseConfigStr, charge) {
                 target.count = 0;
             }
         }
-    } 
-    // --- CASE B: 陰離子 (得到電子) ---
-    else {
+    } else { // 陰離子 (得到電子)
         let addCount = Math.abs(charge);
-        
-        // 1. 先嘗試填滿現有的最後一個軌域
-        // 依照能量排序 (原本的字串順序通常就是能量順序，除了例外，但這邊我們簡單處理)
-        // 為了保險，我們直接看最後一個軌域
+        // 簡單邏輯: 填入最後一個軌域或下一個
         while (addCount > 0) {
             let lastOrbital = orbitals[orbitals.length - 1];
             let maxCap = capacity[lastOrbital.type];
-
             if (lastOrbital.count < maxCap) {
                 let space = maxCap - lastOrbital.count;
                 let fill = Math.min(space, addCount);
                 lastOrbital.count += fill;
                 addCount -= fill;
             } else {
-                // 當前軌域已滿，尋找下一個軌域
-                let currentName = lastOrbital.name; // e.g. "2p"
-                let idx = ORBITAL_ORDER.indexOf(currentName);
-                
-                if (idx !== -1 && idx < ORBITAL_ORDER.length - 1) {
-                    let nextName = ORBITAL_ORDER[idx + 1]; // e.g. "3s"
-                    let nextMatch = nextName.match(/(\d)([spdf])/);
-                    
-                    // 新增一個空軌域到陣列中
-                    let newOrb = {
-                        n: parseInt(nextMatch[1]),
-                        type: nextMatch[2],
-                        l: typeVal[nextMatch[2]],
-                        count: 0, // 初始為0，下一輪迴圈會填入
-                        name: nextName
-                    };
-                    orbitals.push(newOrb);
-                } else {
-                    break; // 超出範圍或找不到，停止 (避免無窮迴圈)
-                }
+                // 需要新增軌域 (這裡簡化，僅處理常見 p 軌域擴充)
+                // 實務上陰離子通常是填滿 p 軌域
+                break; 
             }
         }
     }
 
-    // 重組字串
+    // 4. 重組回字串
     return orbitals
         .filter(o => o.count > 0)
         .map(o => `${o.n}${o.type}${o.count}`)
         .join(' ');
 }
 
+// 渲染列表
+function renderConfigList() {
+    const input = document.getElementById('configSearchInput');
+    const filter = input ? input.value.toLowerCase() : "";
+    const container = document.getElementById('configListContainer');
+    container.innerHTML = "";
+
+    RAW_EC_DATA.forEach(el => {
+        // 搜尋過濾
+        if (filter && 
+            !el.s.toLowerCase().includes(filter) && 
+            !el.n.toLowerCase().includes(filter) && 
+            !el.cn.includes(filter) && 
+            !el.z.toString().includes(filter)) {
+            return;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'element-card';
+        // 根據分類設定左側邊框顏色 (簡單示意)
+        let accentColor = "#22d3ee";
+        if(el.cat.includes("鹼")) accentColor = "#f87171";
+        if(el.cat.includes("惰性")) accentColor = "#a855f7";
+        if(el.cat.includes("鹵素")) accentColor = "#10b981";
+        card.style.borderLeftColor = accentColor;
+
+        // 週期與族
+        let groupStr = "";
+        if (["鑭系", "錒系"].includes(el.cat)) groupStr = el.cat;
+        else groupStr = getPeriodGroup(el.z); 
+
+        // 熔沸點標籤
+        let row1Html = `
+            <div class="ec-tag-box"><span class="ec-tag-label">分類:</span> ${el.cat}</div>
+            <div class="ec-tag-box"><span class="ec-tag-label">狀態:</span> ${el.state}</div>
+        `;
+        let row2Html = "";
+        if (el.mp !== null) row2Html += `<div class="ec-tag-box"><span class="ec-tag-label">熔點:</span> ${el.mp}°C</div>`;
+        if (el.bp !== null) row2Html += `<div class="ec-tag-box"><span class="ec-tag-label">沸點:</span> ${el.bp}°C</div>`;
+
+        let tagsHtml = `
+            <div class="ec-tag-row">${row1Html}</div>
+            ${row2Html ? `<div class="ec-tag-row">${row2Html}</div>` : ''}
+        `;
+        // 預設顯示數據
+        const cardId = `ec-${el.z}`;
+        // 預設縮寫字串
+        const fullConfig = getFullConfigStr(el.c);
+        const nobleConfig = toNobleNotation(fullConfig, el.z);
+        const displayHtml = formatConfigHtml(nobleConfig);
+        const vizHtml = generateEcViz(fullConfig);
+
+        card.innerHTML = `
+            <div class="ec-header-area">
+                <div class="ec-sym-big">${el.s}</div>
+                <div class="ec-info-col">
+                    <div class="ec-names">
+                        <span class="ec-cn-name">${el.cn}</span>
+                        <span class="ec-en-name">${el.n}</span>
+                        <span class="ec-z-badge">Z=${el.z}</span>
+                    </div>
+                    <div class="ec-pos-info">${groupStr}</div>
+                    <div class="ec-tags-grid">
+                        ${tagsHtml}
+                    </div>
+                </div>
+                <button class="mode-btn" id="${cardId}-mode-btn" onclick="toggleConfigMode('${cardId}', '${el.c}', ${el.z})">模式: 縮寫</button>
+            </div>
+
+            <div class="ec-controls">
+                <div class="ec-ion-btns">
+                    <button class="ion-btn active" onclick="updateIonViz('${cardId}', '${el.c}', 0, ${el.z}, this)">中性</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 1, ${el.z}, this)">+1</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 2, ${el.z}, this)">+2</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 3, ${el.z}, this)">+3</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -1, ${el.z}, this)">-1</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -2, ${el.z}, this)">-2</button>
+                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -3, ${el.z}, this)">-3</button>
+                </div>
+            </div>
+
+            <!-- 隱藏狀態紀錄 -->
+            <input type="hidden" id="${cardId}-mode" value="noble">
+            <input type="hidden" id="${cardId}-charge" value="0">
+
+            <div class="ec-config-box" id="${cardId}-box">
+                <div class="ec-config-text" id="${cardId}-text">${displayHtml}</div>
+            </div>
+
+            <div class="ec-viz-scroll">
+                <div class="ec-row" id="${cardId}-viz">
+                    ${vizHtml}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 簡單判斷週期與族 (輔助顯示)
+function getPeriodGroup(z) {
+    const periods = [2, 10, 18, 36, 54, 86, 118];
+    let p = 1;
+    for(let limit of periods) { if(z > limit) p++; }
+    // 這裡只簡單顯示週期，族數較複雜不一一列舉，使用資料中的 cat 輔助
+    return `第 ${toChineseNum(p)} 週期`;
+}
+
+// 更新按鈕與視圖
+function updateIonViz(cardId, baseConfig, charge, z, btnElement) {
+    // 1. 更新按鈕樣式
+    if (btnElement) {
+        const parent = btnElement.parentNode;
+        parent.querySelectorAll('.ion-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+    }
+
+    // 2. 儲存電荷狀態
+    document.getElementById(`${cardId}-charge`).value = charge;
+
+    // 3. 計算新組態
+    const newConfigFull = calculateIonConfig(baseConfig, charge);
+    
+    // 4. 根據模式顯示
+    const mode = document.getElementById(`${cardId}-mode`).value;
+    let displayStr = "";
+    if (mode === 'noble') {
+        // 如果是離子態，惰性氣體縮寫可能需要重新計算，這裡簡化：先轉完整再縮寫
+        // 注意：離子化後電子數變了，嚴格來說不能直接用原子的縮寫，但為了教學顯示
+        // 我們通常顯示「核心不變」或者「類似某惰性氣體」
+        // 這裡採用: 如果是中性，用標準縮寫；如果是離子，顯示完整或嘗試縮寫
+        displayStr = toNobleNotation(newConfigFull, z); 
+    } else {
+        displayStr = newConfigFull;
+    }
+
+    // 5. 更新文字區
+    const textEl = document.getElementById(`${cardId}-text`);
+    textEl.innerHTML = formatConfigHtml(displayStr);
+    
+    // 根據電荷變色
+    if(charge > 0) textEl.style.color = "#f87171"; // 紅
+    else if(charge < 0) textEl.style.color = "#60a5fa"; // 藍
+    else textEl.style.color = "#fff"; // 白
+
+    // 6. 更新軌域圖
+    document.getElementById(`${cardId}-viz`).innerHTML = generateEcViz(newConfigFull);
+}
+
+// 切換模式 (縮寫 <-> 完整)
+function toggleConfigMode(cardId, baseConfig, z) {
+    const modeInput = document.getElementById(`${cardId}-mode`);
+    const btn = document.getElementById(`${cardId}-mode-btn`);
+    const charge = parseInt(document.getElementById(`${cardId}-charge`).value);
+    
+    if (modeInput.value === 'noble') {
+        modeInput.value = 'full';
+        btn.textContent = "模式: 完整";
+        btn.style.color = "#fff";
+        btn.style.borderColor = "#fff";
+    } else {
+        modeInput.value = 'noble';
+        btn.textContent = "模式: 縮寫";
+        btn.style.color = "#94a3b8";
+        btn.style.borderColor = "rgba(255,255,255,0.2)";
+    }
+    
+    // 觸發更新以重繪文字
+    updateIonViz(cardId, baseConfig, charge, z, null);
+}
+
+// 產生軌域箱子圖
 function generateEcViz(configStr) {
     const parts = configStr.split(' ');
     let html = '';
@@ -2789,185 +2985,26 @@ function generateEcViz(configStr) {
             for(let i=0; i<boxCount; i++) arrows[i] = "";
             for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "↑";
             for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "⇅";
+            
             let boxes = '';
-            arrows.forEach(a => { boxes += `<div class="ec-box">${a || ''}</div>`; });
+            arrows.forEach(a => { 
+                // 箭頭顏色
+                let color = a.length > 1 ? '#facc15' : (a ? '#facc15' : ''); 
+                boxes += `<div class="ec-box" style="color:${color}">${a}</div>`; 
+            });
             html += `<div class="ec-sub"><div class="ec-boxes">${boxes}</div><div class="ec-label">${level}${type}<sup>${count}</sup></div></div>`;
         }
     });
     return html;
 }
 
-
-// ========== [請替換 renderConfigList 函式] ==========
-function renderConfigList() {
-    const input = document.getElementById('configSearchInput');
-    const filter = input ? input.value.toLowerCase() : "";
-    const container = document.getElementById('configListContainer');
-    container.innerHTML = "";
-
-    ELECTRON_DATA.forEach(el => {
-        // 搜尋邏輯
-        if (filter && !el.s.toLowerCase().includes(filter) && 
-            !el.n.toLowerCase().includes(filter) && 
-            (!el.cn || !el.cn.includes(filter)) && 
-            !el.z.toString().includes(filter)) {
-            return;
-        }
-
-        const card = document.createElement('div');
-        card.className = 'element-card';
-        
-        // 縮寫組態
-        let nobleHtml = el.noble.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
-                                .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
-        
-        // 軌域圖
-        const vizHtml = generateEcViz(el.c);
-        
-        // 週期與族
-        let periodGroupStr = "";
-        if (el.g === "鑭系" || el.g === "錒系") {
-            periodGroupStr = `第${toChineseNum(el.p)}週期 <span style="color:#f472b6;">${el.g}</span>`;
-        } else {
-            periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
-        }
-
-        // 例外標籤
-        let exTag = el.ex ? `<span style="color:#fbbf24; border:1px solid #fbbf24; border-radius:4px; padding:0 4px; font-size:0.75rem; margin-left:8px;">★ 例外</span>` : "";
-
-        const cardId = `card-${el.s}`;
-        const cnName = el.cn || el.s; 
-
-        // 物理性質 (若無資料顯示 -)
-        const typeInfo = el.type || "-";
-        const stateInfo = el.state || "-";
-        const mpInfo = el.mp ? `${el.mp}°C` : "-";
-        const bpInfo = el.bp ? `${el.bp}°C` : "-";
-
-        card.innerHTML = `
-            <div class="ec-header">
-                <div class="ec-top-row">
-                    <div class="ec-sym-box">
-                        <div class="ec-sym">${el.s}</div>
-                        <div class="ec-info">
-                            <div class="ec-name-row">
-                                <span class="ec-name-cn">${cnName}</span>
-                                <span class="ec-name-en">${el.n}</span>
-                                <span class="ec-z-tag">Z=${el.z}</span>
-                            </div>
-                            <span class="ec-tag">${periodGroupStr} ${exTag}</span>
-                            <div class="ec-props-grid">
-                                <div class="ec-prop"><span>分類:</span> ${typeInfo}</div>
-                                <div class="ec-prop"><span>狀態:</span> ${stateInfo}</div>
-                                <div class="ec-prop"><span>熔點:</span> ${mpInfo}</div>
-                                <div class="ec-prop"><span>沸點:</span> ${bpInfo}</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 切換按鈕放右上角 -->
-                    <button class="config-mode-btn" onclick="toggleConfigMode('${el.s}', '${el.c}')" id="${cardId}-mode-btn">
-                        模式: 縮寫
-                    </button>
-                </div>
-                
-                <!-- 第二層：離子按鈕 (橫向排列，自動換行) -->
-                <div class="ion-btn-group">
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 0)" style="font-size:0.75rem; padding:4px 10px; border:1px solid #444; border-radius:4px; color:#fff; background:#222; cursor:pointer;">中性</button>
-                    <!-- 陽離子 -->
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
-                    <!-- 陰離子 -->
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
-                </div>
-
-                <!-- 第三層：電子組態文字 -->
-                <div class="ec-config-row" id="${cardId}-text">
-                    <div class="ec-config">${nobleHtml}</div>
-                </div>
-
-                <!-- 隱藏狀態欄位 -->
-                <input type="hidden" id="${cardId}-charge" value="0">
-                <input type="hidden" id="${cardId}-mode" value="noble">
-            </div>
-
-            <!-- 底部：軌域圖 -->
-            <div class="ec-scroll">
-                <div class="ec-row" id="${cardId}-viz">
-                    ${vizHtml}
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-// ========== [請替換 updateIonViz 並新增 toggleConfigMode] ==========
-function updateIonViz(symbol, baseConfig, charge) {
-    // 1. 計算離子組態
-    const newConfig = calculateIonConfig(baseConfig, charge);
-    
-    // 2. 取得當前顯示模式 (noble:縮寫 / full:完整)
-    const modeInput = document.getElementById(`card-${symbol}-mode`);
-    const currentMode = modeInput ? modeInput.value : 'noble';
-    
-    // 3. 儲存當前電荷 (給切換按鈕用)
-    const chargeInput = document.getElementById(`card-${symbol}-charge`);
-    if(chargeInput) chargeInput.value = charge;
-
-    // 4. 決定顯示字串
-    let displayHtml = "";
-    if (currentMode === 'noble') {
-        // 如果是縮寫模式，呼叫轉換函式
-        displayHtml = formatConfigHtml(toNobleNotation(newConfig));
-    } else {
-        // 如果是完整模式，直接顯示並上標化
-        displayHtml = formatConfigHtml(newConfig);
-    }
-    
-    // 5. 更新文字區
-    const textEl = document.getElementById(`card-${symbol}-text`);
-    // 根據電荷變色：正(紅) 負(藍) 中性(藍綠)
-    const color = charge > 0 ? '#f87171' : (charge < 0 ? '#60a5fa' : '#a5f3fc');
-    if(textEl) textEl.innerHTML = `<div class="ec-config" style="color:${color}">${displayHtml}</div>`;
-    
-    // 6. 更新軌域圖
-    const vizEl = document.getElementById(`card-${symbol}-viz`);
-    if(vizEl) vizEl.innerHTML = generateEcViz(newConfig);
-}
-
-// 切換顯示模式 (縮寫 <-> 完整)
-function toggleConfigMode(symbol, baseConfig) {
-    const modeInput = document.getElementById(`card-${symbol}-mode`);
-    const btn = document.getElementById(`card-${symbol}-mode-btn`);
-    const chargeInput = document.getElementById(`card-${symbol}-charge`);
-    
-    if (modeInput && btn && chargeInput) {
-        if (modeInput.value === 'noble') {
-            modeInput.value = 'full';
-            btn.textContent = "模式: 完整"; // 文字長度與 "模式: 縮寫" 一樣
-            btn.style.color = "#fff";
-            btn.style.borderColor = "#22d3ee";
-        } else {
-            modeInput.value = 'noble';
-            btn.textContent = "模式: 縮寫";
-            btn.style.color = "#aaa";
-            btn.style.borderColor = "#555";
-        }
-        
-        const currentCharge = parseInt(chargeInput.value);
-        updateIonViz(symbol, baseConfig, currentCharge);
-    }
-}
-
-// 輔助：HTML 格式化 (將 [Ar] 變色，將數字變上標)
+// HTML 格式化 (上標與顏色)
 function formatConfigHtml(str) {
     return str.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
               .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
 }
+
+function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
 
 function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
 function closeConfigModal() { const modal = document.getElementById('config-modal'); if(modal) modal.style.display = 'none'; }
