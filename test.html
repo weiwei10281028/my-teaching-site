@@ -337,10 +337,8 @@
     .ec-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
     
     /* 第一層：符號與資訊 */
-    .ec-top-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-    
-    .ec-sym-box { display: flex; align-items: flex-start; gap: 15px; }
-    
+    .ec-top-row {display: flex;justify-content: space-between;align-items: flex-start; /* 改為靠上對齊，避免高度被撐開 */width: 100%;gap: 10px; /* 增加間距 */}    
+    .ec-sym-box {display: flex;align-items: flex-start;gap: 10px;flex: 1; /* 佔據剩餘空間 */min-width: 0; /* 關鍵：防止 flex 子元素溢出 */}    
     /* 符號樣式 */
     .ec-sym { 
         font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; 
@@ -366,12 +364,17 @@
         white-space: nowrap; border: 1px solid rgba(255,255,255,0.05);
     }
     .ec-prop span { color: #64748b; margin-right: 4px; font-weight: bold; }
+    .config-mode-btn {font-size: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #aaa; border-radius: 4px; padding: 6px 10px; /* 稍微加大觸控區 */cursor: pointer; align-self: flex-start; margin-left: auto; /* 推到最右邊 */
+    
+    /* 關鍵修正：強制不換行，固定寬度行為 */
+    white-space: nowrap; 
+    flex-shrink: 0; 
+    text-align: center;
+    min-width: 60px; /* 確保有最小寬度 */
+}
 
     /* [關鍵修正] 離子按鈕容器 */
-    .ion-btn-group {
-        display: flex; gap: 6px; flex-wrap: wrap; width: 100%;
-        padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.05);
-    }
+    .ion-btn-group {display: flex; gap: 6px; flex-wrap: wrap; /* 允許換行 */width: 100%;padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.05);}
 
     /* 電子組態文字區 */
     .ec-config-row { 
@@ -2514,130 +2517,137 @@ function setupInteractions() {
 }
 // ========== [請插入這段 JS] 電子組態邏輯 ==========
     const ELECTRON_DATA = [
-    // Period 1
-    { z: 1, s: "H", n: "Hydrogen", p: 1, g: "1A", iupac: 1, c: "1s1", noble: "1s1" },
-    { z: 2, s: "He", n: "Helium", p: 1, g: "8A", iupac: 18, c: "1s2", noble: "1s2" },
-    // Period 2
-    { z: 3, s: "Li", n: "Lithium", p: 2, g: "1A", iupac: 1, c: "1s2 2s1", noble: "[He] 2s1" },
-    { z: 4, s: "Be", n: "Beryllium", p: 2, g: "2A", iupac: 2, c: "1s2 2s2", noble: "[He] 2s2" },
-    { z: 5, s: "B", n: "Boron", p: 2, g: "3A", iupac: 13, c: "1s2 2s2 2p1", noble: "[He] 2s2 2p1" },
-    { z: 6, s: "C", n: "Carbon", p: 2, g: "4A", iupac: 14, c: "1s2 2s2 2p2", noble: "[He] 2s2 2p2" },
-    { z: 7, s: "N", n: "Nitrogen", p: 2, g: "5A", iupac: 15, c: "1s2 2s2 2p3", noble: "[He] 2s2 2p3" },
-    { z: 8, s: "O", n: "Oxygen", p: 2, g: "6A", iupac: 16, c: "1s2 2s2 2p4", noble: "[He] 2s2 2p4" },
-    { z: 9, s: "F", n: "Fluorine", p: 2, g: "7A", iupac: 17, c: "1s2 2s2 2p5", noble: "[He] 2s2 2p5" },
-    { z: 10, s: "Ne", n: "Neon", p: 2, g: "8A", iupac: 18, c: "1s2 2s2 2p6", noble: "[He] 2s2 2p6" },
-    // Period 3
-    { z: 11, s: "Na", n: "Sodium", p: 3, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s1", noble: "[Ne] 3s1" },
-    { z: 12, s: "Mg", n: "Magnesium", p: 3, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2", noble: "[Ne] 3s2" },
-    { z: 13, s: "Al", n: "Aluminium", p: 3, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p1", noble: "[Ne] 3s2 3p1" },
-    { z: 14, s: "Si", n: "Silicon", p: 3, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p2", noble: "[Ne] 3s2 3p2" },
-    { z: 15, s: "P", n: "Phosphorus", cn: "磷", p: 3, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p3", noble: "[Ne] 3s2 3p3" },
-    { z: 16, s: "S", n: "Sulfur", cn: "硫", p: 3, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p4", noble: "[Ne] 3s2 3p4" },
-    { z: 17, s: "Cl", n: "Chlorine", cn: "氯", p: 3, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p5", noble: "[Ne] 3s2 3p5" },
-    { z: 18, s: "Ar", n: "Argon", cn: "氬", p: 3, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6", noble: "[Ne] 3s2 3p6", type: "非金屬", state: "氣體", mp: "-189.3", bp: "-185.8" },    // Period 4
-    { z: 19, s: "K", n: "Potassium", cn: "鉀", p: 4, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 4s1", noble: "[Ar] 4s1" },
-    { z: 20, s: "Ca", n: "Calcium", cn: "鈣", p: 4, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 4s2", noble: "[Ar] 4s2" },
-    { z: 21, s: "Sc", n: "Scandium", cn: "鈧", p: 4, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d1 4s2", noble: "[Ar] 3d1 4s2" },
-    { z: 22, s: "Ti", n: "Titanium", p: 4, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d2 4s2", noble: "[Ar] 3d2 4s2" },
-    { z: 23, s: "V", n: "Vanadium", p: 4, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d3 4s2", noble: "[Ar] 3d3 4s2" },
-    { z: 24, s: "Cr", n: "Chromium", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1", ex: true },    
-    { z: 25, s: "Mn", n: "Manganese", p: 4, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s2", noble: "[Ar] 3d5 4s2" },
-    { z: 26, s: "Fe", n: "Iron", p: 4, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d6 4s2", noble: "[Ar] 3d6 4s2" },
-    { z: 27, s: "Co", n: "Cobalt", p: 4, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d7 4s2", noble: "[Ar] 3d7 4s2" },
-    { z: 28, s: "Ni", n: "Nickel", p: 4, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d8 4s2", noble: "[Ar] 3d8 4s2" },
-    { z: 29, s: "Cu", n: "Copper", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1", ex: true },
-    { z: 30, s: "Zn", n: "Zinc", p: 4, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2", noble: "[Ar] 3d10 4s2" },
-    { z: 31, s: "Ga", n: "Gallium", p: 4, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1", noble: "[Ar] 3d10 4s2 4p1" },
-    { z: 32, s: "Ge", n: "Germanium", p: 4, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2", noble: "[Ar] 3d10 4s2 4p2" },
-    { z: 33, s: "As", n: "Arsenic", p: 4, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3", noble: "[Ar] 3d10 4s2 4p3" },
-    { z: 34, s: "Se", n: "Selenium", p: 4, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4", noble: "[Ar] 3d10 4s2 4p4" },
-    { z: 35, s: "Br", n: "Bromine", p: 4, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5", noble: "[Ar] 3d10 4s2 4p5" },
-    { z: 36, s: "Kr", n: "Krypton", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6" },
-    // Period 5
-    { z: 37, s: "Rb", n: "Rubidium", p: 5, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1", noble: "[Kr] 5s1" },
-    { z: 38, s: "Sr", n: "Strontium", p: 5, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2", noble: "[Kr] 5s2" },
-    { z: 39, s: "Y", n: "Yttrium", p: 5, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2", noble: "[Kr] 4d1 5s2" },
-    { z: 40, s: "Zr", n: "Zirconium", p: 5, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2", noble: "[Kr] 4d2 5s2" },
-    { z: 41, s: "Nb", n: "Niobium", p: 5, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1", noble: "[Kr] 4d4 5s1", ex: true },    
-    { z: 42, s: "Mo", n: "Molybdenum", p: 5, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1", noble: "[Kr] 4d5 5s1", ex: true },    
-    { z: 43, s: "Tc", n: "Technetium", p: 5, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2", noble: "[Kr] 4d5 5s2" },
-    { z: 44, s: "Ru", n: "Ruthenium", p: 5, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1", noble: "[Kr] 4d7 5s1" },
-    { z: 45, s: "Rh", n: "Rhodium", p: 5, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1", noble: "[Kr] 4d8 5s1", ex: true },    
-    { z: 46, s: "Pd", n: "Palladium", p: 5, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10", noble: "[Kr] 4d10", ex: true },    
-    { z: 47, s: "Ag", n: "Silver", p: 5, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1", noble: "[Kr] 4d10 5s1", ex: true },    
-    { z: 48, s: "Cd", n: "Cadmium", p: 5, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2", noble: "[Kr] 4d10 5s2" },
-    { z: 49, s: "In", n: "Indium", p: 5, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1", noble: "[Kr] 4d10 5s2 5p1" },
-    { z: 50, s: "Sn", n: "Tin", p: 5, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2", noble: "[Kr] 4d10 5s2 5p2" },
-    { z: 51, s: "Sb", n: "Antimony", p: 5, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3", noble: "[Kr] 4d10 5s2 5p3" },
-    { z: 52, s: "Te", n: "Tellurium", p: 5, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4", noble: "[Kr] 4d10 5s2 5p4" },
-    { z: 53, s: "I", n: "Iodine", p: 5, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5", noble: "[Kr] 4d10 5s2 5p5" },
-    { z: 54, s: "Xe", n: "Xenon", p: 5, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6", noble: "[Kr] 4d10 5s2 5p6" },
-    // Period 6
-    { z: 55, s: "Cs", n: "Cesium", p: 6, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1", noble: "[Xe] 6s1" },
-    { z: 56, s: "Ba", n: "Barium", p: 6, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2", noble: "[Xe] 6s2" },
-    { z: 57, s: "La", n: "Lanthanum", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2", noble: "[Xe] 5d1 6s2", ex: true },    
-    { z: 58, s: "Ce", n: "Cerium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2", noble: "[Xe] 4f1 5d1 6s2", ex: true },    
-    { z: 59, s: "Pr", n: "Praseodymium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f3 6s2", noble: "[Xe] 4f3 6s2" },
-    { z: 60, s: "Nd", n: "Neodymium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f4 6s2", noble: "[Xe] 4f4 6s2" },
-    { z: 61, s: "Pm", n: "Promethium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f5 6s2", noble: "[Xe] 4f5 6s2" },
-    { z: 62, s: "Sm", n: "Samarium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f6 6s2", noble: "[Xe] 4f6 6s2" },
-    { z: 63, s: "Eu", n: "Europium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 6s2", noble: "[Xe] 4f7 6s2" },
-    { z: 64, s: "Gd", n: "Gadolinium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2", noble: "[Xe] 4f7 5d1 6s2", ex: true },    
-    { z: 65, s: "Tb", n: "Terbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f9 6s2", noble: "[Xe] 4f9 6s2" },
-    { z: 66, s: "Dy", n: "Dysprosium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f10 6s2", noble: "[Xe] 4f10 6s2" },
-    { z: 67, s: "Ho", n: "Holmium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f11 6s2", noble: "[Xe] 4f11 6s2" },
-    { z: 68, s: "Er", n: "Erbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f12 6s2", noble: "[Xe] 4f12 6s2" },
-    { z: 69, s: "Tm", n: "Thulium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f13 6s2", noble: "[Xe] 4f13 6s2" },
-    { z: 70, s: "Yb", n: "Ytterbium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 6s2", noble: "[Xe] 4f14 6s2" },
-    { z: 71, s: "Lu", n: "Lutetium", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d1 6s2", noble: "[Xe] 4f14 5d1 6s2" },
-    { z: 72, s: "Hf", n: "Hafnium", p: 6, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d2 6s2", noble: "[Xe] 4f14 5d2 6s2" },
-    { z: 73, s: "Ta", n: "Tantalum", p: 6, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d3 6s2", noble: "[Xe] 4f14 5d3 6s2" },
-    { z: 74, s: "W", n: "Tungsten", p: 6, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d4 6s2", noble: "[Xe] 4f14 5d4 6s2" },
-    { z: 75, s: "Re", n: "Rhenium", p: 6, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d5 6s2", noble: "[Xe] 4f14 5d5 6s2" },
-    { z: 76, s: "Os", n: "Osmium", p: 6, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d6 6s2", noble: "[Xe] 4f14 5d6 6s2" },
-    { z: 77, s: "Ir", n: "Iridium", p: 6, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d7 6s2", noble: "[Xe] 4f14 5d7 6s2" },
-    { z: 78, s: "Pt", n: "Platinum", p: 6, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1", noble: "[Xe] 4f14 5d9 6s1", ex: true },    
-    { z: 79, s: "Au", n: "Gold", p: 6, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1", noble: "[Xe] 4f14 5d10 6s1", ex: true },    
-    { z: 80, s: "Hg", n: "Mercury", p: 6, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2", noble: "[Xe] 4f14 5d10 6s2" },
-    { z: 81, s: "Tl", n: "Thallium", p: 6, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p1", noble: "[Xe] 4f14 5d10 6s2 6p1" },
-    { z: 82, s: "Pb", n: "Lead", p: 6, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p2", noble: "[Xe] 4f14 5d10 6s2 6p2" },
-    { z: 83, s: "Bi", n: "Bismuth", p: 6, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p3", noble: "[Xe] 4f14 5d10 6s2 6p3" },
-    { z: 84, s: "Po", n: "Polonium", p: 6, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p4", noble: "[Xe] 4f14 5d10 6s2 6p4" },
-    { z: 85, s: "At", n: "Astatine", p: 6, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p5", noble: "[Xe] 4f14 5d10 6s2 6p5" },
-    { z: 86, s: "Rn", n: "Radon", p: 6, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6", noble: "[Xe] 4f14 5d10 6s2 6p6" },
-    // Period 7
-    { z: 87, s: "Fr", n: "Francium", p: 7, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s1", noble: "[Rn] 7s1" },
-    { z: 88, s: "Ra", n: "Radium", p: 7, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s2", noble: "[Rn] 7s2" },
-    { z: 89, s: "Ac", n: "Actinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d1 7s2", noble: "[Rn] 6d1 7s2", ex: true },
-    { z: 90, s: "Th", n: "Thorium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d2 7s2", noble: "[Rn] 6d2 7s2", ex: true },
-    { z: 91, s: "Pa", n: "Protactinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f2 6d1 7s2", noble: "[Rn] 5f2 6d1 7s2", ex: true },
-    { z: 92, s: "U", n: "Uranium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f3 6d1 7s2", noble: "[Rn] 5f3 6d1 7s2", ex: true },
-    { z: 93, s: "Np", n: "Neptunium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f4 6d1 7s2", noble: "[Rn] 5f4 6d1 7s2", ex: true },
-    { z: 94, s: "Pu", n: "Plutonium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f6 7s2", noble: "[Rn] 5f6 7s2" },
-    { z: 95, s: "Am", n: "Americium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 7s2", noble: "[Rn] 5f7 7s2" },
-    { z: 96, s: "Cm", n: "Curium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 6d1 7s2", noble: "[Rn] 5f7 6d1 7s2", ex: true },    
-    { z: 97, s: "Bk", n: "Berkelium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f9 7s2", noble: "[Rn] 5f9 7s2" },
-    { z: 98, s: "Cf", n: "Californium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f10 7s2", noble: "[Rn] 5f10 7s2" },
-    { z: 99, s: "Es", n: "Einsteinium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f11 7s2", noble: "[Rn] 5f11 7s2" },
-    { z: 100, s: "Fm", n: "Fermium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f12 7s2", noble: "[Rn] 5f12 7s2" },
-    { z: 101, s: "Md", n: "Mendelevium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f13 7s2", noble: "[Rn] 5f13 7s2" },
-    { z: 102, s: "No", n: "Nobelium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2", noble: "[Rn] 5f14 7s2" },
-    { z: 103, s: "Lr", n: "Lawrencium", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2 7p1", noble: "[Rn] 5f14 7s2 7p1" },
-    { z: 104, s: "Rf", n: "Rutherfordium", p: 7, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d2 7s2", noble: "[Rn] 5f14 6d2 7s2" },
-    { z: 105, s: "Db", n: "Dubnium", p: 7, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d3 7s2", noble: "[Rn] 5f14 6d3 7s2" },
-    { z: 106, s: "Sg", n: "Seaborgium", p: 7, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d4 7s2", noble: "[Rn] 5f14 6d4 7s2" },
-    { z: 107, s: "Bh", n: "Bohrium", p: 7, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d5 7s2", noble: "[Rn] 5f14 6d5 7s2" },
-    { z: 108, s: "Hs", n: "Hassium", p: 7, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d6 7s2", noble: "[Rn] 5f14 6d6 7s2" },
-    { z: 109, s: "Mt", n: "Meitnerium", p: 7, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d7 7s2", noble: "[Rn] 5f14 6d7 7s2" },
-    { z: 110, s: "Ds", n: "Darmstadtium", p: 7, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d8 7s2", noble: "[Rn] 5f14 6d8 7s2" },
-    { z: 111, s: "Rg", n: "Roentgenium", p: 7, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d9 7s2", noble: "[Rn] 5f14 6d9 7s2" },
-    { z: 112, s: "Cn", n: "Copernicium", p: 7, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2", noble: "[Rn] 5f14 6d10 7s2" },
-    { z: 113, s: "Nh", n: "Nihonium", p: 7, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p1", noble: "[Rn] 5f14 6d10 7s2 7p1" },
-    { z: 114, s: "Fl", n: "Flerovium", p: 7, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p2", noble: "[Rn] 5f14 6d10 7s2 7p2" },
-    { z: 115, s: "Mc", n: "Moscovium", p: 7, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p3", noble: "[Rn] 5f14 6d10 7s2 7p3" },
-    { z: 116, s: "Lv", n: "Livermorium", p: 7, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p4", noble: "[Rn] 5f14 6d10 7s2 7p4" },
-    { z: 117, s: "Ts", n: "Tennessine", p: 7, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p5", noble: "[Rn] 5f14 6d10 7s2 7p5" },
-    { z: 118, s: "Og", n: "Oganesson", p: 7, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6", noble: "[Rn] 5f14 6d10 7s2 7p6" }
+    // --- Period 1 ---
+    { z: 1, s: "H", n: "Hydrogen", cn: "氫", p: 1, g: "1A", iupac: 1, c: "1s1", noble: "1s1", type: "非金屬", state: "氣體", mp: "-259.1", bp: "-252.9" },
+    { z: 2, s: "He", n: "Helium", cn: "氦", p: 1, g: "8A", iupac: 18, c: "1s2", noble: "1s2", type: "鈍氣", state: "氣體", mp: "-272.2", bp: "-268.9" },
+
+    // --- Period 2 ---
+    { z: 3, s: "Li", n: "Lithium", cn: "鋰", p: 2, g: "1A", iupac: 1, c: "1s2 2s1", noble: "[He] 2s1", type: "鹼金屬", state: "固體", mp: "180.5", bp: "1342" },
+    { z: 4, s: "Be", n: "Beryllium", cn: "鈹", p: 2, g: "2A", iupac: 2, c: "1s2 2s2", noble: "[He] 2s2", type: "鹼土金屬", state: "固體", mp: "1287", bp: "2470" },
+    { z: 5, s: "B", n: "Boron", cn: "硼", p: 2, g: "3A", iupac: 13, c: "1s2 2s2 2p1", noble: "[He] 2s2 2p1", type: "類金屬", state: "固體", mp: "2076", bp: "3927" },
+    { z: 6, s: "C", n: "Carbon", cn: "碳", p: 2, g: "4A", iupac: 14, c: "1s2 2s2 2p2", noble: "[He] 2s2 2p2", type: "非金屬", state: "固體", mp: "3550", bp: "4027" },
+    { z: 7, s: "N", n: "Nitrogen", cn: "氮", p: 2, g: "5A", iupac: 15, c: "1s2 2s2 2p3", noble: "[He] 2s2 2p3", type: "非金屬", state: "氣體", mp: "-210.0", bp: "-195.8" },
+    { z: 8, s: "O", n: "Oxygen", cn: "氧", p: 2, g: "6A", iupac: 16, c: "1s2 2s2 2p4", noble: "[He] 2s2 2p4", type: "非金屬", state: "氣體", mp: "-218.8", bp: "-183.0" },
+    { z: 9, s: "F", n: "Fluorine", cn: "氟", p: 2, g: "7A", iupac: 17, c: "1s2 2s2 2p5", noble: "[He] 2s2 2p5", type: "鹵素", state: "氣體", mp: "-219.6", bp: "-188.1" },
+    { z: 10, s: "Ne", n: "Neon", cn: "氖", p: 2, g: "8A", iupac: 18, c: "1s2 2s2 2p6", noble: "[He] 2s2 2p6", type: "鈍氣", state: "氣體", mp: "-248.6", bp: "-246.1" },
+
+    // --- Period 3 ---
+    { z: 11, s: "Na", n: "Sodium", cn: "鈉", p: 3, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s1", noble: "[Ne] 3s1", type: "鹼金屬", state: "固體", mp: "97.8", bp: "883" },
+    { z: 12, s: "Mg", n: "Magnesium", cn: "鎂", p: 3, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2", noble: "[Ne] 3s2", type: "鹼土金屬", state: "固體", mp: "650", bp: "1090" },
+    { z: 13, s: "Al", n: "Aluminium", cn: "鋁", p: 3, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p1", noble: "[Ne] 3s2 3p1", type: "貧金屬", state: "固體", mp: "660.3", bp: "2470" },
+    { z: 14, s: "Si", n: "Silicon", cn: "矽", p: 3, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p2", noble: "[Ne] 3s2 3p2", type: "類金屬", state: "固體", mp: "1414", bp: "3265" },
+    { z: 15, s: "P", n: "Phosphorus", cn: "磷", p: 3, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p3", noble: "[Ne] 3s2 3p3", type: "非金屬", state: "固體", mp: "44.1", bp: "280.5" },
+    { z: 16, s: "S", n: "Sulfur", cn: "硫", p: 3, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p4", noble: "[Ne] 3s2 3p4", type: "非金屬", state: "固體", mp: "115.2", bp: "444.6" },
+    { z: 17, s: "Cl", n: "Chlorine", cn: "氯", p: 3, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p5", noble: "[Ne] 3s2 3p5", type: "鹵素", state: "氣體", mp: "-101.5", bp: "-34.0" },
+    { z: 18, s: "Ar", n: "Argon", cn: "氬", p: 3, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6", noble: "[Ne] 3s2 3p6", type: "鈍氣", state: "氣體", mp: "-189.3", bp: "-185.8" },
+
+    // --- Period 4 ---
+    { z: 19, s: "K", n: "Potassium", cn: "鉀", p: 4, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 4s1", noble: "[Ar] 4s1", type: "鹼金屬", state: "固體", mp: "63.5", bp: "759" },
+    { z: 20, s: "Ca", n: "Calcium", cn: "鈣", p: 4, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 4s2", noble: "[Ar] 4s2", type: "鹼土金屬", state: "固體", mp: "842", bp: "1484" },
+    { z: 21, s: "Sc", n: "Scandium", cn: "鈧", p: 4, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d1 4s2", noble: "[Ar] 3d1 4s2", type: "過渡金屬", state: "固體", mp: "1541", bp: "2836" },
+    { z: 22, s: "Ti", n: "Titanium", cn: "鈦", p: 4, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d2 4s2", noble: "[Ar] 3d2 4s2", type: "過渡金屬", state: "固體", mp: "1668", bp: "3287" },
+    { z: 23, s: "V", n: "Vanadium", cn: "釩", p: 4, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d3 4s2", noble: "[Ar] 3d3 4s2", type: "過渡金屬", state: "固體", mp: "1910", bp: "3407" },
+    { z: 24, s: "Cr", n: "Chromium", cn: "鉻", p: 4, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s1", noble: "[Ar] 3d5 4s1", ex: true, type: "過渡金屬", state: "固體", mp: "1907", bp: "2671" },
+    { z: 25, s: "Mn", n: "Manganese", cn: "錳", p: 4, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d5 4s2", noble: "[Ar] 3d5 4s2", type: "過渡金屬", state: "固體", mp: "1246", bp: "2061" },
+    { z: 26, s: "Fe", n: "Iron", cn: "鐵", p: 4, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d6 4s2", noble: "[Ar] 3d6 4s2", type: "過渡金屬", state: "固體", mp: "1538", bp: "2862" },
+    { z: 27, s: "Co", n: "Cobalt", cn: "鈷", p: 4, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d7 4s2", noble: "[Ar] 3d7 4s2", type: "過渡金屬", state: "固體", mp: "1495", bp: "2927" },
+    { z: 28, s: "Ni", n: "Nickel", cn: "鎳", p: 4, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d8 4s2", noble: "[Ar] 3d8 4s2", type: "過渡金屬", state: "固體", mp: "1455", bp: "2730" },
+    { z: 29, s: "Cu", n: "Copper", cn: "銅", p: 4, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s1", noble: "[Ar] 3d10 4s1", ex: true, type: "過渡金屬", state: "固體", mp: "1084", bp: "2562" },
+    { z: 30, s: "Zn", n: "Zinc", cn: "鋅", p: 4, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2", noble: "[Ar] 3d10 4s2", type: "過渡金屬", state: "固體", mp: "419.5", bp: "907" },
+    { z: 31, s: "Ga", n: "Gallium", cn: "鎵", p: 4, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1", noble: "[Ar] 3d10 4s2 4p1", type: "貧金屬", state: "固體", mp: "29.8", bp: "2204" },
+    { z: 32, s: "Ge", n: "Germanium", cn: "鍺", p: 4, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2", noble: "[Ar] 3d10 4s2 4p2", type: "類金屬", state: "固體", mp: "938.3", bp: "2833" },
+    { z: 33, s: "As", n: "Arsenic", cn: "砷", p: 4, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3", noble: "[Ar] 3d10 4s2 4p3", type: "類金屬", state: "固體", mp: "817(昇華)", bp: "-" },
+    { z: 34, s: "Se", n: "Selenium", cn: "硒", p: 4, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4", noble: "[Ar] 3d10 4s2 4p4", type: "非金屬", state: "固體", mp: "221", bp: "685" },
+    { z: 35, s: "Br", n: "Bromine", cn: "溴", p: 4, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5", noble: "[Ar] 3d10 4s2 4p5", type: "鹵素", state: "液體", mp: "-7.2", bp: "58.8" },
+    { z: 36, s: "Kr", n: "Krypton", cn: "氪", p: 4, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6", noble: "[Ar] 3d10 4s2 4p6", type: "鈍氣", state: "氣體", mp: "-157.4", bp: "-153.2" },
+
+    // --- Period 5 ---
+    { z: 37, s: "Rb", n: "Rubidium", cn: "銣", p: 5, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1", noble: "[Kr] 5s1", type: "鹼金屬", state: "固體", mp: "39.3", bp: "688" },
+    { z: 38, s: "Sr", n: "Strontium", cn: "鍶", p: 5, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2", noble: "[Kr] 5s2", type: "鹼土金屬", state: "固體", mp: "777", bp: "1382" },
+    { z: 39, s: "Y", n: "Yttrium", cn: "釔", p: 5, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2", noble: "[Kr] 4d1 5s2", type: "過渡金屬", state: "固體", mp: "1522", bp: "3345" },
+    { z: 40, s: "Zr", n: "Zirconium", cn: "鋯", p: 5, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2", noble: "[Kr] 4d2 5s2", type: "過渡金屬", state: "固體", mp: "1855", bp: "4409" },
+    { z: 41, s: "Nb", n: "Niobium", cn: "鈮", p: 5, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1", noble: "[Kr] 4d4 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2477", bp: "4744" },
+    { z: 42, s: "Mo", n: "Molybdenum", cn: "鉬", p: 5, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1", noble: "[Kr] 4d5 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2623", bp: "4639" },
+    { z: 43, s: "Tc", n: "Technetium", cn: "鎝", p: 5, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2", noble: "[Kr] 4d5 5s2", type: "過渡金屬", state: "固體", mp: "2157", bp: "4265" },
+    { z: 44, s: "Ru", n: "Ruthenium", cn: "釕", p: 5, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1", noble: "[Kr] 4d7 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "2334", bp: "4150" },
+    { z: 45, s: "Rh", n: "Rhodium", cn: "銠", p: 5, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1", noble: "[Kr] 4d8 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "1964", bp: "3695" },
+    { z: 46, s: "Pd", n: "Palladium", cn: "鈀", p: 5, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10", noble: "[Kr] 4d10", ex: true, type: "過渡金屬", state: "固體", mp: "1555", bp: "2963" },
+    { z: 47, s: "Ag", n: "Silver", cn: "銀", p: 5, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1", noble: "[Kr] 4d10 5s1", ex: true, type: "過渡金屬", state: "固體", mp: "961.8", bp: "2162" },
+    { z: 48, s: "Cd", n: "Cadmium", cn: "鎘", p: 5, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2", noble: "[Kr] 4d10 5s2", type: "過渡金屬", state: "固體", mp: "321.1", bp: "767" },
+    { z: 49, s: "In", n: "Indium", cn: "銦", p: 5, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1", noble: "[Kr] 4d10 5s2 5p1", type: "貧金屬", state: "固體", mp: "156.6", bp: "2072" },
+    { z: 50, s: "Sn", n: "Tin", cn: "錫", p: 5, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2", noble: "[Kr] 4d10 5s2 5p2", type: "貧金屬", state: "固體", mp: "231.9", bp: "2602" },
+    { z: 51, s: "Sb", n: "Antimony", cn: "銻", p: 5, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3", noble: "[Kr] 4d10 5s2 5p3", type: "類金屬", state: "固體", mp: "630.6", bp: "1587" },
+    { z: 52, s: "Te", n: "Tellurium", cn: "碲", p: 5, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4", noble: "[Kr] 4d10 5s2 5p4", type: "類金屬", state: "固體", mp: "449.5", bp: "988" },
+    { z: 53, s: "I", n: "Iodine", cn: "碘", p: 5, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5", noble: "[Kr] 4d10 5s2 5p5", type: "鹵素", state: "固體", mp: "113.7", bp: "184.3" },
+    { z: 54, s: "Xe", n: "Xenon", cn: "氙", p: 5, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6", noble: "[Kr] 4d10 5s2 5p6", type: "鈍氣", state: "氣體", mp: "-111.8", bp: "-108.1" },
+
+    // --- Period 6 ---
+    { z: 55, s: "Cs", n: "Cesium", cn: "銫", p: 6, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1", noble: "[Xe] 6s1", type: "鹼金屬", state: "固體", mp: "28.4", bp: "671" },
+    { z: 56, s: "Ba", n: "Barium", cn: "鋇", p: 6, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2", noble: "[Xe] 6s2", type: "鹼土金屬", state: "固體", mp: "727", bp: "1897" },
+    { z: 57, s: "La", n: "Lanthanum", cn: "鑭", p: 6, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2", noble: "[Xe] 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "920", bp: "3464" },
+    { z: 58, s: "Ce", n: "Cerium", cn: "鈰", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2", noble: "[Xe] 4f1 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "795", bp: "3443" },
+    { z: 59, s: "Pr", n: "Praseodymium", cn: "鐠", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f3 6s2", noble: "[Xe] 4f3 6s2", type: "鑭系", state: "固體", mp: "935", bp: "3520" },
+    { z: 60, s: "Nd", n: "Neodymium", cn: "釹", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f4 6s2", noble: "[Xe] 4f4 6s2", type: "鑭系", state: "固體", mp: "1024", bp: "3074" },
+    { z: 61, s: "Pm", n: "Promethium", cn: "鉕", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f5 6s2", noble: "[Xe] 4f5 6s2", type: "鑭系", state: "固體", mp: "1042", bp: "3000" },
+    { z: 62, s: "Sm", n: "Samarium", cn: "釤", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f6 6s2", noble: "[Xe] 4f6 6s2", type: "鑭系", state: "固體", mp: "1072", bp: "1794" },
+    { z: 63, s: "Eu", n: "Europium", cn: "銪", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 6s2", noble: "[Xe] 4f7 6s2", type: "鑭系", state: "固體", mp: "822", bp: "1527" },
+    { z: 64, s: "Gd", n: "Gadolinium", cn: "釓", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2", noble: "[Xe] 4f7 5d1 6s2", ex: true, type: "鑭系", state: "固體", mp: "1312", bp: "3273" },
+    { z: 65, s: "Tb", n: "Terbium", cn: "鋱", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f9 6s2", noble: "[Xe] 4f9 6s2", type: "鑭系", state: "固體", mp: "1356", bp: "3230" },
+    { z: 66, s: "Dy", n: "Dysprosium", cn: "鏑", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f10 6s2", noble: "[Xe] 4f10 6s2", type: "鑭系", state: "固體", mp: "1407", bp: "2567" },
+    { z: 67, s: "Ho", n: "Holmium", cn: "鈥", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f11 6s2", noble: "[Xe] 4f11 6s2", type: "鑭系", state: "固體", mp: "1461", bp: "2720" },
+    { z: 68, s: "Er", n: "Erbium", cn: "鉺", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f12 6s2", noble: "[Xe] 4f12 6s2", type: "鑭系", state: "固體", mp: "1529", bp: "2868" },
+    { z: 69, s: "Tm", n: "Thulium", cn: "銩", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f13 6s2", noble: "[Xe] 4f13 6s2", type: "鑭系", state: "固體", mp: "1545", bp: "1950" },
+    { z: 70, s: "Yb", n: "Ytterbium", cn: "鐿", p: 6, g: "鑭系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 6s2", noble: "[Xe] 4f14 6s2", type: "鑭系", state: "固體", mp: "824", bp: "1196" },
+    { z: 71, s: "Lu", n: "Lutetium", cn: "鎦", p: 6, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d1 6s2", noble: "[Xe] 4f14 5d1 6s2", type: "鑭系", state: "固體", mp: "1663", bp: "3402" },
+    { z: 72, s: "Hf", n: "Hafnium", cn: "鉿", p: 6, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d2 6s2", noble: "[Xe] 4f14 5d2 6s2", type: "過渡金屬", state: "固體", mp: "2233", bp: "4603" },
+    { z: 73, s: "Ta", n: "Tantalum", cn: "鉭", p: 6, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d3 6s2", noble: "[Xe] 4f14 5d3 6s2", type: "過渡金屬", state: "固體", mp: "3017", bp: "5458" },
+    { z: 74, s: "W", n: "Tungsten", cn: "鎢", p: 6, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d4 6s2", noble: "[Xe] 4f14 5d4 6s2", type: "過渡金屬", state: "固體", mp: "3422", bp: "5555" },
+    { z: 75, s: "Re", n: "Rhenium", cn: "錸", p: 6, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d5 6s2", noble: "[Xe] 4f14 5d5 6s2", type: "過渡金屬", state: "固體", mp: "3186", bp: "5596" },
+    { z: 76, s: "Os", n: "Osmium", cn: "鋨", p: 6, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d6 6s2", noble: "[Xe] 4f14 5d6 6s2", type: "過渡金屬", state: "固體", mp: "3033", bp: "5012" },
+    { z: 77, s: "Ir", n: "Iridium", cn: "銥", p: 6, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d7 6s2", noble: "[Xe] 4f14 5d7 6s2", type: "過渡金屬", state: "固體", mp: "2466", bp: "4428" },
+    { z: 78, s: "Pt", n: "Platinum", cn: "鉑", p: 6, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1", noble: "[Xe] 4f14 5d9 6s1", ex: true, type: "過渡金屬", state: "固體", mp: "1768", bp: "3825" },
+    { z: 79, s: "Au", n: "Gold", cn: "金", p: 6, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1", noble: "[Xe] 4f14 5d10 6s1", ex: true, type: "過渡金屬", state: "固體", mp: "1064", bp: "2970" },
+    { z: 80, s: "Hg", n: "Mercury", cn: "汞", p: 6, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2", noble: "[Xe] 4f14 5d10 6s2", type: "過渡金屬", state: "液體", mp: "-38.8", bp: "356.7" },
+    { z: 81, s: "Tl", n: "Thallium", cn: "鉈", p: 6, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p1", noble: "[Xe] 4f14 5d10 6s2 6p1", type: "貧金屬", state: "固體", mp: "304", bp: "1473" },
+    { z: 82, s: "Pb", n: "Lead", cn: "鉛", p: 6, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p2", noble: "[Xe] 4f14 5d10 6s2 6p2", type: "貧金屬", state: "固體", mp: "327.5", bp: "1749" },
+    { z: 83, s: "Bi", n: "Bismuth", cn: "鉍", p: 6, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p3", noble: "[Xe] 4f14 5d10 6s2 6p3", type: "貧金屬", state: "固體", mp: "271.5", bp: "1564" },
+    { z: 84, s: "Po", n: "Polonium", cn: "釙", p: 6, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p4", noble: "[Xe] 4f14 5d10 6s2 6p4", type: "貧金屬", state: "固體", mp: "254", bp: "962" },
+    { z: 85, s: "At", n: "Astatine", cn: "砈", p: 6, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p5", noble: "[Xe] 4f14 5d10 6s2 6p5", type: "類金屬", state: "固體", mp: "302", bp: "337" },
+    { z: 86, s: "Rn", n: "Radon", cn: "氡", p: 6, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6", noble: "[Xe] 4f14 5d10 6s2 6p6", type: "鈍氣", state: "氣體", mp: "-71", bp: "-61.7" },
+
+    // --- Period 7 ---
+    { z: 87, s: "Fr", n: "Francium", cn: "鍅", p: 7, g: "1A", iupac: 1, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s1", noble: "[Rn] 7s1", type: "鹼金屬", state: "固體", mp: "27", bp: "677" },
+    { z: 88, s: "Ra", n: "Radium", cn: "鐳", p: 7, g: "2A", iupac: 2, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 7s2", noble: "[Rn] 7s2", type: "鹼土金屬", state: "固體", mp: "700", bp: "1737" },
+    { z: 89, s: "Ac", n: "Actinium", cn: "錒", p: 7, g: "3B", iupac: 3, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d1 7s2", noble: "[Rn] 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1050", bp: "3198" },
+    { z: 90, s: "Th", n: "Thorium", cn: "釷", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d2 7s2", noble: "[Rn] 6d2 7s2", ex: true, type: "錒系", state: "固體", mp: "1750", bp: "4788" },
+    { z: 91, s: "Pa", n: "Protactinium", cn: " protactinium (鏷)", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f2 6d1 7s2", noble: "[Rn] 5f2 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1568", bp: "4027" },
+    { z: 92, s: "U", n: "Uranium", cn: "鈾", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f3 6d1 7s2", noble: "[Rn] 5f3 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1132", bp: "4131" },
+    { z: 93, s: "Np", n: "Neptunium", cn: "錼", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f4 6d1 7s2", noble: "[Rn] 5f4 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "644", bp: "4000" },
+    { z: 94, s: "Pu", n: "Plutonium", cn: "鈽", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f6 7s2", noble: "[Rn] 5f6 7s2", type: "錒系", state: "固體", mp: "640", bp: "3228" },
+    { z: 95, s: "Am", n: "Americium", cn: "鋂", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 7s2", noble: "[Rn] 5f7 7s2", type: "錒系", state: "固體", mp: "1176", bp: "2607" },
+    { z: 96, s: "Cm", n: "Curium", cn: "鋦", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 6d1 7s2", noble: "[Rn] 5f7 6d1 7s2", ex: true, type: "錒系", state: "固體", mp: "1340", bp: "-" },
+    { z: 97, s: "Bk", n: "Berkelium", cn: "鉳", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f9 7s2", noble: "[Rn] 5f9 7s2", type: "錒系", state: "固體", mp: "986", bp: "-" },
+    { z: 98, s: "Cf", n: "Californium", cn: "鉲", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f10 7s2", noble: "[Rn] 5f10 7s2", type: "錒系", state: "固體", mp: "900", bp: "-" },
+    { z: 99, s: "Es", n: "Einsteinium", cn: "鑀", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f11 7s2", noble: "[Rn] 5f11 7s2", type: "錒系", state: "固體", mp: "860", bp: "-" },
+    { z: 100, s: "Fm", n: "Fermium", cn: "鐨", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f12 7s2", noble: "[Rn] 5f12 7s2", type: "錒系", state: "固體", mp: "1527", bp: "-" },
+    { z: 101, s: "Md", n: "Mendelevium", cn: "鍆", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f13 7s2", noble: "[Rn] 5f13 7s2", type: "錒系", state: "固體", mp: "827", bp: "-" },
+    { z: 102, s: "No", n: "Nobelium", cn: "鍩", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2", noble: "[Rn] 5f14 7s2", type: "錒系", state: "固體", mp: "827", bp: "-" },
+    { z: 103, s: "Lr", n: "Lawrencium", cn: "鐒", p: 7, g: "錒系", iupac: "-", c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 7s2 7p1", noble: "[Rn] 5f14 7s2 7p1", type: "錒系", state: "固體", mp: "1627", bp: "-" },
+    { z: 104, s: "Rf", n: "Rutherfordium", cn: "鑪", p: 7, g: "4B", iupac: 4, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d2 7s2", noble: "[Rn] 5f14 6d2 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 105, s: "Db", n: "Dubnium", cn: "𨧀", p: 7, g: "5B", iupac: 5, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d3 7s2", noble: "[Rn] 5f14 6d3 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 106, s: "Sg", n: "Seaborgium", cn: "𨭎", p: 7, g: "6B", iupac: 6, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d4 7s2", noble: "[Rn] 5f14 6d4 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 107, s: "Bh", n: "Bohrium", cn: "𨨏", p: 7, g: "7B", iupac: 7, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d5 7s2", noble: "[Rn] 5f14 6d5 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 108, s: "Hs", n: "Hassium", cn: "𨭆", p: 7, g: "8B", iupac: 8, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d6 7s2", noble: "[Rn] 5f14 6d6 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 109, s: "Mt", n: "Meitnerium", cn: "䥑", p: 7, g: "8B", iupac: 9, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d7 7s2", noble: "[Rn] 5f14 6d7 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 110, s: "Ds", n: "Darmstadtium", cn: "鐽", p: 7, g: "8B", iupac: 10, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d8 7s2", noble: "[Rn] 5f14 6d8 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 111, s: "Rg", n: "Roentgenium", cn: "錀", p: 7, g: "1B", iupac: 11, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d9 7s2", noble: "[Rn] 5f14 6d9 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 112, s: "Cn", n: "Copernicium", cn: "鎶", p: 7, g: "2B", iupac: 12, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2", noble: "[Rn] 5f14 6d10 7s2", type: "過渡金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 113, s: "Nh", n: "Nihonium", cn: "鉨", p: 7, g: "3A", iupac: 13, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p1", noble: "[Rn] 5f14 6d10 7s2 7p1", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 114, s: "Fl", n: "Flerovium", cn: "鈇", p: 7, g: "4A", iupac: 14, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p2", noble: "[Rn] 5f14 6d10 7s2 7p2", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 115, s: "Mc", n: "Moscovium", cn: "鏌", p: 7, g: "5A", iupac: 15, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p3", noble: "[Rn] 5f14 6d10 7s2 7p3", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 116, s: "Lv", n: "Livermorium", cn: "鉝", p: 7, g: "6A", iupac: 16, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p4", noble: "[Rn] 5f14 6d10 7s2 7p4", type: "貧金屬", state: "未知", mp: "-", bp: "-" },
+    { z: 117, s: "Ts", n: "Tennessine", cn: "鿬", p: 7, g: "7A", iupac: 17, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p5", noble: "[Rn] 5f14 6d10 7s2 7p5", type: "鹵素", state: "未知", mp: "-", bp: "-" },
+    { z: 118, s: "Og", n: "Oganesson", cn: "鿫", p: 7, g: "8A", iupac: 18, c: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f14 6d10 7s2 7p6", noble: "[Rn] 5f14 6d10 7s2 7p6", type: "鈍氣", state: "未知", mp: "-", bp: "-" }
 ];
 
 function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
@@ -2831,7 +2841,6 @@ function renderConfigList() {
 
         card.innerHTML = `
             <div class="ec-header">
-                <!-- 第一層：符號與詳細資訊 -->
                 <div class="ec-top-row">
                     <div class="ec-sym-box">
                         <div class="ec-sym">${el.s}</div>
@@ -2842,8 +2851,6 @@ function renderConfigList() {
                                 <span class="ec-z-tag">Z=${el.z}</span>
                             </div>
                             <span class="ec-tag">${periodGroupStr} ${exTag}</span>
-                            
-                            <!-- 物理性質小方塊 -->
                             <div class="ec-props-grid">
                                 <div class="ec-prop"><span>分類:</span> ${typeInfo}</div>
                                 <div class="ec-prop"><span>狀態:</span> ${stateInfo}</div>
@@ -2854,8 +2861,8 @@ function renderConfigList() {
                     </div>
                     
                     <!-- 切換按鈕放右上角 -->
-                    <button onclick="toggleConfigMode('${el.s}', '${el.c}')" style="font-size:0.75rem; background:rgba(255,255,255,0.1); border:1px solid #555; color:#aaa; border-radius:4px; padding:4px 8px; cursor:pointer; align-self:flex-start; margin-left: auto;" id="${cardId}-mode-btn">
-                        縮寫
+                    <button class="config-mode-btn" onclick="toggleConfigMode('${el.s}', '${el.c}')" id="${cardId}-mode-btn">
+                        模式: 縮寫
                     </button>
                 </div>
                 
@@ -2934,18 +2941,18 @@ function toggleConfigMode(symbol, baseConfig) {
     const chargeInput = document.getElementById(`card-${symbol}-charge`);
     
     if (modeInput && btn && chargeInput) {
-        // 切換狀態
         if (modeInput.value === 'noble') {
             modeInput.value = 'full';
-            btn.textContent = "切換顯示: 完整";
+            btn.textContent = "模式: 完整"; // 文字長度與 "模式: 縮寫" 一樣
             btn.style.color = "#fff";
+            btn.style.borderColor = "#22d3ee";
         } else {
             modeInput.value = 'noble';
-            btn.textContent = "切換顯示: 縮寫";
+            btn.textContent = "模式: 縮寫";
             btn.style.color = "#aaa";
+            btn.style.borderColor = "#555";
         }
         
-        // 讀取當前電荷，重新刷新顯示
         const currentCharge = parseInt(chargeInput.value);
         updateIonViz(symbol, baseConfig, currentCharge);
     }
