@@ -371,12 +371,26 @@
 .ec-en-name { font-size: 1.6rem; font-weight: 500; color: #94a3b8; font-family: 'Segoe UI', sans-serif; }
 .ec-z-badge { background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem; font-weight: bold; font-family: monospace; transform: translateY(-3px); }
 
-/* 週期族資訊 */
-.ec-pos-info { color: #a78bfa; font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+/* [修正] 週期與族的徽章樣式 */
+.ec-pos-badge {
+    display: inline-block;
+    background: rgba(46, 35, 99, 0.6); /* 深紫色背景 */
+    border: 1px solid #6366f1;          /* 紫色邊框 */
+    color: #c7d2fe;                     /* 淺紫色文字 */
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Segoe UI', sans-serif;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.ec-pos-info { margin: 0; padding: 0; }
 
-/* 數據標籤 grid (分類, 狀態, 熔點, 沸點) */
+/* 數據標籤 grid */
 .ec-tags-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
 .ec-tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
 .ec-tag-box { 
     background: rgba(15, 23, 42, 0.6); 
     border: 1px solid rgba(255,255,255,0.15); 
@@ -385,53 +399,72 @@
     font-size: 0.85rem; 
     color: #cbd5e1;
     display: flex; gap: 6px;
-    white-space: nowrap; /* 避免文字斷行 */
+    white-space: nowrap;
 }
 .ec-tag-label { color: #64748b; font-weight: bold; }
 
-/* 按鈕區 */
-.ec-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-.ec-ion-btns { display: flex; gap: 5px; flex-wrap: wrap; }
-.ion-btn {
-    border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #aaa;
-    border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: monospace; font-size: 0.9rem; transition: all 0.2s;
+/* 按鈕區與手機版優化 */
+.ec-controls { 
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 12px; 
+    flex-wrap: wrap; 
+    gap: 8px; 
 }
-.ion-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.ion-btn.active { background: #22d3ee; color: #000; border-color: #22d3ee; font-weight: bold; }
+.ec-ion-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* 離子按鈕 (參考附圖：深色底+彩色框) */
+.ion-btn {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #475569;
+    border-radius: 6px; 
+    padding: 4px 0;
+    width: 36px;
+    text-align: center;
+    cursor: pointer; 
+    font-family: 'Segoe UI Mono', monospace; 
+    font-size: 0.9rem; 
+    transition: all 0.2s;
+    color: #94a3b8;
+    font-weight: 500;
+}
+.ion-btn:hover { background: rgba(255,255,255,0.1); }
+.ion-btn.active { 
+    background: #e2e8f0; 
+    color: #0f172a; 
+    border-color: #e2e8f0; 
+    font-weight: bold; 
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+/* 電荷顏色 Class */
+.ion-btn-neutral { border-color: #94a3b8; color: #e2e8f0; }
+.ion-btn-pos { border-color: #f87171; color: #f87171; }
+.ion-btn-neg { border-color: #60a5fa; color: #60a5fa; }
 
 .mode-btn { 
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); 
-    color: #94a3b8; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    background: rgba(255,255,255,0.05); 
+    border: 1px solid rgba(255,255,255,0.2); 
+    color: #94a3b8; padding: 4px 10px; border-radius: 6px; 
+    cursor: pointer; font-size: 0.8rem; white-space: nowrap;
 }
-.mode-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* 電子組態黑盒 (解決溢出與橫向顯示問題) */
+/* 電子組態黑盒 */
 .ec-config-box { 
-    background: #020617; 
-    border: 1px solid #1e293b; 
-    border-radius: 8px; 
-    padding: 15px; 
-    margin-bottom: 15px;
-    width: 100%;
-    overflow-x: auto; /* 允許橫向捲動 */
-    white-space: nowrap; /* 強制不換行 */
+    background: #020617; border: 1px solid #1e293b; border-radius: 8px; 
+    padding: 15px; margin-bottom: 15px; width: 100%;
+    overflow-x: auto; white-space: nowrap;
 }
 .ec-config-text { 
-    font-family: 'Consolas', 'Monaco', monospace; 
-    font-size: 1.4rem; 
-    letter-spacing: 1px;
-    color: #fff; 
-    display: inline-block; /* 關鍵：讓 padding-right 生效 */
-    padding-right: 20px;   /* 關鍵：右側留出空間 */
+    font-family: 'Consolas', 'Monaco', monospace; font-size: 1.4rem; letter-spacing: 1px; color: #fff; 
+    display: inline-block; padding-right: 20px;
 }
 .noble { color: #22d3ee; font-weight: bold; margin-right: 8px; }
 
-/* 捲軸美化 */
 .ec-config-box::-webkit-scrollbar { height: 6px; }
 .ec-config-box::-webkit-scrollbar-track { background: #0f172a; }
 .ec-config-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 
-/* 軌域圖 */
 .ec-viz-scroll { width: 100%; overflow-x: auto; padding-bottom: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
 .ec-row { display: flex; gap: 10px; width: max-content; }
 .ec-sub { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
@@ -439,15 +472,36 @@
 .ec-box { width: 28px; height: 28px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; color: #facc15; font-size: 1rem; font-weight: bold; }
 .ec-label { font-size: 0.75rem; color: #64748b; margin-top: 2px; font-family: monospace; }
 
-/* 手機版調整 */
+/* 手機版樣式修正 (強制橫向排列) */
 @media (max-width: 600px) {
     .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; }
-    .ec-header-area { flex-direction: column; gap: 10px; align-items: center; text-align: center; }
-    .ec-info-col { align-items: center; width: 100%; }
-    .ec-names { justify-content: center; }
-    .ec-tags-grid { justify-content: center; }
-    .ec-config-text { font-size: 1.1rem; }
-    .ec-controls { justify-content: center; }
+    
+    /* 強制 Header 橫向排列 */
+    .ec-header-area { 
+        flex-direction: row !important; 
+        align-items: flex-start; text-align: left; gap: 12px; 
+        position: relative; padding-right: 0;
+    }
+    /* 縮小左側元素符號 */
+    .ec-sym-big { 
+        font-size: 2.8rem; width: 50px; text-align: left; margin-top: -5px; 
+    }
+    /* 調整右側資訊欄 */
+    .ec-info-col { align-items: flex-start; width: auto; flex: 1; }
+    
+    .ec-names { justify-content: flex-start; gap: 6px; }
+    .ec-cn-name { font-size: 1.3rem; }
+    .ec-en-name { font-size: 1rem; }
+    .ec-pos-badge { font-size: 0.8rem; padding: 2px 8px; margin-bottom: 4px; }
+    
+    .ec-tags-grid { margin-top: 4px; gap: 4px; }
+    .ec-tag-box { font-size: 0.75rem; padding: 2px 6px; }
+
+    /* 模式按鈕移到右上角 */
+    .mode-btn { position: absolute; top: 0; right: 0; font-size: 0.7rem; padding: 4px 8px; }
+
+    .ec-config-text { font-size: 1.1rem; padding-right: 10px; }
+    .ec-controls { justify-content: flex-start; }
 }
 
 </style>
@@ -2801,6 +2855,63 @@ function calculateIonConfig(baseConfigStr, charge) {
         .join(' ');
 }
 
+// [新增] 計算週期與族，並回傳樣式化的 HTML (Badge 風格)
+function getPeriodGroupHTML(z, cat) {
+    // 1. 計算週期
+    const periods = [2, 10, 18, 36, 54, 86, 118];
+    let p = 1;
+    for (let limit of periods) { if (z > limit) p++; }
+    
+    // 2. 處理鑭系與錒系
+    if (cat === "鑭系" || (z >= 57 && z <= 71)) {
+        return `<span class="ec-pos-badge">第${toChineseNum(6)}週期 <span style="color:#f472b6;">鑭系</span></span>`;
+    }
+    if (cat === "錒系" || (z >= 89 && z <= 103)) {
+        return `<span class="ec-pos-badge">第${toChineseNum(7)}週期 <span style="color:#f472b6;">錒系</span></span>`;
+    }
+
+    // 3. 計算族 (Group) - 簡易對照表
+    let gName = ""; 
+    let iupac = "";
+    
+    if (z === 1) iupac = 1; // H
+    else if (z === 2) iupac = 18; // He
+    else {
+        const groupMap = {
+            1:['1A',1], 2:['2A',2], 3:['3B',3], 4:['4B',4], 5:['5B',5], 
+            6:['6B',6], 7:['7B',7], 8:['8B',8], 9:['8B',9], 10:['8B',10],
+            11:['1B',11], 12:['2B',12], 13:['3A',13], 14:['4A',14], 
+            15:['5A',15], 16:['6A',16], 17:['7A',17], 18:['8A',18]
+        };
+        
+        let col = 0;
+        if (p === 2 || p === 3) {
+            let base = (p===2) ? 3 : 11;
+            let offset = z - base;
+            if (offset < 2) col = offset + 1; 
+            else col = offset + 1 + 10;
+        } else if (p >= 4) {
+            let base = (p===4)?19 : (p===5)?37 : (p===6)?55 : 87;
+            let offset = z - base;
+            if (p===6 && z > 71) offset -= 14; 
+            if (p===7 && z > 103) offset -= 14;
+            col = offset + 1;
+        }
+        
+        if (groupMap[col]) {
+            gName = groupMap[col][0];
+            iupac = groupMap[col][1];
+        }
+    }
+
+    if (gName && iupac) {
+        return `<span class="ec-pos-badge">第${toChineseNum(p)}週期 ${gName}族 (第${iupac}族)</span>`;
+    } else {
+        return `<span class="ec-pos-badge">第${toChineseNum(p)}週期</span>`;
+    }
+}
+
+
 // 渲染列表
 function renderConfigList() {
     const input = document.getElementById('configSearchInput');
@@ -2847,11 +2958,15 @@ function renderConfigList() {
         `;
         // 預設顯示數據
         const cardId = `ec-${el.z}`;
-        // 預設縮寫字串
         const fullConfig = getFullConfigStr(el.c);
         const nobleConfig = toNobleNotation(fullConfig, el.z);
         const displayHtml = formatConfigHtml(nobleConfig);
         const vizHtml = generateEcViz(fullConfig);
+
+        // [新增] 計算週期與族的 HTML
+        const posHtml = getPeriodGroupHTML(el.z, el.cat);
+
+
 
         card.innerHTML = `
             <div class="ec-header-area">
@@ -2862,7 +2977,9 @@ function renderConfigList() {
                         <span class="ec-en-name">${el.n}</span>
                         <span class="ec-z-badge">Z=${el.z}</span>
                     </div>
-                    <div class="ec-pos-info">${groupStr}</div>
+                    
+                    <div class="ec-pos-info">${posHtml}</div>
+                    
                     <div class="ec-tags-grid">
                         ${tagsHtml}
                     </div>
@@ -2872,17 +2989,18 @@ function renderConfigList() {
 
             <div class="ec-controls">
                 <div class="ec-ion-btns">
-                    <button class="ion-btn active" onclick="updateIonViz('${cardId}', '${el.c}', 0, ${el.z}, this)">中性</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 1, ${el.z}, this)">+1</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 2, ${el.z}, this)">+2</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', 3, ${el.z}, this)">+3</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -1, ${el.z}, this)">-1</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -2, ${el.z}, this)">-2</button>
-                    <button class="ion-btn" onclick="updateIonViz('${cardId}', '${el.c}', -3, ${el.z}, this)">-3</button>
+                    <button class="ion-btn ion-btn-neutral active" onclick="updateIonViz('${cardId}', '${el.c}', 0, ${el.z}, this)">中性</button>
+                    
+                    <button class="ion-btn ion-btn-pos" onclick="updateIonViz('${cardId}', '${el.c}', 1, ${el.z}, this)">+1</button>
+                    <button class="ion-btn ion-btn-pos" onclick="updateIonViz('${cardId}', '${el.c}', 2, ${el.z}, this)">+2</button>
+                    <button class="ion-btn ion-btn-pos" onclick="updateIonViz('${cardId}', '${el.c}', 3, ${el.z}, this)">+3</button>
+                    
+                    <button class="ion-btn ion-btn-neg" onclick="updateIonViz('${cardId}', '${el.c}', -1, ${el.z}, this)">-1</button>
+                    <button class="ion-btn ion-btn-neg" onclick="updateIonViz('${cardId}', '${el.c}', -2, ${el.z}, this)">-2</button>
+                    <button class="ion-btn ion-btn-neg" onclick="updateIonViz('${cardId}', '${el.c}', -3, ${el.z}, this)">-3</button>
                 </div>
             </div>
 
-            <!-- 隱藏狀態紀錄 -->
             <input type="hidden" id="${cardId}-mode" value="noble">
             <input type="hidden" id="${cardId}-charge" value="0">
 
