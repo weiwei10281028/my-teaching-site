@@ -331,15 +331,14 @@
     .element-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #22d3ee; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
     .ec-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
     .ec-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-    .ec-sym-box { display: flex; align-items: center; gap: 12px; }
-    .ec-sym { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; min-width: 40px; }
+    .ec-sym-box { display: flex; align-items: center; gap: 25px; }
+    .ec-sym { font-size: 3.8rem; font-weight: 900; color: #fff; line-height: 1; min-width: 80px; text-align: center; text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.2); }
     .ec-info { display: flex; flex-direction: column; gap: 2px; }
     .ec-name { font-size: 0.95rem; font-weight: bold; color: #fff; }
     .ec-meta { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
     .ec-tag { font-size: 0.75rem; color: #a78bfa; font-weight: 500; background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139, 92, 246, 0.3); width: fit-content; }
-    
     .ec-config-row { width: 100%; display: flex; justify-content: flex-end; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 6px; }
-    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px; white-space: nowrap; }
+    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.1rem; letter-spacing: -0.5px; word-spacing: -2px; white-space: nowrap; }
     .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
     /* [修改] 開啟水平捲軸並美化樣式 */
     .ec-scroll { 
@@ -463,6 +462,8 @@
                     <button id="reaction-propene-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
                     <button id="reaction-propene-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
                     <button id="reaction-propene-h2o-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-ox-btn" class="reaction-btn btn-kmno4">🧪 一般氧化</button>
+                    <button id="reaction-red-btn" class="reaction-btn btn-h2">🧪 還原</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
@@ -1225,11 +1226,11 @@ addMol("C14H10|Anthracene|蒽", "C", "sp²", ["平面","Planar"], "120°", "218"
 addMol("C10H8|Naphthalene|萘", "C", "sp²", ["平面","Planar"], "120°", "80.2", "218", [{elem:"C",x:0,y:-32,z:0},{elem:"C",x:0,y:32,z:0},{elem:"C",x:55,y:-63,z:0},{elem:"C",x:55,y:63,z:0},{elem:"C",x:-55,y:-63,z:0},{elem:"C",x:-55,y:63,z:0},{elem:"C",x:109,y:-31,z:0},{elem:"C",x:109,y:31,z:0},{elem:"C",x:-109,y:-31,z:0},{elem:"C",x:-109,y:31,z:0},{elem:"H",x:56,y:-112,z:0},{elem:"H",x:56,y:112,z:0},{elem:"H",x:-56,y:-112,z:0},{elem:"H",x:-56,y:112,z:0},{elem:"H",x:152,y:-56,z:0},{elem:"H",x:152,y:56,z:0},{elem:"H",x:-152,y:-56,z:0},{elem:"H",x:-152,y:56,z:0}], [[0,1],[0,2,"double"],[0,4],[1,3,"double"],[1,5],[2,6],[2,10],[3,7],[3,11],[4,8,"double"],[4,12],[5,9,"double"],[5,13],[6,7,"double"],[6,14],[7,15],[8,9],[8,16],[9,17]]);
 addMol("C6H6|苯", "C", "sp²", ["平面","Planar"], "120°", "5.5", "80.1", [{elem:"C",x:-55,y:31,z:0},{elem:"C",x:-54,y:-32,z:0},{elem:"C",x:0,y:63,z:0},{elem:"C",x:0,y:-63,z:0},{elem:"C",x:54,y:32,z:0},{elem:"C",x:55,y:-31,z:0},{elem:"H",x:-97,y:55,z:0},{elem:"H",x:-96,y:-57,z:0},{elem:"H",x:-1,y:112,z:0},{elem:"H",x:1,y:-112,z:0},{elem:"H",x:96,y:57,z:0},{elem:"H",x:97,y:-55,z:0}], [[0,1,"double"],[0,2],[0,6],[1,3],[1,7],[2,4,"double"],[2,8],[3,5,"double"],[3,9],[4,5],[4,10],[5,11]]);
 addMol("CH2O|Formaldehyde|甲醛|福馬林|HCHO", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", "-92", "-19.5", [{elem:"O",x:55,y:0,z:0},{elem:"C",x:-1,y:0,z:0},{elem:"H",x:-27,y:-11,z:-40},{elem:"H",x:-27,y:11,z:40}], [[0,1,"double"],[1,2],[1,3]]);
-
+addMol("C2H4O|Acetaldehyde|乙醛|CH3CHO", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", "-123.4", "20.8", [{elem:"O",x:81,y:-14,z:0},{elem:"C",x:-27,y:-12,z:0},{elem:"C",x:35,y:15,z:0},{elem:"H",x:-51,y:3,z:40},{elem:"H",x:-24,y:-61,z:0},{elem:"H",x:-51,y:3,z:-40},{elem:"H",x:36,y:65,z:0}], [[0,2,"double"],[1,2],[1,3],[1,4],[1,5],[2,6]]);
 
 addMol("Butanone|丁酮", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-86", "79.6", [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:50,z:0},{elem:"C",x:45,y:-30,z:0},{elem:"C",x:-45,y:-30,z:0},{elem:"C",x:-85,y:0,z:0},{elem:"H",x:45,y:-70,z:0},{elem:"H",x:75,y:-10,z:25},{elem:"H",x:75,y:-10,z:-25},{elem:"H",x:-45,y:-70,z:0},{elem:"H",x:-45,y:-30,z:40},{elem:"H",x:-85,y:40,z:0},{elem:"H",x:-115,y:-20,z:25},{elem:"H",x:-115,y:-20,z:-25}], [[0,1,"double"],[0,2],[0,3],[2,5],[2,6],[2,7],[3,4],[3,8],[3,9],[4,10],[4,11],[4,12]]);
 addMol("Propanoic Acid|丙酸", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-20.5", "141.2", [{elem:"C",x:30,y:0,z:0},{elem:"O",x:30,y:50,z:0},{elem:"O",x:70,y:-25,z:0},{elem:"H",x:95,y:-5,z:0},{elem:"C",x:-15,y:-25,z:0},{elem:"C",x:-60,y:5,z:0},{elem:"H",x:-15,y:-65,z:0},{elem:"H",x:-15,y:-25,z:40},{elem:"H",x:-60,y:45,z:0},{elem:"H",x:-90,y:-15,z:25},{elem:"H",x:-90,y:-15,z:-25}], [[0,1,"double"],[0,2],[2,3],[0,4],[4,5],[4,6],[4,7],[5,8],[5,9],[5,10]]);
-addMol("CH3COOH|乙酸|醋酸", "S", "sp²", ["平面/四面體","Planar/Tetra"], "120°/109°", "16.6", "117.9", [{elem:"C",x:-40,y:0,z:0},{elem:"C",x:15,y:0,z:0},{elem:"O",x:15,y:50,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"H",x:90,y:-15,z:0},{elem:"H",x:-40,y:-50,z:0},{elem:"H",x:-75,y:25,z:25},{elem:"H",x:-75,y:25,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[0,5],[0,6],[0,7]]);
+addMol("CH3COOH|乙酸|C2H4O2|醋酸", "C", "sp²", ["平面/四面體","Planar/Tetra"], "120°/109°", "16.6", "117.9", [{elem:"O",x:-36,y:-57,z:0},{elem:"O",x:-66,y:41,z:0},{elem:"C",x:40,y:17,z:0},{elem:"C",x:-26,y:3,z:0},{elem:"H",x:61,y:-1,z:-41},{elem:"H",x:61,y:-2,z:40},{elem:"H",x:46,y:66,z:0},{elem:"H",x:-79,y:-67,z:0}], [[0,3],[0,7],[1,3,"double"],[2,3],[2,4],[2,5],[2,6]]);
 addMol("HCOOCH3|甲酸甲酯", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-99", "31.8", [{elem:"C",x:-15,y:0,z:0},{elem:"O",x:-15,y:50,z:0},{elem:"O",x:25,y:-25,z:0},{elem:"C",x:65,y:-25,z:0},{elem:"H",x:-50,y:-20,z:0},{elem:"H",x:65,y:-65,z:0},{elem:"H",x:95,y:0,z:25},{elem:"H",x:95,y:0,z:-25}], [[0,1,"double"],[0,2],[2,3],[0,4],[3,5],[3,6],[3,7]]);
 addMol("CH3COOCH3|乙酸甲酯", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-98", "56.9", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:50,z:0},{elem:"O",x:50,y:-30,z:0},{elem:"C",x:90,y:-30,z:0},{elem:"H",x:-35,y:-45,z:0},{elem:"H",x:-65,y:25,z:25},{elem:"H",x:-65,y:25,z:-25},{elem:"H",x:90,y:-70,z:0},{elem:"H",x:120,y:-5,z:25},{elem:"H",x:120,y:-5,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[0,5],[0,6],[0,7],[4,8],[4,9],[4,10]]);
 addMol("CH3COOC2H5|乙酸乙酯", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-83.6", "77.1", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:50,z:0},{elem:"O",x:50,y:-30,z:0},{elem:"C",x:90,y:-30,z:0},{elem:"C",x:125,y:15,z:0},{elem:"H",x:-35,y:-45,z:0},{elem:"H",x:-65,y:25,z:25},{elem:"H",x:-65,y:25,z:-25},{elem:"H",x:90,y:-70,z:0},{elem:"H",x:115,y:-50,z:30},{elem:"H",x:125,y:55,z:0},{elem:"H",x:155,y:-5,z:25},{elem:"H",x:155,y:-5,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[4,5],[0,6],[0,7],[0,8],[4,9],[4,10],[5,11],[5,12],[5,13]]);
@@ -1370,10 +1371,27 @@ function checkReactionAvailable(key) {
         if(nitroBtn) nitroBtn.style.display = "flex"; // +HNO3 (硝化)
         resetBtn.style.display = "block";
     } 
-    // 5. 產物顯示重置按鈕
-    else if (["C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH", "C2H6O2"].includes(key) && isReactionFinished) {
+    // 5. 乙醇與乙醛系列反應
+    else if (key === "C2H6O") {
         btnContainer.style.display = "block";
-        resetBtn.style.display = "block"; 
+        document.getElementById("reaction-ox-btn").style.display = "flex"; // 一般氧化
+        document.getElementById("reaction-kmno4-btn").style.display = "flex"; // 強氧化
+        resetBtn.style.display = "block";
+    }
+    else if (key === "C2H4O") {
+        btnContainer.style.display = "block";
+        document.getElementById("reaction-ox-btn").style.display = "flex"; // 氧化
+        document.getElementById("reaction-red-btn").style.display = "flex"; // 還原
+        resetBtn.style.display = "block";
+    }
+    else if (key === "CH3COOH") {
+        btnContainer.style.display = "block";
+        resetBtn.style.display = "block";
+    }
+    // 6. 產物顯示重置按鈕
+    else if (["C2H6O", "C2H4O", "C2H5OH", "C2H4Cl2", "C2H6", "C2H5Cl", "CH3Cl", "CH3NO2", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH", "C2H6O2"].includes(key) && isReactionFinished) {
+        btnContainer.style.display = "block";
+        resetBtn.style.display = "block";
     }
 }
 
@@ -1387,6 +1405,8 @@ function resetReaction() {
     // [修正] 丙烯系列：無論是反應中還是產物(丙烷, 二氯丙烷, 氯丙烷, 丙醇)，一律重置回「丙烯」
     } else if (["C3H6", "C3H8", "C3H6Cl2", "C3H7Cl", "C3H7OH"].includes(currentKey)) {
         loadMolecule("C3H6", "丙烯"); 
+    } else if (["C2H6O", "C2H4O", "CH3COOH", "C2H5OH", "CH3CHO"].includes(currentKey)) {
+        loadMolecule("C2H6O");
     } else {
         loadMolecule("C2H4");
     }     
@@ -1507,6 +1527,23 @@ function runPropeneHydrohalogenation() {
 }
 function runPropeneHydration() {
     finishReaction("C3H8O", "2-丙醇", "2-丙醇", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
+}
+// 5. 乙醇/乙醛/乙酸 系列反應
+function runEthanolMildOxidation() {
+    // 乙醇(C2H6O) -> 乙醛(C2H4O)
+    finishReaction("C2H4O", "乙醛", null, "乙醇為1級醇，接O的C上具有H，一般氧化劑會先將乙醇氧化成乙醛");
+}
+function runEthanolStrongOxidation() {
+    // 乙醇(C2H6O) -> 乙酸(CH3COOH)
+    finishReaction("CH3COOH", "乙酸", null, "乙醇為1級醇，接O的C上具有H，由於過錳酸鉀氧化力較強，故乙醇直接氧化成乙酸");
+}
+function runAcetaldehydeOxidation() {
+    // 乙醛(C2H4O) -> 乙酸(CH3COOH)
+    finishReaction("CH3COOH", "乙酸", null, "乙醛接O的C上具有H，經過氧化可以形成乙酸");
+}
+function runAcetaldehydeReduction() {
+    // 乙醛(C2H4O) -> 乙醇(C2H6O)
+    finishReaction("C2H6O", "乙醇", null, "醛類可以還原，變回1級醇，乙醛還原後形成乙醇");
 }
 
 
@@ -2334,7 +2371,23 @@ function setupInteractions() {
     if(btnCl2) btnCl2.addEventListener('click', () => { isReactionRunning = true; runEthyleneChlorination(); });
 
     const btnKMnO4 = document.getElementById('reaction-kmno4-btn');
-    if(btnKMnO4) btnKMnO4.addEventListener('click', () => { isReactionRunning = true; runEthyleneOxidation(); });
+    if(btnKMnO4) btnKMnO4.addEventListener('click', () => { 
+        isReactionRunning = true; 
+        // [修改] 判斷 C2H6O (乙醇)
+        if (currentKey === "C2H6O") runEthanolStrongOxidation();
+        else runEthyleneOxidation(); 
+    });
+
+    const btnOx = document.getElementById('reaction-ox-btn');
+    if(btnOx) btnOx.addEventListener('click', () => {
+        isReactionRunning = true;
+        // [修改] 判斷 C2H6O (乙醇) 與 C2H4O (乙醛)
+        if(currentKey === "C2H6O") runEthanolMildOxidation();
+        else if(currentKey === "C2H4O") runAcetaldehydeOxidation();
+    });
+
+    const btnRed = document.getElementById('reaction-red-btn');
+    if(btnRed) btnRed.addEventListener('click', () => { isReactionRunning = true; runAcetaldehydeReduction(); });
 
     // 甲烷反應
     const btnSub = document.getElementById('reaction-sub-btn');
