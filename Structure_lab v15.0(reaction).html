@@ -548,9 +548,12 @@
     </div>
 </div>
 
-// 網站流量計數器
+<!-- [修正版] 隱藏的流量計數器 (使用 Hits.sh) -->
+<!-- ID 已修正為網域格式以符合服務要求: weiwei-molecular-lab.app -->
 <div style="display:none;">
-    <img src="https://hits.sh/weiwei-molecular-lab.svg?label=Views&color=10b981&labelColor=2d3748" alt="Page Views">
+    <img id="site_counter_img" 
+         src="https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748" 
+         alt="Page Views">
 </div>
 
 <script>
@@ -1789,18 +1792,17 @@ function handleLoadBtn() {
             // 清空目前的內容
             subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold;">👁️ 本站累積瀏覽人次</div>`;
             
-            // [修正重點]：建立一個全新的圖片物件，並加入時間戳記防止快取
+            // [修正重點]：ID 加上 .app 後綴，並保留時間戳記防止快取
             const newImg = new Image();
-            // 加上 &t=... 強制瀏覽器重新抓取最新數字
-            newImg.src = `https://hits.sh/weiwei-molecular-lab.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
+            newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
             newImg.alt = "載入中...";
             newImg.style.height = "28px";
             newImg.style.display = "block";
-            newImg.style.margin = "0 auto"; // 圖片置中
+            newImg.style.margin = "0 auto";
 
-            // 處理圖片載入錯誤 (例如被 AdBlock 擋住)
+            // 錯誤處理
             newImg.onerror = function() {
-                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(無法顯示：可能被廣告阻擋軟體攔截)</div>`;
+                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗：請檢查網路或擋廣告軟體)</div>`;
             };
 
             subEl.appendChild(newImg);
