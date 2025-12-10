@@ -486,7 +486,7 @@
             </div>
 
             <div class="switch-container" id="glow-switch-wrap">
-                <input type="checkbox" id="toggle-glow" checked>
+                <input type="checkbox" id="toggle-glow">
                 <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
             </div>
             
@@ -546,17 +546,17 @@
         </button>
             
             
-            <div class="card">
+            <div class="card" id="data-card">
                 <div class="card-title">📊 物質資料</div>
-                <div class="data-row"><span class="data-label">化學式</span><span class="data-value" id="disp-formula"></span></div>
-                <div class="data-row"><span class="data-label">中文名稱</span><span class="data-value" id="disp-center"></span></div>
-                <div class="data-row"><span class="data-label">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
-                <div class="data-row"><span class="data-label">形狀</span><span class="data-value" id="disp-shape"></span></div>
-                <div class="data-row"><span class="data-label">鍵角</span><span class="data-value" id="disp-angle"></span></div>
-                <div class="data-row"><span class="data-label">熔點 (MP)</span><span class="data-value" id="disp-mp"></span></div>
-                <div class="data-row"><span class="data-label">沸點 (BP)</span><span class="data-value" id="disp-bp"></span></div>
-                <div class="data-row"><span class="data-label">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
-                <div class="data-row"><span class="data-label">分子量</span><span class="data-value" id="disp-mass"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-formula">化學式</span><span class="data-value" id="disp-formula"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-name">中文名稱</span><span class="data-value" id="disp-center"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-hybrid">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-shape">形狀</span><span class="data-value" id="disp-shape"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-angle">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-mp">熔點 (MP)</span><span class="data-value" id="disp-mp"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-bp">沸點 (BP)</span><span class="data-value" id="disp-bp"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-bonds">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-mass">分子量</span><span class="data-value" id="disp-mass"></span></div>
             </div>
             <div class="spacer-60"></div>
         </div>
@@ -841,6 +841,72 @@ function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{
 /// --- 1. 基礎元素與雙原子分子 (鍵長修正: H=15, 2nd=35, 3rd=40, 4th=45, 5th=50 | Double x0.9, Triple x0.85) ---
 const diatomicNames = {'H': '氫|氫氣', 'N': '氮|氮氣', 'O': '氧|氧氣', 'F': '氟|氟氣', 'Cl': '氯|氯氣', 'Br': '溴', 'I': '碘'};
 const diatomicProps = {'H': {mp: "-259.2", bp: "-252.9"}, 'N': {mp: "-210.0", bp: "-195.8"}, 'O': {mp: "-218.8", bp: "-183.0"}, 'F': {mp: "-219.7", bp: "-188.1"}, 'Cl': {mp: "-101.5", bp: "-34.0"}, 'Br': {mp: "-7.2", bp: "58.8"}, 'I': {mp: "113.7", bp: "184.3"}};
+
+// [新增] 3x3x3 NaCl 離子晶體生成器 (修正版 v3 - 支援代表性原子)
+(function(){
+    const atoms = [];
+    const bonds = [];
+    const scale = 120; // 維持寬間距
+    const gridSize = 1; 
+    
+    // 1. 建立原子
+    for (let x = -gridSize; x <= gridSize; x++) {
+        for (let y = -gridSize; y <= gridSize; y++) {
+            for (let z = -gridSize; z <= gridSize; z++) {
+                const isSodium = Math.abs(x + y + z) % 2 === 1;
+                
+                // [新增] 標記「代表性原子」
+                // 對於 NaCl，只有正中心 (0,0,0) 的這顆是完美的代表
+                // 未來如果是 ZnS，您可以在這裡改變邏輯，標記特定的內部原子
+                const isRepresentative = (x === 0 && y === 0 && z === 0);
+
+                atoms.push({
+                    elem: isSodium ? "Na" : "Cl",
+                    x: x * scale, y: y * scale, z: z * scale,
+                    r: isSodium ? 15 : 24, 
+                    lpCount: 0,
+                    // 將標籤寫入資料
+                    isRepresentative: isRepresentative
+                });
+            }
+        }
+    }
+    // 2. 建立鍵結
+    for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+            const dx = atoms[i].x - atoms[j].x;
+            const dy = atoms[i].y - atoms[j].y;
+            const dz = atoms[i].z - atoms[j].z;
+            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            if (Math.abs(dist - scale) < 5) {
+                bonds.push([i, j, "single"]);
+            }
+        }
+    }
+    // 3. 加入資料庫
+    addMol("NaCl|氯化鈉|食鹽|Sodium Chloride", 
+           "Ionic", 
+           "面心立方堆積 (FCC)", 
+           "102/181 = 0.56",    
+           "配位數: 6",         
+           "801", "1465",       
+           atoms, bonds, null,
+           `<div class="info-section">
+                <div class="info-title">🧂 物質性質</div>
+                <div class="info-body">
+                    <span class="highlight-title">1. 晶體結構：</span>氯化鈉採用<strong>面心立方 (FCC)</strong> 堆積。點擊<strong>正中央</strong>的原子，可觀察其周圍異性離子的<strong>配位數 (6)</strong>。<br>
+                    <span class="highlight-title">2. 半徑比：</span>Na⁺(102 pm) / Cl⁻(181 pm) ≈ 0.56，介於 0.414~0.732 之間，形成八面體空隙填充。<br>
+                    <span class="highlight-title">3. 視覺模型：</span><strong>綠色大球 (Cl⁻)</strong> 與 <strong>紫色小球 (Na⁺)</strong> 交錯排列。
+                </div>
+            </div>`
+    );
+    
+    if(MOLECULE_DB["NaCl"]) {
+        MOLECULE_DB["NaCl"].isIonic = true;
+        MOLECULE_DB["NaCl"].hybrid = "面心立方堆積 (FCC)"; 
+        MOLECULE_DB["NaCl"].edgeRelation = "a = 2(r<sub>+</sub> + r<sub>-</sub>)"; 
+    }
+})();
 
 addMol("H2|氫氣|氫", "雙原子", "s-s", ["直線型", "Linear"], "-", "-259.2", "-252.9", [{elem:"H",x:-15,y:0,z:0},{elem:"H",x:15,y:0,z:0}], [[0,1,"single"]]);
 addMol("N2|氮氣|氮", "雙原子", "sp", ["直線型", "Linear"], "-", "-210.0", "-195.8", [{elem:"N",x:-30,y:0,z:0},{elem:"N",x:30,y:0,z:0}], [[0,1,"triple"]]);
@@ -1928,10 +1994,8 @@ window.onload = () => {
 
 function loadMolecule(key, variantKey = null) {
     const subEl = document.getElementById("viewport-subtitle");
-    if(subEl) {
-        subEl.style.display = 'none'; // 預設隱藏，只有反應觸發時才打開
-        subEl.textContent = "";
-    }
+    if(subEl) { subEl.style.display = 'none'; subEl.textContent = ""; }
+    
     let targetData = MOLECULE_DB[key];
     if (!targetData && MOLECULE_INDEX[key.toUpperCase()]) {
         const idx = MOLECULE_INDEX[key.toUpperCase()];
@@ -1941,7 +2005,6 @@ function loadMolecule(key, variantKey = null) {
     }
     if (!targetData) { console.error("Data missing for:", key); return; }
     
-    // 智慧變體保持邏輯
     if (!variantKey && currentKey === key && typeof currentVariantKey !== 'undefined' && currentVariantKey) {
         variantKey = currentVariantKey;
     }
@@ -1962,66 +2025,29 @@ function loadMolecule(key, variantKey = null) {
     if (!data.bondsRaw) data.bondsRaw = []; 
     let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
 
-    // 八隅體擴展邏輯
+    // 八隅體處理邏輯 (保持不變)
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct && toggleOct.checked) {
         const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
-        
-        // [新增] 針對硫原子的特殊計數器 (SO2, SO3 需要保留一個雙鍵才滿足八隅體)
-        let sDoubleKept = false; 
-        const totalBonds = processedBonds.length; // 簡單判斷總鍵數
-
+        let sDoubleKept = false; const totalBonds = processedBonds.length;
         processedBonds.forEach(bond => {
             if (bond[2] === 'double') {
-                const idx1 = bond[0];
-                const idx2 = bond[1];
-                const atom1 = data.atomsRaw[idx1];
-                const atom2 = data.atomsRaw[idx2];
-                
-                let centerIdx = -1;
-                let termIdx = -1;
-
-                // 判斷誰是中心，誰是末端氧
-                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') {
-                    centerIdx = idx1; termIdx = idx2;
-                } else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') {
-                    centerIdx = idx2; termIdx = idx1;
-                }
-                // 處理 S-S 鍵結 (如 S2O3 2-)
+                const idx1 = bond[0]; const idx2 = bond[1];
+                const atom1 = data.atomsRaw[idx1]; const atom2 = data.atomsRaw[idx2];
+                let centerIdx = -1; let termIdx = -1;
+                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') { centerIdx = idx1; termIdx = idx2; } 
+                else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') { centerIdx = idx2; termIdx = idx1; } 
                 else if (atom1.elem === 'S' && atom2.elem === 'S') {
                     let d1 = 0, d2 = 0;
-                    processedBonds.forEach(b => {
-                        if(b[0]===idx1 || b[1]===idx1) d1++;
-                        if(b[0]===idx2 || b[1]===idx2) d2++;
-                    });
-                    if (d1 > 1 && d2 === 1) { centerIdx = idx1; termIdx = idx2; }
-                    else if (d2 > 1 && d1 === 1) { centerIdx = idx2; termIdx = idx1; }
+                    processedBonds.forEach(b => { if(b[0]===idx1 || b[1]===idx1) d1++; if(b[0]===idx2 || b[1]===idx2) d2++; });
+                    if (d1 > 1 && d2 === 1) { centerIdx = idx1; termIdx = idx2; } else if (d2 > 1 && d1 === 1) { centerIdx = idx2; termIdx = idx1; }
                 }
-
                 if (centerIdx !== -1) {
                     const centerSym = data.atomsRaw[centerIdx].elem;
-                    
-                    // [新增] 硫的特殊邏輯：
-                    // 如果是 SO2 (總鍵數2) 或 SO3 (總鍵數3)，需要保留 1 個雙鍵，其他轉配位。
-                    // 如果是 SO4 (總鍵數4) 或硫酸，則全部轉配位。
-                    if (centerSym === 'S' && totalBonds < 4) {
-                        if (!sDoubleKept) {
-                            sDoubleKept = true; // 保留這個做為雙鍵
-                            return; // 跳過轉換，維持 double
-                        }
-                    }
-
-                    // 檢查末端氧是否只連這一條鍵 (避免破壞主要骨架)
+                    if (centerSym === 'S' && totalBonds < 4 && !sDoubleKept) { sDoubleKept = true; return; }
                     let connectionCount = 0;
-                    processedBonds.forEach(b => {
-                        if (b[0] === termIdx || b[1] === termIdx) connectionCount++;
-                    });
-                    
-                    if (connectionCount === 1) {
-                        bond[2] = 'coordinate'; // 轉為配位鍵
-                        bond[0] = centerIdx;    // 確保方向正確 (中心 -> 末端)
-                        bond[1] = termIdx;
-                    }
+                    processedBonds.forEach(b => { if (b[0] === termIdx || b[1] === termIdx) connectionCount++; });
+                    if (connectionCount === 1) { bond[2] = 'coordinate'; bond[0] = centerIdx; bond[1] = termIdx; }
                 }
             }
         });
@@ -2030,82 +2056,84 @@ function loadMolecule(key, variantKey = null) {
     const renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
     currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
     
-    // 更新 UI 資訊
+    // UI 標籤切換
+    const isIonic = data.isIonic === true || data.center === "Ionic";
+    const lblHybrid = document.getElementById("lbl-hybrid");
+    const lblShape = document.getElementById("lbl-shape");
+    const lblAngle = document.getElementById("lbl-angle");
+    const lblBonds = document.getElementById("lbl-bonds");
+    const lblMass = document.getElementById("lbl-mass");
+
+    if (isIonic) {
+        if(lblHybrid) lblHybrid.textContent = "晶體堆積";
+        if(lblShape) lblShape.textContent = "半徑比 (r⁺/r⁻)";
+        if(lblAngle) lblAngle.textContent = "配位數";
+        if(lblBonds) lblBonds.textContent = "邊長關係";
+        if(lblMass) lblMass.textContent = "式量";
+    } else {
+        if(lblHybrid) lblHybrid.textContent = "混成軌域";
+        if(lblShape) lblShape.textContent = "形狀";
+        if(lblAngle) lblAngle.textContent = "鍵角";
+        if(lblBonds) lblBonds.textContent = "鍵結統計";
+        if(lblMass) lblMass.textContent = "分子量";
+    }
+
+    // 資訊顯示更新
     const formulaEl = document.getElementById('info-formula');
     const nameEl = document.getElementById('info-name');
-    const keyString = data.fullKey || key; 
-    const keyParts = keyString.split('|');
-    // [修改] 依照新規則：Part0=化學式/示性式, Part1=中文
+    const keyParts = (data.fullKey || key).split('|');
     let formulaText = keyParts[0];
     let nameText = keyParts.length > 1 ? keyParts[1] : "";
-    
     if(formulaEl) formulaEl.innerHTML = formatFormula(formulaText);
     if(nameEl) nameEl.textContent = nameText;
 
-    // 更新知識卡片
-    const knowledgeCard = document.getElementById('knowledge-card');
-    const knowledgeText = document.getElementById('knowledge-text');
-    if (knowledgeCard && knowledgeText) {
+    // 知識卡片
+    const kCard = document.getElementById('knowledge-card');
+    const kText = document.getElementById('knowledge-text');
+    if (kCard && kText) {
         if (data.desc) {
-            knowledgeText.innerHTML = data.desc;
-            knowledgeCard.style.display = 'block';
-            if(window.innerWidth < 768) {
-                knowledgeCard.classList.remove('expanded'); 
-            } else {
-                knowledgeCard.classList.add('expanded');
-            }
-        } else {
-            knowledgeCard.style.display = 'none';
-        }
+            kText.innerHTML = data.desc; kCard.style.display = 'block';
+            kCard.classList.toggle('expanded', window.innerWidth >= 768);
+        } else { kCard.style.display = 'none'; }
     }
     updateSuggestions();
 
-    // 更新數據顯示
-    const dispFormula = document.getElementById("disp-formula");
-    if(dispFormula) dispFormula.innerHTML = formatFormula(formulaText);
-    const dispCenter = document.getElementById("disp-center");
-    // [修改] 第二欄顯示中文名稱 (nameText)
-    if(dispCenter) dispCenter.textContent = nameText;
-    const dispHybrid = document.getElementById("disp-hybrid");
-    if(dispHybrid) dispHybrid.textContent = data.hybrid;
-    const dispShape = document.getElementById("disp-shape");
-    if(dispShape) dispShape.textContent = data.shape;
-    const dispAngle = document.getElementById("disp-angle");
-    if(dispAngle) dispAngle.textContent = data.angle;
-    const mpElem = document.getElementById("disp-mp");
-    const bpElem = document.getElementById("disp-bp");
-    if(mpElem) mpElem.textContent = (data.mp && data.mp !== "-") ? `${data.mp} °C` : "無資料";
-    if(bpElem) bpElem.textContent = (data.bp && data.bp !== "-") ? `${data.bp} °C` : "無資料";
+    // 數值面板更新
+    document.getElementById("disp-formula").innerHTML = formatFormula(formulaText);
+    document.getElementById("disp-center").textContent = nameText;
+    document.getElementById("disp-hybrid").textContent = data.hybrid;
+    document.getElementById("disp-shape").textContent = data.shape;
+    document.getElementById("disp-angle").textContent = data.angle;
+    document.getElementById("disp-mp").textContent = (data.mp && data.mp !== "-") ? `${data.mp} °C` : "無資料";
+    document.getElementById("disp-bp").textContent = (data.bp && data.bp !== "-") ? `${data.bp} °C` : "無資料";
     
-    let sigma = 0, pi = 0, totalLP = 0;
-    if (currentMolecule.bonds3D) {
-        currentMolecule.bonds3D.forEach(b => {
-            sigma++; 
-            if(b[2] === 'double') pi += 1;
-            if(b[2] === 'triple') pi += 2;
-        });
-    }
-    currentMolecule.renderObjects.forEach(obj => {
-        if (obj.type === 'atom') totalLP += (obj.calculatedLP || 0);
-    });
+    // [修正] 使用 innerHTML 以支援 <sub> 標籤
     const bondDisp = document.getElementById("disp-bonds");
-    if(bondDisp) bondDisp.innerHTML = `&sigma;: ${sigma} &nbsp; &pi;: ${pi} &nbsp; LP: ${totalLP}`;
+    if(bondDisp) {
+        if (isIonic) {
+            bondDisp.innerHTML = data.edgeRelation || "a = 2(r<sub>+</sub> + r<sub>-</sub>)";
+        } else {
+            let sigma = 0, pi = 0, totalLP = 0;
+            if (currentMolecule.bonds3D) currentMolecule.bonds3D.forEach(b => { 
+                sigma++; if(b[2]==='double') pi++; if(b[2]==='triple') pi+=2; 
+            });
+            currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') totalLP += (obj.calculatedLP||0); });
+            bondDisp.innerHTML = `&sigma;: ${sigma} &nbsp; &pi;: ${pi} &nbsp; LP: ${totalLP}`;
+        }
+    }
     
+    // 質量計算
     let totalMass = 0;
     if (data.atomsRaw) {
-        data.atomsRaw.forEach(a => {
-            const props = ELEMENT_PROPS[a.elem];
-            if (props && props.mass) totalMass += props.mass;
-        });
+        if (isIonic && key.includes("NaCl")) totalMass = 22.99 + 35.45; 
+        else data.atomsRaw.forEach(a => { totalMass += (ELEMENT_PROPS[a.elem]?.mass || 0); });
     }
-    const massDisp = document.getElementById("disp-mass");
-    if (massDisp) massDisp.textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
-
+    document.getElementById("disp-mass").textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
+    
     const subtitle = document.getElementById("viewport-subtitle");
-    if(subtitle) subtitle.textContent = `${nameText} (${formulaText}) - ${data.shape}`; 
+    if(subtitle) subtitle.textContent = `${nameText} (${formulaText})`; 
     
     updateVariantUI(key, variantKey);
-
     checkReactionAvailable(key);
 }
 
@@ -2113,13 +2141,16 @@ function processAtomsData(atomList, bondList, centerElem) {
     let processed = [];
     const atomObjects = atomList.map((a, index) => { 
         const props = ELEMENT_PROPS[a.elem] || { c3d: "#ccc", r3d: 20 };
-        return { ...a, color: props.c3d, r: props.r3d, type: 'atom', originalIndex: index };
+        // [關鍵修改] 優先使用原子個別定義的半徑 (a.r)，如果沒有才用全域設定 (props.r3d)
+        const finalRadius = (a.r !== undefined) ? a.r : props.r3d;
+        
+        return { ...a, color: props.c3d, r: finalRadius, type: 'atom', originalIndex: index };
     });
 
     atomObjects.forEach((atomObj, idx) => {
         const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
         atomObj.calculatedLP = calcLP;
-        // ========== [插入] 計算形式電荷 ==========
+        
         let bondLines = 0;
         bondList.forEach(b => {
             if (b[0] === idx || b[1] === idx) {
@@ -2250,31 +2281,48 @@ function project(p) {
     return { x: x3 * s + panOffset.x, y: y3 * s + panOffset.y, z: z3, scale: s };
 }
 
-// ========== [請替換 renderScene] ==========
 function renderScene(time = 0) {
     sceneRoot.innerHTML = "";
     if(!currentMolecule) return;
     
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     
-    // 電腦版且非電漿模式保留濾鏡
+    // 1. [原有] 濾鏡與一般光暈
     if (!isMobile && !isPlasmaMode) {
         const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
         filter.setAttribute("id", "soft-glow");
         filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
         defs.appendChild(filter);
     }
-    
-    // 電子光暈定義
     const whiteGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
     whiteGlow.setAttribute("id", "mobile-glow-white");
     whiteGlow.setAttribute("cx", "50%"); whiteGlow.setAttribute("cy", "50%"); whiteGlow.setAttribute("r", "50%");
-    whiteGlow.innerHTML = `
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-        <stop offset="30%" stop-color="#ffffff" stop-opacity="0.6"/>
-        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-    `;
+    whiteGlow.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="30%" stop-color="#ffffff" stop-opacity="0.6"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>`;
     defs.appendChild(whiteGlow);
+
+    // 2. [新增] 互動專用的柔和光暈漸層 (Soft Halo Gradients)
+    // (A) 中心原子光暈：金黃色，核心亮，邊緣柔和消失
+    const highlightCenter = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    highlightCenter.setAttribute("id", "highlight-glow-center");
+    highlightCenter.setAttribute("cx", "50%"); highlightCenter.setAttribute("cy", "50%"); highlightCenter.setAttribute("r", "50%");
+    highlightCenter.innerHTML = `
+        <stop offset="0%" stop-color="#FFD700" stop-opacity="0.8"/>
+        <stop offset="40%" stop-color="#FFD700" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    `;
+    defs.appendChild(highlightCenter);
+
+    // (B) 鄰居原子光暈：青色/亮白色，核心亮，邊緣柔和消失
+    const highlightNeighbor = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    highlightNeighbor.setAttribute("id", "highlight-glow-neighbor");
+    highlightNeighbor.setAttribute("cx", "50%"); highlightNeighbor.setAttribute("cy", "50%"); highlightNeighbor.setAttribute("r", "50%");
+    highlightNeighbor.innerHTML = `
+        <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.8"/>
+        <stop offset="40%" stop-color="#00FFFF" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#00FFFF" stop-opacity="0"/>
+    `;
+    defs.appendChild(highlightNeighbor);
+
     
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
@@ -2282,7 +2330,6 @@ function renderScene(time = 0) {
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
         
-        // 1. [正常模式] 立體原子漸層
         const atomGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         atomGrad.setAttribute("id", `atom-grad-${cleanColor}`);
         atomGrad.setAttribute("cx", "50%"); atomGrad.setAttribute("cy", "50%"); 
@@ -2298,37 +2345,19 @@ function renderScene(time = 0) {
         `;
         defs.appendChild(atomGrad);
 
-        // 2. [正常模式] 手機版光暈
         if (isMobile && !isPlasmaMode) {
              const mobileGlowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
             mobileGlowGrad.setAttribute("id", `mobile-glow-${cleanColor}`);
             mobileGlowGrad.setAttribute("cx", "50%"); mobileGlowGrad.setAttribute("cy", "50%"); mobileGlowGrad.setAttribute("r", "50%");
-            mobileGlowGrad.innerHTML = `
-                <stop offset="0%" stop-color="${color}" stop-opacity="0.6"/>
-                <stop offset="65%" stop-color="${color}" stop-opacity="0.4"/>
-                <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-            `;
+            mobileGlowGrad.innerHTML = `<stop offset="0%" stop-color="${color}" stop-opacity="0.6"/><stop offset="65%" stop-color="${color}" stop-opacity="0.4"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>`;
             defs.appendChild(mobileGlowGrad);
         }
 
-        // 3. [電漿模式] 高濃度能量漸層 (Deep Plasma)
-        // 修改重點：不透明度提高，顏色更早出現，讓視覺更紮實
         if (isPlasmaMode) {
             const plasmaGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
             plasmaGrad.setAttribute("id", `plasma-grad-${cleanColor}`);
-            plasmaGrad.setAttribute("cx", "50%"); plasmaGrad.setAttribute("cy", "50%"); 
-            plasmaGrad.setAttribute("r", "50%");
-            plasmaGrad.innerHTML = `
-                <!-- 0%: 核心極亮白 -->
-                <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-                
-                <!-- 25%: 快速轉為高濃度的原子本色 (opacity 0.9) -->
-                <!-- 這樣能確保原子看起來有"實體感" -->
-                <stop offset="25%" stop-color="${color}" stop-opacity="0.9"/>
-                
-                <!-- 100%: 邊緣平滑消融 -->
-                <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-            `;
+            plasmaGrad.setAttribute("cx", "50%"); plasmaGrad.setAttribute("cy", "50%"); plasmaGrad.setAttribute("r", "50%");
+            plasmaGrad.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="25%" stop-color="${color}" stop-opacity="0.9"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>`;
             defs.appendChild(plasmaGrad);
         }
     });
@@ -2337,9 +2366,19 @@ function renderScene(time = 0) {
 
     const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
     const renderList = [];
+    
+    // 檢查是否有高亮
+    const isAnyHighlighted = currentMolecule.renderObjects.some(o => o.isHighlighted);
+
     const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
-        const p = project(obj); 
-        return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i };
+        const p = project(obj);
+        // 透明度邏輯
+        let alpha = 1.0;
+        if (isAnyHighlighted) {
+            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
+            else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
+        }
+        return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha };
     });
     const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
@@ -2350,9 +2389,14 @@ function renderScene(time = 0) {
         
         let drawStyle = "single";
         let c1 = a1.color, c2 = a2.color;
-        
-        // 電漿模式：鍵結稍微明顯一點點 (0.3)，幫助辨識結構
-        const bondOpacity = (bond[3] !== undefined) ? bond[3] : (isPlasmaMode ? 0.3 : 1);
+        let bondOpacity = (bond[3] !== undefined) ? bond[3] : (isPlasmaMode ? 0.3 : 1);
+
+        // 鍵結透明度邏輯
+        let bondAlpha = 1.0;
+        if (isAnyHighlighted) {
+            if (a1.isHighlighted && a2.isHighlighted) bondAlpha = 1.0;
+            else bondAlpha = 0.05; 
+        }
 
         if (bond[2] === "double") drawStyle = "double";
         else if (bond[2] === "triple") drawStyle = "triple";
@@ -2365,7 +2409,8 @@ function renderScene(time = 0) {
             r1: a1.r*a1.scale, r2: a2.r*a2.scale,
             style: drawStyle, scale: (a1.scale+a2.scale)/2, 
             c1: c1, c2: c2, bondIdx: index,
-            opacity: bondOpacity
+            opacity: bondOpacity,
+            alpha: bondAlpha 
         });
     });
 
@@ -2381,31 +2426,30 @@ function renderScene(time = 0) {
     });
 }
 
-// ========== [請替換 drawBond 函式] ==========
 function drawBond(b) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     
+    // [應用透明度]
+    if (b.alpha < 1.0) {
+        g.setAttribute("opacity", b.alpha);
+    }
+
     const dx = b.x2-b.x1, dy = b.y2-b.y1, len = Math.sqrt(dx*dx+dy*dy);
     if(len === 0) return;
     const nx = dx/len, ny = dy/len;
     const px = -ny, py = nx;
     
-    // [參數設定]
-    // 1. 稍微加大總寬度 (16 -> 20)，避免多重鍵太擠
-    const w = 20 * b.scale;    
-    
-    // 2. [修改] 粗細加倍 (原本約 0.25 -> 改為 0.45)
-    // 這樣單鍵、雙鍵、參鍵的每一根線都會變得很粗壯有質感
+    // [維持上一版] 寬度 16
+    const w = 16 * b.scale;    
     const strokeW = w * 0.45;  
     
-    const shorten = 0.75;      // 維持較長的鍵結
+    const shorten = 0.75;      
     
     const x1 = b.x1 + nx * b.r1 * shorten;
     const y1 = b.y1 + ny * b.r1 * shorten;
     const x2 = b.x2 - nx * b.r2 * shorten;
     const y2 = b.y2 - ny * b.r2 * shorten;
 
-    // 定義漸層 (本體色)
     const gradId = `bond-grad-${b.bondIdx}`;
     const defs = sceneRoot.querySelector("defs");
     const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
@@ -2415,7 +2459,6 @@ function drawBond(b) {
     defs.appendChild(grad);
     const stroke = `url(#${gradId})`;
 
-    // [繪圖輔助] 畫一條線
     const drawLine = (ox, oy, width, color, opacity=1) => {
         const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
         l.setAttribute("x1", x1+ox); l.setAttribute("y1", y1+oy); 
@@ -2428,23 +2471,17 @@ function drawBond(b) {
         return l;
     };
 
-    // [繪製圓柱體] 包含底層顏色與頂層高光
     const drawCylinder = (ox, oy) => {
-        // 1. 底層顏色線 (粗)
         g.appendChild(drawLine(ox, oy, strokeW, stroke));
-        // 2. 頂層高光線 (細白線，模擬光澤)
         g.appendChild(drawLine(ox, oy, strokeW * 0.25, "#ffffff", 0.5));
     };
 
-    // --- 繪製邏輯 ---
     if (b.style === "double") {
-        // 雙鍵：稍微拉開間距
         const off = w * 0.38; 
         drawCylinder(px*off, py*off);  
         drawCylinder(-px*off, -py*off); 
     } 
     else if (b.style === "triple") {
-        // 參鍵：間距拉大
         const off = w * 0.75; 
         drawCylinder(0, 0);             
         drawCylinder(px*off, py*off);   
@@ -2457,35 +2494,48 @@ function drawBond(b) {
         g.appendChild(drawLine(-px*off, -py*off, strokeW, b.c1)); 
     } 
     else {
-        // 單鍵
         drawCylinder(0, 0); 
     }
     
     sceneRoot.appendChild(g);
 }
 
-// ========== [請替換 drawAtom] ==========
 function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("data-atom-idx", a.idx); 
     
-    // --- [電漿模式：緊實能量球] ---
+    // [應用透明度]
+    if (a.alpha < 1.0) {
+        g.setAttribute("opacity", a.alpha);
+    }
+
+    // [修改] 柔和光暈特效 (Soft Halo)
+    // 使用剛才在 renderScene 定義的 radialGradient
+    if (a.isHighlighted) {
+        const glowId = a.isHighlighted === "center" ? "highlight-glow-center" : "highlight-glow-neighbor";
+        
+        const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        halo.setAttribute("cx", a.px); 
+        halo.setAttribute("cy", a.py);
+        
+        // 設定光暈半徑：比原子大很多 (2.5倍)，製造擴散感
+        halo.setAttribute("r", a.r * a.scale * 2.5); 
+        
+        // 填入漸層
+        halo.setAttribute("fill", `url(#${glowId})`);
+        
+        // 不設邊框 (stroke)，純粹靠漸層製造光暈
+        
+        g.appendChild(halo);
+    }
+
     if (isPlasmaMode) {
         g.setAttribute("style", "mix-blend-mode: screen;"); 
-
         const baseR = a.r * a.scale;
-        
         const gasCloud = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        gasCloud.setAttribute("cx", a.px); 
-        gasCloud.setAttribute("cy", a.py);
-        
-        // [關鍵修正] 縮小範圍：從 3.0 改為 1.6
-        // 1.6倍足夠產生柔邊，但不會大到把隔壁原子吃掉
+        gasCloud.setAttribute("cx", a.px); gasCloud.setAttribute("cy", a.py);
         gasCloud.setAttribute("r", baseR * 1.6); 
-        
-        // 使用高濃度漸層
         gasCloud.setAttribute("fill", `url(#plasma-grad-${a.color.replace('#','')})`);
-        
         g.appendChild(gasCloud);
 
         const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -2498,7 +2548,6 @@ function drawAtom(a) {
         g.appendChild(txt);
 
     } else {
-        // --- [正常模式：維持原版] ---
         const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
         
         if (useGlow) {
@@ -3269,11 +3318,79 @@ function closeConfigModal() { const modal = document.getElementById('config-moda
 function checkAtomClick(screenX, screenY) {
     if (!currentMolecule || !currentMolecule.renderObjects) return;
     const bestMatch = findAtomByScreenPos(screenX, screenY);
+    
     if (bestMatch) {
-        showHybridInfo(bestMatch, screenX, screenY);
+        if (currentMolecule.isIonic) {
+            // [修改] 通用邏輯：檢查該原子是否有被標記為「代表性原子」
+            // 這樣不管是 NaCl (正中心) 還是 ZnS (內部某顆)，都由生成時決定
+            if (bestMatch.isRepresentative) {
+                // 開關邏輯
+                if (bestMatch.isHighlighted === "center") {
+                    clearHighlights();
+                } else {
+                    highlightNeighbors(bestMatch);
+                }
+            } else {
+                // 點到非代表性的邊緣原子 -> 清除高亮
+                clearHighlights();
+            }
+        } else {
+            // 一般分子
+            showHybridInfo(bestMatch, screenX, screenY);
+        }
     } else {
         hideHybridTooltip();
+        if (currentMolecule && currentMolecule.isIonic) clearHighlights();
     }
+}
+
+// [新增] 輔助函式：高亮鄰居
+function highlightNeighbors(centerAtom) {
+    // 1. 清除舊的高亮
+    currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
+    
+    // 2. 設定中心原子高亮 (黃色)
+    centerAtom.isHighlighted = "center"; 
+    
+    // 3. 尋找並設定鄰居高亮 (白色)
+    // 判斷標準：距離約等於 scale (80)
+    // 我們可以動態計算這個 scale，避免寫死
+    const thresholdMin = 110; // 略小於 80
+    const thresholdMax = 130; // 略大於 80
+    
+    let count = 0;
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type === 'atom' && obj !== centerAtom) {
+            const dx = obj.x - centerAtom.x;
+            const dy = obj.y - centerAtom.y;
+            const dz = obj.z - centerAtom.z;
+            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            
+            if (dist >= thresholdMin && dist <= thresholdMax) {
+                obj.isHighlighted = "neighbor";
+                count++;
+            }
+        }
+    });
+    
+    // 顯示提示文字
+    const tooltip = document.getElementById('hybrid-label');
+    if(tooltip) {
+        tooltip.innerHTML = `<div style="text-align:center;">
+            <span style="color:#facc15; font-weight:bold; font-size:1.2em;">${centerAtom.elem}</span>
+            <br>周圍配位數: <span style="color:#fff; font-weight:bold; font-size:1.4em;">${count}</span>
+        </div>`;
+        tooltip.classList.add('show');
+    }
+    
+    // 強制重繪
+    renderScene();
+}
+
+function clearHighlights() {
+    if(!currentMolecule) return;
+    currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
+    renderScene();
 }
 
 function findAtomByScreenPos(screenX, screenY) {
