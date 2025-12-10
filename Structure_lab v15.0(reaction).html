@@ -996,38 +996,26 @@ addMol("NO2|二氧化氮", "N", "sp²", ["角形","Bent"], "134°", "-11.2", "21
 addMol("N2O|一氧化二氮|笑氣", "N", "sp", ["直線型","Linear"], "180°", "-90.8", "-88.5", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-65,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:65,y:0,z:0}], [[0,1,"triple"],[0,2,"coordinate"]]);
 addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-164", "-152", [{elem:"N",x:-32,y:0,z:0,radical:true,lp3d:[{x:-1,y:1,z:0},{x:-1,y:-1,z:0.4},{x:-1,y:-1,z:-0.4}]},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]]);
 
-// --- 6. 離子與特殊無機分子 ---
-addMol("NO+|亞硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:-30,y:0,z:0,lpCount:1}, {elem:"O",x:30,y:0,z:0,lpCount:1}], [[0,1,"triple"]]);
-addMol("NO2+|硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:65,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
+// --- 6. 離子與特殊無機分子 (含共振結構) ---
 // --- SCN- 共振結構展示 (修改：以 N=C=S 為預設) ---
 addMol("SCN-|硫氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    // 1. [主要結構] N=C=S (負電荷在 N) 
-    // 把這個移到第一個位置，就會變成預設顯示
-    "SCN-|主要結構 (N=C=S)": { 
-        mp: "-", bp: "-", 
-        atoms: [
-            {elem:"C", x:0, y:0, z:0}, 
-            {elem:"N", x:-65, y:0, z:0, lpCount:2}, // N 有 2 對孤對電子 (5-4-2 = -1價)
-            {elem:"S", x:85, y:0, z:0, lpCount:2}   // S 有 2 對孤對電子 (6-4-2 = 0價)
-        ], 
-        bonds: [[0,1,"double"], [0,2,"double"]] 
-    },
-
-    // 2. [次要結構] N≡C-S (負電荷在 S)
-    "SCN-|次要結構 (N≡C-S)": { 
-        mp: "-", bp: "-", 
-        atoms: [
-            {elem:"C", x:0, y:0, z:0}, 
-            {elem:"N", x:-60, y:0, z:0, lpCount:1}, // N 有 1 對孤對電子 (5-6-2 = +1? 不，是5-2-3=0價)
-            {elem:"S", x:90, y:0, z:0, lpCount:3}   // S 有 3 對孤對電子 (6-2-6 = -1價)
-        ], 
-        bonds: [[0,1,"triple"], [0,2,"single"]] 
-    }
+    "SCN-|主要共振結構 (N=C=S)": { mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-65, y:0, z:0, lpCount:2},{elem:"S", x:85, y:0, z:0, lpCount:2}], bonds: [[0,1,"double"], [0,2,"double"]] },
+    "SCN-|次要共振結構 (N≡C-S)": { mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-60, y:0, z:0, lpCount:1}, {elem:"S", x:90, y:0, z:0, lpCount:3}], bonds: [[0,1,"triple"], [0,2,"single"]] }
 });
-
-addMol("N3-|疊氮酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:2}, {elem:"N",x:65,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
-addMol("OCN-|氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:2}, {elem:"O",x:65,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
-addMol("CNO-|雷酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:1}, {elem:"O",x:65,y:0,z:0,lpCount:3}], [[0,1,"triple"], [0,2]]);
+addMol("NO+|亞硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:-30,y:0,z:0,lpCount:1}, {elem:"O",x:30,y:0,z:0,lpCount:1}], [[0,1,"triple"]]);
+addMol("NO2+|硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:65,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
+addMol("N3-|疊氮酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
+    "N3-|主要共振結構 (N=N=N)": { atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"N",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] },
+    "N3-|主要共振結構 (N≡N-N)": { atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"N",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] }
+});
+addMol("OCN-|氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
+    "OCN-|主要共振結構 (N≡C-O)": { atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] },
+    "OCN-|次要共振結構 (N=C=O)": { atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] }
+});
+addMol("CNO-|雷酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
+    "CNO-|主要共振結構 (C≡N-O)": { atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] },
+    "CNO-|次要共振結構 (C=N=O)": { atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] }
+});
 addMol("HOCN|氰酸", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", "-86", "23.5", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:65,y:0,z:0,lpCount:1}, {elem:"O",x:-65,y:0,z:0,lpCount:2}, {elem:"H",x:-95,y:30,z:0}], [[0,1,"triple"], [0,2], [2,3]]);
 
 // --- 7. 擴大八隅體與複雜幾何構型 ---
