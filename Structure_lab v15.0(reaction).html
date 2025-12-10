@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.8 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.9 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -394,6 +394,25 @@
     .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
     .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
 
+/* --- [新增] 共振結構主題 (紫色系) --- */
+#variant-selector.resonance-theme { 
+    background: rgba(139, 92, 246, 0.05); 
+    border: 1px solid rgba(139, 92, 246, 0.3); 
+}
+#variant-selector.resonance-theme .variant-header { 
+    color: #a78bfa; /* 淺紫色 */
+}
+#variant-selector.resonance-theme .variant-option { 
+    color: #a78bfa; 
+}
+#variant-selector.resonance-theme .variant-option:hover { 
+    background: rgba(139, 92, 246, 0.15); 
+    color: #fff;
+}
+#variant-selector.resonance-theme input[type="radio"] {
+    accent-color: #8b5cf6; /* 紫色選框 */
+}
+
 </style>
 </head>
 <body>
@@ -531,9 +550,7 @@
 
 // 網站流量計數器
 <div style="display:none;">
-    <img id="site_counter_img" 
-         src="hits.sh/weiwei-molecular-lab.svg?label=Views&color=10b981&labelColor=2d3748" 
-         alt="Page Views">
+    <img src="https://hits.sh/weiwei-molecular-lab.svg?label=Views&color=10b981&labelColor=2d3748" alt="Page Views">
 </div>
 
 <script>
@@ -740,29 +757,38 @@ function addPairToDots(dotsArray, atom, vector) {
 const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, variants = null, desc = null) => {
     if (typeof MOLECULE_INDEX === 'undefined') MOLECULE_INDEX = {};
     if (typeof MOLECULE_DB === 'undefined') MOLECULE_DB = {};
+    
+    // 1. 處理主鍵 (例如 "SCN-")
     const keys = keysStr.split('|');
     const mainKey = keys[0].trim();
+    const mainKeyUpper = mainKey.toUpperCase();
     
-    // 建立主索引
-    keys.forEach(k => { MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; });
+    // 建立主索引：主鍵預設不指向任何特定變體 (variant: null)
+    // 這樣 loadMolecule 就會自動抓取列表中的「第一個」作為預設
+    keys.forEach(k => { 
+        MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; 
+    });
     
-    // 儲存基礎資料
     const baseData = { center, hybrid: `${hybrid} 混成 (${hybrid})`, shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, angle, mp: mp, bp: bp, atomsRaw: atoms, bondsRaw: bonds, desc: desc, fullKey: keysStr };
     
     if (variants) {
         baseData.variants = {};
         for (let vKeyRaw in variants) {
-            // [修正重點] 
-            // 以前是用 split('|')[0] 當 ID，這會導致相同分子式互相覆蓋。
-            // 現在改用 vKeyRaw (完整的 Key) 當作唯一 ID。
             const uniqueID = vKeyRaw; 
-            
             const vObj = variants[vKeyRaw];
             
-            // 處理搜尋索引 (讓使用者搜尋 "丙烯" 或 "C3H6" 都能找到)
+            // 2. 處理變體索引
             const vKeys = vKeyRaw.split('|');
             vKeys.forEach(vk => { 
-                MOLECULE_INDEX[vk.trim().toUpperCase()] = { key: mainKey, variant: uniqueID }; 
+                const cleanKey = vk.trim().toUpperCase();
+                
+                // [關鍵修正]：
+                // 如果這個變體的關鍵字 (如 "SCN-") 跟主鍵一樣，
+                // 為了避免後面的變體覆蓋掉主鍵的預設行為，我們「跳過」這個索引的更新。
+                // 這樣搜尋 "SCN-" 時，就會維持上面的 variant: null，系統就會乖乖選第一個。
+                if (cleanKey !== mainKeyUpper) {
+                    MOLECULE_INDEX[cleanKey] = { key: mainKey, variant: uniqueID }; 
+                }
             });
 
             baseData.variants[uniqueID] = { 
@@ -772,7 +798,7 @@ const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, var
                 mp: vObj.mp !== undefined ? vObj.mp : baseData.mp,
                 bp: vObj.bp !== undefined ? vObj.bp : baseData.bp,
                 desc: vObj.desc !== undefined ? vObj.desc : baseData.desc,
-                fullKey: vKeyRaw // 確保 UI 能抓到正確的顯示名稱
+                fullKey: vKeyRaw 
             };
         }
     }
@@ -970,7 +996,32 @@ addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-16
 // --- 6. 離子與特殊無機分子 ---
 addMol("NO+|亞硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:-30,y:0,z:0,lpCount:1}, {elem:"O",x:30,y:0,z:0,lpCount:1}], [[0,1,"triple"]]);
 addMol("NO2+|硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:65,y:0,z:0}], [[0,1,"double"],[0,2,"double"]]);
-addMol("SCN-|硫氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:1}, {elem:"S",x:80,y:0,z:0,lpCount:3}], [[0,1,"triple"],[0,2]]);
+// --- SCN- 共振結構展示 (修改：以 N=C=S 為預設) ---
+addMol("SCN-|硫氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
+    // 1. [主要結構] N=C=S (負電荷在 N) 
+    // 把這個移到第一個位置，就會變成預設顯示
+    "SCN-|主要結構 (N=C=S)": { 
+        mp: "-", bp: "-", 
+        atoms: [
+            {elem:"C", x:0, y:0, z:0}, 
+            {elem:"N", x:-65, y:0, z:0, lpCount:2}, // N 有 2 對孤對電子 (5-4-2 = -1價)
+            {elem:"S", x:85, y:0, z:0, lpCount:2}   // S 有 2 對孤對電子 (6-4-2 = 0價)
+        ], 
+        bonds: [[0,1,"double"], [0,2,"double"]] 
+    },
+
+    // 2. [次要結構] N≡C-S (負電荷在 S)
+    "SCN-|次要結構 (N≡C-S)": { 
+        mp: "-", bp: "-", 
+        atoms: [
+            {elem:"C", x:0, y:0, z:0}, 
+            {elem:"N", x:-60, y:0, z:0, lpCount:1}, // N 有 1 對孤對電子 (5-6-2 = +1? 不，是5-2-3=0價)
+            {elem:"S", x:90, y:0, z:0, lpCount:3}   // S 有 3 對孤對電子 (6-2-6 = -1價)
+        ], 
+        bonds: [[0,1,"triple"], [0,2,"single"]] 
+    }
+});
+
 addMol("N3-|疊氮酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:2}, {elem:"N",x:65,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
 addMol("OCN-|氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:2}, {elem:"O",x:65,y:0,z:0,lpCount:2}], [[0,1,"double"],[0,2,"double"]]);
 addMol("CNO-|雷酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:-65,y:0,z:0,lpCount:1}, {elem:"O",x:65,y:0,z:0,lpCount:3}], [[0,1,"triple"], [0,2]]);
@@ -1719,12 +1770,11 @@ function handleLoadBtn() {
     let rawVal = document.getElementById("formula-input").value;
     if (!rawVal) return;
 
-    // ========== [新增] 隱藏功能：查詢瀏覽人次 (Hits.sh 版本) ==========
+    // ========== [修正版] 隱藏功能：查詢瀏覽人次 ==========
     if (rawVal === "人次") {
         const subEl = document.getElementById("viewport-subtitle");
-        const sourceImg = document.getElementById("site_counter_img");
 
-        if (subEl && sourceImg) {
+        if (subEl) {
             subEl.style.display = "block";
             subEl.style.width = "fit-content";
             
@@ -1736,12 +1786,24 @@ function handleLoadBtn() {
             subEl.style.padding = "10px 20px";
             subEl.style.textAlign = "center";
             
-            // 複製圖片並放大顯示
-            const cloneImg = sourceImg.cloneNode(true);
-            cloneImg.style.height = "30px"; // 讓數字大一點
+            // 清空目前的內容
+            subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold;">👁️ 本站累積瀏覽人次</div>`;
             
-            subEl.innerHTML = `<div style="margin-bottom:5px; font-size:0.9rem; color:#ccc;">👁️ 本站累積瀏覽人次</div>`;
-            subEl.appendChild(cloneImg);
+            // [修正重點]：建立一個全新的圖片物件，並加入時間戳記防止快取
+            const newImg = new Image();
+            // 加上 &t=... 強制瀏覽器重新抓取最新數字
+            newImg.src = `https://hits.sh/weiwei-molecular-lab.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
+            newImg.alt = "載入中...";
+            newImg.style.height = "28px";
+            newImg.style.display = "block";
+            newImg.style.margin = "0 auto"; // 圖片置中
+
+            // 處理圖片載入錯誤 (例如被 AdBlock 擋住)
+            newImg.onerror = function() {
+                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(無法顯示：可能被廣告阻擋軟體攔截)</div>`;
+            };
+
+            subEl.appendChild(newImg);
             
             // 清除輸入框
             document.getElementById("formula-input").value = "";
@@ -1750,6 +1812,7 @@ function handleLoadBtn() {
     }
     // ===============================================
 
+    // 原本的分子載入邏輯
     let searchKey = rawVal.replace(/\s/g, '').toUpperCase();
     let target = MOLECULE_INDEX[searchKey];
     if (target) {
@@ -2078,12 +2141,23 @@ function processAtomsData(atomList, bondList, centerElem) {
 function updateVariantUI(key, activeVariant) {
     const rootData = MOLECULE_DB[key];
     variantSelector.innerHTML = ''; 
-    variantSelector.classList.remove('acid-theme');
+    
+    // 清除所有舊的主題 class
+    variantSelector.classList.remove('acid-theme', 'resonance-theme');
     
     if (rootData.variants) {
         variantSelector.style.display = 'block';
         
-        // 1. 判斷是否為酸類/離子系列
+        const variantKeys = Object.keys(rootData.variants);
+        
+        // --- 1. 判斷是否為「共振結構」 (優先權最高) ---
+        // 判斷依據：
+        // (1) 分子 Key 包含特定共振分子 (如 SCN, O3, NO2, 苯)
+        // (2) 變體名稱包含 "共振", "結構", "Structure"
+        const isResonance = key.includes("SCN") || key.includes("O3") || key.includes("NO2") || key.includes("Benzene") ||
+                            variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("結構") || vKey.includes("Structure"));
+
+        // --- 2. 判斷是否為「酸/離子解離」 ---
         const isAcidKey = key.includes("酸") || key.includes("Acid") || key.includes("COOH") || 
                           key.includes("H3PO") || key.includes("H2SO") || key.includes("H2S2O3") ||
                           key.includes("HNO") || key.includes("H2CO") || 
@@ -2091,24 +2165,32 @@ function updateVariantUI(key, activeVariant) {
                           key.includes("NH3") || key.includes("PH3") || 
                           key.includes("H2O") || key.includes("H2S");
         
-        const hasRadicalVariant = Object.keys(rootData.variants).some(vKey => 
+        const hasRadicalVariant = variantKeys.some(vKey => 
             vKey.includes("根") || vKey.includes("ate") || vKey.includes("ite") || vKey.includes("離子")
         );
         const isAcidSeries = isAcidKey || hasRadicalVariant;
         
-        if (isAcidSeries) {
-            variantSelector.classList.add('acid-theme');
-        }
-        
+        // --- 3. 設定標題與主題色 ---
         const hdr = document.createElement('div');
         hdr.className = 'variant-header';
-        if (isAcidSeries) {
+
+        if (isResonance) {
+            // [紫色] 共振結構
+            variantSelector.classList.add('resonance-theme');
+            hdr.textContent = '選擇共振結構 (Resonance):';
+        } else if (isAcidSeries) {
+            // [橘色] 酸鹼解離
+            variantSelector.classList.add('acid-theme');
             hdr.textContent = '選擇解離狀態 (分子/離子):';
         } else {
+            // [綠色] 預設 (同分異構物)
+            // 不加 class，維持 CSS 預設的綠色
             hdr.textContent = '選擇結構模式 (同分異構):';
         }
+        
         variantSelector.appendChild(hdr);
         
+        // --- 4. 產生選項 ---
         for (let vKey in rootData.variants) {
             const div = document.createElement('div');
             div.className = 'variant-option';
@@ -2119,24 +2201,20 @@ function updateVariantUI(key, activeVariant) {
             
             const span = document.createElement('span'); 
             
-            // ========== [關鍵修正] ==========
-            // 不直接使用 vKey (因為它可能被截斷了)，而是去拿資料裡的 fullKey
             const variantData = rootData.variants[vKey];
-            const fullKeyString = variantData.fullKey || vKey; // 如果沒有 fullKey 就用 vKey 當備案
-            
+            const fullKeyString = variantData.fullKey || vKey;
             const parts = fullKeyString.split('|');
             let labelText = "";
 
-            if (isAcidSeries) {
+            if (isAcidSeries && !isResonance) {
                 // 酸系列：強制顯示第 1 段 (化學式)
                 labelText = parts[0].trim();
             } else {
-                // 同分異構物：優先顯示第 2 段 (中文)，沒有則顯示第 1 段
+                // 共振或同分異構物：優先顯示第 2 段 (中文)，沒有則顯示第 1 段
                 labelText = parts.length > 1 ? parts[1].trim() : parts[0].trim();
             }
             
             span.innerHTML = ` ${formatFormula(labelText)}`; 
-            // ==============================
             
             div.appendChild(radio); div.appendChild(span);
             div.addEventListener('click', () => loadMolecule(key, vKey));
@@ -2146,6 +2224,8 @@ function updateVariantUI(key, activeVariant) {
         variantSelector.style.display = 'none';
     }
 }
+
+
 
 // ==========================================
 // 4. 渲染引擎
