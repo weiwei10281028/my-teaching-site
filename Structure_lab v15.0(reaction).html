@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.11 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.12 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -628,6 +628,7 @@ let isPlasmaMode = false; // [修復] 確保變數存在
   I-I       (50 + 50) * 1.0                  100
  ==========================================================================
 */
+
 
 const ELEMENT_PROPS = {
     // --- 第 1 週期 ---
@@ -1316,47 +1317,34 @@ addMol("BH4-|硼氫化離子", "B", "sp³", ["四面體","Tetrahedral"], "109.5�
 
 // --- 9. 酸根與含氧酸 ---
 addMol("H2SO4|硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "10.3", "337", [], [], {
-    "硫酸 H<sub>2</sub>SO<sub>4</sub>|H<sub>2</sub>SO<sub>4</sub>|硫酸": { mp: "10.3", bp: "337", desc: "<strong>硫酸</strong><br>強酸，兩個S=O鍵(可視為配位鍵)，兩個S-OH鍵。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
-    "硫酸氫根 HSO<sub>4</sub><sup>-</sup>|HSO<sub>4</sub><sup>-</sup>|硫酸氫根|HSO4-": { mp: "-", bp: "-", desc: "<strong>硫酸氫根</strong><br>帶-1價電荷，仍保有強酸性。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
-    "硫酸根 SO<sub>4</sub><sup>2-</sup>|SO<sub>4</sub><sup>2-</sup>|硫酸根|SO42-": { mp: "-", bp: "-", desc: "<strong>硫酸根</strong><br>正四面體結構，四個S-O鍵長相等。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]] }});
+    "H2SO4|硫酸": { mp: "10.3", bp: "337", desc: "<strong>硫酸</strong><br>強酸，兩個S=O鍵(可視為配位鍵)，兩個S-OH鍵。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
+    "HSO4-|硫酸氫根": { mp: "-", bp: "-", desc: "<strong>硫酸氫根</strong><br>帶-1價電荷，仍保有強酸性。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
+    "SO42-|硫酸根": { mp: "-", bp: "-", desc: "<strong>硫酸根</strong><br>正四面體結構，四個S-O鍵長相等。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]] }});
 
 addMol("H2SO3|亞硫酸系列", "S", "sp³", ["角錐形","Pyramidal"], "106°", "-", "不穩定", [], [], {
-    "亞硫酸 H<sub>2</sub>SO<sub>3</sub>|H<sub>2</sub>SO<sub>3</sub>|亞硫酸": { mp: "-", bp: "不穩定", desc: "<strong>亞硫酸</strong><br>S原子有一對孤對電子，不穩定，易分解為SO₂與水。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30},{elem:"H",x:-85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
-    "亞硫酸氫根 HSO<sub>3</sub><sup>-</sup>|HSO<sub>3</sub><sup>-</sup>|亞硫酸氫根|HSO3-": { mp: "-", bp: "-", desc: "<strong>亞硫酸氫根</strong><br>帶-1價電荷，具有還原性。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4]] },
-    "亞硫酸根 SO<sub>3</sub><sup>2-</sup>|SO<sub>3</sub><sup>2-</sup>|亞硫酸根|SO32-": { mp: "-", bp: "-", desc: "<strong>亞硫酸根</strong><br>三角錐結構，常見漂白劑。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30}], bonds: [[0,1,"double"],[0,2],[0,3]] }});
+    "H2SO3|亞硫酸": { mp: "-", bp: "不穩定", desc: "<strong>亞硫酸</strong><br>S原子有一對孤對電子，不穩定，易分解為SO₂與水。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30},{elem:"H",x:-85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
+    "HSO3-|亞硫酸氫根": { mp: "-", bp: "-", desc: "<strong>亞硫酸氫根</strong><br>帶-1價電荷，具有還原性。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4]] },
+    "SO32-|亞硫酸根": { mp: "-", bp: "-", desc: "<strong>亞硫酸根</strong><br>三角錐結構，常見漂白劑。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30}], bonds: [[0,1,"double"],[0,2],[0,3]] }});
 
 addMol("H2S2O3|硫代硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-78 (分解)", "-", [], [], {
-    "硫代硫酸 H<sub>2</sub>S<sub>2</sub>O<sub>3</sub>|H<sub>2</sub>S<sub>2</sub>O<sub>3</sub>|硫代硫酸": { mp: "-78", bp: "-", desc: "<strong>硫代硫酸</strong><br>不穩定酸，中心S連接另一個外圍S原子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
-    "硫代硫酸氫根 HS<sub>2</sub>O<sub>3</sub><sup>-</sup>|HS<sub>2</sub>O<sub>3</sub><sup>-</sup>|硫代硫酸氫根|HS2O3-": { mp: "-", bp: "-", desc: "<strong>硫代硫酸氫根</strong><br>失去一個質子，結構類似硫酸氫根但一個O被S取代。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
-    "硫代硫酸根 S<sub>2</sub>O<sub>3</sub><sup>2-</sup>|S<sub>2</sub>O<sub>3</sub><sup>2-</sup>|硫代硫酸根|S2O32-": { mp: "-", bp: "-", desc: "<strong>硫代硫酸根</strong><br>海波(大蘇打)的陰離子，用於定影液。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4]] }});
+    "H2S2O3|硫代硫酸": { mp: "-78", bp: "-", desc: "<strong>硫代硫酸</strong><br>不穩定酸，中心S連接另一個外圍S原子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
+    "HS2O3-|硫代硫酸氫根": { mp: "-", bp: "-", desc: "<strong>硫代硫酸氫根</strong><br>失去一個質子，結構類似硫酸氫根但一個O被S取代。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
+    "S2O32-|硫代硫酸根": { mp: "-", bp: "-", desc: "<strong>硫代硫酸根</strong><br>海波(大蘇打)的陰離子，用於定影液。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4]] }});
 
 addMol("H2CO3|碳酸系列", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-", "不穩定", [], [], {
-    "碳酸 H<sub>2</sub>CO<sub>3</sub>|H<sub>2</sub>CO<sub>3</sub>|碳酸": { mp: "-", bp: "不穩定", desc: "<strong>碳酸</strong><br>二質子弱酸，存在於汽水中。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
-    "碳酸氫根 HCO<sub>3</sub><sup>-</sup>|HCO<sub>3</sub><sup>-</sup>|碳酸氫根|HCO3-": { mp: "-", bp: "-", desc: "<strong>碳酸氫根</strong><br>帶-1價電荷，失去一個質子，常見於小蘇打。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] },
-    "碳酸根 CO<sub>3</sub><sup>2-</sup>|CO<sub>3</sub><sup>2-</sup>|碳酸根|CO32-": { mp: "-", bp: "-", desc: "<strong>碳酸根</strong><br>帶-2價電荷，三個C-O鍵長相等(共振)。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2],[0,3]] }});
+    "H2CO3|碳酸": { mp: "-", bp: "不穩定", desc: "<strong>碳酸</strong><br>二質子弱酸，存在於汽水中。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
+    "HCO3-|碳酸氫根": { mp: "-", bp: "-", desc: "<strong>碳酸氫根</strong><br>帶-1價電荷，失去一個質子，常見於小蘇打。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] },
+    "CO32-|碳酸根": { mp: "-", bp: "-", desc: "<strong>碳酸根</strong><br>帶-2價電荷，三個C-O鍵長相等(共振)。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2],[0,3]] }});
 
 addMol("HNO2|亞硝酸系列", "N", "sp²", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
-    "亞硝酸 HNO<sub>2</sub>|HNO<sub>2</sub>|亞硝酸": { mp: "-", bp: "不穩定", desc: "<strong>亞硝酸</strong><br>弱酸，N原子上有一對孤對電子。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[2,3]] },
-    "亞硝酸根 NO<sub>2</sub><sup>-</sup>|NO<sub>2</sub><sup>-</sup>|亞硝酸根|NO2-": { mp: "-", bp: "-", desc: "<strong>亞硝酸根</strong><br>常見的防腐劑成分(亞硝酸鹽)，結構呈V型。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2]] }});
+    "HNO2|亞硝酸": { mp: "-", bp: "不穩定", desc: "<strong>亞硝酸</strong><br>弱酸，N原子上有一對孤對電子。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[2,3]] },
+    "NO2-|亞硝酸根": { mp: "-", bp: "-", desc: "<strong>亞硝酸根</strong><br>常見的防腐劑成分(亞硝酸鹽)，結構呈V型。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2]] }});
 
 addMol("HNO3|硝酸系列", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [], [], {
-    "硝酸 HNO<sub>3</sub>|HNO<sub>3</sub>|硝酸": { mp: "-42", bp: "83", desc: `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心氮原子採取 <strong>sp² 混成</strong>，分子呈現<strong>平面結構</strong>。在硝酸根離子 (NO₃⁻) 中存在<strong>共振結構</strong>，使得三個 N-O 鍵的鍵長均等，介於單鍵與雙鍵之間，結構相當穩定。<br>
-            <span class="highlight-title">2. 物理性質：</span>純硝酸為無色液體，但在光照或受熱下極易分解產生二氧化氮 (NO₂)，氣體溶於酸中會使溶液呈現黃褐色。易溶於水且極易揮發。<br>
-            <span class="highlight-title">3. 化學性質：</span>為強酸及<strong>強氧化劑</strong>。與金屬反應時，通常<strong>不產生氫氣</strong>，而是依濃度不同生成 NO₂ (濃硝酸) 或 NO (稀硝酸)。若不慎接觸皮膚，會與蛋白質發生<strong>黃蛋白反應</strong>，使皮膚變黃且難以洗去。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 肥料工業 (氮肥)：</span>工業上最重要的用途是與氨氣反應製造<strong>硝酸銨</strong>。它是農業不可或缺的優良氮肥來源，能有效促進植物枝葉生長。<br>
-            <span class="highlight-title">2. 國防工業 (炸藥)：</span>硝酸是製造炸藥的核心原料，著名的 TNT (黃色炸藥) 與硝化甘油皆由此製成。透過<strong>硝化反應</strong>將硝基 (-NO₂) 引入有機分子中，能使物質變得極不穩定且具爆炸性。<br>
-            <span class="highlight-title">3. 冶金 (王水溶金)：</span>將濃硝酸與濃鹽酸以 1:3 體積比混合即為<strong>王水</strong>。利用硝酸強大的氧化力將金原子氧化，再由鹽酸提供氯離子形成穩定的<strong>四氯金錯離子 ([AuCl₄]⁻)</strong>，成功溶解最不活潑的黃金。
-        </div>
-    </div>`,atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]] },
-    "硝酸根 NO<sub>3</sub><sup>-</sup>|NO<sub>3</sub><sup>-</sup>|硝酸根|NO3-": { mp: "-", bp: "-", desc: "<strong>硝酸根</strong><br>具有對稱的平面結構，因共振效應，三個N-O鍵長相等，N原子上無孤對電子。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] }});
+    "HNO3|硝酸": { mp: "-42", bp: "83", desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>中心氮原子採取 <strong>sp² 混成</strong>，分子呈現<strong>平面結構</strong>。在硝酸根離子 (NO₃⁻) 中存在<strong>共振結構</strong>，使得三個 N-O 鍵的鍵長均等。<br><span class="highlight-title">2. 物理性質：</span>純硝酸為無色液體，易揮發。光照或受熱下極易分解產生紅棕色二氧化氮 (NO₂)。<br><span class="highlight-title">3. 化學性質：</span>為強酸及<strong>強氧化劑</strong>。與金屬反應時通常不產生氫氣。接觸皮膚會發生<strong>黃蛋白反應</strong>。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 生活應用</div><div class="info-body"><span class="highlight-title">1. 肥料與炸藥：</span>製造硝酸銨(氮肥)、TNT(黃色炸藥)與硝化甘油的核心原料。<br><span class="highlight-title">2. 王水：</span>濃硝酸與濃鹽酸 (1:3) 混合可溶解黃金。</div></div>`, atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]] },
+    "NO3-|硝酸根": { mp: "-", bp: "-", desc: "<strong>硝酸根</strong><br>具有高度對稱的平面結構，因共振效應，三個N-O鍵長相等 (-1價)，是許多鹽類的重要組成部分。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
+    "KNO3|硝酸鉀": { mp: "334", bp: "400 (分解)", desc: "<strong>硝酸鉀 (KNO₃)</strong><br>俗稱<strong>硝石</strong>。易溶於水，是<strong>黑火藥</strong>的三大成分之一 (作為氧化劑提供氧氣)，也廣泛用於製作複合肥料、食品防腐劑與玻璃強化。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"K",x:0,y:0,z:85,r:22,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
+    "NaNO3|硝酸鈉": { mp: "308", bp: "380 (分解)", desc: "<strong>硝酸鈉 (NaNO₃)</strong><br>俗稱<strong>智利硝石</strong>。具有強烈的吸濕性，容易潮解。主要用於製造氮肥、炸藥，以及在玻璃工業中作為消泡劑與脫色劑。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"Na",x:0,y:0,z:80,r:15,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] }});
 
 addMol("H3PO4|磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [], [], {
     "H3PO4|磷酸": {mp: "42.4", bp: "213 (分解)", desc: "<strong>磷酸 (Phosphoric Acid)</strong><br>三質子酸，含三個 -OH 基團與一個 P=O 雙鍵。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55},{elem:"H",x:0,y:-10,z:-90}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6],[4,7]] },
@@ -2371,25 +2359,16 @@ function updateVariantUI(key, activeVariant) {
         
         const variantKeys = Object.keys(rootData.variants);
         
-        // --- 1. 判斷是否為「共振結構」 (優先權最高) ---
-        // 判斷依據：
-        // (1) 分子 Key 包含特定共振分子 (如 SCN, O3, NO2, 苯)
-        // (2) 變體名稱包含 "共振", "結構", "Structure"
-        const isResonance = key.includes("SCN") || key.includes("O3") || key.includes("NO2") || key.includes("Benzene") ||
-                            variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("結構") || vKey.includes("Structure"));
+        // --- 1. 判斷是否為「共振結構」 (紫色) ---
+        // 邏輯：變體名稱中明確包含 "共振" 或 "Resonance"
+        const isResonance = variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("Resonance"));
 
-        // --- 2. 判斷是否為「酸/離子解離」 ---
-        const isAcidKey = key.includes("酸") || key.includes("Acid") || key.includes("COOH") || 
-                          key.includes("H3PO") || key.includes("H2SO") || key.includes("H2S2O3") ||
-                          key.includes("HNO") || key.includes("H2CO") || 
-                          key.includes("HClO") || key.includes("HBrO") || key.includes("HIO") ||
-                          key.includes("NH3") || key.includes("PH3") || 
-                          key.includes("H2O") || key.includes("H2S");
-        
-        const hasRadicalVariant = variantKeys.some(vKey => 
-            vKey.includes("根") || vKey.includes("ate") || vKey.includes("ite") || vKey.includes("離子")
-        );
-        const isAcidSeries = isAcidKey || hasRadicalVariant;
+        // --- 2. 判斷是否為「分子/離子/鹽類」 (橘色) ---
+        // 邏輯：主鍵包含 "酸" 或變體包含 "根", "離子", "鹽", "ate", "ite"
+        // (HNO3 會落入此區，因為主鍵有"硝酸"，變體有"硝酸根"、"硝酸鉀"(鹽))
+        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || 
+                                 key.includes("H2O") || key.includes("NH3") || // 特殊無機系列
+                                 variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽") || vKey.includes("Salt") || vKey.includes("Ion"));
         
         // --- 3. 設定標題與主題色 ---
         const hdr = document.createElement('div');
@@ -2399,13 +2378,12 @@ function updateVariantUI(key, activeVariant) {
             // [紫色] 共振結構
             variantSelector.classList.add('resonance-theme');
             hdr.textContent = '選擇共振結構 (Resonance):';
-        } else if (isAcidSeries) {
-            // [橘色] 酸鹼解離
+        } else if (isAcidSaltSeries) {
+            // [橘色] 分子/離子/鹽類 (包含酸解離)
             variantSelector.classList.add('acid-theme');
-            hdr.textContent = '選擇解離狀態 (分子/離子):';
+            hdr.textContent = '選擇解離狀態 (分子/離子/鹽類):';
         } else {
             // [綠色] 預設 (同分異構物)
-            // 不加 class，維持 CSS 預設的綠色
             hdr.textContent = '選擇結構模式 (同分異構):';
         }
         
@@ -2427,13 +2405,18 @@ function updateVariantUI(key, activeVariant) {
             const parts = fullKeyString.split('|');
             let labelText = "";
 
-            if (isAcidSeries && !isResonance) {
-                // 酸系列：強制顯示第 1 段 (化學式)
-                labelText = parts[0].trim();
-            } else {
-                // 共振或同分異構物：優先顯示第 2 段 (中文)，沒有則顯示第 1 段
-                labelText = parts.length > 1 ? parts[1].trim() : parts[0].trim();
-            }
+            // 顯示邏輯：
+            // 如果是酸/鹽系列，且不是共振，通常顯示化學式比較清楚 (例如 HNO3, NO3-, KNO3)
+            // 但如果變體名稱有中文 (例如 "硝酸鉀")，顯示中文也很好
+            // 這裡維持通用邏輯：如果有 | 分隔，優先顯示第 2 段 (中文)，否則顯示第 1 段
+            // 對於 HNO3 系列：
+            // "硝酸 HNO3|HNO3|..." -> 顯示 HNO3 (第一段有化學式)
+            // 您的 Key 設為 "硝酸 HNO3|..." -> 會顯示 HNO3
+            // 建議統一一下 Key 的寫法，或者這裡直接取第 0 段 (通常是化學式+中文)
+            
+            // 為了讓您的選單整齊，我讓它優先抓取「包含化學式的名稱」
+            // 您的 Key 格式是 "中文 化學式|..."
+            labelText = parts[0].trim(); 
             
             span.innerHTML = ` ${formatFormula(labelText)}`; 
             
@@ -3750,4 +3733,3 @@ function setupMobilePanel() {
 </script>
 </body>
 </html>
-
