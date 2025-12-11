@@ -284,59 +284,62 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-    /* --- 手機版 GPU 加速優化樣式 --- */
+/* --- 手機版極速優化 (iOS Native Like) --- */
 @media (max-width: 768px), (max-height: 500px) { 
     .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
     .controls-container { display: none !important; } 
-    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
+    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     
     .controls-area {
-        position: absolute; 
+        position: fixed; 
         left: 0; 
         bottom: 0; 
         width: 100%; 
         
-        /* 【關鍵 1】固定高度，不再動態伸縮 */
-        height: 85vh; /* 面板最大高度設為螢幕的 85% */
-        max-height: 85vh;
+        /* 【關鍵】高度固定，不要變動它，變動高度會卡頓 */
+        height: 80vh; 
         
+        background-color: rgba(26, 26, 26, 0.96); 
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         border-radius: 20px 20px 0 0; 
-        border-top: 1px solid rgba(255,255,255,0.2); 
-        background-color: rgba(26, 26, 26, 0.95); 
-        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+        z-index: 100;
         
         display: flex; flex-direction: column;
-        padding: 0; z-index: 100; 
-        box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+        padding: 0;
 
-        /* 【關鍵 2】預設往下推，只露出 40px 把手 */
-        /* 計算公式：100%高度 - 40px把手 = 藏起來的部分 */
+        /* 【關鍵】預設位置：往下推 (100% - 40px把手高度) */
         transform: translateY(calc(100% - 40px));
         
-        /* 【關鍵 3】開啟 GPU 硬體加速 */
+        /* 啟用硬體加速 */
         will-change: transform;
-        transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        /* 這是放手後的彈力曲線，模仿 iOS */
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     }
 
     #mobile-panel-handle { 
-        display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
+        display: flex; width: 100%; height: 40px; 
+        justify-content: center; align-items: center;
         cursor: grab; flex-shrink: 0; 
-        background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-        border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
-        touch-action: none; 
+        /* 把手背景 */
+        background: rgba(255,255,255,0.02);
+        border-bottom: 1px solid rgba(255,255,255,0.05); 
+        touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
     }
     
     .handle-bar {
-        width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
-        border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        width: 36px; height: 5px; background-color: rgba(255, 255, 255, 0.3); 
+        border-radius: 10px;
     }
     
     .controls-content { 
-        padding: 15px 20px 80px 20px; /* 底部加多一點空間 */
-        overflow-y: auto; 
         flex: 1; 
-        -webkit-overflow-scrolling: touch; 
+        padding: 20px; 
+        overflow-y: auto; 
         overscroll-behavior: contain;
+        /* 增加底部空間，避免被 iPhone Home Bar 擋住 */
+        padding-bottom: 80px; 
     }
 }
 
@@ -2789,123 +2792,135 @@ function hideHybridTooltip() {
 function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
+    
     if(!handle || !panel || window.innerWidth > 768) return;
 
-    let startY = 0;
-    let currentTransY = 0;
-    let isDragging = false;
-    let hasMoved = false;
-
-    // 定義常數
-    const HANDLE_HEIGHT = 40;
-    const PANEL_MAX_HEIGHT = window.innerHeight * 0.85; // 對應 CSS 的 85vh
+    // --- 設定參數 ---
+    const HANDLE_H = 40; // 把手高度
+    const PANEL_H = window.innerHeight * 0.8; // 面板總高度 (對應 CSS 的 80vh)
     
-    // 計算 TranslateY 的錨點 (數值越大越往下)
-    // 全關：推下去，只留把手
-    const POS_CLOSED = PANEL_MAX_HEIGHT - HANDLE_HEIGHT; 
-    // 半開：推下去一半 (例如畫面的一半位置)
-    const POS_MID = PANEL_MAX_HEIGHT - (window.innerHeight * 0.45); 
-    // 全開：不推 (0)
-    const POS_OPEN = 0;
+    // 定義三個錨點位置 (translateY 的值，越小越上面)
+    // 0 = 全開 (拉到頂)
+    const POS_OPEN = 0; 
+    // 半開 = 面板露出約 45% 螢幕高度的位置
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.45); 
+    // 全關 = 推到底，只留把手
+    const POS_CLOSE = PANEL_H - HANDLE_H;
 
-    // 初始狀態設為全關
-    let currentState = POS_CLOSED;
+    // 狀態變數
+    let startY = 0;
+    let startTransY = POS_CLOSE; // 起始位移量
+    let currentTransY = POS_CLOSE; // 當前位移量
+    let startTime = 0; // 用來計算滑動速度
+    let isDragging = false;
 
-    // 防止面板內容誤觸
-    panel.addEventListener('click', (e) => {
-        if (hasMoved) { e.preventDefault(); e.stopPropagation(); return false; }
-    }, true);
+    // 預設位置
+    panel.style.transform = `translateY(${POS_CLOSE}px)`;
 
-    // 1. 手指按下
+    // 1. 觸摸開始
     handle.addEventListener('touchstart', (e) => {
-        if(e.cancelable) e.preventDefault(); 
-        e.stopPropagation(); 
+        // 阻止誤觸背景
+        if(e.cancelable) e.preventDefault();
+        e.stopPropagation();
 
         isDragging = true;
-        hasMoved = false; 
         startY = e.touches[0].clientY;
-        
-        // 取得當前的 Y 軸偏移量
-        // 如果是剛載入，就設為關閉狀態
+        startTime = new Date().getTime();
+
+        // 讀取當前面板位置 (從 CSS transform 矩陣中解析)
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
-        currentTransY = matrix.m42; 
+        startTransY = matrix.m42; 
 
-        // ★關鍵：關閉動畫，實現 0 延遲跟手
-        panel.style.transition = 'none'; 
+        // ★★★ 關鍵：手指按住時，關閉過渡動畫，實現 0 延遲跟手 ★★★
+        panel.style.transition = 'none';
     }, {passive: false});
 
-    // 2. 手指拖曳
+    // 2. 觸摸移動
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        if(e.cancelable) e.preventDefault();
-        
-        const touchY = e.touches[0].clientY;
-        const deltaY = touchY - startY; // 往下拉是正，往上拉是負
-        
-        if (Math.abs(deltaY) > 5) hasMoved = true;
-        
-        // 計算新的 Y 位置 (原本位置 + 移動量)
-        let newY = currentTransY + deltaY;
+        if(e.cancelable) e.preventDefault(); // 防止畫面捲動
 
-        // 邊界阻尼 (橡皮筋效果)
-        // 如果拉超過頂部 ( < 0 )
-        if (newY < POS_OPEN) {
-            newY = newY * 0.3; // 阻力很大
-        }
-        // 如果拉超過底部 ( > POS_CLOSED )
-        else if (newY > POS_CLOSED) {
-            newY = POS_CLOSED + (newY - POS_CLOSED) * 0.3;
-        }
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // 計算新位置 (跟隨手指)
+        let newY = startTransY + deltaY;
 
-        // 直接使用 GPU 位移，極度滑順
+        // 阻尼效果 (拉過頭時給點阻力，像橡皮筋)
+        if (newY < POS_OPEN) newY = newY * 0.4; // 拉太高
+        if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; // 拉太低
+
         panel.style.transform = `translateY(${newY}px)`;
-
+        currentTransY = newY;
     }, {passive: false});
 
-    // 3. 手指放開
+    // 3. 觸摸結束 (磁吸歸位)
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
         e.stopPropagation();
 
-        // 恢復 iPhone 風格的彈性動畫
-        panel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        // ★★★ 關鍵：放手後，開啟 iOS 風格彈性動畫 ★★★
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
 
-        // 讀取最終放手的位置
-        const style = window.getComputedStyle(panel);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        const finalY = matrix.m42;
-        
-        let targetY = POS_CLOSED;
+        // 計算滑動速度 (判斷是否為「甩」的動作)
+        const endTime = new Date().getTime();
+        const duration = endTime - startTime;
+        const moveDist = currentTransY - startTransY;
+        const velocity = Math.abs(moveDist) / duration; // px per ms
 
-        // 簡單的點擊判定 (沒移動)
-        if (!hasMoved) {
-            // 如果現在是關的，就開到中間；否則關起來
-            // 容許一點誤差
-            targetY = (finalY >= POS_CLOSED - 10) ? POS_MID : POS_CLOSED;
-        } 
-        else {
-            // 拖曳判定 (依據位置吸附)
-            // 越上面數值越小
-            if (finalY < POS_MID - 50) {
-                targetY = POS_OPEN; // 全開
-            } else if (finalY < POS_CLOSED - 50) {
-                targetY = POS_MID; // 半開
+        let targetY = POS_CLOSE;
+
+        // 判定邏輯：
+        // 1. 如果是快速滑動 (甩動 velocity > 0.3)
+        if (velocity > 0.3) {
+            if (moveDist < 0) { 
+                // 往上甩 -> 判斷去全開還是半開
+                // 如果是從底部甩上來，先去半開；如果已經在半開上面，就去全開
+                targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
             } else {
-                targetY = POS_CLOSED; // 關閉
+                // 往下甩 -> 關閉
+                targetY = POS_CLOSE;
             }
+        } 
+        // 2. 如果是慢速拖曳 (看位置)
+        else {
+            // 找出離當前位置最近的錨點
+            const distToOpen = Math.abs(currentTransY - POS_OPEN);
+            const distToHalf = Math.abs(currentTransY - POS_HALF);
+            const distToClose = Math.abs(currentTransY - POS_CLOSE);
+
+            // 比較哪個距離最近
+            if (distToOpen < distToHalf && distToOpen < distToClose) targetY = POS_OPEN;
+            else if (distToHalf < distToClose) targetY = POS_HALF;
+            else targetY = POS_CLOSE;
         }
 
-        // 執行彈跳
+        // 執行歸位
         panel.style.transform = `translateY(${targetY}px)`;
-        currentState = targetY; // 更新狀態
-
-        setTimeout(() => { hasMoved = false; }, 100);
     });
 
-    // 額外攔截
-    handle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
+    // 額外保險：點擊把手時切換狀態 (如果只是輕輕點一下)
+    handle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 判斷當前大約位置
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const currentY = matrix.m42;
+
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        
+        // 如果是關閉狀態 -> 開到半開
+        if (currentY >= POS_CLOSE - 10) {
+            panel.style.transform = `translateY(${POS_HALF}px)`;
+        } else {
+            // 否則 -> 關閉
+            panel.style.transform = `translateY(${POS_CLOSE}px)`;
+        }
+    });
 }
 </script>
 </body>
