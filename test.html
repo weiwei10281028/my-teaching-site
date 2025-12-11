@@ -285,78 +285,57 @@
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
     /* --- 手機版優化樣式 (IG 風格) --- */
-@media (max-width: 768px), (max-height: 500px) {
-    .app-container {
-        flex-direction: column;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        position: relative;
-    }
+/* --- 手機版樣式 (還原優化版) --- */
+@media (max-width: 768px), (max-height: 500px) { 
+    .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    .controls-container { display: none !important; } 
+    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
     
-    .controls-container { display: none !important; }
-    
-    .viewport-area {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-    }
-
     .controls-area {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        /* 設定最大展開高度，例如螢幕的 85% */
-        height: 85vh; 
-        max-height: 85vh;
+        position: absolute; bottom: 0; left: 0; width: 100%; 
+        /* 預設高度 */
+        height: 40px; 
+        max-height: 90vh; 
+        min-height: 40px;
         
-        background-color: var(--panel-glass);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px 20px 0 0;
-        border-top: 1px solid rgba(255,255,255,0.15);
-        box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
-        z-index: 100;
+        border-radius: 20px 20px 0 0; 
+        border-top: 1px solid rgba(255,255,255,0.2); border-left: none;
+        background-color: rgba(26, 26, 26, 0.95); 
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
         
-        display: flex;
-        flex-direction: column;
+        padding: 0; z-index: 100; 
+        box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
+        display: flex; flex-direction: column;
         
-        /* 關鍵優化：預設往下推，只露出 60px 的把手 */
-        /* 使用 transform 也就是 GPU 加速 */
-        transform: translateY(calc(100% - 60px)); 
-        will-change: transform; /* 告訴瀏覽器準備硬體加速 */
-        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* IG 風格的回彈曲線 */
+        /* 關鍵：預設有彈性動畫 (放手時用) */
+        transition: height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        will-change: height; /* 效能優化 */
     }
 
-    /* 當面板被展開時的樣式 (透過 JS 切換 class) */
-    .controls-area.panel-open {
-        transform: translateY(0%);
+    /* 關鍵：當手指拖曳時，移除動畫，讓它瞬間反應，才不會有延遲感 */
+    .controls-area.is-dragging {
+        transition: none !important;
     }
 
-    #mobile-panel-handle {
-        display: flex;
-        width: 100%;
-        height: 60px; /* 增加觸控區域高度 */
-        justify-content: center;
-        align-items: center;
-        cursor: grab;
-        flex-shrink: 0;
-        /* 確保把手背景有一點透明度 */
-        background: linear-gradient(to bottom, rgba(30,30,30,0.9), rgba(30,30,30,0.0)); 
-        touch-action: none; /* 禁止瀏覽器預設滑動行為 */
+    #mobile-panel-handle { 
+        display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
+        cursor: grab; flex-shrink: 0; 
+        background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+        border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
+        touch-action: none; /* 禁止瀏覽器預設捲動 */
     }
-
+    
     .handle-bar {
-        width: 40px;
-        height: 5px;
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
+        width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
+        border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
-
-    .controls-content {
-        flex: 1;
-        overflow-y: auto; /* 內容可捲動 */
-        padding: 0 25px 40px 25px; /* 底部留白 */
-        overscroll-behavior: contain; /* 防止拉過頭動到背景 */
+    
+    .controls-content { 
+        padding: 15px 20px 40px 20px; 
+        overflow-y: auto; 
+        flex: 1; 
+        -webkit-overflow-scrolling: touch; 
+        overscroll-behavior: contain; 
     }
 }
     .hybrid-tooltip {
@@ -2809,136 +2788,87 @@ function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
     
-    // 如果不是手機版或找不到元素，就跳過
-    if (!handle || !panel || window.innerWidth > 768) return;
+    // 1. 檢查元素是否存在，且是否為手機版
+    if(!handle || !panel || window.innerWidth > 768) return;
 
     let startY = 0;
-    let currentY = 0;
+    let startHeight = 0;
     let isDragging = false;
-    
-    // 面板狀態
-    let isOpen = false;
-    
-    // 取得面板總高度 (例如 85vh 的像素值)
-    const getPanelHeight = () => panel.getBoundingClientRect().height;
-    // 露出的把手高度
-    const PEEK_HEIGHT = 60; 
+    let isClick = true; // 用來分辨是點擊還是拖曳
 
-    // 1. 開始觸摸
+    // 定義高度錨點 (Snap Points)
+    const MIN_H = 40; // 收起 (只露把手)
+    const MID_H = window.innerHeight * 0.45; // 半開 (適合操作)
+    const MAX_H = window.innerHeight * 0.90; // 全開
+
+    // A. 手指按下 (Touch Start)
     handle.addEventListener('touchstart', (e) => {
         isDragging = true;
+        isClick = true; 
         startY = e.touches[0].clientY;
         
-        // 取得當前的 translateY 值 (為了連續拖曳)
-        const style = window.getComputedStyle(panel);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        currentY = matrix.m42;
-
-        // 拖曳時要關閉過渡動畫，不然會遲鈍
+        // 取得當前高度
+        startHeight = panel.getBoundingClientRect().height;
+        
+        // 【關鍵優化】手指按下去的瞬間，把動畫關掉！
+        // 這樣面板才會「瞬間」跟著手指動，不會有延遲感
         panel.style.transition = 'none';
-    }, { passive: false });
+    }, {passive: false});
 
-    // 2. 拖曳中
+    // B. 手指移動 (Touch Move)
     window.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
+        if(!isDragging) return;
         
-        // 防止網頁背景跟著動
+        // 防止拉面板時，背後的 3D 畫面跟著動
         if(e.cancelable) e.preventDefault();
-
-        const touchY = e.touches[0].clientY;
-        const deltaY = touchY - startY;
         
-        // 計算新的位置 (基於上次的位置 + 移動量)
-        // 邏輯：原本位置 + 移動量
-        // 但因為我們是用 transform: translateY 控制
-        // 0 是全開，(Height - 60) 是全關
+        const currentY = e.touches[0].clientY;
+        const deltaY = startY - currentY; // 往上拉是正值，往下拉是負值
         
-        let newTranslateY;
+        // 如果移動超過 5px，就視為拖曳，不是點擊
+        if (Math.abs(deltaY) > 5) isClick = false;
         
-        if (isOpen) {
-            // 如果原本是開的，deltaY > 0 是往下拉
-            newTranslateY = deltaY; 
-        } else {
-            // 如果原本是關的，deltaY < 0 是往上拉
-            // 初始位置是 (Height - 60)
-            const closedY = getPanelHeight() - PEEK_HEIGHT;
-            newTranslateY = closedY + deltaY;
-        }
+        // 計算新高度
+        let newHeight = startHeight + deltaY;
 
-        // 邊界限制 (不要讓它飛太高或鑽太低)
-        const maxTranslate = getPanelHeight() - PEEK_HEIGHT;
-        if (newTranslateY < 0) newTranslateY = 0; // 不能超過頂部
-        if (newTranslateY > maxTranslate) newTranslateY = maxTranslate; // 不能超過底部
+        // 簡單的邊界限制 (不讓它拉過頭太誇張)
+        if (newHeight < MIN_H) newHeight = MIN_H;
+        if (newHeight > MAX_H) newHeight = MAX_H;
 
-        // 套用位置 (GPU加速)
-        panel.style.transform = `translateY(${newTranslateY}px)`;
+        // 直接設定高度 (因為上面關閉了 transition，這裡會非常滑順)
+        panel.style.height = `${newHeight}px`;
+    }, {passive: false});
 
-    }, { passive: false });
-
-    // 3. 放開手指
+    // C. 手指放開 (Touch End)
     window.addEventListener('touchend', (e) => {
-        if (!isDragging) return;
+        if(!isDragging) return;
         isDragging = false;
-
-        // 恢復彈性動畫
-        panel.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-
-        // 讀取最終位置，決定要彈去哪
-        const style = window.getComputedStyle(panel);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        const finalY = matrix.m42;
-        const threshold = getPanelHeight() / 3; // 拉超過 1/3 就觸發切換
-
-        // 判斷邏輯
-        if (isOpen) {
-            // 原本是開的，如果往下拉超過閾值，就關起來
-            if (finalY > threshold) {
-                closePanel();
-            } else {
-                openPanel(); // 否則彈回全開
-            }
-        } else {
-            // 原本是關的，如果往上拉的位置高於 (底部 - 閾值)
-            // 注意：Y越小越上面。
-            const closedY = getPanelHeight() - PEEK_HEIGHT;
-            if (finalY < (closedY - threshold)) {
-                openPanel();
-            } else {
-                closePanel(); // 否則彈回全關
-            }
-        }
-    });
-
-    // 點擊把手切換 (如果沒有拖曳，只是點一下)
-    let isClick = true;
-    handle.addEventListener('touchmove', () => { isClick = false; });
-    handle.addEventListener('touchstart', () => { isClick = true; });
-    handle.addEventListener('touchend', () => {
-        if (isClick && !isDragging) {
-            if (isOpen) closePanel(); else openPanel();
-        }
-    });
-
-    function openPanel() {
-        panel.style.transform = `translateY(0px)`;
-        panel.classList.add('panel-open');
-        isOpen = true;
-    }
-
-    function closePanel() {
-        // 計算關閉時的 Y 值 (總高度 - 露出的高度)
-        const closedY = getPanelHeight() - PEEK_HEIGHT;
-        panel.style.transform = `translateY(${closedY}px)`;
-        panel.classList.remove('panel-open');
-        isOpen = false;
         
-        // 收起鍵盤 (如果有輸入框聚焦)
-        document.activeElement?.blur();
-    }
-    
-    // 初始化位置 (確保載入時在正確位置)
-    // 延遲一下確保高度計算正確
-    setTimeout(closePanel, 100);
+        // 【關鍵優化】手放開後，把彈性動畫加回去
+        // 這樣它自動彈跳到定位時，才會像 IG 一樣滑順
+        panel.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+
+        const currentH = panel.getBoundingClientRect().height;
+        let targetH = MIN_H;
+
+        if (isClick) {
+            // 如果只是輕輕點一下 (沒拖曳)
+            // 邏輯：如果是關的就開到中間，否則就關起來
+            targetH = (currentH < 100) ? MID_H : MIN_H;
+        } else {
+            // 如果是拖曳後放手 (智慧判定)
+            if (currentH > window.innerHeight * 0.65) {
+                targetH = MAX_H; // 拉很高 -> 全開
+            } else if (currentH > window.innerHeight * 0.25) {
+                targetH = MID_H; // 拉超過 1/4 -> 半開
+            } else {
+                targetH = MIN_H; // 拉太少 -> 關閉
+            }
+        }
+
+        // 執行彈跳動畫
+        panel.style.height = `${targetH}px`;
+    });
 }
 </script>
 </body>
