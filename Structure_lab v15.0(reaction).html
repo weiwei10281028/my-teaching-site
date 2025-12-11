@@ -1593,180 +1593,147 @@ function renderScene(time = 0) {
     sceneRoot.innerHTML = "";
     if(!currentMolecule) return;
     
-    // --- 定義濾鏡與漸層 ---
+    // --- 1. 定義濾鏡與漸層 ---
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 
-    // 邊框發光濾鏡 (Box Glow)
+    // A. 邊框發光
     const boxGlowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
     boxGlowFilter.setAttribute("id", "box-glow");
-    boxGlowFilter.innerHTML = `
-        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-        <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-    `;
+    boxGlowFilter.innerHTML = `<feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
     defs.appendChild(boxGlowFilter);
 
-    if (!isMobile && !isPlasmaMode) {
-        const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-        filter.setAttribute("id", "soft-glow");
-        filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />';
-        defs.appendChild(filter);
-    }
-    const whiteGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-    whiteGlow.setAttribute("id", "mobile-glow-white");
-    whiteGlow.setAttribute("cx", "50%"); whiteGlow.setAttribute("cy", "50%"); whiteGlow.setAttribute("r", "50%");
-    whiteGlow.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="30%" stop-color="#ffffff" stop-opacity="0.6"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>`;
-    defs.appendChild(whiteGlow);
-
-    const highlightCenter = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-    highlightCenter.setAttribute("id", "highlight-glow-center");
-    highlightCenter.setAttribute("cx", "50%"); highlightCenter.setAttribute("cy", "50%"); highlightCenter.setAttribute("r", "50%");
-    highlightCenter.innerHTML = `<stop offset="0%" stop-color="#FFD700" stop-opacity="0.8"/><stop offset="40%" stop-color="#FFD700" stop-opacity="0.4"/><stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>`;
-    defs.appendChild(highlightCenter);
-
-    const highlightNeighbor = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-    highlightNeighbor.setAttribute("id", "highlight-glow-neighbor");
-    highlightNeighbor.setAttribute("cx", "50%"); highlightNeighbor.setAttribute("cy", "50%"); highlightNeighbor.setAttribute("r", "50%");
-    highlightNeighbor.innerHTML = `<stop offset="0%" stop-color="#00FFFF" stop-opacity="0.8"/><stop offset="40%" stop-color="#00FFFF" stop-opacity="0.4"/><stop offset="100%" stop-color="#00FFFF" stop-opacity="0"/>`;
-    defs.appendChild(highlightNeighbor);
-
+    // B. 原子立體漸層
     const usedColors = new Set();
     currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
     usedColors.forEach(color => {
         const cleanColor = color.replace('#','');
         const atomGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
         atomGrad.setAttribute("id", `atom-grad-${cleanColor}`);
-        atomGrad.setAttribute("cx", "50%"); atomGrad.setAttribute("cy", "50%"); 
-        atomGrad.setAttribute("r", "50%"); atomGrad.setAttribute("fx", "35%"); atomGrad.setAttribute("fy", "35%");
+        atomGrad.setAttribute("cx", "35%"); atomGrad.setAttribute("cy", "35%"); atomGrad.setAttribute("r", "60%");
         let highlight = "#FFFFFF"; let baseColor = color; let shadowColor = adjustColor(color, -80); 
-        atomGrad.innerHTML = `<stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/><stop offset="15%" stop-color="${adjustColor(color, 60)}" stop-opacity="1"/><stop offset="50%" stop-color="${baseColor}" stop-opacity="1"/><stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>`;
+        atomGrad.innerHTML = `<stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/><stop offset="40%" stop-color="${baseColor}" stop-opacity="1"/><stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>`;
         defs.appendChild(atomGrad);
-        
-        if (isMobile && !isPlasmaMode) {
-             const mobileGlowGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-            mobileGlowGrad.setAttribute("id", `mobile-glow-${cleanColor}`);
-            mobileGlowGrad.setAttribute("cx", "50%"); mobileGlowGrad.setAttribute("cy", "50%"); mobileGlowGrad.setAttribute("r", "50%");
-            mobileGlowGrad.innerHTML = `<stop offset="0%" stop-color="${color}" stop-opacity="0.6"/><stop offset="65%" stop-color="${color}" stop-opacity="0.4"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>`;
-            defs.appendChild(mobileGlowGrad);
-        }
-        if (isPlasmaMode) {
-            const plasmaGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
-            plasmaGrad.setAttribute("id", `plasma-grad-${cleanColor}`);
-            plasmaGrad.setAttribute("cx", "50%"); plasmaGrad.setAttribute("cy", "50%"); plasmaGrad.setAttribute("r", "50%");
-            plasmaGrad.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="25%" stop-color="${color}" stop-opacity="0.9"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>`;
-            defs.appendChild(plasmaGrad);
-        }
     });
+
+    // C. 軌域專用漸層 (P=綠, D=橘)
+    const orbGradP = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    orbGradP.setAttribute("id", "grad-orb-p");
+    orbGradP.setAttribute("cx", "30%"); orbGradP.setAttribute("cy", "30%"); orbGradP.setAttribute("r", "80%");
+    orbGradP.innerHTML = `<stop offset="0%" stop-color="#34D399" stop-opacity="0.95"/><stop offset="60%" stop-color="#059669" stop-opacity="0.9"/><stop offset="100%" stop-color="#064E3B" stop-opacity="0.9"/>`;
+    defs.appendChild(orbGradP);
+
+    const orbGradD = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    orbGradD.setAttribute("id", "grad-orb-d");
+    orbGradD.setAttribute("cx", "30%"); orbGradD.setAttribute("cy", "30%"); orbGradD.setAttribute("r", "80%");
+    orbGradD.innerHTML = `<stop offset="0%" stop-color="#FBBF24" stop-opacity="0.95"/><stop offset="60%" stop-color="#D97706" stop-opacity="0.9"/><stop offset="100%" stop-color="#78350F" stop-opacity="0.9"/>`;
+    defs.appendChild(orbGradD);
+
     sceneRoot.appendChild(defs);
 
+    // --- 2. 投影與物件收集 ---
     const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
-    const renderList = [];
     const isAnyHighlighted = currentMolecule.renderObjects.some(o => o.isHighlighted);
+    const renderList = [];
+    
+    // ★ 關鍵修復：建立原子索引對照表 (解決鍵結消失問題) ★
+    // Map<originalIndex, ProjectedAtomObject>
+    const atomMap = new Map();
 
-    // 處理晶胞邊框 (Box)
-    if (currentMolecule.boxData) {
-        const { x, y, z } = currentMolecule.boxData;
-        const corners = [
-            {x:x[0], y:y[0], z:z[0]}, {x:x[1], y:y[0], z:z[0]}, {x:x[1], y:y[1], z:z[0]}, {x:x[0], y:y[1], z:z[0]},
-            {x:x[0], y:y[0], z:z[1]}, {x:x[1], y:y[0], z:z[1]}, {x:x[1], y:y[1], z:z[1]}, {x:x[0], y:y[1], z:z[1]}
-        ];
-        const edges = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6], [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]];
-        edges.forEach(edge => {
-            const p1 = project(corners[edge[0]]);
-            const p2 = project(corners[edge[1]]);
-            const avgScale = (p1.scale + p2.scale) / 2;
+    currentMolecule.renderObjects.forEach((obj, i) => {
+        // A. 軌域花瓣 (Lobe)
+        if (obj.isLobe) {
+            const pStart = project(obj);
+            const pEnd = project(obj.end);
+            const avgZ = (pStart.z + pEnd.z) / 2;
             renderList.push({ 
-                type: "boxLine", 
-                // [修正] Z軸減去 30，讓線條在深度排序時「退後」，這樣原子就會蓋住它
-                z: (p1.z + p2.z)/2 - 30, 
-                x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, 
-                alpha: isAnyHighlighted ? 0.1 : 0.8,
-                scale: avgScale 
+                type: 'lobe', z: avgZ, pStart, pEnd, 
+                colorType: obj.colorType, scale: pStart.scale 
             });
-        });
-    }
-
-    // 處理額外虛線 (Extra Lines)
-    if (currentMolecule.extraLines) {
-        currentMolecule.extraLines.forEach(l => {
-            const p1 = project(l.start);
-            const p2 = project(l.end);
-            const avgScale = (p1.scale + p2.scale) / 2;
-            renderList.push({ 
-                type: "boxLine", 
-                // [修正] 同樣減去 30，解決穿刺閃爍
-                z: (p1.z + p2.z)/2 - 30, 
-                x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, 
-                alpha: isAnyHighlighted ? 0.1 : 0.5,
-                scale: avgScale
+            return;
+        }
+        
+        // B. 座標軸向量 (Axis)
+        if (obj.isAxis) {
+            const pStart = project(obj);
+            const pEnd = project(obj.end);
+            const avgZ = (pStart.z + pEnd.z) / 2;
+            renderList.push({
+                type: 'axisVector', z: avgZ, pStart, pEnd, 
+                label: obj.label, scale: pStart.scale
             });
-        });
-    }
+            return;
+        }
 
-    // 處理原子
-    const projectedObjects = currentMolecule.renderObjects.map((obj, i) => {
+        // C. 電子與原子
+        if (obj.type === 'electron' && !showLPs) return;
+
         const p = project(obj);
         let alpha = 1.0;
         if (isAnyHighlighted) {
             if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
             else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
         }
-        return { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha };
-    });
-    const atomProjections = projectedObjects.filter(o => o.type === 'atom');
 
-    // 處理鍵結
-    currentMolecule.bonds3D.forEach((bond, index) => { 
-        const a1 = atomProjections[bond[0]];
-        const a2 = atomProjections[bond[1]];
-        if (!a1 || !a2) return;
+        const renderObj = { 
+            ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha, z: p.z 
+        };
         
-        let drawStyle = "single";
-        let c1 = a1.color, c2 = a2.color;
-        let bondOpacity = (bond[3] !== undefined) ? bond[3] : (isPlasmaMode ? 0.3 : 1);
-        
-        let bondAlpha = 1.0;
-        if (isAnyHighlighted) {
-            // [修正] 嚴格判斷：只有連接「中心」和「鄰居」的線才顯示
-            // 鄰居之間的線 (neighbor-neighbor) 會被隱藏
-            const connectedToCenter = 
-                (a1.isHighlighted === 'center' && a2.isHighlighted === 'neighbor') ||
-                (a2.isHighlighted === 'center' && a1.isHighlighted === 'neighbor');
-                
-            if (connectedToCenter) bondAlpha = 1.0;
-            else bondAlpha = 0.05; // 變得很淡
+        renderList.push(renderObj);
+
+        // 如果是原子，存入 Map 供鍵結使用
+        if (obj.type === 'atom') {
+            atomMap.set(obj.originalIndex, renderObj);
         }
+    });
 
-        if (bond[2] === "double") drawStyle = "double";
-        else if (bond[2] === "triple") drawStyle = "triple";
-        else if (bond[2] === "coordinate") { drawStyle = "single"; c2 = c1; } 
-        else if (bond[2] === "coordinate_triple") { drawStyle = "coordinate_triple"; }
+    // --- 3. 鍵結生成 (使用 Map 確保準確) ---
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach((bond, index) => { 
+            const idx1 = bond[0]; 
+            const idx2 = bond[1];
+            
+            // 從 Map 中取得對應的原子投影物件
+            const a1 = atomMap.get(idx1);
+            const a2 = atomMap.get(idx2);
 
-        renderList.push({ 
-            type: "bond", z: (a1.pz+a2.pz)/2, 
-            x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, 
-            r1: a1.r*a1.scale, r2: a2.r*a2.scale,
-            style: drawStyle, scale: (a1.scale+a2.scale)/2, 
-            c1: c1, c2: c2, bondIdx: index,
-            opacity: bondOpacity,
-            alpha: bondAlpha 
+            if (!a1 || !a2) return; // 若找不到原子則跳過
+
+            let drawStyle = "single";
+            if (bond[2] === "double") drawStyle = "double";
+            else if (bond[2] === "triple") drawStyle = "triple";
+            else if (bond[2] === "coordinate") drawStyle = "single";
+            else if (bond[2] === "coordinate_triple") drawStyle = "coordinate_triple";
+
+            let bondAlpha = 1.0;
+            if (isAnyHighlighted) {
+                const connectedToCenter = 
+                    (a1.isHighlighted === 'center' && a2.isHighlighted === 'neighbor') ||
+                    (a2.isHighlighted === 'center' && a1.isHighlighted === 'neighbor');
+                if (!connectedToCenter) bondAlpha = 0.05;
+            }
+
+            renderList.push({ 
+                type: "bond", z: (a1.pz + a2.pz) / 2, 
+                x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, 
+                r1: a1.r * a1.scale, r2: a2.r * a2.scale,
+                style: drawStyle, scale: (a1.scale + a2.scale) / 2, 
+                c1: a1.color, c2: a2.color, bondIdx: index,
+                opacity: 1, alpha: bondAlpha 
+            });
         });
-    });
+    }
 
-    projectedObjects.forEach(obj => {
-        if (obj.type === 'electron' && !showLPs) return;
-        if (obj.type !== 'bond') renderList.push({ ...obj, z: obj.pz });
-    });
-
+    // --- 4. 排序並繪製 ---
     renderList.sort((a,b) => a.z - b.z).forEach(obj => {
         if (obj.type === "bond") drawBond(obj);
         else if (obj.type === "atom") drawAtom(obj);
+        else if (obj.type === "lobe") drawLobe(obj);
+        else if (obj.type === "axisVector") drawAxisVector(obj);
         else if (obj.type === "electron") drawElectron(obj);
         else if (obj.type === "boxLine") drawBoxLine(obj);
     });
 }
+
 
 // 1. 繪製晶胞邊框 (發光科技感)
 function drawBoxLine(l) {
@@ -2321,6 +2288,100 @@ function setupInteractions() {
 
     setupMobilePanel();
 }
+
+// 繪製水滴狀花瓣 (Bezier Curve)
+function drawLobe(lobe) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const x1 = lobe.pStart.x; const y1 = lobe.pStart.y;
+    const x2 = lobe.pEnd.x;   const y2 = lobe.pEnd.y;
+    
+    const dx = x2 - x1; const dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 1) return;
+
+    const width = 45 * lobe.scale; 
+    const nx = -dy / len; const ny = dx / len; 
+
+    const midX = x1 + dx * 0.6; const midY = y1 + dy * 0.6;
+    const cp1x = midX + nx * width; const cp1y = midY + ny * width;
+    const cp2x = midX - nx * width; const cp2y = midY - ny * width;
+
+    const d = `M ${x1} ${y1} Q ${cp1x} ${cp1y} ${x2} ${y2} Q ${cp2x} ${cp2y} ${x1} ${y1} Z`;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    
+    const fillUrl = (lobe.colorType === 'd') ? "url(#grad-orb-d)" : "url(#grad-orb-p)";
+    path.setAttribute("fill", fillUrl);
+    path.setAttribute("stroke", (lobe.colorType === 'd') ? "#B45309" : "#047857");
+    path.setAttribute("stroke-width", "1");
+    path.setAttribute("opacity", "0.9"); 
+
+    g.appendChild(path);
+    sceneRoot.appendChild(g);
+}
+
+// ★ 新版：高質感金屬軸 (銀灰軸身 + 白色文字 + 無凸點箭頭) ★
+function drawAxisVector(axis) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const x1 = axis.pStart.x; const y1 = axis.pStart.y;
+    const x2 = axis.pEnd.x;   const y2 = axis.pEnd.y;
+
+    const dx = x2 - x1; const dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len <= 0) return;
+
+    // 單位向量
+    const ux = dx/len; const uy = dy/len;
+    
+    // 箭頭尺寸
+    const arrowSize = 10 * axis.scale;
+    
+    // 計算線段終點 (停在箭頭底部，避免圓頭凸出)
+    const lineEndX = x2 - ux * (arrowSize - 2); 
+    const lineEndY = y2 - uy * (arrowSize - 2);
+
+    // 1. 畫線 (銀灰色，平頭 Butt Cap)
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+    line.setAttribute("x2", lineEndX); line.setAttribute("y2", lineEndY);
+    line.setAttribute("stroke", "#B0B0B0"); // 金屬銀灰
+    line.setAttribute("stroke-width", 2.5 * axis.scale);
+    line.setAttribute("stroke-linecap", "butt"); // ★ 關鍵：平頭，消除凸點
+    g.appendChild(line);
+
+    // 2. 畫箭頭 (三角形)
+    const bx = x2 - ux * arrowSize;
+    const by = y2 - uy * arrowSize;
+    const vx = -uy * arrowSize * 0.5;
+    const vy = ux * arrowSize * 0.5;
+
+    const pTip = `${x2},${y2}`;
+    const pLeft = `${bx + vx},${by + vy}`;
+    const pRight = `${bx - vx},${by - vy}`;
+
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    polygon.setAttribute("points", `${pTip} ${pLeft} ${pRight}`);
+    polygon.setAttribute("fill", "#B0B0B0"); // 同色箭頭
+    g.appendChild(polygon);
+
+    // 3. 畫文字 (純白 XYZ)
+    if (axis.label) {
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        // 文字位置往外推
+        text.setAttribute("x", x2 + ux * 18 * axis.scale);
+        text.setAttribute("y", y2 + uy * 18 * axis.scale);
+        text.setAttribute("fill", "#FFFFFF"); // ★ 純白文字
+        text.setAttribute("font-size", 16 * axis.scale);
+        text.setAttribute("font-weight", "bold");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.style.textShadow = "0 0 3px #000000"; // 加一點陰影讓白色更清楚
+        text.textContent = axis.label;
+        g.appendChild(text);
+    }
+    sceneRoot.appendChild(g);
+}
+
 
 
 function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
