@@ -284,32 +284,61 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-    @media (max-width: 768px), (max-height: 500px) { 
-        .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
-        .controls-container { display: none !important; } 
-        .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
-        .controls-area {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            height: 40vh; max-height: 95vh; min-height: 30px;
-            border-radius: 20px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.2); border-left: none;
-            background-color: rgba(26, 26, 26, 0.95); backdrop-filter: blur(10px);
-            padding: 0; z-index: 100; box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
-            display: flex; flex-direction: column;
-        }
-        #mobile-panel-handle { 
-            display: flex; width: 100%; height: 30px; justify-content: center; align-items: center;
-            cursor: grab; flex-shrink: 0; 
-            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-            border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
-            touch-action: none; 
-        }
-        .handle-bar {
-            width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
-            border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: all 0.2s ease;
-        }
-        #mobile-panel-handle:active .handle-bar { background-color: rgba(255, 255, 255, 0.8); width: 55px; }
-        .controls-content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: 40px; }
+    /* --- 手機版 GPU 加速優化樣式 --- */
+@media (max-width: 768px), (max-height: 500px) { 
+    .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    .controls-container { display: none !important; } 
+    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
+    
+    .controls-area {
+        position: absolute; 
+        left: 0; 
+        bottom: 0; 
+        width: 100%; 
+        
+        /* 【關鍵 1】固定高度，不再動態伸縮 */
+        height: 85vh; /* 面板最大高度設為螢幕的 85% */
+        max-height: 85vh;
+        
+        border-radius: 20px 20px 0 0; 
+        border-top: 1px solid rgba(255,255,255,0.2); 
+        background-color: rgba(26, 26, 26, 0.95); 
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        
+        display: flex; flex-direction: column;
+        padding: 0; z-index: 100; 
+        box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+
+        /* 【關鍵 2】預設往下推，只露出 40px 把手 */
+        /* 計算公式：100%高度 - 40px把手 = 藏起來的部分 */
+        transform: translateY(calc(100% - 40px));
+        
+        /* 【關鍵 3】開啟 GPU 硬體加速 */
+        will-change: transform;
+        transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
+
+    #mobile-panel-handle { 
+        display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
+        cursor: grab; flex-shrink: 0; 
+        background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+        border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
+        touch-action: none; 
+    }
+    
+    .handle-bar {
+        width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
+        border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .controls-content { 
+        padding: 15px 20px 80px 20px; /* 底部加多一點空間 */
+        overflow-y: auto; 
+        flex: 1; 
+        -webkit-overflow-scrolling: touch; 
+        overscroll-behavior: contain;
+    }
+}
 
     .hybrid-tooltip {
         position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
@@ -2760,105 +2789,123 @@ function hideHybridTooltip() {
 function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
-    
-    // 1. 檢查元素是否存在，且是否為手機版
     if(!handle || !panel || window.innerWidth > 768) return;
 
     let startY = 0;
-    let startHeight = 0;
+    let currentTransY = 0;
     let isDragging = false;
-    let isClick = true; // 用來分辨是點擊還是拖曳
+    let hasMoved = false;
 
-    // 定義高度錨點 (Snap Points)
-    const MIN_H = 40; // 收起 (只露把手)
-    const MID_H = window.innerHeight * 0.45; // 半開 (適合操作)
-    const MAX_H = window.innerHeight * 0.90; // 全開
+    // 定義常數
+    const HANDLE_HEIGHT = 40;
+    const PANEL_MAX_HEIGHT = window.innerHeight * 0.85; // 對應 CSS 的 85vh
+    
+    // 計算 TranslateY 的錨點 (數值越大越往下)
+    // 全關：推下去，只留把手
+    const POS_CLOSED = PANEL_MAX_HEIGHT - HANDLE_HEIGHT; 
+    // 半開：推下去一半 (例如畫面的一半位置)
+    const POS_MID = PANEL_MAX_HEIGHT - (window.innerHeight * 0.45); 
+    // 全開：不推 (0)
+    const POS_OPEN = 0;
 
-    // A. 手指按下 (Touch Start)
+    // 初始狀態設為全關
+    let currentState = POS_CLOSED;
+
+    // 防止面板內容誤觸
+    panel.addEventListener('click', (e) => {
+        if (hasMoved) { e.preventDefault(); e.stopPropagation(); return false; }
+    }, true);
+
+    // 1. 手指按下
     handle.addEventListener('touchstart', (e) => {
-        // ★★★ 關鍵修正：阻止事件穿透到下層 ★★★
         if(e.cancelable) e.preventDefault(); 
         e.stopPropagation(); 
 
         isDragging = true;
-        isClick = true; 
+        hasMoved = false; 
         startY = e.touches[0].clientY;
         
-        // 取得當前高度
-        startHeight = panel.getBoundingClientRect().height;
-        
-        // 移除過渡動畫，讓反應即時
-        panel.style.transition = 'none';
+        // 取得當前的 Y 軸偏移量
+        // 如果是剛載入，就設為關閉狀態
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        currentTransY = matrix.m42; 
+
+        // ★關鍵：關閉動畫，實現 0 延遲跟手
+        panel.style.transition = 'none'; 
     }, {passive: false});
 
-    // B. 手指移動 (Touch Move)
+    // 2. 手指拖曳
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        
-        // 阻止背景捲動
         if(e.cancelable) e.preventDefault();
         
-        const currentY = e.touches[0].clientY;
-        const deltaY = startY - currentY; // 往上拉是正值
+        const touchY = e.touches[0].clientY;
+        const deltaY = touchY - startY; // 往下拉是正，往上拉是負
         
-        // 如果移動超過 5px，就視為拖曳，不是點擊
-        if (Math.abs(deltaY) > 5) isClick = false;
+        if (Math.abs(deltaY) > 5) hasMoved = true;
         
-        // 計算新高度
-        let newHeight = startHeight + deltaY;
+        // 計算新的 Y 位置 (原本位置 + 移動量)
+        let newY = currentTransY + deltaY;
 
-        // 邊界阻尼 (拉超過極限時變難拉)
-        if (newHeight < MIN_H) {
-            newHeight = MIN_H + (newHeight - MIN_H) * 0.3;
-        } else if (newHeight > MAX_H) {
-            newHeight = MAX_H + (newHeight - MAX_H) * 0.3;
+        // 邊界阻尼 (橡皮筋效果)
+        // 如果拉超過頂部 ( < 0 )
+        if (newY < POS_OPEN) {
+            newY = newY * 0.3; // 阻力很大
+        }
+        // 如果拉超過底部 ( > POS_CLOSED )
+        else if (newY > POS_CLOSED) {
+            newY = POS_CLOSED + (newY - POS_CLOSED) * 0.3;
         }
 
-        // 使用 requestAnimationFrame 保持滑順
-        requestAnimationFrame(() => {
-            panel.style.height = `${newHeight}px`;
-        });
+        // 直接使用 GPU 位移，極度滑順
+        panel.style.transform = `translateY(${newY}px)`;
+
     }, {passive: false});
 
-    // C. 手指放開 (Touch End)
+    // 3. 手指放開
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
-        
-        // ★★★ 關鍵修正：放手時也阻止事件擴散 ★★★
         e.stopPropagation();
 
-        // 加回彈性動畫
-        panel.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+        // 恢復 iPhone 風格的彈性動畫
+        panel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-        const currentH = panel.getBoundingClientRect().height;
-        let targetH = MIN_H;
+        // 讀取最終放手的位置
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const finalY = matrix.m42;
+        
+        let targetY = POS_CLOSED;
 
-        if (isClick) {
-            // 如果只是輕輕點一下 (沒拖曳)
-            // 邏輯：如果是關的就開到中間，否則就關起來
-            targetH = (currentH < 100) ? MID_H : MIN_H;
-        } else {
-            // 如果是拖曳後放手 (智慧判定)
-            if (currentH > window.innerHeight * 0.65) {
-                targetH = MAX_H; // 拉很高 -> 全開
-            } else if (currentH > window.innerHeight * 0.25) {
-                targetH = MID_H; // 拉超過 1/4 -> 半開
+        // 簡單的點擊判定 (沒移動)
+        if (!hasMoved) {
+            // 如果現在是關的，就開到中間；否則關起來
+            // 容許一點誤差
+            targetY = (finalY >= POS_CLOSED - 10) ? POS_MID : POS_CLOSED;
+        } 
+        else {
+            // 拖曳判定 (依據位置吸附)
+            // 越上面數值越小
+            if (finalY < POS_MID - 50) {
+                targetY = POS_OPEN; // 全開
+            } else if (finalY < POS_CLOSED - 50) {
+                targetY = POS_MID; // 半開
             } else {
-                targetH = MIN_H; // 拉太少 -> 關閉
+                targetY = POS_CLOSED; // 關閉
             }
         }
 
-        // 執行彈跳動畫
-        panel.style.height = `${targetH}px`;
+        // 執行彈跳
+        panel.style.transform = `translateY(${targetY}px)`;
+        currentState = targetY; // 更新狀態
+
+        setTimeout(() => { hasMoved = false; }, 100);
     });
 
-    // ★★★ 額外保險：攔截滑鼠點擊事件 ★★★
-    // 防止某些瀏覽器將 touch 轉換為 click 穿透下去
-    handle.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    });
+    // 額外攔截
+    handle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
 }
 </script>
 </body>
