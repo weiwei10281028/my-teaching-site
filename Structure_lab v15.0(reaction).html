@@ -2933,17 +2933,17 @@ function setupMobilePanel() {
     const PANEL_H = window.innerHeight * 0.8; 
     
     const POS_OPEN = 0; 
-    const POS_HALF = PANEL_H - (window.innerHeight * 0.45); 
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.3); 
     const POS_CLOSE = PANEL_H - HANDLE_H;
 
     let startY = 0;
-    let startTransY = POS_CLOSE;
-    let currentTransY = POS_CLOSE;
+    let startTransY = POS_HALF;
+    let currentTransY = POS_HALF;
     let startTime = 0;
     let isDragging = false;
 
     // 預設位置
-    panel.style.transform = `translateY(${POS_CLOSE}px)`;
+    panel.style.transform = `translateY(${POS_HALF}px)`; 
 
     // 1. 觸摸開始
     handle.addEventListener('touchstart', (e) => {
