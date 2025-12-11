@@ -284,60 +284,33 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-    /* --- 手機版優化樣式 (IG 風格) --- */
-/* --- 手機版樣式 (還原優化版) --- */
-@media (max-width: 768px), (max-height: 500px) { 
-    .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
-    .controls-container { display: none !important; } 
-    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
-    
-    .controls-area {
-        position: absolute; bottom: 0; left: 0; width: 100%; 
-        /* 預設高度 */
-        height: 40px; 
-        max-height: 90vh; 
-        min-height: 40px;
-        
-        border-radius: 20px 20px 0 0; 
-        border-top: 1px solid rgba(255,255,255,0.2); border-left: none;
-        background-color: rgba(26, 26, 26, 0.95); 
-        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        
-        padding: 0; z-index: 100; 
-        box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
-        display: flex; flex-direction: column;
-        
-        /* 關鍵：預設有彈性動畫 (放手時用) */
-        transition: height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-        will-change: height; /* 效能優化 */
+    @media (max-width: 768px), (max-height: 500px) { 
+        .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+        .controls-container { display: none !important; } 
+        .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
+        .controls-area {
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            height: 40vh; max-height: 95vh; min-height: 30px;
+            border-radius: 20px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.2); border-left: none;
+            background-color: rgba(26, 26, 26, 0.95); backdrop-filter: blur(10px);
+            padding: 0; z-index: 100; box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
+            display: flex; flex-direction: column;
+        }
+        #mobile-panel-handle { 
+            display: flex; width: 100%; height: 30px; justify-content: center; align-items: center;
+            cursor: grab; flex-shrink: 0; 
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
+            touch-action: none; 
+        }
+        .handle-bar {
+            width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
+            border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: all 0.2s ease;
+        }
+        #mobile-panel-handle:active .handle-bar { background-color: rgba(255, 255, 255, 0.8); width: 55px; }
+        .controls-content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: 40px; }
     }
 
-    /* 關鍵：當手指拖曳時，移除動畫，讓它瞬間反應，才不會有延遲感 */
-    .controls-area.is-dragging {
-        transition: none !important;
-    }
-
-    #mobile-panel-handle { 
-        display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
-        cursor: grab; flex-shrink: 0; 
-        background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-        border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
-        touch-action: none; /* 禁止瀏覽器預設捲動 */
-    }
-    
-    .handle-bar {
-        width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
-        border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-    
-    .controls-content { 
-        padding: 15px 20px 40px 20px; 
-        overflow-y: auto; 
-        flex: 1; 
-        -webkit-overflow-scrolling: touch; 
-        overscroll-behavior: contain; 
-    }
-}
     .hybrid-tooltip {
         position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
         background: rgba(0, 0, 0, 0.9); color: #fff; padding: 15px 25px;
@@ -2803,6 +2776,10 @@ function setupMobilePanel() {
 
     // A. 手指按下 (Touch Start)
     handle.addEventListener('touchstart', (e) => {
+        // ★★★ 關鍵修正：阻止事件穿透到下層 ★★★
+        if(e.cancelable) e.preventDefault(); 
+        e.stopPropagation(); 
+
         isDragging = true;
         isClick = true; 
         startY = e.touches[0].clientY;
@@ -2810,8 +2787,7 @@ function setupMobilePanel() {
         // 取得當前高度
         startHeight = panel.getBoundingClientRect().height;
         
-        // 【關鍵優化】手指按下去的瞬間，把動畫關掉！
-        // 這樣面板才會「瞬間」跟著手指動，不會有延遲感
+        // 移除過渡動畫，讓反應即時
         panel.style.transition = 'none';
     }, {passive: false});
 
@@ -2819,11 +2795,11 @@ function setupMobilePanel() {
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
         
-        // 防止拉面板時，背後的 3D 畫面跟著動
+        // 阻止背景捲動
         if(e.cancelable) e.preventDefault();
         
         const currentY = e.touches[0].clientY;
-        const deltaY = startY - currentY; // 往上拉是正值，往下拉是負值
+        const deltaY = startY - currentY; // 往上拉是正值
         
         // 如果移動超過 5px，就視為拖曳，不是點擊
         if (Math.abs(deltaY) > 5) isClick = false;
@@ -2831,12 +2807,17 @@ function setupMobilePanel() {
         // 計算新高度
         let newHeight = startHeight + deltaY;
 
-        // 簡單的邊界限制 (不讓它拉過頭太誇張)
-        if (newHeight < MIN_H) newHeight = MIN_H;
-        if (newHeight > MAX_H) newHeight = MAX_H;
+        // 邊界阻尼 (拉超過極限時變難拉)
+        if (newHeight < MIN_H) {
+            newHeight = MIN_H + (newHeight - MIN_H) * 0.3;
+        } else if (newHeight > MAX_H) {
+            newHeight = MAX_H + (newHeight - MAX_H) * 0.3;
+        }
 
-        // 直接設定高度 (因為上面關閉了 transition，這裡會非常滑順)
-        panel.style.height = `${newHeight}px`;
+        // 使用 requestAnimationFrame 保持滑順
+        requestAnimationFrame(() => {
+            panel.style.height = `${newHeight}px`;
+        });
     }, {passive: false});
 
     // C. 手指放開 (Touch End)
@@ -2844,8 +2825,10 @@ function setupMobilePanel() {
         if(!isDragging) return;
         isDragging = false;
         
-        // 【關鍵優化】手放開後，把彈性動畫加回去
-        // 這樣它自動彈跳到定位時，才會像 IG 一樣滑順
+        // ★★★ 關鍵修正：放手時也阻止事件擴散 ★★★
+        e.stopPropagation();
+
+        // 加回彈性動畫
         panel.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
 
         const currentH = panel.getBoundingClientRect().height;
@@ -2868,6 +2851,13 @@ function setupMobilePanel() {
 
         // 執行彈跳動畫
         panel.style.height = `${targetH}px`;
+    });
+
+    // ★★★ 額外保險：攔截滑鼠點擊事件 ★★★
+    // 防止某些瀏覽器將 touch 轉換為 click 穿透下去
+    handle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
     });
 }
 </script>
