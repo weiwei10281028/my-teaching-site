@@ -284,32 +284,77 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-    @media (max-width: 768px), (max-height: 500px) { 
-        .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
-        .controls-container { display: none !important; } 
-        .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; flex: none; }
-        .controls-area {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            height: 40vh; max-height: 95vh; min-height: 30px;
-            border-radius: 20px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.2); border-left: none;
-            background-color: rgba(26, 26, 26, 0.95); backdrop-filter: blur(10px);
-            padding: 0; z-index: 100; box-shadow: 0 -5px 30px rgba(0,0,0,0.7);
-            display: flex; flex-direction: column;
-        }
-        #mobile-panel-handle { 
-            display: flex; width: 100%; height: 30px; justify-content: center; align-items: center;
-            cursor: grab; flex-shrink: 0; 
-            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-            border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0;
-            touch-action: none; 
-        }
-        .handle-bar {
-            width: 45px; height: 5px; background-color: rgba(255, 255, 255, 0.4); 
-            border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: all 0.2s ease;
-        }
-        #mobile-panel-handle:active .handle-bar { background-color: rgba(255, 255, 255, 0.8); width: 55px; }
-        .controls-content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: 40px; }
+/* --- 手機版極速優化 (iOS Native Like) --- */
+@media (max-width: 768px), (max-height: 500px) { 
+    .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    .controls-container { display: none !important; } 
+    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    
+    .controls-area {
+        position: fixed; 
+        left: 0; 
+        bottom: 0; 
+        width: 100%; 
+        
+        /* 【關鍵】高度固定，不要變動它，變動高度會卡頓 */
+        height: 80vh; 
+        
+        background-color: rgba(26, 26, 26, 0.96); 
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px 20px 0 0; 
+        border-top: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+        z-index: 100;
+        
+        display: flex; flex-direction: column;
+        padding: 0;
+
+        /* 【關鍵】預設位置：往下推 (100% - 40px把手高度) */
+        transform: translateY(calc(100% - 40px));
+        
+        /* 啟用硬體加速 */
+        will-change: transform;
+        /* 這是放手後的彈力曲線，模仿 iOS */
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     }
+
+    #mobile-panel-handle { 
+        display: flex; width: 100%; height: 40px; 
+        justify-content: center; align-items: center;
+        cursor: grab; flex-shrink: 0; 
+        /* 把手背景 */
+        background: rgba(255,255,255,0.02);
+        border-bottom: 1px solid rgba(255,255,255,0.05); 
+        touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
+    }
+    
+    /* 修改這裡：把手的樣式 */
+    .handle-bar {
+        width: 36px; 
+        height: 5px; 
+        background-color: rgba(255, 255, 255, 0.3); 
+        border-radius: 10px;
+        /* 加入過渡動畫，讓變大變小很滑順 */
+        transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* 新增這裡：當把手被按住 (active) 時的效果 */
+    #mobile-panel-handle:active .handle-bar,
+    #mobile-panel-handle.active .handle-bar {
+        width: 55px; /* 變寬 */
+        background-color: rgba(255, 255, 255, 0.7); /* 變亮 */
+        box-shadow: 0 0 10px rgba(255,255,255,0.3); /* 加一點發光 */
+    }
+    
+    .controls-content { 
+        flex: 1; 
+        padding: 20px; 
+        overflow-y: auto; 
+        overscroll-behavior: contain;
+        /* 增加底部空間，避免被 iPhone Home Bar 擋住 */
+        padding-bottom: 80px; 
+    }
+}
 
     .hybrid-tooltip {
         position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
@@ -1483,7 +1528,7 @@ function updateVariantUI(key, activeVariant) {
             hdr.textContent = '選擇解離狀態 (分子/離子/鹽類):';
         } else {
             // [綠色] 預設 (同分異構物)
-            hdr.textContent = '選擇結構模式 (同分異構):';
+            hdr.textContent = '選擇同分異構物:';
         }
         
         variantSelector.appendChild(hdr);
@@ -1502,22 +1547,22 @@ function updateVariantUI(key, activeVariant) {
             const variantData = rootData.variants[vKey];
             const fullKeyString = variantData.fullKey || vKey;
             const parts = fullKeyString.split('|');
+            
+            // ★★★ 修改開始：優先顯示中文名稱 ★★★
             let labelText = "";
-
-            // 顯示邏輯：
-            // 如果是酸/鹽系列，且不是共振，通常顯示化學式比較清楚 (例如 HNO3, NO3-, KNO3)
-            // 但如果變體名稱有中文 (例如 "硝酸鉀")，顯示中文也很好
-            // 這裡維持通用邏輯：如果有 | 分隔，優先顯示第 2 段 (中文)，否則顯示第 1 段
-            // 對於 HNO3 系列：
-            // "硝酸 HNO3|HNO3|..." -> 顯示 HNO3 (第一段有化學式)
-            // 您的 Key 設為 "硝酸 HNO3|..." -> 會顯示 HNO3
-            // 建議統一一下 Key 的寫法，或者這裡直接取第 0 段 (通常是化學式+中文)
             
-            // 為了讓您的選單整齊，我讓它優先抓取「包含化學式的名稱」
-            // 您的 Key 格式是 "中文 化學式|..."
-            labelText = parts[0].trim(); 
-            
-            span.innerHTML = ` ${formatFormula(labelText)}`; 
+            if (parts.length > 1) {
+                // 如果有 "|", 取第二段 (通常是中文名稱，如 "1-丁烯")
+                labelText = parts[1].trim();
+                
+                // 顯示純文字 (不使用 formatFormula)，避免 "1-丁烯" 的 "1" 被變成下標
+                span.textContent = ` ${labelText}`; 
+            } else {
+                // 如果沒有 "|", 就只顯示第一段 (化學式)
+                labelText = parts[0].trim();
+                // 如果是純化學式，才使用 formatFormula 轉下標 (如 H2O)
+                span.innerHTML = ` ${formatFormula(labelText)}`;
+            }
             
             div.appendChild(radio); div.appendChild(span);
             div.addEventListener('click', () => loadMolecule(key, vKey));
@@ -2760,37 +2805,120 @@ function hideHybridTooltip() {
 function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const handle = document.getElementById('mobile-panel-handle');
-    if(!handle || !panel || !isMobile) return;
-    let startY = 0; let startHeight = 0; let isDragging = false; let hasMoved = false; 
-    const MIN_H = 30; const MID_H = window.innerHeight * 0.4; const MAX_H = window.innerHeight * 0.95;
-    panel.addEventListener('click', (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return false; } }, true);
-    handle.addEventListener('touchstart', (e) => { isDragging = true; hasMoved = false; startY = e.touches[0].clientY; startHeight = panel.offsetHeight; panel.style.transition = 'none'; }, {passive: false});
+    
+    if(!handle || !panel || window.innerWidth > 768) return;
+
+    // --- 設定參數 ---
+    const HANDLE_H = 40; 
+    const PANEL_H = window.innerHeight * 0.8; 
+    
+    const POS_OPEN = 0; 
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.45); 
+    const POS_CLOSE = PANEL_H - HANDLE_H;
+
+    let startY = 0;
+    let startTransY = POS_CLOSE;
+    let currentTransY = POS_CLOSE;
+    let startTime = 0;
+    let isDragging = false;
+
+    // 預設位置
+    panel.style.transform = `translateY(${POS_CLOSE}px)`;
+
+    // 1. 觸摸開始
+    handle.addEventListener('touchstart', (e) => {
+        if(e.cancelable) e.preventDefault();
+        e.stopPropagation();
+
+        isDragging = true;
+        
+        // ★★★ 新增：加上 active 類別，觸發 CSS 變寬特效 ★★★
+        handle.classList.add('active'); 
+
+        startY = e.touches[0].clientY;
+        startTime = new Date().getTime();
+
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        startTransY = matrix.m42; 
+
+        panel.style.transition = 'none';
+    }, {passive: false});
+
+    // 2. 觸摸移動
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        if(e.cancelable) e.preventDefault();
+        if(e.cancelable) e.preventDefault(); 
+
         const currentY = e.touches[0].clientY;
-        const deltaY = startY - currentY; 
-        if (Math.abs(deltaY) > 5) hasMoved = true;
-        let newHeight = startHeight + deltaY;
-        if (newHeight < MIN_H) newHeight = MIN_H + (newHeight - MIN_H) * 0.2;
-        if (newHeight > MAX_H) newHeight = MAX_H + (newHeight - MAX_H) * 0.2;
-        panel.style.height = `${newHeight}px`;
+        const deltaY = currentY - startY;
+        
+        let newY = startTransY + deltaY;
+
+        if (newY < POS_OPEN) newY = newY * 0.4; 
+        if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; 
+
+        panel.style.transform = `translateY(${newY}px)`;
+        currentTransY = newY;
     }, {passive: false});
+
+    // 3. 觸摸結束
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
-        panel.style.transition = 'height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-        const currentHeight = panel.offsetHeight;
-        const moved = currentHeight - startHeight;
-        if (Math.abs(moved) < 5 && !hasMoved) {
-            if (currentHeight < 100) panel.style.height = `${MID_H}px`;
-            else panel.style.height = `${MIN_H}px`;
-        } else {
-            if (currentHeight > window.innerHeight * 0.6) panel.style.height = `${MAX_H}px`;
-            else if (currentHeight > window.innerHeight * 0.25) panel.style.height = `${MID_H}px`;
-            else panel.style.height = `${MIN_H}px`;
+        e.stopPropagation();
+
+        // ★★★ 新增：手指放開後，移除特效 ★★★
+        handle.classList.remove('active');
+
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+
+        const endTime = new Date().getTime();
+        const duration = endTime - startTime;
+        const moveDist = currentTransY - startTransY;
+        const velocity = Math.abs(moveDist) / duration;
+
+        let targetY = POS_CLOSE;
+
+        if (velocity > 0.3) {
+            if (moveDist < 0) { 
+                targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
+            } else {
+                targetY = POS_CLOSE;
+            }
+        } 
+        else {
+            const distToOpen = Math.abs(currentTransY - POS_OPEN);
+            const distToHalf = Math.abs(currentTransY - POS_HALF);
+            const distToClose = Math.abs(currentTransY - POS_CLOSE);
+
+            if (distToOpen < distToHalf && distToOpen < distToClose) targetY = POS_OPEN;
+            else if (distToHalf < distToClose) targetY = POS_HALF;
+            else targetY = POS_CLOSE;
         }
-        setTimeout(() => { hasMoved = false; }, 100);
+
+        panel.style.transform = `translateY(${targetY}px)`;
+    });
+
+    handle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 點擊也加上一瞬間的特效回饋
+        handle.classList.add('active');
+        setTimeout(() => handle.classList.remove('active'), 200);
+
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const currentY = matrix.m42;
+
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        
+        if (currentY >= POS_CLOSE - 10) {
+            panel.style.transform = `translateY(${POS_HALF}px)`;
+        } else {
+            panel.style.transform = `translateY(${POS_CLOSE}px)`;
+        }
     });
 }
 </script>
