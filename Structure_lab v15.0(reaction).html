@@ -772,67 +772,95 @@ function autoAssignLonePairs(atom, bonds, allAtoms) {
     return Math.max(0, lp);
 }
 function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
-    const dots = []; let lpCount = atom.calculatedLP;
+    const dots = []; 
+    let lpCount = atom.calculatedLP;
     if (lpCount <= 0 && !atom.radical) return dots;
+
+    // --- 幾何計算部分 (維持不變) ---
     if (atom.lp3d && atom.lp3d.length > 0) {
-            const pushDist = atom.r * 2.2; 
-            atom.lp3d.forEach(v => {
-                const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
-                addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
-            });
-            return dots;
+        const pushDist = atom.r * 2.2; 
+        atom.lp3d.forEach(v => {
+            const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
+            addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
+        });
+    } else {
+        const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
+        let bondVectors = [];
+        myBonds.forEach(b => {
+            const otherIdx = (b[0] === atomIndex) ? b[1] : b[0];
+            const other = allAtoms[otherIdx];
+            let vx = other.x - atom.x, vy = other.y - atom.y, vz = other.z - atom.z;
+            const len = Math.sqrt(vx*vx + vy*vy + vz*vz) || 1;
+            bondVectors.push({ x: vx/len, y: vy/len, z: vz/len, style: b[2] });
+        });
+        
+        let sumX = 0, sumY = 0, sumZ = 0;
+        if (bondVectors.length > 0) { bondVectors.forEach(v => { sumX += v.x; sumY += v.y; sumZ += v.z; }); } 
+        else { sumX = 0; sumY = -1; sumZ = 0; }
+        
+        let backX = -sumX, backY = -sumY, backZ = -sumZ;
+        let backLen = Math.sqrt(backX*backX + backY*backY + backZ*backZ);
+        if (backLen < 0.001) { backX=0; backY=1; backZ=0; backLen=1; }
+        backX /= backLen; backY /= backLen; backZ /= backLen;
+        
+        let ux = backX, uy = backY, uz = backZ;
+        let tempX = 0, tempY = 1, tempZ = 0;
+        if (Math.abs(ux) < 0.1 && Math.abs(uz) < 0.1) { tempX=1; tempY=0; tempZ=0; }
+        let wx = uy*tempZ - uz*tempY, wy = uz*tempX - ux*tempZ, wz = ux*tempY - uy*tempX;
+        let wLen = Math.sqrt(wx*wx + wy*wy + wz*wz);
+        wx/=wLen; wy/=wLen; wz/=wLen;
+        let vx = wy*uz - wz*uy, vy = wz*ux - wx*uz, vz = wx*uy - wy*ux;
+        
+        const lpDist = atom.r * 2.2;
+        const pushLP = (dx, dy, dz) => { addPairToDots(dots, atom, { x: dx*lpDist, y: dy*lpDist, z: dz*lpDist }); };
+
+        if (bondVectors.length === 1) {
+            if (lpCount === 3) {
+                const angle = 70 * (Math.PI/180); const sinA = Math.sin(angle); const cosA = Math.cos(angle);
+                for(let i=0; i<3; i++) {
+                    const theta = i * (120 * Math.PI/180);
+                    const px = cosA * ux + sinA * (Math.cos(theta)*vx + Math.sin(theta)*wx);
+                    const py = cosA * uy + sinA * (Math.cos(theta)*vy + Math.sin(theta)*wy);
+                    const pz = cosA * uz + sinA * (Math.cos(theta)*vz + Math.sin(theta)*wz);
+                    pushLP(px, py, pz);
+                }
+            } else if (lpCount === 2) {
+                const angle = 60 * (Math.PI/180);
+                pushLP(Math.cos(angle)*ux + Math.sin(angle)*vx, Math.cos(angle)*uy + Math.sin(angle)*vy, Math.cos(angle)*uz + Math.sin(angle)*vz);
+                pushLP(Math.cos(angle)*ux - Math.sin(angle)*vx, Math.cos(angle)*uy - Math.sin(angle)*vy, Math.cos(angle)*uz - Math.sin(angle)*vz);
+            } else if (lpCount === 1) { pushLP(ux, uy, uz); }
+        } else if (bondVectors.length === 2) {
+            if (lpCount === 2) {
+                let b1 = bondVectors[0], b2 = bondVectors[1];
+                let nx = b1.y*b2.z - b1.z*b2.y, ny = b1.z*b2.x - b1.x*b2.z, nz = b1.x*b2.y - b1.y*b2.x;
+                let nLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+                if (nLen > 0.001) { nx/=nLen; ny/=nLen; nz/=nLen; } else { nx=vx; ny=vy; nz=vz; }
+                const tilt = 50 * (Math.PI/180);
+                pushLP(Math.cos(tilt)*ux + Math.sin(tilt)*nx, Math.cos(tilt)*uy + Math.sin(tilt)*ny, Math.cos(tilt)*uz + Math.sin(tilt)*nz);
+                pushLP(Math.cos(tilt)*ux - Math.sin(tilt)*nx, Math.cos(tilt)*uy - Math.sin(tilt)*ny, Math.cos(tilt)*uz - Math.sin(tilt)*nz);
+            } else if (lpCount === 1) { pushLP(ux, uy, uz); }
+        } else { pushLP(ux, uy, uz); }
     }
-    const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
-    let bondVectors = [];
-    myBonds.forEach(b => {
-        const otherIdx = (b[0] === atomIndex) ? b[1] : b[0];
-        const other = allAtoms[otherIdx];
-        let vx = other.x - atom.x, vy = other.y - atom.y, vz = other.z - atom.z;
-        const len = Math.sqrt(vx*vx + vy*vy + vz*vz) || 1;
-        bondVectors.push({ x: vx/len, y: vy/len, z: vz/len, style: b[2] });
-    });
-    let sumX = 0, sumY = 0, sumZ = 0;
-    if (bondVectors.length > 0) { bondVectors.forEach(v => { sumX += v.x; sumY += v.y; sumZ += v.z; }); } 
-    else { sumX = 0; sumY = -1; sumZ = 0; }
-    let backX = -sumX, backY = -sumY, backZ = -sumZ;
-    let backLen = Math.sqrt(backX*backX + backY*backY + backZ*backZ);
-    if (backLen < 0.001) { backX=0; backY=1; backZ=0; backLen=1; }
-    backX /= backLen; backY /= backLen; backZ /= backLen;
-    let ux = backX, uy = backY, uz = backZ;
-    let tempX = 0, tempY = 1, tempZ = 0;
-    if (Math.abs(ux) < 0.1 && Math.abs(uz) < 0.1) { tempX=1; tempY=0; tempZ=0; }
-    let wx = uy*tempZ - uz*tempY, wy = uz*tempX - ux*tempZ, wz = ux*tempY - uy*tempX;
-    let wLen = Math.sqrt(wx*wx + wy*wy + wz*wz);
-    wx/=wLen; wy/=wLen; wz/=wLen;
-    let vx = wy*uz - wz*uy, vy = wz*ux - wx*uz, vz = wx*uy - wy*ux;
-    const lpDist = atom.r * 2.2;
-    const pushLP = (dx, dy, dz) => { addPairToDots(dots, atom, { x: dx*lpDist, y: dy*lpDist, z: dz*lpDist }); };
-    if (bondVectors.length === 1) {
-        if (lpCount === 3) {
-            const angle = 70 * (Math.PI/180); const sinA = Math.sin(angle); const cosA = Math.cos(angle);
-            for(let i=0; i<3; i++) {
-                const theta = i * (120 * Math.PI/180);
-                const px = cosA * ux + sinA * (Math.cos(theta)*vx + Math.sin(theta)*wx);
-                const py = cosA * uy + sinA * (Math.cos(theta)*vy + Math.sin(theta)*wy);
-                const pz = cosA * uz + sinA * (Math.cos(theta)*vz + Math.sin(theta)*wz);
-                pushLP(px, py, pz);
+
+    // --- [修正邏輯] 粉紅電子判定 ---
+    // 1. 形式電荷必須 <= -0.5 (代表帶負電)
+    // 2. 且該原子「不是」配位鍵的接收者 (!isCoordinateReceiver)
+    // 這樣 S->O (FC=-1, Receiver=True) -> 不會粉紅 (正確!)
+    // 這樣 S-O- (FC=-1, Receiver=False) -> 會粉紅 (正確!)
+    if (atom.formalCharge <= -0.5 && !atom.isCoordinateReceiver) {
+        let countToColor = Math.round(Math.abs(atom.formalCharge));
+        
+        // 倒著找，把最後幾顆電子標記為粉紅
+        for (let i = dots.length - 1; i >= 0; i--) {
+            if (countToColor > 0) {
+                dots[i].isNegativeCharge = true;
+                countToColor--;
+            } else {
+                break;
             }
-        } else if (lpCount === 2) {
-            const angle = 60 * (Math.PI/180);
-            pushLP(Math.cos(angle)*ux + Math.sin(angle)*vx, Math.cos(angle)*uy + Math.sin(angle)*vy, Math.cos(angle)*uz + Math.sin(angle)*vz);
-            pushLP(Math.cos(angle)*ux - Math.sin(angle)*vx, Math.cos(angle)*uy - Math.sin(angle)*vy, Math.cos(angle)*uz - Math.sin(angle)*vz);
-        } else if (lpCount === 1) { pushLP(ux, uy, uz); }
-    } else if (bondVectors.length === 2) {
-        if (lpCount === 2) {
-            let b1 = bondVectors[0], b2 = bondVectors[1];
-            let nx = b1.y*b2.z - b1.z*b2.y, ny = b1.z*b2.x - b1.x*b2.z, nz = b1.x*b2.y - b1.y*b2.x;
-            let nLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
-            if (nLen > 0.001) { nx/=nLen; ny/=nLen; nz/=nLen; } else { nx=vx; ny=vy; nz=vz; }
-            const tilt = 50 * (Math.PI/180);
-            pushLP(Math.cos(tilt)*ux + Math.sin(tilt)*nx, Math.cos(tilt)*uy + Math.sin(tilt)*ny, Math.cos(tilt)*uz + Math.sin(tilt)*nz);
-            pushLP(Math.cos(tilt)*ux - Math.sin(tilt)*nx, Math.cos(tilt)*uy - Math.sin(tilt)*ny, Math.cos(tilt)*uz - Math.sin(tilt)*nz);
-        } else if (lpCount === 1) { pushLP(ux, uy, uz); }
-    } else { pushLP(ux, uy, uz); }
+        }
+    }
+
     return dots;
 }
 
@@ -844,12 +872,14 @@ function addPairToDots(dotsArray, atom, vector) {
     const separation = 14.0; 
     ox = (ox/oLen) * (separation/2); oy = (oy/oLen) * (separation/2); oz = (oz/oLen) * (separation/2);
     const eRadius = 4.5;
-    dotsArray.push({ x: atom.x + lx + ox, y: atom.y + ly + oy, z: atom.z + lz + oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom });
+    
+    // 預設 isNegativeCharge 為 false
+    dotsArray.push({ x: atom.x + lx + ox, y: atom.y + ly + oy, z: atom.z + lz + oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom, isNegativeCharge: false });
+    
     if (!atom.radical) {
-        dotsArray.push({ x: atom.x + lx - ox, y: atom.y + ly - oy, z: atom.z + lz - oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom });
+        dotsArray.push({ x: atom.x + lx - ox, y: atom.y + ly - oy, z: atom.z + lz - oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom, isNegativeCharge: false });
     }
 }
-
 
 
 
@@ -1385,35 +1415,45 @@ function loadMolecule(key, variantKey = null) {
 
     if (!data.bondsRaw) data.bondsRaw = []; 
     let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
+    let processedAtoms = JSON.parse(JSON.stringify(data.atomsRaw)); 
 
     const toggleOct = document.getElementById('toggle-octet');
-    if (toggleOct && toggleOct.checked) {
-        const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
-        let sDoubleKept = false; const totalBonds = processedBonds.length;
-        processedBonds.forEach(bond => {
-            if (bond[2] === 'double') {
-                const idx1 = bond[0]; const idx2 = bond[1];
-                const atom1 = data.atomsRaw[idx1]; const atom2 = data.atomsRaw[idx2];
-                let centerIdx = -1; let termIdx = -1;
-                if (expandableCenters.includes(atom1.elem) && atom2.elem === 'O') { centerIdx = idx1; termIdx = idx2; } 
-                else if (expandableCenters.includes(atom2.elem) && atom1.elem === 'O') { centerIdx = idx2; termIdx = idx1; } 
-                else if (atom1.elem === 'S' && atom2.elem === 'S') {
-                    let d1 = 0, d2 = 0;
-                    processedBonds.forEach(b => { if(b[0]===idx1 || b[1]===idx1) d1++; if(b[0]===idx2 || b[1]===idx2) d2++; });
-                    if (d1 > 1 && d2 === 1) { centerIdx = idx1; termIdx = idx2; } else if (d2 > 1 && d1 === 1) { centerIdx = idx2; termIdx = idx1; }
+    const isOctetMode = toggleOct ? toggleOct.checked : true;
+
+    const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
+    const centerAtomSym = processedAtoms[0].elem; 
+    const canExpand = expandableCenters.includes(centerAtomSym);
+
+    processedBonds.forEach(bond => {
+        const idx1 = bond[0]; 
+        const idx2 = bond[1];
+        const type = bond[2];
+
+        let termIdx = -1;
+        if (idx1 === 0) termIdx = idx2;
+        else if (idx2 === 0) termIdx = idx1;
+        
+        if (canExpand && termIdx !== -1) {
+            const termAtom = processedAtoms[termIdx];
+
+            if (isOctetMode) {
+                if (type === 'double' && termAtom.elem === 'O') {
+                    bond[2] = 'coordinate'; 
+                    bond[0] = 0; 
+                    bond[1] = termIdx;
                 }
-                if (centerIdx !== -1) {
-                    const centerSym = data.atomsRaw[centerIdx].elem;
-                    if (centerSym === 'S' && totalBonds < 4 && !sDoubleKept) { sDoubleKept = true; return; }
-                    let connectionCount = 0;
-                    processedBonds.forEach(b => { if (b[0] === termIdx || b[1] === termIdx) connectionCount++; });
-                    if (connectionCount === 1) { bond[2] = 'coordinate'; bond[0] = centerIdx; bond[1] = termIdx; }
+            } else {
+                if (type === 'coordinate' && termAtom.elem === 'O') {
+                    bond[2] = 'double';
+                    if (termAtom.lpCount !== undefined && termAtom.lpCount > 0) {
+                        termAtom.lpCount -= 1;
+                    }
                 }
             }
-        });
-    }
+        }
+    });
 
-    let renderObjects = processAtomsData(data.atomsRaw, processedBonds, data.center);
+    let renderObjects = processAtomsData(processedAtoms, processedBonds, data.center);
     
     // UI 標籤切換
     const isIonic = data.isIonic === true || data.center === "Ionic";
@@ -1511,35 +1551,56 @@ function loadMolecule(key, variantKey = null) {
 
 function processAtomsData(atomList, bondList, centerElem) {
     let processed = [];
+    
+    // 1. 建立原子基本物件
     const atomObjects = atomList.map((a, index) => { 
         const props = ELEMENT_PROPS[a.elem] || { c3d: "#ccc", r3d: 20 };
-        // [關鍵修改] 優先使用原子個別定義的半徑 (a.r)，如果沒有才用全域設定 (props.r3d)
         const finalRadius = (a.r !== undefined) ? a.r : props.r3d;
-        
         return { ...a, color: props.c3d, r: finalRadius, type: 'atom', originalIndex: index };
     });
 
+    // 2. 計算屬性
     atomObjects.forEach((atomObj, idx) => {
         const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
         atomObj.calculatedLP = calcLP;
         
         let bondLines = 0;
+        let isCoordinateReceiver = false; // [標記] 是否為配位鍵的接收端
+
         bondList.forEach(b => {
             if (b[0] === idx || b[1] === idx) {
                 let type = b[2] || "single";
-                if (type.includes("triple")) bondLines += 3;
-                else if (type.includes("double")) bondLines += 2;
-                else bondLines += 1;
+                
+                // [關鍵] 判斷是否為配位鍵接收端 (b[0] -> b[1])
+                // 若我是接收端 (idx === b[1])，標記起來，但鍵數照算 1
+                if (type === "coordinate" && b[1] === idx) {
+                    isCoordinateReceiver = true;
+                    bondLines += 1;
+                } else if (type === "coordinate" && b[0] === idx) {
+                    bondLines += 1; // 施予端也算 1 根鍵
+                } else {
+                    // 一般共價鍵計算
+                    if (type.includes("triple")) bondLines += 3;
+                    else if (type.includes("double")) bondLines += 2;
+                    else bondLines += 1;
+                }
             }
         });
+
+        // 將標記存入物件，給 generateElectronDots 使用
+        atomObj.isCoordinateReceiver = isCoordinateReceiver;
+
         const props = ELEMENT_PROPS[atomObj.elem];
         if (props) {
             const dots = (calcLP * 2) + (atomObj.radical ? 1 : 0);
+            // 正常計算形式電荷 (S->O 的 O 算出來會是 -1，這是對的化學定義)
             atomObj.formalCharge = props.ve - dots - bondLines;
         } else {
             atomObj.formalCharge = 0;
         }
+        
         processed.push(atomObj);
+        
         if (ELEMENT_PROPS[atomObj.elem]) { 
             const electronDots = generateElectronDots(atomObj, idx, atomObjects, bondList);
             electronDots.forEach(dot => {
@@ -1686,6 +1747,12 @@ function renderScene(time = 0) {
     orbGradD.setAttribute("cx", "30%"); orbGradD.setAttribute("cy", "30%"); orbGradD.setAttribute("r", "80%");
     orbGradD.innerHTML = `<stop offset="0%" stop-color="#FBBF24" stop-opacity="0.95"/><stop offset="60%" stop-color="#D97706" stop-opacity="0.9"/><stop offset="100%" stop-color="#78350F" stop-opacity="0.9"/>`;
     defs.appendChild(orbGradD);
+    // D. [新增] 負電荷電子專用光暈 (粉紅色/洋紅色)
+    const chargeGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    chargeGlow.setAttribute("id", "charge-glow-pink");
+    chargeGlow.setAttribute("cx", "50%"); chargeGlow.setAttribute("cy", "50%"); chargeGlow.setAttribute("r", "50%");
+    chargeGlow.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="40%" stop-color="#f472b6" stop-opacity="0.9"/><stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>`;
+    defs.appendChild(chargeGlow);
 
     sceneRoot.appendChild(defs);
 
@@ -1760,7 +1827,7 @@ function renderScene(time = 0) {
             let drawStyle = "single";
             if (bond[2] === "double") drawStyle = "double";
             else if (bond[2] === "triple") drawStyle = "triple";
-            else if (bond[2] === "coordinate") drawStyle = "single";
+            else if (bond[2] === "coordinate") drawStyle = "coordinate";
             else if (bond[2] === "coordinate_triple") drawStyle = "coordinate_triple";
 
             let bondAlpha = 1.0;
@@ -1923,13 +1990,22 @@ function drawBond(b) {
     const x2 = b.x2 - nx * b.r2 * shorten; const y2 = b.y2 - ny * b.r2 * shorten;
     
     let strokeColor;
-    if (currentMolecule && currentMolecule.isIonic) { strokeColor = "#D1D5DB"; } 
+    if (currentMolecule && currentMolecule.isIonic) { 
+        strokeColor = "#D1D5DB"; 
+    } 
+    // [新增] 如果是配位鍵，整根都用原子1 (施體/中心原子) 的顏色
+    else if (b.style === "coordinate") {
+        strokeColor = b.c1; 
+    }
+    // [原邏輯] 其他鍵 (單/雙/參) 維持雙色漸層
     else {
         const gradId = `bond-grad-${b.bondIdx}`;
         const defs = sceneRoot.querySelector("defs");
         const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
         grad.setAttribute("id", gradId); grad.setAttribute("gradientUnits", "userSpaceOnUse");
         grad.setAttribute("x1", x1); grad.setAttribute("y1", y1); grad.setAttribute("x2", x2); grad.setAttribute("y2", y2);
+        
+        // 漸層：前40%是顏色1，後40%是顏色2，中間混合
         grad.innerHTML = `<stop offset="0%" stop-color="${b.c1}"/><stop offset="40%" stop-color="${b.c1}"/><stop offset="60%" stop-color="${b.c2}"/><stop offset="100%" stop-color="${b.c2}"/>`;
         defs.appendChild(grad);
         strokeColor = `url(#${gradId})`;
@@ -2041,22 +2117,31 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
+    // 預設顏色
+    let coreColor = "#ffffff";
+    let glowFill = isMobile ? "url(#mobile-glow-white)" : "#ffffff";
+    let glowOpacity = isMobile ? "1.0" : "0.28";
+    
+    // [關鍵] 只有被標記的那幾顆會變色
+    if (e.isNegativeCharge) {
+        coreColor = "#ff9efa"; 
+        glowFill = "#ff9efa"; 
+        glowOpacity = "0.5"; // 降低不透明度，配合濾鏡才會柔和
+    }
+
     if (isPlasmaMode) {
         g.setAttribute("style", "mix-blend-mode: screen;"); 
-
-        // 1. 光暈：縮小到 2.0 倍 (原本 3.0)
         const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
-        halo.setAttribute("r", r * 2.0); 
-        halo.setAttribute("fill", "url(#mobile-glow-white)");
-        halo.setAttribute("opacity", "0.6"); // 稍微亮一點
+        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); // 粉紅光暈再大一點
+        halo.setAttribute("fill", glowFill);
+        halo.setAttribute("opacity", "0.6");
         g.appendChild(halo);
 
-        // 2. 核心
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         core.setAttribute("cx", e.px); core.setAttribute("cy", e.py);
         core.setAttribute("r", r * 1.0);
-        core.setAttribute("fill", "#ffffff");
+        core.setAttribute("fill", coreColor);
         core.setAttribute("class", "electron-spark"); 
         g.appendChild(core);
 
@@ -2067,21 +2152,24 @@ function drawElectron(e) {
             const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
             
-            if (isMobile) {
-                glow.setAttribute("r", r * 2.2); 
-                glow.setAttribute("fill", "url(#mobile-glow-white)");
-            } else {
-                glow.setAttribute("r", r * 1.8); 
-                glow.setAttribute("fill", "#ffffff"); 
-                glow.setAttribute("opacity", "0.28");
+            // 讓粉紅光暈大小跟一般電子一致 (約 1.8~2.2 倍)
+            glow.setAttribute("r", r * (isMobile ? 2.2 : 2.0)); 
+            glow.setAttribute("fill", glowFill);
+            
+            // [關鍵修正] 只要不是手機版，通通套用柔焦濾鏡 (包含粉紅電子)
+            if (!isMobile) {
+                glow.setAttribute("opacity", glowOpacity);
                 glow.setAttribute("filter", "url(#soft-glow)");
+            } else {
+                glow.setAttribute("opacity", "1.0");
             }
             g.appendChild(glow);
         }
 
         const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
-        c.setAttribute("fill", "#ffffff"); c.setAttribute("opacity", "0.9");
+        c.setAttribute("fill", coreColor); 
+        c.setAttribute("opacity", "0.95");
         g.appendChild(c);
     }
     
