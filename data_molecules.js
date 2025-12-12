@@ -5,7 +5,7 @@
 let MOLECULE_DB = {};
 let MOLECULE_INDEX = {};
 
-// 幾何輔助函式 (必須放在 addMol 之前)
+// 幾何輔助函式
 const di = (e, dist=60) => [{elem:e,x:-dist,y:0,z:0},{elem:e,x:dist,y:0,z:0}];
 const getLinear = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:r,y:0,z:0} ];
 const getTrigPlanar = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:r*0.866,y:-r*0.5,z:0}, {elem:o,x:-r*0.866,y:-r*0.5,z:0} ];
@@ -14,31 +14,21 @@ const getOcta = (c, o, r=65) => [{elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:
 const benzBase=[{x:0,y:70,z:0},{x:60,y:35,z:0},{x:60,y:-35,z:0},{x:0,y:-70,z:0},{x:-60,y:-35,z:0},{x:-60,y:35,z:0}];
 function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{x:v.x+v.x/l*s,y:v.y+v.y/l*s,z:0};}
 
+// 主註冊函式 (已修改：直接使用傳入的 hybrid 字串，不添加贅字)
 const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, variants = null, desc = null) => {
     if (typeof MOLECULE_INDEX === 'undefined') MOLECULE_INDEX = {};
     if (typeof MOLECULE_DB === 'undefined') MOLECULE_DB = {};
-    
     const keys = keysStr.split('|');
     const mainKey = keys[0].trim();
     const mainKeyUpper = mainKey.toUpperCase();
-    
-    keys.forEach(k => { 
-        MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; 
-    });
-    
-    // [修正] 如果是晶體堆積，直接顯示 hybrid 字串，不再重複 "混成"
-    let hybridText = hybrid;
-    const isCrystal = hybrid.includes("堆積") || hybrid.includes("Packing") || center === "Ionic";
-    if (!isCrystal) {
-        hybridText = `${hybrid} 混成 (${hybrid})`;
-    }
+    keys.forEach(k => { MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; });
 
     const baseData = { 
         center, 
-        hybrid: hybridText, // 使用修正後的字串
+        hybrid: hybrid, // 修改處：直接使用傳入字串
         shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, 
         angle, mp, bp, atomsRaw: atoms, bondsRaw: bonds, desc, fullKey: keysStr,
-        isMetal: false // 預設不是金屬，金屬生成器會覆蓋此值
+        isMetal: false 
     };
     
     if (variants) {
@@ -46,15 +36,11 @@ const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, var
         for (let vKeyRaw in variants) {
             const uniqueID = vKeyRaw; 
             const vObj = variants[vKeyRaw];
-            
             const vKeys = vKeyRaw.split('|');
             vKeys.forEach(vk => { 
                 const cleanKey = vk.trim().toUpperCase();
-                if (cleanKey !== mainKeyUpper) {
-                    MOLECULE_INDEX[cleanKey] = { key: mainKey, variant: uniqueID }; 
-                }
+                if (cleanKey !== mainKeyUpper) { MOLECULE_INDEX[cleanKey] = { key: mainKey, variant: uniqueID }; }
             });
-
             baseData.variants[uniqueID] = { 
                 ...baseData, 
                 atomsRaw: vObj.atoms, 
@@ -83,68 +69,85 @@ function markReps(atoms, bonds, cnA, elemA, cnB, elemB) {
 // 離子晶體輔助函式
 // ==========================================
 
-// 1. [NaCl] 氯化鈉 (6:6) - [修正] 面上多個十字架虛線
+// ==========================================
+// [NaCl] 氯化鈉 (修正：強制注入 isIonic 屬性，確保配位數顯示)
+// ==========================================
 (function(){
-    const atoms = []; const bonds = []; const scale = 120;
-    // 範圍 -1 ~ 1
-    for (let x = -1; x <= 1; x++) {
-        for (let y = -1; y <= 1; y++) {
-            for (let z = -1; z <= 1; z++) {
-                const isNa = Math.abs(x+y+z)%2 === 1;
-                atoms.push({ elem: isNa?"Na":"Cl", x:x*scale, y:y*scale, z:z*scale, r: isNa?15:27, lpCount:0 });
+    // 1. 參數設定：間距 s=100 (大幅拉開)
+    const ca = [], cb = [], s = 150; 
+    
+    // 2. 生成 3x3x3 晶格原子
+    for(let x=-1; x<=1; x++){
+        for(let y=-1; y<=1; y++){
+            for(let z=-1; z<=1; z++){
+                // 判斷元素：座標和為偶數=Cl(綠), 奇數=Na(灰)
+                // (0,0,0) sum=0 -> Cl
+                const isNa = (Math.abs(x+y+z) % 2 !== 0);
+                const r = isNa ? 18 : 34; // 半徑
+                
+                // 判斷中心：是否為 (0,0,0)
+                const isCenter = (x === 0 && y === 0 && z === 0);
+
+                ca.push({
+                    elem: isNa ? "Na" : "Cl",
+                    x: x*s, y: y*s, z: z*s,
+                    r: r, 
+                    lpCount: 0,
+                    gx: x, gy: y, gz: z,
+                    isRepresentative: isCenter // 標記中心原子
+                });
             }
         }
     }
-    
-    for (let i=0; i<atoms.length; i++) {
-        for (let j=i+1; j<atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            const isCenterI = (Math.abs(atoms[i].x) < 1 && Math.abs(atoms[i].y) < 1 && Math.abs(atoms[i].z) < 1);
-            const isCenterJ = (Math.abs(atoms[j].x) < 1 && Math.abs(atoms[j].y) < 1 && Math.abs(atoms[j].z) < 1);
 
-            if (Math.abs(d - scale) < 5) {
-                // 只畫中心連接的實體線
-                if (isCenterI || isCenterJ) bonds.push([i,j,"single"]);
+    // 3. 生成鍵結 (外框粗 / 內部細)
+    for(let i=0; i<ca.length; i++){
+        for(let j=i+1; j<ca.length; j++){
+            const a1 = ca[i], a2 = ca[j];
+            const dist = Math.abs(a1.x-a2.x) + Math.abs(a1.y-a2.y) + Math.abs(a1.z-a2.z);
+            
+            // 判斷相鄰 (允許一點誤差)
+            if(Math.abs(dist - s) < 1){
+                // 判斷是否為外框表面
+                const onFaceX = (a1.gx === a2.gx) && Math.abs(a1.gx) === 1;
+                const onFaceY = (a1.gy === a2.gy) && Math.abs(a1.gy) === 1;
+                const onFaceZ = (a1.gz === a2.gz) && Math.abs(a1.gz) === 1;
+                
+                // 設定樣式
+                const type = (onFaceX || onFaceY || onFaceZ) ? "ionic_thick" : "ionic_thin";
+                cb.push([i, j, type]);
             }
         }
     }
-    
-    markReps(atoms, bonds, 6, "Na", 6, "Cl");
 
-    const box = { x:[-scale, scale], y:[-scale, scale], z:[-scale, scale] };
-    
-    // [新增] 6 個面上的十字架虛線 (12條)
-    // 每個面有兩條線：水平中線 與 垂直中線
-    const s = scale;
-    const extraLines = [
-        // Front Face (z = s)
-        { start: {x:-s, y:0, z:s}, end: {x:s, y:0, z:s} },
-        { start: {x:0, y:-s, z:s}, end: {x:0, y:s, z:s} },
-        // Back Face (z = -s)
-        { start: {x:-s, y:0, z:-s}, end: {x:s, y:0, z:-s} },
-        { start: {x:0, y:-s, z:-s}, end: {x:0, y:s, z:-s} },
-        // Right Face (x = s)
-        { start: {x:s, y:0, z:-s}, end: {x:s, y:0, z:s} },
-        { start: {x:s, y:-s, z:0}, end: {x:s, y:s, z:0} },
-        // Left Face (x = -s)
-        { start: {x:-s, y:0, z:-s}, end: {x:-s, y:0, z:s} },
-        { start: {x:-s, y:-s, z:0}, end: {x:-s, y:s, z:0} },
-        // Top Face (y = s)
-        { start: {x:-s, y:s, z:0}, end: {x:s, y:s, z:0} },
-        { start: {x:0, y:s, z:-s}, end: {x:0, y:s, z:s} },
-        // Bottom Face (y = -s)
-        { start: {x:-s, y:-s, z:0}, end: {x:s, y:-s, z:0} },
-        { start: {x:0, y:-s, z:-s}, end: {x:0, y:-s, z:s} }
-    ];
+    // 4. 基本單元 (不變)
+    const sa=[{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0},{elem:"Cl",x:40,y:0,z:0,r:35,lpCount:0}], sb=[];
 
-    addMol("NaCl|氯化鈉|食鹽|Sodium Chloride", "Ionic", "面心立方堆積 (FCC)", "1.02(Å) / 1.81(Å) = 0.56", "配位數: Na⁺:6, Cl⁻:6", "801", "1465", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🧂 氯化鈉 (NaCl)</div><div class="info-body">點擊<strong>正中央</strong>原子。虛線框與十字線標示了晶胞的表面網格。</div></div>`);
-    if(MOLECULE_DB["NaCl"]) { 
-        MOLECULE_DB["NaCl"].isIonic=true; 
-        MOLECULE_DB["NaCl"].hybrid="面心立方堆積 (FCC)"; 
-        MOLECULE_DB["NaCl"].edgeRelation="a = 2(r<sub>+</sub> + r<sub>-</sub>)";
-        MOLECULE_DB["NaCl"].boxData = box; 
-        MOLECULE_DB["NaCl"].extraLines = extraLines; // 存入額外線段
+    // 5. 註冊分子
+    addMol("NaCl|氯化鈉|食鹽", "Na", "-", "-", "-", "801", "1465", sa, sb, {
+        "Simple|基本單元 (離子對)": { 
+            atoms: sa, bonds: sb, hybrid: "-", shape: "-", 
+            desc: '<div class="info-section"><div class="info-title">🧂 物質簡介</div><div class="info-body"><strong>氯化鈉 (NaCl)</strong><br>俗稱食鹽。純淨時為無色透明或白色的立方晶體，易溶於水並產生鹹味。它是生活中最重要的調味品與防腐劑，也是人體維持生理機能所必需的電解質。</div></div>'
+        },
+        "Crystal|晶體堆積 (FCC)": { 
+            atoms: ca, 
+            bonds: cb, 
+            // 注意：這裡寫 isIonic: true 在 addMol 函式運作時會被忽略，
+            // 必須靠下面的補丁代碼來生效。
+            desc: '<div class="info-section"><div class="info-title">🧊 晶體特性</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>氯化鈉具有高熔點 (801°C)，質地堅硬但易碎。晶格內部結構極為緊密，每個鈉離子周圍都被6個氯離子包圍，反之亦然，形成穩定的八面體配位。<br><span style="color:#facc15">★ 點擊正中央的綠色氯離子可查看其配位數。</span></div></div>'
+        }
+    }, '<div class="info-section"><div class="info-title">🧂 氯化鈉 (食鹽)</div><div class="info-body">請切換上方選項以檢視<strong>化學組成</strong>或<strong>宏觀晶體結構</strong>。</div></div>');
+
+    // ==========================================
+    // [關鍵修正補丁] 手動注入離子屬性
+    // 這是修復顯示錯誤的關鍵步驟！
+    // ==========================================
+    if (MOLECULE_DB["NaCl"] && MOLECULE_DB["NaCl"].variants) {
+        const v = MOLECULE_DB["NaCl"].variants["Crystal|晶體堆積 (FCC)"];
+        if (v) {
+            v.isIonic = true; // 強制開啟離子模式 (觸發 checkAtomClick 的正確路徑)
+            v.edgeRelation = "a = 2(r<sub>+</sub> + r<sub>-</sub>)";
+        }
     }
 })();
 
@@ -873,7 +876,6 @@ addMol("H2SO4|硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°"
     "MgSO4|硫酸鎂|瀉鹽": { mp: "1124", bp: "-", desc: "<strong>硫酸鎂 (瀉鹽)</strong><br>易溶於水，醫療上作為瀉劑或緩解子癇，生活中常用於泡澡浴鹽放鬆肌肉。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Mg",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] }
 });
 
-
 addMol("H2SO3|亞硫酸系列", "S", "sp³", ["角錐形","Pyramidal"], "106°", "-", "不穩定", [], [], {
     "H2SO3|亞硫酸": { mp: "-", bp: "不穩定", desc: "<strong>亞硫酸</strong><br>不穩定酸，易分解出 SO₂。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30},{elem:"H",x:-85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
     "HSO3-|亞硫酸氫根": { mp: "-", bp: "-", desc: "<strong>亞硫酸氫根</strong><br>帶-1價電荷，具還原性。", atoms: [{elem:"S",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:80,z:0},{elem:"O",x:55,y:-30,z:30},{elem:"O",x:-55,y:-30,z:30},{elem:"H",x:85,y:-10,z:30}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4]] },
@@ -980,6 +982,7 @@ addMol("HIO3|碘酸系列", "I", "sp³", ["角錐形","Pyramidal"], "107°", "11
     "IO3-|碘酸根": { mp: "-", bp: "-", desc: "<strong>碘酸根</strong><br>三角錐形結構。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
     "KIO3|碘酸鉀": { mp: "560 (分解)", bp: "-", desc: "<strong>碘酸鉀</strong><br>食鹽加碘成分，K⁺ 位於外側。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:60,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
 });
+
 
 // --- 11. 簡單有機分子與衍生物 (鍵長修正: C-H=50, C-C=70, C-N=70, C=O=68, C-Cl=75) ---
 addMol("CH3NO2|硝基甲烷", "C", "sp3", ["正四面體","Tetrahedral"], "109.5°", "-29", "101.2", [{elem:"O",x:-65,y:50,z:0,lpCount:3},{elem:"O",x:-65,y:-50,z:0},{elem:"N",x:-35,y:0,z:0,lpCount:0},{elem:"C",x:35,y:0,z:0},{elem:"H",x:55,y:-35,z:-25},{elem:"H",x:55,y:35,z:-25},{elem:"H",x:55,y:0,z:45}], [[2,0,"coordinate"],[1,2,"double"],[2,3],[3,4],[3,5],[3,6]]);
@@ -1187,6 +1190,44 @@ addMol("C2H5Cl|氯乙烷", "C", "sp3", ["四面體","Tetrahedral"], "109.5", "-1
 addMol("CHOCHO|乙二醛|Glyoxal", "C", "sp²", ["平面","Planar"], "120°", "15", "50.4", [{elem:"C",x:-28,y:0,z:0},{elem:"C",x:28,y:0,z:0},{elem:"O",x:-55,y:45,z:0},{elem:"O",x:55,y:-45,z:0},{elem:"H",x:-45,y:-40,z:0},{elem:"H",x:45,y:40,z:0}], [[0,1],[0,2,"double"],[1,3,"double"],[0,4],[1,5]]);
 addMol("CH3OH|甲醇|木精", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", "-97.6", "64.7", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:70,z:0,lpCount:2}, {elem:"H",x:0,y:-50,z:0}, {elem:"H",x:45,y:15,z:30}, {elem:"H",x:-45,y:15,z:30}, {elem:"H",x:50,y:85,z:0}], [[0,1],[0,2],[0,3],[0,4],[1,5]]);
 addMol("C2H5OH|乙醇|Ethanol|酒精", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", "-114.1", "78.2", [{elem:"O",x:-69,y:-14,z:-4},{elem:"C",x:-19,y:25,z:-4},{elem:"C",x:38,y:-13,z:-4},{elem:"H",x:-21,y:54,z:36},{elem:"H",x:-21,y:53,z:-44},{elem:"H",x:78,y:16,z:-5},{elem:"H",x:39,y:-42,z:-43},{elem:"H",x:40,y:-41,z:36},{elem:"H",x:-67,y:-38,z:32}], [[0,1],[0,8],[1,2],[1,3],[1,4],[2,5],[2,6],[2,7]]);
+
+
+// --- 13.簡單離子化合物
+addMol("KCl|氯化鉀", "K", "-", "-", "-", "770", "1420", [{elem:"K",x:-50,y:0,z:0,r:22,lpCount:0}, {elem:"Cl",x:50,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鉀 (KCl)</strong><br>白色結晶固體，外觀與食鹽相似。它是鉀肥的主要成分，對植物生長至關重要。在醫學上用於補充鉀離子，也是低鈉鹽的主要替代成分。</div></div>');
+addMol("KI|碘化鉀", "K", "-", "-", "-", "681", "1330", [{elem:"K",x:-55,y:0,z:0,r:22,lpCount:0}, {elem:"I",x:55,y:0,z:0,r:40,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>碘化鉀 (KI)</strong><br>白色晶體，易溶於水。常添加於食鹽中作為碘的來源以預防甲狀腺腫大。在實驗室中常用於碘滴定分析，或與硝酸鉛反應產生黃色沈澱（黃金雨）。</div></div>');
+addMol("KBr|溴化鉀", "K", "-", "-", "-", "734", "1435", [{elem:"K",x:-50,y:0,z:0,r:22,lpCount:0}, {elem:"Br",x:50,y:0,z:0,r:38,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>溴化鉀 (KBr)</strong><br>白色結晶，曾被用作鎮靜劑和抗癲癇藥物。在紅外光譜分析 (IR) 中極為重要，因其對紅外光透明，常用來製作樣品鹽片。</div></div>');
+addMol("NaF|氟化鈉", "Na", "-", "-", "-", "993", "1704", [{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0}, {elem:"F",x:40,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氟化鈉 (NaF)</strong><br>無色晶體或白色粉末。它是牙膏中常見的添加劑，能提供氟離子以強化牙齒琺瑯質，預防蛀牙。亦可用於殺蟲劑或木材防腐劑。</div></div>');
+addMol("LiF|氟化鋰", "Li", "-", "-", "-", "845", "1676", [{elem:"Li",x:-40,y:0,z:0,r:15,lpCount:0}, {elem:"F",x:40,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氟化鋰 (LiF)</strong><br>在紫外線區域具有極佳的穿透性，常用於光學透鏡或稜鏡材料。由於晶格能極大，它在鹼金屬鹵化物中溶解度最低。</div></div>');
+addMol("MgO|氧化鎂|苦土", "Mg", "-", "-", "-", "2852", "3600", [{elem:"Mg",x:-40,y:0,z:0,r:18,lpCount:0}, {elem:"O",x:40,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧱 物質性質</div><div class="info-body"><strong>氧化鎂 (MgO)</strong><br>熔點極高 (2852°C)，是優良的耐火材料，用於製造耐火磚和坩堝。在醫藥上可作為抗酸劑（中和胃酸）或輕瀉劑。燃燒鎂帶時產生的白煙即為氧化鎂。</div></div>');
+addMol("CaO|氧化鈣|生石灰", "Ca", "-", "-", "-", "2572", "2850", [{elem:"Ca",x:-45,y:0,z:0,r:22,lpCount:0}, {elem:"O",x:45,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧱 物質性質</div><div class="info-body"><strong>氧化鈣 (CaO)</strong><br>俗稱「生石灰」。遇水會劇烈反應並放出大量熱，生成熟石灰 Ca(OH)₂，常用於自熱食品包或作為工業乾燥劑、建築材料。</div></div>');
+addMol("BaO|氧化鋇", "Ba", "-", "-", "-", "1923", "2000", [{elem:"Ba",x:-50,y:0,z:0,r:28,lpCount:0}, {elem:"O",x:50,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧱 物質性質</div><div class="info-body"><strong>氧化鋇 (BaO)</strong><br>白色吸濕性粉末，用於玻璃工業增加折射率，或作為熱陰極的塗層材料以利電子發射。</div></div>');
+addMol("ZnO|氧化鋅|鋅白", "Zn", "-", "-", "-", "1975", "-", [{elem:"Zn",x:-40,y:0,z:0,r:18,lpCount:0}, {elem:"O",x:40,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🎨 物質性質</div><div class="info-body"><strong>氧化鋅 (ZnO)</strong><br>白色粉末，俗稱「鋅白」。具有優異的紫外線遮蔽能力，廣泛用於防曬乳、化妝品。此外也是橡膠工業的硫化活性劑。</div></div>');
+addMol("CuO|氧化銅", "Cu", "-", "-", "-", "1326", "-", [{elem:"Cu",x:-40,y:0,z:0,r:18,lpCount:0}, {elem:"O",x:40,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">⚫ 物質性質</div><div class="info-body"><strong>氧化銅 (CuO)</strong><br>黑色固體，不溶於水。常用於製造玻璃與陶瓷的綠色或藍色顏料。在有機分析中用作氧化劑測定碳氫含量。</div></div>');
+addMol("AgCl|氯化銀", "Ag", "-", "-", "-", "455", "1550", [{elem:"Ag",x:-45,y:0,z:0,r:22,lpCount:0}, {elem:"Cl",x:45,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">📷 物質性質</div><div class="info-body"><strong>氯化銀 (AgCl)</strong><br>白色沈澱物，見光會分解產生黑色的金屬銀。這個感光特性使其成為早期攝影底片與相紙的關鍵材料。</div></div>');
+addMol("AgBr|溴化銀", "Ag", "-", "-", "-", "432", "1502", [{elem:"Ag",x:-48,y:0,z:0,r:22,lpCount:0}, {elem:"Br",x:48,y:0,z:0,r:38,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">📷 物質性質</div><div class="info-body"><strong>溴化銀 (AgBr)</strong><br>淺黃色固體，感光性比氯化銀更強，是傳統黑白攝影底片中最主要的感光乳劑成分。</div></div>');
+addMol("AgI|碘化銀", "Ag", "-", "-", "-", "558", "1506", [{elem:"Ag",x:-50,y:0,z:0,r:22,lpCount:0}, {elem:"I",x:50,y:0,z:0,r:40,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🌧️ 物質性質</div><div class="info-body"><strong>碘化銀 (AgI)</strong><br>黃色固體。由於其晶體結構與冰相似，常被飛機撒播於雲層中作為「晶種」，以此進行人造降雨（Cloud Seeding）。</div></div>');
+addMol("NaH|氫化鈉", "Na", "-", "-", "-", "800", "分解", [{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0}, {elem:"H",x:40,y:0,z:0,r:15,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氫化鈉 (NaH)</strong><br>由鈉離子與氫負離子 (H⁻) 組成。它是極強的鹼與還原劑，遇水會劇烈反應產生氫氣，常用於有機合成中拔除質子。</div></div>');
+addMol("CuCl|氯化亞銅", "Cu", "-", "-", "-", "430", "1490", [{elem:"Cu",x:-45,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:45,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">⚪ 物質性質</div><div class="info-body"><strong>氯化亞銅 (CuCl)</strong><br>白色固體，微溶於水。在空氣中易被氧化而變成綠色。是有機合成中重要的催化劑（如 Sandmeyer 反應）及氣體吸收劑。</div></div>');
+addMol("ZnS|硫化鋅|閃鋅礦", "Zn", "-", "-", "-", "1185", "昇華", [{elem:"Zn",x:-45,y:0,z:0,r:18,lpCount:0}, {elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">💡 物質性質</div><div class="info-body"><strong>硫化鋅 (ZnS)</strong><br>白色或微黃色粉末。具有螢光特性，摻雜微量金屬後可用於製作夜光塗料、螢光屏以及陰極射線管。</div></div>');
+addMol("HgS|硫化汞|硃砂", "Hg", "-", "-", "-", "583", "昇華", [{elem:"Hg",x:-45,y:0,z:0,r:25,lpCount:0}, {elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🎨 物質性質</div><div class="info-body"><strong>硫化汞 (HgS)</strong><br>天然礦物稱為「硃砂」，呈鮮紅色。古代常用作紅色顏料或印泥，也是提煉金屬汞的主要礦源。注意其具有毒性。</div></div>');
+addMol("MgCl2|氯化鎂", "Mg", "-", "-", "-", "714", "1412", [{elem:"Mg",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:-85,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:85,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鎂 (MgCl₂)</strong><br>苦味極重的白色固體，是海水與鹽滷的主要成分之一，也是製作豆腐的傳統凝固劑。工業上經電解熔融態氯化鎂可製得金屬鎂。</div></div>');
+addMol("CaCl2|氯化鈣", "Ca", "-", "-", "-", "772", "1935", [{elem:"Ca",x:0,y:0,z:0,r:22,lpCount:0}, {elem:"Cl",x:-90,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:90,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鈣 (CaCl₂)</strong><br>具有極強的吸濕性，是實驗室與家庭常用的乾燥劑（水玻璃）。溶解時會釋放大量熱，因此也廣泛用於道路融雪劑。</div></div>');
+addMol("CaF2|氟化鈣|螢石", "Ca", "-", "-", "-", "1418", "2533", [{elem:"Ca",x:0,y:0,z:0,r:22,lpCount:0}, {elem:"F",x:-80,y:0,z:0,r:25,lpCount:0}, {elem:"F",x:80,y:0,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">💎 物質性質</div><div class="info-body"><strong>氟化鈣 (CaF₂)</strong><br>天然礦物稱為「螢石」。它是工業製備氟化氫 (HF) 的主要原料，也因其低色散特性用於製造顯微鏡或相機的高級鏡頭。</div></div>');
+addMol("BaCl2|氯化鋇", "Ba", "-", "-", "-", "962", "1560", [{elem:"Ba",x:0,y:0,z:0,r:28,lpCount:0}, {elem:"Cl",x:-95,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:95,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鋇 (BaCl₂)</strong><br>劇毒的白色固體，易溶於水。常用於實驗室檢驗硫酸根離子 (SO₄²⁻)，會產生白色的硫酸鋇沈澱。燃燒時會發出黃綠色火焰，用於製造煙火。</div></div>');
+addMol("CuCl2|氯化銅", "Cu", "-", "-", "-", "620", "993", [{elem:"Cu",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:-80,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:80,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化銅 (CuCl₂)</strong><br>無水物為棕黃色，吸水後變為藍綠色。燃燒時會產生特徵性的藍綠色火焰（焰色反應），常用於煙火製造與木材防腐。</div></div>');
+addMol("PbI2|碘化鉛", "Pb", "-", "-", "-", "402", "953", [{elem:"Pb",x:0,y:0,z:0,r:25,lpCount:0}, {elem:"I",x:-90,y:0,z:0,r:40,lpCount:0}, {elem:"I",x:90,y:0,z:0,r:40,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">✨ 物質性質</div><div class="info-body"><strong>碘化鉛 (PbI₂)</strong><br>亮黃色晶體，微溶於冷水但可溶於熱水。著名的化學演示實驗「黃金雨」即是利用其在冷卻時析出金光閃閃的片狀晶體。</div></div>');
+addMol("CaH2|氫化鈣", "Ca", "-", "-", "-", "816", "分解", [{elem:"Ca",x:0,y:0,z:0,r:22,lpCount:0}, {elem:"H",x:-70,y:0,z:0,r:15,lpCount:0}, {elem:"H",x:70,y:0,z:0,r:15,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">⛺ 物質性質</div><div class="info-body"><strong>氫化鈣 (CaH₂)</strong><br>俗稱「氫氣發生劑」。在野外或軍事用途中，與水反應可便攜且快速地產生大量氫氣，用於填充氣象氣球。</div></div>');
+addMol("Na2O|氧化鈉", "Na", "-", "-", "-", "1132", "1950", [{elem:"O",x:0,y:0,z:0,r:25,lpCount:0}, {elem:"Na",x:-90,y:0,z:0,r:20,lpCount:0}, {elem:"Na",x:90,y:0,z:0,r:20,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氧化鈉 (Na₂O)</strong><br>鹼性氧化物，溶於水劇烈反應生成氫氧化鈉。它是製造普通玻璃（鈉鈣玻璃）的重要原料之一，能降低二氧化矽的熔點。</div></div>');
+addMol("K2O|氧化鉀", "K", "-", "-", "-", "740", "分解", [{elem:"O",x:0,y:0,z:0,r:25,lpCount:0}, {elem:"K",x:-100,y:0,z:0,r:22,lpCount:0}, {elem:"K",x:100,y:0,z:0,r:22,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氧化鉀 (K₂O)</strong><br>白色粉末，極易吸濕，溶於水生成氫氧化鉀。主要用於農業肥料（鉀肥）的計算基準，以及特殊玻璃與陶瓷的釉料。</div></div>');
+addMol("Na2S|硫化鈉", "Na", "-", "-", "-", "1176", "-", [{elem:"S",x:0,y:0,z:0,r:30,lpCount:0}, {elem:"Na",x:-90,y:0,z:0,r:20,lpCount:0}, {elem:"Na",x:90,y:0,z:0,r:20,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>硫化鈉 (Na₂S)</strong><br>亦稱「臭鹼」，易溶於水呈強鹼性，具有臭雞蛋味。工業上主要用於造紙（牛皮紙漿法）、皮革脫毛以及硫化染料的製造。</div></div>');
+addMol("FeCl2|氯化亞鐵", "Fe", "-", "-", "-", "677", "1023", [{elem:"Fe",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:-85,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:85,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氯化亞鐵 (FeCl₂)</strong><br>無水物為灰棕色，吸濕後變為淺綠色晶體。具有還原性，在空氣中易被氧化成氯化鐵。工業上常用於污水處理及染料媒染劑。</div></div>');
+addMol("FeCl3|氯化鐵", "Fe", "-", "-", "-", "306", "315", [{elem:"Fe",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:0,y:90,z:0,r:35,lpCount:0}, {elem:"Cl",x:-78,y:-45,z:0,r:35,lpCount:0}, {elem:"Cl",x:78,y:-45,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氯化鐵 (FeCl₃)</strong><br>黑棕色晶體，溶於水呈黃褐色酸性溶液。工業上廣泛用於印刷電路板 (PCB) 的蝕刻劑以及污水處理的絮凝劑。</div></div>');
+addMol("AlCl3|氯化鋁", "Al", "-", "-", "-", "192", "180 (昇華)", [{elem:"Al",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:0,y:90,z:0,r:35,lpCount:0}, {elem:"Cl",x:-78,y:-45,z:0,r:35,lpCount:0}, {elem:"Cl",x:78,y:-45,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氯化鋁 (AlCl₃)</strong><br>白色或淡黃色固體，在加熱時易昇華。它是典型的路易斯酸，在有機化學中是傅-克反應 (Friedel-Crafts) 的重要催化劑。</div></div>');
+addMol("Al2O3|氧化鋁|剛玉", "Al", "-", "-", "-", "2072", "2977", [{elem:"O",x:-90,y:-20,z:0,r:25,lpCount:0}, {elem:"Al",x:-45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:0,y:-20,z:0,r:25,lpCount:0}, {elem:"Al",x:45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:90,y:-20,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">💎 物質性質</div><div class="info-body"><strong>氧化鋁 (Al₂O₃)</strong><br>硬度極高（莫氏硬度9），天然結晶稱為「剛玉」（紅寶石、藍寶石）。工業上是電解製鋁的原料，也廣泛用於研磨材料與陶瓷基板。</div></div>');
+addMol("Fe2O3|氧化鐵|赤鐵礦", "Fe", "-", "-", "-", "1565", "-", [{elem:"O",x:-90,y:-20,z:0,r:25,lpCount:0}, {elem:"Fe",x:-45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:0,y:-20,z:0,r:25,lpCount:0}, {elem:"Fe",x:45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:90,y:-20,z:0,r:25,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧱 物質性質</div><div class="info-body"><strong>氧化鐵 (Fe₂O₃)</strong><br>俗稱鐵鏽或紅土，紅棕色粉末。它是鋼鐵工業最重要的鐵礦石來源（赤鐵礦），也常作為紅色顏料（紅丹）與磁性材料。</div></div>');
+
+
+
 
 // ==========================================
 // 碳簇生成器 (放在檔案最後面)
