@@ -794,16 +794,19 @@ function autoAssignLonePairs(atom, bonds, allAtoms) {
 function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
     const dots = []; 
     let lpCount = atom.calculatedLP;
+    // 如果沒有孤對電子且不是自由基，直接返回空陣列
     if (lpCount <= 0 && !atom.radical) return dots;
 
-    // --- 幾何計算部分 (維持不變) ---
+    // --- 1. 幾何位置計算 (維持原有的 3D 向量運算) ---
     if (atom.lp3d && atom.lp3d.length > 0) {
+        // 如果有手動指定的座標 (hardcoded)
         const pushDist = atom.r * 2.2; 
         atom.lp3d.forEach(v => {
             const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
             addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
         });
     } else {
+        // 自動計算：根據鍵結向量推算孤對電子位置
         const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
         let bondVectors = [];
         myBonds.forEach(b => {
@@ -862,12 +865,24 @@ function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
         } else { pushLP(ux, uy, uz); }
     }
 
-    // --- [修正邏輯] 粉紅電子判定 ---
-    // 1. 形式電荷必須 <= -0.5 (代表帶負電)
-    // 2. 且該原子「不是」配位鍵的接收者 (!isCoordinateReceiver)
-    // 這樣 S->O (FC=-1, Receiver=True) -> 不會粉紅 (正確!)
-    // 這樣 S-O- (FC=-1, Receiver=False) -> 會粉紅 (正確!)
-    if (atom.formalCharge <= -0.5 && !atom.isCoordinateReceiver) {
+    // --- 2. [修正] 顏色判定邏輯 (排除 NO/NO2) ---
+    
+    // 判斷是否為氮氧化物特例
+    let isNitrogenOxide = false;
+    if (typeof currentKey !== 'undefined' && currentKey) {
+        // 只要分子名稱包含 NO 或 NO2 且不含電荷符號(如 NO3-)，就視為特例
+        if (currentKey === "NO" || currentKey === "NO2" || 
+            currentKey.startsWith("NO|") || currentKey.startsWith("NO2|")) {
+            isNitrogenOxide = true;
+        }
+    }
+
+    // 只有當：
+    // 1. 形式電荷 <= -0.5 (帶負電)
+    // 2. 且 不是配位鍵接收者
+    // 3. 且 不是 NO/NO2 這種特例
+    // 才將電子塗成粉紅色
+    if (atom.formalCharge <= -0.5 && !atom.isCoordinateReceiver && !isNitrogenOxide) {
         let countToColor = Math.round(Math.abs(atom.formalCharge));
         
         // 倒著找，把最後幾顆電子標記為粉紅
@@ -1443,6 +1458,7 @@ function loadMolecule(key, variantKey = null) {
     const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
     const centerAtomSym = processedAtoms[0].elem; 
     const canExpand = expandableCenters.includes(centerAtomSym);
+    let keptDoubleBonds = 0;
 
     processedBonds.forEach(bond => {
         const idx1 = bond[0]; 
@@ -1457,16 +1473,27 @@ function loadMolecule(key, variantKey = null) {
             const termAtom = processedAtoms[termIdx];
 
             if (isOctetMode) {
+                // 模式開啟：強制降階以符合八隅體
                 if (type === 'double' && termAtom.elem === 'O') {
-                    bond[2] = 'coordinate'; 
-                    bond[0] = 0; 
-                    bond[1] = termIdx;
+                    
+                    // 針對 SO2 (或類似結構) 的特殊處理：保留第一個雙鍵，其餘轉配位鍵
+                    // 這樣 SO2 會顯示 O=S→O (正確共振)
+                    const resonanceMols = ["SO2", "二氧化硫"];
+                    const isResonance = resonanceMols.some(n => currentKey.includes(n));
+
+                    if (isResonance && keptDoubleBonds === 0) {
+                        keptDoubleBonds++; // 保留這一個雙鍵
+                    } else {
+                        // 其他的雙鍵轉為配位鍵 (單鍵)
+                        bond[2] = 'coordinate'; 
+                        bond[0] = 0; 
+                        bond[1] = termIdx;
+                    }
                 }
             } else {
                 if (type === 'coordinate' && termAtom.elem === 'O') {
                     bond[2] = 'double';
                     if (termAtom.lpCount !== undefined && termAtom.lpCount > 0) {
-                        termAtom.lpCount -= 1;
                     }
                 }
             }
@@ -3261,10 +3288,58 @@ const ORBITAL_DATA = {
     "dxy": { lobes: [{e:[110,110,0],color:"blue"}, {e:[-110,-110,0],color:"blue"}, {e:[-110,110,0],color:"orange"}, {e:[110,-110,0],color:"orange"}], planes:[{type:'xz'},{type:'yz'}], label:"3dxy" },
     "dyz": { lobes: [{e:[0,110,110],color:"blue"}, {e:[0,-110,-110],color:"blue"}, {e:[0,-110,110],color:"orange"}, {e:[0,110,-110],color:"orange"}], planes:[{type:'xy'},{type:'xz'}], label:"3dyz" },
     "dxz": { lobes: [{e:[110,0,110],color:"blue"}, {e:[-110,0,-110],color:"blue"}, {e:[-110,0,110],color:"orange"}, {e:[110,0,-110],color:"orange"}], planes:[{type:'xy'},{type:'yz'}], label:"3dxz" },
-    
-    "dx2-y2": { lobes: [{e:[150,0,0],color:"blue"}, {e:[-150,0,0],color:"blue"}, {e:[0,150,0],color:"orange"}, {e:[0,-150,0],color:"orange"}], planes:[{type:'custom',v:[{x:90,y:90,z:90},{x:-90,y:-90,z:90},{x:-90,y:-90,z:-90},{x:90,y:90,z:-90}]},{type:'custom',v:[{x:90,y:-90,z:90},{x:-90,y:90,z:90},{x:-90,y:90,z:-90},{x:90,y:-90,z:-90}]}], label:"3dx²-y²" },
-    
-    "dz2": { lobes: [{e:[0,0,150],color:"blue"}, {e:[0,0,-150],color:"blue"}], torus:{r:80,color:"orange"}, planes:[], label:"3dz²" }
+    "dx2-y2": { lobes: [{e:[150,0,0],color:"blue"}, {e:[-150,0,0],color:"blue"}, {e:[0,150,0],color:"orange"}, {e:[0,-150,0],color:"orange"}], planes:[{type:'custom',v:[{x:80,y:80,z:80},{x:-80,y:-80,z:80},{x:-80,y:-80,z:-80},{x:80,y:80,z:-80}]},{type:'custom',v:[{x:80,y:-80,z:80},{x:-80,y:80,z:80},{x:-80,y:80,z:-80},{x:80,y:-80,z:-80}]}], label: "3dx²-y²" },   
+    "dz2": { lobes: [{e:[0,0,150],color:"blue"}, {e:[0,0,-150],color:"blue"}], torus:{r:80,color:"orange"}, planes:[], label:"3dz²" },
+
+    // --- f 軌域 (Cube Set) ---
+    // 特徵：兩個主花瓣 + 兩個環 (Double Torus)
+    "fz3": { 
+        lobes: [{e:[0,0,160],color:"blue"}, {e:[0,0,-160],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[0,0,1]}, {r:55, color:"blue", offset:-25, normal:[0,0,1]}],
+        label: "4fz³" 
+    },
+    "fx3": { 
+        lobes: [{e:[160,0,0],color:"blue"}, {e:[-160,0,0],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[1,0,0]}, {r:55, color:"blue", offset:-25, normal:[1,0,0]}],
+        label: "4fx³" 
+    },
+    "fy3": { 
+        lobes: [{e:[0,160,0],color:"blue"}, {e:[0,-160,0],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[0,1,0]}, {r:55, color:"blue", offset:-25, normal:[0,1,0]}],
+        label: "4fy³" 
+    },
+
+    // --- f 軌域 (General Set) ---
+    // 特徵：8 個花瓣指向立方體的角落
+    "fxyz": { 
+        lobes: [
+            {e:[100,100,100],color:"blue"}, {e:[-100,-100,100],color:"blue"}, {e:[-100,100,-100],color:"blue"}, {e:[100,-100,-100],color:"blue"},
+            {e:[-100,-100,-100],color:"orange"}, {e:[100,100,-100],color:"orange"}, {e:[100,-100,100],color:"orange"}, {e:[-100,100,100],color:"orange"}
+        ], 
+        label: "4fxyz" 
+    },
+    // 下面三個形狀類似 xyz 但旋轉 45 度，我們用 8 個花瓣模擬圖中的樣子
+    "f_z_x2y2": { 
+        lobes: [
+            {e:[120,0,80],color:"blue"}, {e:[-120,0,80],color:"blue"}, {e:[0,120,-80],color:"blue"}, {e:[0,-120,-80],color:"blue"},
+            {e:[0,120,80],color:"orange"}, {e:[0,-120,80],color:"orange"}, {e:[120,0,-80],color:"orange"}, {e:[-120,0,-80],color:"orange"}
+        ], 
+        label: "4fz(x²-y²)" 
+    },
+    "f_x_z2y2": { 
+        lobes: [
+            {e:[80,120,0],color:"blue"}, {e:[80,-120,0],color:"blue"}, {e:[-80,0,120],color:"blue"}, {e:[-80,0,-120],color:"blue"},
+            {e:[80,0,120],color:"orange"}, {e:[80,0,-120],color:"orange"}, {e:[-80,120,0],color:"orange"}, {e:[-80,-120,0],color:"orange"}
+        ], 
+        label: "4fx(z²-y²)" 
+    },
+    "f_y_z2x2": { 
+        lobes: [
+            {e:[0,80,120],color:"blue"}, {e:[0,80,-120],color:"blue"}, {e:[120,-80,0],color:"blue"}, {e:[-120,-80,0],color:"blue"},
+            {e:[120,80,0],color:"orange"}, {e:[-120,80,0],color:"orange"}, {e:[0,-80,120],color:"orange"}, {e:[0,-80,-120],color:"orange"}
+        ], 
+        label: "4fy(z²-x²)" 
+    }
 };
 
 // 3. UI 初始化
@@ -3275,13 +3350,17 @@ function initOrbitalUI() {
     const card = document.createElement('div');
     card.id = 'orbital-card'; card.className = 'card'; card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
     card.innerHTML = `
-        <div class="card-title" style="color:#38bdf8;">💠 原子軌域 (4K 電子雲版)</div>
+        <div class="card-title" style="color:#38bdf8;">💠 原子軌域</div>
+        
+        <!-- s, p 軌域 -->
         <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
             <button class="orb-btn" onclick="loadOrbital('s')">s</button>
             <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
             <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
             <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
         </div>
+        
+        <!-- d 軌域 -->
         <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
             <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
             <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
@@ -3289,6 +3368,23 @@ function initOrbitalUI() {
             <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
             <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
         </div>
+
+        <!-- f 軌域 (新增) -->
+        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
+        <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
+            <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+        </div>
+        
+        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
+        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
+            <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
+        </div>
+
         <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
     `;
     const dataCard = document.getElementById('data-card');
@@ -3296,12 +3392,20 @@ function initOrbitalUI() {
     else container.appendChild(card);
 }
 
-// 4. 純電子雲生成引擎 (增加密度)
+// 4. 純電子雲生成引擎 (高密度動態版)
 function generateCloudPoints(type) {
     const data = ORBITAL_DATA[type];
     const points = [];
-    // ★ 提升粒子數量：從 3000 提升至 4500，讓畫面更飽滿
-    const DOT_COUNT = 4500; 
+    // [修改] 大幅提升粒子數量 (4500 -> 20000) 讓雲層更綿密
+    const DOT_COUNT = 20000; 
+
+    // 輔助：加入隨機動畫參數
+    const createPoint = (x, y, z, color) => ({
+        x, y, z, color,
+        // [新增] 每個粒子獨立的顫動參數
+        phase: Math.random() * Math.PI * 2, 
+        speed: 0.002 + Math.random() * 0.004
+    });
 
     const addLobePoints = (baseV, color, count) => {
         const len = Math.sqrt(baseV[0]**2 + baseV[1]**2 + baseV[2]**2) || 1;
@@ -3317,35 +3421,40 @@ function generateCloudPoints(type) {
         for(let i=0; i<count; i++) {
             let d = Math.pow(Math.random(), 0.7); 
             const dist = d * 160; 
-            let r = Math.sin(d * Math.PI) * 45; 
+            // 讓花瓣稍微收斂一點，形狀更銳利
+            let r = Math.sin(d * Math.PI) * 38; 
             r *= Math.sqrt(Math.random()); 
             const theta = Math.random() * Math.PI * 2;
             const rc = r * Math.cos(theta);
             const rs = r * Math.sin(theta);
-            points.push({
-                x: dist * dx + rc * ux + rs * wx,
-                y: dist * dy + rc * uy + rs * wy,
-                z: dist * dz + rc * uz + rs * wz,
-                color: color
-            });
+            
+            points.push(createPoint(
+                dist * dx + rc * ux + rs * wx,
+                dist * dy + rc * uy + rs * wy,
+                dist * dz + rc * uz + rs * wz,
+                color
+            ));
         }
     };
 
+    // s 軌域
     if (data.sphere) {
         for(let i=0; i<DOT_COUNT; i++) {
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             let r = 80 * Math.pow(Math.random(), 1/3);
             if (Math.random() > 0.6) r = 80 * Math.abs(generateGaussian()) * 0.6;
-            points.push({
-                x: r * Math.sin(phi) * Math.cos(theta),
-                y: r * Math.sin(phi) * Math.sin(theta),
-                z: r * Math.cos(phi),
-                color: "#38bdf8"
-            });
+            
+            points.push(createPoint(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta),
+                r * Math.cos(phi),
+                "#38bdf8"
+            ));
         }
     }
 
+    // p, d, f 軌域 (花瓣)
     if (data.lobes) {
         const countPerLobe = Math.floor(DOT_COUNT / data.lobes.length);
         data.lobes.forEach(lobe => {
@@ -3354,21 +3463,60 @@ function generateCloudPoints(type) {
         });
     }
 
+    // d 軌域 (單環)
     if (data.torus) {
-        const ringCount = 1000;
+        const ringCount = 2500; // [修改] 增加環的密度
         const color = (data.torus.color === 'blue') ? "#38bdf8" : "#fbbf24";
         for(let i=0; i<ringCount; i++) {
             const theta = Math.random() * Math.PI * 2;
             const ringR = 60 + (generateGaussian()) * 10; 
             const tubeH = (Math.random() - 0.5) * 20;
-            points.push({
-                x: ringR * Math.cos(theta),
-                y: ringR * Math.sin(theta),
-                z: tubeH,
-                color: color
-            });
+            
+            points.push(createPoint(
+                ringR * Math.cos(theta),
+                ringR * Math.sin(theta),
+                tubeH,
+                color
+            ));
         }
     }
+
+    // f 軌域 (多重環)
+    if (data.tori) {
+        const ringCount = 2000; // [修改] 增加環的密度
+        data.tori.forEach(torus => {
+            const color = (torus.color === 'blue') ? "#38bdf8" : "#fbbf24";
+            let nx = torus.normal[0], ny = torus.normal[1], nz = torus.normal[2];
+            let len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+            nx/=len; ny/=len; nz/=len;
+
+            let tx = 0, ty = 1, tz = 0; 
+            if (Math.abs(nx) < 0.1 && Math.abs(nz) < 0.1) { tx=1; ty=0; tz=0; }
+            let ux = ny*tz - nz*ty, uy = nz*tx - nx*tz, uz = nx*ty - ny*tx; 
+            let uLen = Math.sqrt(ux*ux + uy*uy + uz*uz); 
+            ux/=uLen; uy/=uLen; uz/=uLen;
+            let vx = ny*uz - nz*uy, vy = nz*ux - nx*uz, vz = nx*uy - ny*ux;
+
+            for(let i=0; i<ringCount; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const rBase = torus.r || 50;
+                const ringR = rBase + (generateGaussian()) * 8; 
+                const tubeH = (Math.random() - 0.5) * 15 + (torus.offset || 0);
+
+                let px = ringR * Math.cos(theta);
+                let py = ringR * Math.sin(theta);
+                let pz = tubeH;
+
+                points.push(createPoint(
+                    px * ux + py * vx + pz * nx,
+                    px * uy + py * vy + pz * ny,
+                    px * uz + py * vz + pz * nz,
+                    color
+                ));
+            }
+        });
+    }
+
     return points;
 }
 
@@ -3379,25 +3527,20 @@ function generateGaussian() {
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
 
-// 5. 渲染迴圈 (★ 修正：支援 High-DPI 清晰度)
+// 5. 渲染迴圈 (加入微幅抖動動畫)
 function renderOrbitals() {
-    const sceneRoot = document.getElementById("scene-root"); sceneRoot.innerHTML = "";
+    const sceneRoot = document.getElementById("scene-root"); 
+    sceneRoot.innerHTML = "";
     
     const canvas = ensureCanvasLayer();
     const ctx = canvas.getContext('2d');
-    
-    // 取得像素比
     const dpr = canvas.dpr || 1;
+    const time = performance.now(); // 取得當前時間
 
-    // 1. 重置矩陣
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 2. 縮放並置中 (Scale for Retina -> Translate to center)
-    // 注意：Canvas 尺寸變大 dpr 倍，所以我們要將繪圖指令放大 dpr 倍
     ctx.scale(dpr, dpr);
-    
-    // 因為 scale 了，所以 translate 的位移量要是 邏輯像素 (client width/2)
     ctx.translate(canvas.width / dpr / 2, canvas.height / dpr / 2);
 
     if(!currentMolecule || !currentMolecule.renderObjects) return;
@@ -3405,26 +3548,38 @@ function renderOrbitals() {
     // 繪製電子雲
     if (currentMolecule.cloudPoints) {
         const projected = [];
+        
+        // 投影時加入微幅抖動
         currentMolecule.cloudPoints.forEach(p => {
-            const proj = project(p); 
+            // [新增] 根據時間與相位計算偏移量 (Jitter)
+            // 範圍約 +/- 1.5 單位，製造 "電子不確定性" 的感覺
+            const jitterX = Math.cos(time * p.speed + p.phase) * 1.5;
+            const jitterY = Math.sin(time * p.speed + p.phase) * 1.5;
+            const jitterZ = Math.sin(time * p.speed * 1.3 + p.phase) * 1.5;
+
+            // 將偏移量加到原始座標
+            const proj = project({
+                x: p.x + jitterX,
+                y: p.y + jitterY,
+                z: p.z + jitterZ
+            }); 
+
             if (proj.scale > 0) {
                 projected.push({ ...proj, color: p.color });
             }
         });
 
-        // ★ 優化視覺：稍微增加銳利度
-        // 使用 lighter 會讓重疊處變白，產生光暈感
-        // 但我們同時提高 globalAlpha，讓單顆粒子更實，減少模糊感
-        ctx.globalCompositeOperation = 'lighter';
+        // 繪圖設定
+        ctx.globalCompositeOperation = 'lighter'; // 讓重疊處發光
         
         projected.forEach(p => {
-            // ★ 縮小半徑：從 1.5 改為 1.0 (甚至更小)，粒子越小越銳利
-            // 並確保 scale 影響不會讓近處粒子變得過大而模糊
-            const size = 1.0 * p.scale; 
+            // 粒子大小：隨縮放變化，但保持在合理範圍
+            const size = Math.max(0.6, 1.1 * p.scale); 
             
             ctx.fillStyle = p.color;
-            // ★ 提高不透明度：從 0.3 提升到 0.6，減少邊緣糊邊
-            ctx.globalAlpha = 0.6; 
+            // [修改] 降低不透明度：因為密度增加4倍，透明度要降低以免變成實心色塊
+            // 從 0.6 降到 0.25，這樣堆疊起來才有雲霧感
+            ctx.globalAlpha = 0.25; 
             
             ctx.beginPath();
             ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
@@ -3435,7 +3590,7 @@ function renderOrbitals() {
         ctx.globalAlpha = 1.0;
     }
 
-    // 繪製 SVG 輔助線 (節面與軸)
+    // 繪製 SVG 輔助線 (節面與軸) - 保持不變
     const renderList = [];
     currentMolecule.renderObjects.forEach(obj => {
         if (obj.type === 'axisVector') {
@@ -3498,8 +3653,21 @@ window.renderScene = function(time) {
 };
 
 window.loadMolecule = function(key, variant) {
+    // [修正] 1. 強制關閉軌域模式
     window.currentOrbitalMode = false;
+    window.currentOrbitalType = null;
+    
+    // [修正] 2. 清除軌域 Canvas 畫面 (避免殘留)
+    const canvas = document.getElementById('orbital-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // [修正] 3. 移除按鈕活性狀態
     document.querySelectorAll('.orb-btn').forEach(b => b.classList.remove('active'));
+    
+    // 執行原本的載入邏輯
     window._nativeLoadMolecule(key, variant);
 };
 
@@ -3512,9 +3680,11 @@ window.loadOrbital = function(type) {
 
     const data = ORBITAL_DATA[type];
     let objs = [];
-    objs.push({ type:'axisVector', start:{x:0,y:0,z:0}, end:{x:AXIS_LEN,y:0,z:0}, label:'x' });
-    objs.push({ type:'axisVector', start:{x:0,y:0,z:0}, end:{x:0,y:AXIS_LEN,z:0}, label:'y' });
-    objs.push({ type:'axisVector', start:{x:0,y:0,z:0}, end:{x:0,y:0,z:AXIS_LEN}, label:'z' });
+
+    objs.push({ type:'axisVector', start:{x:-AXIS_LEN,y:0,z:0}, end:{x:AXIS_LEN,y:0,z:0}, label:'x' });
+    objs.push({ type:'axisVector', start:{x:0,y:-AXIS_LEN,z:0}, end:{x:0,y:AXIS_LEN,z:0}, label:'y' });
+    objs.push({ type:'axisVector', start:{x:0,y:0,z:-AXIS_LEN}, end:{x:0,y:0,z:AXIS_LEN}, label:'z' });
+
     if (showNodalPlanes && data.planes) data.planes.forEach(p => objs.push({ type:'plane', planeType:p.type, customV:p.v }));
 
     currentMolecule = { fullKey:`Orbital|${data.label}`, renderObjects:objs, bonds3D:[] };
@@ -3538,6 +3708,50 @@ window.togglePlanes = function() {
 
 setTimeout(initOrbitalUI, 500);
 
+// ==========================================
+// [系統修復] 解決軌域重疊問題 & 確保畫面清除
+// ==========================================
+
+// 1. 覆寫渲染迴圈：確保非軌域模式下，每一幀都強制清空 Canvas
+window.renderScene = function(time) {
+    if (window.currentOrbitalMode) {
+        // 如果是軌域模式，執行軌域渲染
+        renderOrbitals();
+    } else {
+        // 如果是普通分子模式
+        const canvas = document.getElementById('orbital-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            // ★關鍵修正：清除前必須重置矩陣 (Reset Transform)
+            // 否則 clearRect 只會清除偏移後的區域，導致畫面殘留
+            ctx.setTransform(1, 0, 0, 1, 0, 0); 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        // 呼叫原本的 SVG 渲染
+        window._nativeRenderScene(time);
+    }
+};
+
+// 2. 覆寫載入函式：切換分子時，立即重置狀態
+window.loadMolecule = function(key, variant) {
+    // 關閉軌域旗標
+    window.currentOrbitalMode = false;
+    window.currentOrbitalType = null;
+    
+    // 立即清除 Canvas (雙重保險)
+    const canvas = document.getElementById('orbital-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // 重置矩陣
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空
+    }
+    
+    // 移除按鈕活性
+    document.querySelectorAll('.orb-btn').forEach(b => b.classList.remove('active'));
+    
+    // 執行原始載入
+    window._nativeLoadMolecule(key, variant);
+};
 
 </script>
 </body>
