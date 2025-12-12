@@ -151,149 +151,415 @@ function markReps(atoms, bonds, cnA, elemA, cnB, elemB) {
     }
 })();
 
-// 2. [CsCl] 氯化銫 (8:8) - [維持原樣]
+// // ==========================================
+// [CsCl] 氯化銫 (單元與晶體整合版，風格同步)
+// ==========================================
 (function(){
-    const atoms = []; const bonds = []; const scale = 140;
-    const corners = [[-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1], [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]];
-    corners.forEach(p => atoms.push({ elem:"Cl", x:p[0]*scale/2, y:p[1]*scale/2, z:p[2]*scale/2, r:27, lpCount:0 }));
-    atoms.push({ elem:"Cs", x:0, y:0, z:0, r:25, lpCount:0 });
-    const centerIdx = atoms.length - 1;
-    for(let i=0; i<centerIdx; i++) bonds.push([centerIdx, i, "single"]);
-    
-    markReps(atoms, bonds, 8, "Cs", 8, "Cl");
-    const box = { x:[-scale/2, scale/2], y:[-scale/2, scale/2], z:[-scale/2, scale/2] };
+    // --- A. 基本單元 (Simple Unit) ---
+    const sa = [
+        {elem:"Cs", x:-45, y:0, z:0, r:26, lpCount:0}, 
+        {elem:"Cl", x:45, y:0, z:0, r:34, lpCount:0}
+    ];
+    const sb = []; // 不畫連接線
 
-    addMol("CsCl|氯化銫|Cesium Chloride", "Ionic", "簡單立方堆積 (SC)", "1.67(Å) / 1.81(Å) = 0.92", "配位數: Cs⁺:8, Cl⁻:8", "645", "1290", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🧊 氯化銫 (CsCl)</div><div class="info-body">點擊<strong>正中央 Cs⁺</strong>。Cs⁺ 被 8 個 Cl⁻ 包圍。</div></div>`);
-    if(MOLECULE_DB["CsCl"]) { MOLECULE_DB["CsCl"].isIonic=true; MOLECULE_DB["CsCl"].hybrid="簡單立方堆積 (SC)"; MOLECULE_DB["CsCl"].edgeRelation="a = 2r<sub>-</sub> (限制)"; MOLECULE_DB["CsCl"].boxData = box; }
-})();
+    // --- B. 晶體結構 (Body-Centered Cubic Type) ---
+    const ca = [], cb = [];
+    const s = 180; // 邊長
 
-// 3. [ZnS] 閃鋅礦 (4:4) - [修正] 間距大，單一晶胞，框線在外
-(function(){
-    const atoms = []; const bonds = []; 
-    const scale = 200; // 間距拉大
-    
-    // 定義一個標準晶胞的 S 原子 (8頂點 + 6面心)
-    const baseS = [[0,0,0], [1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], 
-                   [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5], [0.5,1,0.5], [1,0.5,0.5], [0.5,0.5,1]];
-    // 定義內部的 4 個 Zn
-    const baseZn = [[0.25,0.25,0.25], [0.75,0.75,0.25], [0.75,0.25,0.75], [0.25,0.75,0.75]];
-
-    baseS.forEach(p => {
-        atoms.push({ elem:"S", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:28 });
-    });
-    baseZn.forEach(p => {
-        atoms.push({ elem:"Zn", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:12 });
+    // 1. 中心 Cs 原子 (代表原子)
+    ca.push({
+        elem: "Cs", x: 0, y: 0, z: 0, r: 26, 
+        isRepresentative: true // 點擊顯示配位數
     });
 
-    const bondDist = scale * 0.433;
-    for(let i=0; i<atoms.length; i++) {
-        for(let j=i+1; j<atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - bondDist) < 20) bonds.push([i,j,"single"]);
+    // 2. 角落 Cl 原子 (8顆)
+    const dirs = [-1, 1];
+    let idx = 1;
+    dirs.forEach(x => {
+        dirs.forEach(y => {
+            dirs.forEach(z => {
+                ca.push({
+                    elem: "Cl",
+                    x: x * s * 0.5,
+                    y: y * s * 0.5,
+                    z: z * s * 0.5,
+                    r: 34,
+                    isCorner: true
+                });
+                
+                // 3. 生成內部鍵結 (Cs-Cl): ionic_thin
+                // 中心(0) 連到目前這顆角落原子(idx)
+                cb.push([0, idx, "ionic_thin"]);
+                idx++;
+            });
+        });
+    });
+
+    // 4. 生成外部邊框 (Cl-Cl): ionic_thick
+    // 連接相鄰的角落原子 (距離等於 s)
+    for(let i=1; i<ca.length; i++) {
+        for(let j=i+1; j<ca.length; j++) {
+            const d = Math.abs(ca[i].x - ca[j].x) + Math.abs(ca[i].y - ca[j].y) + Math.abs(ca[i].z - ca[j].z);
+            // 曼哈頓距離為 s 代表是立方體的邊 (例如 x變了s，y,z沒變)
+            if(Math.abs(d - s) < 5) {
+                cb.push([i, j, "ionic_thick"]);
+            }
         }
     }
-    markReps(atoms, bonds, 4, "Zn", 4, "S");
-    
-    // 居中處理：將中心從 (0.5, 0.5, 0.5) 移回 (0,0,0)
-    const offset = scale * 0.5;
-    atoms.forEach(a => { a.x -= offset; a.y -= offset; a.z -= offset; });
-    
-    // 邊框：範圍剛好是 [-0.5, 0.5] * scale，這樣就會畫在最外圍的 S 上
-    const box = { x:[-scale/2, scale/2], y:[-scale/2, scale/2], z:[-scale/2, scale/2] };
 
-    addMol("ZnS|閃鋅礦|硫化鋅|Zinc Blende", "Ionic", "面心立方堆積 (FCC)", "0.74(Å) / 1.84(Å) = 0.40", "配位數: Zn²⁺:4, S²⁻:4", "1185", "-", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">💎 閃鋅礦 (ZnS)</div><div class="info-body">點擊內部的 <strong>Zn²⁺</strong>。Zn²⁺ 位於四面體空隙中。外圍虛線框連接了 S²⁻ 頂點。</div></div>`);
-    if(MOLECULE_DB["ZnS"]) { MOLECULE_DB["ZnS"].isIonic=true; MOLECULE_DB["ZnS"].hybrid="面心立方堆積 (FCC)"; MOLECULE_DB["ZnS"].edgeRelation="4(r<sub>+</sub> + r<sub>-</sub>) = √3 a"; MOLECULE_DB["ZnS"].boxData = box; }
+    // --- C. 註冊與補丁 ---
+    addMol("CsCl|氯化銫|Cesium Chloride", "Cs", "-", "-", "-", "645", "1290", sa, sb, {
+        "Simple|基本單元 (離子對)": { 
+            atoms: sa, bonds: sb, hybrid: "-", shape: "-",
+            desc: '<div class="info-section"><div class="info-title">⚛️ 物質簡介</div><div class="info-body"><strong>氯化銫 (CsCl)</strong><br>由銫離子 (Cs⁺) 與氯離子 (Cl⁻) 組成。由於銫離子半徑較大，無法像鈉離子那樣塞入八面體空隙，因此形成配位數更高的體心立方堆積結構。</div></div>'
+        },
+        "Crystal|晶體堆積 (SC)": { 
+            atoms: ca, bonds: cb, isIonic: true, edgeRelation: "a = 2r<sub>-</sub> / √3 a = 2(r⁺+r⁻)",
+            desc: '<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>簡單立方堆積 (SC)</strong><br>氯離子構成簡單立方堆積，銫離子則填入正中央的體心空隙。<br>外框<strong>粗線</strong>顯示立方體結構，內部<strong>細線</strong>顯示 Cs-Cl 的 8 配位關係。<br><span style="color:#facc15">★ 點擊中央 Cs 離子可查看配位數。</span></div></div>'
+        }
+    }, '<div class="info-section"><div class="info-title">🧊 氯化銫 (CsCl)</div><div class="info-body">請切換選項檢視<strong>單元</strong>或<strong>晶體結構</strong>。</div></div>');
+
+    if(MOLECULE_DB["CsCl"] && MOLECULE_DB["CsCl"].variants) {
+        const vCry = MOLECULE_DB["CsCl"].variants["Crystal|晶體堆積 (SC)"];
+        const vSim = MOLECULE_DB["CsCl"].variants["Simple|基本單元 (離子對)"];
+        if(vCry) vCry.isIonic = true;
+        if(vSim) vSim.isIonic = true;
+    }
 })();
 
-// 4. [CuCl] 氯化亞銅 (4:4) - [修正] 同 ZnS
+// ==========================================
+// [ZnS] 閃鋅礦 (修正：基本單元無鍵結，晶體維持風格)
+// ==========================================
 (function(){
-    const atoms = []; const bonds = []; const scale = 200; // 間距拉大
-    const baseCl = [[0,0,0], [1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5], [0.5,1,0.5], [1,0.5,0.5], [0.5,0.5,1]];
-    const baseCu = [[0.25,0.25,0.25], [0.75,0.75,0.25], [0.75,0.25,0.75], [0.25,0.75,0.75]];
-    
-    baseCl.forEach(p => { atoms.push({ elem:"Cl", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:27 }); });
-    baseCu.forEach(p => { atoms.push({ elem:"Cu", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:13 }); });
+    // --- A. 定義基本單元 (Simple Unit) ---
+    // Zn 在左，S 在右，無連接線
+    const sa = [
+        {elem:"Zn", x:-45, y:0, z:0, r:18, lpCount:0}, 
+        {elem:"S", x:45, y:0, z:0, r:30, lpCount:0}
+    ];
+    const sb = []; // [修正] 這裡設為空陣列，不畫連接線
 
+    // --- B. 定義晶體結構 (Crystal Structure - Zinc Blende) ---
+    const ca = [], cb = [];
+    const scale = 200; 
+    
+    // 1. 原子座標定義
+    const baseS = [
+        [0,0,0], [1,0,0], [0,1,0], [0,0,1], // 0-3
+        [1,1,0], [1,0,1], [0,1,1], [1,1,1], // 4-7
+        [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5], // 面心
+        [0.5,1,0.5], [1,0.5,0.5], [0.5,0.5,1]  // 面心
+    ];
+    const baseZn = [
+        [0.25,0.25,0.25], [0.75,0.75,0.25], 
+        [0.75,0.25,0.75], [0.25,0.75,0.75]
+    ];
+
+    // 2. 生成 S 原子 (0~13)
+    let sIdx = 0;
+    baseS.forEach((p, i) => {
+        // 判斷頂點：座標皆為整數
+        const isCorner = (p[0]===0||p[0]===1) && (p[1]===0||p[1]===1) && (p[2]===0||p[2]===1);
+        ca.push({
+            elem: "S",
+            x: (p[0] - 0.5) * scale,
+            y: (p[1] - 0.5) * scale,
+            z: (p[2] - 0.5) * scale,
+            r: 28, 
+            isCorner: isCorner, 
+            idx: sIdx++
+        });
+    });
+
+    // 3. 生成 Zn 原子 (14~17)
+    baseZn.forEach((p, i) => {
+        ca.push({
+            elem: "Zn",
+            x: (p[0] - 0.5) * scale,
+            y: (p[1] - 0.5) * scale,
+            z: (p[2] - 0.5) * scale,
+            r: 12,
+            isRepresentative: (i === 0) // 標記代表原子
+        });
+    });
+
+    // 4. 生成鍵結
+    // (1) 內部鍵結 (Zn-S): ionic_thin
     const bondDist = scale * 0.433;
-    for(let i=0; i<atoms.length; i++) {
-        for(let j=i+1; j<atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - bondDist) < 20) bonds.push([i,j,"single"]);
+    for(let i = 14; i < ca.length; i++) {
+        for(let j = 0; j < 14; j++) {
+            const d = Math.sqrt((ca[i].x-ca[j].x)**2 + (ca[i].y-ca[j].y)**2 + (ca[i].z-ca[j].z)**2);
+            if (Math.abs(d - bondDist) < 20) {
+                cb.push([i, j, "ionic_thin"]);
+            }
         }
     }
-    markReps(atoms, bonds, 4, "Cu", 4, "Cl");
-    const offset = scale * 0.5;
-    atoms.forEach(a => { a.x -= offset; a.y -= offset; a.z -= offset; });
-    const box = { x:[-scale/2, scale/2], y:[-scale/2, scale/2], z:[-scale/2, scale/2] };
 
-    addMol("CuCl|氯化亞銅|Nantokite", "Ionic", "面心立方堆積 (FCC)", "0.77(Å) / 1.81(Å) = 0.43", "配位數: Cu⁺:4, Cl⁻:4", "430", "1490", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🔸 氯化亞銅 (CuCl)</div><div class="info-body">結構與閃鋅礦相同。</div></div>`);
-    if(MOLECULE_DB["CuCl"]) { MOLECULE_DB["CuCl"].isIonic=true; MOLECULE_DB["CuCl"].hybrid="面心立方堆積 (FCC)"; MOLECULE_DB["CuCl"].edgeRelation="4(r<sub>+</sub> + r<sub>-</sub>) = √3 a"; MOLECULE_DB["CuCl"].boxData = box; }
+    // (2) 外部邊框 (S-S): ionic_thick
+    for(let i = 0; i < 14; i++) {
+        for(let j = i + 1; j < 14; j++) {
+            if (ca[i].isCorner && ca[j].isCorner) {
+                const d = Math.sqrt((ca[i].x-ca[j].x)**2 + (ca[i].y-ca[j].y)**2 + (ca[i].z-ca[j].z)**2);
+                if (Math.abs(d - scale) < 5) {
+                    cb.push([i, j, "ionic_thick"]);
+                }
+            }
+        }
+    }
+
+    // --- C. 註冊與合併 ---
+    addMol("ZnS|閃鋅礦|硫化鋅|Zinc Blende", "Zn", "-", "-", "-", "1185", "昇華", sa, sb, {
+        "Simple|基本單元 (離子對)": { 
+            atoms: sa, bonds: sb, hybrid: "-", shape: "-",
+            desc: '<div class="info-section"><div class="info-title">💡 物質性質</div><div class="info-body"><strong>硫化鋅 (ZnS)</strong><br>白色或微黃色粉末。具有螢光特性，摻雜微量金屬後可用於製作夜光塗料、螢光屏以及陰極射線管。</div></div>'
+        },
+        "Crystal|晶體堆積 (FCC)": { 
+            atoms: ca, 
+            bonds: cb, 
+            isIonic: true, 
+            edgeRelation: "4(r<sub>+</sub> + r<sub>-</sub>) = √3 a",
+            desc: '<div class="info-section"><div class="info-title">💎 閃鋅礦 (ZnS)</div><div class="info-body">硫離子(S²⁻)構成面心立方堆積，鋅離子(Zn²⁺)位於四面體空隙中。<br>外圍<strong>粗框</strong>標示出晶胞範圍，內部<strong>細線</strong>顯示 Zn-S 的四面體配位。<br><span style="color:#facc15">★ 點擊內部的 Zn 離子可查看配位數。</span></div></div>'
+        }
+    }, '<div class="info-section"><div class="info-title">💡 硫化鋅 (ZnS)</div><div class="info-body">請切換選項以檢視<strong>單元</strong>或<strong>晶體結構</strong>。</div></div>');
+
+    // --- D. 強制注入補丁 ---
+    if (MOLECULE_DB["ZnS"] && MOLECULE_DB["ZnS"].variants) {
+        const vCry = MOLECULE_DB["ZnS"].variants["Crystal|晶體堆積 (FCC)"];
+        const vSim = MOLECULE_DB["ZnS"].variants["Simple|基本單元 (離子對)"];
+        if (vCry) vCry.isIonic = true;
+        if (vSim) vSim.isIonic = true;
+    }
 })();
 
-// 5. [TiO2] 金紅石 (6:3) - [修正] 邊框包覆外圍
+// ==========================================
+// [CuCl] 氯化亞銅 (單元與晶體整合版，風格同步)
+// ==========================================
 (function(){
-    const atoms = []; const bonds = []; const scale = 160; const c_ratio = 0.65;
-    // 標準晶胞：Ti 在頂點(8) + 體心(1)
-    const baseTi = [[0,0,0], [1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [0.5,0.5,0.5]];
+    // --- A. 基本單元 ---
+    const sa = [
+        {elem:"Cu", x:-45, y:0, z:0, r:13, lpCount:0}, 
+        {elem:"Cl", x:45, y:0, z:0, r:27, lpCount:0}
+    ];
+    const sb = []; // 單元不畫線
+
+    // --- B. 晶體結構 (Zinc Blende Type) ---
+    const ca = [], cb = [];
+    const scale = 200; 
+    
+    // 1. Cl (FCC格點)
+    const baseCl = [
+        [0,0,0], [1,0,0], [0,1,0], [0,0,1], 
+        [1,1,0], [1,0,1], [0,1,1], [1,1,1], 
+        [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5], 
+        [0.5,1,0.5], [1,0.5,0.5], [0.5,0.5,1]
+    ];
+    // 2. Cu (四面體空隙)
+    const baseCu = [
+        [0.25,0.25,0.25], [0.75,0.75,0.25], 
+        [0.75,0.25,0.75], [0.25,0.75,0.75]
+    ];
+
+    let clIdx = 0;
+    baseCl.forEach(p => {
+        const isCorner = (p[0]%1===0 && p[1]%1===0 && p[2]%1===0);
+        ca.push({
+            elem: "Cl",
+            x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale,
+            r: 27, isCorner: isCorner, idx: clIdx++
+        });
+    });
+
+    baseCu.forEach((p, i) => {
+        ca.push({
+            elem: "Cu",
+            x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale,
+            r: 13, isRepresentative: (i===0)
+        });
+    });
+
+    // 3. 鍵結
+    // 內部 (Cu-Cl): ionic_thin
+    const bondDist = scale * 0.433;
+    for(let i=14; i<ca.length; i++) { // Cu start at 14
+        for(let j=0; j<14; j++) {     // Cl 0-13
+            const d = Math.sqrt((ca[i].x-ca[j].x)**2 + (ca[i].y-ca[j].y)**2 + (ca[i].z-ca[j].z)**2);
+            if (Math.abs(d - bondDist) < 20) cb.push([i, j, "ionic_thin"]);
+        }
+    }
+    // 外部 (Cl-Cl): ionic_thick
+    for(let i=0; i<14; i++) {
+        for(let j=i+1; j<14; j++) {
+            if(ca[i].isCorner && ca[j].isCorner) {
+                const d = Math.sqrt((ca[i].x-ca[j].x)**2 + (ca[i].y-ca[j].y)**2 + (ca[i].z-ca[j].z)**2);
+                if (Math.abs(d - scale) < 5) cb.push([i, j, "ionic_thick"]);
+            }
+        }
+    }
+
+    addMol("CuCl|氯化亞銅|Nantokite", "Cu", "-", "-", "-", "430", "1490", sa, sb, {
+        "Simple|基本單元 (離子對)": { atoms: sa, bonds: sb, hybrid: "-", shape: "-", desc: '<div class="info-section"><div class="info-title">🔸 物質簡介</div><div class="info-body"><strong>氯化亞銅 (CuCl)</strong><br>白色固體，難溶於水。結構與閃鋅礦(ZnS)相同，銅離子位於四面體空隙中。</div></div>' },
+        "Crystal|晶體堆積 (FCC)": { atoms: ca, bonds: cb, isIonic: true, edgeRelation: "4(r<sub>+</sub> + r<sub>-</sub>) = √3 a", desc: '<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>氯離子構成面心立方堆積，亞銅離子填入一半的四面體空隙。<br>外框<strong>粗線</strong>顯示晶胞，內部<strong>細線</strong>顯示 Cu-Cl 配位。<br><span style="color:#facc15">★ 點擊內部 Cu⁺ 可查看配位數(4)。</span></div></div>' }
+    }, '<div class="info-section"><div class="info-title">🔸 氯化亞銅</div><div class="info-body">請切換選項檢視。</div></div>');
+
+    if(MOLECULE_DB["CuCl"] && MOLECULE_DB["CuCl"].variants) {
+        MOLECULE_DB["CuCl"].variants["Crystal|晶體堆積 (FCC)"].isIonic = true;
+        MOLECULE_DB["CuCl"].variants["Simple|基本單元 (離子對)"].isIonic = true;
+    }
+})();
+
+// ==========================================
+// [TiO2] 金紅石 (單元與晶體整合版，風格同步)
+// ==========================================
+(function(){
+    // --- A. 基本單元 ---
+    const sa = [
+        {elem:"Ti", x:0, y:0, z:0, r:11, lpCount:0}, 
+        {elem:"O", x:50, y:0, z:0, r:21, lpCount:0},
+        {elem:"O", x:-50, y:0, z:0, r:21, lpCount:0}
+    ];
+    // 單元稍微畫出 O-Ti-O 連線以示結構 (因為它是三原子)
+    const sb = [[0, 1, "ionic_thin"], [0, 2, "ionic_thin"]];
+
+    // --- B. 晶體結構 (Rutile Type) ---
+    const ca = [], cb = [];
+    const scale = 160; 
+    const c_ratio = 0.65; // 四方晶系 c < a
+    
+    // 1. Ti (體心四方堆積: 頂點+體心)
+    const baseTi = [
+        [0,0,0], [1,0,0], [0,1,0], [0,0,1], 
+        [1,1,0], [1,0,1], [0,1,1], [1,1,1], // 0-7 Corners
+        [0.5,0.5,0.5] // 8 Body Center
+    ];
+    // 2. O (面上對角線位置)
     const u = 0.3;
-    // O 在面上的對角線位置 (內部)
-    const baseO = [[u, u, 0], [1-u, 1-u, 0], [u, u, 1], [1-u, 1-u, 1], [0.5+u, 0.5-u, 0.5], [0.5-u, 0.5+u, 0.5]];
+    const baseO = [
+        [u, u, 0], [1-u, 1-u, 0], [u, u, 1], [1-u, 1-u, 1], 
+        [0.5+u, 0.5-u, 0.5], [0.5-u, 0.5+u, 0.5]
+    ];
 
-    baseTi.forEach(p => {
-        // Z 軸壓縮 c_ratio
-        atoms.push({ elem:"Ti", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale*c_ratio, r:11 });
+    let tiIdx = 0;
+    baseTi.forEach((p, i) => {
+        const isCorner = (i < 8);
+        ca.push({
+            elem: "Ti",
+            x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale*c_ratio,
+            r: 11, isCorner: isCorner, idx: tiIdx++,
+            isRepresentative: (i===8) // 體心 Ti 為代表
+        });
     });
+
     baseO.forEach(p => {
-        atoms.push({ elem:"O", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale*c_ratio, r:21 });
+        ca.push({
+            elem: "O",
+            x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale*c_ratio,
+            r: 21, isCorner: false
+        });
     });
 
-    for(let i=0; i<atoms.length; i++) {
-        for(let j=i+1; j<atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if(d < scale * 0.55) bonds.push([i,j,"single"]);
+    // 3. 鍵結
+    // 內部 (Ti-O): ionic_thin
+    // Ti (0-8), O (9-14)
+    for(let i=0; i<ca.length; i++) {
+        for(let j=i+1; j<ca.length; j++) {
+            // 只連 Ti-O
+            if (ca[i].elem === ca[j].elem) continue; 
+            const d = Math.sqrt((ca[i].x-ca[j].x)**2 + (ca[i].y-ca[j].y)**2 + (ca[i].z-ca[j].z)**2);
+            // 距離判斷：短鍵約 1.9A, 長鍵約 2.0A -> scale 換算約 0.6~0.7 倍 a
+            if (d < scale * 0.75) cb.push([i, j, "ionic_thin"]);
         }
     }
-    markReps(atoms, bonds, 6, "Ti", 3, "O");
-    const offset = scale * 0.5; const offsetZ = scale * c_ratio * 0.5;
-    atoms.forEach(a => { a.x -= offset; a.y -= offset; a.z -= offsetZ; });
-    
-    // [修正] 邊框設定：因為原子生成範圍是 0~1，所以框線畫在 -scale/2 到 scale/2 (置中後)
-    // Z 軸範圍則依照 c_ratio 調整
-    const box = { x:[-scale/2, scale/2], y:[-scale/2, scale/2], z:[-scale*c_ratio/2, scale*c_ratio/2] };
 
-    addMol("TiO2|金紅石|二氧化鈦|Rutile", "Ionic", "四方晶系 (Tetragonal)", "0.61(Å) / 1.40(Å) = 0.44", "配位數: Ti⁴⁺:6, O²⁻:3", "1843", "2972", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">⬜ 金紅石 (TiO₂)</div><div class="info-body">點擊體心的 <strong>Ti⁴⁺ (CN=6)</strong> 或內部的 <strong>O²⁻ (CN=3)</strong>。虛線框連接了 8 個頂點的 Ti。</div></div>`);
-    if(MOLECULE_DB["TiO2"]) { MOLECULE_DB["TiO2"].isIonic=true; MOLECULE_DB["TiO2"].hybrid="四方晶系 (Tetragonal)"; MOLECULE_DB["TiO2"].edgeRelation="複雜幾何"; MOLECULE_DB["TiO2"].boxData = box; }
+    // 外部 (Ti-Ti): ionic_thick (畫出長方體框)
+    // 連接頂點 Ti (idx 0-7)
+    for(let i=0; i<8; i++) {
+        for(let j=i+1; j<8; j++) {
+            const dx = Math.abs(ca[i].x-ca[j].x);
+            const dy = Math.abs(ca[i].y-ca[j].y);
+            const dz = Math.abs(ca[i].z-ca[j].z);
+            // 邊長可能是 scale (a) 或 scale*c_ratio (c)
+            // 判斷是否為邊：只有一個維度有差異，且差異等於邊長
+            const isEdgeA = (Math.abs(dx-scale)<5 && dy<5 && dz<5) || (Math.abs(dy-scale)<5 && dx<5 && dz<5);
+            const isEdgeC = (Math.abs(dz-scale*c_ratio)<5 && dx<5 && dy<5);
+            
+            if (isEdgeA || isEdgeC) cb.push([i, j, "ionic_thick"]);
+        }
+    }
+
+    addMol("TiO2|金紅石|二氧化鈦|Rutile", "Ti", "-", "-", "-", "1843", "2972", sa, sb, {
+        "Simple|基本單元": { atoms: sa, bonds: sb, hybrid: "-", shape: "-", desc: '<div class="info-section"><div class="info-title">⬜ 物質簡介</div><div class="info-body"><strong>二氧化鈦 (TiO₂)</strong><br>白色粉末，廣泛用於白色顏料、防曬乳及光觸媒。</div></div>' },
+        "Crystal|晶體堆積 (Tetragonal)": { atoms: ca, bonds: cb, isIonic: true, edgeRelation: "複雜幾何", desc: '<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>四方晶系 (金紅石型)</strong><br>鈦離子位於體心與頂點，氧離子位於面上。Ti⁴⁺ 配位數為 6 (八面體)，O²⁻ 配位數為 3 (平面三角)。<br><span style="color:#facc15">★ 點擊體心 Ti⁴⁺ 可查看配位數。</span></div></div>' }
+    }, '<div class="info-section"><div class="info-title">⬜ 金紅石</div><div class="info-body">請切換選項檢視。</div></div>');
+
+    if(MOLECULE_DB["TiO2"] && MOLECULE_DB["TiO2"].variants) {
+        MOLECULE_DB["TiO2"].variants["Crystal|晶體堆積 (Tetragonal)"].isIonic = true;
+        MOLECULE_DB["TiO2"].variants["Simple|基本單元"].isIonic = true;
+    }
 })();
 
-// 6. [Cu2O] 赤銅礦 (2:4) - [維持原樣]
+// ==========================================
+// [Cu2O] 赤銅礦 (修正：Cu 全可點擊 CN=2, O 體心可點擊 CN=4)
+// ==========================================
 (function(){
-    const atoms = []; const bonds = []; const scale = 140;
-    const baseO = [[0,0,0], [1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [0.5,0.5,0.5]];
-    const baseCu = [[0.25,0.25,0.25], [0.75,0.75,0.25], [0.75,0.25,0.75], [0.25,0.75,0.75]]; 
+    const scale = 160;
     
-    baseO.forEach(p => atoms.push({ elem:"O", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:21, lpCount:0 }));
-    baseCu.forEach(p => atoms.push({ elem:"Cu", x:p[0]*scale, y:p[1]*scale, z:p[2]*scale, r:13, lpCount:0 }));
+    // --- 1. 定義原子數據 ---
+    // O: 氧構成 BCC 堆積 (0-7為頂點, 8為體心)
+    const baseO = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0.5]];
+    // Cu: 銅填入 1/2 的四面體空隙
+    const baseCu = [[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
 
-    for(let i=0; i<atoms.length; i++) {
-        for(let j=i+1; j<atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if(d < scale * 0.45) bonds.push([i,j,"single"]);
+    const ca = [
+        ...baseO.map((p, i) => ({
+            elem: "O", x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale,
+            r: 21, 
+            isCorner: i < 8, 
+            isRepresentative: i === 8 // 只有正中央的 O 結構完整，可點擊 (CN=4)
+        })),
+        ...baseCu.map((p, i) => ({
+            elem: "Cu", x: (p[0]-0.5)*scale, y: (p[1]-0.5)*scale, z: (p[2]-0.5)*scale,
+            r: 13, 
+            isRepresentative: true    // [修正] 所有內部的 Cu 都結構完整，皆可點擊 (CN=2)
+        }))
+    ];
+
+    // --- 2. 生成鍵結 ---
+    const cb = [];
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+    for (let i = 0; i < ca.length; i++) {
+        for (let j = i + 1; j < ca.length; j++) {
+            const d = dist(ca[i], ca[j]);
+            // A. 內部鍵結 (Cu-O, 鍵長約 0.433a)
+            if (ca[i].elem !== ca[j].elem && Math.abs(d - scale * 0.433) < 20) {
+                cb.push([i, j, "ionic_thin"]);
+            }
+            // B. 外部邊框 (O-O 頂點, 邊長 a)
+            if (ca[i].isCorner && ca[j].isCorner && Math.abs(d - scale) < 5) {
+                cb.push([i, j, "ionic_thick"]);
+            }
         }
     }
-    markReps(atoms, bonds, 2, "Cu", 4, "O");
-    const offset = scale * 0.5;
-    atoms.forEach(a => { a.x -= offset; a.y -= offset; a.z -= offset; });
-    const box = { x:[-scale/2, scale/2], y:[-scale/2, scale/2], z:[-scale/2, scale/2] };
 
-    addMol("Cu2O|赤銅礦|氧化亞銅|Cuprite", "Ionic", "立方晶系", "0.77(Å) / 1.40(Å) = 0.55", "配位數: Cu⁺:2, O²⁻:4", "1235", "1800", atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🔴 赤銅礦 (Cu₂O)</div><div class="info-body">點擊<strong>Cu⁺ (CN=2)</strong> 或 <strong>O²⁻ (CN=4)</strong>。</div></div>`);
-    if(MOLECULE_DB["Cu2O"]) { MOLECULE_DB["Cu2O"].isIonic=true; MOLECULE_DB["Cu2O"].hybrid="立方晶系"; MOLECULE_DB["Cu2O"].edgeRelation="複雜幾何"; MOLECULE_DB["Cu2O"].boxData = box; }
+    // --- 3. 基本單元與註冊 ---
+    const sa = [{elem:"O", x:0, y:0, z:0, r:21}, {elem:"Cu", x:50, y:0, z:0, r:13}, {elem:"Cu", x:-50, y:0, z:0, r:13}];
+    const sb = [[0, 1, "ionic_thin"], [0, 2, "ionic_thin"]];
+
+    addMol("Cu2O|赤銅礦|氧化亞銅|Cuprite", "Cu", "-", "-", "-", "1235", "1800", sa, sb, {
+        "Simple|基本單元": { 
+            atoms: sa, bonds: sb, hybrid: "-", shape: "-", 
+            desc: '<div class="info-section"><div class="info-title">🔴 物質簡介</div><div class="info-body"><strong>氧化亞銅 (Cu₂O)</strong><br>紅色固體。Cu⁺ 為直線型配位 (CN=2)，O²⁻ 為四面體型配位 (CN=4)。</div></div>' 
+        },
+        "Crystal|晶體堆積 (Cubic)": { 
+            atoms: ca, bonds: cb, isIonic: true, edgeRelation: "複雜幾何", 
+            desc: '<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>赤銅礦結構</strong><br>氧離子(紅)構成體心立方，銅離子(橘)位於氧離子連線中點。<br>• 點擊<strong>紅色氧離子</strong> (體心) 可見配位數為 4。<br>• 點擊任一<strong>橘色銅離子</strong> 可見配位數為 2。</div></div>' 
+        }
+    }, '<div class="info-section"><div class="info-title">🔴 赤銅礦</div><div class="info-body">請切換選項檢視。</div></div>');
+
+    // --- 4. 屬性補丁 ---
+    const v = MOLECULE_DB["Cu2O"]?.variants;
+    if (v) { v["Crystal|晶體堆積 (Cubic)"].isIonic = true; v["Simple|基本單元"].isIonic = true; }
 })();
-
 
 
 
@@ -1207,8 +1473,6 @@ addMol("AgCl|氯化銀", "Ag", "-", "-", "-", "455", "1550", [{elem:"Ag",x:-45,y
 addMol("AgBr|溴化銀", "Ag", "-", "-", "-", "432", "1502", [{elem:"Ag",x:-48,y:0,z:0,r:22,lpCount:0}, {elem:"Br",x:48,y:0,z:0,r:38,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">📷 物質性質</div><div class="info-body"><strong>溴化銀 (AgBr)</strong><br>淺黃色固體，感光性比氯化銀更強，是傳統黑白攝影底片中最主要的感光乳劑成分。</div></div>');
 addMol("AgI|碘化銀", "Ag", "-", "-", "-", "558", "1506", [{elem:"Ag",x:-50,y:0,z:0,r:22,lpCount:0}, {elem:"I",x:50,y:0,z:0,r:40,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🌧️ 物質性質</div><div class="info-body"><strong>碘化銀 (AgI)</strong><br>黃色固體。由於其晶體結構與冰相似，常被飛機撒播於雲層中作為「晶種」，以此進行人造降雨（Cloud Seeding）。</div></div>');
 addMol("NaH|氫化鈉", "Na", "-", "-", "-", "800", "分解", [{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0}, {elem:"H",x:40,y:0,z:0,r:15,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氫化鈉 (NaH)</strong><br>由鈉離子與氫負離子 (H⁻) 組成。它是極強的鹼與還原劑，遇水會劇烈反應產生氫氣，常用於有機合成中拔除質子。</div></div>');
-addMol("CuCl|氯化亞銅", "Cu", "-", "-", "-", "430", "1490", [{elem:"Cu",x:-45,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:45,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">⚪ 物質性質</div><div class="info-body"><strong>氯化亞銅 (CuCl)</strong><br>白色固體，微溶於水。在空氣中易被氧化而變成綠色。是有機合成中重要的催化劑（如 Sandmeyer 反應）及氣體吸收劑。</div></div>');
-addMol("ZnS|硫化鋅|閃鋅礦", "Zn", "-", "-", "-", "1185", "昇華", [{elem:"Zn",x:-45,y:0,z:0,r:18,lpCount:0}, {elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">💡 物質性質</div><div class="info-body"><strong>硫化鋅 (ZnS)</strong><br>白色或微黃色粉末。具有螢光特性，摻雜微量金屬後可用於製作夜光塗料、螢光屏以及陰極射線管。</div></div>');
 addMol("HgS|硫化汞|硃砂", "Hg", "-", "-", "-", "583", "昇華", [{elem:"Hg",x:-45,y:0,z:0,r:25,lpCount:0}, {elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🎨 物質性質</div><div class="info-body"><strong>硫化汞 (HgS)</strong><br>天然礦物稱為「硃砂」，呈鮮紅色。古代常用作紅色顏料或印泥，也是提煉金屬汞的主要礦源。注意其具有毒性。</div></div>');
 addMol("MgCl2|氯化鎂", "Mg", "-", "-", "-", "714", "1412", [{elem:"Mg",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:-85,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:85,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鎂 (MgCl₂)</strong><br>苦味極重的白色固體，是海水與鹽滷的主要成分之一，也是製作豆腐的傳統凝固劑。工業上經電解熔融態氯化鎂可製得金屬鎂。</div></div>');
 addMol("CaCl2|氯化鈣", "Ca", "-", "-", "-", "772", "1935", [{elem:"Ca",x:0,y:0,z:0,r:22,lpCount:0}, {elem:"Cl",x:-90,y:0,z:0,r:35,lpCount:0}, {elem:"Cl",x:90,y:0,z:0,r:35,lpCount:0}], [], null, '<div class="info-section"><div class="info-title">🧂 物質性質</div><div class="info-body"><strong>氯化鈣 (CaCl₂)</strong><br>具有極強的吸濕性，是實驗室與家庭常用的乾燥劑（水玻璃）。溶解時會釋放大量熱，因此也廣泛用於道路融雪劑。</div></div>');
