@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.13 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.14 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -1456,46 +1456,32 @@ function loadMolecule(key, variantKey = null) {
     const isOctetMode = toggleOct ? toggleOct.checked : true;
 
     const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
-    const centerAtomSym = processedAtoms[0].elem; 
-    const canExpand = expandableCenters.includes(centerAtomSym);
     let keptDoubleBonds = 0;
 
     processedBonds.forEach(bond => {
-        const idx1 = bond[0]; 
-        const idx2 = bond[1];
-        const type = bond[2];
+        const idx1 = bond[0], idx2 = bond[1], type = bond[2];
+        const a1 = processedAtoms[idx1], a2 = processedAtoms[idx2];
+        let cIdx = -1, tIdx = -1;
 
-        let termIdx = -1;
-        if (idx1 === 0) termIdx = idx2;
-        else if (idx2 === 0) termIdx = idx1;
-        
-        if (canExpand && termIdx !== -1) {
-            const termAtom = processedAtoms[termIdx];
+        if (expandableCenters.includes(a1.elem) && a2.elem === 'O') { cIdx = idx1; tIdx = idx2; }
+        else if (expandableCenters.includes(a2.elem) && a1.elem === 'O') { cIdx = idx2; tIdx = idx1; }
 
+        if (cIdx !== -1) {
             if (isOctetMode) {
-                // 模式開啟：強制降階以符合八隅體
-                if (type === 'double' && termAtom.elem === 'O') {
-                    
-                    // 針對 SO2 (或類似結構) 的特殊處理：保留第一個雙鍵，其餘轉配位鍵
-                    // 這樣 SO2 會顯示 O=S→O (正確共振)
-                    const resonanceMols = ["SO2", "二氧化硫"];
+                if (type === 'double') {
+                    const resonanceMols = ["SO2", "二氧化硫", "亞硫酸", "H2SO3", "SO3", "亞硫酸根", "HSO3"];
                     const isResonance = resonanceMols.some(n => currentKey.includes(n));
 
                     if (isResonance && keptDoubleBonds === 0) {
-                        keptDoubleBonds++; // 保留這一個雙鍵
+                        keptDoubleBonds++;
                     } else {
-                        // 其他的雙鍵轉為配位鍵 (單鍵)
-                        bond[2] = 'coordinate'; 
-                        bond[0] = 0; 
-                        bond[1] = termIdx;
+                        bond[2] = 'coordinate';
+                        bond[0] = cIdx;
+                        bond[1] = tIdx;
                     }
                 }
             } else {
-                if (type === 'coordinate' && termAtom.elem === 'O') {
-                    bond[2] = 'double';
-                    if (termAtom.lpCount !== undefined && termAtom.lpCount > 0) {
-                    }
-                }
+                if (type === 'coordinate') bond[2] = 'double';
             }
         }
     });
@@ -1964,31 +1950,13 @@ function drawBond(b) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
     // ============================================================
-    // [最終調整版] NaCl 晶體 - 高質感金屬框 + 朦朧發光內線 (不透明度提升)
+    // [區塊 1] NaCl / 離子晶體專用繪圖邏輯 (外金屬框 + 內發光細線)
     // ============================================================
     if (b.style === "ionic_thick" || b.style === "ionic_thin") {
-        
-        // 1. 自動注入「高質感金屬漸層」 (維持之前的金屬質感)
-        const gradID = "grad-hyper-metal";
-        if (!document.getElementById(gradID)) {
-            const defs = document.querySelector("defs") || sceneRoot;
-            const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
-            grad.setAttribute("id", gradID);
-            grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%");
-            grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "0%"); 
-            grad.innerHTML = `
-                <stop offset="0%" stop-color="#475569"/>
-                <stop offset="30%" stop-color="#cbd5e1"/>
-                <stop offset="50%" stop-color="#ffffff"/>
-                <stop offset="70%" stop-color="#cbd5e1"/>
-                <stop offset="100%" stop-color="#475569"/>
-            `;
-            defs.appendChild(grad);
-        }
-
         const dx = b.x2 - b.x1, dy = b.y2 - b.y1, len = Math.sqrt(dx*dx + dy*dy);
         if(len === 0) return;
         
+        // 計算截斷點，讓線條貼齊原子表面
         const nx = dx / len, ny = dy / len;
         const off1 = b.r1 * 0.9, off2 = b.r2 * 0.9; 
         
@@ -1999,6 +1967,24 @@ function drawBond(b) {
             l.setAttribute("x2", b.x2 - nx * off2);
             l.setAttribute("y2", b.y2 - ny * off2);
             
+            // 1. 自動注入「高質感金屬漸層」 (如果還沒建立過)
+            const gradID = "grad-hyper-metal";
+            if (!document.getElementById(gradID)) {
+                const defs = document.querySelector("defs") || sceneRoot;
+                const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+                grad.setAttribute("id", gradID);
+                grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%");
+                grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "0%"); 
+                grad.innerHTML = `
+                    <stop offset="0%" stop-color="#475569"/>
+                    <stop offset="30%" stop-color="#cbd5e1"/>
+                    <stop offset="50%" stop-color="#ffffff"/>
+                    <stop offset="70%" stop-color="#cbd5e1"/>
+                    <stop offset="100%" stop-color="#475569"/>
+                `;
+                defs.appendChild(grad);
+            }
+
             // 2. 樣式與濾鏡設定
             let baseOpacity = 1.0;
 
@@ -2007,79 +1993,64 @@ function drawBond(b) {
                 l.setAttribute("stroke", `url(#${gradID})`); 
                 l.setAttribute("stroke-width", 12 * b.scale); 
                 baseOpacity = 1.0; 
-                // 外框不加濾鏡，保持銳利金屬感
             } else {
                 // --- 內部 (朦朧發光線) ---
                 l.setAttribute("stroke", "#ffffff");      
-                
-                // [修改 1] 加粗：為了讓模糊後還有實體感，從 2.5 改為 4.0
                 l.setAttribute("stroke-width", 4.0 * b.scale); 
                 
-                // [修改 2] 加回濾鏡：製造您要的「錯誤版」模糊光暈效果
-                if (typeof isMobile !== 'undefined' && !isMobile) {
-                    l.setAttribute("filter", "url(#soft-glow)");
-                }
+                // [關鍵修改] 移除 !isMobile 判斷，強制所有裝置都套用發光濾鏡
+                // 這樣手機版也能看到漂亮的發光效果
+                l.setAttribute("filter", "url(#soft-glow)");
 
-                // [修改 3] 提升不透明度：從很透 改為 0.6，讓線條更明顯
-                baseOpacity = 0.6; 
+                baseOpacity = 0.6; // 半透明
             }
             l.setAttribute("stroke-linecap", "round");
 
-            // 3. 互動邏輯
+            // 3. 互動邏輯 (點擊中心時的淡出效果)
             let finalOpacity = baseOpacity; 
-
-            // 未被選中時淡出
             if (b.alpha < 0.9) {
                 finalOpacity = 0.05; 
             }
-            
             l.setAttribute("opacity", finalOpacity);
 
             g.appendChild(l);
         }
         sceneRoot.appendChild(g);
-        return; 
+        return; // 晶體繪製完畢，直接返回
     }
 
     // ============================================================
-    // [原有邏輯] (保持不動)
+    // [區塊 2] 一般共價鍵與舊版金屬 (保持原樣不動)
     // ============================================================
     
+    // 應用透明度 (共用)
     if (b.alpha < 1.0) g.setAttribute("opacity", b.alpha);
 
+    // A. 舊版金屬/簡單離子晶體邏輯
     if (currentMolecule && (currentMolecule.isMetal || (currentMolecule.isIonic && !b.style))) {
         const dx = b.x2 - b.x1;
         const dy = b.y2 - b.y1;
         const len = Math.sqrt(dx*dx + dy*dy);
-        if(len === 0) return;
-
-        const nx = dx / len;
-        const ny = dy / len;
-        const offset1 = b.r1 * 0.95; 
-        const offset2 = b.r2 * 0.95;
-
-        if (len > (offset1 + offset2)) {
-            const x1 = b.x1 + nx * offset1;
-            const y1 = b.y1 + ny * offset1;
-            const x2 = b.x2 - nx * offset2;
-            const y2 = b.y2 - ny * offset2;
-
+        if(len > 0) { // 原本邏輯有做 len > 0 判斷，這裡整合
+            const nx = dx / len;
+            const ny = dy / len;
+            // 這裡使用 0.95 的截斷係數，與上面晶體不同，保持原樣
             const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            l.setAttribute("x1", x1); l.setAttribute("y1", y1);
-            l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+            l.setAttribute("x1", b.x1 + nx * b.r1 * 0.95); 
+            l.setAttribute("y1", b.y1 + ny * b.r1 * 0.95);
+            l.setAttribute("x2", b.x2 - nx * b.r2 * 0.95); 
+            l.setAttribute("y2", b.y2 - ny * b.r2 * 0.95);
             l.setAttribute("stroke", "#9ca3af"); 
             l.setAttribute("stroke-width", "4"); 
             l.setAttribute("stroke-linecap", "round");
-            
-            const finalOpacity = b.alpha < 1.0 ? 0.05 : 0.6;
-            l.setAttribute("opacity", finalOpacity); 
-            
+            l.setAttribute("opacity", b.alpha < 1.0 ? 0.05 : 0.6); 
             g.appendChild(l);
         }
         sceneRoot.appendChild(g);
         return; 
     }
 
+    // B. 一般共價鍵 (漸層、多重鍵)
     const dxMol = b.x2-b.x1, dyMol = b.y2-b.y1, lenMol = Math.sqrt(dxMol*dxMol+dyMol*dyMol);
     if(lenMol === 0) return;
     const nxMol = dxMol/lenMol, nyMol = dyMol/lenMol;
@@ -2126,38 +2097,31 @@ function drawAtom(a) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("data-atom-idx", a.idx); 
     
-    // [應用透明度]
-    if (a.alpha < 1.0) {
-        g.setAttribute("opacity", a.alpha);
-    }
+    if (a.alpha < 1.0) g.setAttribute("opacity", a.alpha);
 
-    // [修改] 柔和光暈特效 (Soft Halo)
-    // 使用剛才在 renderScene 定義的 radialGradient
+    // 點擊高亮
     if (a.isHighlighted) {
         const glowId = a.isHighlighted === "center" ? "highlight-glow-center" : "highlight-glow-neighbor";
-        
         const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        halo.setAttribute("cx", a.px); 
-        halo.setAttribute("cy", a.py);
-        
-        // 設定光暈半徑：比原子大很多 (2.5倍)，製造擴散感
+        halo.setAttribute("cx", a.px); halo.setAttribute("cy", a.py);
         halo.setAttribute("r", a.r * a.scale * 2.5); 
-        
-        // 填入漸層
         halo.setAttribute("fill", `url(#${glowId})`);
-        
-        // 不設邊框 (stroke)，純粹靠漸層製造光暈
-        
         g.appendChild(halo);
     }
 
     if (isPlasmaMode) {
+        // [修正] 手機版電漿修復：強制使用標準濾鏡
         g.setAttribute("style", "mix-blend-mode: screen;"); 
         const baseR = a.r * a.scale;
+        
+        // 核心
         const gasCloud = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         gasCloud.setAttribute("cx", a.px); gasCloud.setAttribute("cy", a.py);
         gasCloud.setAttribute("r", baseR * 1.6); 
-        gasCloud.setAttribute("fill", `url(#plasma-grad-${a.color.replace('#','')})`);
+        // 這裡需要確保 plasma-grad- 存在，如果沒有定義，回退到單色
+        // 建議直接用 atom-grad 以確保有顏色
+        gasCloud.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`);
+        gasCloud.setAttribute("filter", "url(#soft-glow)"); // 加上光暈
         g.appendChild(gasCloud);
 
         const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -2175,15 +2139,13 @@ function drawAtom(a) {
         if (useGlow) {
             const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
-            if (isMobile) {
-                glow.setAttribute("r", a.r * a.scale * 1.85); 
-                glow.setAttribute("fill", `url(#mobile-glow-${a.color.replace('#','')})`);
-            } else {
-                glow.setAttribute("r", a.r * a.scale * 1.3); 
-                glow.setAttribute("fill", a.color); 
-                glow.setAttribute("opacity", "0.36");
-                glow.setAttribute("filter", "url(#soft-glow)");
-            }
+            
+            // [關鍵修正] 移除手機版 mobile-glow 分支，統一使用電腦版邏輯
+            glow.setAttribute("r", a.r * a.scale * 1.3); 
+            glow.setAttribute("fill", a.color); 
+            glow.setAttribute("opacity", "0.36");
+            glow.setAttribute("filter", "url(#soft-glow)"); // 手機現在也跑這個
+            
             g.appendChild(glow);
         }
 
@@ -2209,25 +2171,24 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
-    // 預設顏色
     let coreColor = "#ffffff";
-    let glowFill = isMobile ? "url(#mobile-glow-white)" : "#ffffff";
-    let glowOpacity = isMobile ? "1.0" : "0.28";
+    let glowFill = "#ffffff";
+    let glowOpacity = "0.28";
     
-    // [關鍵] 只有被標記的那幾顆會變色
     if (e.isNegativeCharge) {
         coreColor = "#ff9efa"; 
         glowFill = "#ff9efa"; 
-        glowOpacity = "0.5"; // 降低不透明度，配合濾鏡才會柔和
+        glowOpacity = "0.5"; 
     }
 
     if (isPlasmaMode) {
         g.setAttribute("style", "mix-blend-mode: screen;"); 
         const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
-        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); // 粉紅光暈再大一點
+        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); 
         halo.setAttribute("fill", glowFill);
         halo.setAttribute("opacity", "0.6");
+        halo.setAttribute("filter", "url(#soft-glow)"); // [修正] 強制加濾鏡
         g.appendChild(halo);
 
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -2238,23 +2199,17 @@ function drawElectron(e) {
         g.appendChild(core);
 
     } else {
-        // [正常模式]
         const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
         if (useGlow) {
             const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
             
-            // 讓粉紅光暈大小跟一般電子一致 (約 1.8~2.2 倍)
-            glow.setAttribute("r", r * (isMobile ? 2.2 : 2.0)); 
+            // [關鍵修正] 移除手機特判，強制統一
+            glow.setAttribute("r", r * 2.0); 
             glow.setAttribute("fill", glowFill);
+            glow.setAttribute("opacity", glowOpacity);
+            glow.setAttribute("filter", "url(#soft-glow)"); 
             
-            // [關鍵修正] 只要不是手機版，通通套用柔焦濾鏡 (包含粉紅電子)
-            if (!isMobile) {
-                glow.setAttribute("opacity", glowOpacity);
-                glow.setAttribute("filter", "url(#soft-glow)");
-            } else {
-                glow.setAttribute("opacity", "1.0");
-            }
             g.appendChild(glow);
         }
 
