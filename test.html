@@ -351,8 +351,12 @@
         padding: 20px; 
         overflow-y: auto; 
         overscroll-behavior: contain;
-        /* [修正] 大幅增加底部內距，確保內容捲動到底時不會被螢幕邊緣或把手遮住 */
-        padding-bottom: 150px; 
+        padding-bottom: 80px; 
+        transition: padding-bottom 0.4s ease;
+    }
+
+    .controls-area.half-open .controls-content {
+        padding-bottom: 55vh; 
     }
 }
 
@@ -3067,8 +3071,9 @@ function setupMobilePanel() {
     const HANDLE_H = 40; 
     const PANEL_H = window.innerHeight * 0.8; 
     
+    // 定義三個停靠點
     const POS_OPEN = 0; 
-    const POS_HALF = PANEL_H - (window.innerHeight * 0.35); // 微調半開高度，讓它稍微高一點點比較好操作
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.35); // 露出約 35%
     const POS_CLOSE = PANEL_H - HANDLE_H;
 
     let startY = 0;
@@ -3077,8 +3082,9 @@ function setupMobilePanel() {
     let startTime = 0;
     let isDragging = false;
 
-    // 預設位置
+    // [初始化] 預設位置在半開，所以加上 half-open 類別
     panel.style.transform = `translateY(${POS_HALF}px)`; 
+    panel.classList.add('half-open');
 
     // 1. 觸摸開始
     handle.addEventListener('touchstart', (e) => {
@@ -3108,7 +3114,7 @@ function setupMobilePanel() {
         
         let newY = startTransY + deltaY;
 
-        // 邊界阻尼效果
+        // 邊界阻尼
         if (newY < POS_OPEN) newY = newY * 0.4; 
         if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; 
 
@@ -3116,7 +3122,18 @@ function setupMobilePanel() {
         currentTransY = newY;
     }, {passive: false});
 
-    // 3. 觸摸結束 (關鍵修正區域)
+    // [輔助函式] 更新面板狀態 (控制底部留白)
+    const updatePanelState = (targetY) => {
+        // 如果目標是半開位置，加上 class；否則移除
+        // 我們允許一點誤差 (Math.abs < 10)
+        if (Math.abs(targetY - POS_HALF) < 10) {
+            panel.classList.add('half-open');
+        } else {
+            panel.classList.remove('half-open');
+        }
+    };
+
+    // 3. 觸摸結束
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
@@ -3132,27 +3149,20 @@ function setupMobilePanel() {
 
         let targetY = POS_CLOSE;
 
-        // [修正] 判斷滑動邏輯：加入狀態判斷，不再直接到底
+        // [修正] 分段滑動邏輯
         if (velocity > 0.3) {
-            // --- 快速滑動 (Flick) ---
+            // 快速滑動
             if (moveDist < 0) { 
                 // 往上滑 (Up)
-                // 如果目前位置已經高於半開的一半，就全開；否則去半開
+                // 如果原本在半開以上，就全開；否則去半開
                 targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
             } else {
-                // 往下滑 (Down) [關鍵修正]
-                // 如果原本是全開狀態 (接近 0)，往下滑應該先停在半開
-                // 如果原本已經是半開附近，往下滑才關閉
-                if (startTransY < POS_HALF - 50) {
-                    targetY = POS_HALF;
-                } else {
-                    targetY = POS_CLOSE;
-                }
+                // 往下滑 (Down)
+                // 如果原本是全開 (接近0)，先停半開；否則關閉
+                targetY = (startTransY < POS_HALF - 50) ? POS_HALF : POS_CLOSE;
             }
-        } 
-        else {
-            // --- 慢速拖曳 (Drag) ---
-            // 找最近的停靠點
+        } else {
+            // 慢速拖曳：找最近的點
             const distToOpen = Math.abs(currentTransY - POS_OPEN);
             const distToHalf = Math.abs(currentTransY - POS_HALF);
             const distToClose = Math.abs(currentTransY - POS_CLOSE);
@@ -3163,9 +3173,10 @@ function setupMobilePanel() {
         }
 
         panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
     });
 
-    // 點擊把手的行為也順便優化
+    // 4. 點擊把手切換
     handle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -3179,15 +3190,15 @@ function setupMobilePanel() {
 
         panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         
-        // 循環切換：關閉 -> 半開 -> 全開 -> 關閉
-        // 判定目前位置最接近哪個狀態
-        if (Math.abs(currentY - POS_CLOSE) < 50) {
-            panel.style.transform = `translateY(${POS_HALF}px)`; // 關 -> 半
-        } else if (Math.abs(currentY - POS_HALF) < 50) {
-            panel.style.transform = `translateY(${POS_OPEN}px)`; // 半 -> 開
-        } else {
-            panel.style.transform = `translateY(${POS_CLOSE}px)`; // 開 -> 關
-        }
+        let targetY = POS_CLOSE;
+
+        // 循環邏輯：關 -> 半 -> 開 -> 關
+        if (Math.abs(currentY - POS_CLOSE) < 50) targetY = POS_HALF;      // 關 -> 半
+        else if (Math.abs(currentY - POS_HALF) < 50) targetY = POS_OPEN;  // 半 -> 開
+        else targetY = POS_CLOSE;                                         // 開 -> 關
+
+        panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
     });
 }
 
