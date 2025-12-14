@@ -1,0 +1,3779 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>分子結構模擬實驗室 v16.13 (Plasma Fixed)</title>
+<style>
+/* --- 1. 基礎設定 --- */
+    :root {
+        --bg-radial-inner: #000000; 
+        --bg-radial-outer: #000000;
+        --panel-glass: rgba(20, 20, 20, 0.9);
+        --panel-border: rgba(255, 255, 255, 0.15);
+        --card-glass: rgba(255, 255, 255, 0.05);
+        --text-main: #f0f4f8;
+        --text-sub: #94a3b8;
+        --text-highlight: #38bdf8;
+        --accent-blue: #3b82f6;
+        --accent-green: #10b981;
+    }
+
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+    /* --- [修改] 上下標與正負號 分離控制區 --- */
+    
+    /* 1. 下標設定 (控制原子數量，如 H2 的 2) */
+    sub {
+        font-size: 1.0em;      /* 下標字體大小 */
+        line-height: 1;
+        position: relative;
+        vertical-align: baseline;
+        bottom: -0.2em;        /* 下標位置：越負越往下 */
+    }
+
+    /* 2. 上標設定 (控制電荷的"數字"，如 3- 的 3) */
+    sup {
+        font-size: 1.0em;      /* 上標字體大小 */
+        line-height: 1;
+        position: relative;
+        vertical-align: baseline;
+        top: -0.35em;          /* 上標位置：越負越往上 */
+        font-weight: bold;     /* 上標加粗bold，正常為normal */
+        margin-left: 1px;      /* 與主文字的距離 */
+    }
+
+    /* 3. 正負號設定 (專門控制 + 與 -，如 3- 的 -) */
+    .charge-sign {
+        font-size: 1.4em;      /* 正負號可以設大一點，比較清楚 */
+        font-weight: bold;     /* 正負號加粗 */
+        position: relative;
+        top: 0.05em;           /* 正負號微調：正值往下，負值往上 */
+        margin-left: 0px;      /* 正負號與數字的距離 */
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
+        background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
+        color: var(--text-main);
+        height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        overscroll-behavior: none;
+    }
+
+    .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
+
+/* --- 3D 顯示區 --- */
+    .viewport-area {
+        flex: 1; position: relative;
+        background-image: 
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 60px 60px; 
+        background-position: center center;
+        overflow: hidden; cursor: grab;
+        touch-action: none; 
+        -webkit-user-select: none;
+        will-change: transform;
+        transform: translateZ(0);
+    } 
+
+    .viewport-header { 
+        position: absolute; top: 20px; left: 25px; z-index: 10; pointer-events: none; 
+        max-width: 80%;
+    }
+
+    .viewport-header h1 {
+        margin: 0; 
+        font-size: 1.6rem; /*稍微大一點*/
+        letter-spacing: 2px;
+        /* 改為純白，不再半透明 */
+        color: #ffffff; 
+        /* 增強光暈效果：雙層陰影讓它更亮 */
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(56, 189, 248, 0.4);
+        margin-bottom: 5px;
+        display: flex;
+        align-items: baseline; /* 讓版本號對齊文字底部 */
+        gap: 8px;
+    }
+
+    .molecule-display-info {
+        margin-top: 5px;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        padding: 10px 15px;
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-blue);
+        pointer-events: auto;
+        display: inline-block;
+    }
+
+    .info-formula {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    
+    .info-name {
+        font-size: 1.2rem;
+        color: var(--text-highlight);
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+     .suggestions-container {
+        position: fixed; z-index: 60; pointer-events: auto;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 170px;
+        top: 80px; right: 25px; left: auto;   
+    }
+
+    .suggestion-label {
+        grid-column: 1 / -1; 
+        font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-weight: bold; text-align: right; 
+    }
+
+    .suggestion-tag {
+        background: rgba(40, 40, 40, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #eee; padding: 6px 0; border-radius: 12px; font-size: 0.85rem;
+        cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        display: flex; justify-content: center; align-items: center; width: 100%;
+    }
+
+    .suggestion-tag:hover {
+        background: var(--accent-blue); color: #fff; border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+        .suggestions-container { top: 20px; right: 15px; width: 160px; }
+        .suggestion-tag { font-size: 0.75rem; padding: 5px 0; }
+        .viewport-header { top: 15px; left: 15px; }
+        .viewport-header h1 { font-size: 0.9rem; letter-spacing: 0.5px; }
+        .molecule-display-info { padding: 8px 12px; }
+        .info-formula { font-size: 1.8rem; }
+        .info-name { font-size: 1rem; }
+    }
+
+    #viewport-subtitle { display: none; }
+    #molecule-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    #molecule-svg * { pointer-events: none; }
+
+    .atom-label-text {
+        font-family: 'Segoe UI', 'Arial', sans-serif; font-weight: 700; 
+        text-anchor: middle; dominant-baseline: central; 
+        fill: #ffffff; text-shadow: 0 0 4px #000;
+    }
+
+/* --- 控制面板 --- */
+    .controls-container {
+        position: absolute; top: 25px; right: 25px; z-index: 50; 
+        display: flex; gap: 15px; align-items: center; pointer-events: auto;
+    }
+
+    .control-button {
+        padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+        border: 1px solid var(--panel-border); cursor: pointer; transition: all 0.3s;
+        background: rgba(0, 0, 0, 0.4); color: var(--text-main);
+        backdrop-filter: blur(4px); box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+
+    .card { 
+        background: var(--card-glass); border: 1px solid var(--panel-border); 
+        border-radius: 16px; padding: 20px; margin-bottom: 20px; 
+    }
+    .card-title { 
+        font-size: 1rem; font-weight: 700; color: var(--text-highlight); 
+        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .data-label { font-size: 1rem; color: var(--text-sub); }
+    .data-value { font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
+    
+    .input-group { display: flex; gap: 8px; }
+    .input-group input { 
+        flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
+        background: rgba(0,0,0,0.3); color: white; transition: border 0.3s; outline: none; font-size: 1.1rem; 
+    }
+    .input-group button { 
+        padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
+        cursor: pointer; font-weight: bold;
+    }
+
+    .switch-container { 
+        display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
+        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;
+    }
+    .switch-container input { width: 18px; height: 18px; accent-color: var(--accent-green); cursor: pointer; }
+
+    #variant-selector {
+        display: none; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 15px; border-radius: 12px; margin-bottom: 15px;
+    }
+    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
+
+    #variant-selector.acid-theme { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); }
+    #variant-selector.acid-theme .variant-header { color: #fbbf24; }
+    #variant-selector.acid-theme .variant-option { color: #fbbf24; }
+    #variant-selector.acid-theme .variant-option:hover { background: rgba(245, 158, 11, 0.15); }
+
+    #reaction-container { margin-bottom: 30px; width: 100%; }
+    .reaction-row { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; }
+    .reaction-btn {
+        flex: 1 0 42%; max-width: 48%; min-width: 140px; height: 50px;
+        padding: 0 10px; font-size: 0.95rem; font-weight: 600; color: white;
+        border: none; border-radius: 50px; cursor: pointer;
+        transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        display: none; align-items: center; justify-content: center; white-space: nowrap;
+    }
+    .reaction-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+    .reaction-btn:active { transform: translateY(1px); }
+
+    .btn-h2o { background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); }
+    .btn-cl2 { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+    .btn-h2  { background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%); }
+    .btn-hcl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .btn-kmno4 { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
+    
+    @keyframes blurOutEffect { 0% { opacity: 1; filter: blur(0px); transform: scale(1); } 100% { opacity: 0; filter: blur(8px) brightness(1.5); transform: scale(1.05); } }
+    @keyframes blurInEffect { 0% { opacity: 0; filter: blur(8px); transform: scale(0.95); } 100% { opacity: 1; filter: blur(0px); transform: scale(1); } }
+    .scene-blur-out { animation: blurOutEffect 1.5s forwards ease-in; }
+    .scene-blur-in { animation: blurInEffect 1.5s forwards ease-out; }
+
+    .reset-btn {
+        flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--panel-border); color: var(--text-sub); border-radius: 12px;
+        font-weight: bold; cursor: pointer; transition: all 0.2s;
+    }
+    .reset-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+
+    /* 手機版樣式 */
+    body.simulate-mobile .app-container { flex-direction: column; }
+    body.simulate-mobile .controls-container { display: none !important; }
+    body.simulate-mobile .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    body.simulate-mobile .controls-area {
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 70vh; max-height: 70vh;
+        border-left: none; border-top: 1px solid rgba(255,255,255,0.15);
+        border-radius: 20px 20px 0 0; background-color: #1a1a1a; padding: 0; z-index: 100;
+        transform: translateY(0); transition: transform 0.3s; will-change: transform;
+    }
+    body.simulate-mobile #mobile-panel-handle {
+        display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
+        cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .controls-area { 
+        width: 400px; min-width: 320px;
+        background-color: var(--panel-glass);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-left: 1px solid var(--panel-border);
+        display: flex; flex-direction: column; 
+        padding: 25px; overflow-y: auto; 
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5); 
+        z-index: 20;
+    }
+    #mobile-panel-handle { display: none; }
+
+    .input-note { font-size: 0.8rem; color: var(--text-sub); margin-top: 10px; line-height: 1.4; }
+    .clickable-label { cursor: pointer; font-weight: bold; }
+    .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
+
+/* --- 手機版極速優化 (iOS Native Like) --- */
+@media (max-width: 768px), (max-height: 500px) { 
+    .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    .controls-container { display: none !important; } 
+    .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    
+    .controls-area {
+        position: fixed; 
+        left: 0; 
+        bottom: 0; 
+        width: 100%; 
+        
+        /* 【關鍵】高度固定，不要變動它，變動高度會卡頓 */
+        height: 80vh; 
+        
+        background-color: rgba(26, 26, 26, 0.96); 
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px 20px 0 0; 
+        border-top: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+        z-index: 100;
+        
+        display: flex; flex-direction: column;
+        padding: 0;
+
+        /* 【關鍵】預設位置：往下推 (100% - 40px把手高度) */
+        transform: translateY(calc(100% - 40px));
+        
+        /* 啟用硬體加速 */
+        will-change: transform;
+        /* 這是放手後的彈力曲線，模仿 iOS */
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    #mobile-panel-handle { 
+        display: flex; width: 100%; height: 40px; 
+        justify-content: center; align-items: center;
+        cursor: grab; flex-shrink: 0; 
+        /* 把手背景 */
+        background: rgba(255,255,255,0.02);
+        border-bottom: 1px solid rgba(255,255,255,0.05); 
+        touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
+    }
+    
+    /* 修改這裡：把手的樣式 */
+    .handle-bar {
+        width: 36px; 
+        height: 5px; 
+        background-color: rgba(255, 255, 255, 0.3); 
+        border-radius: 10px;
+        /* 加入過渡動畫，讓變大變小很滑順 */
+        transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* 新增這裡：當把手被按住 (active) 時的效果 */
+    #mobile-panel-handle:active .handle-bar,
+    #mobile-panel-handle.active .handle-bar {
+        width: 55px; /* 變寬 */
+        background-color: rgba(255, 255, 255, 0.7); /* 變亮 */
+        box-shadow: 0 0 10px rgba(255,255,255,0.3); /* 加一點發光 */
+    }
+    
+    .controls-content { 
+        flex: 1; 
+        padding: 20px; 
+        overflow-y: auto; 
+        overscroll-behavior: contain;
+        padding-bottom: 15px; /* 全開的底部留白 */
+        transition: padding-bottom 0.4s ease;
+    }
+
+    .controls-area.half-open .controls-content {
+        padding-bottom: 45vh; /* 半開的底部留白 */
+    }
+}
+
+    .hybrid-tooltip {
+        position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
+        background: rgba(0, 0, 0, 0.9); color: #fff; padding: 15px 25px;
+        border-radius: 12px; border: 2px solid var(--accent-green);
+        font-family: 'Segoe UI', 'Arial', sans-serif; font-size: 1.4rem; font-weight: bold;
+        pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        z-index: 9999; white-space: nowrap; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-shadow: 0 2px 4px #000;
+        max-width: 90vw; 
+    }
+    
+    /* --- 知識小百科卡片樣式 --- */
+    .knowledge-card {
+        border: 1px solid rgba(251, 191, 36, 0.3); /* 金黃色邊框 */
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+        transition: all 0.3s ease;
+    }
+
+    .knowledge-card .card-title {
+        color: #fbbf24; cursor: pointer; justify-content: space-between; margin-bottom: 0; 
+    }
+
+    .toggle-icon { font-size: 0.8rem; transition: transform 0.3s; color: #fbbf24; }
+    .knowledge-card.expanded .toggle-icon { transform: rotate(180deg); }
+    .knowledge-card.expanded .card-title { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(251, 191, 36, 0.2); }
+    .knowledge-content { display: none; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; text-align: justify; }
+    .knowledge-content strong { color: #38bdf8; }
+    .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .info-section { margin-bottom: 15px; }
+    .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
+    .info-body { padding-left: 6px; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; text-align: justify; }
+    .info-body strong { color: inherit; font-weight: 700; }
+    .highlight-title { color: #38bdf8; font-weight: bold; display: inline-block; margin-right: 4px; }
+    .hybrid-tooltip.show { opacity: 1; }
+
+    /* 電子閃爍動畫 */
+    @keyframes spark-flicker {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.6); }
+    }
+    .electron-spark { animation: spark-flicker 0.15s linear infinite; }
+    /* ========== [請插入這段 CSS] 電子組態表樣式 ========== */
+    #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
+    .config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 500px; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @media (max-width: 600px) { .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; } }
+    
+    .config-header { padding: 15px; background: rgba(30,41,59,0.9); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; }
+    .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
+    .config-search { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #475569; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
+    .config-list { flex: 1; overflow-y: auto; padding: 15px; }
+    
+    .element-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #22d3ee; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
+    .ec-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .ec-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .ec-sym-box { display: flex; align-items: center; gap: 25px; }
+    .ec-sym { font-size: 3.8rem; font-weight: 900; color: #fff; line-height: 1; min-width: 80px; text-align: center; text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.2); }
+    .ec-info { display: flex; flex-direction: column; gap: 2px; }
+    .ec-name { font-size: 0.95rem; font-weight: bold; color: #fff; }
+    .ec-meta { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+    .ec-tag { font-size: 0.75rem; color: #a78bfa; font-weight: 500; background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139, 92, 246, 0.3); width: fit-content; }
+    .ec-config-row { width: 100%; display: flex; justify-content: flex-end; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 6px; }
+    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.1rem; letter-spacing: -0.5px; word-spacing: -2px; white-space: nowrap; }
+    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
+    /* [修改] 開啟水平捲軸並美化樣式 */
+    .ec-scroll { 
+        width: 100%; 
+        overflow-x: auto; /* 允許橫向捲動 */
+        padding-top: 5px; 
+        padding-bottom: 8px; /* 增加底部空間給捲軸 */
+        border-top: 1px solid rgba(255,255,255,0.05); 
+        scrollbar-width: thin; /* Firefox: 細捲軸 */
+        scrollbar-color: #475569 #0f172a; /* Firefox: 顏色 */
+    }
+    
+    /* Chrome/Edge/Safari 捲軸樣式 */
+    .ec-scroll::-webkit-scrollbar { height: 6px; display: block; } /* 設定高度並顯示 */
+    .ec-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
+    .ec-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    .ec-scroll::-webkit-scrollbar-thumb:hover { background: #22d3ee; } /* 滑鼠移過去變亮藍色 */
+
+    .ec-row { display: flex; gap: 8px; width: max-content; padding-right: 10px; }
+    .ec-sub { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+    .ec-boxes { display: flex; gap: 2px; }
+    .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
+    .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
+
+    /* ========== [新增] 離子按鈕互動樣式 ========== */
+    .ion-btn {
+    opacity: 0.8;
+    border-width: 1px !important;
+    font-weight: normal;
+}
+
+.ion-btn:active {
+    opacity: 0.6; 
+}
+
+.ion-btn.active {
+    opacity: 1;
+    font-weight: bold;
+    border-width: 2px !important;
+    z-index: 2;
+}
+
+.ion-btn.active[data-type="neutral"] { background: #f1f5f9 !important; color: #000 !important; border-color: #fff !important; }
+.ion-btn.active[data-type="pos"]     { background: #fca5a5 !important; color: #000 !important; border-color: #fca5a5 !important; }
+.ion-btn.active[data-type="neg"]     { background: #93c5fd !important; color: #000 !important; border-color: #93c5fd !important; }
+
+
+/* --- [新增] 共振結構主題 (紫色系) --- */
+#variant-selector.resonance-theme { 
+    background: rgba(139, 92, 246, 0.05); 
+    border: 1px solid rgba(139, 92, 246, 0.3); 
+}
+#variant-selector.resonance-theme .variant-header { 
+    color: #a78bfa; /* 淺紫色 */
+}
+#variant-selector.resonance-theme .variant-option { 
+    color: #a78bfa; 
+}
+#variant-selector.resonance-theme .variant-option:hover { 
+    background: rgba(139, 92, 246, 0.15); 
+    color: #fff;
+}
+#variant-selector.resonance-theme input[type="radio"] {
+    accent-color: #8b5cf6; /* 紫色選框 */
+}
+
+/* --- [新增] 結構/晶體切換主題 (藍色系) --- */
+#variant-selector.structure-theme { 
+    background: rgba(56, 189, 248, 0.05); /* 天藍色背景 */
+    border: 1px solid rgba(56, 189, 248, 0.3); 
+}
+#variant-selector.structure-theme .variant-header { 
+    color: #38bdf8; /* 天藍色文字 */
+}
+#variant-selector.structure-theme .variant-option { 
+    color: #38bdf8; 
+}
+#variant-selector.structure-theme .variant-option:hover { 
+    background: rgba(56, 189, 248, 0.15); 
+    color: #fff;
+}
+#variant-selector.structure-theme input[type="radio"] {
+    accent-color: #0ea5e9; /* 藍色選框 */
+}
+
+
+/* --- 軌域控制面板樣式 --- */
+.orbital-btn-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.orb-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    padding: 6px 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Times New Roman', serif; /* 讓軌域符號更有學術感 */
+    font-style: italic;
+}
+.orb-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+.orb-btn.active {
+    background: #38bdf8;
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+}
+
+/* 開關節面按鈕 */
+.plane-toggle {
+    width: 100%;
+    margin-top: 5px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e2e8f0;
+}
+.plane-toggle.active {
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-color: #10b981;
+    color: white;
+}
+
+.orbital-btn-group {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;
+}
+.orb-btn {
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8;
+    padding: 6px 0; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+    font-family: 'Times New Roman', serif; font-style: italic;
+}
+.orb-btn:hover { background: rgba(56, 189, 248, 0.2); box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+.orb-btn.active { background: #38bdf8; color: #000; font-weight: bold; box-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
+.plane-toggle {
+    width: 100%; margin-top: 5px; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0;
+}
+.plane-toggle.active { background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; color: white; }
+
+
+
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="viewport-area" id="viewport">
+        <!-- 標題與資訊顯示區 -->
+        <div class="viewport-header">
+            <h1 class="title">MOLECULAR SIMULATOR</h1>
+            
+            <div class="molecule-display-info" id="molecule-display-info">
+                <div class="info-formula" id="info-formula"></div>
+                <div class="info-name" id="info-name"></div>
+            </div>
+
+            <!-- 猜你想看功能 -->
+            <div class="suggestions-container" id="suggestions-container">
+                <div class="suggestion-label">你可能還想看：</div>
+            </div>
+
+            <span class="input-note" id="viewport-subtitle"></span>
+        </div>
+        
+        <div class="controls-container">
+            <button id="mode-toggle" class="control-button active">模式: 複合</button>
+        </div>
+
+        <svg id="molecule-svg" viewBox="-400 -300 800 600" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <filter id="soft-glow" x="-300%" y="-300%" width="700%" height="700%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" />
+                </filter>
+            </defs>
+            <g id="scene-root"></g>
+        </svg>
+        <div id="hybrid-label" class="hybrid-tooltip"></div>
+    </div>
+    <div id="config-modal">
+        <div class="config-panel">
+            <div class="config-header">
+                <button class="config-close" onclick="closeConfigModal()">✕</button>
+                <input type="text" class="config-search" id="configSearchInput" placeholder="搜尋元素 (Ex: Fe, 26, Carbon)..." onkeyup="renderConfigList()">
+            </div>
+            <div class="config-list" id="configListContainer"></div>
+        </div>
+    </div>
+
+    <div class="controls-area" id="controls-panel">
+        <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
+        
+        <div class="controls-content">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+    <span>⚛️ 輸入化學式</span>
+    <span style="font-size: 14px; color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.9); font-weight: normal; letter-spacing: 0.5px;">
+        Created by 林瑋老師
+    </span>
+</div>
+                <div class="input-group">
+                    <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
+                    <button id="load-btn">載入</button>
+                </div>
+                <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
+            </div>
+
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-lp" checked>
+                <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
+            </div>
+
+            <div class="switch-container" id="glow-switch-wrap">
+                <input type="checkbox" id="toggle-glow">
+                <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
+            </div>
+            
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-octet" checked>
+                <label for="toggle-octet" class="clickable-label">優先遵循八隅體</label>
+            </div>
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-auto-rotate" checked>
+                <label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label>
+            </div>
+
+            <div id="variant-selector"></div>
+            
+            <div class="switch-container">
+                <input type="checkbox" id="toggle-plasma">
+                <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; text-shadow:0 0 5px #a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+            </div>
+
+            <div id="reaction-container">
+                <div class="reaction-row">
+                    <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
+                    <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
+                    <button id="reaction-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
+                    <button id="reaction-kmno4-btn" class="reaction-btn btn-kmno4">🧪 KMnO4 氧化</button>
+                    <button id="reaction-sub-btn" class="reaction-btn btn-cl2">🧪 鹵素取代</button>
+                    <button id="reaction-nitro-btn" class="reaction-btn btn-hcl">🧪 硝酸取代</button>
+                    <button id="reaction-propene-h2-btn"  class="reaction-btn btn-h2">🧪 氫氣加成</button>
+                    <button id="reaction-propene-cl2-btn" class="reaction-btn btn-cl2">🧪 鹵素加成</button>
+                    <button id="reaction-propene-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
+                    <button id="reaction-propene-h2o-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-ox-btn" class="reaction-btn btn-kmno4">🧪 一般氧化</button>
+                    <button id="reaction-red-btn" class="reaction-btn btn-h2">🧪 還原</button>
+                    <!-- [新增] 乙炔 (C2H2) 專用按鈕群 (共7個) -->
+        <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
+        <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
+        <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
+        <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
+        <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
+        <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
+        <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reset-btn" class="reset-btn">↺ 重置</button>
+                </div>
+            </div>
+            <!-- 知識小百科卡片 -->
+            <div class="card knowledge-card" id="knowledge-card" style="display: none;">
+            <div class="card-title" onclick="toggleKnowledge()">
+            <span>💡 小知識</span>
+            <span class="toggle-icon">▼</span>
+            </div>
+            <div class="knowledge-content" id="knowledge-text">
+            </div>
+        </div>
+        <button id="btn-open-config" class="control-button" style="width:100%; margin-bottom:15px; background:rgba(34, 211, 238, 0.1); border:1px solid #22d3ee; color:#22d3ee; font-weight:bold;">
+            ⚛️ 查詢電子組態 (1-118)
+        </button>
+            
+            
+            <div class="card" id="data-card">
+                <div class="card-title">📊 物質資料</div>
+                <div class="data-row"><span class="data-label" id="lbl-formula">化學式</span><span class="data-value" id="disp-formula"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-name">中文名稱</span><span class="data-value" id="disp-center"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-hybrid">混成軌域</span><span class="data-value" id="disp-hybrid"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-shape">形狀</span><span class="data-value" id="disp-shape"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-angle">鍵角</span><span class="data-value" id="disp-angle"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-mp">熔點 (MP)</span><span class="data-value" id="disp-mp"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-bp">沸點 (BP)</span><span class="data-value" id="disp-bp"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-bonds">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
+                <div class="data-row"><span class="data-label" id="lbl-mass">分子量</span><span class="data-value" id="disp-mass"></span></div>
+            </div>
+            <div class="spacer-60"></div>
+        </div>
+    </div>
+</div>
+
+<!-- [修正版] 隱藏的流量計數器 (使用 Hits.sh) -->
+<!-- ID 已修正為網域格式以符合服務要求: weiwei-molecular-lab.app -->
+<div style="display:none;">
+    <img id="site_counter_img" 
+         src="https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748" 
+         alt="Page Views">
+</div>
+
+<script src="data_static.js"></script>
+<script src="data_molecules.js"></script>
+<script>
+// ==========================================
+// 1. 系統初始化
+// ==========================================
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+let isReactionRunning = false; 
+let isReactionFinished = false; 
+let isPlasmaMode = false; // [修復] 確保變數存在
+
+/*
+ ==========================================================================
+ ★ 視覺鍵長標準參考表 (Visual Bond Length Standards) v16.2
+ ==========================================================================
+ 基準：以 1,2-二氯丙烷為錨點 (C-C ~ 70, C-H ~ 50, C-Cl ~ 75)
+ 
+ [1] 原子視覺半徑貢獻 (Base Radius Contribution)
+ --------------------------------------------------------------------------
+  - H (氫) .................... 15  (最小，確保緊湊)
+  - Row 2 (C, N, O, F) ........ 35  (基準)
+  - Row 3 (Si, P, S, Cl) ...... 40  (略大)
+  - Row 4 (Br) ................ 45
+  - Row 5 (I, Xe) ............. 50  (最大)
+
+ [2] 鍵級修正係數 (Bond Order Multiplier)
+ --------------------------------------------------------------------------
+  - 單鍵 (Single) ............. x 1.00
+  - 雙鍵 (Double) ............. x 0.90
+  - 參鍵 (Triple) ............. x 0.85
+
+ [3] 常見鍵長計算範例 (Calculated Examples)
+ --------------------------------------------------------------------------
+  Type      Calc (R1 + R2) * Multiplier      Final Value
+  -------   ---------------------------      -----------
+  H-H       (15 + 15) * 1.0                  30
+  C-H       (35 + 15) * 1.0                  50  (基準)
+  N-H       (35 + 15) * 1.0                  50
+  O-H       (35 + 15) * 1.0                  50
+  P-H       (40 + 15) * 1.0                  55
+
+  C-C       (35 + 35) * 1.0                  70  (基準)
+  C=C       (35 + 35) * 0.9                  63
+  C≡C       (35 + 35) * 0.85                 60
+  
+  C-O       (35 + 35) * 1.0                  70
+  C=O       (35 + 35) * 0.9                  63
+
+  S-O       (40 + 35) * 1.0                  75
+  S=O       (40 + 35) * 0.9                  68  (SO4, SO3)
+  
+  P-Cl      (40 + 40) * 1.0                  80  (PCl3)
+  Xe=O      (50 + 35) * 0.9                  76  (XeO3)
+  
+  F-F       (35 + 35) * 1.0                  70
+  Cl-Cl     (40 + 40) * 1.0                  80
+  I-I       (50 + 50) * 1.0                  100
+ ==========================================================================
+*/
+
+
+
+
+
+// --- [新增] 用來儲存反應歷史紀錄 ---
+let moleculeHistory = [];
+
+function autoAssignLonePairs(atom, bonds, allAtoms) {
+    if (atom.lp3d !== undefined && atom.lp3d.length > 0) return atom.lpCount || atom.lp3d.length;
+    if (atom.lpCount !== undefined) return atom.lpCount;
+    const props = ELEMENT_PROPS[atom.elem]; if (!props) return 0;
+    const valence = props.ve; const en = props.en || 0;
+    let bondElectronCount = 0; let neighborCount = 0;
+    const myIndex = atom.originalIndex;
+    bonds.forEach(b => {
+        if (b[0] !== myIndex && b[1] !== myIndex) return;
+        neighborCount++; 
+        let type = b[2] || "single";
+        if (type.includes("triple")) bondElectronCount += 3;
+        else if (type.includes("double")) bondElectronCount += 2;
+        else if (type === "coordinate") { if (b[0] === myIndex) bondElectronCount += 2; }
+        else if (type === "coordinate_triple") bondElectronCount += 3;
+        else bondElectronCount += 1;
+    });
+    let remainingElectrons = valence - bondElectronCount;
+    if (remainingElectrons % 2 !== 0 && !atom.radical) {
+        if (neighborCount === 1 && en > 2.5) remainingElectrons += 1;
+    }
+    let lp = Math.floor(remainingElectrons / 2);
+    return Math.max(0, lp);
+}
+function generateElectronDots(atom, atomIndex, allAtoms, allBonds) {
+    const dots = []; 
+    let lpCount = atom.calculatedLP;
+    // 如果沒有孤對電子且不是自由基，直接返回空陣列
+    if (lpCount <= 0 && !atom.radical) return dots;
+
+    // --- 1. 幾何位置計算 (維持原有的 3D 向量運算) ---
+    if (atom.lp3d && atom.lp3d.length > 0) {
+        // 如果有手動指定的座標 (hardcoded)
+        const pushDist = atom.r * 2.2; 
+        atom.lp3d.forEach(v => {
+            const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z) || 1;
+            addPairToDots(dots, atom, { x: (v.x/len)*pushDist, y: (v.y/len)*pushDist, z: (v.z/len)*pushDist });
+        });
+    } else {
+        // 自動計算：根據鍵結向量推算孤對電子位置
+        const myBonds = allBonds.filter(b => b[0] === atomIndex || b[1] === atomIndex);
+        let bondVectors = [];
+        myBonds.forEach(b => {
+            const otherIdx = (b[0] === atomIndex) ? b[1] : b[0];
+            const other = allAtoms[otherIdx];
+            let vx = other.x - atom.x, vy = other.y - atom.y, vz = other.z - atom.z;
+            const len = Math.sqrt(vx*vx + vy*vy + vz*vz) || 1;
+            bondVectors.push({ x: vx/len, y: vy/len, z: vz/len, style: b[2] });
+        });
+        
+        let sumX = 0, sumY = 0, sumZ = 0;
+        if (bondVectors.length > 0) { bondVectors.forEach(v => { sumX += v.x; sumY += v.y; sumZ += v.z; }); } 
+        else { sumX = 0; sumY = -1; sumZ = 0; }
+        
+        let backX = -sumX, backY = -sumY, backZ = -sumZ;
+        let backLen = Math.sqrt(backX*backX + backY*backY + backZ*backZ);
+        if (backLen < 0.001) { backX=0; backY=1; backZ=0; backLen=1; }
+        backX /= backLen; backY /= backLen; backZ /= backLen;
+        
+        let ux = backX, uy = backY, uz = backZ;
+        let tempX = 0, tempY = 1, tempZ = 0;
+        if (Math.abs(ux) < 0.1 && Math.abs(uz) < 0.1) { tempX=1; tempY=0; tempZ=0; }
+        let wx = uy*tempZ - uz*tempY, wy = uz*tempX - ux*tempZ, wz = ux*tempY - uy*tempX;
+        let wLen = Math.sqrt(wx*wx + wy*wy + wz*wz);
+        wx/=wLen; wy/=wLen; wz/=wLen;
+        let vx = wy*uz - wz*uy, vy = wz*ux - wx*uz, vz = wx*uy - wy*ux;
+        
+        const lpDist = atom.r * 2.2;
+        const pushLP = (dx, dy, dz) => { addPairToDots(dots, atom, { x: dx*lpDist, y: dy*lpDist, z: dz*lpDist }); };
+
+        if (bondVectors.length === 1) {
+            if (lpCount === 3) {
+                const angle = 70 * (Math.PI/180); const sinA = Math.sin(angle); const cosA = Math.cos(angle);
+                for(let i=0; i<3; i++) {
+                    const theta = i * (120 * Math.PI/180);
+                    const px = cosA * ux + sinA * (Math.cos(theta)*vx + Math.sin(theta)*wx);
+                    const py = cosA * uy + sinA * (Math.cos(theta)*vy + Math.sin(theta)*wy);
+                    const pz = cosA * uz + sinA * (Math.cos(theta)*vz + Math.sin(theta)*wz);
+                    pushLP(px, py, pz);
+                }
+            } else if (lpCount === 2) {
+                const angle = 60 * (Math.PI/180);
+                pushLP(Math.cos(angle)*ux + Math.sin(angle)*vx, Math.cos(angle)*uy + Math.sin(angle)*vy, Math.cos(angle)*uz + Math.sin(angle)*vz);
+                pushLP(Math.cos(angle)*ux - Math.sin(angle)*vx, Math.cos(angle)*uy - Math.sin(angle)*vy, Math.cos(angle)*uz - Math.sin(angle)*vz);
+            } else if (lpCount === 1) { pushLP(ux, uy, uz); }
+        } else if (bondVectors.length === 2) {
+            if (lpCount === 2) {
+                let b1 = bondVectors[0], b2 = bondVectors[1];
+                let nx = b1.y*b2.z - b1.z*b2.y, ny = b1.z*b2.x - b1.x*b2.z, nz = b1.x*b2.y - b1.y*b2.x;
+                let nLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+                if (nLen > 0.001) { nx/=nLen; ny/=nLen; nz/=nLen; } else { nx=vx; ny=vy; nz=vz; }
+                const tilt = 50 * (Math.PI/180);
+                pushLP(Math.cos(tilt)*ux + Math.sin(tilt)*nx, Math.cos(tilt)*uy + Math.sin(tilt)*ny, Math.cos(tilt)*uz + Math.sin(tilt)*nz);
+                pushLP(Math.cos(tilt)*ux - Math.sin(tilt)*nx, Math.cos(tilt)*uy - Math.sin(tilt)*ny, Math.cos(tilt)*uz - Math.sin(tilt)*nz);
+            } else if (lpCount === 1) { pushLP(ux, uy, uz); }
+        } else { pushLP(ux, uy, uz); }
+    }
+
+    // --- 2. [修正] 顏色判定邏輯 (排除 NO/NO2) ---
+    
+    // 判斷是否為氮氧化物特例
+    let isNitrogenOxide = false;
+    if (typeof currentKey !== 'undefined' && currentKey) {
+        // 只要分子名稱包含 NO 或 NO2 且不含電荷符號(如 NO3-)，就視為特例
+        if (currentKey === "NO" || currentKey === "NO2" || 
+            currentKey.startsWith("NO|") || currentKey.startsWith("NO2|")) {
+            isNitrogenOxide = true;
+        }
+    }
+
+    // 只有當：
+    // 1. 形式電荷 <= -0.5 (帶負電)
+    // 2. 且 不是配位鍵接收者
+    // 3. 且 不是 NO/NO2 這種特例
+    // 才將電子塗成粉紅色
+    if (atom.formalCharge <= -0.5 && !atom.isCoordinateReceiver && !isNitrogenOxide) {
+        let countToColor = Math.round(Math.abs(atom.formalCharge));
+        
+        // 倒著找，把最後幾顆電子標記為粉紅
+        for (let i = dots.length - 1; i >= 0; i--) {
+            if (countToColor > 0) {
+                dots[i].isNegativeCharge = true;
+                countToColor--;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return dots;
+}
+
+function addPairToDots(dotsArray, atom, vector) {
+    let lx = vector.x, ly = vector.y, lz = vector.z;
+    let ox = -ly, oy = lx, oz = 0;
+    if (Math.abs(lx) < 0.1 && Math.abs(ly) < 0.1) { ox = 1; oy = 0; oz = 0; }
+    let oLen = Math.sqrt(ox*ox + oy*oy + oz*oz);
+    const separation = 14.0; 
+    ox = (ox/oLen) * (separation/2); oy = (oy/oLen) * (separation/2); oz = (oz/oLen) * (separation/2);
+    const eRadius = 4.5;
+    
+    // 預設 isNegativeCharge 為 false
+    dotsArray.push({ x: atom.x + lx + ox, y: atom.y + ly + oy, z: atom.z + lz + oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom, isNegativeCharge: false });
+    
+    if (!atom.radical) {
+        dotsArray.push({ x: atom.x + lx - ox, y: atom.y + ly - oy, z: atom.z + lz - oz, isElectron: true, r: eRadius, type: 'electron', parentAtom: atom, isNegativeCharge: false });
+    }
+}
+
+
+
+
+
+// ==========================================
+// 特殊功能：化學反應動畫 (V14.0 終極版：全中文邏輯)
+// ==========================================
+
+// [新增] 輔助函式：取得當前分子的中文名稱
+// 邏輯：從 currentMolecule 的 fullKey 中抓取 "|" 後面的文字
+function getCurrentMoleculeName() {
+    if (!currentMolecule || !currentMolecule.fullKey) return "";
+    const parts = currentMolecule.fullKey.split('|');
+    // 如果有 '|' 抓第二段(中文)，否則抓第一段
+    return parts.length > 1 ? parts[1].trim() : parts[0].trim();
+}
+
+// --- 核心邏輯：檢查按鈕狀態 & 重置 ---
+function checkReactionAvailable(key) {
+    const btnContainer = document.getElementById("reaction-container");
+    const resetBtn = document.querySelector(".reset-btn");
+    const btns = document.querySelectorAll(".reaction-btn"); 
+    
+    // 1. 初始化：隱藏所有按鈕
+    btns.forEach(b => b.style.display = "none");
+    btnContainer.style.display = "none";
+    resetBtn.style.display = "none";
+
+    const currentName = getCurrentMoleculeName();
+
+    // --- 各分子專屬反應按鈕 ---
+
+    // A. 乙烯
+    if (currentName === "乙烯") {
+        btnContainer.style.display = "block";
+        document.getElementById("reaction-btn").style.display = "flex";
+        document.getElementById("reaction-h2-btn").style.display = "flex";
+        document.getElementById("reaction-hcl-btn").style.display = "flex";
+        document.getElementById("reaction-cl2-btn").style.display = "flex";
+        document.getElementById("reaction-kmno4-btn").style.display = "flex";
+    } 
+    // B. 丙烯
+    else if (currentName === "丙烯") { 
+        btnContainer.style.display = "block";
+        document.getElementById("reaction-propene-h2-btn").style.display = "flex";
+        document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
+        document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
+        document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
+    } 
+    // C. 乙炔
+    else if (currentName === "乙炔") {
+        btnContainer.style.display = "block";
+        document.getElementById("btn-c2h2-h2-full").style.display = "flex";
+        document.getElementById("btn-c2h2-h2-part").style.display = "flex";
+        document.getElementById("btn-c2h2-cl2-full").style.display = "flex";
+        document.getElementById("btn-c2h2-cl2-part").style.display = "flex";
+        document.getElementById("btn-c2h2-hcl-full").style.display = "flex";
+        document.getElementById("btn-c2h2-hcl-part").style.display = "flex";
+        document.getElementById("btn-c2h2-h2o").style.display = "flex";
+    }
+    // D. 甲烷
+    else if (currentName === "甲烷") {
+        btnContainer.style.display = "block";
+        const subBtn = document.getElementById("reaction-sub-btn");
+        if(subBtn) subBtn.style.display = "flex"; 
+        const nitroBtn = document.getElementById("reaction-nitro-btn");
+        if(nitroBtn) nitroBtn.style.display = "flex"; 
+    } 
+    // E. 乙醇/乙醛/乙酸
+    else if (currentName === "乙醇" || currentName === "酒精") {
+        btnContainer.style.display = "block";
+        document.getElementById("reaction-ox-btn").style.display = "flex";
+        document.getElementById("reaction-kmno4-btn").style.display = "flex";
+    }
+    else if (currentName === "乙醛") {
+        btnContainer.style.display = "block";
+        document.getElementById("reaction-ox-btn").style.display = "flex";
+        document.getElementById("reaction-red-btn").style.display = "flex";
+    }
+    else if (currentName === "乙酸" || currentName === "醋酸") {
+        btnContainer.style.display = "block";
+        // 乙酸通常是終點，只有重置按鈕
+    }
+
+    // --- [修正] 重置按鈕顯示邏輯 ---
+    // 只要歷史紀錄不是空的，就顯示重置按鈕 (代表可以"回到上一頁")
+    if (moleculeHistory.length > 0) {
+        btnContainer.style.display = "block"; // 確保容器可見
+        resetBtn.style.display = "block";     // 顯示重置按鈕
+    }
+}
+
+
+function resetReaction() {
+    // [修正] 歷史紀錄邏輯
+    // 如果沒有歷史紀錄 (陣列為空)，代表已經是最源頭，按下不反應
+    if (moleculeHistory.length === 0) return;
+
+    isReactionRunning = false;
+    isReactionFinished = false; 
+    
+    // 隱藏說明文字
+    const subEl = document.getElementById("viewport-subtitle");
+    if(subEl) subEl.style.display = 'none';
+
+    // 取出最後一筆紀錄 (Pop)
+    const previousState = moleculeHistory.pop();
+
+    // 載入上一個分子
+    // 注意：這裡不需要再根據名稱判斷了，因為 previousState 裡面存的就是正確的來源
+    loadMolecule(previousState.key, previousState.variant);
+}
+
+function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
+    // [新增] 將當前的分子狀態存入歷史紀錄 (推入堆疊)
+    // 這樣不管從乙烯來還是乙炔來，系統都會記得「上一個是誰」
+    moleculeHistory.push({
+        key: currentKey,
+        variant: currentVariantKey
+    });
+
+    const svg = document.getElementById("scene-root");
+    svg.classList.add("scene-blur-out");
+    
+    setTimeout(() => {
+        loadMolecule(nextKey, variantName); 
+        
+        if (description) {
+            const subtitle = document.getElementById("viewport-subtitle");
+            if (subtitle) {
+                subtitle.textContent = description;
+                subtitle.style.display = "block"; 
+                subtitle.style.width = "fit-content";
+                const themeColor = "#fb923c"; 
+                subtitle.style.border = `1px solid ${themeColor}`;   
+                subtitle.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; 
+                subtitle.style.borderRadius = "12px";                
+                subtitle.style.padding = "10px 14px";                
+                subtitle.style.backdropFilter = "blur(4px)";         
+                subtitle.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)"; 
+                subtitle.style.color = themeColor;                   
+                subtitle.style.fontSize = "1.0rem"; 
+                subtitle.style.fontWeight = "600";                   
+                subtitle.style.textShadow = "0 2px 4px #000000";     
+                subtitle.style.maxWidth = "20em"; 
+                subtitle.style.whiteSpace = "normal";                
+                subtitle.style.wordBreak = "break-word";             
+                subtitle.style.lineHeight = "1.5";  
+                subtitle.style.marginTop = "15px";
+                subtitle.style.clear = "both";
+                subtitle.style.textAlign = "left"; 
+            }
+
+            const kCard = document.getElementById("knowledge-card");
+            const kText = document.getElementById("knowledge-text");
+            if (kCard && kText) {
+                kText.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">[反應發生]</span> ${description}`;
+                kCard.style.display = "block";
+                kCard.classList.add("expanded");
+            }
+        }
+        
+        svg.classList.remove("scene-blur-out");
+        svg.classList.add("scene-blur-in");
+        
+        setTimeout(() => {
+            svg.classList.remove("scene-blur-in");
+            isReactionRunning = false; 
+            isReactionFinished = true; 
+            checkReactionAvailable(nextKey); 
+        }, 1500);
+    }, 1500);
+}
+
+// 1. 乙烯系列 (原料: 乙烯)
+function runEthyleneHydration() {
+    finishReaction("C2H5OH", "乙醇", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接OH，轉變成乙醇");
+}
+function runEthyleneChlorination() {
+    finishReaction("C2H4Cl2", "1,2-二氯乙烷", "C2H4Cl2|1,2-二氯乙烷", "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個Cl，轉變成1,2-二氯乙烷，亦為氧化反應(C氧化數上升)");
+}
+function runEthyleneHydrogenation() {
+    finishReaction("C2H6", "乙烷", null, "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個H，轉變成乙烷，亦為還原反應(C氧化數下降)");
+}
+function runEthyleneHydrohalogenation() {
+    finishReaction("C2H5Cl", "氯乙烷", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接Cl，轉變成氯乙烷");
+}
+function runEthyleneOxidation() {
+    finishReaction("C2H4(OH)2", "乙二醇", "C2H4(OH)2|乙二醇|1,2-乙二醇", "乙烯通入冷稀、中性或微鹼性的過錳酸鉀溶液中，碳碳雙鍵斷裂，發生氧化反應，雙鍵的兩個C接上OH，生成乙二醇。");
+}
+
+// 2. 甲烷系列 (原料: 甲烷)
+function runMethaneSubstitution() {
+    finishReaction("CH3Cl", "一氯甲烷", null, "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl");
+}
+
+function runMethaneNitration() {
+    finishReaction("CH3NO2", "硝基甲烷", null, "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O");
+}
+
+// --- 3. 丙烯系列 (原料: 丙烯) ---
+function runPropeneHydrogenation() {
+    finishReaction("C3H8", "丙烷", null, "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個H，轉變成丙烷，亦為還原反應(C氧化數下降)");
+}
+
+function runPropeneChlorination() {
+    finishReaction("C3H6Cl2", "1,2-二氯丙烷", "C3H6Cl2|1,2-二氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個Cl，轉變成1,2-二氯丙烷，亦為氧化反應(C氧化數上升)");
+}
+
+function runPropeneHydrohalogenation() {
+    finishReaction("C3H7Cl", "2-氯丙烷", "C3H7Cl|2-氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
+}
+
+function runPropeneHydration() {
+    finishReaction("C3H8O", "2-丙醇", "C3H8O|2-丙醇", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
+}
+
+// 4. 乙醇系列
+function runEthanolMildOxidation() {
+    finishReaction("CH3CHO", "乙醛", null, "乙醇為1級醇，接O的C上具有H，一般氧化劑會先將乙醇氧化成乙醛");
+}
+
+function runEthanolStrongOxidation() {
+    finishReaction("CH3COOH", "乙酸", null, "乙醇為1級醇，接O的C上具有H，由於過錳酸鉀氧化力較強，故乙醇直接氧化成乙酸");
+}
+
+function runAcetaldehydeOxidation() {
+    finishReaction("CH3COOH", "乙酸", null, "乙醛接O的C上具有H，經過氧化可以形成乙酸");
+}
+
+function runAcetaldehydeReduction() {
+    finishReaction("C2H5OH", "乙醇", null, "醛類可以還原，變回1級醇，乙醛還原後形成乙醇");
+}
+
+// 5. 乙炔系列
+
+function runAcetyleneFullHydrogenation() {
+    finishReaction("C2H6", "乙烷", null, "乙炔的兩個碳碳𝝿鍵全數打斷，參鍵兩端的C原子各接上2個H，轉變成飽和的乙烷，亦為還原反應(C氧化數下降)。");
+}
+
+function runAcetylenePartialHydrogenation() {
+    finishReaction("C2H4", "乙烯", null, "乙炔的其中一個碳碳𝝿鍵打斷，參鍵兩端的C原子各接上1個H，轉變成乙烯，此為控制條件下的部分還原反應(C氧化數下降)。");
+}
+
+function runAcetyleneFullHalogenation() {
+    finishReaction("C2H2Cl4", "1,1,1,2-四氯乙烷", "C2H2Cl4|1,1,2,2-四氯乙烷", "乙炔的兩個碳碳𝝿鍵全數打斷，參鍵兩端的C原子各接上2個Cl，轉變成1,1,2,2-四氯乙烷，亦為氧化反應(C氧化數上升)。");
+}
+
+function runAcetylenePartialHalogenation() {
+    finishReaction("C2H2Cl2", "反-1,2-二氯乙烯", "C2H2Cl2|反-1,2-二氯乙烯", "乙炔的其中一個碳碳𝝿鍵打斷，參鍵兩端的C原子各接上1個Cl，轉變成1,2-二氯乙烯(從反應機構可知主產物為反式)。");
+}
+
+function runAcetyleneFullHydrohalogenation() {
+    finishReaction("C2H4Cl2", "1,1-二氯乙烷", "C2H4Cl2|1,1-二氯乙烷", "乙炔與足量鹵化氫反應，兩個碳碳𝝿鍵全數打斷。依馬氏規則，兩個Cl原子會接在同一個C原子上，轉變成1,1-二氯乙烷。");
+}
+
+// 6. 鹵化氫部分加成 (+HCl) -> 氯乙烯
+function runAcetylenePartialHydrohalogenation() {
+    finishReaction("C2H3Cl", "氯乙烯", "C2H3Cl|氯乙烯", "乙炔的其中一個碳碳𝝿鍵打斷，一個C接H，另一個C接Cl，轉變成氯乙烯，此為聚氯乙烯(PVC)的重要單體原料。");
+}
+
+// 7. 水加成 (+H2O) -> 乙醛
+function runAcetyleneHydration() {
+    finishReaction("CH3CHO", "乙醛", null, "乙炔在硫酸與硫酸汞(HgSO₄)催化下與水加成，𝝿鍵斷裂後先形成不穩定的乙烯醇，隨即發生『醛酮-烯醇互變異構』，氫原子轉移，最終轉變成乙醛。");
+}
+
+
+// ==========================================
+// 3. 核心邏輯與顯示更新
+// ==========================================
+
+let currentMolecule = null;
+let currentMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+let rotVelocity = { x: 0, y: 0, z: 0 }; 
+let panOffset = { x: 0, y: 0 }; 
+let isLongPressActive = false;
+let scale = 1.6; 
+let isDragging = false; 
+let lastMouse = { x: 0, y: 0 };
+let currentMode = 2; 
+let altKeyIsDown = false;
+let currentKey = null; 
+let currentVariantKey = null; 
+let lastInteractTime = 0; 
+let lastTouchDist = 0;
+let lastTouchCenter = { x:0, y:0 };
+let lastTouchAngle = 0; 
+
+function toggleMode() {
+    currentMode = (currentMode + 1) % 3; 
+    const modes = ['平移', '旋轉', '複合'];
+    const classes = ['mode-pan', 'mode-rotate', 'mode-composite'];
+    modeToggleBtn.className = `control-button ${classes[currentMode]} active`;
+    modeToggleBtn.innerHTML = `模式: ${modes[currentMode]}`;
+}
+
+function formatFormula(str) {
+    if (!str) return "";
+    if (str.includes('<') && str.includes('>')) return str;
+
+    let s = str;
+    let chargePart = "";
+    let mainPart = s;
+
+    // [修改] 智慧電荷判斷 + 正負號分離標籤
+    
+    // 1. 嘗試抓取結尾的 "數字+正負號" (例如 3-, 2+)
+    let matchWithDigit = s.match(/(\d)([+-]+)$/);
+    
+    if (matchWithDigit) {
+        let index = matchWithDigit.index;
+        let charBefore = s[index - 1]; // 抓取數字前的一個字
+
+        // A. 如果前一個字是 "數字" (例如 PO43-) -> 3- 是電荷
+        if (/\d/.test(charBefore)) {
+            // 將符號包在 span 裡，方便單獨調整 CSS
+            let num = matchWithDigit[1];
+            let sign = matchWithDigit[2];
+            chargePart = `<sup>${num}<span class="charge-sign">${sign}</span></sup>`;
+            mainPart = s.substring(0, index);
+        } 
+        // B. 如果前一個字是 "字母" (例如 IO3-) -> 3 是下標，只有 - 是電荷
+        else {
+            let sign = matchWithDigit[2];
+            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
+            // 這裡保留數字部分，讓它流到下面被轉成下標
+            mainPart = s.substring(0, s.length - sign.length); 
+        }
+    } else {
+        // 2. 如果沒抓到數字電荷，抓純符號 (例如 -, +)
+        let matchSignOnly = s.match(/([+-]+)$/);
+        if (matchSignOnly) {
+            let sign = matchSignOnly[0];
+            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
+            mainPart = s.substring(0, matchSignOnly.index);
+        }
+    }
+
+    // 3. 處理剩下部分的下標 (所有數字都變下標)
+    mainPart = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+
+    return mainPart + chargePart;
+}
+
+function handleLoadBtn() {
+    let rawVal = document.getElementById("formula-input").value;
+    if (!rawVal) return;
+
+    // ========== 隱藏功能：查詢瀏覽人次 ==========
+    if (rawVal === "人次") {
+        const subEl = document.getElementById("viewport-subtitle");
+        if (subEl) {
+            subEl.style.display = "block";
+            subEl.style.width = "fit-content";
+            subEl.style.border = "1px solid #10b981"; 
+            subEl.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
+            subEl.style.color = "#10b981"; 
+            subEl.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.3)";
+            subEl.style.padding = "10px 20px";
+            subEl.style.textAlign = "center";
+            
+            subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold;">👁️ 本站累積瀏覽人次</div>`;
+            
+            const newImg = new Image();
+            newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
+            newImg.alt = "載入中...";
+            newImg.style.height = "28px";
+            newImg.style.display = "block";
+            newImg.style.margin = "0 auto";
+
+            newImg.onerror = function() {
+                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
+            };
+            subEl.appendChild(newImg);
+            document.getElementById("formula-input").value = "";
+        }
+        return; 
+    }
+    // ===============================================
+
+    // [新增] 手動搜尋時，清空歷史紀錄
+    moleculeHistory = [];
+
+    let searchKey = rawVal.replace(/\s/g, '').toUpperCase();
+    let target = MOLECULE_INDEX[searchKey];
+    if (target) {
+        loadMolecule(target.key, target.variant);
+    } else if (MOLECULE_DB[rawVal]) {
+        loadMolecule(rawVal);
+    } else if (MOLECULE_DB[searchKey]) {
+        loadMolecule(searchKey);
+    } else {
+        alert("資料庫中未找到該分子: " + rawVal);
+    }
+}
+
+function toggleKnowledge() {
+    const card = document.getElementById('knowledge-card');
+    if(!card) return;
+    card.classList.toggle('expanded');
+    const isMobileNow = window.innerWidth < 768;
+    if (isMobileNow && card.classList.contains('expanded')) {
+        setTimeout(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }
+
+function updateSuggestions() {
+    const container = document.getElementById('suggestions-container');
+    if(!container) return;
+    
+    container.innerHTML = '<div class="suggestion-label">你可能還想看：</div>';
+    
+    const allKeys = Object.keys(MOLECULE_DB);
+    if(allKeys.length === 0) return;
+    
+    const picks = [];
+    let safety = 0;
+    
+    // 隨機挑選 4 個不重複且不是當前的分子
+    while(picks.length < 4 && picks.length < allKeys.length && safety < 100) {
+        const r = allKeys[Math.floor(Math.random() * allKeys.length)];
+        if(!picks.includes(r) && r !== currentKey) {
+            picks.push(r);
+        }
+        safety++;
+    }
+    
+    picks.forEach(key => {
+        const tag = document.createElement('div');
+        tag.className = 'suggestion-tag';
+        
+        // 處理顯示名稱 (抓取 | 後面的中文，如果太長就截斷)
+        const parts = key.split('|');
+        let displayName = parts.length > 1 ? parts[parts.length-1] : parts[0];
+        if(displayName.length > 8) displayName = displayName.substring(0, 6) + '..';
+        
+        tag.textContent = displayName;
+        
+        tag.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // [關鍵修改] 點擊建議標籤時，視為新的起點，清空歷史紀錄
+            moleculeHistory = []; 
+            
+            loadMolecule(key);
+        });
+        
+        container.appendChild(tag);
+    });
+}
+
+function multiplyMatrix(a, b) {
+    const out = [];
+    for (let i = 0; i < 3; i++) { 
+        for (let j = 0; j < 3; j++) { 
+            let sum = 0;
+            for (let k = 0; k < 3; k++) sum += a[i * 3 + k] * b[k * 3 + j];
+            out.push(sum);
+        }
+    }
+    return out;
+}
+
+function normalizeMatrix(m) {
+    let x = [m[0], m[3], m[6]], y = [m[1], m[4], m[7]];
+    const lenX = Math.sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+    x = x.map(v => v / lenX);
+    const dot = x[0]*y[0] + x[1]*y[1] + x[2]*y[2];
+    y = [y[0]-x[0]*dot, y[1]-x[1]*dot, y[2]-x[2]*dot];
+    const lenY = Math.sqrt(y[0]*y[0] + y[1]*y[1] + y[2]*y[2]);
+    y = y.map(v => v / lenY);
+    const z = [x[1]*y[2]-x[2]*y[1], x[2]*y[0]-x[0]*y[2], x[0]*y[1]-x[1]*y[0]];
+    return [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]];
+}
+
+function applyRotation(dx, dy, dz) {
+    const cx = Math.cos(dy), sx = Math.sin(dy);
+    const rotX = [1,0,0, 0,cx,-sx, 0,sx,cx];
+    const cy = Math.cos(dx), sy = Math.sin(dx);
+    const rotY = [cy,0,sy, 0,1,0, -sy,0,cy];
+    const cz = Math.cos(dz), sz = Math.sin(dz);
+    const rotZ = [cz,-sz,0, sz,cz,0, 0,0,1];
+    let rot = multiplyMatrix(rotY, multiplyMatrix(rotX, rotZ));
+    currentMatrix = multiplyMatrix(rot, currentMatrix);
+    currentMatrix = normalizeMatrix(currentMatrix);
+}
+
+const sceneRoot = document.getElementById("scene-root");
+const viewport = document.getElementById("viewport");
+const modeToggleBtn = document.getElementById("mode-toggle");
+const variantSelector = document.getElementById("variant-selector");
+
+window.onload = () => {
+    if(Object.keys(MOLECULE_DB).length > 0) {
+        loadMolecule("P4O6"); 
+    }
+    animate();
+    setupInteractions();
+};
+
+function loadMolecule(key, variantKey = null) {
+    const subEl = document.getElementById("viewport-subtitle");
+    if(subEl) { subEl.style.display = 'none'; subEl.textContent = ""; }
+    
+    let targetData = MOLECULE_DB[key];
+    if (!targetData && MOLECULE_INDEX[key.toUpperCase()]) {
+        const idx = MOLECULE_INDEX[key.toUpperCase()];
+        targetData = MOLECULE_DB[idx.key];
+        key = idx.key; 
+        if (!variantKey) variantKey = idx.variant;
+    }
+    if (!targetData) { console.error("Data missing for:", key); return; }
+    
+    if (!variantKey && currentKey === key && typeof currentVariantKey !== 'undefined' && currentVariantKey) {
+        variantKey = currentVariantKey;
+    }
+
+    rotVelocity = { x: 0.004, y: 0.004, z: 0 }; 
+    currentKey = key;
+    
+    let data = targetData;
+    if (variantKey && data.variants && data.variants[variantKey]) {
+        data = data.variants[variantKey];
+    } else if (data.variants && !variantKey) {
+        const firstKey = Object.keys(data.variants)[0];
+        data = data.variants[firstKey];
+        variantKey = firstKey;
+    }
+    currentVariantKey = variantKey;
+
+    if (!data.bondsRaw) data.bondsRaw = []; 
+    let processedBonds = JSON.parse(JSON.stringify(data.bondsRaw)); 
+    let processedAtoms = JSON.parse(JSON.stringify(data.atomsRaw)); 
+
+    const toggleOct = document.getElementById('toggle-octet');
+    const isOctetMode = toggleOct ? toggleOct.checked : true;
+
+    const expandableCenters = ['P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe', 'Sb', 'Te'];
+    let keptDoubleBonds = 0;
+
+    processedBonds.forEach(bond => {
+        const idx1 = bond[0], idx2 = bond[1], type = bond[2];
+        const a1 = processedAtoms[idx1], a2 = processedAtoms[idx2];
+        let cIdx = -1, tIdx = -1;
+
+        if (expandableCenters.includes(a1.elem) && a2.elem === 'O') { cIdx = idx1; tIdx = idx2; }
+        else if (expandableCenters.includes(a2.elem) && a1.elem === 'O') { cIdx = idx2; tIdx = idx1; }
+
+        if (cIdx !== -1) {
+            if (isOctetMode) {
+                if (type === 'double') {
+                    const resonanceMols = ["SO2", "二氧化硫", "亞硫酸", "H2SO3", "SO3", "亞硫酸根", "HSO3"];
+                    const isResonance = resonanceMols.some(n => currentKey.includes(n));
+
+                    if (isResonance && keptDoubleBonds === 0) {
+                        keptDoubleBonds++;
+                    } else {
+                        bond[2] = 'coordinate';
+                        bond[0] = cIdx;
+                        bond[1] = tIdx;
+                    }
+                }
+            } else {
+                if (type === 'coordinate') bond[2] = 'double';
+            }
+        }
+    });
+
+    let renderObjects = processAtomsData(processedAtoms, processedBonds, data.center);
+    
+    // UI 標籤切換
+    const isIonic = data.isIonic === true || data.center === "Ionic";
+    
+    // [修正] 如果是離子晶體，強制移除所有電子點 (LP)
+    if (isIonic) {
+        renderObjects = renderObjects.filter(obj => obj.type !== 'electron');
+    }
+
+    currentMolecule = { ...data, renderObjects: renderObjects, bonds3D: processedBonds };
+
+    const lblHybrid = document.getElementById("lbl-hybrid");
+    const lblShape = document.getElementById("lbl-shape");
+    const lblAngle = document.getElementById("lbl-angle");
+    const lblBonds = document.getElementById("lbl-bonds");
+    const lblMass = document.getElementById("lbl-mass");
+
+    // [修改] 標籤顯示邏輯
+    if (data.isMetal) {
+        // 金屬模式
+        if(lblHybrid) lblHybrid.textContent = "晶體堆積";
+        if(lblShape) lblShape.textContent = "空間利用率"; // 修正為空間利用率
+        if(lblAngle) lblAngle.textContent = "配位數";
+        if(lblBonds) lblBonds.textContent = "邊長關係";
+        if(lblMass) lblMass.textContent = "原子量";
+    } else if (isIonic) {
+        // 離子晶體模式 (鹽類)
+        if(lblHybrid) lblHybrid.textContent = "晶體堆積";
+        if(lblShape) lblShape.textContent = "半徑比 (r⁺/r⁻)";
+        if(lblAngle) lblAngle.textContent = "配位數";
+        if(lblBonds) lblBonds.textContent = "邊長關係";
+        if(lblMass) lblMass.textContent = "式量";
+    } else {
+        // 一般分子模式
+        if(lblHybrid) lblHybrid.textContent = "混成軌域";
+        if(lblShape) lblShape.textContent = "形狀";
+        if(lblAngle) lblAngle.textContent = "鍵角";
+        if(lblBonds) lblBonds.textContent = "鍵結統計";
+        if(lblMass) lblMass.textContent = "分子量";
+    }
+
+    const formulaEl = document.getElementById('info-formula');
+    const nameEl = document.getElementById('info-name');
+    const keyParts = (data.fullKey || key).split('|');
+    let formulaText = keyParts[0];
+    let nameText = keyParts.length > 1 ? keyParts[1] : "";
+    if(formulaEl) formulaEl.innerHTML = formatFormula(formulaText);
+    if(nameEl) nameEl.textContent = nameText;
+
+    const kCard = document.getElementById('knowledge-card');
+    const kText = document.getElementById('knowledge-text');
+    if (kCard && kText) {
+        if (data.desc) {
+            kText.innerHTML = data.desc; kCard.style.display = 'block';
+            kCard.classList.toggle('expanded', window.innerWidth >= 768);
+        } else { kCard.style.display = 'none'; }
+    }
+    updateSuggestions();
+
+    document.getElementById("disp-formula").innerHTML = formatFormula(formulaText);
+    document.getElementById("disp-center").textContent = nameText;
+    document.getElementById("disp-hybrid").textContent = data.hybrid;
+    document.getElementById("disp-shape").textContent = data.shape;
+    document.getElementById("disp-angle").textContent = data.angle;
+    document.getElementById("disp-mp").textContent = (data.mp && data.mp !== "-") ? `${data.mp} °C` : "無資料";
+    document.getElementById("disp-bp").textContent = (data.bp && data.bp !== "-") ? `${data.bp} °C` : "無資料";
+    
+    const bondDisp = document.getElementById("disp-bonds");
+    if(bondDisp) {
+        if (isIonic) {
+            bondDisp.innerHTML = data.edgeRelation || "a = 2(r<sub>+</sub> + r<sub>-</sub>)";
+        } else {
+            let sigma = 0, pi = 0, totalLP = 0;
+            if (currentMolecule.bonds3D) currentMolecule.bonds3D.forEach(b => { 
+                sigma++; if(b[2]==='double') pi++; if(b[2]==='triple') pi+=2; 
+            });
+            currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') totalLP += (obj.calculatedLP||0); });
+            bondDisp.innerHTML = `&sigma;: ${sigma} &nbsp; &pi;: ${pi} &nbsp; LP: ${totalLP}`;
+        }
+    }
+    
+    let totalMass = 0;
+    if (data.atomsRaw) {
+        if (isIonic && key.includes("NaCl")) totalMass = 22.99 + 35.45; 
+        else data.atomsRaw.forEach(a => { totalMass += (ELEMENT_PROPS[a.elem]?.mass || 0); });
+    }
+    document.getElementById("disp-mass").textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
+    
+    const subtitle = document.getElementById("viewport-subtitle");
+    if(subtitle) subtitle.textContent = `${nameText} (${formulaText})`; 
+    
+    updateVariantUI(key, variantKey);
+    checkReactionAvailable(key);
+}
+
+function processAtomsData(atomList, bondList, centerElem) {
+    let processed = [];
+    
+    // 1. 建立原子基本物件
+    const atomObjects = atomList.map((a, index) => { 
+        const props = ELEMENT_PROPS[a.elem] || { c3d: "#ccc", r3d: 20 };
+        const finalRadius = (a.r !== undefined) ? a.r : props.r3d;
+        return { ...a, color: props.c3d, r: finalRadius, type: 'atom', originalIndex: index };
+    });
+
+    // 2. 計算屬性
+    atomObjects.forEach((atomObj, idx) => {
+        const calcLP = autoAssignLonePairs(atomObj, bondList, atomObjects);
+        atomObj.calculatedLP = calcLP;
+        
+        let bondLines = 0;
+        let isCoordinateReceiver = false; // [標記] 是否為配位鍵的接收端
+
+        bondList.forEach(b => {
+            if (b[0] === idx || b[1] === idx) {
+                let type = b[2] || "single";
+                
+                // [關鍵] 判斷是否為配位鍵接收端 (b[0] -> b[1])
+                // 若我是接收端 (idx === b[1])，標記起來，但鍵數照算 1
+                if (type === "coordinate" && b[1] === idx) {
+                    isCoordinateReceiver = true;
+                    bondLines += 1;
+                } else if (type === "coordinate" && b[0] === idx) {
+                    bondLines += 1; // 施予端也算 1 根鍵
+                } else {
+                    // 一般共價鍵計算
+                    if (type.includes("triple")) bondLines += 3;
+                    else if (type.includes("double")) bondLines += 2;
+                    else bondLines += 1;
+                }
+            }
+        });
+
+        // 將標記存入物件，給 generateElectronDots 使用
+        atomObj.isCoordinateReceiver = isCoordinateReceiver;
+
+        const props = ELEMENT_PROPS[atomObj.elem];
+        if (props) {
+            const dots = (calcLP * 2) + (atomObj.radical ? 1 : 0);
+            // 正常計算形式電荷 (S->O 的 O 算出來會是 -1，這是對的化學定義)
+            atomObj.formalCharge = props.ve - dots - bondLines;
+        } else {
+            atomObj.formalCharge = 0;
+        }
+        
+        processed.push(atomObj);
+        
+        if (ELEMENT_PROPS[atomObj.elem]) { 
+            const electronDots = generateElectronDots(atomObj, idx, atomObjects, bondList);
+            electronDots.forEach(dot => {
+                processed.push(dot); 
+            });
+        }
+    });
+    return processed;
+}
+
+function updateVariantUI(key, activeVariant) {
+    const rootData = MOLECULE_DB[key];
+    variantSelector.innerHTML = ''; 
+    
+    // 清除所有舊的主題 class
+    variantSelector.classList.remove('acid-theme', 'resonance-theme', 'structure-theme');
+    
+    if (rootData.variants) {
+        variantSelector.style.display = 'block';
+        
+        const variantKeys = Object.keys(rootData.variants);
+        
+        // --- 1. 判斷是否為「共振結構」 (紫色) ---
+        const isResonance = variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("Resonance"));
+
+        // --- 2. [新增] 判斷是否為「結構/晶體切換」 (藍色) ---
+        // 邏輯：變體名稱中包含 "晶體", "堆積", "Simple", "Crystal"
+        const isStructure = variantKeys.some(vKey => vKey.includes("晶體") || vKey.includes("堆積") || vKey.includes("Crystal"));
+
+        // --- 3. 判斷是否為「分子/離子/鹽類」 (橘色) ---
+        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || 
+                                 key.includes("H2O") || key.includes("NH3") || 
+                                 variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽") || vKey.includes("Salt") || vKey.includes("Ion"));
+        
+        // --- 4. 設定標題與主題色 ---
+        const hdr = document.createElement('div');
+        hdr.className = 'variant-header';
+
+        if (isResonance) {
+            variantSelector.classList.add('resonance-theme'); // 紫色
+            hdr.textContent = '選擇共振結構 (Resonance):';
+        } else if (isStructure) {
+            variantSelector.classList.add('structure-theme'); // [新增] 藍色
+            hdr.textContent = '選擇結構層次 (Structure):';
+        } else if (isAcidSaltSeries) {
+            variantSelector.classList.add('acid-theme'); // 橘色
+            hdr.textContent = '選擇解離狀態 (分子/離子/鹽類):';
+        } else {
+            // 綠色 (預設)
+            hdr.textContent = '選擇同分異構物:';
+        }
+        
+        variantSelector.appendChild(hdr);
+        
+        // --- 5. 產生選項 ---
+        for (let vKey in rootData.variants) {
+            const div = document.createElement('div');
+            div.className = 'variant-option';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio'; radio.name = 'v';
+            if (vKey === activeVariant) radio.checked = true;
+            
+            const span = document.createElement('span'); 
+            
+            const variantData = rootData.variants[vKey];
+            const fullKeyString = variantData.fullKey || vKey;
+            const parts = fullKeyString.split('|');
+            
+            // 優先顯示中文名稱
+            let labelText = "";
+            if (parts.length > 1) {
+                labelText = parts[1].trim();
+                span.textContent = ` ${labelText}`; 
+            } else {
+                labelText = parts[0].trim();
+                span.innerHTML = ` ${formatFormula(labelText)}`;
+            }
+            
+            div.appendChild(radio); div.appendChild(span);
+            div.addEventListener('click', () => loadMolecule(key, vKey));
+            variantSelector.appendChild(div);
+        }
+    } else {
+        variantSelector.style.display = 'none';
+    }
+}
+
+
+
+// ==========================================
+// 4. 渲染引擎
+// ==========================================
+
+function project(p) {
+    const m = currentMatrix;
+    let x3 = p.x * m[0] + p.y * m[1] + p.z * m[2];
+    let y3 = p.x * m[3] + p.y * m[4] + p.z * m[5];
+    let z3 = p.x * m[6] + p.y * m[7] + p.z * m[8];
+    
+    let s = (600 / (600 - Math.min(z3, 590))) * scale;
+    return { x: x3 * s + panOffset.x, y: y3 * s + panOffset.y, z: z3, scale: s };
+}
+
+function renderScene(time = 0) {
+    sceneRoot.innerHTML = "";
+    if(!currentMolecule) return;
+    
+    // --- 1. 定義濾鏡與漸層 ---
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    // 發光濾鏡 (給邊框用)
+    const boxGlowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    boxGlowFilter.setAttribute("id", "box-glow");
+    boxGlowFilter.innerHTML = `<feGaussianBlur stdDeviation="1.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
+    defs.appendChild(boxGlowFilter);
+
+    // 原子立體漸層
+    const usedColors = new Set();
+    currentMolecule.renderObjects.forEach(obj => { if (obj.type === 'atom') usedColors.add(obj.color); });
+    usedColors.forEach(color => {
+        const cleanColor = color.replace('#','');
+        const atomGrad = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        atomGrad.setAttribute("id", `atom-grad-${cleanColor}`);
+        atomGrad.setAttribute("cx", "35%"); atomGrad.setAttribute("cy", "35%"); atomGrad.setAttribute("r", "60%");
+        let highlight = "#FFFFFF"; let baseColor = color; let shadowColor = adjustColor(color, -80); 
+        atomGrad.innerHTML = `<stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/><stop offset="40%" stop-color="${baseColor}" stop-opacity="1"/><stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>`;
+        defs.appendChild(atomGrad);
+    });
+    
+    // (保留原本的軌域/點擊/電荷光暈定義，為節省篇幅此處不重複列出，請確保您的檔案中有這些)
+    const highlightGlowCenter = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    highlightGlowCenter.setAttribute("id", "highlight-glow-center");
+    highlightGlowCenter.setAttribute("cx", "50%"); highlightGlowCenter.setAttribute("cy", "50%"); highlightGlowCenter.setAttribute("r", "50%");
+    highlightGlowCenter.innerHTML = `<stop offset="0%" stop-color="#facc15" stop-opacity="0.6"/><stop offset="100%" stop-color="#facc15" stop-opacity="0"/>`;
+    defs.appendChild(highlightGlowCenter);
+    const highlightGlowNeighbor = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    highlightGlowNeighbor.setAttribute("id", "highlight-glow-neighbor");
+    highlightGlowNeighbor.setAttribute("cx", "50%"); highlightGlowNeighbor.setAttribute("cy", "50%"); highlightGlowNeighbor.setAttribute("r", "50%");
+    highlightGlowNeighbor.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>`;
+    defs.appendChild(highlightGlowNeighbor);
+    const chargeGlow = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    chargeGlow.setAttribute("id", "charge-glow-pink");
+    chargeGlow.setAttribute("cx", "50%"); chargeGlow.setAttribute("cy", "50%"); chargeGlow.setAttribute("r", "50%");
+    chargeGlow.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="40%" stop-color="#f472b6" stop-opacity="0.9"/><stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>`;
+    defs.appendChild(chargeGlow);
+    const orbGradP = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    orbGradP.setAttribute("id", "grad-orb-p");
+    orbGradP.setAttribute("cx", "30%"); orbGradP.setAttribute("cy", "30%"); orbGradP.setAttribute("r", "80%");
+    orbGradP.innerHTML = `<stop offset="0%" stop-color="#34D399" stop-opacity="0.95"/><stop offset="60%" stop-color="#059669" stop-opacity="0.9"/><stop offset="100%" stop-color="#064E3B" stop-opacity="0.9"/>`;
+    defs.appendChild(orbGradP);
+    const orbGradD = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    orbGradD.setAttribute("id", "grad-orb-d");
+    orbGradD.setAttribute("cx", "30%"); orbGradD.setAttribute("cy", "30%"); orbGradD.setAttribute("r", "80%");
+    orbGradD.innerHTML = `<stop offset="0%" stop-color="#FBBF24" stop-opacity="0.95"/><stop offset="60%" stop-color="#D97706" stop-opacity="0.9"/><stop offset="100%" stop-color="#78350F" stop-opacity="0.9"/>`;
+    defs.appendChild(orbGradD);
+
+    sceneRoot.appendChild(defs);
+
+    // --- 2. 投影與物件收集 ---
+    const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
+    const isAnyHighlighted = currentMolecule.renderObjects.some(o => o.isHighlighted);
+    const renderList = [];
+    
+    // 建立原子索引對照表與位置清單
+    const atomMap = new Map();
+    const atomPosList = [];
+
+    currentMolecule.renderObjects.forEach((obj, i) => {
+        if (obj.isLobe) {
+            const pStart = project(obj); const pEnd = project(obj.end);
+            renderList.push({ type: 'lobe', z: (pStart.z + pEnd.z)/2, pStart, pEnd, colorType: obj.colorType, scale: pStart.scale });
+            return;
+        }
+        if (obj.isAxis) {
+            const pStart = project(obj); const pEnd = project(obj.end);
+            renderList.push({ type: 'axisVector', z: (pStart.z + pEnd.z)/2, pStart, pEnd, label: obj.label, scale: pStart.scale });
+            return;
+        }
+        if (obj.type === 'electron' && !showLPs) return;
+
+        const p = project(obj);
+        let alpha = 1.0;
+        if (isAnyHighlighted) {
+            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
+            else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
+        }
+
+        const renderObj = { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha, z: p.z };
+        renderList.push(renderObj);
+
+        if (obj.type === 'atom') {
+            atomMap.set(obj.originalIndex, renderObj);
+            atomPosList.push({ x: obj.x, y: obj.y, z: obj.z, r: obj.r });
+        }
+    });
+
+    // --- 3. 處理晶體邊框 (Box Lines) ---
+    if (currentMolecule.extraLines) {
+        currentMolecule.extraLines.forEach(line => {
+            const pStart = project(line.start);
+            const pEnd = project(line.end);
+            const avgZ = (pStart.z + pEnd.z) / 2;
+            let alpha = isAnyHighlighted ? 0.1 : 1.0;
+
+            // 尋找端點是否有原子
+            const findAtomR = (pt) => {
+                const match = atomPosList.find(a => Math.abs(a.x - pt.x) < 2 && Math.abs(a.y - pt.y) < 2 && Math.abs(a.z - pt.z) < 2);
+                return match ? match.r : 0;
+            };
+
+            const rStart = findAtomR(line.start);
+            const rEnd = findAtomR(line.end);
+
+            renderList.push({
+                type: "boxLine", z: avgZ,
+                x1: pStart.x, y1: pStart.y,
+                x2: pEnd.x,   y2: pEnd.y,
+                scale: (pStart.scale + pEnd.scale) / 2,
+                r1: rStart, r2: rEnd, 
+                alpha: alpha
+            });
+        });
+    }
+
+    // --- 4. 鍵結生成 ---
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach((bond, index) => { 
+            const idx1 = bond[0]; const idx2 = bond[1];
+            const a1 = atomMap.get(idx1); const a2 = atomMap.get(idx2);
+            if (!a1 || !a2) return; 
+
+            let drawStyle = bond[2] || "single";
+            let bondAlpha = 1.0;
+            if (isAnyHighlighted) {
+                const connectedToCenter = (a1.isHighlighted==='center' && a2.isHighlighted==='neighbor') || (a2.isHighlighted==='center' && a1.isHighlighted==='neighbor');
+                if (!connectedToCenter) bondAlpha = 0.05;
+            }
+
+            renderList.push({ 
+                type: "bond", z: (a1.pz + a2.pz) / 2, 
+                x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, 
+                r1: a1.r * a1.scale, r2: a2.r * a2.scale,
+                style: drawStyle, scale: (a1.scale + a2.scale) / 2, 
+                c1: a1.color, c2: a2.color, bondIdx: index,
+                opacity: 1, alpha: bondAlpha 
+            });
+        });
+    }
+
+    // --- 5. 排序並繪製 ---
+    // [修正重點] Z軸排序邏輯：如果 Z 差不多 (在誤差範圍內)，強制讓 boxLine 排在前面 (也就是先畫，被後面的蓋住)
+    renderList.sort((a,b) => {
+        const delta = a.z - b.z;
+        if (Math.abs(delta) < 5) { // 深度非常接近
+            if (a.type === 'boxLine' && b.type === 'atom') return -1; // 線在原子前 -> 先畫線 -> 原子蓋住線
+            if (a.type === 'atom' && b.type === 'boxLine') return 1;
+        }
+        return delta;
+    }).forEach(obj => {
+        if (obj.type === "bond") drawBond(obj);
+        else if (obj.type === "atom") drawAtom(obj);
+        else if (obj.type === "lobe") drawLobe(obj);
+        else if (obj.type === "axisVector") drawAxisVector(obj);
+        else if (obj.type === "electron") drawElectron(obj);
+        else if (obj.type === "boxLine") drawBoxLine(obj);
+    });
+}
+
+function drawBoxLine(l) {
+    let x1 = l.x1, y1 = l.y1, x2 = l.x2, y2 = l.y2;
+    
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    
+    if (len > 0) {
+        const nx = dx / len;
+        const ny = dy / len;
+
+        // 截斷邏輯
+        const cut1 = (l.r1 || 0) * l.scale * 0.95;
+        const cut2 = (l.r2 || 0) * l.scale * 0.95;
+
+        if (len > (cut1 + cut2)) {
+            x1 = x1 + nx * cut1;
+            y1 = y1 + ny * cut1;
+            x2 = x2 - nx * cut2;
+            y2 = y2 - ny * cut2;
+        } else {
+            return;
+        }
+    }
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+    
+    // [設定：白色粗框]
+    line.setAttribute("stroke", "#ffffff"); 
+    line.setAttribute("stroke-width", "5"); 
+    line.setAttribute("stroke-linecap", "round");
+    
+    if (!isMobile) {
+        line.setAttribute("filter", "url(#box-glow)"); 
+    }
+    
+    line.setAttribute("opacity", l.alpha === 0.1 ? "0.1" : "0.9"); 
+    
+    sceneRoot.appendChild(line);
+}
+
+// 2. 繪製原子連線 (細白線 + 截斷)
+function drawBond(b) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    // ============================================================
+    // [區塊 1] NaCl / 離子晶體專用繪圖邏輯 (外金屬框 + 內發光細線)
+    // ============================================================
+    if (b.style === "ionic_thick" || b.style === "ionic_thin") {
+        const dx = b.x2 - b.x1, dy = b.y2 - b.y1, len = Math.sqrt(dx*dx + dy*dy);
+        if(len === 0) return;
+        
+        // 計算截斷點，讓線條貼齊原子表面
+        const nx = dx / len, ny = dy / len;
+        const off1 = b.r1 * 0.9, off2 = b.r2 * 0.9; 
+        
+        if (len > (off1 + off2)) {
+            const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            l.setAttribute("x1", b.x1 + nx * off1);
+            l.setAttribute("y1", b.y1 + ny * off1);
+            l.setAttribute("x2", b.x2 - nx * off2);
+            l.setAttribute("y2", b.y2 - ny * off2);
+            
+            // 1. 自動注入「高質感金屬漸層」 (如果還沒建立過)
+            const gradID = "grad-hyper-metal";
+            if (!document.getElementById(gradID)) {
+                const defs = document.querySelector("defs") || sceneRoot;
+                const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+                grad.setAttribute("id", gradID);
+                grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%");
+                grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "0%"); 
+                grad.innerHTML = `
+                    <stop offset="0%" stop-color="#475569"/>
+                    <stop offset="30%" stop-color="#cbd5e1"/>
+                    <stop offset="50%" stop-color="#ffffff"/>
+                    <stop offset="70%" stop-color="#cbd5e1"/>
+                    <stop offset="100%" stop-color="#475569"/>
+                `;
+                defs.appendChild(grad);
+            }
+
+            // 2. 樣式與濾鏡設定
+            let baseOpacity = 1.0;
+
+            if (b.style === "ionic_thick") {
+                // --- 外框 (粗金屬) ---
+                l.setAttribute("stroke", `url(#${gradID})`); 
+                l.setAttribute("stroke-width", 12 * b.scale); 
+                baseOpacity = 1.0; 
+            } else {
+                // --- 內部 (朦朧發光線) ---
+                l.setAttribute("stroke", "#ffffff");      
+                l.setAttribute("stroke-width", 4.0 * b.scale); 
+                
+                // [關鍵修改] 移除 !isMobile 判斷，強制所有裝置都套用發光濾鏡
+                // 這樣手機版也能看到漂亮的發光效果
+                l.setAttribute("filter", "url(#soft-glow)");
+
+                baseOpacity = 0.6; // 半透明
+            }
+            l.setAttribute("stroke-linecap", "round");
+
+            // 3. 互動邏輯 (點擊中心時的淡出效果)
+            let finalOpacity = baseOpacity; 
+            if (b.alpha < 0.9) {
+                finalOpacity = 0.05; 
+            }
+            l.setAttribute("opacity", finalOpacity);
+
+            g.appendChild(l);
+        }
+        sceneRoot.appendChild(g);
+        return; // 晶體繪製完畢，直接返回
+    }
+
+    // ============================================================
+    // [區塊 2] 一般共價鍵與舊版金屬 (保持原樣不動)
+    // ============================================================
+    
+    // 應用透明度 (共用)
+    if (b.alpha < 1.0) g.setAttribute("opacity", b.alpha);
+
+    // A. 舊版金屬/簡單離子晶體邏輯
+    if (currentMolecule && (currentMolecule.isMetal || (currentMolecule.isIonic && !b.style))) {
+        const dx = b.x2 - b.x1;
+        const dy = b.y2 - b.y1;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        if(len > 0) { // 原本邏輯有做 len > 0 判斷，這裡整合
+            const nx = dx / len;
+            const ny = dy / len;
+            // 這裡使用 0.95 的截斷係數，與上面晶體不同，保持原樣
+            const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            l.setAttribute("x1", b.x1 + nx * b.r1 * 0.95); 
+            l.setAttribute("y1", b.y1 + ny * b.r1 * 0.95);
+            l.setAttribute("x2", b.x2 - nx * b.r2 * 0.95); 
+            l.setAttribute("y2", b.y2 - ny * b.r2 * 0.95);
+            l.setAttribute("stroke", "#9ca3af"); 
+            l.setAttribute("stroke-width", "4"); 
+            l.setAttribute("stroke-linecap", "round");
+            l.setAttribute("opacity", b.alpha < 1.0 ? 0.05 : 0.6); 
+            g.appendChild(l);
+        }
+        sceneRoot.appendChild(g);
+        return; 
+    }
+
+    // B. 一般共價鍵 (漸層、多重鍵)
+    const dxMol = b.x2-b.x1, dyMol = b.y2-b.y1, lenMol = Math.sqrt(dxMol*dxMol+dyMol*dyMol);
+    if(lenMol === 0) return;
+    const nxMol = dxMol/lenMol, nyMol = dyMol/lenMol;
+    const px = -nyMol, py = nxMol;
+    const w = 16 * b.scale; const strokeW = w * 0.45; const shorten = 0.75;      
+    const x1 = b.x1 + nxMol * b.r1 * shorten; const y1 = b.y1 + nyMol * b.r1 * shorten;
+    const x2 = b.x2 - nxMol * b.r2 * shorten; const y2 = b.y2 - nyMol * b.r2 * shorten;
+    
+    let strokeColor;
+    if (b.style === "coordinate") strokeColor = b.c1; 
+    else {
+        const gradId = `bond-grad-${b.bondIdx}`;
+        const defs = sceneRoot.querySelector("defs");
+        const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+        grad.setAttribute("id", gradId); grad.setAttribute("gradientUnits", "userSpaceOnUse");
+        grad.setAttribute("x1", x1); grad.setAttribute("y1", y1); grad.setAttribute("x2", x2); grad.setAttribute("y2", y2);
+        grad.innerHTML = `<stop offset="0%" stop-color="${b.c1}"/><stop offset="40%" stop-color="${b.c1}"/><stop offset="60%" stop-color="${b.c2}"/><stop offset="100%" stop-color="${b.c2}"/>`;
+        defs.appendChild(grad);
+        strokeColor = `url(#${gradId})`;
+    }
+    
+    const drawLine = (ox, oy, width, color, opacity=1) => {
+        const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l.setAttribute("x1", x1+ox); l.setAttribute("y1", y1+oy); l.setAttribute("x2", x2+ox); l.setAttribute("y2", y2+oy);
+        l.setAttribute("stroke", color); l.setAttribute("stroke-width", width); l.setAttribute("stroke-linecap", "round");
+        const finalOp = opacity * (b.opacity || 1); 
+        if(finalOp < 1) l.setAttribute("opacity", finalOp);
+        return l;
+    };
+    const drawCylinder = (ox, oy) => {
+        g.appendChild(drawLine(ox, oy, strokeW, strokeColor));
+        g.appendChild(drawLine(ox, oy, strokeW * 0.25, "#ffffff", 0.5));
+    };
+    
+    if (b.style === "double") { const off = w * 0.38; drawCylinder(px*off, py*off); drawCylinder(-px*off, -py*off); } 
+    else if (b.style === "triple") { const off = w * 0.75; drawCylinder(0, 0); drawCylinder(px*off, py*off); drawCylinder(-px*off, -py*off); } 
+    else if (b.style === "coordinate_triple") { const off = w * 0.75; drawCylinder(0, 0); drawCylinder(px*off, py*off); g.appendChild(drawLine(-px*off, -py*off, strokeW, strokeColor)); } 
+    else { drawCylinder(0, 0); }
+    
+    sceneRoot.appendChild(g);
+}
+
+function drawAtom(a) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("data-atom-idx", a.idx); 
+    
+    if (a.alpha < 1.0) g.setAttribute("opacity", a.alpha);
+
+    // 點擊高亮
+    if (a.isHighlighted) {
+        const glowId = a.isHighlighted === "center" ? "highlight-glow-center" : "highlight-glow-neighbor";
+        const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        halo.setAttribute("cx", a.px); halo.setAttribute("cy", a.py);
+        halo.setAttribute("r", a.r * a.scale * 2.5); 
+        halo.setAttribute("fill", `url(#${glowId})`);
+        g.appendChild(halo);
+    }
+
+    if (isPlasmaMode) {
+        // [修正] 手機版電漿修復：強制使用標準濾鏡
+        g.setAttribute("style", "mix-blend-mode: screen;"); 
+        const baseR = a.r * a.scale;
+        
+        // 核心
+        const gasCloud = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        gasCloud.setAttribute("cx", a.px); gasCloud.setAttribute("cy", a.py);
+        gasCloud.setAttribute("r", baseR * 1.6); 
+        // 這裡需要確保 plasma-grad- 存在，如果沒有定義，回退到單色
+        // 建議直接用 atom-grad 以確保有顏色
+        gasCloud.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`);
+        gasCloud.setAttribute("filter", "url(#soft-glow)"); // 加上光暈
+        g.appendChild(gasCloud);
+
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py);
+        txt.setAttribute("font-size", baseR * 0.85); 
+        txt.setAttribute("class", "atom-label-text");
+        txt.style.textShadow = "0 0 3px #000, 0 0 5px #000"; 
+        txt.style.fill = "#fff";
+        txt.textContent = a.elem;
+        g.appendChild(txt);
+
+    } else {
+        const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+        
+        if (useGlow) {
+            const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            glow.setAttribute("cx", a.px); glow.setAttribute("cy", a.py); 
+            
+            // [關鍵修正] 移除手機版 mobile-glow 分支，統一使用電腦版邏輯
+            glow.setAttribute("r", a.r * a.scale * 1.3); 
+            glow.setAttribute("fill", a.color); 
+            glow.setAttribute("opacity", "0.36");
+            glow.setAttribute("filter", "url(#soft-glow)"); // 手機現在也跑這個
+            
+            g.appendChild(glow);
+        }
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", a.px); circle.setAttribute("cy", a.py); 
+        circle.setAttribute("r", a.r * a.scale); 
+        circle.setAttribute("fill", `url(#atom-grad-${a.color.replace('#','')})`); 
+        
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", a.px); txt.setAttribute("y", a.py); 
+        txt.setAttribute("font-size", a.r * 0.75 * a.scale); 
+        txt.setAttribute("class", "atom-label-text"); 
+        txt.textContent = a.elem;
+        
+        g.appendChild(circle); g.appendChild(txt);
+    }
+    
+    sceneRoot.appendChild(g);
+}
+
+// ========== [請替換 drawElectron] ==========
+function drawElectron(e) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const r = e.r * e.scale;
+    
+    let coreColor = "#ffffff";
+    let glowFill = "#ffffff";
+    let glowOpacity = "0.28";
+    
+    if (e.isNegativeCharge) {
+        coreColor = "#ff9efa"; 
+        glowFill = "#ff9efa"; 
+        glowOpacity = "0.5"; 
+    }
+
+    if (isPlasmaMode) {
+        g.setAttribute("style", "mix-blend-mode: screen;"); 
+        const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
+        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); 
+        halo.setAttribute("fill", glowFill);
+        halo.setAttribute("opacity", "0.6");
+        halo.setAttribute("filter", "url(#soft-glow)"); // [修正] 強制加濾鏡
+        g.appendChild(halo);
+
+        const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        core.setAttribute("cx", e.px); core.setAttribute("cy", e.py);
+        core.setAttribute("r", r * 1.0);
+        core.setAttribute("fill", coreColor);
+        core.setAttribute("class", "electron-spark"); 
+        g.appendChild(core);
+
+    } else {
+        const useGlow = document.getElementById('toggle-glow') ? document.getElementById('toggle-glow').checked : true;
+        if (useGlow) {
+            const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
+            
+            // [關鍵修正] 移除手機特判，強制統一
+            glow.setAttribute("r", r * 2.0); 
+            glow.setAttribute("fill", glowFill);
+            glow.setAttribute("opacity", glowOpacity);
+            glow.setAttribute("filter", "url(#soft-glow)"); 
+            
+            g.appendChild(glow);
+        }
+
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", e.px); c.setAttribute("cy", e.py); c.setAttribute("r", r);
+        c.setAttribute("fill", coreColor); 
+        c.setAttribute("opacity", "0.95");
+        g.appendChild(c);
+    }
+    
+    sceneRoot.appendChild(g);
+}
+
+function adjustColor(col, amt) {
+    let usePound = false;
+    if (col[0] == "#") { col = col.slice(1); usePound = true; }
+    let num = parseInt(col,16);
+    let r = (num >> 16) + amt; if (r > 255) r = 255; else if  (r < 0) r = 0;
+    let b = ((num >> 8) & 0x00FF) + amt; if (b > 255) b = 255; else if  (b < 0) b = 0;
+    let g = (num & 0x0000FF) + amt; if (g > 255) g = 255; else if (g < 0) g = 0;
+    return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
+}
+
+function animate() {
+    const time = performance.now(); 
+    if (!isDragging && !isReactionRunning && !isLongPressActive) {
+        rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
+        let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
+        const MIN_SPEED = 0.004; 
+        const autoRotateEl = document.getElementById('toggle-auto-rotate');
+        const isAutoRotateOn = autoRotateEl ? autoRotateEl.checked : true;
+
+        if (speed > 0.00001) { 
+            if (speed < MIN_SPEED) {
+                if (isAutoRotateOn) {
+                    let scaleFactor = MIN_SPEED / speed;
+                    rotVelocity.x *= scaleFactor; rotVelocity.y *= scaleFactor; rotVelocity.z *= scaleFactor;
+                }
+            }
+            applyRotation(rotVelocity.y, rotVelocity.x, rotVelocity.z);
+        } else {
+            if (isAutoRotateOn) applyRotation(0.004, 0, 0); 
+        }
+    }
+    renderScene(time);
+    requestAnimationFrame(animate);
+}
+
+function setupInteractions() {
+    // 1. 基礎按鈕綁定
+    const modeBtn = document.getElementById('mode-toggle');
+    if (modeBtn) modeBtn.addEventListener('click', toggleMode);
+
+    const loadBtn = document.getElementById('load-btn');
+    if (loadBtn) loadBtn.addEventListener('click', handleLoadBtn);
+
+    const inputField = document.getElementById('formula-input');
+    if (inputField) {
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLoadBtn();
+        });
+    }
+
+    // 2. 顯示設定開關
+    const toggleLp = document.getElementById('toggle-lp');
+    if (toggleLp) toggleLp.addEventListener('change', () => { renderScene(); });
+
+    const toggleGlow = document.getElementById('toggle-glow');
+    if (toggleGlow) toggleGlow.addEventListener('change', () => { renderScene(); });
+
+    const toggleOct = document.getElementById('toggle-octet');
+    if (toggleOct) toggleOct.addEventListener('change', () => { 
+        if(currentKey) loadMolecule(currentKey); 
+    });
+
+    const togglePlasma = document.getElementById('toggle-plasma');
+    if (togglePlasma) {
+        togglePlasma.addEventListener('change', (e) => {
+            isPlasmaMode = e.target.checked;
+            renderScene();
+        });
+    }
+
+    // 3. [關鍵修復] 反應按鈕事件綁定
+    // 必須一一對應 HTML ID 與上面定義的函式
+    
+    // 乙烯反應
+    const btnH2O = document.getElementById('reaction-btn');
+    if(btnH2O) btnH2O.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydration(); });
+
+    const btnH2 = document.getElementById('reaction-h2-btn');
+    if(btnH2) btnH2.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydrogenation(); });
+
+    const btnHCl = document.getElementById('reaction-hcl-btn');
+    if(btnHCl) btnHCl.addEventListener('click', () => { isReactionRunning = true; runEthyleneHydrohalogenation(); });
+
+    const btnCl2 = document.getElementById('reaction-cl2-btn');
+    if(btnCl2) btnCl2.addEventListener('click', () => { isReactionRunning = true; runEthyleneChlorination(); });
+
+    const btnKMnO4 = document.getElementById('reaction-kmno4-btn');
+    if(btnKMnO4) btnKMnO4.addEventListener('click', () => { 
+        isReactionRunning = true; 
+        const name = getCurrentMoleculeName();
+        // 根據當前是 乙醇 還是 乙烯 決定執行什麼反應
+        if (name === "乙醇" || name === "酒精") runEthanolStrongOxidation();
+        else runEthyleneOxidation(); 
+    });
+
+    const btnOx = document.getElementById('reaction-ox-btn');
+    if(btnOx) btnOx.addEventListener('click', () => {
+        isReactionRunning = true;
+        const name = getCurrentMoleculeName();
+        // 根據當前是 乙醇 還是 乙醛 決定執行什麼反應
+        if(name === "乙醇" || name === "酒精") runEthanolMildOxidation();
+        else if(name === "乙醛") runAcetaldehydeOxidation();
+    });
+
+    const btnRed = document.getElementById('reaction-red-btn');
+    if(btnRed) btnRed.addEventListener('click', () => { isReactionRunning = true; runAcetaldehydeReduction(); });
+
+    // 甲烷反應
+    const btnSub = document.getElementById('reaction-sub-btn');
+    if(btnSub) btnSub.addEventListener('click', () => { isReactionRunning = true; runMethaneSubstitution(); });
+
+    const btnNitro = document.getElementById('reaction-nitro-btn');
+    if(btnNitro) btnNitro.addEventListener('click', () => { isReactionRunning = true; runMethaneNitration(); });
+
+    // 丙烯反應
+    const btnPropH2 = document.getElementById('reaction-propene-h2-btn');
+    if(btnPropH2) btnPropH2.addEventListener('click', () => { isReactionRunning = true; runPropeneHydrogenation(); });
+
+    const btnPropCl2 = document.getElementById('reaction-propene-cl2-btn');
+    if(btnPropCl2) btnPropCl2.addEventListener('click', () => { isReactionRunning = true; runPropeneChlorination(); });
+
+    const btnPropHCl = document.getElementById('reaction-propene-hcl-btn');
+    if(btnPropHCl) btnPropHCl.addEventListener('click', () => { isReactionRunning = true; runPropeneHydrohalogenation(); });
+
+    const btnPropH2O = document.getElementById('reaction-propene-h2o-btn');
+    if(btnPropH2O) btnPropH2O.addEventListener('click', () => { isReactionRunning = true; runPropeneHydration(); });
+
+// [新增] 乙炔系列按鈕事件綁定
+    const btnAcetH2Full = document.getElementById('btn-c2h2-h2-full');
+    if(btnAcetH2Full) btnAcetH2Full.addEventListener('click', () => { isReactionRunning = true; runAcetyleneFullHydrogenation(); });
+
+    const btnAcetH2Part = document.getElementById('btn-c2h2-h2-part');
+    if(btnAcetH2Part) btnAcetH2Part.addEventListener('click', () => { isReactionRunning = true; runAcetylenePartialHydrogenation(); });
+
+    const btnAcetCl2Full = document.getElementById('btn-c2h2-cl2-full');
+    if(btnAcetCl2Full) btnAcetCl2Full.addEventListener('click', () => { isReactionRunning = true; runAcetyleneFullHalogenation(); });
+
+    const btnAcetCl2Part = document.getElementById('btn-c2h2-cl2-part');
+    if(btnAcetCl2Part) btnAcetCl2Part.addEventListener('click', () => { isReactionRunning = true; runAcetylenePartialHalogenation(); });
+
+    const btnAcetHClFull = document.getElementById('btn-c2h2-hcl-full');
+    if(btnAcetHClFull) btnAcetHClFull.addEventListener('click', () => { isReactionRunning = true; runAcetyleneFullHydrohalogenation(); });
+
+    const btnAcetHClPart = document.getElementById('btn-c2h2-hcl-part');
+    if(btnAcetHClPart) btnAcetHClPart.addEventListener('click', () => { isReactionRunning = true; runAcetylenePartialHydrohalogenation(); });
+
+    const btnAcetH2O = document.getElementById('btn-c2h2-h2o');
+    if(btnAcetH2O) btnAcetH2O.addEventListener('click', () => { isReactionRunning = true; runAcetyleneHydration(); });
+
+// 4. 重置按鈕 (修正為呼叫統一函式)
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+        // 直接呼叫上面定義好的 resetReaction 函式
+        // 它會自動根據當前的中文名稱，判斷要跳回乙烯、丙烯還是甲烷
+        resetReaction();
+    });
+
+    const btnConfig = document.getElementById('btn-open-config');
+    if(btnConfig) btnConfig.addEventListener('click', openConfigModal);
+
+
+    // 5. 手機面板與鍵盤
+    const mobileHandle = document.getElementById('mobile-panel-handle');
+    if (mobileHandle) {
+        mobileHandle.addEventListener('click', () => {
+            const body = document.body;
+            body.classList.toggle('simulate-mobile-open');
+            const panel = document.querySelector('.controls-area');
+            if (panel) {
+                if (body.classList.contains('simulate-mobile-open')) panel.style.transform = 'translateY(0)';
+                else panel.style.transform = 'translateY(70vh)';
+            }
+        });
+    }
+    window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
+    window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
+
+    // 6. 3D 拖曳控制
+    const MOUSE_SENSITIVITY = 0.005; const TOUCH_SENSITIVITY = 0.004;
+    let longPressTimer = null; let startX = 0, startY = 0;
+    const LONG_PRESS_MS = 500; const MOVE_TOLERANCE = 10;
+
+    const handleStart = (x, y) => { 
+        isDragging = true; isLongPressActive = false; 
+        startX = x; startY = y; lastMouse = { x, y }; 
+        rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+            isDragging = false; isLongPressActive = true; 
+            checkAtomClick(x, y); 
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, LONG_PRESS_MS);
+    };
+
+    const handleMove = (x, y, sensitivity) => {
+        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) clearTimeout(longPressTimer);
+        if (!isDragging) return;
+        const dx = x - lastMouse.x; const dy = y - lastMouse.y;
+        if (currentMode === 1 || (currentMode === 2 && !altKeyIsDown)) {
+            rotVelocity.y = dx * sensitivity; rotVelocity.x = -dy * sensitivity; 
+            applyRotation(rotVelocity.y, rotVelocity.x, 0);
+        } else {
+            panOffset.x += dx * 0.5; panOffset.y += dy * 0.5;
+        }
+        lastMouse = { x, y };
+    };
+    const handleEnd = () => { clearTimeout(longPressTimer); isDragging = false; isLongPressActive = false; };
+
+    viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
+    viewport.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
+    viewport.addEventListener("mouseup", handleEnd);
+    
+    viewport.addEventListener("touchstart", e => {
+        if(e.target.closest('.control-button') || e.target.closest('.suggestion-tag')) return;
+        if (e.touches.length === 1) {
+            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        } else if (e.touches.length === 2) {
+            clearTimeout(longPressTimer); 
+            const t1 = e.touches[0], t2 = e.touches[1];
+            lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+        }
+    }, { passive: false });
+
+    viewport.addEventListener("touchmove", e => {
+        e.preventDefault(); 
+        if(e.touches.length === 1) {
+            handleMove(e.touches[0].clientX, e.touches[0].clientY, TOUCH_SENSITIVITY);
+        } else if (e.touches.length === 2) {
+            const t1 = e.touches[0], t2 = e.touches[1];
+            const center = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            panOffset.x += (center.x - lastTouchCenter.x) * 0.4;
+            panOffset.y += (center.y - lastTouchCenter.y) * 0.4;
+            lastTouchCenter = center;
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            if (lastTouchDist > 0) {
+                const zoomDelta = (dist - lastTouchDist) * 0.003;
+                scale = Math.max(0.3, Math.min(8, scale + zoomDelta));
+            }
+            lastTouchDist = dist;
+            const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+            let angleDelta = angle - lastTouchAngle;
+            if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
+            if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+            rotVelocity.z = angleDelta;
+            applyRotation(0, 0, rotVelocity.z);
+            lastTouchAngle = angle;
+        }
+    }, { passive: false });
+
+    viewport.addEventListener("touchend", handleEnd);
+    viewport.addEventListener("wheel", e => {
+        scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
+        hideHybridTooltip();
+    });
+
+    setupMobilePanel();
+}
+
+// 繪製水滴狀花瓣 (Bezier Curve)
+function drawLobe(lobe) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const x1 = lobe.pStart.x; const y1 = lobe.pStart.y;
+    const x2 = lobe.pEnd.x;   const y2 = lobe.pEnd.y;
+    
+    const dx = x2 - x1; const dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 1) return;
+
+    const width = 45 * lobe.scale; 
+    const nx = -dy / len; const ny = dx / len; 
+
+    const midX = x1 + dx * 0.6; const midY = y1 + dy * 0.6;
+    const cp1x = midX + nx * width; const cp1y = midY + ny * width;
+    const cp2x = midX - nx * width; const cp2y = midY - ny * width;
+
+    const d = `M ${x1} ${y1} Q ${cp1x} ${cp1y} ${x2} ${y2} Q ${cp2x} ${cp2y} ${x1} ${y1} Z`;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    
+    const fillUrl = (lobe.colorType === 'd') ? "url(#grad-orb-d)" : "url(#grad-orb-p)";
+    path.setAttribute("fill", fillUrl);
+    path.setAttribute("stroke", (lobe.colorType === 'd') ? "#B45309" : "#047857");
+    path.setAttribute("stroke-width", "1");
+    path.setAttribute("opacity", "0.9"); 
+
+    g.appendChild(path);
+    sceneRoot.appendChild(g);
+}
+
+// ★ 新版：高質感金屬軸 (銀灰軸身 + 白色文字 + 無凸點箭頭) ★
+function drawAxisVector(axis) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const x1 = axis.pStart.x; const y1 = axis.pStart.y;
+    const x2 = axis.pEnd.x;   const y2 = axis.pEnd.y;
+
+    const dx = x2 - x1; const dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len <= 0) return;
+
+    // 單位向量
+    const ux = dx/len; const uy = dy/len;
+    
+    // 箭頭尺寸
+    const arrowSize = 10 * axis.scale;
+    
+    // 計算線段終點 (停在箭頭底部，避免圓頭凸出)
+    const lineEndX = x2 - ux * (arrowSize - 2); 
+    const lineEndY = y2 - uy * (arrowSize - 2);
+
+    // 1. 畫線 (銀灰色，平頭 Butt Cap)
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+    line.setAttribute("x2", lineEndX); line.setAttribute("y2", lineEndY);
+    line.setAttribute("stroke", "#B0B0B0"); // 金屬銀灰
+    line.setAttribute("stroke-width", 2.5 * axis.scale);
+    line.setAttribute("stroke-linecap", "butt"); // ★ 關鍵：平頭，消除凸點
+    g.appendChild(line);
+
+    // 2. 畫箭頭 (三角形)
+    const bx = x2 - ux * arrowSize;
+    const by = y2 - uy * arrowSize;
+    const vx = -uy * arrowSize * 0.5;
+    const vy = ux * arrowSize * 0.5;
+
+    const pTip = `${x2},${y2}`;
+    const pLeft = `${bx + vx},${by + vy}`;
+    const pRight = `${bx - vx},${by - vy}`;
+
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    polygon.setAttribute("points", `${pTip} ${pLeft} ${pRight}`);
+    polygon.setAttribute("fill", "#B0B0B0"); // 同色箭頭
+    g.appendChild(polygon);
+
+    // 3. 畫文字 (純白 XYZ)
+    if (axis.label) {
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        // 文字位置往外推
+        text.setAttribute("x", x2 + ux * 18 * axis.scale);
+        text.setAttribute("y", y2 + uy * 18 * axis.scale);
+        text.setAttribute("fill", "#FFFFFF"); // ★ 純白文字
+        text.setAttribute("font-size", 16 * axis.scale);
+        text.setAttribute("font-weight", "bold");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.style.textShadow = "0 0 3px #000000"; // 加一點陰影讓白色更清楚
+        text.textContent = axis.label;
+        g.appendChild(text);
+    }
+    sceneRoot.appendChild(g);
+}
+
+
+
+function toChineseNum(num) { const map={1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七'}; return map[num]||num; }
+// ========== [請插入這段 JS] 離子計算邏輯 ==========
+// ========== [請插入這段 JS] 1. 標準軌域順序 & 2. 縮寫轉換器 ==========
+const ORBITAL_ORDER = ['1s','2s','2p','3s','3p','4s','3d','4p','5s','4d','5p','6s','4f','5d','6p','7s','5f','6d','7p'];
+
+// 將完整組態轉為惰性氣體縮寫 (例如: 1s2 2s2 2p6 -> [Ne])
+function toNobleNotation(fullConfig) {
+    // 定義惰性氣體核心
+    const nobles = [
+        { sym: '[Rn]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6" },
+        { sym: '[Xe]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6" },
+        { sym: '[Kr]', conf: "1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6" },
+        { sym: '[Ar]', conf: "1s2 2s2 2p6 3s2 3p6" },
+        { sym: '[Ne]', conf: "1s2 2s2 2p6" },
+        { sym: '[He]', conf: "1s2" }
+    ];
+
+    for (let gas of nobles) {
+        if (fullConfig.startsWith(gas.conf) && fullConfig !== gas.conf) {
+            // 移除核心部分，保留剩下的
+            let rest = fullConfig.replace(gas.conf, "").trim();
+            return `<span class="noble">${gas.sym}</span> ${rest}`;
+        }
+    }
+    // 如果比 He 還小 (例如 H)，直接回傳
+    return fullConfig;
+}
+function calculateIonConfig(baseConfigStr, charge) {
+    if (charge === 0) return baseConfigStr;
+
+    const parts = baseConfigStr.split(' ');
+    let orbitals = [];
+    const typeVal = { 's':0, 'p':1, 'd':2, 'f':3 };
+    // 定義各軌域容量
+    const capacity = { 's':2, 'p':6, 'd':10, 'f':14 };
+
+    parts.forEach(p => {
+        const match = p.match(/(\d)([spdf])(\d+)/);
+        if (match) {
+            orbitals.push({
+                n: parseInt(match[1]),
+                type: match[2],
+                l: typeVal[match[2]],
+                count: parseInt(match[3]),
+                name: match[1] + match[2] // e.g., "1s"
+            });
+        }
+    });
+
+    // --- CASE A: 陽離子 (失去電子) ---
+    if (charge > 0) {
+        let removeCount = charge;
+        while (removeCount > 0) {
+            let candidates = orbitals.filter(o => o.count > 0);
+            if (candidates.length === 0) break;
+
+            // 排序：先拔 n 最大，n 相同拔 l 最大
+            candidates.sort((a, b) => {
+                if (b.n !== a.n) return b.n - a.n;
+                return b.l - a.l;
+            });
+
+            let target = candidates[0];
+            if (target.count >= removeCount) {
+                target.count -= removeCount;
+                removeCount = 0;
+            } else {
+                removeCount -= target.count;
+                target.count = 0;
+            }
+        }
+    } 
+    // --- CASE B: 陰離子 (得到電子) ---
+    else {
+        let addCount = Math.abs(charge);
+        
+        // 1. 先嘗試填滿現有的最後一個軌域
+        // 依照能量排序 (原本的字串順序通常就是能量順序，除了例外，但這邊我們簡單處理)
+        // 為了保險，我們直接看最後一個軌域
+        while (addCount > 0) {
+            let lastOrbital = orbitals[orbitals.length - 1];
+            let maxCap = capacity[lastOrbital.type];
+
+            if (lastOrbital.count < maxCap) {
+                let space = maxCap - lastOrbital.count;
+                let fill = Math.min(space, addCount);
+                lastOrbital.count += fill;
+                addCount -= fill;
+            } else {
+                // 當前軌域已滿，尋找下一個軌域
+                let currentName = lastOrbital.name; // e.g. "2p"
+                let idx = ORBITAL_ORDER.indexOf(currentName);
+                
+                if (idx !== -1 && idx < ORBITAL_ORDER.length - 1) {
+                    let nextName = ORBITAL_ORDER[idx + 1]; // e.g. "3s"
+                    let nextMatch = nextName.match(/(\d)([spdf])/);
+                    
+                    // 新增一個空軌域到陣列中
+                    let newOrb = {
+                        n: parseInt(nextMatch[1]),
+                        type: nextMatch[2],
+                        l: typeVal[nextMatch[2]],
+                        count: 0, // 初始為0，下一輪迴圈會填入
+                        name: nextName
+                    };
+                    orbitals.push(newOrb);
+                } else {
+                    break; // 超出範圍或找不到，停止 (避免無窮迴圈)
+                }
+            }
+        }
+    }
+
+    // 重組字串
+    return orbitals
+        .filter(o => o.count > 0)
+        .map(o => `${o.n}${o.type}${o.count}`)
+        .join(' ');
+}
+
+function generateEcViz(configStr) {
+    const parts = configStr.split(' ');
+    let html = '';
+    parts.forEach(part => {
+        const match = part.match(/(\d)([spdf])(\d+)/);
+        if(match) {
+            const level = match[1]; const type = match[2]; const count = parseInt(match[3]);
+            const boxCount = {s:1, p:3, d:5, f:7}[type];
+            let arrows = []; let e = count;
+            for(let i=0; i<boxCount; i++) arrows[i] = "";
+            for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "↑";
+            for(let i=0; i<boxCount && e>0; i++, e--) arrows[i] = "⇅";
+            let boxes = '';
+            arrows.forEach(a => { boxes += `<div class="ec-box">${a || ''}</div>`; });
+            html += `<div class="ec-sub"><div class="ec-boxes">${boxes}</div><div class="ec-label">${level}${type}<sup>${count}</sup></div></div>`;
+        }
+    });
+    return html;
+}
+
+function renderConfigList() {
+    const input = document.getElementById('configSearchInput');
+    const filter = input ? input.value.toLowerCase() : "";
+    const container = document.getElementById('configListContainer');
+    container.innerHTML = "";
+
+    ELECTRON_DATA.forEach(el => {
+        if (filter && !el.s.toLowerCase().includes(filter) && 
+            !el.n.toLowerCase().includes(filter) && 
+            !el.z.toString().includes(filter)) {
+            return;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'element-card';
+        
+        // 預設顯示：縮寫版
+        // 我們將 "完整組態" 存在 data-full-config 屬性中
+        // 將 "當前電荷" 存在 data-charge 屬性中 (預設0)
+        // 將 "顯示模式" 存在 data-mode 屬性中 (預設 'noble')
+        
+        let nobleHtml = el.noble.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
+                                .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+        const vizHtml = generateEcViz(el.c);
+        
+        let periodGroupStr = "";
+        if (el.g === "鑭系" || el.g === "錒系") {
+            periodGroupStr = `第${toChineseNum(el.p)}週期 <span style="color:#f472b6;">${el.g}</span>`;
+        } else {
+            periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
+        }
+
+        const cardId = `card-${el.s}`;
+
+        card.innerHTML = `
+            <div class="ec-header">
+                <div class="ec-top-row">
+                    <div class="ec-sym-box">
+                        <div class="ec-sym">${el.s}</div>
+                        <div class="ec-info">
+                            <span class="ec-name">${el.cn ? el.cn + " " : ""}${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span>
+                            <span class="ec-tag">${periodGroupStr}</span>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
+                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">分類: ${el.type || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">狀態: ${el.state || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">熔點: ${el.mp || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">沸點: ${el.bp || "-"}</div>
+                            </div>
+                        </div>
+                    </div>
+                
+                <!-- 顯示模式切換按鈕 -->
+                <button onclick="toggleConfigMode('${el.s}', '${el.c}')" style="font-size:0.75rem; background:rgba(255,255,255,0.1); border:1px solid #555; color:#aaa; border-radius:4px; padding:2px 6px; cursor:pointer;" id="${cardId}-mode-btn">
+                    模式: 縮寫
+                </button>
+            </div>
+            
+            <!-- 離子控制 -->
+            <div id="ion-group-${el.s}" style="display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; align-items:center;">
+                <button class="ion-btn active" data-charge="0" data-type="neutral" onclick="updateIonViz('${el.s}', '${el.c}', 0)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #64748b; border-radius:4px; color:#cbd5e1; background:#1e293b; cursor:pointer;">中性</button>
+                
+                <button class="ion-btn" data-charge="1" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 1)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
+                <button class="ion-btn" data-charge="2" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 2)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
+                <button class="ion-btn" data-charge="3" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 3)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
+                
+                <button class="ion-btn" data-charge="-1" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -1)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
+                <button class="ion-btn" data-charge="-2" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -2)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
+                <button class="ion-btn" data-charge="-3" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -3)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
+            </div>
+
+                <!-- 隱藏欄位：儲存當前電荷與模式 -->
+                <input type="hidden" id="${cardId}-charge" value="0">
+                <input type="hidden" id="${cardId}-mode" value="noble">
+
+                <div class="ec-config-row ec-scroll" id="${cardId}-text" style="justify-content: flex-start;">
+                    <div class="ec-config" style="white-space: nowrap;">${nobleHtml}</div>
+                </div>
+            </div>
+            <div class="ec-scroll">
+                <div class="ec-row" id="${cardId}-viz">
+                    ${vizHtml}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+// ========== [請替換 updateIonViz 並新增 toggleConfigMode] ==========
+// [修改] 更新離子視覺化 (加入按鈕發亮邏輯)
+function updateIonViz(symbol, baseConfig, charge) {
+    // 1. 計算離子組態
+    const newConfig = calculateIonConfig(baseConfig, charge);
+    
+    // 2. 取得模式與儲存電荷
+    const modeInput = document.getElementById(`card-${symbol}-mode`);
+    const currentMode = modeInput ? modeInput.value : 'noble';
+    const chargeInput = document.getElementById(`card-${symbol}-charge`);
+    if(chargeInput) chargeInput.value = charge;
+
+    // 3. 【關鍵】切換按鈕狀態 (這裡只改 Class，不涉及複雜運算)
+    const btnGroup = document.getElementById(`ion-group-${symbol}`);
+    if (btnGroup) {
+        // 使用最傳統的 for 迴圈，效能最好
+        const btns = btnGroup.getElementsByClassName('ion-btn');
+        for (let i = 0; i < btns.length; i++) {
+            let btn = btns[i];
+            let btnCharge = parseInt(btn.getAttribute('data-charge'));
+            if (btnCharge === charge) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+    }
+
+    // 4. 更新文字顯示
+    let displayHtml = (currentMode === 'noble') ? formatConfigHtml(toNobleNotation(newConfig)) : formatConfigHtml(newConfig);
+    const textEl = document.getElementById(`card-${symbol}-text`);
+    const color = charge > 0 ? '#f87171' : (charge < 0 ? '#60a5fa' : '#a5f3fc');
+    if(textEl) textEl.innerHTML = `<div class="ec-config" style="color:${color}">${displayHtml}</div>`;
+    
+    // 5. 更新軌域圖
+    const vizEl = document.getElementById(`card-${symbol}-viz`);
+    if(vizEl) vizEl.innerHTML = generateEcViz(newConfig);
+}
+
+// 切換顯示模式 (縮寫 <-> 完整)
+function toggleConfigMode(symbol, baseConfig) {
+    const modeInput = document.getElementById(`card-${symbol}-mode`);
+    const btn = document.getElementById(`card-${symbol}-mode-btn`);
+    const chargeInput = document.getElementById(`card-${symbol}-charge`);
+    
+    if (modeInput && btn && chargeInput) {
+        // 切換狀態
+        if (modeInput.value === 'noble') {
+            modeInput.value = 'full';
+            btn.textContent = "模式: 完整";
+            btn.style.color = "#fff";
+        } else {
+            modeInput.value = 'noble';
+            btn.textContent = "模式: 縮寫";
+            btn.style.color = "#aaa";
+        }
+        
+        // 讀取當前電荷，重新刷新顯示
+        const currentCharge = parseInt(chargeInput.value);
+        updateIonViz(symbol, baseConfig, currentCharge);
+    }
+}
+
+// 輔助：HTML 格式化 (將 [Ar] 變色，將數字變上標)
+function formatConfigHtml(str) {
+    return str.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
+              .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+}
+
+function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
+function closeConfigModal() { const modal = document.getElementById('config-modal'); if(modal) modal.style.display = 'none'; }
+
+
+function checkAtomClick(screenX, screenY) {
+    if (!currentMolecule || !currentMolecule.renderObjects) return;
+    const bestMatch = findAtomByScreenPos(screenX, screenY);
+    
+    if (bestMatch) {
+        if (currentMolecule.isIonic) {
+            // 檢查是否為代表原子 (擁有完整配位數的原子)
+            if (bestMatch.isRepresentative) {
+                if (bestMatch.isHighlighted === "center") {
+                    clearHighlights();
+                } else {
+                    highlightNeighbors(bestMatch);
+                }
+            } else {
+                // 點擊到邊緣殘缺的原子 -> 視為取消
+                // 您也可以選擇 alert("這是晶體邊緣，配位數不完整")，但這裡選擇直接清除比較流暢
+                clearHighlights();
+            }
+        } else {
+            showHybridInfo(bestMatch, screenX, screenY);
+        }
+    } else {
+        hideHybridTooltip();
+        if (currentMolecule && currentMolecule.isIonic) clearHighlights();
+    }
+}
+
+// [修改] 輔助函式：高亮鄰居 (基於鍵結數據)
+function highlightNeighbors(centerAtom) {
+    // 1. 清除舊的高亮
+    currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
+    
+    // 2. 設定中心原子高亮
+    centerAtom.isHighlighted = "center"; 
+    
+    let count = 0;
+    const centerIdx = centerAtom.originalIndex; // 取得原始索引
+
+    // 3. 遍歷所有鍵結，找出連接的鄰居
+    // 只有當鍵結存在於數據中時，才視為鄰居
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(bond => {
+            // bond[0] 和 bond[1] 是原子的索引
+            let neighborIdx = -1;
+            if (bond[0] === centerIdx) neighborIdx = bond[1];
+            else if (bond[1] === centerIdx) neighborIdx = bond[0];
+
+            if (neighborIdx !== -1) {
+                // 找到鄰居物件
+                const neighbor = currentMolecule.renderObjects.find(obj => obj.type === 'atom' && obj.originalIndex === neighborIdx);
+                if (neighbor) {
+                    neighbor.isHighlighted = "neighbor";
+                    count++;
+                }
+            }
+        });
+    }
+    
+    // 4. 更新提示文字 (加入原子名稱)
+    const tooltip = document.getElementById('hybrid-label');
+    if(tooltip) {
+        tooltip.innerHTML = `<div style="text-align:center;">
+            <span style="color:#facc15; font-weight:bold; font-size:1.2em;">${centerAtom.elem}</span>
+            <br>配位數: <span style="color:#fff; font-weight:bold; font-size:1.4em;">${count}</span>
+        </div>`;
+        tooltip.classList.add('show');
+    }
+    
+    renderScene();
+}
+
+function clearHighlights() {
+    if(!currentMolecule) return;
+    currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
+    renderScene();
+}
+
+function findAtomByScreenPos(screenX, screenY) {
+    const atomGroups = document.querySelectorAll("g[data-atom-idx]");
+    let candidates = [];
+    atomGroups.forEach(g => {
+        const idx = parseInt(g.getAttribute("data-atom-idx"));
+        const atomData = currentMolecule.renderObjects[idx];
+        if (!atomData) return;
+        const circle = g.querySelector("circle");
+        if (!circle) return;
+        const rect = circle.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dist = Math.hypot(screenX - cx, screenY - cy);
+        if (dist < (rect.width / 2 + 10)) {
+            const p = project(atomData);
+            candidates.push({ atom: atomData, z: p.z, dist: dist });
+        }
+    });
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.z - a.z);
+    return candidates[0].atom;
+}
+
+// ========== [請替換 showHybridInfo 函式] ==========
+function showHybridInfo(atomObj, x, y) {
+    const tooltip = document.getElementById('hybrid-label');
+    if(!tooltip) return;
+
+    const atomIdx = atomObj.originalIndex;
+    let sigmaCount = 0;
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                sigmaCount++;
+            }
+        });
+    }
+    
+    const lpCount = atomObj.calculatedLP || 0;
+    const sum = sigmaCount + lpCount;
+    
+    // 計算形式電荷數據
+    const props = ELEMENT_PROPS[atomObj.elem];
+    const ve = props ? props.ve : "?";
+    const dots = (lpCount * 2) + (atomObj.radical ? 1 : 0);
+    let bondLines = 0;
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                let type = b[2] || "single";
+                if (type.includes("triple")) bondLines += 3;
+                else if (type.includes("double")) bondLines += 2;
+                else if (type === "coordinate") bondLines += 1; 
+                else if (type === "coordinate_triple") bondLines += 3;
+                else bondLines += 1;
+            }
+        });
+    }
+
+    const fc = atomObj.formalCharge || 0;
+    let fcStr = fc > 0 ? `+${fc}` : `${fc}`;
+    let fcColor = fc === 0 ? "#9ca3af" : (fc > 0 ? "#f87171" : "#60a5fa");
+
+    // [修改] 計算過程字串：線 -> 鍵
+    const calcStr = `<div style="font-size:0.8em; color:#bbb; margin-top:4px; border-top:1px solid #444; padding-top:2px;">(價${ve} - 點${dots} - 鍵${bondLines})</div>`;
+
+    let contentHtml = `<span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2;font-weight:bold;">${atomObj.elem}</span>`;
+    
+    // [修改] 調整顯示順序
+    if (sigmaCount >= 2) { 
+        let hybrid = "";
+        let hybridColor = "#ffffff"; 
+        if (sum === 2) { hybrid = "sp"; hybridColor = "#22d3ee"; } 
+        else if (sum === 3) { hybrid = "sp²"; hybridColor = "#a3e635"; } 
+        else if (sum === 4) { hybrid = "sp³"; hybridColor = "#fbbf24"; } 
+        else if (sum === 5) { hybrid = "sp³d"; hybridColor = "#f472b6"; } 
+        else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
+        else { hybrid = "-"; }
+
+        // 1. 顯示混成
+        contentHtml += `<div style="margin-top:4px;">混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span></div>`;
+        
+        // 2. 顯示 Sigma + LP 計算 (移到混成下方)
+        contentHtml += `<div style="font-size:0.8em;color:#888;margin-top:2px;margin-bottom:6px;">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
+        
+        // 3. 顯示形式電荷 (文字改為 "形式電荷")
+        contentHtml += `<div>形式電荷: <span style="color:${fcColor};font-size:1.2em;font-weight:bold">${fcStr}</span></div>`;
+        
+        // 4. 顯示形式電荷計算公式 (放在最下方)
+        contentHtml += calcStr;
+        // =====================================
+
+    } else {  
+        contentHtml += `<div style="margin-top:4px;">電荷: <span style="color:${fcColor};font-size:1.4em;font-weight:bold">${fcStr}</span></div>`;
+        if(atomObj.elem === 'H') contentHtml += `<div style="font-size:0.8em;color:#888;">(1s)</div>`;
+        
+        // [修改] 計算過程放在最後
+        contentHtml += calcStr;
+    }
+
+    tooltip.innerHTML = contentHtml;
+    tooltip.classList.add('show');
+}
+
+function hideHybridTooltip() {
+    const tooltip = document.getElementById('hybrid-label');
+    if (tooltip) tooltip.classList.remove('show');
+}
+
+function setupMobilePanel() {
+    const panel = document.querySelector('.controls-area');
+    const handle = document.getElementById('mobile-panel-handle');
+    
+    if(!handle || !panel || window.innerWidth > 768) return;
+
+    // --- 設定參數 ---
+    const HANDLE_H = 40; 
+    const PANEL_H = window.innerHeight * 0.8; 
+    
+    // 定義三個停靠點
+    const POS_OPEN = 0; 
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.35); // 露出約 35%
+    const POS_CLOSE = PANEL_H - HANDLE_H;
+
+    let startY = 0;
+    let startTransY = POS_HALF;
+    let currentTransY = POS_HALF;
+    let startTime = 0;
+    let isDragging = false;
+
+    // [初始化] 預設位置在半開，所以加上 half-open 類別
+    panel.style.transform = `translateY(${POS_HALF}px)`; 
+    panel.classList.add('half-open');
+
+    // 1. 觸摸開始
+    handle.addEventListener('touchstart', (e) => {
+        if(e.cancelable) e.preventDefault();
+        e.stopPropagation();
+
+        isDragging = true;
+        handle.classList.add('active'); 
+
+        startY = e.touches[0].clientY;
+        startTime = new Date().getTime();
+
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        startTransY = matrix.m42; 
+
+        panel.style.transition = 'none';
+    }, {passive: false});
+
+    // 2. 觸摸移動
+    window.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        if(e.cancelable) e.preventDefault(); 
+
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        let newY = startTransY + deltaY;
+
+        // 邊界阻尼
+        if (newY < POS_OPEN) newY = newY * 0.4; 
+        if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; 
+
+        panel.style.transform = `translateY(${newY}px)`;
+        currentTransY = newY;
+    }, {passive: false});
+
+    // [輔助函式] 更新面板狀態 (控制底部留白)
+    const updatePanelState = (targetY) => {
+        // 如果目標是半開位置，加上 class；否則移除
+        // 我們允許一點誤差 (Math.abs < 10)
+        if (Math.abs(targetY - POS_HALF) < 10) {
+            panel.classList.add('half-open');
+        } else {
+            panel.classList.remove('half-open');
+        }
+    };
+
+    // 3. 觸摸結束
+    window.addEventListener('touchend', (e) => {
+        if(!isDragging) return;
+        isDragging = false;
+        e.stopPropagation();
+
+        handle.classList.remove('active');
+        panel.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+
+        const endTime = new Date().getTime();
+        const duration = endTime - startTime;
+        const moveDist = currentTransY - startTransY;
+        const velocity = Math.abs(moveDist) / duration;
+
+        let targetY = POS_CLOSE;
+
+        // [修正] 分段滑動邏輯
+        if (velocity > 0.3) {
+            // 快速滑動
+            if (moveDist < 0) { 
+                // 往上滑 (Up)
+                // 如果原本在半開以上，就全開；否則去半開
+                targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
+            } else {
+                // 往下滑 (Down)
+                // 如果原本是全開 (接近0)，先停半開；否則關閉
+                targetY = (startTransY < POS_HALF - 50) ? POS_HALF : POS_CLOSE;
+            }
+        } else {
+            // 慢速拖曳：找最近的點
+            const distToOpen = Math.abs(currentTransY - POS_OPEN);
+            const distToHalf = Math.abs(currentTransY - POS_HALF);
+            const distToClose = Math.abs(currentTransY - POS_CLOSE);
+
+            if (distToOpen < distToHalf && distToOpen < distToClose) targetY = POS_OPEN;
+            else if (distToHalf < distToClose) targetY = POS_HALF;
+            else targetY = POS_CLOSE;
+        }
+
+        panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
+    });
+
+    // 4. 點擊把手切換
+    handle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        handle.classList.add('active');
+        setTimeout(() => handle.classList.remove('active'), 200);
+
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const currentY = matrix.m42;
+
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        
+        let targetY = POS_CLOSE;
+
+        // 循環邏輯：關 -> 半 -> 開 -> 關
+        if (Math.abs(currentY - POS_CLOSE) < 50) targetY = POS_HALF;      // 關 -> 半
+        else if (Math.abs(currentY - POS_HALF) < 50) targetY = POS_OPEN;  // 半 -> 開
+        else targetY = POS_CLOSE;                                         // 開 -> 關
+
+        panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
+    });
+}
+
+
+// ===============================================
+// 1. 系統備份與初始化 (4K 高清電子雲版)
+// ===============================================
+
+if (!window._nativeRenderScene) {
+    window._nativeRenderScene = window.renderScene;
+    window._nativeLoadMolecule = window.loadMolecule;
+}
+
+window.currentOrbitalMode = false;
+window.currentOrbitalType = null;
+window.showNodalPlanes = true;
+window.isHighDensityMode = true; 
+
+const AXIS_LEN = 150;
+
+// ★ 優化：支援 Retina/High-DPI 螢幕，解決模糊問題
+function ensureCanvasLayer() {
+    const viewport = document.getElementById('viewport');
+    let canvas = document.getElementById('orbital-canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'orbital-canvas';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.pointerEvents = 'none'; 
+        canvas.style.zIndex = '10'; 
+        viewport.appendChild(canvas);
+    }
+    
+    // 取得裝置像素比 (Retina 螢幕通常是 2 或 3)
+    const dpr = window.devicePixelRatio || 1;
+    const rect = viewport.getBoundingClientRect();
+
+    // 如果畫布實際像素尺寸不符，則重設 (避免每幀重設導致閃爍，只在視窗改變時觸發)
+    // 我們給寬高加一點緩衝，避免小數點誤差導致頻繁重繪
+    if (Math.abs(canvas.width - rect.width * dpr) > 1 || 
+        Math.abs(canvas.height - rect.height * dpr) > 1) {
+        
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        
+        // CSS 尺寸維持與視窗一致 (瀏覽器會自動縮放，但因為我們像素夠多，縮放後就很清晰)
+        // 注意：這裡不需要設定 style.width/height，因為上面已經設定 width:100%
+        
+        // 儲存 dpr 供渲染時使用
+        canvas.dpr = dpr;
+    }
+    return canvas;
+}
+
+// 2. 軌域數據配置
+const ORBITAL_DATA = {
+    "s":  { sphere: {r:80, color:"blue"}, planes:[], label:"1s" },
+    
+    "px": { lobes: [{e:[160,0,0],color:"blue"}, {e:[-160,0,0],color:"orange"}], planes:[{type:'yz'}], label:"2px" },
+    "py": { lobes: [{e:[0,160,0],color:"blue"}, {e:[0,-160,0],color:"orange"}], planes:[{type:'xz'}], label:"2py" },
+    "pz": { lobes: [{e:[0,0,160],color:"blue"}, {e:[0,0,-160],color:"orange"}], planes:[{type:'xy'}], label:"2pz" },
+    
+    "dxy": { lobes: [{e:[110,110,0],color:"blue"}, {e:[-110,-110,0],color:"blue"}, {e:[-110,110,0],color:"orange"}, {e:[110,-110,0],color:"orange"}], planes:[{type:'xz'},{type:'yz'}], label:"3dxy" },
+    "dyz": { lobes: [{e:[0,110,110],color:"blue"}, {e:[0,-110,-110],color:"blue"}, {e:[0,-110,110],color:"orange"}, {e:[0,110,-110],color:"orange"}], planes:[{type:'xy'},{type:'xz'}], label:"3dyz" },
+    "dxz": { lobes: [{e:[110,0,110],color:"blue"}, {e:[-110,0,-110],color:"blue"}, {e:[-110,0,110],color:"orange"}, {e:[110,0,-110],color:"orange"}], planes:[{type:'xy'},{type:'yz'}], label:"3dxz" },
+    "dx2-y2": { lobes: [{e:[150,0,0],color:"blue"}, {e:[-150,0,0],color:"blue"}, {e:[0,150,0],color:"orange"}, {e:[0,-150,0],color:"orange"}], planes:[{type:'custom',v:[{x:80,y:80,z:80},{x:-80,y:-80,z:80},{x:-80,y:-80,z:-80},{x:80,y:80,z:-80}]},{type:'custom',v:[{x:80,y:-80,z:80},{x:-80,y:80,z:80},{x:-80,y:80,z:-80},{x:80,y:-80,z:-80}]}], label: "3dx²-y²" },   
+    "dz2": { lobes: [{e:[0,0,150],color:"blue"}, {e:[0,0,-150],color:"blue"}], torus:{r:80,color:"orange"}, planes:[], label:"3dz²" },
+
+    // --- f 軌域 (Cube Set) ---
+    // 特徵：兩個主花瓣 + 兩個環 (Double Torus)
+    "fz3": { 
+        lobes: [{e:[0,0,160],color:"blue"}, {e:[0,0,-160],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[0,0,1]}, {r:55, color:"blue", offset:-25, normal:[0,0,1]}],
+        label: "4fz³" 
+    },
+    "fx3": { 
+        lobes: [{e:[160,0,0],color:"blue"}, {e:[-160,0,0],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[1,0,0]}, {r:55, color:"blue", offset:-25, normal:[1,0,0]}],
+        label: "4fx³" 
+    },
+    "fy3": { 
+        lobes: [{e:[0,160,0],color:"blue"}, {e:[0,-160,0],color:"orange"}], 
+        tori: [{r:55, color:"orange", offset:25, normal:[0,1,0]}, {r:55, color:"blue", offset:-25, normal:[0,1,0]}],
+        label: "4fy³" 
+    },
+
+    // --- f 軌域 (General Set) ---
+    // 特徵：8 個花瓣指向立方體的角落
+    "fxyz": { 
+        lobes: [
+            {e:[100,100,100],color:"blue"}, {e:[-100,-100,100],color:"blue"}, {e:[-100,100,-100],color:"blue"}, {e:[100,-100,-100],color:"blue"},
+            {e:[-100,-100,-100],color:"orange"}, {e:[100,100,-100],color:"orange"}, {e:[100,-100,100],color:"orange"}, {e:[-100,100,100],color:"orange"}
+        ], 
+        label: "4fxyz" 
+    },
+    // 下面三個形狀類似 xyz 但旋轉 45 度，我們用 8 個花瓣模擬圖中的樣子
+    "f_z_x2y2": { 
+        lobes: [
+            {e:[120,0,80],color:"blue"}, {e:[-120,0,80],color:"blue"}, {e:[0,120,-80],color:"blue"}, {e:[0,-120,-80],color:"blue"},
+            {e:[0,120,80],color:"orange"}, {e:[0,-120,80],color:"orange"}, {e:[120,0,-80],color:"orange"}, {e:[-120,0,-80],color:"orange"}
+        ], 
+        label: "4fz(x²-y²)" 
+    },
+    "f_x_z2y2": { 
+        lobes: [
+            {e:[80,120,0],color:"blue"}, {e:[80,-120,0],color:"blue"}, {e:[-80,0,120],color:"blue"}, {e:[-80,0,-120],color:"blue"},
+            {e:[80,0,120],color:"orange"}, {e:[80,0,-120],color:"orange"}, {e:[-80,120,0],color:"orange"}, {e:[-80,-120,0],color:"orange"}
+        ], 
+        label: "4fx(z²-y²)" 
+    },
+    "f_y_z2x2": { 
+        lobes: [
+            {e:[0,80,120],color:"blue"}, {e:[0,80,-120],color:"blue"}, {e:[120,-80,0],color:"blue"}, {e:[-120,-80,0],color:"blue"},
+            {e:[120,80,0],color:"orange"}, {e:[-120,80,0],color:"orange"}, {e:[0,-80,120],color:"orange"}, {e:[0,-80,-120],color:"orange"}
+        ], 
+        label: "4fy(z²-x²)" 
+    }
+};
+
+// 3. UI 初始化
+function initOrbitalUI() {
+    if(document.getElementById('orbital-card')) return;
+    const container = document.querySelector('.controls-content');
+    if(!container) return;
+    const card = document.createElement('div');
+    card.id = 'orbital-card'; card.className = 'card'; card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+    card.innerHTML = `
+        <div class="card-title" style="color:#38bdf8;">💠 原子軌域</div>
+        
+        <!-- s, p 軌域 -->
+        <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+            <button class="orb-btn" onclick="loadOrbital('s')">s</button>
+            <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+        </div>
+        
+        <!-- d 軌域 -->
+        <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
+            <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+        </div>
+
+        <!-- f 軌域 (新增) -->
+        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
+        <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
+            <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+        </div>
+        
+        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
+        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
+            <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
+            <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
+        </div>
+
+        <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
+    `;
+    const dataCard = document.getElementById('data-card');
+    if(dataCard && dataCard.parentNode) dataCard.parentNode.insertBefore(card, dataCard);
+    else container.appendChild(card);
+}
+
+// 4. 純電子雲生成引擎 (高密度動態版)
+function generateCloudPoints(type) {
+    const data = ORBITAL_DATA[type];
+    const points = [];
+    // [修改] 大幅提升粒子數量 (4500 -> 20000) 讓雲層更綿密
+    const DOT_COUNT = 20000; 
+
+    // 輔助：加入隨機動畫參數
+    const createPoint = (x, y, z, color) => ({
+        x, y, z, color,
+        // [新增] 每個粒子獨立的顫動參數
+        phase: Math.random() * Math.PI * 2, 
+        speed: 0.002 + Math.random() * 0.004
+    });
+
+    const addLobePoints = (baseV, color, count) => {
+        const len = Math.sqrt(baseV[0]**2 + baseV[1]**2 + baseV[2]**2) || 1;
+        const dx = baseV[0]/len, dy = baseV[1]/len, dz = baseV[2]/len;
+
+        let tx = 0, ty = 1, tz = 0;
+        if (Math.abs(dx) < 0.1 && Math.abs(dz) < 0.1) { tx=1; ty=0; tz=0; }
+        let ux = dy*tz - dz*ty, uy = dz*tx - dx*tz, uz = dx*ty - dy*tx; 
+        const uLen = Math.sqrt(ux*ux + uy*uy + uz*uz);
+        ux/=uLen; uy/=uLen; uz/=uLen;
+        let wx = dy*uz - dz*uy, wy = dz*ux - dx*uz, wz = dx*uy - dy*ux;
+
+        for(let i=0; i<count; i++) {
+            let d = Math.pow(Math.random(), 0.7); 
+            const dist = d * 160; 
+            // 讓花瓣稍微收斂一點，形狀更銳利
+            let r = Math.sin(d * Math.PI) * 38; 
+            r *= Math.sqrt(Math.random()); 
+            const theta = Math.random() * Math.PI * 2;
+            const rc = r * Math.cos(theta);
+            const rs = r * Math.sin(theta);
+            
+            points.push(createPoint(
+                dist * dx + rc * ux + rs * wx,
+                dist * dy + rc * uy + rs * wy,
+                dist * dz + rc * uz + rs * wz,
+                color
+            ));
+        }
+    };
+
+    // s 軌域
+    if (data.sphere) {
+        for(let i=0; i<DOT_COUNT; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            let r = 80 * Math.pow(Math.random(), 1/3);
+            if (Math.random() > 0.6) r = 80 * Math.abs(generateGaussian()) * 0.6;
+            
+            points.push(createPoint(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta),
+                r * Math.cos(phi),
+                "#38bdf8"
+            ));
+        }
+    }
+
+    // p, d, f 軌域 (花瓣)
+    if (data.lobes) {
+        const countPerLobe = Math.floor(DOT_COUNT / data.lobes.length);
+        data.lobes.forEach(lobe => {
+            const color = (lobe.color === 'blue') ? "#38bdf8" : "#fbbf24";
+            addLobePoints(lobe.e, color, countPerLobe);
+        });
+    }
+
+    // d 軌域 (單環)
+    if (data.torus) {
+        const ringCount = 2500; // [修改] 增加環的密度
+        const color = (data.torus.color === 'blue') ? "#38bdf8" : "#fbbf24";
+        for(let i=0; i<ringCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const ringR = 60 + (generateGaussian()) * 10; 
+            const tubeH = (Math.random() - 0.5) * 20;
+            
+            points.push(createPoint(
+                ringR * Math.cos(theta),
+                ringR * Math.sin(theta),
+                tubeH,
+                color
+            ));
+        }
+    }
+
+    // f 軌域 (多重環)
+    if (data.tori) {
+        const ringCount = 2000; // [修改] 增加環的密度
+        data.tori.forEach(torus => {
+            const color = (torus.color === 'blue') ? "#38bdf8" : "#fbbf24";
+            let nx = torus.normal[0], ny = torus.normal[1], nz = torus.normal[2];
+            let len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+            nx/=len; ny/=len; nz/=len;
+
+            let tx = 0, ty = 1, tz = 0; 
+            if (Math.abs(nx) < 0.1 && Math.abs(nz) < 0.1) { tx=1; ty=0; tz=0; }
+            let ux = ny*tz - nz*ty, uy = nz*tx - nx*tz, uz = nx*ty - ny*tx; 
+            let uLen = Math.sqrt(ux*ux + uy*uy + uz*uz); 
+            ux/=uLen; uy/=uLen; uz/=uLen;
+            let vx = ny*uz - nz*uy, vy = nz*ux - nx*uz, vz = nx*uy - ny*ux;
+
+            for(let i=0; i<ringCount; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const rBase = torus.r || 50;
+                const ringR = rBase + (generateGaussian()) * 8; 
+                const tubeH = (Math.random() - 0.5) * 15 + (torus.offset || 0);
+
+                let px = ringR * Math.cos(theta);
+                let py = ringR * Math.sin(theta);
+                let pz = tubeH;
+
+                points.push(createPoint(
+                    px * ux + py * vx + pz * nx,
+                    px * uy + py * vy + pz * ny,
+                    px * uz + py * vz + pz * nz,
+                    color
+                ));
+            }
+        });
+    }
+
+    return points;
+}
+
+function generateGaussian() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random(); 
+    while(v === 0) v = Math.random();
+    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+}
+
+// 5. 渲染迴圈 (加入微幅抖動動畫)
+function renderOrbitals() {
+    const sceneRoot = document.getElementById("scene-root"); 
+    sceneRoot.innerHTML = "";
+    
+    const canvas = ensureCanvasLayer();
+    const ctx = canvas.getContext('2d');
+    const dpr = canvas.dpr || 1;
+    const time = performance.now(); // 取得當前時間
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.scale(dpr, dpr);
+    ctx.translate(canvas.width / dpr / 2, canvas.height / dpr / 2);
+
+    if(!currentMolecule || !currentMolecule.renderObjects) return;
+
+    // 繪製電子雲
+    if (currentMolecule.cloudPoints) {
+        const projected = [];
+        
+        // 投影時加入微幅抖動
+        currentMolecule.cloudPoints.forEach(p => {
+            // [新增] 根據時間與相位計算偏移量 (Jitter)
+            // 範圍約 +/- 1.5 單位，製造 "電子不確定性" 的感覺
+            const jitterX = Math.cos(time * p.speed + p.phase) * 1.5;
+            const jitterY = Math.sin(time * p.speed + p.phase) * 1.5;
+            const jitterZ = Math.sin(time * p.speed * 1.3 + p.phase) * 1.5;
+
+            // 將偏移量加到原始座標
+            const proj = project({
+                x: p.x + jitterX,
+                y: p.y + jitterY,
+                z: p.z + jitterZ
+            }); 
+
+            if (proj.scale > 0) {
+                projected.push({ ...proj, color: p.color });
+            }
+        });
+
+        // 繪圖設定
+        ctx.globalCompositeOperation = 'lighter'; // 讓重疊處發光
+        
+        projected.forEach(p => {
+            // 粒子大小：隨縮放變化，但保持在合理範圍
+            const size = Math.max(0.6, 1.1 * p.scale); 
+            
+            ctx.fillStyle = p.color;
+            // [修改] 降低不透明度：因為密度增加4倍，透明度要降低以免變成實心色塊
+            // 從 0.6 降到 0.25，這樣堆疊起來才有雲霧感
+            ctx.globalAlpha = 0.25; 
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0;
+    }
+
+    // 繪製 SVG 輔助線 (節面與軸) - 保持不變
+    const renderList = [];
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type === 'axisVector') {
+            const pStart = project(obj.start); const pEnd = project(obj.end);
+            renderList.push({ type:'axisVector', z:(pStart.z+pEnd.z)/2, pStart, pEnd, label:obj.label, scale:pStart.scale });
+        } else if (obj.type === 'plane' && showNodalPlanes) {
+             const poly = (function(t,v){ 
+                const s=100; if(v)return v; 
+                if(t==='xy')return[{x:s,y:s,z:0},{x:-s,y:s,z:0},{x:-s,y:-s,z:0},{x:s,y:-s,z:0}];
+                if(t==='yz')return[{x:0,y:s,z:s},{x:0,y:-s,z:s},{x:0,y:-s,z:-s},{x:0,y:s,z:-s}];
+                if(t==='xz')return[{x:s,y:0,z:s},{x:s,y:0,z:-s},{x:-s,y:0,z:-s},{x:-s,y:0,z:s}]; return [];
+            })(obj.planeType, obj.customV);
+            const proj = poly.map(p => project(p));
+            renderList.push({ type:'plane', z:proj.reduce((s,p)=>s+p.z,0)/proj.length, points:proj });
+        }
+    });
+
+    renderList.sort((a,b) => a.z - b.z).forEach(obj => {
+        if (obj.type === "plane") drawPlane(obj, sceneRoot);
+        else if (obj.type === "axisVector") drawAxisVectorInSVG(obj, sceneRoot);
+    });
+}
+
+// 6. SVG 輔助繪圖函數
+function drawPlane(plane, root) {
+    let pts=""; plane.points.forEach(p=>{pts+=`${p.x},${p.y} `});
+    const p=document.createElementNS("http://www.w3.org/2000/svg","polygon"); p.setAttribute("points",pts); 
+    p.setAttribute("fill","rgba(255,255,255,0.1)"); p.setAttribute("stroke","rgba(255,255,255,0.3)"); 
+    root.appendChild(p);
+}
+
+function drawAxisVectorInSVG(axis, root) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const x1 = axis.pStart.x; const y1 = axis.pStart.y;
+    const x2 = axis.pEnd.x;   const y2 = axis.pEnd.y;
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+    l.setAttribute("stroke", "#9ca3af"); l.setAttribute("stroke-width", 2);
+    g.appendChild(l);
+    if (axis.label) {
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x2 + (x2-x1)*0.1); t.setAttribute("y", y2 + (y2-y1)*0.1);
+        t.textContent = axis.label; t.setAttribute("fill", "white"); t.setAttribute("font-size", 14);
+        g.appendChild(t);
+    }
+    root.appendChild(g);
+}
+
+// 7. 系統掛載
+window.renderScene = function(time) {
+    if (window.currentOrbitalMode) renderOrbitals();
+    else {
+        const canvas = document.getElementById('orbital-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        window._nativeRenderScene(time);
+    }
+};
+
+window.loadMolecule = function(key, variant) {
+    // [修正] 1. 強制關閉軌域模式
+    window.currentOrbitalMode = false;
+    window.currentOrbitalType = null;
+    
+    // [修正] 2. 清除軌域 Canvas 畫面 (避免殘留)
+    const canvas = document.getElementById('orbital-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // [修正] 3. 移除按鈕活性狀態
+    document.querySelectorAll('.orb-btn').forEach(b => b.classList.remove('active'));
+    
+    // 執行原本的載入邏輯
+    window._nativeLoadMolecule(key, variant);
+};
+
+window.loadOrbital = function(type) {
+    window.currentOrbitalMode = true;
+    window.currentOrbitalType = type;
+    document.querySelectorAll('.orb-btn').forEach(b => b.classList.remove('active'));
+    const targetBtn = document.querySelector(`button[onclick="loadOrbital('${type}')"]`);
+    if(targetBtn) targetBtn.classList.add('active');
+
+    const data = ORBITAL_DATA[type];
+    let objs = [];
+
+    objs.push({ type:'axisVector', start:{x:-AXIS_LEN,y:0,z:0}, end:{x:AXIS_LEN,y:0,z:0}, label:'x' });
+    objs.push({ type:'axisVector', start:{x:0,y:-AXIS_LEN,z:0}, end:{x:0,y:AXIS_LEN,z:0}, label:'y' });
+    objs.push({ type:'axisVector', start:{x:0,y:0,z:-AXIS_LEN}, end:{x:0,y:0,z:AXIS_LEN}, label:'z' });
+
+    if (showNodalPlanes && data.planes) data.planes.forEach(p => objs.push({ type:'plane', planeType:p.type, customV:p.v }));
+
+    currentMolecule = { fullKey:`Orbital|${data.label}`, renderObjects:objs, bonds3D:[] };
+    currentMolecule.cloudPoints = generateCloudPoints(type);
+
+    const n = document.getElementById('info-name'); if(n) n.textContent = `軌域: ${data.label}`;
+    const f = document.getElementById('info-formula'); if(f) f.innerHTML = "";
+
+    renderScene();
+};
+
+window.togglePlanes = function() {
+    showNodalPlanes = !showNodalPlanes;
+    const btn = document.getElementById('btn-toggle-plane');
+    if(btn) { 
+        btn.textContent = `顯示節面: ${showNodalPlanes?"ON":"OFF"}`; 
+        btn.classList.toggle('active', showNodalPlanes);
+    }
+    if(currentOrbitalMode && currentOrbitalType) loadOrbital(currentOrbitalType);
+};
+
+setTimeout(initOrbitalUI, 500);
+
+// ==========================================
+// [系統修復] 解決軌域重疊問題 & 確保畫面清除
+// ==========================================
+
+// 1. 覆寫渲染迴圈：確保非軌域模式下，每一幀都強制清空 Canvas
+window.renderScene = function(time) {
+    if (window.currentOrbitalMode) {
+        // 如果是軌域模式，執行軌域渲染
+        renderOrbitals();
+    } else {
+        // 如果是普通分子模式
+        const canvas = document.getElementById('orbital-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            // ★關鍵修正：清除前必須重置矩陣 (Reset Transform)
+            // 否則 clearRect 只會清除偏移後的區域，導致畫面殘留
+            ctx.setTransform(1, 0, 0, 1, 0, 0); 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        // 呼叫原本的 SVG 渲染
+        window._nativeRenderScene(time);
+    }
+};
+
+// 2. 覆寫載入函式：切換分子時，立即重置狀態
+window.loadMolecule = function(key, variant) {
+    // 關閉軌域旗標
+    window.currentOrbitalMode = false;
+    window.currentOrbitalType = null;
+    
+    // 立即清除 Canvas (雙重保險)
+    const canvas = document.getElementById('orbital-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // 重置矩陣
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空
+    }
+    
+    // 移除按鈕活性
+    document.querySelectorAll('.orb-btn').forEach(b => b.classList.remove('active'));
+    
+    // 執行原始載入
+    window._nativeLoadMolecule(key, variant);
+};
+
+</script>
+</body>
+</html>
