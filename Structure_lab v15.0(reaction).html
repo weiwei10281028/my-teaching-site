@@ -450,6 +450,33 @@
     .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
     .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
 
+    /* ========== [新增] 離子按鈕互動樣式 ========== */
+    .ion-btn {
+    transition: all 0.2s;
+    opacity: 0.8;
+    border-width: 1px !important;
+    }
+    .ion-btn:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    }
+    /* 選中狀態：強制變色並發光 */
+    .ion-btn.active {
+    opacity: 1;
+    font-weight: bold;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px currentColor; /* 跟隨文字顏色發光 */
+    border-width: 2px !important;
+    z-index: 5;
+    }
+    /* 強制覆蓋原本的 inline-style */
+    .ion-btn.active[data-type="neutral"] { background: #e2e8f0 !important; color: #000 !important; border-color: #fff !important; }
+    .ion-btn.active[data-type="pos"]     { background: #f87171 !important; color: #000 !important; border-color: #f87171 !important; }
+    .ion-btn.active[data-type="neg"]     { background: #60a5fa !important; color: #000 !important; border-color: #60a5fa !important; }
+
+
+
+
 /* --- [新增] 共振結構主題 (紫色系) --- */
 #variant-selector.resonance-theme { 
     background: rgba(139, 92, 246, 0.05); 
@@ -548,6 +575,10 @@
     border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0;
 }
 .plane-toggle.active { background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; color: white; }
+
+
+
+
 </style>
 </head>
 <body>
@@ -2780,15 +2811,24 @@ function renderConfigList() {
             </div>
             
             <!-- 離子控制 -->
-            <div style="display:flex; gap:5px; margin:10px 0; flex-wrap:wrap;">
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 0)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #444; border-radius:4px; color:#fff; background:#222; cursor:pointer;">中性</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', 3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
-                    <button onclick="updateIonViz('${el.s}', '${el.c}', -3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
-                </div>
+            <div id="ion-group-${el.s}" style="display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; align-items:center;">
+                <button class="ion-btn active" data-charge="0" data-type="neutral" onclick="updateIonViz('${el.s}', '${el.c}', 0)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #64748b; border-radius:4px; color:#cbd5e1; background:#1e293b; cursor:pointer;">中性</button>
+                
+                <button class="ion-btn" data-charge="1" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 1)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
+                <button class="ion-btn" data-charge="2" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 2)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
+                <button class="ion-btn" data-charge="3" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 3)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
+                
+                <button class="ion-btn" data-charge="-1" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -1)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
+                <button class="ion-btn" data-charge="-2" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -2)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
+                <button class="ion-btn" data-charge="-3" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -3)" 
+                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
+            </div>
 
                 <!-- 隱藏欄位：儲存當前電荷與模式 -->
                 <input type="hidden" id="${cardId}-charge" value="0">
@@ -2808,35 +2848,47 @@ function renderConfigList() {
     });
 }
 // ========== [請替換 updateIonViz 並新增 toggleConfigMode] ==========
+// [修改] 更新離子視覺化 (加入按鈕發亮邏輯)
 function updateIonViz(symbol, baseConfig, charge) {
     // 1. 計算離子組態
     const newConfig = calculateIonConfig(baseConfig, charge);
     
-    // 2. 取得當前顯示模式 (noble:縮寫 / full:完整)
+    // 2. 取得當前顯示模式
     const modeInput = document.getElementById(`card-${symbol}-mode`);
     const currentMode = modeInput ? modeInput.value : 'noble';
     
-    // 3. 儲存當前電荷 (給切換按鈕用)
+    // 3. 儲存當前電荷
     const chargeInput = document.getElementById(`card-${symbol}-charge`);
     if(chargeInput) chargeInput.value = charge;
 
-    // 4. 決定顯示字串
+    // 4. [新增] 按鈕發亮切換邏輯
+    const btnGroup = document.getElementById(`ion-group-${symbol}`);
+    if (btnGroup) {
+        const btns = btnGroup.querySelectorAll('.ion-btn');
+        btns.forEach(btn => {
+            const btnCharge = parseInt(btn.getAttribute('data-charge'));
+            if (btnCharge === charge) {
+                btn.classList.add('active'); // 選中：發亮
+            } else {
+                btn.classList.remove('active'); // 其他：恢復原狀
+            }
+        });
+    }
+
+    // 5. 決定顯示字串
     let displayHtml = "";
     if (currentMode === 'noble') {
-        // 如果是縮寫模式，呼叫轉換函式
         displayHtml = formatConfigHtml(toNobleNotation(newConfig));
     } else {
-        // 如果是完整模式，直接顯示並上標化
         displayHtml = formatConfigHtml(newConfig);
     }
     
-    // 5. 更新文字區
+    // 6. 更新文字區
     const textEl = document.getElementById(`card-${symbol}-text`);
-    // 根據電荷變色：正(紅) 負(藍) 中性(藍綠)
     const color = charge > 0 ? '#f87171' : (charge < 0 ? '#60a5fa' : '#a5f3fc');
     if(textEl) textEl.innerHTML = `<div class="ec-config" style="color:${color}">${displayHtml}</div>`;
     
-    // 6. 更新軌域圖
+    // 7. 更新軌域圖
     const vizEl = document.getElementById(`card-${symbol}-viz`);
     if(vizEl) vizEl.innerHTML = generateEcViz(newConfig);
 }
