@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.14 (Plasma Fixed)</title>
+    <title>分子結構模擬實驗室 v16.13 (Plasma Fixed)</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -351,8 +351,12 @@
         padding: 20px; 
         overflow-y: auto; 
         overscroll-behavior: contain;
-        /* 增加底部空間，避免被 iPhone Home Bar 擋住 */
-        padding-bottom: 80px; 
+        padding-bottom: 15px; /* 全開的底部留白 */
+        transition: padding-bottom 0.4s ease;
+    }
+
+    .controls-area.half-open .controls-content {
+        padding-bottom: 45vh; /* 半開的底部留白 */
     }
 }
 
@@ -3067,8 +3071,9 @@ function setupMobilePanel() {
     const HANDLE_H = 40; 
     const PANEL_H = window.innerHeight * 0.8; 
     
+    // 定義三個停靠點
     const POS_OPEN = 0; 
-    const POS_HALF = PANEL_H - (window.innerHeight * 0.3); 
+    const POS_HALF = PANEL_H - (window.innerHeight * 0.35); // 露出約 35%
     const POS_CLOSE = PANEL_H - HANDLE_H;
 
     let startY = 0;
@@ -3077,8 +3082,9 @@ function setupMobilePanel() {
     let startTime = 0;
     let isDragging = false;
 
-    // 預設位置
+    // [初始化] 預設位置在半開，所以加上 half-open 類別
     panel.style.transform = `translateY(${POS_HALF}px)`; 
+    panel.classList.add('half-open');
 
     // 1. 觸摸開始
     handle.addEventListener('touchstart', (e) => {
@@ -3086,8 +3092,6 @@ function setupMobilePanel() {
         e.stopPropagation();
 
         isDragging = true;
-        
-        // ★★★ 新增：加上 active 類別，觸發 CSS 變寬特效 ★★★
         handle.classList.add('active'); 
 
         startY = e.touches[0].clientY;
@@ -3110,6 +3114,7 @@ function setupMobilePanel() {
         
         let newY = startTransY + deltaY;
 
+        // 邊界阻尼
         if (newY < POS_OPEN) newY = newY * 0.4; 
         if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; 
 
@@ -3117,16 +3122,25 @@ function setupMobilePanel() {
         currentTransY = newY;
     }, {passive: false});
 
+    // [輔助函式] 更新面板狀態 (控制底部留白)
+    const updatePanelState = (targetY) => {
+        // 如果目標是半開位置，加上 class；否則移除
+        // 我們允許一點誤差 (Math.abs < 10)
+        if (Math.abs(targetY - POS_HALF) < 10) {
+            panel.classList.add('half-open');
+        } else {
+            panel.classList.remove('half-open');
+        }
+    };
+
     // 3. 觸摸結束
     window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
         isDragging = false;
         e.stopPropagation();
 
-        // ★★★ 新增：手指放開後，移除特效 ★★★
         handle.classList.remove('active');
-
-        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        panel.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
 
         const endTime = new Date().getTime();
         const duration = endTime - startTime;
@@ -3135,14 +3149,20 @@ function setupMobilePanel() {
 
         let targetY = POS_CLOSE;
 
+        // [修正] 分段滑動邏輯
         if (velocity > 0.3) {
+            // 快速滑動
             if (moveDist < 0) { 
+                // 往上滑 (Up)
+                // 如果原本在半開以上，就全開；否則去半開
                 targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
             } else {
-                targetY = POS_CLOSE;
+                // 往下滑 (Down)
+                // 如果原本是全開 (接近0)，先停半開；否則關閉
+                targetY = (startTransY < POS_HALF - 50) ? POS_HALF : POS_CLOSE;
             }
-        } 
-        else {
+        } else {
+            // 慢速拖曳：找最近的點
             const distToOpen = Math.abs(currentTransY - POS_OPEN);
             const distToHalf = Math.abs(currentTransY - POS_HALF);
             const distToClose = Math.abs(currentTransY - POS_CLOSE);
@@ -3153,13 +3173,14 @@ function setupMobilePanel() {
         }
 
         panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
     });
 
+    // 4. 點擊把手切換
     handle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // 點擊也加上一瞬間的特效回饋
         handle.classList.add('active');
         setTimeout(() => handle.classList.remove('active'), 200);
 
@@ -3169,11 +3190,15 @@ function setupMobilePanel() {
 
         panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         
-        if (currentY >= POS_CLOSE - 10) {
-            panel.style.transform = `translateY(${POS_HALF}px)`;
-        } else {
-            panel.style.transform = `translateY(${POS_CLOSE}px)`;
-        }
+        let targetY = POS_CLOSE;
+
+        // 循環邏輯：關 -> 半 -> 開 -> 關
+        if (Math.abs(currentY - POS_CLOSE) < 50) targetY = POS_HALF;      // 關 -> 半
+        else if (Math.abs(currentY - POS_HALF) < 50) targetY = POS_OPEN;  // 半 -> 開
+        else targetY = POS_CLOSE;                                         // 開 -> 關
+
+        panel.style.transform = `translateY(${targetY}px)`;
+        updatePanelState(targetY); // 更新留白狀態
     });
 }
 
