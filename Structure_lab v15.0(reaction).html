@@ -452,29 +452,25 @@
 
     /* ========== [新增] 離子按鈕互動樣式 ========== */
     .ion-btn {
-    transition: all 0.2s;
     opacity: 0.8;
     border-width: 1px !important;
-    }
-    .ion-btn:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    }
-    /* 選中狀態：強制變色並發光 */
-    .ion-btn.active {
+    font-weight: normal;
+}
+
+.ion-btn:active {
+    opacity: 0.6; 
+}
+
+.ion-btn.active {
     opacity: 1;
     font-weight: bold;
-    transform: scale(1.1);
-    box-shadow: 0 0 10px currentColor; /* 跟隨文字顏色發光 */
     border-width: 2px !important;
-    z-index: 5;
-    }
-    /* 強制覆蓋原本的 inline-style */
-    .ion-btn.active[data-type="neutral"] { background: #e2e8f0 !important; color: #000 !important; border-color: #fff !important; }
-    .ion-btn.active[data-type="pos"]     { background: #f87171 !important; color: #000 !important; border-color: #f87171 !important; }
-    .ion-btn.active[data-type="neg"]     { background: #60a5fa !important; color: #000 !important; border-color: #60a5fa !important; }
+    z-index: 2;
+}
 
-
+.ion-btn.active[data-type="neutral"] { background: #f1f5f9 !important; color: #000 !important; border-color: #fff !important; }
+.ion-btn.active[data-type="pos"]     { background: #fca5a5 !important; color: #000 !important; border-color: #fca5a5 !important; }
+.ion-btn.active[data-type="neg"]     { background: #93c5fd !important; color: #000 !important; border-color: #93c5fd !important; }
 
 
 /* --- [新增] 共振結構主題 (紫色系) --- */
@@ -2853,42 +2849,35 @@ function updateIonViz(symbol, baseConfig, charge) {
     // 1. 計算離子組態
     const newConfig = calculateIonConfig(baseConfig, charge);
     
-    // 2. 取得當前顯示模式
+    // 2. 取得模式與儲存電荷
     const modeInput = document.getElementById(`card-${symbol}-mode`);
     const currentMode = modeInput ? modeInput.value : 'noble';
-    
-    // 3. 儲存當前電荷
     const chargeInput = document.getElementById(`card-${symbol}-charge`);
     if(chargeInput) chargeInput.value = charge;
 
-    // 4. [新增] 按鈕發亮切換邏輯
+    // 3. 【關鍵】切換按鈕狀態 (這裡只改 Class，不涉及複雜運算)
     const btnGroup = document.getElementById(`ion-group-${symbol}`);
     if (btnGroup) {
-        const btns = btnGroup.querySelectorAll('.ion-btn');
-        btns.forEach(btn => {
-            const btnCharge = parseInt(btn.getAttribute('data-charge'));
+        // 使用最傳統的 for 迴圈，效能最好
+        const btns = btnGroup.getElementsByClassName('ion-btn');
+        for (let i = 0; i < btns.length; i++) {
+            let btn = btns[i];
+            let btnCharge = parseInt(btn.getAttribute('data-charge'));
             if (btnCharge === charge) {
-                btn.classList.add('active'); // 選中：發亮
+                btn.classList.add('active');
             } else {
-                btn.classList.remove('active'); // 其他：恢復原狀
+                btn.classList.remove('active');
             }
-        });
+        }
     }
 
-    // 5. 決定顯示字串
-    let displayHtml = "";
-    if (currentMode === 'noble') {
-        displayHtml = formatConfigHtml(toNobleNotation(newConfig));
-    } else {
-        displayHtml = formatConfigHtml(newConfig);
-    }
-    
-    // 6. 更新文字區
+    // 4. 更新文字顯示
+    let displayHtml = (currentMode === 'noble') ? formatConfigHtml(toNobleNotation(newConfig)) : formatConfigHtml(newConfig);
     const textEl = document.getElementById(`card-${symbol}-text`);
     const color = charge > 0 ? '#f87171' : (charge < 0 ? '#60a5fa' : '#a5f3fc');
     if(textEl) textEl.innerHTML = `<div class="ec-config" style="color:${color}">${displayHtml}</div>`;
     
-    // 7. 更新軌域圖
+    // 5. 更新軌域圖
     const vizEl = document.getElementById(`card-${symbol}-viz`);
     if(vizEl) vizEl.innerHTML = generateEcViz(newConfig);
 }
