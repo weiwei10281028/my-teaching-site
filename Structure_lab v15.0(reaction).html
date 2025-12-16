@@ -572,7 +572,171 @@
 }
 .plane-toggle.active { background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; color: white; }
 
+/* --- 每日運勢 UI (Mystical Theme) --- */
+.fortune-entry-btn {
+    /* 基礎設定 */
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px; /* 手機版改小一點 */
+    border-radius: 25px; /* 改成膠囊狀更精緻 */
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto; 
+    z-index: 100;
+    
+    /* 星空風格背景 */
+    background: radial-gradient(circle at center, #2e1065 0%, #0f172a 100%);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #e0e7ff;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+    text-shadow: 0 0 5px rgba(167, 139, 250, 0.8);
+}
 
+/* 手機版特別優化：避免遮擋 */
+@media (max-width: 768px) {
+    .fortune-entry-btn {
+        width: auto; /* 寬度自動 */
+        display: inline-flex; /* 不佔滿整行 */
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        background: rgba(15, 23, 42, 0.8); /* 半透明黑底 */
+        backdrop-filter: blur(4px);
+    }
+}
+
+.fortune-entry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+    border-color: #a78bfa;
+}
+.fortune-entry-btn:active { transform: scale(0.95); }
+
+/* Modal 背景：改用 opacity 做漸變動畫 */
+#fortune-modal {
+    visibility: hidden; /* 預設隱藏 */
+    opacity: 0;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(5, 5, 10, 0.95); /* 更深沈的背景 */
+    backdrop-filter: blur(8px);
+    z-index: 300;
+    display: flex; /* 常駐 flex，用 opacity 控制顯示 */
+    justify-content: center; align-items: center; flex-direction: column;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 顯示狀態 */
+#fortune-modal.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.fortune-card-container {
+    width: 300px;
+    height: 520px; /* 固定高度，避免破版 */
+    perspective: 1500px; /* 增加透視感 */
+    cursor: pointer;
+    position: relative;
+}
+
+.fortune-card-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    text-align: center;
+    transition: transform 3.0s cubic-bezier(0.19, 1, 0.22, 1);
+    transform-style: preserve-3d;
+}
+
+/* 優化：改為轉 3圈半 (1260度)，原本是轉太多圈了 */
+.fortune-card-container.flipped .fortune-card-inner {
+    transform: rotateY(900deg); 
+}
+
+.fortune-card-front, .fortune-card-back {
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 25px 20px;
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.2); /* 陰影調暗一點 */
+}
+
+/* 卡背：深沈宇宙 + 隱約科學格線 (仿造中間圖但更暗) */
+.fortune-card-front {
+    /* 背景底色：極深的黑藍色 */
+    background-color: #020617;
+    
+    /* 背景圖層：
+       1. 隱約的網格 (模仿週期表格子) 
+       2. 中央的深紫色星雲光暈 
+       3. 頂部的深藍色光暈 
+    */
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, #312e81 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, #1e1b4b 0%, transparent 50%);
+        
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%; /* 格子大小 */
+    background-position: center;
+    
+    border: 1px solid rgba(139, 92, 246, 0.3); /* 邊框調暗 */
+    justify-content: center;
+}
+
+/* 卡面：結果 */
+.fortune-card-back {
+    background: linear-gradient(180deg, #312e81 0%, #111827 100%);
+    border: 2px solid #818cf8;
+    transform: rotateY(180deg); /* 修正：改回標準 180 度 */
+    color: #e0e7ff;
+    justify-content: flex-start;
+}
+
+/* 內容排版優化 */
+.fortune-symbol { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 25px #8b5cf6; margin-bottom: 15px; line-height: 1.2; }
+.fortune-sub { font-size: 0.9rem; color: #a5b4fc; margin-bottom: 10px; }
+.fortune-divider { width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); margin: 10px 0; }
+.fortune-title { font-size: 1.5rem; color: #c4b5fd; margin-bottom: 5px; font-weight: bold; }
+.fortune-oracle-text {
+    font-family: 'Times New Roman', serif; font-style: italic; color: #67e8f9; 
+    margin: 10px 0 15px 0; font-size: 1.05rem; line-height: 1.4; padding: 0 5px;
+    text-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
+}
+.fortune-score { color: #facc15; font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 3px; }
+
+/* ★★★ 解決文字溢出問題：限制高度並允許滑動 ★★★ */
+.fortune-guide {
+    font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #e2e8f0;
+    background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    width: 100%;
+    /* 關鍵：彈性高度 */
+    flex: 1; 
+    overflow-y: auto; /* 內容太多時出現卷軸 */
+    /* 美化捲軸 */
+    scrollbar-width: thin;
+    scrollbar-color: #6366f1 rgba(0,0,0,0.3);
+}
+
+.close-fortune {
+    margin-top: 25px; padding: 8px 25px;
+    background: rgba(255,255,255,0.1); border: 1px solid #4b5563;
+    color: #cbd5e1; border-radius: 20px; cursor: pointer; transition: 0.2s;
+    font-size: 0.9rem;
+}
+.close-fortune:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
+
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
 
 </style>
@@ -592,8 +756,9 @@
 
             <!-- 猜你想看功能 -->
             <div class="suggestions-container" id="suggestions-container">
-                <div class="suggestion-label">你可能還想看：</div>
+                <div class="suggestion-label">你可能還想看：</div>  
             </div>
+            <div class="fortune-entry-btn" onclick="openFortuneModal()">🔮 每日元素運勢</div>
 
             <span class="input-note" id="viewport-subtitle"></span>
         </div>
@@ -729,6 +894,27 @@
     <img id="site_counter_img" 
          src="https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748" 
          alt="Page Views">
+</div>
+
+<!-- ★★★ 請在中間插入以下代碼 (Modal 視窗) ★★★ -->
+<div id="fortune-modal">
+    <div class="fortune-card-container" id="fortune-card" onclick="revealFortune()">
+        <div class="fortune-card-inner">
+            <div class="fortune-card-front">
+                <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px #a78bfa);">⚛️</div>
+                <div class="spell-text">Elementa Revelio</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px; letter-spacing: 3px; text-transform: uppercase;">Daily Analysis</div>
+                
+                <div style="flex:1;"></div> <!-- 佔位符，把文字往下推 -->
+                
+                <div class="click-hint" style="font-size: 0.85rem; letter-spacing: 2px; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); padding: 8px 24px; border-radius: 50px; background: rgba(255,255,255,0.05);">
+                    點擊揭示
+                </div>
+            </div>
+            <div class="fortune-card-back" id="fortune-result"></div>
+        </div>
+    </div>
+    <button class="close-fortune" onclick="closeFortuneModal()">關閉</button>
 </div>
 
 <script src="data_static.js"></script>
@@ -3692,6 +3878,8 @@ window.loadMolecule = function(key, variant) {
     window._nativeLoadMolecule(key, variant);
 };
 
+
+
 window.loadOrbital = function(type) {
     window.currentOrbitalMode = true;
     window.currentOrbitalType = type;
@@ -3773,6 +3961,123 @@ window.loadMolecule = function(key, variant) {
     // 執行原始載入
     window._nativeLoadMolecule(key, variant);
 };
+
+let isFortuneRevealed = false;
+
+function openFortuneModal() {
+    const modal = document.getElementById('fortune-modal');
+    const card = document.getElementById('fortune-card');
+    const inner = document.querySelector('.fortune-card-inner'); // 抓取內部旋轉層
+    if (!modal || !card || !inner) return;
+    
+    // 1. 顯示 Modal
+    modal.classList.add('show');
+    
+    // 2. ★關鍵修正：瞬間切斷動畫，強制重置★
+    // 這樣關掉再打開時，才不會看到它還在轉
+    inner.style.transition = 'none'; // 暫時關閉動畫效果
+    card.classList.remove('flipped'); // 移除翻轉狀態
+    
+    // 3. 強制瀏覽器「讀取」一次狀態 (Reflow)，讓它意識到動畫被關了
+    void card.offsetWidth; 
+    
+    // 4. 恢復動畫效果，等待下一次點擊
+    inner.style.transition = ''; 
+
+    // 5. 清空背面文字
+    setTimeout(() => {
+        const resultDiv = document.getElementById('fortune-result');
+        if(resultDiv) resultDiv.innerHTML = '';
+    }, 100);
+
+    isFortuneRevealed = false;
+}
+
+function closeFortuneModal() {
+    const modal = document.getElementById('fortune-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function revealFortune() {
+    if (isFortuneRevealed) return;
+    
+    isFortuneRevealed = true;
+
+    // 1. 開始旋轉 (這時候背面是空的，沒有字)
+    const card = document.getElementById('fortune-card');
+    card.classList.add('flipped');
+
+    // ========== [每日運勢邏輯設定] ==========
+    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
+    
+    let pickIndex;
+
+    if (ENABLE_DAILY_LIMIT) {
+        // 1. 計算台灣時間 (UTC+8)
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const twTime = new Date(utc + (3600000 * 8)); // 台灣現在時間
+
+        // 2. 計算「運勢日期」 (早上8點才換日，所以將時間減去8小時來取日期)
+        // 例如：12/16 07:59 -> 減8小時 -> 12/15 23:59 -> 算 12/15 的運勢
+        // 例如：12/16 08:01 -> 減8小時 -> 12/16 00:01 -> 算 12/16 的運勢
+        const resetHour = 8; 
+        const adjustTime = new Date(twTime.getTime() - (resetHour * 3600000));
+        const todayKey = adjustTime.toISOString().split('T')[0]; // 格式：YYYY-MM-DD
+
+        // 3. 讀取紀錄
+        const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
+
+        // 4. 判斷是否同一天
+        if (record.date === todayKey && record.index !== undefined) {
+            // 是同一天，使用舊的結果
+            pickIndex = record.index;
+        } else {
+            // 是新的一天 (或第一次)，產生新亂數並存檔
+            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
+            localStorage.setItem('daily_fortune_record', JSON.stringify({
+                date: todayKey,
+                index: pickIndex
+            }));
+        }
+    } else {
+        // 沒開啟限制，直接隨機
+        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
+    }
+
+    // 2. 根據索引取出資料
+    const pick = ELEMENT_FORTUNES[pickIndex];
+    let stars = "";
+    for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
+
+    const resultHtml = `
+        <div class="fortune-symbol">${pick.s}</div>
+        <div style="font-size:0.9rem; color:#a5b4fc;">${pick.n} (Z=${pick.z})</div>
+        <div style="width:100%; height:1px; background:rgba(255,255,255,0.2); margin:10px 0;"></div>
+        <div class="fortune-title">${pick.title} <span style="font-size:0.8em; font-weight:normal; color:#818cf8;">${pick.title_en}</span></div>
+        <div class="fortune-oracle-text">"${pick.oracle_text}"</div>
+        <div class="fortune-score">運勢指數：${stars}</div>
+        <div class="fortune-guide">${pick.guide}</div>
+    `;
+    
+    // 3. ★關鍵修正：延遲 1.5 秒後才填入文字★
+    // 動畫總長 2秒，所以在 1.5秒時出現文字最剛好 (快停下來的時候)
+    setTimeout(() => {
+        const resultContainer = document.getElementById('fortune-result');
+        if (resultContainer) {
+            resultContainer.style.opacity = 0; // 先隱藏
+            resultContainer.innerHTML = resultHtml;
+            
+            // 淡入效果
+            requestAnimationFrame(() => {
+                resultContainer.style.transition = 'opacity 0.5s ease';
+                resultContainer.style.opacity = 1;
+            });
+        }
+    }, 1500);
+}
 
 </script>
 </body>
