@@ -574,12 +574,18 @@
 
 /* --- 每日運勢 UI (Mystical Theme) --- */
 .fortune-entry-btn {
-    /* 基礎設定 */
-    width: 100%;
-    margin-top: 15px;
-    padding: 10px; /* 手機版改小一點 */
-    border-radius: 25px; /* 改成膠囊狀更精緻 */
-    font-size: 0.9rem;
+    /* ★★★ 位置大修正：改為固定定位，緊貼建議清單下方 ★★★ */
+    position: fixed;
+    z-index: 60; /* 與建議標籤同層級 */
+    
+    /* 電腦版位置設定 */
+    right: 25px;
+    top: 190px; /* 建議清單約在 top:80px，高度約100px，所以這裡設 190px */
+    width: 170px; /* 寬度與建議清單一致，整齊美觀 */
+    
+    padding: 8px 0; /* 縮小內距，讓按鈕扁一點，不佔空間 */
+    border-radius: 12px;
+    font-size: 0.85rem; /* 字體稍微縮小 */
     font-weight: bold;
     cursor: pointer;
     text-align: center;
@@ -587,29 +593,28 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    position: relative;
+    gap: 6px;
     overflow: hidden;
     pointer-events: auto; 
-    z-index: 100;
     
-    /* 星空風格背景 */
-    background: radial-gradient(circle at center, #2e1065 0%, #0f172a 100%);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    color: #e0e7ff;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-    text-shadow: 0 0 5px rgba(167, 139, 250, 0.8);
+    /* 星空風格：加深背景色，與黑底融合 */
+    background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #c4b5fd; /* 字體改淡紫，更有質感 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+    text-shadow: 0 0 5px rgba(139, 92, 246, 0.5);
 }
 
-/* 手機版特別優化：避免遮擋 */
+/* 手機版特別優化：位置更緊湊 */
 @media (max-width: 768px) {
     .fortune-entry-btn {
-        width: auto; /* 寬度自動 */
-        display: inline-flex; /* 不佔滿整行 */
-        padding: 8px 16px;
-        font-size: 0.85rem;
-        margin-top: 10px;
-        background: rgba(15, 23, 42, 0.8); /* 半透明黑底 */
+        right: 15px;
+        top: 125px; /* 手機版建議清單約在 top:20px，算上高度後，放在 125px 剛好 */
+        width: 160px; /* 手機版寬度 */
+        
+        padding: 6px 0; /* 手機版再扁一點 */
+        font-size: 0.8rem;
+        background: rgba(2, 6, 23, 0.95); /* 極深色背景，防遮擋 */
         backdrop-filter: blur(4px);
     }
 }
