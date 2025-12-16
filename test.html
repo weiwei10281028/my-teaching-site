@@ -574,151 +574,174 @@
 
 /* --- 每日運勢 UI (Mystical Theme) --- */
 .fortune-entry-btn {
-    width: 100%;
-    margin-top: 15px; /* 在「你可能還想看」下方留點距離 */
-    background: linear-gradient(135deg, #4c1d95 0%, #8b5cf6 100%);
-    border: 1px solid rgba(167, 139, 250, 0.5);
-    color: #ede9fe;
-    padding: 12px;
+    /* ★★★ 位置大修正：改為固定定位，緊貼建議清單下方 ★★★ */
+    position: fixed;
+    z-index: 60; /* 與建議標籤同層級 */
+    
+    /* 電腦版位置設定 */
+    right: 25px;
+    top: 190px; /* 建議清單約在 top:80px，高度約100px，所以這裡設 190px */
+    width: 170px; /* 寬度與建議清單一致，整齊美觀 */
+    
+    padding: 8px 0; /* 縮小內距，讓按鈕扁一點，不佔空間 */
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 0.85rem; /* 字體稍微縮小 */
     font-weight: bold;
     cursor: pointer;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    position: relative;
+    gap: 6px;
     overflow: hidden;
-/* ★★★ 關鍵修正：加上這行，按鈕才能被點到！ ★★★ */
     pointer-events: auto; 
-    z-index: 100; /* 確保它浮在最上面 */
+    
+    /* 星空風格：加深背景色，與黑底融合 */
+    background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #c4b5fd; /* 字體改淡紫，更有質感 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+    text-shadow: 0 0 5px rgba(139, 92, 246, 0.5);
 }
 
-/* 滑鼠移過去的效果 */
+/* 手機版特別優化：位置更緊湊 */
+@media (max-width: 768px) {
+    .fortune-entry-btn {
+        right: 15px;
+        top: 125px; /* 手機版建議清單約在 top:20px，算上高度後，放在 125px 剛好 */
+        width: 160px; /* 手機版寬度 */
+        
+        padding: 6px 0; /* 手機版再扁一點 */
+        font-size: 0.8rem;
+        background: rgba(2, 6, 23, 0.95); /* 極深色背景，防遮擋 */
+        backdrop-filter: blur(4px);
+    }
+}
+
 .fortune-entry-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
-    background: linear-gradient(135deg, #5b21b6 0%, #a78bfa 100%); /* 變亮一點 */
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+    border-color: #a78bfa;
 }
+.fortune-entry-btn:active { transform: scale(0.95); }
 
-/* ★★★ 新增：按下去的凹陷感 (Active) ★★★ */
-.fortune-entry-btn:active {
-    transform: scale(0.95) translateY(0); /* 縮小並回彈 */
-    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
-    filter: brightness(0.9);
-}
-.fortune-entry-btn::before {
-    content: "";
-    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
-.fortune-entry-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
-}
-.fortune-entry-btn:hover::before { left: 100%; }
-
-/* 運勢 Modal */
+/* Modal 背景：改用 opacity 做漸變動畫 */
 #fortune-modal {
-    display: none;
+    visibility: hidden; /* 預設隱藏 */
+    opacity: 0;
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 5, 20, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(5, 5, 10, 0.95); /* 更深沈的背景 */
+    backdrop-filter: blur(8px);
     z-index: 300;
-    justify-content: center; align-items: center;
-    flex-direction: column;
+    display: flex; /* 常駐 flex，用 opacity 控制顯示 */
+    justify-content: center; align-items: center; flex-direction: column;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 顯示狀態 */
+#fortune-modal.show {
+    visibility: visible;
+    opacity: 1;
 }
 
 .fortune-card-container {
-    width: 320px;
-    min-height: 450px;
-    perspective: 1000px;
+    width: 300px;
+    height: 520px; /* 固定高度，避免破版 */
+    perspective: 1500px; /* 增加透視感 */
     cursor: pointer;
+    position: relative;
 }
 
 .fortune-card-inner {
     position: relative;
     width: 100%; height: 100%;
     text-align: center;
-    transition: transform 0.8s;
+    transition: transform 3.0s cubic-bezier(0.19, 1, 0.22, 1);
     transform-style: preserve-3d;
 }
 
-/* 翻牌動畫狀態 */
+/* 優化：改為轉 3圈半 (1260度)，原本是轉太多圈了 */
 .fortune-card-container.flipped .fortune-card-inner {
-    transform: rotateY(180deg);
+    transform: rotateY(900deg); 
 }
 
 .fortune-card-front, .fortune-card-back {
-    position: absolute;
-    width: 100%; height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
     border-radius: 20px;
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 25px 20px;
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.2); /* 陰影調暗一點 */
 }
 
-/* 卡背 (未翻開) */
+/* 卡背：深沈宇宙 + 隱約科學格線 (仿造中間圖但更暗) */
 .fortune-card-front {
-    background: linear-gradient(135deg, #2e1065 0%, #000000 100%);
-    border: 2px solid #a78bfa;
+    /* 背景底色：極深的黑藍色 */
+    background-color: #020617;
+    
+    /* 背景圖層：
+       1. 隱約的網格 (模仿週期表格子) 
+       2. 中央的深紫色星雲光暈 
+       3. 頂部的深藍色光暈 
+    */
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, #312e81 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, #1e1b4b 0%, transparent 50%);
+        
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%; /* 格子大小 */
+    background-position: center;
+    
+    border: 1px solid rgba(139, 92, 246, 0.3); /* 邊框調暗 */
+    justify-content: center;
 }
 
-/* 卡面 (結果) */
+/* 卡面：結果 */
 .fortune-card-back {
-    background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+    background: linear-gradient(180deg, #312e81 0%, #111827 100%);
     border: 2px solid #818cf8;
-    transform: rotateY(180deg);
+    transform: rotateY(180deg); /* 修正：改回標準 180 度 */
     color: #e0e7ff;
+    justify-content: flex-start;
 }
 
-/* 內容樣式 */
-.fortune-symbol {
-    font-size: 4rem; font-weight: 900; color: #fff;
-    text-shadow: 0 0 20px #8b5cf6;
-    margin-bottom: 5px;
+/* 內容排版優化 */
+.fortune-symbol { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 25px #8b5cf6; margin-bottom: 15px; line-height: 1.2; }
+.fortune-sub { font-size: 0.9rem; color: #a5b4fc; margin-bottom: 10px; }
+.fortune-divider { width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); margin: 10px 0; }
+.fortune-title { font-size: 1.5rem; color: #c4b5fd; margin-bottom: 5px; font-weight: bold; }
+.fortune-oracle-text {
+    font-family: 'Times New Roman', serif; font-style: italic; color: #67e8f9; 
+    margin: 10px 0 15px 0; font-size: 1.05rem; line-height: 1.4; padding: 0 5px;
+    text-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
 }
-.fortune-title {
-    font-size: 1.5rem; color: #c4b5fd; margin-bottom: 10px; font-weight: bold;
-}
-.fortune-oracle {
-    font-family: serif; font-style: italic; color: #a5b4fc; margin-bottom: 15px; font-size: 1.1rem;
-}
-.fortune-score {
-    color: #fbbf24; font-size: 1.2rem; margin-bottom: 20px; letter-spacing: 3px;
-}
+.fortune-score { color: #facc15; font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 3px; }
+
+/* ★★★ 解決文字溢出問題：限制高度並允許滑動 ★★★ */
 .fortune-guide {
-    font-size: 1rem; line-height: 1.6; text-align: justify; color: #e0e7ff;
-    background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;
+    font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #e2e8f0;
+    background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.1);
+    width: 100%;
+    /* 關鍵：彈性高度 */
+    flex: 1; 
+    overflow-y: auto; /* 內容太多時出現卷軸 */
+    /* 美化捲軸 */
+    scrollbar-width: thin;
+    scrollbar-color: #6366f1 rgba(0,0,0,0.3);
 }
-.close-fortune {
-    margin-top: 30px;
-    padding: 8px 20px;
-    background: transparent;
-    border: 1px solid #6b7280;
-    color: #9ca3af;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.close-fortune:hover { border-color: #fff; color: #fff; }
 
-/* 抽卡中的動畫 */
-@keyframes pulse-glow {
-    0% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
-    50% { box-shadow: 0 0 50px rgba(139, 92, 246, 0.8); }
-    100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+.close-fortune {
+    margin-top: 25px; padding: 8px 25px;
+    background: rgba(255,255,255,0.1); border: 1px solid #4b5563;
+    color: #cbd5e1; border-radius: 20px; cursor: pointer; transition: 0.2s;
+    font-size: 0.9rem;
 }
-.shuffling { animation: pulse-glow 1s infinite; }
+.close-fortune:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
+
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
 
 </style>
@@ -882,9 +905,16 @@
 <div id="fortune-modal">
     <div class="fortune-card-container" id="fortune-card" onclick="revealFortune()">
         <div class="fortune-card-inner">
-            <div class="fortune-card-front shuffling">
-                <div style="font-size: 3rem;">⚛️</div>
-                <div style="margin-top:20px; color:#c4b5fd; font-weight:bold;">點擊抽取今日元素</div>
+            <div class="fortune-card-front">
+                <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px #a78bfa);">⚛️</div>
+                <div class="spell-text">Elementa Revelio</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px; letter-spacing: 3px; text-transform: uppercase;">Daily Analysis</div>
+                
+                <div style="flex:1;"></div> <!-- 佔位符，把文字往下推 -->
+                
+                <div class="click-hint" style="font-size: 0.85rem; letter-spacing: 2px; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); padding: 8px 24px; border-radius: 50px; background: rgba(255,255,255,0.05);">
+                    點擊揭示
+                </div>
             </div>
             <div class="fortune-card-back" id="fortune-result"></div>
         </div>
@@ -3942,25 +3972,88 @@ let isFortuneRevealed = false;
 function openFortuneModal() {
     const modal = document.getElementById('fortune-modal');
     const card = document.getElementById('fortune-card');
-    if (!modal || !card) return;
+    const inner = document.querySelector('.fortune-card-inner'); // 抓取內部旋轉層
+    if (!modal || !card || !inner) return;
     
-    modal.style.display = 'flex';
-    card.classList.remove('flipped');
+    // 1. 顯示 Modal
+    modal.classList.add('show');
+    
+    // 2. ★關鍵修正：瞬間切斷動畫，強制重置★
+    // 這樣關掉再打開時，才不會看到它還在轉
+    inner.style.transition = 'none'; // 暫時關閉動畫效果
+    card.classList.remove('flipped'); // 移除翻轉狀態
+    
+    // 3. 強制瀏覽器「讀取」一次狀態 (Reflow)，讓它意識到動畫被關了
+    void card.offsetWidth; 
+    
+    // 4. 恢復動畫效果，等待下一次點擊
+    inner.style.transition = ''; 
+
+    // 5. 清空背面文字
+    setTimeout(() => {
+        const resultDiv = document.getElementById('fortune-result');
+        if(resultDiv) resultDiv.innerHTML = '';
+    }, 100);
+
     isFortuneRevealed = false;
-    card.style.transform = "scale(0.8)";
-    setTimeout(() => { card.style.transform = "scale(1)"; }, 100);
 }
 
 function closeFortuneModal() {
-    document.getElementById('fortune-modal').style.display = 'none';
+    const modal = document.getElementById('fortune-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 function revealFortune() {
     if (isFortuneRevealed) return;
     
-    // 從 ELEMENT_FORTUNES 資料庫中隨機選一個
-    const pick = ELEMENT_FORTUNES[Math.floor(Math.random() * ELEMENT_FORTUNES.length)];
+    isFortuneRevealed = true;
+
+    // 1. 開始旋轉 (這時候背面是空的，沒有字)
+    const card = document.getElementById('fortune-card');
+    card.classList.add('flipped');
+
+    // ========== [每日運勢邏輯設定] ==========
+    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
     
+    let pickIndex;
+
+    if (ENABLE_DAILY_LIMIT) {
+        // 1. 計算台灣時間 (UTC+8)
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const twTime = new Date(utc + (3600000 * 8)); // 台灣現在時間
+
+        // 2. 計算「運勢日期」 (早上8點才換日，所以將時間減去8小時來取日期)
+        // 例如：12/16 07:59 -> 減8小時 -> 12/15 23:59 -> 算 12/15 的運勢
+        // 例如：12/16 08:01 -> 減8小時 -> 12/16 00:01 -> 算 12/16 的運勢
+        const resetHour = 8; 
+        const adjustTime = new Date(twTime.getTime() - (resetHour * 3600000));
+        const todayKey = adjustTime.toISOString().split('T')[0]; // 格式：YYYY-MM-DD
+
+        // 3. 讀取紀錄
+        const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
+
+        // 4. 判斷是否同一天
+        if (record.date === todayKey && record.index !== undefined) {
+            // 是同一天，使用舊的結果
+            pickIndex = record.index;
+        } else {
+            // 是新的一天 (或第一次)，產生新亂數並存檔
+            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
+            localStorage.setItem('daily_fortune_record', JSON.stringify({
+                date: todayKey,
+                index: pickIndex
+            }));
+        }
+    } else {
+        // 沒開啟限制，直接隨機
+        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
+    }
+
+    // 2. 根據索引取出資料
+    const pick = ELEMENT_FORTUNES[pickIndex];
     let stars = "";
     for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
 
@@ -3974,9 +4067,21 @@ function revealFortune() {
         <div class="fortune-guide">${pick.guide}</div>
     `;
     
-    document.getElementById('fortune-result').innerHTML = resultHtml;
-    document.getElementById('fortune-card').classList.add('flipped');
-    isFortuneRevealed = true;
+    // 3. ★關鍵修正：延遲 1.5 秒後才填入文字★
+    // 動畫總長 2秒，所以在 1.5秒時出現文字最剛好 (快停下來的時候)
+    setTimeout(() => {
+        const resultContainer = document.getElementById('fortune-result');
+        if (resultContainer) {
+            resultContainer.style.opacity = 0; // 先隱藏
+            resultContainer.innerHTML = resultHtml;
+            
+            // 淡入效果
+            requestAnimationFrame(() => {
+                resultContainer.style.transition = 'opacity 0.5s ease';
+                resultContainer.style.opacity = 1;
+            });
+        }
+    }, 1500);
 }
 
 </script>
