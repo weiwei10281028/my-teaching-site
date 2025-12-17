@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.13 (Plasma Fixed)</title>
+    <title>CHEM STUDIO</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -698,40 +698,33 @@
     justify-content: center;
 }
 
-/* 卡面：結果 */
-.fortune-card-back {
-    background: linear-gradient(180deg, #312e81 0%, #111827 100%);
-    border: 2px solid #818cf8;
-    transform: rotateY(180deg); /* 修正：改回標準 180 度 */
-    color: #e0e7ff;
-    justify-content: flex-start;
-}
+/* --- 運勢卡片背面 (上中下結構 + 緊湊版) --- */
+/* --- 運勢卡片背面 (緊湊優化版) --- */
+.fortune-card-back { display:flex; flex-direction:column; padding:18px; background:linear-gradient(180deg,#1e1b4b 0%,#0f172a 100%); border:2px solid #818cf8; color:#e0e7ff; overflow:hidden; transform:rotateY(180deg); justify-content:flex-start; }
 
-/* 內容排版優化 */
-.fortune-symbol { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 25px #8b5cf6; margin-bottom: 15px; line-height: 1.2; }
-.fortune-sub { font-size: 0.9rem; color: #a5b4fc; margin-bottom: 10px; }
-.fortune-divider { width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); margin: 10px 0; }
-.fortune-title { font-size: 1.5rem; color: #c4b5fd; margin-bottom: 5px; font-weight: bold; }
-.fortune-oracle-text {
-    font-family: 'Times New Roman', serif; font-style: italic; color: #67e8f9; 
-    margin: 10px 0 15px 0; font-size: 1.05rem; line-height: 1.4; padding: 0 5px;
-    text-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
-}
-.fortune-score { color: #facc15; font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 3px; }
+/* 1. 上方資訊列 (符號完美置中) */
+.fortune-header { flex-shrink:0; display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:10px; margin-bottom:10px; }
+.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; } 
+.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 18px rgba(139,92,246,0.9); margin:0; text-align:center; transform:translateX(-3px); }
+.fortune-info-box { flex:1; display:flex; flex-direction:column; text-align:left; justify-content:center; }
+.fortune-meta { font-size:0.8rem; color:#cbd5e1; margin-bottom:2px; font-family:'Segoe UI',sans-serif; }
+.fortune-title-row { display:flex; align-items:baseline; gap:6px; }
+.fortune-title { font-size:1.4rem; color:#c4b5fd; font-weight:bold; line-height:1.2; margin:0; }
+.fortune-title-en { font-size:0.85rem; color:#818cf8; font-weight:normal; }
+.fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; }
 
-/* ★★★ 解決文字溢出問題：限制高度並允許滑動 ★★★ */
-.fortune-guide {
-    font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #e2e8f0;
-    background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    width: 100%;
-    /* 關鍵：彈性高度 */
-    flex: 1; 
-    overflow-y: auto; /* 內容太多時出現卷軸 */
-    /* 美化捲軸 */
-    scrollbar-width: thin;
-    scrollbar-color: #6366f1 rgba(0,0,0,0.3);
-}
+/* 2. 神諭 */
+.fortune-oracle { flex-shrink:0; font-family:'Georgia','Times New Roman',serif; font-style:italic; color:#67e8f9; font-size:0.95rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(34,211,238,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* 3. 運勢文字區 (縮小字體、緊湊) */
+.fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:#6366f1 rgba(0,0,0,0.1); }
+.fortune-guide-text { font-size:0.92rem; line-height:1.6; text-align:left; letter-spacing:0.5px; margin-bottom:15px; color:#f8fafc; font-weight:400; }
+.fortune-science { font-size:0.85rem; color:#6ee7b7; background:rgba(16,185,129,0.15); padding:8px; border-radius:6px; border-left:3px solid #10b981; line-height:1.4; text-align:left; letter-spacing:0.5px; }
+
+/* 4. 幸運物區塊 (移除數字，橫式滿版) */
+.fortune-lucky { flex-shrink:0; margin-top:12px; background:linear-gradient(90deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03)); border-radius:10px; padding:10px 15px; display:flex; flex-direction:column; gap:4px; border:1px solid rgba(255,255,255,0.15); box-shadow:0 4px 8px rgba(0,0,0,0.3); text-align:left; }
+.lucky-title { color:#38bdf8; font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; }
+.lucky-desc { font-size:0.85rem; color:#e2e8f0; line-height:1.4; opacity:0.95; margin-left:2px; }
 
 .close-fortune {
     margin-top: 25px; padding: 8px 25px;
@@ -752,7 +745,7 @@
     <div class="viewport-area" id="viewport">
         <!-- 標題與資訊顯示區 -->
         <div class="viewport-header">
-            <h1 class="title">MOLECULAR SIMULATOR</h1>
+            <h1 class="title">CHEM STUDIO</h1>
             
             <div class="molecule-display-info" id="molecule-display-info">
                 <div class="info-formula" id="info-formula"></div>
@@ -4007,79 +4000,51 @@ function closeFortuneModal() {
 
 function revealFortune() {
     if (isFortuneRevealed) return;
-    
     isFortuneRevealed = true;
+    document.getElementById('fortune-card').classList.add('flipped');
 
-    // 1. 開始旋轉 (這時候背面是空的，沒有字)
-    const card = document.getElementById('fortune-card');
-    card.classList.add('flipped');
-
-    // ========== [每日運勢邏輯設定] ==========
-    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
-    
+    // 1. 抽取邏輯
+    const ENABLE_DAILY_LIMIT = false; 
     let pickIndex;
-
     if (ENABLE_DAILY_LIMIT) {
-        // 1. 計算台灣時間 (UTC+8)
-        const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const twTime = new Date(utc + (3600000 * 8)); // 台灣現在時間
-
-        // 2. 計算「運勢日期」 (早上8點才換日，所以將時間減去8小時來取日期)
-        // 例如：12/16 07:59 -> 減8小時 -> 12/15 23:59 -> 算 12/15 的運勢
-        // 例如：12/16 08:01 -> 減8小時 -> 12/16 00:01 -> 算 12/16 的運勢
-        const resetHour = 8; 
-        const adjustTime = new Date(twTime.getTime() - (resetHour * 3600000));
-        const todayKey = adjustTime.toISOString().split('T')[0]; // 格式：YYYY-MM-DD
-
-        // 3. 讀取紀錄
+        const todayKey = new Date(new Date().getTime() + (new Date().getTimezoneOffset()*60000) + (3600000*(8-8))).toISOString().split('T')[0]; 
         const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
+        if (record.date === todayKey && record.index !== undefined) { pickIndex = record.index; } 
+        else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); }
+    } else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); }
 
-        // 4. 判斷是否同一天
-        if (record.date === todayKey && record.index !== undefined) {
-            // 是同一天，使用舊的結果
-            pickIndex = record.index;
-        } else {
-            // 是新的一天 (或第一次)，產生新亂數並存檔
-            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
-            localStorage.setItem('daily_fortune_record', JSON.stringify({
-                date: todayKey,
-                index: pickIndex
-            }));
-        }
-    } else {
-        // 沒開啟限制，直接隨機
-        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
-    }
-
-    // 2. 根據索引取出資料
+    // 2. 取得資料
     const pick = ELEMENT_FORTUNES[pickIndex];
-    let stars = "";
-    for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
+    let stars = ""; for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
+    const db = (typeof LUCKY_ITEMS_DB !== 'undefined') ? LUCKY_ITEMS_DB : {};
+    const lucky = db[pick.z] || { item: "微笑", reason: "保持好心情就是最好的幸運。" };
 
+    // 3. 生成 HTML (移除 lucky-num，版面橫向滿版)
     const resultHtml = `
-        <div class="fortune-symbol">${pick.s}</div>
-        <div style="font-size:0.9rem; color:#a5b4fc;">${pick.n} (Z=${pick.z})</div>
-        <div style="width:100%; height:1px; background:rgba(255,255,255,0.2); margin:10px 0;"></div>
-        <div class="fortune-title">${pick.title} <span style="font-size:0.8em; font-weight:normal; color:#818cf8;">${pick.title_en}</span></div>
-        <div class="fortune-oracle-text">"${pick.oracle_text}"</div>
-        <div class="fortune-score">運勢指數：${stars}</div>
-        <div class="fortune-guide">${pick.guide}</div>
-    `;
-    
-    // 3. ★關鍵修正：延遲 1.5 秒後才填入文字★
-    // 動畫總長 2秒，所以在 1.5秒時出現文字最剛好 (快停下來的時候)
+        <div class="fortune-header">
+            <div class="fortune-symbol-box"><div class="fortune-symbol">${pick.s}</div></div>
+            <div class="fortune-info-box">
+                <div class="fortune-meta">${pick.n} (Atomic No. ${pick.z})</div>
+                <div class="fortune-title-row"><div class="fortune-title">${pick.title}</div><div class="fortune-title-en">${pick.title_en}</div></div>
+                <div class="fortune-score">${stars}</div>
+            </div>
+        </div>
+        <div class="fortune-oracle">“ ${pick.oracle_text} ”</div>
+        <div class="fortune-guide-container">
+            <div class="fortune-guide-text">${pick.guide}</div>
+            <div class="fortune-science"><strong>⚛️ 科學冷知識：</strong><br>${pick.science}</div>
+        </div>
+        <div class="fortune-lucky">
+            <div class="lucky-title">🍀 幸運物：${lucky.item}</div>
+            <div class="lucky-desc">${lucky.reason}</div>
+        </div>`;
+
+    // 4. 延遲顯示
     setTimeout(() => {
-        const resultContainer = document.getElementById('fortune-result');
-        if (resultContainer) {
-            resultContainer.style.opacity = 0; // 先隱藏
-            resultContainer.innerHTML = resultHtml;
-            
-            // 淡入效果
-            requestAnimationFrame(() => {
-                resultContainer.style.transition = 'opacity 0.5s ease';
-                resultContainer.style.opacity = 1;
-            });
+        const container = document.getElementById('fortune-result');
+        if (container) {
+            container.style.opacity = 0; container.innerHTML = resultHtml;
+            requestAnimationFrame(() => { container.style.transition = 'opacity 0.5s ease'; container.style.opacity = 1; });
         }
     }, 1500);
 }
