@@ -2679,16 +2679,19 @@ function setupInteractions() {
         startX = x; startY = y; lastMouse = { x, y }; 
         rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
         clearTimeout(longPressTimer);
-        // --- [核心修正] 如果在成面模式，按下瞬間立即判定選取 ---
-        if (isFaceBuildMode) {
-            checkAtomClick(x, y);
-        }
 
-        // 只有非成面模式才需要這個計時器來觸發混成軌域提示
-        if (!isFaceBuildMode) {
+        if (isFaceBuildMode) {
+            // 手機版優化：成面模式需停留 0.2 秒才觸發，防止旋轉誤觸導致選取失敗
+            longPressTimer = setTimeout(() => {
+                checkAtomClick(startX, startY);
+                isLongPressActive = true; // 標記已觸發，防止放開時重複選取
+                if (navigator.vibrate) navigator.vibrate(30); 
+            }, 200);
+        } else {
+            // 正常模式：長按 0.5 秒顯示混成軌域
             longPressTimer = setTimeout(() => {
                 isDragging = false; isLongPressActive = true; 
-                checkAtomClick(x, y); 
+                checkAtomClick(startX, startY); 
                 if (navigator.vibrate) navigator.vibrate(40);
             }, LONG_PRESS_MS);
         }
@@ -2708,7 +2711,8 @@ function setupInteractions() {
     };
     const handleEnd = (x, y) => { 
         clearTimeout(longPressTimer); 
-        // --- [核心修正] 如果是成面模式，因為 Start 處理過了，End 就直接結束 ---
+        
+        // 若在成面模式，選取已在 0.2 秒計時器完成，此處僅重置旗標
         if (isFaceBuildMode) {
             isDragging = false;
             isLongPressActive = false;
@@ -4124,7 +4128,7 @@ function revealFortune() {
     document.getElementById('fortune-card').classList.add('flipped');
 
     // 1. 抽取邏輯
-    const ENABLE_DAILY_LIMIT = false; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
+    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
     let pickIndex;
     if (ENABLE_DAILY_LIMIT) {
         const todayKey = new Date(new Date().getTime() + (new Date().getTimezoneOffset()*60000) + (3600000*(8-8))).toISOString().split('T')[0]; 
