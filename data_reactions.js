@@ -110,34 +110,18 @@ function finishReaction(nextKey, nextTitle, variantName = null, description = nu
         loadMolecule(nextKey, variantName); 
         
         if (description) {
+            // 1. 隱藏左上角副標題文字
             const subtitle = document.getElementById("viewport-subtitle");
-            if (subtitle) {
-                // 1. 注入原始完整文字
-                subtitle.innerHTML = description;
-                // 2. 強制設定樣式：琥珀橘實心框、置於名稱下方、寬度自適應
-                subtitle.style.cssText = `
-                    display: block;
-                    margin-top: 10px;
-                    padding: 8px 12px;
-                    border: 1.5px solid #f59e0b;
-                    border-radius: 12px;
-                    background-color: rgba(0, 0, 0, 0.85);
-                    backdrop-filter: blur(8px);
-                    color: #f59e0b;
-                    font-size: 0.95rem;
-                    font-weight: 500;
-                    line-height: 1.6;
-                    max-width: 30%;
-                    width: fit-content;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-                    text-align: justify;
-                    pointer-events: auto;
-                    z-index: 100;
-                `;
-            }
-            // 隱藏重複出現的控制面板卡片
+            if (subtitle) subtitle.style.display = "none";
+
+            // 2. 將描述文字放回控制面板的「小知識」卡片
             const kCard = document.getElementById("knowledge-card");
-            if (kCard) kCard.style.display = "none";
+            const kText = document.getElementById("knowledge-text");
+            if (kCard && kText) {
+                kText.innerHTML = description;
+                kCard.style.display = "block";
+                kCard.classList.add("expanded"); // 自動展開卡片
+            }
         }
         
         svg.classList.remove("scene-blur-out");
