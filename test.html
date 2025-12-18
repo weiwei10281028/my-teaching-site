@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>分子結構模擬實驗室 v16.13 (Plasma Fixed)</title>
+    <title>CHEM STUDIO</title>
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
@@ -698,40 +698,33 @@
     justify-content: center;
 }
 
-/* 卡面：結果 */
-.fortune-card-back {
-    background: linear-gradient(180deg, #312e81 0%, #111827 100%);
-    border: 2px solid #818cf8;
-    transform: rotateY(180deg); /* 修正：改回標準 180 度 */
-    color: #e0e7ff;
-    justify-content: flex-start;
-}
+/* --- 運勢卡片背面 (上中下結構 + 緊湊版) --- */
+/* --- 運勢卡片背面 (緊湊優化版) --- */
+.fortune-card-back { display:flex; flex-direction:column; padding:18px; background:linear-gradient(180deg,#1e1b4b 0%,#0f172a 100%); border:2px solid #818cf8; color:#e0e7ff; overflow:hidden; transform:rotateY(180deg); justify-content:flex-start; }
 
-/* 內容排版優化 */
-.fortune-symbol { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 25px #8b5cf6; margin-bottom: 15px; line-height: 1.2; }
-.fortune-sub { font-size: 0.9rem; color: #a5b4fc; margin-bottom: 10px; }
-.fortune-divider { width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); margin: 10px 0; }
-.fortune-title { font-size: 1.5rem; color: #c4b5fd; margin-bottom: 5px; font-weight: bold; }
-.fortune-oracle-text {
-    font-family: 'Times New Roman', serif; font-style: italic; color: #67e8f9; 
-    margin: 10px 0 15px 0; font-size: 1.05rem; line-height: 1.4; padding: 0 5px;
-    text-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
-}
-.fortune-score { color: #facc15; font-size: 1.1rem; margin-bottom: 15px; letter-spacing: 3px; }
+/* 1. 上方資訊列 (修正版：強制滿版與符號置中) */
+.fortune-header { width:100%; flex-shrink:0; display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:12px; margin-bottom:12px; }
+.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; }
+.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 18px rgba(139,92,246,0.9); margin:0; width:100%; text-align:center; transform:translateX(-3px); }
+.fortune-info-box { flex:1; display:flex; flex-direction:column; text-align:left; justify-content:center; overflow:hidden; }
+.fortune-meta { font-size:0.8rem; color:#cbd5e1; margin-bottom:2px; font-family:'Segoe UI',sans-serif; }
+.fortune-title-row { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+.fortune-title { font-size:1.4rem; color:#c4b5fd; font-weight:bold; line-height:1.2; margin:0; }
+.fortune-title-en { font-size:0.85rem; color:#818cf8; font-weight:normal; }
+.fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; }
 
-/* ★★★ 解決文字溢出問題：限制高度並允許滑動 ★★★ */
-.fortune-guide {
-    font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #e2e8f0;
-    background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    width: 100%;
-    /* 關鍵：彈性高度 */
-    flex: 1; 
-    overflow-y: auto; /* 內容太多時出現卷軸 */
-    /* 美化捲軸 */
-    scrollbar-width: thin;
-    scrollbar-color: #6366f1 rgba(0,0,0,0.3);
-}
+/* 2. 神諭 */
+.fortune-oracle { flex-shrink:0; font-family:'Georgia','Times New Roman',serif; font-style:italic; color:#67e8f9; font-size:0.95rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(34,211,238,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* 3. 運勢文字區 (縮小字體、緊湊) */
+.fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:#6366f1 rgba(0,0,0,0.1); }
+.fortune-guide-text { font-size:0.92rem; line-height:1.6; text-align:left; letter-spacing:0.5px; margin-bottom:15px; color:#f8fafc; font-weight:400; }
+.fortune-science { font-size:0.85rem; color:#6ee7b7; background:rgba(16,185,129,0.15); padding:8px; border-radius:6px; border-left:3px solid #10b981; line-height:1.4; text-align:left; letter-spacing:0.5px; }
+
+/* 4. 幸運物區塊 (移除數字，橫式滿版) */
+.fortune-lucky { flex-shrink:0; margin-top:12px; background:linear-gradient(90deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03)); border-radius:10px; padding:10px 15px; display:flex; flex-direction:column; gap:4px; border:1px solid rgba(255,255,255,0.15); box-shadow:0 4px 8px rgba(0,0,0,0.3); text-align:left; }
+.lucky-title { color:#38bdf8; font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; }
+.lucky-desc { font-size:0.85rem; color:#e2e8f0; line-height:1.4; opacity:0.95; margin-left:2px; }
 
 .close-fortune {
     margin-top: 25px; padding: 8px 25px;
@@ -752,7 +745,7 @@
     <div class="viewport-area" id="viewport">
         <!-- 標題與資訊顯示區 -->
         <div class="viewport-header">
-            <h1 class="title">MOLECULAR SIMULATOR</h1>
+            <h1 class="title">CHEM STUDIO</h1>
             
             <div class="molecule-display-info" id="molecule-display-info">
                 <div class="info-formula" id="info-formula"></div>
@@ -831,6 +824,16 @@
 
             <div id="variant-selector"></div>
             
+            <div id="manual-poly-controls" style="margin-top: 10px; margin-bottom: 15px;">
+                <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:8px;" onclick="toggleFaceBuildMode()">點擊三點成面: OFF</button>
+                <div style="display: flex; gap: 5px;">
+                    <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
+                    <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
+                    <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
+                    <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0;" onclick="clearCustomFaces()">清除面</button>
+                </div>
+            </div>
+
             <div class="switch-container">
                 <input type="checkbox" id="toggle-plasma">
                 <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; text-shadow:0 0 5px #a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
@@ -1411,7 +1414,11 @@ function runAcetyleneHydration() {
 
 let currentMolecule = null;
 let currentMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-let rotVelocity = { x: 0, y: 0, z: 0 }; 
+let isFaceBuildMode = false;
+let faceSelection = [];
+let customFaces = [];   
+let currentFaceColor = 'yellow'; // 預設顏色
+let rotVelocity = { x: 0.004, y: 0.004, z: 0 };
 let panOffset = { x: 0, y: 0 }; 
 let isLongPressActive = false;
 let scale = 1.6; 
@@ -2051,6 +2058,23 @@ function renderScene(time = 0) {
             atomPosList.push({ x: obj.x, y: obj.y, z: obj.z, r: obj.r });
         }
     });
+    // --- 手動平面渲染邏輯 ---
+    if (customFaces.length > 0) {
+        customFaces.forEach(faceIndices => {
+            const nodes = faceIndices.map(idx => atomMap.get(idx)).filter(n => n);
+            if (nodes.length === 3) {
+                // 計算面的深度 (三點平均 Z 值)
+                const avgZ = (nodes[0].z + nodes[1].z + nodes[2].z) / 3;
+                renderList.push({
+                    type: 'polyFace',
+                    z: avgZ,
+                    nodes: nodes,
+                    colorType: faceIndices[3] || 'yellow', // 修正變數名稱 faceData -> faceIndices
+                    alpha: isAnyHighlighted ? 0.1 : 1.0
+                });
+            }
+        });
+    }
 
     // --- 3. 處理晶體邊框 (Box Lines) ---
     if (currentMolecule.extraLines) {
@@ -2121,7 +2145,27 @@ function renderScene(time = 0) {
         else if (obj.type === "axisVector") drawAxisVector(obj);
         else if (obj.type === "electron") drawElectron(obj);
         else if (obj.type === "boxLine") drawBoxLine(obj);
+        else if (obj.type === "polyFace") {
+            const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            poly.setAttribute("points", obj.nodes.map(n => `${n.px},${n.py}`).join(" "));
+            
+            // 顏色對照表
+            const colors = {
+                'yellow': { f: "rgba(253, 224, 71, 0.15)", s: "rgba(253, 224, 71, 0.5)" },
+                'cyan':   { f: "rgba(34, 211, 238, 0.15)", s: "rgba(34, 211, 238, 0.5)" },
+                'pink':   { f: "rgba(244, 114, 182, 0.15)", s: "rgba(244, 114, 182, 0.5)" }
+            };
+            const config = colors[obj.colorType] || colors.yellow;
+            
+            poly.setAttribute("fill", config.f);
+            poly.setAttribute("stroke", config.s);
+            poly.setAttribute("stroke-width", "1.0");
+            poly.setAttribute("opacity", obj.alpha);
+            sceneRoot.appendChild(poly);
+        }
+
     });
+    
 }
 
 function drawBoxLine(l) {
@@ -2507,6 +2551,9 @@ function setupInteractions() {
         if(currentKey) loadMolecule(currentKey); 
     });
 
+    const togglePoly = document.getElementById('toggle-polyhedron');
+    if (togglePoly) togglePoly.addEventListener('change', () => { renderScene(); });
+
     const togglePlasma = document.getElementById('toggle-plasma');
     if (togglePlasma) {
         togglePlasma.addEventListener('change', (e) => {
@@ -2632,11 +2679,22 @@ function setupInteractions() {
         startX = x; startY = y; lastMouse = { x, y }; 
         rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
         clearTimeout(longPressTimer);
-        longPressTimer = setTimeout(() => {
-            isDragging = false; isLongPressActive = true; 
-            checkAtomClick(x, y); 
-            if (navigator.vibrate) navigator.vibrate(40);
-        }, LONG_PRESS_MS);
+
+        if (isFaceBuildMode) {
+            // 手機版優化：成面模式需停留 0.2 秒才觸發，防止旋轉誤觸導致選取失敗
+            longPressTimer = setTimeout(() => {
+                checkAtomClick(startX, startY);
+                isLongPressActive = true; // 標記已觸發，防止放開時重複選取
+                if (navigator.vibrate) navigator.vibrate(30); 
+            }, 200);
+        } else {
+            // 正常模式：長按 0.5 秒顯示混成軌域
+            longPressTimer = setTimeout(() => {
+                isDragging = false; isLongPressActive = true; 
+                checkAtomClick(startX, startY); 
+                if (navigator.vibrate) navigator.vibrate(40);
+            }, LONG_PRESS_MS);
+        }
     };
 
     const handleMove = (x, y, sensitivity) => {
@@ -2651,7 +2709,23 @@ function setupInteractions() {
         }
         lastMouse = { x, y };
     };
-    const handleEnd = () => { clearTimeout(longPressTimer); isDragging = false; isLongPressActive = false; };
+    const handleEnd = (x, y) => { 
+        clearTimeout(longPressTimer); 
+        
+        // 若在成面模式，選取已在 0.2 秒計時器完成，此處僅重置旗標
+        if (isFaceBuildMode) {
+            isDragging = false;
+            isLongPressActive = false;
+            return;
+        }
+
+        const moveDist = Math.hypot(x - startX, y - startY);
+        if (!isLongPressActive && moveDist < MOVE_TOLERANCE) {
+            checkAtomClick(x, y);
+        }
+        isDragging = false; 
+        isLongPressActive = false; 
+    };
 
     viewport.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
     viewport.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY, MOUSE_SENSITIVITY));
@@ -2660,6 +2734,7 @@ function setupInteractions() {
     viewport.addEventListener("touchstart", e => {
         if(e.target.closest('.control-button') || e.target.closest('.suggestion-tag')) return;
         if (e.touches.length === 1) {
+            // 手機版也強制立即執行 handleStart 邏輯
             handleStart(e.touches[0].clientX, e.touches[0].clientY);
         } else if (e.touches.length === 2) {
             clearTimeout(longPressTimer); 
@@ -2696,7 +2771,13 @@ function setupInteractions() {
         }
     }, { passive: false });
 
-    viewport.addEventListener("touchend", handleEnd);
+    viewport.addEventListener("touchend", e => {
+        if (e.changedTouches.length > 0) {
+            handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        } else {
+            handleEnd(0, 0);
+        }
+    });
     viewport.addEventListener("wheel", e => {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
         hideHybridTooltip();
@@ -2945,6 +3026,8 @@ function renderConfigList() {
     const filter = input ? input.value.toLowerCase() : "";
     const container = document.getElementById('configListContainer');
     container.innerHTML = "";
+    let shownCount = 0;
+    const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
     ELECTRON_DATA.forEach(el => {
         if (filter && !el.s.toLowerCase().includes(filter) && 
@@ -2952,6 +3035,8 @@ function renderConfigList() {
             !el.z.toString().includes(filter)) {
             return;
         }
+        if (shownCount >= MAX_SHOW) return;
+        shownCount++;
 
         const card = document.createElement('div');
         card.className = 'element-card';
@@ -3112,17 +3197,35 @@ function checkAtomClick(screenX, screenY) {
     const bestMatch = findAtomByScreenPos(screenX, screenY);
     
     if (bestMatch) {
-        if (currentMolecule.isIonic) {
-            // 檢查是否為代表原子 (擁有完整配位數的原子)
-            if (bestMatch.isRepresentative) {
-                if (bestMatch.isHighlighted === "center") {
-                    clearHighlights();
-                } else {
-                    highlightNeighbors(bestMatch);
-                }
+        if (isFaceBuildMode) {
+            const idx = bestMatch.originalIndex;
+            const selectPos = faceSelection.indexOf(idx);
+            
+            if (selectPos > -1) {
+                // --- 再次點擊：取消選取 ---
+                faceSelection.splice(selectPos, 1);
+                bestMatch.isHighlighted = false;
             } else {
-                // 點擊到邊緣殘缺的原子 -> 視為取消
-                // 您也可以選擇 alert("這是晶體邊緣，配位數不完整")，但這裡選擇直接清除比較流暢
+                // --- 正常選取：加入清單 ---
+                faceSelection.push(idx);
+                bestMatch.isHighlighted = "center"; 
+                
+                if (faceSelection.length === 3) {
+                    customFaces.push([...faceSelection, currentFaceColor]);
+                    faceSelection = [];
+                    currentMolecule.renderObjects.forEach(o => o.isHighlighted = false);
+                }
+            }
+            renderScene();
+            return; 
+        }
+
+        // --- 以下為原本的混成軌域/離子判定邏輯 ---
+        if (currentMolecule.isIonic) {
+            if (bestMatch.isRepresentative) {
+                if (bestMatch.isHighlighted === "center") clearHighlights();
+                else highlightNeighbors(bestMatch);
+            } else {
                 clearHighlights();
             }
         } else {
@@ -3134,47 +3237,27 @@ function checkAtomClick(screenX, screenY) {
     }
 }
 
-// [修改] 輔助函式：高亮鄰居 (基於鍵結數據)
 function highlightNeighbors(centerAtom) {
-    // 1. 清除舊的高亮
     currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
-    
-    // 2. 設定中心原子高亮
     centerAtom.isHighlighted = "center"; 
-    
     let count = 0;
-    const centerIdx = centerAtom.originalIndex; // 取得原始索引
-
-    // 3. 遍歷所有鍵結，找出連接的鄰居
-    // 只有當鍵結存在於數據中時，才視為鄰居
+    const centerIdx = centerAtom.originalIndex;
     if (currentMolecule.bonds3D) {
         currentMolecule.bonds3D.forEach(bond => {
-            // bond[0] 和 bond[1] 是原子的索引
-            let neighborIdx = -1;
-            if (bond[0] === centerIdx) neighborIdx = bond[1];
-            else if (bond[1] === centerIdx) neighborIdx = bond[0];
-
-            if (neighborIdx !== -1) {
-                // 找到鄰居物件
-                const neighbor = currentMolecule.renderObjects.find(obj => obj.type === 'atom' && obj.originalIndex === neighborIdx);
-                if (neighbor) {
-                    neighbor.isHighlighted = "neighbor";
-                    count++;
-                }
+            let nIdx = -1;
+            if (bond[0] === centerIdx) nIdx = bond[1];
+            else if (bond[1] === centerIdx) nIdx = bond[0];
+            if (nIdx !== -1) {
+                const n = currentMolecule.renderObjects.find(obj => obj.type === 'atom' && obj.originalIndex === nIdx);
+                if (n) { n.isHighlighted = "neighbor"; count++; }
             }
         });
     }
-    
-    // 4. 更新提示文字 (加入原子名稱)
     const tooltip = document.getElementById('hybrid-label');
     if(tooltip) {
-        tooltip.innerHTML = `<div style="text-align:center;">
-            <span style="color:#facc15; font-weight:bold; font-size:1.2em;">${centerAtom.elem}</span>
-            <br>配位數: <span style="color:#fff; font-weight:bold; font-size:1.4em;">${count}</span>
-        </div>`;
+        tooltip.innerHTML = `<div style="text-align:center;"><span style="color:#facc15; font-weight:bold; font-size:1.2em;">${centerAtom.elem}</span><br>配位數: <span style="color:#fff; font-weight:bold; font-size:1.4em;">${count}</span></div>`;
         tooltip.classList.add('show');
     }
-    
     renderScene();
 }
 
@@ -3182,6 +3265,44 @@ function clearHighlights() {
     if(!currentMolecule) return;
     currentMolecule.renderObjects.forEach(obj => obj.isHighlighted = false);
     renderScene();
+}
+
+function toggleFaceBuildMode() {
+    isFaceBuildMode = !isFaceBuildMode;
+    faceSelection = [];
+    const btn = document.getElementById('btn-face-mode');
+    if (btn) {
+        btn.innerHTML = `點擊三點成面: ${isFaceBuildMode ? 'ON' : 'OFF'}`;
+        btn.style.background = isFaceBuildMode ? "rgba(253, 224, 71, 0.25)" : "rgba(0, 0, 0, 0.4)";
+        btn.style.boxShadow = isFaceBuildMode ? "0 0 15px rgba(253, 224, 71, 0.4)" : "none";
+    }
+    if(currentMolecule) currentMolecule.renderObjects.forEach(o => o.isHighlighted = false);
+    renderScene();
+}
+
+function setFaceColor(color) {
+    currentFaceColor = color;
+    document.querySelectorAll('.face-color-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-color') === color);
+    });
+}
+
+function clearCustomFaces() {
+    customFaces = [];
+    faceSelection = [];
+    if(currentMolecule) currentMolecule.renderObjects.forEach(o => o.isHighlighted = false);
+    renderScene();
+}
+
+// 覆寫載入邏輯：換分子時自動清除平面
+if (typeof loadMolecule === 'function' && !window._manualFaceWrapped) {
+    const _originalLoad = loadMolecule;
+    loadMolecule = function(key, variant) {
+        customFaces = [];
+        faceSelection = [];
+        _originalLoad(key, variant);
+    };
+    window._manualFaceWrapped = true;
 }
 
 function findAtomByScreenPos(screenX, screenY) {
@@ -3476,7 +3597,7 @@ function ensureCanvasLayer() {
     // 我們給寬高加一點緩衝，避免小數點誤差導致頻繁重繪
     if (Math.abs(canvas.width - rect.width * dpr) > 1 || 
         Math.abs(canvas.height - rect.height * dpr) > 1) {
-        
+        if (isMobileDevice && canvas.width > 0) return canvas;
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
         
@@ -3606,10 +3727,13 @@ function initOrbitalUI() {
 
 // 4. 純電子雲生成引擎 (高密度動態版)
 function generateCloudPoints(type) {
+    
+    
     const data = ORBITAL_DATA[type];
     const points = [];
-    // [修改] 大幅提升粒子數量 (4500 -> 20000) 讓雲層更綿密
-    const DOT_COUNT = 20000; 
+    // [優化] 偵測行動裝置，手機版將 20000 降至 3000 以防止 Safari 崩潰
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const DOT_COUNT = isMobileDevice ? 3000 : 20000;
 
     // 輔助：加入隨機動畫參數
     const createPoint = (x, y, z, color) => ({
@@ -4007,79 +4131,51 @@ function closeFortuneModal() {
 
 function revealFortune() {
     if (isFortuneRevealed) return;
-    
     isFortuneRevealed = true;
+    document.getElementById('fortune-card').classList.add('flipped');
 
-    // 1. 開始旋轉 (這時候背面是空的，沒有字)
-    const card = document.getElementById('fortune-card');
-    card.classList.add('flipped');
-
-    // ========== [每日運勢邏輯設定] ==========
+    // 1. 抽取邏輯
     const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
-    
     let pickIndex;
-
     if (ENABLE_DAILY_LIMIT) {
-        // 1. 計算台灣時間 (UTC+8)
-        const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const twTime = new Date(utc + (3600000 * 8)); // 台灣現在時間
-
-        // 2. 計算「運勢日期」 (早上8點才換日，所以將時間減去8小時來取日期)
-        // 例如：12/16 07:59 -> 減8小時 -> 12/15 23:59 -> 算 12/15 的運勢
-        // 例如：12/16 08:01 -> 減8小時 -> 12/16 00:01 -> 算 12/16 的運勢
-        const resetHour = 8; 
-        const adjustTime = new Date(twTime.getTime() - (resetHour * 3600000));
-        const todayKey = adjustTime.toISOString().split('T')[0]; // 格式：YYYY-MM-DD
-
-        // 3. 讀取紀錄
+        const todayKey = new Date(new Date().getTime() + (new Date().getTimezoneOffset()*60000) + (3600000*(8-8))).toISOString().split('T')[0]; 
         const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
+        if (record.date === todayKey && record.index !== undefined) { pickIndex = record.index; } 
+        else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); }
+    } else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); }
 
-        // 4. 判斷是否同一天
-        if (record.date === todayKey && record.index !== undefined) {
-            // 是同一天，使用舊的結果
-            pickIndex = record.index;
-        } else {
-            // 是新的一天 (或第一次)，產生新亂數並存檔
-            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
-            localStorage.setItem('daily_fortune_record', JSON.stringify({
-                date: todayKey,
-                index: pickIndex
-            }));
-        }
-    } else {
-        // 沒開啟限制，直接隨機
-        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length);
-    }
-
-    // 2. 根據索引取出資料
+    // 2. 取得資料
     const pick = ELEMENT_FORTUNES[pickIndex];
-    let stars = "";
-    for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
+    let stars = ""; for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
+    const db = (typeof LUCKY_ITEMS_DB !== 'undefined') ? LUCKY_ITEMS_DB : {};
+    const lucky = db[pick.z] || { item: "微笑", reason: "保持好心情就是最好的幸運。" };
 
+    // 3. 生成 HTML (移除 lucky-num，版面橫向滿版)
     const resultHtml = `
-        <div class="fortune-symbol">${pick.s}</div>
-        <div style="font-size:0.9rem; color:#a5b4fc;">${pick.n} (Z=${pick.z})</div>
-        <div style="width:100%; height:1px; background:rgba(255,255,255,0.2); margin:10px 0;"></div>
-        <div class="fortune-title">${pick.title} <span style="font-size:0.8em; font-weight:normal; color:#818cf8;">${pick.title_en}</span></div>
-        <div class="fortune-oracle-text">"${pick.oracle_text}"</div>
-        <div class="fortune-score">運勢指數：${stars}</div>
-        <div class="fortune-guide">${pick.guide}</div>
-    `;
-    
-    // 3. ★關鍵修正：延遲 1.5 秒後才填入文字★
-    // 動畫總長 2秒，所以在 1.5秒時出現文字最剛好 (快停下來的時候)
+        <div class="fortune-header">
+            <div class="fortune-symbol-box"><div class="fortune-symbol">${pick.s}</div></div>
+            <div class="fortune-info-box">
+                <div class="fortune-meta">${pick.n} (Atomic No. ${pick.z})</div>
+                <div class="fortune-title-row"><div class="fortune-title">${pick.title}</div><div class="fortune-title-en">${pick.title_en}</div></div>
+                <div class="fortune-score">${stars}</div>
+            </div>
+        </div>
+        <div class="fortune-oracle">“ ${pick.oracle_text} ”</div>
+        <div class="fortune-guide-container">
+            <div class="fortune-guide-text">${pick.guide}</div>
+            <div class="fortune-science"><strong>⚛️ 科學冷知識：</strong><br>${pick.science}</div>
+        </div>
+        <div class="fortune-lucky">
+            <div class="lucky-title">🍀 幸運物：${lucky.item}</div>
+            <div class="lucky-desc">${lucky.reason}</div>
+        </div>`;
+
+    // 4. 延遲顯示
     setTimeout(() => {
-        const resultContainer = document.getElementById('fortune-result');
-        if (resultContainer) {
-            resultContainer.style.opacity = 0; // 先隱藏
-            resultContainer.innerHTML = resultHtml;
-            
-            // 淡入效果
-            requestAnimationFrame(() => {
-                resultContainer.style.transition = 'opacity 0.5s ease';
-                resultContainer.style.opacity = 1;
-            });
+        const container = document.getElementById('fortune-result');
+        if (container) {
+            container.style.opacity = 0; container.innerHTML = resultHtml;
+            requestAnimationFrame(() => { container.style.transition = 'opacity 0.5s ease'; container.style.opacity = 1; });
         }
     }, 1500);
 }
