@@ -3026,6 +3026,8 @@ function renderConfigList() {
     const filter = input ? input.value.toLowerCase() : "";
     const container = document.getElementById('configListContainer');
     container.innerHTML = "";
+    let shownCount = 0;
+    const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
     ELECTRON_DATA.forEach(el => {
         if (filter && !el.s.toLowerCase().includes(filter) && 
@@ -3033,6 +3035,8 @@ function renderConfigList() {
             !el.z.toString().includes(filter)) {
             return;
         }
+        if (shownCount >= MAX_SHOW) return;
+        shownCount++;
 
         const card = document.createElement('div');
         card.className = 'element-card';
@@ -3585,23 +3589,20 @@ function ensureCanvasLayer() {
         viewport.appendChild(canvas);
     }
     
-    // 取得裝置像素比 (Retina 螢幕通常是 2 或 3)
+    // 取得裝置像素比
     const dpr = window.devicePixelRatio || 1;
     const rect = viewport.getBoundingClientRect();
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // 如果畫布實際像素尺寸不符，則重設 (避免每幀重設導致閃爍，只在視窗改變時觸發)
-    // 我們給寬高加一點緩衝，避免小數點誤差導致頻繁重繪
-    if (Math.abs(canvas.width - rect.width * dpr) > 1 || 
-        Math.abs(canvas.height - rect.height * dpr) > 1) {
+    // [核心修復] 手機版增加容錯值 (threshold)，防止捲動時寬高微變導致畫布每幀重置
+    const threshold = isMobileDevice ? 5 : 1;
+
+    if (Math.abs(canvas.width - rect.width * dpr) > threshold || 
+        Math.abs(canvas.height - rect.height * dpr) > threshold) {
         
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
-        
-        // CSS 尺寸維持與視窗一致 (瀏覽器會自動縮放，但因為我們像素夠多，縮放後就很清晰)
-        // 注意：這裡不需要設定 style.width/height，因為上面已經設定 width:100%
-        
-        // 儲存 dpr 供渲染時使用
-        canvas.dpr = dpr;
+        canvas.dpr = dpr; // 儲存 dpr 給 renderOrbitals 使用
     }
     return canvas;
 }
@@ -3723,10 +3724,13 @@ function initOrbitalUI() {
 
 // 4. 純電子雲生成引擎 (高密度動態版)
 function generateCloudPoints(type) {
+    
+    
     const data = ORBITAL_DATA[type];
     const points = [];
-    // [修改] 大幅提升粒子數量 (4500 -> 20000) 讓雲層更綿密
-    const DOT_COUNT = 20000; 
+    // [修正] 確保移動端偵測邏輯在函式內
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const DOT_COUNT = isMobile ? 3500 : 20000;
 
     // 輔助：加入隨機動畫參數
     const createPoint = (x, y, z, color) => ({
@@ -3901,14 +3905,12 @@ function renderOrbitals() {
         // 繪圖設定
         ctx.globalCompositeOperation = 'lighter'; // 讓重疊處發光
         
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         projected.forEach(p => {
-            // 粒子大小：隨縮放變化，但保持在合理範圍
-            const size = Math.max(0.6, 1.1 * p.scale); 
-            
+            // [優化] 手機版點數少，所以點要變大 (1.5倍)，透明度要增加 (0.7)
+            const size = (isMobile ? 1.5 : 1.1) * p.scale; 
             ctx.fillStyle = p.color;
-            // [修改] 降低不透明度：因為密度增加4倍，透明度要降低以免變成實心色塊
-            // 從 0.6 降到 0.25，這樣堆疊起來才有雲霧感
-            ctx.globalAlpha = 0.25; 
+            ctx.globalAlpha = isMobile ? 0.7 : 0.25; 
             
             ctx.beginPath();
             ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
@@ -4175,4 +4177,4 @@ function revealFortune() {
 
 </script>
 </body>
-</html>
+            </html>
