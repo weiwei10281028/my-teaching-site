@@ -190,7 +190,7 @@ function markReps(atoms, bonds, cnA, elemA, cnB, elemB) {
 
 
 // ==========================================
-// 金屬晶體生成模組 (Metal Crystal Structures) - V4 (高效能/教學優化版)
+// 金屬晶體生成模組 (CN=12 延伸增強版)
 // ==========================================
 
 function ensureElement(elem, defaultColor, defaultR) {
@@ -199,277 +199,185 @@ function ensureElement(elem, defaultColor, defaultR) {
     }
 }
 
-// 1. 簡單立方 (SC) - [Po] (維持不變)
+// 1. 簡單立方 (SC) 
 function addMetal_SC(elem, name, mp, bp, scale=160) {
     ensureElement(elem, "#ab5c00", 28);
     const atoms = []; const bonds = [];
-    
-    // 生成 3x3x3 網格 (確保中心被包圍)
-    for (let x = -1; x <= 1; x++) {
-        for (let y = -1; y <= 1; y++) {
-            for (let z = -1; z <= 1; z++) {
-                atoms.push({ elem: elem, x: x*scale, y: y*scale, z: z*scale, r: 28, lpCount: 0 });
+    for (let x = 0; x <= 1; x++) {
+        for (let y = 0; y <= 1; y++) {
+            for (let z = 0; z <= 1; z++) {
+                atoms.push({ elem: elem, x: (x-0.5)*scale, y: (y-0.5)*scale, z: (z-0.5)*scale, r: 28, isRepresentative: true });
             }
         }
     }
-    
-    // 連結
     for (let i = 0; i < atoms.length; i++) {
         for (let j = i + 1; j < atoms.length; j++) {
             const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - scale) < 10) bonds.push([i, j, "single"]);
+            if (Math.abs(d - scale) < 10) bonds.push([i, j, "ionic_thick"]);
+        }
+    }
+    addMol(`${elem}|${name}`, "Metal", "簡單立方堆積 (SC)", "52.4%", "6", mp, bp, atoms, bonds, null,
+        `<div class="info-section"><div class="info-title">📦 簡單立方 (SC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 52.4%。原子僅位於立方體頂點，沿著邊長互相接觸。</div></div>`);
+    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "a = 2r"; }
+}
+
+// 2. 體心立方 (BCC)
+function addMetal_BCC(elem, name, mp, bp, scale=200) {
+    ensureElement(elem, "#9ca3af", 24); 
+    const atoms = []; const bonds = [];
+    const h = scale / 2;
+    atoms.push({ elem: elem, x: 0, y: 0, z: 0, r: 24, isRepresentative: true });
+    const pts = [[-h,-h,-h],[h,-h,-h],[h,h,-h],[-h,h,-h],[-h,-h,h],[h,-h,h],[h,h,h],[-h,h,h]];
+    pts.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 24 }));
+    for(let i=1; i<=8; i++) bonds.push([0, i, "ionic_thin"]);
+    const cubeEdges = [[1,2],[2,3],[3,4],[4,1],[5,6],[6,7],[7,8],[8,5],[1,5],[2,6],[3,7],[4,8]];
+    cubeEdges.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
+    addMol(`${elem}|${name}`, "Metal", "體心立方堆積 (BCC)", "68%", "8", mp, bp, atoms, bonds, null,
+        `<div class="info-section"><div class="info-title">🧊 體心立方 (BCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 68%。原子位於角落與體中心，沿著體對角線互相接觸。</div></div>`);
+    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√3 a = 4r"; }
+}
+
+// 3. 面心立方 (FCC) - 升級為 5-4-5-4 堆積 (展示 CN=12)
+function addMetal_FCC(elem, name, mp, bp, scale=200) {
+    ensureElement(elem, "#d1d5db", 22);
+    const atoms = []; const bonds = [];
+    const h = scale / 2;
+    
+    // 定義四層：L1(5) -> L2(4) -> L3(5) -> L4(4)
+    // 我們將座標中心設在 L3 的中心原子，方便旋轉觀察
+    const addLayer5 = (z, isMain) => {
+        const s = atoms.length;
+        // 中心
+        atoms.push({ elem: elem, x: 0, y: 0, z: z, r: 22, isRepresentative: isMain });
+        // 四個角
+        const corners = [[-h,-h,z],[h,-h,z],[h,h,z],[-h,h,z]];
+        corners.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
+        // 只有主要晶胞層 (L1到L3) 有框
+        if (isMain || z < scale) {
+            bonds.push([s+1, s+2, "ionic_thick"], [s+2, s+3, "ionic_thick"], [s+3, s+4, "ionic_thick"], [s+4, s+1, "ionic_thick"]);
+        }
+    };
+
+    const addLayer4 = (z, isExtended) => {
+        const s = atoms.length;
+        // 四個面心
+        const faces = [[0,-h,z],[h,0,z],[0,h,z],[-h,0,z]];
+        faces.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
+        // 垂直柱子 (只連接 L1-L3 核心)
+        if (!isExtended) {
+            // 此處邏輯由後續接觸線處理
+        }
+    };
+
+    addLayer5(-scale, false); // L1 (底部)
+    addLayer4(-h, false);     // L2
+    addLayer5(0, true);       // L3 (核心層，設為座標 0)
+    addLayer4(h, true);       // L4 (延伸層)
+
+    // 建立所有原子間的接觸線 (距離為 0.707a)
+    const contactDist = scale * 0.707;
+    for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
+            if (Math.abs(d - contactDist) < 10) {
+                // 判斷是否屬於延伸層 (L4) 的連線
+                const isExt = (atoms[i].z > 5 || atoms[j].z > 5);
+                bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thin"]); 
+            }
         }
     }
 
-    markReps(atoms, bonds, 6, elem, 0, ""); 
+    // 建立核心晶胞的垂直粗框線 (L1 到 L3)
+    const coreCorners = [[1,10],[2,11],[3,12],[4,13]]; // L1 到 L3 的頂點對應
+    coreCorners.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
 
-    // 虛線框：標準晶胞
-    const h = scale / 2;
-    const extraLines = [
-        {start:{x:-h,y:h,z:-h}, end:{x:h,y:h,z:-h}}, {start:{x:h,y:h,z:-h}, end:{x:h,y:h,z:h}},
-        {start:{x:h,y:h,z:h}, end:{x:-h,y:h,z:h}}, {start:{x:-h,y:h,z:h}, end:{x:-h,y:h,z:-h}},
-        {start:{x:-h,y:-h,z:-h}, end:{x:h,y:-h,z:-h}}, {start:{x:h,y:-h,z:-h}, end:{x:h,y:-h,z:h}},
-        {start:{x:h,y:-h,z:h}, end:{x:-h,y:-h,z:h}}, {start:{x:-h,y:-h,z:h}, end:{x:-h,y:-h,z:-h}},
-        {start:{x:-h,y:-h,z:-h}, end:{x:-h,y:h,z:-h}}, {start:{x:h,y:-h,z:-h}, end:{x:h,y:h,z:-h}},
-        {start:{x:h,y:-h,z:h}, end:{x:h,y:h,z:h}}, {start:{x:-h,y:-h,z:h}, end:{x:-h,y:h,z:h}}
-    ];
-
-    addMol(`${elem}|${name}`, "Ionic", "簡單立方堆積 (SC)", "52%", "配位數: 6", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">📦 簡單立方 (SC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 52%。原子僅位於立方體頂點。<br>點擊<strong>正中央</strong>原子可見配位數為 6。</div></div>`);
-    
-    if(MOLECULE_DB[elem]) { 
-        MOLECULE_DB[elem].isIonic = true; 
-        MOLECULE_DB[elem].isMetal = true; 
-        MOLECULE_DB[elem].extraLines = extraLines;
-        MOLECULE_DB[elem].edgeRelation = "2r = a";
-    }
+    addMol(`${elem}|${name}`, "Metal", "面心立方堆積 (FCC)", "74%", "12", mp, bp, atoms, bonds, null,
+        `<div class="info-section"><div class="info-title">✨ 面心立方 (FCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 74%。模型展示了 5-4-5-4 的四層堆積。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見其配位數為 12 (同層4, 下層4, 上層4)。</span></div></div>`);
+    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√2 a = 4r"; }
 }
 
-// 2. 體心立方 (BCC) - [回歸經典單晶胞]
-function addMetal_BCC(elem, name, mp, bp, scale=180) {
-    ensureElement(elem, "#9ca3af", 24); 
+// 4. 六方最密堆積 (HCP) - 修正比例與配位數版
+function addMetal_HCP(elem, name, mp, bp, scale=140) {
+    ensureElement(elem, "#e5e7eb", 22);
     const atoms = []; const bonds = [];
     
-    // 經典單晶胞：8個頂點 + 1個體心
-    // 頂點 (-0.5, -0.5, -0.5) 到 (0.5, 0.5, 0.5) * scale
-    // 這樣中心原子剛好在 (0,0,0)
-    
-    // 1. 體心原子 (CN=8)
-    atoms.push({ elem: elem, x: 0, y: 0, z: 0, r: 24, lpCount: 0 }); // Index 0
+    // a = scale (原子間距，即底面六角形的邊長)
+    // h = 層與層之間的垂直距離 (理想比例為 sqrt(2/3) * a ≈ 0.8165a)
+    const h = scale * 0.8165; 
+    const r = 22;
 
-    // 2. 8個頂點原子
-    const signs = [-1, 1];
-    signs.forEach(x => {
-        signs.forEach(y => {
-            signs.forEach(z => {
-                atoms.push({ elem: elem, x: x*scale/2, y: y*scale/2, z: z*scale/2, r: 24, lpCount: 0 });
-            });
+    // A 層生成器 (中心 + 6 顆環繞)
+    const getLayerA = (z) => [
+        {x:0, y:0, z:z}, // 中心
+        {x:scale, y:0, z:z}, {x:scale*0.5, y:scale*0.866, z:z}, {x:-scale*0.5, y:scale*0.866, z:z},
+        {x:-scale, y:0, z:z}, {x:-scale*0.5, y:-scale*0.866, z:z}, {x:scale*0.5, y:-scale*0.866, z:z}
+    ];
+
+    // B 層生成器 (填入 A 層空隙的 3 顆)
+    const getLayerB = (z) => [
+        {x:scale*0.5, y:scale*0.288, z:z}, 
+        {x:-scale*0.5, y:scale*0.288, z:z}, 
+        {x:0, y:-scale*0.577, z:z}
+    ];
+
+    // --- 建立四層堆積 A1-B1-A2-B2 ---
+    // 為了讓中心原子在座標原點，我們這樣對齊：
+    const l1 = getLayerA(-2 * h);   // Index 0-6 (A1 最底層)
+    const l2 = getLayerB(-h);       // Index 7-9 (B1)
+    const l3 = getLayerA(0);        // Index 10-16 (A2 核心主角層)
+    const l4 = getLayerB(h);        // Index 17-19 (B2 延伸層)
+
+    [...l1, ...l2, ...l3, ...l4].forEach((p, i) => {
+        atoms.push({
+            elem: elem, ...p, r: r, lpCount: 0,
+            // 將第三層的中心原子 (Index 10) 設為主角
+            isRepresentative: (i === 10) 
         });
     });
 
-    // 建立鍵結：中心(0) 連接所有頂點(1-8)
-    for(let i=1; i<=8; i++) {
-        bonds.push([0, i, "single"]);
+    // --- 建立鍵結邏輯 ---
+    for (let i = 0; i < atoms.length; i++) {
+        for (let j = i + 1; j < atoms.length; j++) {
+            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
+            
+            // 距離約等於 scale (a) 的判定為鄰居
+            if (d > 10 && d < scale * 1.1) {
+                // 判斷是否為延伸層 (L4 / Index 17-19) 的連線
+                const isExt = (atoms[i].z > h/2 || atoms[j].z > h/2);
+                
+                // 1. 同層內部的連線 (六角外框與內部輻射)
+                if (Math.abs(atoms[i].z - atoms[j].z) < 1) {
+                    const isCenter = (Math.abs(atoms[i].x) < 1 && Math.abs(atoms[i].y) < 1) || 
+                                     (Math.abs(atoms[j].x) < 1 && Math.abs(atoms[j].y) < 1);
+                    
+                    if (isCenter) {
+                        bonds.push([i, j, "ionic_thin"]); // 內部輻射用細線
+                    } else {
+                        // 外部六角框：L1到L3用粗框，延伸層L4用細線
+                        bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thick"]);
+                    }
+                } 
+                // 2. 層與層之間的連線 (CN=12 的斜向接觸)
+                else {
+                    bonds.push([i, j, "ionic_thin"]);
+                }
+            }
+        }
     }
 
-    // 標記中心原子
-    markReps(atoms, bonds, 8, elem, 0, "");
+    // --- 核心六角柱的「垂直」稜線 (L1 頂點對應到 L3 頂點) ---
+    // 讓主要的晶胞框架看起來像一個完整的六角柱
+    for (let i = 1; i <= 6; i++) {
+        bonds.push([i, i + 10, "ionic_thick"]);
+    }
 
-    // 虛線框：連接8個頂點
-    const h = scale / 2;
-    const extraLines = [
-        {start:{x:-h,y:h,z:-h}, end:{x:h,y:h,z:-h}}, {start:{x:h,y:h,z:-h}, end:{x:h,y:h,z:h}},
-        {start:{x:h,y:h,z:h}, end:{x:-h,y:h,z:h}}, {start:{x:-h,y:h,z:h}, end:{x:-h,y:h,z:-h}},
-        {start:{x:-h,y:-h,z:-h}, end:{x:h,y:-h,z:-h}}, {start:{x:h,y:-h,z:-h}, end:{x:h,y:-h,z:h}},
-        {start:{x:h,y:-h,z:h}, end:{x:-h,y:-h,z:h}}, {start:{x:-h,y:-h,z:h}, end:{x:-h,y:-h,z:-h}},
-        {start:{x:-h,y:-h,z:-h}, end:{x:-h,y:h,z:-h}}, {start:{x:h,y:-h,z:-h}, end:{x:h,y:h,z:-h}},
-        {start:{x:h,y:-h,z:h}, end:{x:h,y:h,z:h}}, {start:{x:-h,y:-h,z:h}, end:{x:-h,y:h,z:h}}
-    ];
-
-    addMol(`${elem}|${name}`, "Ionic", "體心立方堆積 (BCC)", "68%", "配位數: 8", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🧊 體心立方 (BCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 68%。原子位於角落與體中心。<br>點擊<strong>體中心</strong>原子，可見其與 8 個頂點接觸。</div></div>`);
+    addMol(`${elem}|${name}`, "Metal", "六方最密堆積 (HCP)", "74%", "12", mp, bp, atoms, bonds, null,
+        `<div class="info-section"><div class="info-title">🛑 六方最密堆積 (HCP)</div><div class="info-body">金屬範例：<strong>${elem} (如鎂、鋅)</strong>。<br>利用率 74%。模型展示 A-B-A-B 四層堆積，延伸出一層三角形 B 層。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見配位數為 12 (同層6，下層3，上層3)。</span></div></div>`);
     
     if(MOLECULE_DB[elem]) { 
         MOLECULE_DB[elem].isIonic = true; 
         MOLECULE_DB[elem].isMetal = true; 
-        MOLECULE_DB[elem].extraLines = extraLines; 
-        MOLECULE_DB[elem].edgeRelation = "4r = √3a";
-    }
-}
-
-// 3. 面心立方 (FCC) - [5-4-5-4 結構，移除面對角線]
-function addMetal_FCC(elem, name, mp, bp, scale=200) {
-    ensureElement(elem, "#d1d5db", 20);
-    const atoms = []; const bonds = [];
-    
-    // 定義 5-4-5-4 層狀結構
-    const L1_z = 0;
-    const l1 = [
-        {x:0, y:0}, // Center
-        {x:-0.5, y:-0.5}, {x:0.5, y:-0.5}, {x:0.5, y:0.5}, {x:-0.5, y:0.5} // Corners
-    ];
-    l1.forEach(p => atoms.push({x:p.x*scale, y:p.y*scale, z:L1_z, r:20, layer:1}));
-
-    const L2_z = 0.5 * scale;
-    const l2 = [
-        {x:0, y:-0.5}, {x:0.5, y:0}, {x:0, y:0.5}, {x:-0.5, y:0}
-    ];
-    l2.forEach(p => atoms.push({x:p.x*scale, y:p.y*scale, z:L2_z, r:20, layer:2}));
-
-    const L3_z = 1.0 * scale;
-    l1.forEach(p => atoms.push({x:p.x*scale, y:p.y*scale, z:L3_z, r:20, layer:3}));
-
-    const L4_z = 1.5 * scale;
-    l2.forEach(p => atoms.push({x:p.x*scale, y:p.y*scale, z:L4_z, r:20, layer:4}));
-
-    atoms.forEach(a => { a.elem = elem; a.lpCount = 0; });
-
-    const bondDist = scale * 0.707;
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - bondDist) < 10) bonds.push([i, j, "single"]);
-        }
-    }
-    
-    markReps(atoms, bonds, 12, elem, 0, "");
-
-    const offsetZ = L3_z; 
-    atoms.forEach(a => { a.z -= offsetZ; });
-
-    // --- 虛線邊框設定 (只保留立方體 12 條邊) ---
-    const h = scale / 2;
-    const extraLines = [
-        // Top Face (z=0) - 4 lines
-        {start:{x:-h,y:-h,z:0}, end:{x:h,y:-h,z:0}}, 
-        {start:{x:h,y:-h,z:0}, end:{x:h,y:h,z:0}},
-        {start:{x:h,y:h,z:0}, end:{x:-h,y:h,z:0}}, 
-        {start:{x:-h,y:h,z:0}, end:{x:-h,y:-h,z:0}},
-        
-        // Bottom Face (z=-scale) - 4 lines
-        {start:{x:-h,y:-h,z:-scale}, end:{x:h,y:-h,z:-scale}}, 
-        {start:{x:h,y:-h,z:-scale}, end:{x:h,y:h,z:-scale}},
-        {start:{x:h,y:h,z:-scale}, end:{x:-h,y:h,z:-scale}}, 
-        {start:{x:-h,y:h,z:-scale}, end:{x:-h,y:-h,z:-scale}},
-        
-        // Pillars (Vertical) - 4 lines
-        {start:{x:-h,y:-h,z:-scale}, end:{x:-h,y:-h,z:0}}, 
-        {start:{x:h,y:-h,z:-scale}, end:{x:h,y:-h,z:0}},
-        {start:{x:h,y:h,z:-scale}, end:{x:h,y:h,z:0}}, 
-        {start:{x:-h,y:h,z:-scale}, end:{x:-h,y:h,z:0}}
-    ];
-
-    addMol(`${elem}|${name}`, "Ionic", "面心立方堆積 (FCC/CCP)", "74%", "配位數: 12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">✨ 面心立方 (FCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 74% (最密)。原子沿著<strong>面對角線</strong>接觸。<br>點擊<strong>頂層中心</strong>原子，可見其完整的 12 個鄰居 (同層4，下層4，上層4)。</div></div>`);
-    
-    if(MOLECULE_DB[elem]) { 
-        MOLECULE_DB[elem].isIonic = true; 
-        MOLECULE_DB[elem].isMetal = true; 
-        MOLECULE_DB[elem].extraLines = extraLines;
-        MOLECULE_DB[elem].edgeRelation = "4r = √2a";
-    }
-}
-
-// 4. 六方最密堆積 (HCP) - [7-3-7-3 結構，以中間 A 層為核心]
-function addMetal_HCP(elem, name, mp, bp, scale=120) {
-    ensureElement(elem, "#e5e7eb", 22);
-    const atoms = []; const bonds = [];
-    const h = scale * 1.633; // c = 1.633a
-    const r = 22;
-
-    // 輔助：生成六角形層 (Center + 6 Ring) -> 7顆
-    const hexLayer = (z) => {
-        const res = [];
-        res.push({x:0, y:0, z:z}); // Center (Index 0 relative to layer)
-        for(let i=0; i<6; i++) {
-            const angle = i * 60 * Math.PI / 180;
-            res.push({x: scale * Math.cos(angle), y: scale * Math.sin(angle), z: z});
-        }
-        return res;
-    };
-
-    // 輔助：生成三角形層 (3個凹洞) -> 3顆
-    const triLayer = (z) => {
-        return [
-            {x: scale*0.5, y: scale*0.288, z:z},
-            {x: -scale*0.5, y: scale*0.288, z:z},
-            {x: 0, y: -scale*0.577, z:z}
-        ];
-    };
-
-    // --- 生成 7-3-7-3 結構 (由上而下: A - B - A - B) ---
-    // Layer 1 (Top A): z = h
-    const l1 = hexLayer(h);
-    // Layer 2 (Mid B): z = h/2
-    const l2 = triLayer(h/2);
-    // Layer 3 (Bot A): z = 0  <-- 這是我們的主角層 (CN=12)
-    const l3 = hexLayer(0);
-    // Layer 4 (Bot2 B): z = -h/2
-    const l4 = triLayer(-h/2);
-
-    // 合併原子 (順序: L1 -> L2 -> L3 -> L4)
-    // L1: 0-6, L2: 7-9, L3: 10-16, L4: 17-19
-    [...l1, ...l2, ...l3, ...l4].forEach(p => {
-        atoms.push({elem: elem, x: p.x, y: p.y, z: p.z, r: r, lpCount: 0});
-    });
-
-    // 建立鍵結 (距離約為 a)
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (d < scale * 1.15) bonds.push([i, j, "single"]);
-        }
-    }
-
-    // 標記 L3 的中心原子 (它是 L3 的第1個，L3從 index 10 開始) -> index 10
-    // 驗證 CN=12: 上層(L2)有3個 + 同層(L3)有6個 + 下層(L4)有3個
-    markReps(atoms, bonds, 12, elem, 0, "");
-
-    // 置中位移：將 L3 中心 (原點) 移到視覺中心
-    // 目前 Z 範圍是 h 到 -h/2。中心大約在 h/4。
-    const offsetZ = h * 0.25; 
-    atoms.forEach(a => { a.z -= offsetZ; });
-
-    // --- 繪製六角柱虛線框 (只框住 7-3-7 部分，即 L1 到 L3) ---
-    // 這樣符合教科書的六角柱晶胞定義
-    const extraLines = [];
-    const zTop = h - offsetZ;
-    const zBot = 0 - offsetZ;
-
-    // 1. 六角柱 上下環 與 垂直柱
-    // L1 indices: 1~6 (Ring)
-    // L3 indices: 11~16 (Ring) -> 對應 L1 的 index + 10
-    for(let i=1; i<=6; i++) {
-        let next = i+1; if(next>6) next=1;
-        
-        // 取得 L1 環的座標 (因為 atoms 已經被位移過了，所以直接讀 atoms)
-        const topP1 = atoms[i];
-        const topP2 = atoms[next];
-        const botP1 = atoms[i+10];
-        const botP2 = atoms[next+10];
-
-        // Top Ring
-        extraLines.push({start: topP1, end: topP2});
-        // Bot Ring
-        extraLines.push({start: botP1, end: botP2});
-        // Pillars (Vertical)
-        extraLines.push({start: topP1, end: botP1});
-    }
-
-    // 2. 上下底面的輻射線 (中心到環)
-    for(let i=1; i<=6; i++) {
-        extraLines.push({start: atoms[0], end: atoms[i]});      // Top Face
-        extraLines.push({start: atoms[10], end: atoms[i+10]});  // Bot Face
-    }
-
-    addMol(`${elem}|${name}`, "Ionic", "六方最密堆積 (HCP)", "74%", "配位數: 12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🛑 六方最密堆積 (HCP)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 74% (最密)。堆積模式：A-B-A-B (7-3-7-3)。<br>虛線框出了標準的六角柱單元(A-B-A)，點擊<strong>底層六邊形中心</strong>原子，可見完整的 12 個鄰居。</div></div>`);
-    
-    if(MOLECULE_DB[elem]) { 
-        MOLECULE_DB[elem].isIonic = true; 
-        MOLECULE_DB[elem].isMetal = true;
-        MOLECULE_DB[elem].extraLines = extraLines; 
-        MOLECULE_DB[elem].edgeRelation = "c ≈ 1.63a";
+        MOLECULE_DB[elem].edgeRelation = "c ≈ 1.633 a";
     }
 }
 
