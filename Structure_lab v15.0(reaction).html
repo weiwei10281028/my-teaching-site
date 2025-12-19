@@ -390,6 +390,11 @@
     .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    /* 軌域卡片收合樣式 */
+    .orbital-card .orbital-content { display: none; margin-top: 15px; }
+    .orbital-card.expanded .orbital-content { display: block; animation: fadeIn 0.4s ease; }
+    .orbital-card .card-title { cursor: pointer; justify-content: space-between; }
+    .orbital-card.expanded .toggle-icon { transform: rotate(180deg); }
 
     .info-section { margin-bottom: 15px; }
     .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
@@ -927,65 +932,19 @@
 
 <script src="data_static.js"></script>
 <script src="data_molecules.js"></script>
+<script src="data_reactions.js"></script>
 <script>
 // ==========================================
 // 1. 系統初始化
 // ==========================================
+window.currentMolecule = null;
+window.currentKey = null;
+window.currentVariantKey = null;
+window.moleculeHistory = [];
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 let isReactionRunning = false; 
 let isReactionFinished = false; 
 let isPlasmaMode = false; // [修復] 確保變數存在
-
-/*
- ==========================================================================
- ★ 視覺鍵長標準參考表 (Visual Bond Length Standards) v16.2
- ==========================================================================
- 基準：以 1,2-二氯丙烷為錨點 (C-C ~ 70, C-H ~ 50, C-Cl ~ 75)
- 
- [1] 原子視覺半徑貢獻 (Base Radius Contribution)
- --------------------------------------------------------------------------
-  - H (氫) .................... 15  (最小，確保緊湊)
-  - Row 2 (C, N, O, F) ........ 35  (基準)
-  - Row 3 (Si, P, S, Cl) ...... 40  (略大)
-  - Row 4 (Br) ................ 45
-  - Row 5 (I, Xe) ............. 50  (最大)
-
- [2] 鍵級修正係數 (Bond Order Multiplier)
- --------------------------------------------------------------------------
-  - 單鍵 (Single) ............. x 1.00
-  - 雙鍵 (Double) ............. x 0.90
-  - 參鍵 (Triple) ............. x 0.85
-
- [3] 常見鍵長計算範例 (Calculated Examples)
- --------------------------------------------------------------------------
-  Type      Calc (R1 + R2) * Multiplier      Final Value
-  -------   ---------------------------      -----------
-  H-H       (15 + 15) * 1.0                  30
-  C-H       (35 + 15) * 1.0                  50  (基準)
-  N-H       (35 + 15) * 1.0                  50
-  O-H       (35 + 15) * 1.0                  50
-  P-H       (40 + 15) * 1.0                  55
-
-  C-C       (35 + 35) * 1.0                  70  (基準)
-  C=C       (35 + 35) * 0.9                  63
-  C≡C       (35 + 35) * 0.85                 60
-  
-  C-O       (35 + 35) * 1.0                  70
-  C=O       (35 + 35) * 0.9                  63
-
-  S-O       (40 + 35) * 1.0                  75
-  S=O       (40 + 35) * 0.9                  68  (SO4, SO3)
-  
-  P-Cl      (40 + 40) * 1.0                  80  (PCl3)
-  Xe=O      (50 + 35) * 0.9                  76  (XeO3)
-  
-  F-F       (35 + 35) * 1.0                  70
-  Cl-Cl     (40 + 40) * 1.0                  80
-  I-I       (50 + 50) * 1.0                  100
- ==========================================================================
-*/
-
-
 
 
 
@@ -1146,273 +1105,10 @@ function addPairToDots(dotsArray, atom, vector) {
 
 
 // ==========================================
-// 特殊功能：化學反應動畫 (V14.0 終極版：全中文邏輯)
-// ==========================================
-
-// [新增] 輔助函式：取得當前分子的中文名稱
-// 邏輯：從 currentMolecule 的 fullKey 中抓取 "|" 後面的文字
-function getCurrentMoleculeName() {
-    if (!currentMolecule || !currentMolecule.fullKey) return "";
-    const parts = currentMolecule.fullKey.split('|');
-    // 如果有 '|' 抓第二段(中文)，否則抓第一段
-    return parts.length > 1 ? parts[1].trim() : parts[0].trim();
-}
-
-// --- 核心邏輯：檢查按鈕狀態 & 重置 ---
-function checkReactionAvailable(key) {
-    const btnContainer = document.getElementById("reaction-container");
-    const resetBtn = document.querySelector(".reset-btn");
-    const btns = document.querySelectorAll(".reaction-btn"); 
-    
-    // 1. 初始化：隱藏所有按鈕
-    btns.forEach(b => b.style.display = "none");
-    btnContainer.style.display = "none";
-    resetBtn.style.display = "none";
-
-    const currentName = getCurrentMoleculeName();
-
-    // --- 各分子專屬反應按鈕 ---
-
-    // A. 乙烯
-    if (currentName === "乙烯") {
-        btnContainer.style.display = "block";
-        document.getElementById("reaction-btn").style.display = "flex";
-        document.getElementById("reaction-h2-btn").style.display = "flex";
-        document.getElementById("reaction-hcl-btn").style.display = "flex";
-        document.getElementById("reaction-cl2-btn").style.display = "flex";
-        document.getElementById("reaction-kmno4-btn").style.display = "flex";
-    } 
-    // B. 丙烯
-    else if (currentName === "丙烯") { 
-        btnContainer.style.display = "block";
-        document.getElementById("reaction-propene-h2-btn").style.display = "flex";
-        document.getElementById("reaction-propene-cl2-btn").style.display = "flex";
-        document.getElementById("reaction-propene-hcl-btn").style.display = "flex";
-        document.getElementById("reaction-propene-h2o-btn").style.display = "flex";
-    } 
-    // C. 乙炔
-    else if (currentName === "乙炔") {
-        btnContainer.style.display = "block";
-        document.getElementById("btn-c2h2-h2-full").style.display = "flex";
-        document.getElementById("btn-c2h2-h2-part").style.display = "flex";
-        document.getElementById("btn-c2h2-cl2-full").style.display = "flex";
-        document.getElementById("btn-c2h2-cl2-part").style.display = "flex";
-        document.getElementById("btn-c2h2-hcl-full").style.display = "flex";
-        document.getElementById("btn-c2h2-hcl-part").style.display = "flex";
-        document.getElementById("btn-c2h2-h2o").style.display = "flex";
-    }
-    // D. 甲烷
-    else if (currentName === "甲烷") {
-        btnContainer.style.display = "block";
-        const subBtn = document.getElementById("reaction-sub-btn");
-        if(subBtn) subBtn.style.display = "flex"; 
-        const nitroBtn = document.getElementById("reaction-nitro-btn");
-        if(nitroBtn) nitroBtn.style.display = "flex"; 
-    } 
-    // E. 乙醇/乙醛/乙酸
-    else if (currentName === "乙醇" || currentName === "酒精") {
-        btnContainer.style.display = "block";
-        document.getElementById("reaction-ox-btn").style.display = "flex";
-        document.getElementById("reaction-kmno4-btn").style.display = "flex";
-    }
-    else if (currentName === "乙醛") {
-        btnContainer.style.display = "block";
-        document.getElementById("reaction-ox-btn").style.display = "flex";
-        document.getElementById("reaction-red-btn").style.display = "flex";
-    }
-    else if (currentName === "乙酸" || currentName === "醋酸") {
-        btnContainer.style.display = "block";
-        // 乙酸通常是終點，只有重置按鈕
-    }
-
-    // --- [修正] 重置按鈕顯示邏輯 ---
-    // 只要歷史紀錄不是空的，就顯示重置按鈕 (代表可以"回到上一頁")
-    if (moleculeHistory.length > 0) {
-        btnContainer.style.display = "block"; // 確保容器可見
-        resetBtn.style.display = "block";     // 顯示重置按鈕
-    }
-}
-
-
-function resetReaction() {
-    // [修正] 歷史紀錄邏輯
-    // 如果沒有歷史紀錄 (陣列為空)，代表已經是最源頭，按下不反應
-    if (moleculeHistory.length === 0) return;
-
-    isReactionRunning = false;
-    isReactionFinished = false; 
-    
-    // 隱藏說明文字
-    const subEl = document.getElementById("viewport-subtitle");
-    if(subEl) subEl.style.display = 'none';
-
-    // 取出最後一筆紀錄 (Pop)
-    const previousState = moleculeHistory.pop();
-
-    // 載入上一個分子
-    // 注意：這裡不需要再根據名稱判斷了，因為 previousState 裡面存的就是正確的來源
-    loadMolecule(previousState.key, previousState.variant);
-}
-
-function finishReaction(nextKey, nextTitle, variantName = null, description = null) {
-    // [新增] 將當前的分子狀態存入歷史紀錄 (推入堆疊)
-    // 這樣不管從乙烯來還是乙炔來，系統都會記得「上一個是誰」
-    moleculeHistory.push({
-        key: currentKey,
-        variant: currentVariantKey
-    });
-
-    const svg = document.getElementById("scene-root");
-    svg.classList.add("scene-blur-out");
-    
-    setTimeout(() => {
-        loadMolecule(nextKey, variantName); 
-        
-        if (description) {
-            const subtitle = document.getElementById("viewport-subtitle");
-            if (subtitle) {
-                subtitle.textContent = description;
-                subtitle.style.display = "block"; 
-                subtitle.style.width = "fit-content";
-                const themeColor = "#fb923c"; 
-                subtitle.style.border = `1px solid ${themeColor}`;   
-                subtitle.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; 
-                subtitle.style.borderRadius = "12px";                
-                subtitle.style.padding = "10px 14px";                
-                subtitle.style.backdropFilter = "blur(4px)";         
-                subtitle.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)"; 
-                subtitle.style.color = themeColor;                   
-                subtitle.style.fontSize = "1.0rem"; 
-                subtitle.style.fontWeight = "600";                   
-                subtitle.style.textShadow = "0 2px 4px #000000";     
-                subtitle.style.maxWidth = "20em"; 
-                subtitle.style.whiteSpace = "normal";                
-                subtitle.style.wordBreak = "break-word";             
-                subtitle.style.lineHeight = "1.5";  
-                subtitle.style.marginTop = "15px";
-                subtitle.style.clear = "both";
-                subtitle.style.textAlign = "left"; 
-            }
-
-            const kCard = document.getElementById("knowledge-card");
-            const kText = document.getElementById("knowledge-text");
-            if (kCard && kText) {
-                kText.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">[反應發生]</span> ${description}`;
-                kCard.style.display = "block";
-                kCard.classList.add("expanded");
-            }
-        }
-        
-        svg.classList.remove("scene-blur-out");
-        svg.classList.add("scene-blur-in");
-        
-        setTimeout(() => {
-            svg.classList.remove("scene-blur-in");
-            isReactionRunning = false; 
-            isReactionFinished = true; 
-            checkReactionAvailable(nextKey); 
-        }, 1500);
-    }, 1500);
-}
-
-// 1. 乙烯系列 (原料: 乙烯)
-function runEthyleneHydration() {
-    finishReaction("C2H5OH", "乙醇", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接OH，轉變成乙醇");
-}
-function runEthyleneChlorination() {
-    finishReaction("C2H4Cl2", "1,2-二氯乙烷", "C2H4Cl2|1,2-二氯乙烷", "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個Cl，轉變成1,2-二氯乙烷，亦為氧化反應(C氧化數上升)");
-}
-function runEthyleneHydrogenation() {
-    finishReaction("C2H6", "乙烷", null, "乙烯的碳碳𝝿鍵打斷，兩個C原子各接1個H，轉變成乙烷，亦為還原反應(C氧化數下降)");
-}
-function runEthyleneHydrohalogenation() {
-    finishReaction("C2H5Cl", "氯乙烷", null, "乙烯的碳碳𝝿鍵打斷，一個C原子接H，另一個C原子接Cl，轉變成氯乙烷");
-}
-function runEthyleneOxidation() {
-    finishReaction("C2H4(OH)2", "乙二醇", "C2H4(OH)2|乙二醇|1,2-乙二醇", "乙烯通入冷稀、中性或微鹼性的過錳酸鉀溶液中，碳碳雙鍵斷裂，發生氧化反應，雙鍵的兩個C接上OH，生成乙二醇。");
-}
-
-// 2. 甲烷系列 (原料: 甲烷)
-function runMethaneSubstitution() {
-    finishReaction("CH3Cl", "一氯甲烷", null, "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl");
-}
-
-function runMethaneNitration() {
-    finishReaction("CH3NO2", "硝基甲烷", null, "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O");
-}
-
-// --- 3. 丙烯系列 (原料: 丙烯) ---
-function runPropeneHydrogenation() {
-    finishReaction("C3H8", "丙烷", null, "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個H，轉變成丙烷，亦為還原反應(C氧化數下降)");
-}
-
-function runPropeneChlorination() {
-    finishReaction("C3H6Cl2", "1,2-二氯丙烷", "C3H6Cl2|1,2-二氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子各接1個Cl，轉變成1,2-二氯丙烷，亦為氧化反應(C氧化數上升)");
-}
-
-function runPropeneHydrohalogenation() {
-    finishReaction("C3H7Cl", "2-氯丙烷", "C3H7Cl|2-氯丙烷", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接Cl，轉變成2-氯丙烷(需考慮馬氏規則)");
-}
-
-function runPropeneHydration() {
-    finishReaction("C3H8O", "2-丙醇", "C3H8O|2-丙醇", "丙烯的碳碳𝝿鍵打斷，兩個斷𝝿鍵的C原子，含H較多的C連接H，另一個C(中間)連接OH，轉變成異丙醇(需考慮馬氏規則)");
-}
-
-// 4. 乙醇系列
-function runEthanolMildOxidation() {
-    finishReaction("CH3CHO", "乙醛", null, "乙醇為1級醇，接O的C上具有H，一般氧化劑會先將乙醇氧化成乙醛");
-}
-
-function runEthanolStrongOxidation() {
-    finishReaction("CH3COOH", "乙酸", null, "乙醇為1級醇，接O的C上具有H，由於過錳酸鉀氧化力較強，故乙醇直接氧化成乙酸");
-}
-
-function runAcetaldehydeOxidation() {
-    finishReaction("CH3COOH", "乙酸", null, "乙醛接O的C上具有H，經過氧化可以形成乙酸");
-}
-
-function runAcetaldehydeReduction() {
-    finishReaction("C2H5OH", "乙醇", null, "醛類可以還原，變回1級醇，乙醛還原後形成乙醇");
-}
-
-// 5. 乙炔系列
-
-function runAcetyleneFullHydrogenation() {
-    finishReaction("C2H6", "乙烷", null, "乙炔的兩個碳碳𝝿鍵全數打斷，參鍵兩端的C原子各接上2個H，轉變成飽和的乙烷，亦為還原反應(C氧化數下降)。");
-}
-
-function runAcetylenePartialHydrogenation() {
-    finishReaction("C2H4", "乙烯", null, "乙炔的其中一個碳碳𝝿鍵打斷，參鍵兩端的C原子各接上1個H，轉變成乙烯，此為控制條件下的部分還原反應(C氧化數下降)。");
-}
-
-function runAcetyleneFullHalogenation() {
-    finishReaction("C2H2Cl4", "1,1,1,2-四氯乙烷", "C2H2Cl4|1,1,2,2-四氯乙烷", "乙炔的兩個碳碳𝝿鍵全數打斷，參鍵兩端的C原子各接上2個Cl，轉變成1,1,2,2-四氯乙烷，亦為氧化反應(C氧化數上升)。");
-}
-
-function runAcetylenePartialHalogenation() {
-    finishReaction("C2H2Cl2", "反-1,2-二氯乙烯", "C2H2Cl2|反-1,2-二氯乙烯", "乙炔的其中一個碳碳𝝿鍵打斷，參鍵兩端的C原子各接上1個Cl，轉變成1,2-二氯乙烯(從反應機構可知主產物為反式)。");
-}
-
-function runAcetyleneFullHydrohalogenation() {
-    finishReaction("C2H4Cl2", "1,1-二氯乙烷", "C2H4Cl2|1,1-二氯乙烷", "乙炔與足量鹵化氫反應，兩個碳碳𝝿鍵全數打斷。依馬氏規則，兩個Cl原子會接在同一個C原子上，轉變成1,1-二氯乙烷。");
-}
-
-// 6. 鹵化氫部分加成 (+HCl) -> 氯乙烯
-function runAcetylenePartialHydrohalogenation() {
-    finishReaction("C2H3Cl", "氯乙烯", "C2H3Cl|氯乙烯", "乙炔的其中一個碳碳𝝿鍵打斷，一個C接H，另一個C接Cl，轉變成氯乙烯，此為聚氯乙烯(PVC)的重要單體原料。");
-}
-
-// 7. 水加成 (+H2O) -> 乙醛
-function runAcetyleneHydration() {
-    finishReaction("CH3CHO", "乙醛", null, "乙炔在硫酸與硫酸汞(HgSO₄)催化下與水加成，𝝿鍵斷裂後先形成不穩定的乙烯醇，隨即發生『醛酮-烯醇互變異構』，氫原子轉移，最終轉變成乙醛。");
-}
-
-
-// ==========================================
 // 3. 核心邏輯與顯示更新
 // ==========================================
 
-let currentMolecule = null;
+currentMolecule = null;
 let currentMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 let isFaceBuildMode = false;
 let faceSelection = [];
@@ -1426,8 +1122,8 @@ let isDragging = false;
 let lastMouse = { x: 0, y: 0 };
 let currentMode = 2; 
 let altKeyIsDown = false;
-let currentKey = null; 
-let currentVariantKey = null; 
+currentKey = null; 
+currentVariantKey = null;
 let lastInteractTime = 0; 
 let lastTouchDist = 0;
 let lastTouchCenter = { x:0, y:0 };
@@ -3030,10 +2726,10 @@ function renderConfigList() {
     const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
     ELECTRON_DATA.forEach(el => {
-        if (filter && !el.s.toLowerCase().includes(filter) && 
-            !el.n.toLowerCase().includes(filter) && 
-            !el.z.toString().includes(filter)) {
-            return;
+        if (filter) {
+            const isSymbolMatch = el.s.toLowerCase().startsWith(filter);
+            const isZMatch = el.z.toString() === filter;
+            if (!isSymbolMatch && !isZMatch) return;
         }
         if (shownCount >= MAX_SHOW) return;
         shownCount++;
@@ -3678,44 +3374,45 @@ function initOrbitalUI() {
     const container = document.querySelector('.controls-content');
     if(!container) return;
     const card = document.createElement('div');
-    card.id = 'orbital-card'; card.className = 'card'; card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+    card.id = 'orbital-card'; 
+    card.className = 'card orbital-card'; // 預設不含 expanded 則為收合
+    card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
     card.innerHTML = `
-        <div class="card-title" style="color:#38bdf8;">💠 原子軌域</div>
-        
-        <!-- s, p 軌域 -->
-        <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-            <button class="orb-btn" onclick="loadOrbital('s')">s</button>
-            <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+        <div class="card-title" onclick="this.parentElement.classList.toggle('expanded')" style="color:#38bdf8;">
+            <span>💠 原子軌域</span>
+            <span class="toggle-icon">▼</span>
         </div>
-        
-        <!-- d 軌域 -->
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+        <div class="orbital-content">
+            <!-- s, p 軌域 -->
+            <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                <button class="orb-btn" onclick="loadOrbital('s')">s</button>
+                <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+            </div>
+            <!-- d 軌域 -->
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
+                <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+            </div>
+            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
+                <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+            </div>
+            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
+                <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
+            </div>
+            <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
         </div>
-
-        <!-- f 軌域 (新增) -->
-        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
-        </div>
-        
-        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
-        </div>
-
-        <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
     `;
     const dataCard = document.getElementById('data-card');
     if(dataCard && dataCard.parentNode) dataCard.parentNode.insertBefore(card, dataCard);
@@ -4177,4 +3874,4 @@ function revealFortune() {
 
 </script>
 </body>
-            </html>
+</html>
