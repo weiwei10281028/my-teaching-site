@@ -390,11 +390,37 @@
     .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    /* 軌域卡片收合樣式 */
-    .orbital-card .orbital-content { display: none; margin-top: 15px; }
-    .orbital-card.expanded .orbital-content { display: block; animation: fadeIn 0.4s ease; }
-    .orbital-card .card-title { cursor: pointer; justify-content: space-between; }
-    .orbital-card.expanded .toggle-icon { transform: rotate(180deg); }
+    /* 統一按鈕型面板樣式 */
+    .orbital-toggle-btn {
+        width: 100%;
+        margin-bottom: 15px;
+        background: rgba(34, 211, 238, 0.1);
+        border: 1px solid #22d3ee;
+        color: #22d3ee;
+        font-weight: bold;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+    }
+    .orbital-toggle-btn:hover { background: rgba(34, 211, 238, 0.2); }
+    
+    .orbital-wrapper { margin-bottom: 15px; }
+    .orbital-content { 
+        display: none; 
+        padding: 15px; 
+        background: rgba(0, 0, 0, 0.2); 
+        border: 1px solid rgba(56, 189, 248, 0.3); 
+        border-radius: 16px;
+        margin-top: -10px;
+        margin-bottom: 10px;
+    }
+    .orbital-wrapper.expanded .orbital-content { display: block; animation: fadeIn 0.4s ease; }
+    .orbital-wrapper.expanded .orbital-toggle-btn { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 10px; }
 
     .info-section { margin-bottom: 15px; }
     .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
@@ -3375,22 +3401,19 @@ function initOrbitalUI() {
     if(!container) return;
     const card = document.createElement('div');
     card.id = 'orbital-card'; 
-    card.className = 'card orbital-card'; // 預設不含 expanded 則為收合
-    card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+    card.className = 'orbital-wrapper';
     card.innerHTML = `
-        <div class="card-title" onclick="this.parentElement.classList.toggle('expanded')" style="color:#38bdf8;">
+        <button class="orbital-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
             <span>💠 原子軌域</span>
-            <span class="toggle-icon">▼</span>
-        </div>
+            <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
+        </button>
         <div class="orbital-content">
-            <!-- s, p 軌域 -->
             <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
                 <button class="orb-btn" onclick="loadOrbital('s')">s</button>
                 <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
             </div>
-            <!-- d 軌域 -->
             <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
                 <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
@@ -3398,20 +3421,19 @@ function initOrbitalUI() {
                 <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
             </div>
-            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
+            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:5px;">f 軌域 (Cubic / General):</div>
             <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
                 <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
             </div>
-            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
             <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
                 <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
             </div>
-            <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
+            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px;" onclick="togglePlanes()">顯示節面: ON</button>
         </div>
     `;
     const dataCard = document.getElementById('data-card');
