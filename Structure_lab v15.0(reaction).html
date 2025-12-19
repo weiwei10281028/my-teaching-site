@@ -390,38 +390,30 @@
     .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    /* 統一按鈕型面板樣式 */
-    .orbital-toggle-btn {
-        width: 100%;
-        margin-bottom: 15px;
-        background: rgba(34, 211, 238, 0.1);
-        border: 1px solid #22d3ee;
-        color: #22d3ee;
-        font-weight: bold;
-        padding: 8px 16px;
-        border-radius: 20px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        transition: all 0.3s;
+    /* 統一高亮紫色玻璃風格 */
+    .glass-toggle-btn {
+        width: 100%; height: 46px; margin-bottom: 12px;
+        background: rgba(139, 92, 246, 0.25); 
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(139, 92, 246, 0.7); 
+        color: #fff; font-size: 1rem; font-weight: 600; border-radius: 23px;
+        cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .orbital-toggle-btn:hover { background: rgba(34, 211, 238, 0.2); }
-    
-    .orbital-wrapper { margin-bottom: 15px; }
-    .orbital-content { 
-        display: none; 
-        padding: 15px; 
-        background: rgba(0, 0, 0, 0.2); 
-        border: 1px solid rgba(56, 189, 248, 0.3); 
-        border-radius: 16px;
-        margin-top: -10px;
-        margin-bottom: 10px;
-    }
-    .orbital-wrapper.expanded .orbital-content { display: block; animation: fadeIn 0.4s ease; }
-    .orbital-wrapper.expanded .orbital-toggle-btn { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 10px; }
+    .glass-toggle-btn:hover { background: rgba(139, 92, 246, 0.35); border-color: #fff; }
 
+    .glass-content-panel {
+        display: none; padding: 12px; border-radius: 20px;
+        background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(139, 92, 246, 0.3);
+        margin-top: -6px; margin-bottom: 15px;
+    }
+    .panel-wrapper.expanded > .glass-content-panel { display: block; animation: fadeIn 0.3s ease; }
+    .panel-wrapper.expanded > .glass-toggle-btn { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
+
+    .glass-content-panel .glass-toggle-btn {
+        height: 40px; font-size: 0.95rem;
+        background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4);
+    }
     .info-section { margin-bottom: 15px; }
     .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
     .info-body { padding-left: 6px; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; text-align: justify; }
@@ -820,58 +812,67 @@
         <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
         
         <div class="controls-content">
+            <!-- 1. 核心輸入 -->
             <div class="card">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-    <span>⚛️ 輸入化學式</span>
-    <span style="font-size: 14px; color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.9); font-weight: normal; letter-spacing: 0.5px;">
-        Created by 林瑋老師
-    </span>
-</div>
+                    <span>⚛️ 輸入化學式</span>
+                    <span style="font-size: 13px; color: rgba(255,255,255,0.6); font-weight: normal;">Created by 林瑋老師</span>
+                </div>
                 <div class="input-group">
                     <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
                     <button id="load-btn">載入</button>
                 </div>
-                <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
             </div>
 
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-lp" checked>
-                <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
-            </div>
-
-            <div class="switch-container" id="glow-switch-wrap">
-                <input type="checkbox" id="toggle-glow">
-                <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
-            </div>
-            
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-octet" checked>
-                <label for="toggle-octet" class="clickable-label">優先遵循八隅體</label>
-            </div>
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-auto-rotate" checked>
-                <label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label>
-            </div>
-
-            <div id="variant-selector"></div>
-            
-            <div id="manual-poly-controls" style="margin-top: 10px; margin-bottom: 15px;">
-                <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:8px;" onclick="toggleFaceBuildMode()">點擊三點成面: OFF</button>
-                <div style="display: flex; gap: 5px;">
-                    <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
-                    <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
-                    <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
-                    <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0;" onclick="clearCustomFaces()">清除面</button>
+            <!-- 2. 顯示開關 (包含整合好的電漿態) -->
+            <div class="card" style="padding: 12px; background: rgba(0,0,0,0.2);">
+                <div class="switch-container"><input type="checkbox" id="toggle-lp" checked><label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-glow"><label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-octet" checked><label for="toggle-octet" class="clickable-label">優先遵循八隅體</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-auto-rotate" checked><label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label></div>
+                <div class="switch-container" style="margin-bottom:0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <input type="checkbox" id="toggle-plasma">
+                    <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
                 </div>
             </div>
 
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-plasma">
-                <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; text-shadow:0 0 5px #a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+            <!-- 3. 🛠️ 其他擴充功能 (唯一入口) -->
+            <div class="panel-wrapper" id="master-other-functions">
+                <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+                    <span>🛠️ 其他擴充功能</span>
+                    <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
+                </button>
+                <div class="glass-content-panel">
+                    <!-- A. 三點成面 -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span>📐 幾何成面模式</span>
+                            <span class="toggle-icon" style="font-size:0.6rem;">▼</span>
+                        </button>
+                        <div class="glass-content-panel">
+                            <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:12px; background:rgba(0,0,0,0.3);" onclick="toggleFaceBuildMode()">點擊選取狀態: OFF</button>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
+                                <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
+                                <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
+                                <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.2);" onclick="clearCustomFaces()">清除面</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- B. 電子組態 -->
+                    <button id="btn-open-config" class="glass-toggle-btn"><span>⚛️ 查詢電子組態 (1-118)</span></button>
+                    <!-- C. 原子軌域 (掛載點) -->
+                    <div id="orbital-mount-point"></div>
+                </div>
             </div>
 
+            <!-- 4. 🟢 異構物選擇區 (確保在功能面板下方) -->
+            <div id="variant-selector"></div>
+
+            <!-- 5. 🧪 反應按鈕區 (補齊標籤，防止結構吃掉後面) -->
             <div id="reaction-container">
                 <div class="reaction-row">
+                    <!-- 反應按鈕由 JS 控制顯示，這裡確保清單完整 -->
                     <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
                     <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
@@ -885,29 +886,24 @@
                     <button id="reaction-propene-h2o-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reaction-ox-btn" class="reaction-btn btn-kmno4">🧪 一般氧化</button>
                     <button id="reaction-red-btn" class="reaction-btn btn-h2">🧪 還原</button>
-                    <!-- [新增] 乙炔 (C2H2) 專用按鈕群 (共7個) -->
-        <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
-        <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
-        <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
-        <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
-        <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
-        <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
-        <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
+                    <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
+                    <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
+                    <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
+                    <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
+                    <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
+                    <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
-            <!-- 知識小百科卡片 -->
+
+            <!-- 6. 小百科 -->
             <div class="card knowledge-card" id="knowledge-card" style="display: none;">
-            <div class="card-title" onclick="toggleKnowledge()">
-            <span>💡 小知識</span>
-            <span class="toggle-icon">▼</span>
+                <div class="card-title" onclick="toggleKnowledge()">
+                    <span>💡 小知識</span><span class="toggle-icon">▼</span>
+                </div>
+                <div class="knowledge-content" id="knowledge-text"></div>
             </div>
-            <div class="knowledge-content" id="knowledge-text">
-            </div>
-        </div>
-        <button id="btn-open-config" class="control-button" style="width:100%; margin-bottom:15px; background:rgba(34, 211, 238, 0.1); border:1px solid #22d3ee; color:#22d3ee; font-weight:bold;">
-            ⚛️ 查詢電子組態 (1-118)
-        </button>
             
             
             <div class="card" id="data-card">
@@ -2753,10 +2749,19 @@ function renderConfigList() {
 
     ELECTRON_DATA.forEach(el => {
         if (filter) {
-            const isSymbolMatch = el.s.toLowerCase().startsWith(filter);
+            const isNumeric = !isNaN(filter) && filter !== "";
+            const isSymbolMatch = el.s.toLowerCase().startsWith(filter); 
+            const isChineseMatch = el.cn === filter; // 中文完全匹配
             const isZMatch = el.z.toString() === filter;
-            if (!isSymbolMatch && !isZMatch) return;
+
+            if (isNumeric) {
+                if (!isZMatch) return;
+            } else {
+                if (!isSymbolMatch && !isChineseMatch) return;
+            }
         }
+
+        // 2. 效能限制邏輯 (搜尋時通常不會達到限制，主要是保護空搜尋狀態)
         if (shownCount >= MAX_SHOW) return;
         shownCount++;
 
@@ -3396,19 +3401,16 @@ const ORBITAL_DATA = {
 
 // 3. UI 初始化
 function initOrbitalUI() {
-    if(document.getElementById('orbital-card')) return;
-    const container = document.querySelector('.controls-content');
+    const container = document.getElementById('orbital-mount-point'); 
     if(!container) return;
-    const card = document.createElement('div');
-    card.id = 'orbital-card'; 
-    card.className = 'orbital-wrapper';
-    card.innerHTML = `
-        <button class="orbital-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
-            <span>💠 原子軌域</span>
-            <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
-        </button>
-        <div class="orbital-content">
-            <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+
+    // 直接將按鈕組注入到紫色「其他擴充功能」內部的掛載點
+    container.innerHTML = `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(139, 92, 246, 0.3);">
+            <div style="font-weight: bold; color: #a78bfa; margin-bottom: 10px; font-size: 0.9rem; border-left: 3px solid #8b5cf6; padding-left: 8px;">
+                💠 原子軌域模型選擇
+            </div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
                 <button class="orb-btn" onclick="loadOrbital('s')">s</button>
                 <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
@@ -3421,24 +3423,21 @@ function initOrbitalUI() {
                 <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
             </div>
-            <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:5px;">f 軌域 (Cubic / General):</div>
-            <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); margin:5px 0 5px 2px;">f 軌域系列:</div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr); margin-bottom:5px;">
                 <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
-            </div>
-            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
                 <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+            </div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr); margin-bottom:12px;">
                 <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
                 <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
             </div>
-            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px;" onclick="togglePlanes()">顯示節面: ON</button>
+            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px; height:36px;" onclick="togglePlanes()">顯示節面: ON</button>
         </div>
     `;
-    const dataCard = document.getElementById('data-card');
-    if(dataCard && dataCard.parentNode) dataCard.parentNode.insertBefore(card, dataCard);
-    else container.appendChild(card);
 }
 
 // 4. 純電子雲生成引擎 (高密度動態版)
