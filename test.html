@@ -195,6 +195,27 @@
     .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .data-label { font-size: 1rem; color: var(--text-sub); }
     .data-value { font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
+    /* 平衡結果專用樣式 */
+    #balance-result {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+        padding: 20px; font-family: 'Times New Roman', serif;
+    }
+    .eqn-item { display: flex; align-items: center; margin: 0 4px; }
+    .coeff { 
+        color: #facc15; font-weight: 900; font-size: 1.6rem; 
+        margin-right: 4px; font-style: italic;
+        text-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+    }
+    .eqn-op { color: rgba(255,255,255,0.4); font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
+    .reaction-arrow { color: #38bdf8; font-size: 1.8rem; margin: 0 15px; font-weight: bold; }
+    #balance-info-trigger { transition: all 0.2s; background: rgba(16, 185, 129, 0.1); }
+    #balance-info-trigger:hover { 
+        background: var(--accent-green); 
+        color: #000; 
+        box-shadow: 0 0 10px var(--accent-green);
+    }
+    #balance-result sup { top: -0.6em; font-size: 0.75em; margin-left: 1px; vertical-align: baseline; position: relative; }
+    #balance-result sub { bottom: -0.2em; font-size: 0.75em; vertical-align: baseline; position: relative; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
@@ -390,7 +411,30 @@
     .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    /* 統一高亮紫色玻璃風格 */
+    .glass-toggle-btn {
+        width: 100%; height: 46px; margin-bottom: 12px;
+        background: rgba(139, 92, 246, 0.25); 
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(139, 92, 246, 0.7); 
+        color: #fff; font-size: 1rem; font-weight: 600; border-radius: 23px;
+        cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .glass-toggle-btn:hover { background: rgba(139, 92, 246, 0.35); border-color: #fff; }
 
+    .glass-content-panel {
+        display: none; padding: 12px; border-radius: 20px;
+        background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(139, 92, 246, 0.3);
+        margin-top: -6px; margin-bottom: 15px;
+    }
+    .panel-wrapper.expanded > .glass-content-panel { display: block; animation: fadeIn 0.3s ease; }
+    .panel-wrapper.expanded > .glass-toggle-btn { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
+
+    .glass-content-panel .glass-toggle-btn {
+        height: 40px; font-size: 0.95rem;
+        background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4);
+    }
     .info-section { margin-bottom: 15px; }
     .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
     .info-body { padding-left: 6px; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; text-align: justify; }
@@ -789,58 +833,100 @@
         <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
         
         <div class="controls-content">
+            <!-- 1. 核心輸入 -->
             <div class="card">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-    <span>⚛️ 輸入化學式</span>
-    <span style="font-size: 14px; color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.9); font-weight: normal; letter-spacing: 0.5px;">
-        Created by 林瑋老師
-    </span>
-</div>
+                    <span>⚛️ 輸入化學式</span>
+                    <span style="font-size: 13px; color: rgba(255,255,255,0.6); font-weight: normal;">Created by 林瑋老師</span>
+                </div>
                 <div class="input-group">
                     <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
                     <button id="load-btn">載入</button>
                 </div>
-                <div class="input-note">單指滑動旋轉，雙指縮放/平移</div>
             </div>
+            <!-- 化學方程式平衡卡片 (修正版) -->
+            <div class="card" style="border-color: var(--accent-green); position: relative;">
+                <div class="card-title" style="color: var(--accent-green); display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <span>⚖️ 平衡化學反應式</span>
+                    <div id="balance-info-trigger" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                    
+                    <!-- 隱藏說明框 (美化版) - 加入修復大寫問題的指令 -->
+                    <div id="balance-help-popup" style="display: none; position: absolute; top: 60px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
+                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem; display: flex; align-items: center; gap: 8px;">📝 輸入規範與範例 ( _ 表示空格 )</div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            1. <strong style="color: #fff;">物質間空格：</strong> 不同項請用 <span style="color: #facc15; font-weight: bold;">「 _+_ 」</span> 隔開。<br>
+                            2. <strong style="color: #fff;">離子電荷：</strong> 多原子者建議加空格如 <span style="color: #f472b6;">MnO<sub>4</sub>_-</span>，簡單者可不加如 <span style="color: #f472b6;">S2-</span>。<br>
+                            3. <strong style="color: #fff;">嚴格大小寫：</strong> 正確格式為 <span style="color: #38bdf8;">NaOH</span> 而非 NAOH。<br>
+                            4. <strong style="color: #fff;">括號支援：</strong> 支援 <span style="color: #38bdf8;">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></span> 等複雜分子。
+                        </div>
 
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-lp" checked>
-                <label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label>
-            </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #facc15;">
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">正確範例輸入：</div>
+                            <code style="color: #facc15; font-family: 'Courier New', monospace; font-size: 0.9rem; word-break: break-all; letter-spacing: 1px;">MnO4_-_+_H+_+_S2-_=_Mn2+_+_S_+_H2O</code>
+                        </div>
+                        
+                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; text-align: center;">( 點擊框外任意處關閉 )</div>
+                    </div>
+                </div>
 
-            <div class="switch-container" id="glow-switch-wrap">
-                <input type="checkbox" id="toggle-glow">
-                <label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label>
-            </div>
-            
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-octet" checked>
-                <label for="toggle-octet" class="clickable-label">優先遵循八隅體</label>
-            </div>
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-auto-rotate" checked>
-                <label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label>
-            </div>
-
-            <div id="variant-selector"></div>
-            
-            <div id="manual-poly-controls" style="margin-top: 10px; margin-bottom: 15px;">
-                <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:8px;" onclick="toggleFaceBuildMode()">點擊三點成面: OFF</button>
-                <div style="display: flex; gap: 5px;">
-                    <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
-                    <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
-                    <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
-                    <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0;" onclick="clearCustomFaces()">清除面</button>
+                <div class="input-group">
+                    <input type="text" id="equation-input" placeholder="請輸入反應式 (如: H2 + O2 = H2O)" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <button id="balance-btn" style="background: var(--accent-green); white-space: nowrap; padding: 0 15px;">平衡</button>
+                </div>
+                <div id="balance-result" style="margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 12px; display: none; min-height: 60px; border: 1px dashed rgba(255,255,255,0.1);">
                 </div>
             </div>
 
-            <div class="switch-container">
-                <input type="checkbox" id="toggle-plasma">
-                <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; text-shadow:0 0 5px #a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+            <!-- 2. 顯示開關 (包含整合好的電漿態) -->
+            <div class="card" style="padding: 12px; background: rgba(0,0,0,0.2);">
+                <div class="switch-container"><input type="checkbox" id="toggle-lp" checked><label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-glow"><label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-octet" checked><label for="toggle-octet" class="clickable-label">優先遵循八隅體</label></div>
+                <div class="switch-container"><input type="checkbox" id="toggle-auto-rotate" checked><label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label></div>
+                <div class="switch-container" style="margin-bottom:0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <input type="checkbox" id="toggle-plasma">
+                    <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+                </div>
             </div>
 
+            <!-- 3. 🛠️ 其他擴充功能 (唯一入口) -->
+            <div class="panel-wrapper" id="master-other-functions">
+                <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+                    <span>🛠️ 其他擴充功能</span>
+                    <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
+                </button>
+                <div class="glass-content-panel">
+                    <!-- A. 三點成面 -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span>📐 幾何成面模式</span>
+                            <span class="toggle-icon" style="font-size:0.6rem;">▼</span>
+                        </button>
+                        <div class="glass-content-panel">
+                            <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:12px; background:rgba(0,0,0,0.3);" onclick="toggleFaceBuildMode()">點擊選取狀態: OFF</button>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
+                                <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
+                                <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
+                                <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.2);" onclick="clearCustomFaces()">清除面</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- B. 電子組態 -->
+                    <button id="btn-open-config" class="glass-toggle-btn"><span>⚛️ 查詢電子組態 (1-118)</span></button>
+                    <!-- C. 原子軌域 (掛載點) -->
+                    <div id="orbital-mount-point"></div>
+                </div>
+            </div>
+
+            <!-- 4. 🟢 異構物選擇區 (確保在功能面板下方) -->
+            <div id="variant-selector"></div>
+
+            <!-- 5. 🧪 反應按鈕區 (補齊標籤，防止結構吃掉後面) -->
             <div id="reaction-container">
                 <div class="reaction-row">
+                    <!-- 反應按鈕由 JS 控制顯示，這裡確保清單完整 -->
                     <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
                     <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
@@ -854,29 +940,24 @@
                     <button id="reaction-propene-h2o-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reaction-ox-btn" class="reaction-btn btn-kmno4">🧪 一般氧化</button>
                     <button id="reaction-red-btn" class="reaction-btn btn-h2">🧪 還原</button>
-                    <!-- [新增] 乙炔 (C2H2) 專用按鈕群 (共7個) -->
-        <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
-        <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
-        <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
-        <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
-        <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
-        <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
-        <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
+                    <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
+                    <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
+                    <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
+                    <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
+                    <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
+                    <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
-            <!-- 知識小百科卡片 -->
+
+            <!-- 6. 小百科 -->
             <div class="card knowledge-card" id="knowledge-card" style="display: none;">
-            <div class="card-title" onclick="toggleKnowledge()">
-            <span>💡 小知識</span>
-            <span class="toggle-icon">▼</span>
+                <div class="card-title" onclick="toggleKnowledge()">
+                    <span>💡 小知識</span><span class="toggle-icon">▼</span>
+                </div>
+                <div class="knowledge-content" id="knowledge-text"></div>
             </div>
-            <div class="knowledge-content" id="knowledge-text">
-            </div>
-        </div>
-        <button id="btn-open-config" class="control-button" style="width:100%; margin-bottom:15px; background:rgba(34, 211, 238, 0.1); border:1px solid #22d3ee; color:#22d3ee; font-weight:bold;">
-            ⚛️ 查詢電子組態 (1-118)
-        </button>
             
             
             <div class="card" id="data-card">
@@ -1134,50 +1215,166 @@ function toggleMode() {
 
 function formatFormula(str) {
     if (!str) return "";
-    if (str.includes('<') && str.includes('>')) return str;
-
-    let s = str;
-    let chargePart = "";
+    let s = str.trim();
     let mainPart = s;
+    let chargePart = "";
 
-    // [修改] 智慧電荷判斷 + 正負號分離標籤
-    
-    // 1. 嘗試抓取結尾的 "數字+正負號" (例如 3-, 2+)
-    let matchWithDigit = s.match(/(\d)([+-]+)$/);
-    
-    if (matchWithDigit) {
-        let index = matchWithDigit.index;
-        let charBefore = s[index - 1]; // 抓取數字前的一個字
+    // 1. 改進的電荷偵測：支援 "Fe 2+" 或 "Ag+" 格式
+    // 匹配末尾的 (數字+正負號) 或 (單純正負號)，前方可能有空格
+    const chargeRegex = /\s*(\d*[+-]+)$/;
+    const match = s.match(chargeRegex);
 
-        // A. 如果前一個字是 "數字" (例如 PO43-) -> 3- 是電荷
-        if (/\d/.test(charBefore)) {
-            // 將符號包在 span 裡，方便單獨調整 CSS
-            let num = matchWithDigit[1];
-            let sign = matchWithDigit[2];
-            chargePart = `<sup>${num}<span class="charge-sign">${sign}</span></sup>`;
-            mainPart = s.substring(0, index);
-        } 
-        // B. 如果前一個字是 "字母" (例如 IO3-) -> 3 是下標，只有 - 是電荷
-        else {
-            let sign = matchWithDigit[2];
-            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
-            // 這裡保留數字部分，讓它流到下面被轉成下標
-            mainPart = s.substring(0, s.length - sign.length); 
-        }
-    } else {
-        // 2. 如果沒抓到數字電荷，抓純符號 (例如 -, +)
-        let matchSignOnly = s.match(/([+-]+)$/);
-        if (matchSignOnly) {
-            let sign = matchSignOnly[0];
-            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
-            mainPart = s.substring(0, matchSignOnly.index);
-        }
+    if (match) {
+        let rawCharge = match[1];
+        mainPart = s.replace(chargeRegex, ""); // 剩下的就是化學式主體
+        
+        // 格式化電荷顯示：把數字跟符號分開處理
+        let chargeDisplay = rawCharge.replace(/(\d+)/g, '$1').replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
+        chargePart = `<sup>${chargeDisplay}</sup>`;
     }
 
-    // 3. 處理剩下部分的下標 (所有數字都變下標)
-    mainPart = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+    // 2. 處理主體的數字 (將所有數字變為下標 sub，但排除已經處理過的電荷部分)
+    mainPart = mainPart.replace(/(\d+)(?![^<]*>)/g, '<sub>$1</sub>');
 
     return mainPart + chargePart;
+}
+
+function setupEquationBalancer() {
+    const btn = document.getElementById('balance-btn');
+    const input = document.getElementById('equation-input');
+    const resultDiv = document.getElementById('balance-result');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+        const rawValue = input.value.trim();
+        if (!rawValue) return;
+        try {
+            const resultHtml = solveChemicalEquation(rawValue);
+            resultDiv.innerHTML = `<div style="width:100%; color:#94a3b8; font-size:0.85rem; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1);">⚖️ 平衡結果：</div>${resultHtml}`;
+            resultDiv.style.display = 'flex';
+        } catch (e) {
+            resultDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
+            resultDiv.style.display = 'flex';
+        }
+    });
+
+    // --- 說明框互動邏輯 (精簡優化版) ---
+    const helpBtn = document.getElementById('balance-info-trigger');
+    const helpBox = document.getElementById('balance-help-popup');
+
+    if (helpBtn && helpBox) {
+        // 點擊「i」按鈕：切換顯示/隱藏
+        helpBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止點擊按鈕同時觸發下方的 document 關閉邏輯
+            const isOpen = helpBox.style.display === 'block';
+            helpBox.style.display = isOpen ? 'none' : 'block';
+            
+            // 手機版震動回饋 (若支援)
+            if (!isOpen && typeof navigator.vibrate === 'function') {
+                navigator.vibrate(20);
+            }
+        });
+
+        // 全域點擊邏輯：點擊說明框以外的任何地方就自動關閉
+        document.addEventListener('click', (e) => {
+            if (helpBox.style.display === 'block' && !helpBox.contains(e.target)) {
+                helpBox.style.display = 'none';
+            }
+        });
+    }
+}
+
+function solveChemicalEquation(eqn) {
+    const sides = eqn.split('=');
+    if (sides.length !== 2) throw new Error("缺少 '=' 號");
+    const parseSide = (s) => s.split(/\s+\+\s+/).map(x => x.trim()).filter(x => x);
+    const leftArr = parseSide(sides[0]);
+    const rightArr = parseSide(sides[1]);
+    const allItems = [...leftArr, ...rightArr];
+
+    const species = allItems.map(s => {
+        const parts = s.split(/\s+/);
+        let f = parts[0], cStr = parts[1] || "";
+        if (!cStr && (f.endsWith('+') || f.endsWith('-'))) {
+            const m = f.match(/^(.*?)(\d*[+-]+)$/);
+            if (m) { f = m[1]; cStr = m[2]; }
+        }
+        return { formula: f, charge: parseCharge(cStr), atoms: parseAtoms(f) };
+    });
+
+    const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
+    const rows = elements.length + 1; 
+    const cols = species.length;
+    let matrix = Array.from({ length: rows }, () => new Array(cols).fill(0));
+    species.forEach((s, j) => {
+        const mult = (j < leftArr.length) ? 1 : -1;
+        elements.forEach((el, i) => { matrix[i][j] = (s.atoms[el] || 0) * mult; });
+        matrix[rows - 1][j] = s.charge * mult;
+    });
+
+    const finalCoeffs = gaussElimination(matrix);
+    let html = "";
+    species.forEach((s, i) => {
+        const c = finalCoeffs[i];
+        const cDisp = `<span class="coeff">${c}</span>`;
+        const rawSpec = allItems[i].split(/\s+/);
+        const fCombined = rawSpec[0] + (rawSpec[1] ? " " + rawSpec[1] : "");
+        html += `<div class="eqn-item">${cDisp}${formatFormula(fCombined)}</div>`;
+        if (i === leftArr.length - 1) html += `<span class="reaction-arrow">→</span>`;
+        else if (i < cols - 1) html += `<span class="eqn-op">+</span>`;
+    });
+    return html;
+}
+
+function gaussElimination(matrix) {
+    const rows = matrix.length, cols = matrix[0].length;
+    let pivot = 0;
+    for (let j = 0; j < cols && pivot < rows; j++) {
+        let max = pivot;
+        for (let i = pivot + 1; i < rows; i++) { if (Math.abs(matrix[i][j]) > Math.abs(matrix[max][j])) max = i; }
+        [matrix[pivot], matrix[max]] = [matrix[max], matrix[pivot]];
+        if (Math.abs(matrix[pivot][j]) < 1e-10) continue;
+        const val = matrix[pivot][j];
+        for (let k = 0; k < cols; k++) matrix[pivot][k] /= val;
+        for (let i = 0; i < rows; i++) { if (i !== pivot) { const factor = matrix[i][j]; for (let k = 0; k < cols; k++) matrix[i][k] -= factor * matrix[pivot][k]; } }
+        pivot++;
+    }
+    let sol = new Array(cols).fill(0); sol[cols - 1] = 1;
+    for (let i = 0; i < cols - 1; i++) { sol[i] = -matrix[i][cols - 1]; }
+    let bestMult = 1;
+    for (let m = 1; m <= 500; m++) { if (sol.every(v => Math.abs(v * m - Math.round(v * m)) < 1e-3)) { bestMult = m; break; } }
+    return sol.map(v => Math.round(Math.abs(v * bestMult)));
+}
+
+function parseAtoms(f) {
+    let formula = f.replace(/\[/g, '(').replace(/\]/g, ')').replace(/\{/g, '(').replace(/\}/g, ')');
+    const stack = [{}];
+    let i = 0;
+    while (i < formula.length) {
+        let char = formula[i];
+        if (char === '(') { stack.push({}); i++; }
+        else if (char === ')') {
+            i++; let mStr = "";
+            while (i < formula.length && /\d/.test(formula[i])) { mStr += formula[i]; i++; }
+            let m = parseInt(mStr || "1"), popped = stack.pop(), top = stack[stack.length - 1];
+            for (let el in popped) { top[el] = (top[el] || 0) + popped[el] * m; }
+        } else {
+            let match = formula.slice(i).match(/^([A-Z][a-z]*)(\d*)/);
+            if (match) {
+                let el = match[1], count = parseInt(match[2] || "1"), top = stack[stack.length - 1];
+                top[el] = (top[el] || 0) + count; i += match[0].length;
+            } else { i++; }
+        }
+    }
+    return stack[0];
+}
+
+function parseCharge(c) {
+    if (!c) return 0;
+    if (c === '+') return 1; if (c === '-') return -1;
+    const m = c.match(/^(\d*)([+-])$/);
+    if (!m) return 0;
+    return parseInt(m[1] || "1") * (m[2] === '+' ? 1 : -1);
 }
 
 function handleLoadBtn() {
@@ -2216,6 +2413,9 @@ function animate() {
 }
 
 function setupInteractions() {
+    // 啟動方程式平衡器
+    setupEquationBalancer();
+
     // 1. 基礎按鈕綁定
     const modeBtn = document.getElementById('mode-toggle');
     if (modeBtn) modeBtn.addEventListener('click', toggleMode);
@@ -2721,11 +2921,20 @@ function renderConfigList() {
     const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
     ELECTRON_DATA.forEach(el => {
-        if (filter && !el.s.toLowerCase().includes(filter) && 
-            !el.n.toLowerCase().includes(filter) && 
-            !el.z.toString().includes(filter)) {
-            return;
+        if (filter) {
+            const isNumeric = !isNaN(filter) && filter !== "";
+            const isSymbolMatch = el.s.toLowerCase().startsWith(filter); 
+            const isChineseMatch = el.cn === filter; // 中文完全匹配
+            const isZMatch = el.z.toString() === filter;
+
+            if (isNumeric) {
+                if (!isZMatch) return;
+            } else {
+                if (!isSymbolMatch && !isChineseMatch) return;
+            }
         }
+
+        // 2. 效能限制邏輯 (搜尋時通常不會達到限制，主要是保護空搜尋狀態)
         if (shownCount >= MAX_SHOW) return;
         shownCount++;
 
@@ -3365,52 +3574,43 @@ const ORBITAL_DATA = {
 
 // 3. UI 初始化
 function initOrbitalUI() {
-    if(document.getElementById('orbital-card')) return;
-    const container = document.querySelector('.controls-content');
+    const container = document.getElementById('orbital-mount-point'); 
     if(!container) return;
-    const card = document.createElement('div');
-    card.id = 'orbital-card'; card.className = 'card'; card.style.border = '1px solid rgba(56, 189, 248, 0.4)';
-    card.innerHTML = `
-        <div class="card-title" style="color:#38bdf8;">💠 原子軌域</div>
-        
-        <!-- s, p 軌域 -->
-        <div class="orbital-btn-group" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-            <button class="orb-btn" onclick="loadOrbital('s')">s</button>
-            <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
-        </div>
-        
-        <!-- d 軌域 -->
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
-        </div>
 
-        <!-- f 軌域 (新增) -->
-        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (Cubic Set):</div>
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+    // 直接將按鈕組注入到紫色「其他擴充功能」內部的掛載點
+    container.innerHTML = `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(139, 92, 246, 0.3);">
+            <div style="font-weight: bold; color: #a78bfa; margin-bottom: 10px; font-size: 0.9rem; border-left: 3px solid #8b5cf6; padding-left: 8px;">
+                💠 原子軌域模型選擇
+            </div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
+                <button class="orb-btn" onclick="loadOrbital('s')">s</button>
+                <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+            </div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
+                <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+            </div>
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); margin:5px 0 5px 2px;">f 軌域系列:</div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr); margin-bottom:5px;">
+                <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+            </div>
+            <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr); margin-bottom:12px;">
+                <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
+                <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
+            </div>
+            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px; height:36px;" onclick="togglePlanes()">顯示節面: ON</button>
         </div>
-        
-        <div style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:2px;">f 軌域 (General Set):</div>
-        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
-            <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
-            <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
-        </div>
-
-        <button id="btn-toggle-plane" class="control-button plane-toggle active" onclick="togglePlanes()">顯示節面: ON</button>
     `;
-    const dataCard = document.getElementById('data-card');
-    if(dataCard && dataCard.parentNode) dataCard.parentNode.insertBefore(card, dataCard);
-    else container.appendChild(card);
 }
 
 // 4. 純電子雲生成引擎 (高密度動態版)
