@@ -195,6 +195,27 @@
     .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .data-label { font-size: 1rem; color: var(--text-sub); }
     .data-value { font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
+    /* 平衡結果專用樣式 */
+    #balance-result {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+        padding: 20px; font-family: 'Times New Roman', serif;
+    }
+    .eqn-item { display: flex; align-items: center; margin: 0 4px; }
+    .coeff { 
+        color: #facc15; font-weight: 900; font-size: 1.6rem; 
+        margin-right: 4px; font-style: italic;
+        text-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+    }
+    .eqn-op { color: rgba(255,255,255,0.4); font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
+    .reaction-arrow { color: #38bdf8; font-size: 1.8rem; margin: 0 15px; font-weight: bold; }
+    #balance-info-trigger { transition: all 0.2s; background: rgba(16, 185, 129, 0.1); }
+    #balance-info-trigger:hover { 
+        background: var(--accent-green); 
+        color: #000; 
+        box-shadow: 0 0 10px var(--accent-green);
+    }
+    #balance-result sup { top: -0.6em; font-size: 0.75em; margin-left: 1px; vertical-align: baseline; position: relative; }
+    #balance-result sub { bottom: -0.2em; font-size: 0.75em; vertical-align: baseline; position: relative; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
@@ -823,6 +844,39 @@
                     <button id="load-btn">載入</button>
                 </div>
             </div>
+            <!-- 化學方程式平衡卡片 (修正版) -->
+            <div class="card" style="border-color: var(--accent-green); position: relative;">
+                <div class="card-title" style="color: var(--accent-green); display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <span>⚖️ 平衡化學反應式</span>
+                    <div id="balance-info-trigger" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                    
+                    <!-- 隱藏說明框 (美化版) - 加入修復大寫問題的指令 -->
+                    <div id="balance-help-popup" style="display: none; position: absolute; top: 60px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
+                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem; display: flex; align-items: center; gap: 8px;">📝 輸入規範與範例 ( _ 表示空格 )</div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            1. <strong style="color: #fff;">物質間空格：</strong> 不同項請用 <span style="color: #facc15; font-weight: bold;">「 _+_ 」</span> 隔開。<br>
+                            2. <strong style="color: #fff;">離子電荷：</strong> 多原子者建議加空格如 <span style="color: #f472b6;">MnO<sub>4</sub>_-</span>，簡單者可不加如 <span style="color: #f472b6;">S2-</span>。<br>
+                            3. <strong style="color: #fff;">嚴格大小寫：</strong> 正確格式為 <span style="color: #38bdf8;">NaOH</span> 而非 NAOH。<br>
+                            4. <strong style="color: #fff;">括號支援：</strong> 支援 <span style="color: #38bdf8;">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></span> 等複雜分子。
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #facc15;">
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">正確範例輸入：</div>
+                            <code style="color: #facc15; font-family: 'Courier New', monospace; font-size: 0.9rem; word-break: break-all; letter-spacing: 1px;">MnO4_-_+_H+_+_S2-_=_Mn2+_+_S_+_H2O</code>
+                        </div>
+                        
+                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; text-align: center;">( 點擊框外任意處關閉 )</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="equation-input" placeholder="請輸入反應式 (如: H2 + O2 = H2O)" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <button id="balance-btn" style="background: var(--accent-green); white-space: nowrap; padding: 0 15px;">平衡</button>
+                </div>
+                <div id="balance-result" style="margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 12px; display: none; min-height: 60px; border: 1px dashed rgba(255,255,255,0.1);">
+                </div>
+            </div>
 
             <!-- 2. 顯示開關 (包含整合好的電漿態) -->
             <div class="card" style="padding: 12px; background: rgba(0,0,0,0.2);">
@@ -1161,50 +1215,166 @@ function toggleMode() {
 
 function formatFormula(str) {
     if (!str) return "";
-    if (str.includes('<') && str.includes('>')) return str;
-
-    let s = str;
-    let chargePart = "";
+    let s = str.trim();
     let mainPart = s;
+    let chargePart = "";
 
-    // [修改] 智慧電荷判斷 + 正負號分離標籤
-    
-    // 1. 嘗試抓取結尾的 "數字+正負號" (例如 3-, 2+)
-    let matchWithDigit = s.match(/(\d)([+-]+)$/);
-    
-    if (matchWithDigit) {
-        let index = matchWithDigit.index;
-        let charBefore = s[index - 1]; // 抓取數字前的一個字
+    // 1. 改進的電荷偵測：支援 "Fe 2+" 或 "Ag+" 格式
+    // 匹配末尾的 (數字+正負號) 或 (單純正負號)，前方可能有空格
+    const chargeRegex = /\s*(\d*[+-]+)$/;
+    const match = s.match(chargeRegex);
 
-        // A. 如果前一個字是 "數字" (例如 PO43-) -> 3- 是電荷
-        if (/\d/.test(charBefore)) {
-            // 將符號包在 span 裡，方便單獨調整 CSS
-            let num = matchWithDigit[1];
-            let sign = matchWithDigit[2];
-            chargePart = `<sup>${num}<span class="charge-sign">${sign}</span></sup>`;
-            mainPart = s.substring(0, index);
-        } 
-        // B. 如果前一個字是 "字母" (例如 IO3-) -> 3 是下標，只有 - 是電荷
-        else {
-            let sign = matchWithDigit[2];
-            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
-            // 這裡保留數字部分，讓它流到下面被轉成下標
-            mainPart = s.substring(0, s.length - sign.length); 
-        }
-    } else {
-        // 2. 如果沒抓到數字電荷，抓純符號 (例如 -, +)
-        let matchSignOnly = s.match(/([+-]+)$/);
-        if (matchSignOnly) {
-            let sign = matchSignOnly[0];
-            chargePart = `<sup><span class="charge-sign">${sign}</span></sup>`;
-            mainPart = s.substring(0, matchSignOnly.index);
-        }
+    if (match) {
+        let rawCharge = match[1];
+        mainPart = s.replace(chargeRegex, ""); // 剩下的就是化學式主體
+        
+        // 格式化電荷顯示：把數字跟符號分開處理
+        let chargeDisplay = rawCharge.replace(/(\d+)/g, '$1').replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
+        chargePart = `<sup>${chargeDisplay}</sup>`;
     }
 
-    // 3. 處理剩下部分的下標 (所有數字都變下標)
-    mainPart = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+    // 2. 處理主體的數字 (將所有數字變為下標 sub，但排除已經處理過的電荷部分)
+    mainPart = mainPart.replace(/(\d+)(?![^<]*>)/g, '<sub>$1</sub>');
 
     return mainPart + chargePart;
+}
+
+function setupEquationBalancer() {
+    const btn = document.getElementById('balance-btn');
+    const input = document.getElementById('equation-input');
+    const resultDiv = document.getElementById('balance-result');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+        const rawValue = input.value.trim();
+        if (!rawValue) return;
+        try {
+            const resultHtml = solveChemicalEquation(rawValue);
+            resultDiv.innerHTML = `<div style="width:100%; color:#94a3b8; font-size:0.85rem; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1);">⚖️ 平衡結果：</div>${resultHtml}`;
+            resultDiv.style.display = 'flex';
+        } catch (e) {
+            resultDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
+            resultDiv.style.display = 'flex';
+        }
+    });
+
+    // --- 說明框互動邏輯 (精簡優化版) ---
+    const helpBtn = document.getElementById('balance-info-trigger');
+    const helpBox = document.getElementById('balance-help-popup');
+
+    if (helpBtn && helpBox) {
+        // 點擊「i」按鈕：切換顯示/隱藏
+        helpBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止點擊按鈕同時觸發下方的 document 關閉邏輯
+            const isOpen = helpBox.style.display === 'block';
+            helpBox.style.display = isOpen ? 'none' : 'block';
+            
+            // 手機版震動回饋 (若支援)
+            if (!isOpen && typeof navigator.vibrate === 'function') {
+                navigator.vibrate(20);
+            }
+        });
+
+        // 全域點擊邏輯：點擊說明框以外的任何地方就自動關閉
+        document.addEventListener('click', (e) => {
+            if (helpBox.style.display === 'block' && !helpBox.contains(e.target)) {
+                helpBox.style.display = 'none';
+            }
+        });
+    }
+}
+
+function solveChemicalEquation(eqn) {
+    const sides = eqn.split('=');
+    if (sides.length !== 2) throw new Error("缺少 '=' 號");
+    const parseSide = (s) => s.split(/\s+\+\s+/).map(x => x.trim()).filter(x => x);
+    const leftArr = parseSide(sides[0]);
+    const rightArr = parseSide(sides[1]);
+    const allItems = [...leftArr, ...rightArr];
+
+    const species = allItems.map(s => {
+        const parts = s.split(/\s+/);
+        let f = parts[0], cStr = parts[1] || "";
+        if (!cStr && (f.endsWith('+') || f.endsWith('-'))) {
+            const m = f.match(/^(.*?)(\d*[+-]+)$/);
+            if (m) { f = m[1]; cStr = m[2]; }
+        }
+        return { formula: f, charge: parseCharge(cStr), atoms: parseAtoms(f) };
+    });
+
+    const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
+    const rows = elements.length + 1; 
+    const cols = species.length;
+    let matrix = Array.from({ length: rows }, () => new Array(cols).fill(0));
+    species.forEach((s, j) => {
+        const mult = (j < leftArr.length) ? 1 : -1;
+        elements.forEach((el, i) => { matrix[i][j] = (s.atoms[el] || 0) * mult; });
+        matrix[rows - 1][j] = s.charge * mult;
+    });
+
+    const finalCoeffs = gaussElimination(matrix);
+    let html = "";
+    species.forEach((s, i) => {
+        const c = finalCoeffs[i];
+        const cDisp = `<span class="coeff">${c}</span>`;
+        const rawSpec = allItems[i].split(/\s+/);
+        const fCombined = rawSpec[0] + (rawSpec[1] ? " " + rawSpec[1] : "");
+        html += `<div class="eqn-item">${cDisp}${formatFormula(fCombined)}</div>`;
+        if (i === leftArr.length - 1) html += `<span class="reaction-arrow">→</span>`;
+        else if (i < cols - 1) html += `<span class="eqn-op">+</span>`;
+    });
+    return html;
+}
+
+function gaussElimination(matrix) {
+    const rows = matrix.length, cols = matrix[0].length;
+    let pivot = 0;
+    for (let j = 0; j < cols && pivot < rows; j++) {
+        let max = pivot;
+        for (let i = pivot + 1; i < rows; i++) { if (Math.abs(matrix[i][j]) > Math.abs(matrix[max][j])) max = i; }
+        [matrix[pivot], matrix[max]] = [matrix[max], matrix[pivot]];
+        if (Math.abs(matrix[pivot][j]) < 1e-10) continue;
+        const val = matrix[pivot][j];
+        for (let k = 0; k < cols; k++) matrix[pivot][k] /= val;
+        for (let i = 0; i < rows; i++) { if (i !== pivot) { const factor = matrix[i][j]; for (let k = 0; k < cols; k++) matrix[i][k] -= factor * matrix[pivot][k]; } }
+        pivot++;
+    }
+    let sol = new Array(cols).fill(0); sol[cols - 1] = 1;
+    for (let i = 0; i < cols - 1; i++) { sol[i] = -matrix[i][cols - 1]; }
+    let bestMult = 1;
+    for (let m = 1; m <= 500; m++) { if (sol.every(v => Math.abs(v * m - Math.round(v * m)) < 1e-3)) { bestMult = m; break; } }
+    return sol.map(v => Math.round(Math.abs(v * bestMult)));
+}
+
+function parseAtoms(f) {
+    let formula = f.replace(/\[/g, '(').replace(/\]/g, ')').replace(/\{/g, '(').replace(/\}/g, ')');
+    const stack = [{}];
+    let i = 0;
+    while (i < formula.length) {
+        let char = formula[i];
+        if (char === '(') { stack.push({}); i++; }
+        else if (char === ')') {
+            i++; let mStr = "";
+            while (i < formula.length && /\d/.test(formula[i])) { mStr += formula[i]; i++; }
+            let m = parseInt(mStr || "1"), popped = stack.pop(), top = stack[stack.length - 1];
+            for (let el in popped) { top[el] = (top[el] || 0) + popped[el] * m; }
+        } else {
+            let match = formula.slice(i).match(/^([A-Z][a-z]*)(\d*)/);
+            if (match) {
+                let el = match[1], count = parseInt(match[2] || "1"), top = stack[stack.length - 1];
+                top[el] = (top[el] || 0) + count; i += match[0].length;
+            } else { i++; }
+        }
+    }
+    return stack[0];
+}
+
+function parseCharge(c) {
+    if (!c) return 0;
+    if (c === '+') return 1; if (c === '-') return -1;
+    const m = c.match(/^(\d*)([+-])$/);
+    if (!m) return 0;
+    return parseInt(m[1] || "1") * (m[2] === '+' ? 1 : -1);
 }
 
 function handleLoadBtn() {
@@ -2243,6 +2413,9 @@ function animate() {
 }
 
 function setupInteractions() {
+    // 啟動方程式平衡器
+    setupEquationBalancer();
+
     // 1. 基礎按鈕綁定
     const modeBtn = document.getElementById('mode-toggle');
     if (modeBtn) modeBtn.addEventListener('click', toggleMode);
