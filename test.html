@@ -3412,18 +3412,21 @@ function setupMobilePanel() {
     // --- 設定參數 ---
     const H = window.innerHeight;
     const HANDLE_H = 40;
-    const PANEL_H = H * 0.98;
+    const PANEL_H = H * 0.98; // 物理總高度
 
-    const POS_98 = 0;                     
-    const POS_70 = H * (1 - 0.70);        
-    const POS_35 = H * (1 - 0.35);        
-    const POS_MIN = PANEL_H - HANDLE_H;   
+    // 定義停靠位置 (Y 軸偏移量)
+    const POS_98 = 0;                     // 露出 98% (全開)
+    const POS_70 = H * (1 - 0.70);        // 露出 70%
+    const POS_35 = H * (1 - 0.35);        // 露出 35% (中等)
+    const POS_MIN = PANEL_H - HANDLE_H;   // 露出 0% (只剩把手)
 
     let startY = 0, startTransY = POS_35, currentTransY = POS_35, isDragging = false;
 
+    // 初始狀態設在 35%
     panel.style.transform = `translateY(${POS_35}px)`; 
     panel.classList.add('half-open');
 
+    // 觸摸開始邏輯
     handle.addEventListener('touchstart', (e) => {
         if(e.cancelable) e.preventDefault();
         isDragging = true;
@@ -3435,15 +3438,17 @@ function setupMobilePanel() {
         panel.style.transition = 'none';
     }, {passive: false});
 
+    // 觸摸移動邏輯
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
         const deltaY = e.touches[0].clientY - startY;
         let newY = startTransY + deltaY;
-        if (newY < POS_98) newY = newY * 0.4; 
+        if (newY < POS_98) newY = newY * 0.4; // 頂部拉不動阻尼
         panel.style.transform = `translateY(${newY}px)`;
         currentTransY = newY;
     }, {passive: false});
 
+    // 觸摸放開：自動吸附最近段位
     window.addEventListener('touchend', () => {
         if(!isDragging) return;
         isDragging = false;
@@ -3461,18 +3466,31 @@ function setupMobilePanel() {
         else panel.classList.add('half-open');
     });
 
+    // 【核心修正：點擊把手彈出/縮回邏輯】
     handle.addEventListener('click', (e) => {
         e.preventDefault();
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         const curY = matrix.m42;
+
+        // 模擬彈力動畫
         panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         let target;
-        if (Math.abs(curY - POS_MIN) < 50) target = POS_35;
-        else if (Math.abs(curY - POS_35) < 50) target = POS_70;
-        else if (Math.abs(curY - POS_70) < 50) target = POS_98;
-        else target = POS_MIN;
+
+        // 循環跳轉邏輯
+        if (Math.abs(curY - POS_MIN) < 50) {
+            target = POS_35; // 從最低彈到 35%
+        } else if (Math.abs(curY - POS_35) < 50) {
+            target = POS_70; // 從 35% 彈到 70%
+        } else if (Math.abs(curY - POS_70) < 50) {
+            target = POS_98; // 從 70% 彈到 98%
+        } else {
+            target = POS_MIN; // 從最高處直接縮回最低
+        }
+
         panel.style.transform = `translateY(${target}px)`;
+
+        // 根據目標位置切換 class，控制內容區的滾動空間
         if (target <= POS_70) panel.classList.remove('half-open');
         else panel.classList.add('half-open');
     });
