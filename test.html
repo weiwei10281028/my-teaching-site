@@ -277,7 +277,7 @@
     body.simulate-mobile .controls-container { display: none !important; }
     body.simulate-mobile .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     body.simulate-mobile .controls-area {
-        position: fixed; bottom: 0; left: 0; width: 100%; height: 70vh; max-height: 70vh;
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 98vh; max-height: 98vh;
         border-left: none; border-top: 1px solid rgba(255,255,255,0.15);
         border-radius: 20px 20px 0 0; background-color: #1a1a1a; padding: 0; z-index: 100;
         transform: translateY(0); transition: transform 0.3s; will-change: transform;
@@ -314,27 +314,20 @@
         left: 0; 
         bottom: 0; 
         width: 100%; 
-        
-        /* 【關鍵】高度固定，不要變動它，變動高度會卡頓 */
-        height: 80vh; 
-        
+        height: 98vh; 
+        max-height: 98vh;
         background-color: rgba(26, 26, 26, 0.96); 
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         border-radius: 20px 20px 0 0; 
         border-top: 1px solid rgba(255,255,255,0.15);
         box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
         z-index: 100;
-        
         display: flex; flex-direction: column;
         padding: 0;
-
-        /* 【關鍵】預設位置：往下推 (100% - 40px把手高度) */
         transform: translateY(calc(100% - 40px));
-        
-        /* 啟用硬體加速 */
         will-change: transform;
-        /* 這是放手後的彈力曲線，模仿 iOS */
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+
     }
 
     #mobile-panel-handle { 
@@ -835,7 +828,7 @@
             <div class="card">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>⚛️ 輸入化學式</span>
-                    <span style="font-size: 13px; color: rgba(255,255,255,0.6); font-weight: normal;">Created by 林瑋老師</span>
+                    <span style="font-size: 13px; color: #fff; font-weight: bold; text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.4); letter-spacing: 1px;">CREATED BY 林瑋老師</span>
                 </div>
                 <div class="input-group">
                     <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
@@ -870,7 +863,7 @@
                     <button id="balance-btn" style="background: var(--accent-green);">平衡</button>
                 </div>
                 <div id="balance-result" style="margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 12px; display: none; border: 1px dashed rgba(255,255,255,0.1);"></div>
-                <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 12px; cursor: pointer; color: #38bdf8; font-size: 0.85rem; text-decoration: underline; font-weight: bold;">查看解題思路與觀察法步驟</div>
+                <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 12px; cursor: pointer; color: #38bdf8; font-size: 0.85rem; text-decoration: underline; font-weight: bold;">查看解題思路</div>
                 <div id="balance-steps" style="display: none; margin-top: 15px; padding: 20px; background: rgba(15, 23, 42, 0.8); border-radius: 12px; border-left: 5px solid #facc15; font-size: 0.95rem; color: #e2e8f0; line-height: 1.7; text-transform: none;"></div>
 
             <!-- 2. 顯示開關 (包含整合好的電漿態) -->
@@ -1282,7 +1275,7 @@ function setupEquationBalancer() {
             resDiv.style.display = 'flex';
             stpDiv.innerHTML = res.stepsHtml;
             stpBtn.style.display = 'block';
-            stpBtn.textContent = '查看解題思路與觀察法步驟';
+            stpBtn.textContent = '查看解題思路';
         } catch (e) {
             resDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
             resDiv.style.display = 'flex';
@@ -1292,7 +1285,7 @@ function setupEquationBalancer() {
     stpBtn.onclick = () => {
         const isH = stpDiv.style.display === 'none';
         stpDiv.style.display = isH ? 'block' : 'none';
-        stpBtn.textContent = isH ? '隱藏解題思路' : '查看解題思路與觀察法步驟';
+        stpBtn.textContent = isH ? '隱藏解題思路' : '查看解題思路';
     };
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
     if (hBtn && hBox) {
@@ -1315,8 +1308,6 @@ function solveChemicalEquationWithSteps(eqn) {
         return { index: idx, formula: f, charge: parseCharge(cS), atoms: parseAtoms(f), raw: s };
     });
     const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
-
-    // 2. 矩陣預算求正解
     const finalCoeffs = (function() {
         let m = Array.from({ length: elements.length + 1 }, () => new Array(species.length).fill(0));
         species.forEach((s, j) => {
@@ -1327,29 +1318,18 @@ function solveChemicalEquationWithSteps(eqn) {
         return gaussElimination(m);
     })();
 
-    // 3. 【緊湊版 Style 5 浮雕方塊生成器】
-    const buildModularEquation = (coeffs) => {
+    const buildModularEq = (coeffs) => {
         let itemsHtml = "";
         species.forEach((s, i) => {
-            // 縮小內距 (4px 10px)、間距 (4px) 與字體 (1.1rem)
-            let unit = `
-                <div style="display: inline-flex; align-items: baseline; background: #1e293b; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 8px rgba(0,0,0,0.3); margin: 4px 2px; gap: 4px; vertical-align: middle;">
-                    <span style="font-size: 1.1rem; color: #facc15; font-weight: 900; font-style: italic; line-height:1;">${coeffs[i]}</span>
-                    <span style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height:1;">${formatFormula(s.raw)}</span>
-                </div>`;
+            let unit = `<div style="display: inline-flex; align-items: baseline; background: #1e293b; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 8px rgba(0,0,0,0.3); margin: 4px 2px; gap: 4px; vertical-align: middle;"><span style="font-size: 1.1rem; color: #facc15; font-weight: 900; font-style: italic;">${coeffs[i]}</span><span style="font-size: 1.1rem; color: #fff; font-weight: 500;">${formatFormula(s.raw)}</span></div>`;
             itemsHtml += unit;
-            if (i === leftRaw.length - 1) {
-                itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 8px; color: #38bdf8; font-size: 1.2rem; font-weight: bold;">→</span>`;
-            } else if (i < species.length - 1) {
-                itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 2px; color: rgba(255,255,255,0.2); font-size: 1rem;">+</span>`;
-            }
+            if (i === leftRaw.length - 1) itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 8px; color: #38bdf8; font-size: 1.2rem; font-weight: bold;">→</span>`;
+            else if (i < species.length - 1) itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 2px; color: rgba(255,255,255,0.8); font-size: 1rem;">+</span>`;
         });
-        return `<div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; padding: 2px 0;">${itemsHtml}</div>`;
+        return `<div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">${itemsHtml}</div>`;
     };
 
-    // 4. 解題思路生成
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
-    
     let startIdx = 0, maxScore = 0;
     species.forEach((s, i) => { 
         let score = Object.keys(s.atoms).length * 10 + Object.values(s.atoms).reduce((a,b)=>a+b,0);
@@ -1359,7 +1339,6 @@ function solveChemicalEquationWithSteps(eqn) {
 
     let locked = new Set([startIdx]), expressions = new Array(species.length).fill(""), usedConservation = new Set(), obsDetails = [];
     expressions[startIdx] = "1";
-
     const toMathTerm = (expr, count) => {
         if (!count || !expr) return null;
         if (expr === "1") return `${count}`;
@@ -1394,10 +1373,10 @@ function solveChemicalEquationWithSteps(eqn) {
             }
         }
     }
-    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可直接由基準物開始推導。"}</div></div>`;
+    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可由基準直接推導。"}</div></div>`;
 
     if (locked.size < species.length) {
-        let algebraicSteps = [], vars = ['a', 'b', 'c', 'd'], vIdx = 0;
+        let vars = ['a', 'b', 'c', 'd'], vIdx = 0, algebraicSteps = [];
         let remaining = species.filter(s => !locked.has(s.index));
         while(remaining.length > 0) {
             let next = remaining[0], v = vars[vIdx++] || 'k';
@@ -1427,15 +1406,15 @@ function solveChemicalEquationWithSteps(eqn) {
             return `${L.join(' + ') || "0"} = ${R.join(' + ') || "0"}`;
         };
         algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">列出守恆等式：</div>`);
-        elements.forEach(el => { if (!usedConservation.has(el)) algebraicSteps.push(`• 根據 <span class="highlight-atom">${el}</span> 原子：<br><span style="display:block; padding:5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.15rem; font-weight:bold; word-break:break-all;">${buildEq('atom', el)}</span>`); });
-        if (!usedConservation.has("charge") && species.some(s => s.charge !== 0)) algebraicSteps.push(`• 根據 <span class="highlight-atom">電荷</span>：<br><span style="display:block; padding:5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.15rem; font-weight:bold; word-break:break-all;">${buildEq('charge')}</span>`);
+        elements.forEach(el => { if (!usedConservation.has(el)) algebraicSteps.push(`• 根據 <span class="highlight-atom">${el}</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('atom', el)}</span>`); });
+        if (!usedConservation.has("charge") && species.some(s => s.charge !== 0)) algebraicSteps.push(`• 根據 <span class="highlight-atom">電荷</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('charge')}</span>`);
 
         let solvedVars = []; let seenV = new Set();
         species.forEach((s, idx) => {
             let ex = expressions[idx]; if(!ex || ex === "1") return;
             let vChar = ex.match(/[a-z]/);
             if(vChar && !seenV.has(vChar[0])) {
-                seenV.add(vChar[0]); let mNum = ex.match(/[0-9.]+/), mult = mNum ? parseFloat(mNum[0]) : 1;
+                seenV.add(vChar[0]); let numMatch = ex.match(/[0-9.]+/), mult = numMatch ? parseFloat(numMatch[0]) : 1;
                 let val = toFraction((finalCoeffs[idx] / finalCoeffs[startIdx]) / mult);
                 solvedVars.push(`<div style="display:flex; align-items:center; gap:8px;"><span style="font-style:italic; color:#f472b6; font-weight:bold; font-size:1.3rem;">${vChar[0]}</span> <span style="color:#94a3b8;">=</span> <span style="color:#facc15; font-weight:900; font-size:1.6rem; text-shadow: 0 0 10px rgba(250,204,21,0.4);">${val}</span></div>`);
             }
@@ -1444,21 +1423,21 @@ function solveChemicalEquationWithSteps(eqn) {
         stp += `<div class="step-box"><div class="step-title">步驟 3：代數法</div><div style="font-size:1.05rem; line-height:1.8;">${algebraicSteps.join('<br>')}</div></div>`;
     }
 
-    let multiplier = 1, baseVal = finalCoeffs[startIdx];
+    let multiplier = 1, baseV = finalCoeffs[startIdx];
     finalCoeffs.forEach(c => {
-        let f = c / baseVal;
+        let f = c / baseV;
         for(let d=1; d<=60; d++){ if(Math.abs(f*d - Math.round(f*d)) < 0.01){ multiplier = Math.max(multiplier, d); break; } }
     });
 
-    const finalBoxHtml = buildModularEquation(finalCoeffs);
-    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.04); border-radius:15px; border:1px solid rgba(255,255,255,0.1);">${finalBoxHtml}</div></div>`;
+    const finalBox = buildModularEq(finalCoeffs);
+    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>目前比例：<span style="color:#94a3b8;">(${finalCoeffs.map(c => toFraction(c/baseV)).join(' : ')})</span>。<br>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.03); border-radius:15px; border:1px solid rgba(255,255,255,0.08);">${finalBox}</div></div>`;
 
     const btnDom = document.getElementById('steps-toggle-btn');
     if(btnDom) { btnDom.style.margin = "35px auto 25px auto"; btnDom.style.display = "block"; }
     const resDom = document.getElementById('balance-result');
     if(resDom) { resDom.style.marginBottom = "20px"; }
 
-    let html = buildModularEquation(finalCoeffs);
+    let html = buildModularEq(finalCoeffs);
 
     return { html, stepsHtml: stp };
 }
@@ -3431,137 +3410,71 @@ function setupMobilePanel() {
     if(!handle || !panel || window.innerWidth > 768) return;
 
     // --- 設定參數 ---
-    const HANDLE_H = 40; 
-    const PANEL_H = window.innerHeight * 0.8; 
-    
-    // 定義三個停靠點
-    const POS_OPEN = 0; 
-    const POS_HALF = PANEL_H - (window.innerHeight * 0.35); // 露出約 35%
-    const POS_CLOSE = PANEL_H - HANDLE_H;
+    const H = window.innerHeight;
+    const HANDLE_H = 40;
+    const PANEL_H = H * 0.98;
 
-    let startY = 0;
-    let startTransY = POS_HALF;
-    let currentTransY = POS_HALF;
-    let startTime = 0;
-    let isDragging = false;
+    const POS_98 = 0;                     
+    const POS_70 = H * (1 - 0.70);        
+    const POS_35 = H * (1 - 0.35);        
+    const POS_MIN = PANEL_H - HANDLE_H;   
 
-    // [初始化] 預設位置在半開，所以加上 half-open 類別
-    panel.style.transform = `translateY(${POS_HALF}px)`; 
+    let startY = 0, startTransY = POS_35, currentTransY = POS_35, isDragging = false;
+
+    panel.style.transform = `translateY(${POS_35}px)`; 
     panel.classList.add('half-open');
 
-    // 1. 觸摸開始
     handle.addEventListener('touchstart', (e) => {
         if(e.cancelable) e.preventDefault();
-        e.stopPropagation();
-
         isDragging = true;
         handle.classList.add('active'); 
-
         startY = e.touches[0].clientY;
-        startTime = new Date().getTime();
-
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         startTransY = matrix.m42; 
-
         panel.style.transition = 'none';
     }, {passive: false});
 
-    // 2. 觸摸移動
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        if(e.cancelable) e.preventDefault(); 
-
-        const currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY;
-        
+        const deltaY = e.touches[0].clientY - startY;
         let newY = startTransY + deltaY;
-
-        // 邊界阻尼
-        if (newY < POS_OPEN) newY = newY * 0.4; 
-        if (newY > POS_CLOSE) newY = POS_CLOSE + (newY - POS_CLOSE) * 0.1; 
-
+        if (newY < POS_98) newY = newY * 0.4; 
         panel.style.transform = `translateY(${newY}px)`;
         currentTransY = newY;
     }, {passive: false});
 
-    // [輔助函式] 更新面板狀態 (控制底部留白)
-    const updatePanelState = (targetY) => {
-        // 如果目標是半開位置，加上 class；否則移除
-        // 我們允許一點誤差 (Math.abs < 10)
-        if (Math.abs(targetY - POS_HALF) < 10) {
-            panel.classList.add('half-open');
-        } else {
-            panel.classList.remove('half-open');
-        }
-    };
-
-    // 3. 觸摸結束
-    window.addEventListener('touchend', (e) => {
+    window.addEventListener('touchend', () => {
         if(!isDragging) return;
         isDragging = false;
-        e.stopPropagation();
-
         handle.classList.remove('active');
         panel.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
-
-        const endTime = new Date().getTime();
-        const duration = endTime - startTime;
-        const moveDist = currentTransY - startTransY;
-        const velocity = Math.abs(moveDist) / duration;
-
-        let targetY = POS_CLOSE;
-
-        // [修正] 分段滑動邏輯
-        if (velocity > 0.3) {
-            // 快速滑動
-            if (moveDist < 0) { 
-                // 往上滑 (Up)
-                // 如果原本在半開以上，就全開；否則去半開
-                targetY = (startTransY > POS_HALF + 50) ? POS_HALF : POS_OPEN;
-            } else {
-                // 往下滑 (Down)
-                // 如果原本是全開 (接近0)，先停半開；否則關閉
-                targetY = (startTransY < POS_HALF - 50) ? POS_HALF : POS_CLOSE;
-            }
-        } else {
-            // 慢速拖曳：找最近的點
-            const distToOpen = Math.abs(currentTransY - POS_OPEN);
-            const distToHalf = Math.abs(currentTransY - POS_HALF);
-            const distToClose = Math.abs(currentTransY - POS_CLOSE);
-
-            if (distToOpen < distToHalf && distToOpen < distToClose) targetY = POS_OPEN;
-            else if (distToHalf < distToClose) targetY = POS_HALF;
-            else targetY = POS_CLOSE;
-        }
-
-        panel.style.transform = `translateY(${targetY}px)`;
-        updatePanelState(targetY); // 更新留白狀態
+        const dists = [
+            { pos: POS_98, d: Math.abs(currentTransY - POS_98) },
+            { pos: POS_70, d: Math.abs(currentTransY - POS_70) },
+            { pos: POS_35, d: Math.abs(currentTransY - POS_35) },
+            { pos: POS_MIN, d: Math.abs(currentTransY - POS_MIN) }
+        ];
+        const closest = dists.reduce((prev, curr) => (prev.d < curr.d) ? prev : curr);
+        panel.style.transform = `translateY(${closest.pos}px)`;
+        if (closest.pos <= POS_70) panel.classList.remove('half-open');
+        else panel.classList.add('half-open');
     });
 
-    // 4. 點擊把手切換
     handle.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        
-        handle.classList.add('active');
-        setTimeout(() => handle.classList.remove('active'), 200);
-
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
-        const currentY = matrix.m42;
-
+        const curY = matrix.m42;
         panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-        
-        let targetY = POS_CLOSE;
-
-        // 循環邏輯：關 -> 半 -> 開 -> 關
-        if (Math.abs(currentY - POS_CLOSE) < 50) targetY = POS_HALF;      // 關 -> 半
-        else if (Math.abs(currentY - POS_HALF) < 50) targetY = POS_OPEN;  // 半 -> 開
-        else targetY = POS_CLOSE;                                         // 開 -> 關
-
-        panel.style.transform = `translateY(${targetY}px)`;
-        updatePanelState(targetY); // 更新留白狀態
+        let target;
+        if (Math.abs(curY - POS_MIN) < 50) target = POS_35;
+        else if (Math.abs(curY - POS_35) < 50) target = POS_70;
+        else if (Math.abs(curY - POS_70) < 50) target = POS_98;
+        else target = POS_MIN;
+        panel.style.transform = `translateY(${target}px)`;
+        if (target <= POS_70) panel.classList.remove('half-open');
+        else panel.classList.add('half-open');
     });
 }
 
