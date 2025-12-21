@@ -1307,12 +1307,50 @@ function solveChemicalEquationWithSteps(eqn) {
         return { index: idx, formula: f, charge: parseCharge(cS), atoms: parseAtoms(f), raw: s };
     });
     const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
+    // 將變數定義在外部作用域，讓後面的詳解步驟也能讀取
+    let redoxInfo = { partnerEl: null, partnerDelta: 0, h2o2Delta: 0, h2o2Idx: -1 };
+
     const finalCoeffs = (function() {
-        let m = Array.from({ length: elements.length + 1 }, () => new Array(species.length).fill(0));
+        // 初始化矩陣：原子守恆(elements.length) + 電子守恆(1) + 電荷守恆(1)
+        let m = Array.from({ length: elements.length + 2 }, () => new Array(species.length).fill(0));
+        const redoxRowIdx = elements.length;
+        const chargeRowIdx = elements.length + 1;
+
+        // --- 氧化還原邏輯判定 ---
+        const h2o2 = species.find(s => s.formula === "H2O2" && s.index < leftRaw.length);
+        if (h2o2) {
+            redoxInfo.h2o2Idx = h2o2.index;
+            elements.filter(e => e !== 'H' && e !== 'O').forEach(el => {
+                const r = species.find(s => s.index < leftRaw.length && s.atoms[el]);
+                const p = species.find(s => s.index >= leftRaw.length && s.atoms[el]);
+                if (r && p) {
+                    const oxR = (r.charge - (r.atoms['O'] || 0) * -2 - (r.atoms['H'] || 0) * 1) / (r.atoms[el] || 1);
+                    const oxP = (p.charge - (p.atoms['O'] || 0) * -2 - (p.atoms['H'] || 0) * 1) / (p.atoms[el] || 1);
+                    if (Math.abs(oxR - oxP) > 0.01) {
+                        redoxInfo.partnerEl = el;
+                        redoxInfo.partnerDelta = oxP - oxR;
+                        redoxInfo.h2o2Delta = (redoxInfo.partnerDelta < 0) ? 1 : -1;
+                    }
+                }
+            });
+        }
+
         species.forEach((s, j) => {
             const sign = (j < leftRaw.length) ? 1 : -1;
+            // 1. 原子守恆
             elements.forEach((el, i) => m[i][j] = (s.atoms[el] || 0) * sign);
-            m[elements.length][j] = s.charge * sign;
+            
+            // 2. 電子守恆 (只有反應物參與電子交換計算)
+            if (redoxInfo.h2o2Delta !== 0 && j < leftRaw.length) {
+                if (s.formula === "H2O2") {
+                    m[redoxRowIdx][j] = 2 * redoxInfo.h2o2Delta; // 每莫耳 H2O2 轉移 2 莫耳電子
+                } else if (redoxInfo.partnerEl && s.atoms[redoxInfo.partnerEl]) {
+                    m[redoxRowIdx][j] = s.atoms[redoxInfo.partnerEl] * redoxInfo.partnerDelta;
+                }
+            }
+
+            // 3. 電荷守恆
+            m[chargeRowIdx][j] = s.charge * sign;
         });
         return gaussElimination(m);
     })();
@@ -1373,6 +1411,27 @@ function solveChemicalEquationWithSteps(eqn) {
         }
     }
     stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可由基準直接推導。"}</div></div>`;
+    // --- 步驟 3：氧化還原守恆說法 ---
+    if (redoxInfo && redoxInfo.h2o2Delta !== 0) {
+        const h2o2Role = redoxInfo.h2o2Delta > 0 ? "還原劑 (氧化成 O<sub>2</sub>)" : "氧化劑 (還原成 H<sub>2</sub>O)";
+        const eFlowPerPartner = Math.abs(redoxInfo.partnerDelta * species[startIdx].atoms[redoxInfo.partnerEl]);
+        const h2o2Coeff = finalCoeffs[redoxInfo.h2o2Idx] / finalCoeffs[startIdx];
+        
+        stp += `<div class="step-box" style="border-left-color: #f472b6; background: rgba(244, 114, 182, 0.05);">
+            <div class="step-title" style="color: #f472b6;">步驟 3：氧化還原守恆 (關鍵限制)</div>
+            偵測到 <span style="color:#f472b6; font-weight:bold;">H<sub>2</sub>O<sub>2</sub></span> 參與反應：<br>
+            • 變價夥伴：<span style="color:#38bdf8; font-weight:bold;">${redoxInfo.partnerEl}</span> 氧化數從基點變化了 <span style="color:#facc15;">${redoxInfo.partnerDelta}</span>。<br>
+            • H<sub>2</sub>O<sub>2</sub> 角色：擔任 <span style="color:#f472b6; font-weight:bold;">${h2o2Role}</span>。<br>
+            • 根據電子得失守恆：<br>
+            <div class="step-formula-box" style="border-color: #f472b6; color: #f472b6; font-weight:bold;">
+                1 × ${eFlowPerPartner}(e⁻) = a(H<sub>2</sub>O<sub>2</sub>) × 2(e⁻) 
+                &nbsp; → &nbsp; <span style="font-size:1.3rem;">a = ${toFraction(h2o2Coeff)}</span>
+            </div>
+            得到 H<sub>2</sub>O<sub>2</sub> 係數後，代數系統即可解出唯一解。
+        </div>`;
+        locked.add(redoxInfo.h2o2Idx);
+        expressions[redoxInfo.h2o2Idx] = toFraction(h2o2Coeff);
+    }
 
     if (locked.size < species.length) {
         let vars = ['a', 'b', 'c', 'd'], vIdx = 0, algebraicSteps = [];
