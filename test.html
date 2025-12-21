@@ -1307,7 +1307,7 @@ function solveChemicalEquationWithSteps(eqn) {
     const parseSide = (s) => s.split(/\s+\+\s+/).map(x => x.trim()).filter(x => x);
     const leftRaw = parseSide(sides[0]), rightRaw = parseSide(sides[1]), allRaw = [...leftRaw, ...rightRaw];
 
-    // 1. 解析物質與元素 (確保 elements 必定被定義)
+    // 1. 解析物質與元素清單
     const species = allRaw.map((s, idx) => {
         const p = s.split(/\s+/);
         let f = p[0], cS = p[1] || "";
@@ -1316,6 +1316,7 @@ function solveChemicalEquationWithSteps(eqn) {
     });
     const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
 
+    // 2. 矩陣預算求正解
     const finalCoeffs = (function() {
         let m = Array.from({ length: elements.length + 1 }, () => new Array(species.length).fill(0));
         species.forEach((s, j) => {
@@ -1326,74 +1327,98 @@ function solveChemicalEquationWithSteps(eqn) {
         return gaussElimination(m);
     })();
 
+    // 3. 【緊湊版 Style 5 浮雕方塊生成器】
+    const buildModularEquation = (coeffs) => {
+        let itemsHtml = "";
+        species.forEach((s, i) => {
+            // 縮小內距 (4px 10px)、間距 (4px) 與字體 (1.1rem)
+            let unit = `
+                <div style="display: inline-flex; align-items: baseline; background: #1e293b; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 8px rgba(0,0,0,0.3); margin: 4px 2px; gap: 4px; vertical-align: middle;">
+                    <span style="font-size: 1.1rem; color: #facc15; font-weight: 900; font-style: italic; line-height:1;">${coeffs[i]}</span>
+                    <span style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height:1;">${formatFormula(s.raw)}</span>
+                </div>`;
+            itemsHtml += unit;
+            if (i === leftRaw.length - 1) {
+                itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 8px; color: #38bdf8; font-size: 1.2rem; font-weight: bold;">→</span>`;
+            } else if (i < species.length - 1) {
+                itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 2px; color: rgba(255,255,255,0.2); font-size: 1rem;">+</span>`;
+            }
+        });
+        return `<div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; padding: 2px 0;">${itemsHtml}</div>`;
+    };
+
+    // 4. 解題思路生成
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
     
-    // 步驟 1: 選基準
     let startIdx = 0, maxScore = 0;
     species.forEach((s, i) => { 
-        let score = Object.keys(s.atoms).length * 5 + Object.values(s.atoms).reduce((a,b)=>a+b,0);
+        let score = Object.keys(s.atoms).length * 10 + Object.values(s.atoms).reduce((a,b)=>a+b,0);
         if (score > maxScore) { maxScore = score; startIdx = i; } 
     });
     stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定結構最複雜的 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 係數為 <span class="coeff">1</span>。</div>`;
 
-    let locked = new Set([startIdx]);
-    let expressions = new Array(species.length).fill(""); 
-    expressions[startIdx] = "1"; 
-    let vars = ['a', 'b', 'c'], vIdx = 0;
-    let observationDetails = [], algebraicDetails = [];
+    let locked = new Set([startIdx]), expressions = new Array(species.length).fill(""), usedConservation = new Set(), obsDetails = [];
+    expressions[startIdx] = "1";
 
     const toMathTerm = (expr, count) => {
         if (!count || !expr) return null;
         if (expr === "1") return `${count}`;
-        let numMatch = expr.match(/[0-9.]+/);
-        let varMatch = expr.match(/[a-z]/);
-        let numPart = numMatch ? parseFloat(numMatch[0]) : 1;
-        let varPart = varMatch ? varMatch[0] : "";
-        let totalNum = numPart * count;
-        return (totalNum === 1 ? "" : totalNum) + varPart;
+        let mMatch = expr.match(/^(\d*\.?\d*)/)[1], numPart = mMatch === "" ? 1 : parseFloat(mMatch);
+        let varPart = expr.replace(/[0-9.]/g, ''), totalNum = numPart * count;
+        return (totalNum === 1 ? "" : (totalNum === -1 ? "-" : totalNum)) + varPart;
     };
 
-    // 步驟 2: 觀察法
     let progressed = true;
     while(progressed) {
         progressed = false;
         for(let el of elements) {
-            let rel = species.filter(s => s.atoms[el] > 0);
-            let unk = rel.filter(s => !locked.has(s.index));
-            if(unk.length === 1 && rel.filter(s => locked.has(s.index)).length >= 1) {
-                let target = unk[0];
-                locked.add(target.index);
-                let val = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
-                expressions[target.index] = val;
-                observationDetails.push(`• 觀察 <span class="highlight-atom">${el}</span> 原子：鎖定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 為 <span class="coeff">${val}</span>。`);
+            if (usedConservation.has(el)) continue;
+            let rel = species.filter(s => s.atoms[el] > 0), unk = rel.filter(s => !locked.has(s.index));
+            if(unk.length === 1 && rel.length > 1) {
+                let target = unk[0]; locked.add(target.index);
+                expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
+                usedConservation.add(el);
+                obsDetails.push(`• 觀察 <span class="highlight-atom">${el}</span> 原子：鎖定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 為 <span class="coeff">${expressions[target.index]}</span>。`);
+                progressed = true; break;
+            }
+        }
+        if(progressed) continue;
+        if (!usedConservation.has("charge")) {
+            let unkC = species.filter(s => s.charge !== 0 && !locked.has(s.index));
+            if(unkC.length === 1) {
+                let target = unkC[0]; locked.add(target.index);
+                expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
+                usedConservation.add("charge");
+                obsDetails.push(`• 觀察 <span class="highlight-atom">電荷</span>：鎖定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 為 <span class="coeff">${expressions[target.index]}</span>。`);
                 progressed = true;
             }
         }
     }
-    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${observationDetails.length > 0 ? observationDetails.join('<br>') : "本階段無可直接觀察之項。"}</div></div>`;
+    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可直接由基準物開始推導。"}</div></div>`;
 
-    // 步驟 3: 代數法
     if (locked.size < species.length) {
+        let algebraicSteps = [], vars = ['a', 'b', 'c', 'd'], vIdx = 0;
         let remaining = species.filter(s => !locked.has(s.index));
         while(remaining.length > 0) {
             let next = remaining[0], v = vars[vIdx++] || 'k';
-            let linkEl = Object.keys(next.atoms).find(el => species.filter(s => s.atoms[el] > 0 && !locked.has(s.index)).length === 2);
+            let linkEl = Object.keys(next.atoms).find(el => {
+                let allRel = species.filter(s => s.atoms[el] > 0);
+                return allRel.filter(x => !locked.has(x.index)).length === 2 && allRel.filter(x => locked.has(x.index)).length === 0;
+            });
             if (linkEl) {
-                let relSub = species.filter(s => s.atoms[linkEl] > 0 && !locked.has(s.index));
-                let s1 = relSub[0], s2 = relSub[1], n1 = s1.atoms[linkEl], n2 = s2.atoms[linkEl];
-                expressions[s1.index] = (n2 === 1 ? "" : n2) + v;
-                expressions[s2.index] = (n1 === 1 ? "" : n1) + v;
-                algebraicDetails.push(`• 關聯 <span class="highlight-atom">${linkEl}</span> 原子：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，則 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
+                let pair = species.filter(s => s.atoms[linkEl] > 0);
+                let s1 = pair[0], s2 = pair[1], n1 = s1.atoms[linkEl], n2 = s2.atoms[linkEl];
+                expressions[s1.index] = (n2 === 1 ? "" : n2) + v; expressions[s2.index] = (n1 === 1 ? "" : n1) + v;
+                usedConservation.add(linkEl);
+                algebraicSteps.push(`• 關聯 <span class="highlight-atom">${linkEl}</span> 原子：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，則 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
                 locked.add(s1.index); locked.add(s2.index);
             } else {
-                expressions[next.index] = v;
-                algebraicDetails.push(`• 獨立設元：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 係數為 <span style="color:#f472b6;">${v}</span>。`);
+                expressions[next.index] = v; algebraicSteps.push(`• 獨立設元：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 為 <span style="color:#f472b6;">${v}</span>。`);
                 locked.add(next.index);
             }
             remaining = species.filter(s => !locked.has(s.index));
         }
-
-        const buildEqStr = (type, elName) => {
+        const buildEq = (type, elName) => {
             let L = [], R = [];
             species.forEach((s, idx) => {
                 let term = toMathTerm(expressions[idx], (type === 'atom' ? s.atoms[elName] : s.charge));
@@ -1401,74 +1426,39 @@ function solveChemicalEquationWithSteps(eqn) {
             });
             return `${L.join(' + ') || "0"} = ${R.join(' + ') || "0"}`;
         };
+        algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">列出守恆等式：</div>`);
+        elements.forEach(el => { if (!usedConservation.has(el)) algebraicSteps.push(`• 根據 <span class="highlight-atom">${el}</span> 原子：<br><span style="display:block; padding:5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.15rem; font-weight:bold; word-break:break-all;">${buildEq('atom', el)}</span>`); });
+        if (!usedConservation.has("charge") && species.some(s => s.charge !== 0)) algebraicSteps.push(`• 根據 <span class="highlight-atom">電荷</span>：<br><span style="display:block; padding:5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.15rem; font-weight:bold; word-break:break-all;">${buildEq('charge')}</span>`);
 
-        let unusedEl = elements.find(el => species.filter(s => s.atoms[el] > 0).length > 2) || elements[elements.length-1];
-        algebraicDetails.push(`<div style="margin-top:15px; color:#94a3b8; font-size: 0.95rem;">列出守恆等式：</div>`);
-        // 【修正】方程式換行顯示，字體放大
-        algebraicDetails.push(`• 根據 <span class="highlight-atom">${unusedEl}</span> 原子守恆：<br><span style="display:block; padding: 5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.2rem; font-weight:bold; word-break:break-all;">${buildEqStr('atom', unusedEl)}</span>`);
-        if (species.some(s => s.charge !== 0)) {
-            algebraicDetails.push(`• 根據 <span class="highlight-atom">電荷</span> 守恆：<br><span style="display:block; padding: 5px 0 5px 20px; font-family:serif; color:#facc15; font-size:1.2rem; font-weight:bold; word-break:break-all;">${buildEqStr('charge')}</span>`);
-        }
-
-        let solvedVarsHtml = [];
-        let seenVars = new Set();
+        let solvedVars = []; let seenV = new Set();
         species.forEach((s, idx) => {
-            let expr = expressions[idx];
-            if (expr && expr !== "1") {
-                let v = expr.match(/[a-z]/);
-                if (v && !seenVars.has(v[0])) {
-                    seenVars.add(v[0]);
-                    let numMatch = expr.match(/[0-9.]+/);
-                    let mult = numMatch ? parseFloat(numMatch[0]) : 1;
-                    let val = toFraction((finalCoeffs[idx] / finalCoeffs[startIdx]) / mult);
-                    solvedVarsHtml.push(`
-                        <div style="display:flex; align-items:center; gap:8px; margin: 0 15px;">
-                            <span style="font-style:italic; color:#f472b6; font-weight:bold; font-size:1.4rem;">${v[0]}</span> 
-                            <span style="color:#94a3b8; font-size:1.2rem;">=</span> 
-                            <span style="color:#facc15; font-weight:900; font-size:1.8rem; text-shadow: 0 0 15px rgba(250,204,21,0.5);">${val}</span>
-                        </div>
-                    `);
-                }
+            let ex = expressions[idx]; if(!ex || ex === "1") return;
+            let vChar = ex.match(/[a-z]/);
+            if(vChar && !seenV.has(vChar[0])) {
+                seenV.add(vChar[0]); let mNum = ex.match(/[0-9.]+/), mult = mNum ? parseFloat(mNum[0]) : 1;
+                let val = toFraction((finalCoeffs[idx] / finalCoeffs[startIdx]) / mult);
+                solvedVars.push(`<div style="display:flex; align-items:center; gap:8px;"><span style="font-style:italic; color:#f472b6; font-weight:bold; font-size:1.3rem;">${vChar[0]}</span> <span style="color:#94a3b8;">=</span> <span style="color:#facc15; font-weight:900; font-size:1.6rem; text-shadow: 0 0 10px rgba(250,204,21,0.4);">${val}</span></div>`);
             }
         });
-
-        algebraicDetails.push(`<div style="margin-top:20px; color:#94a3b8;">針對未平衡項解出聯立方程解：</div>`);
-        algebraicDetails.push(`<div style="display:flex; flex-wrap:wrap; justify-content:center; align-items:center; margin: 15px 0; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; min-height:60px;">${solvedVarsHtml.join('')}</div>`);
-
-        stp += `<div class="step-box"><div class="step-title">步驟 3：代數法</div><div style="font-size:1.05rem; line-height:1.8;">${algebraicDetails.join('<br>')}</div></div>`;
+        algebraicSteps.push(`<div style="margin-top:20px; color:#94a3b8;">解聯立方程得：</div><div style="display:flex; flex-wrap:wrap; justify-content:center; gap:25px; margin:15px 0; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px;">${solvedVars.join('')}</div>`);
+        stp += `<div class="step-box"><div class="step-title">步驟 3：代數法</div><div style="font-size:1.05rem; line-height:1.8;">${algebraicSteps.join('<br>')}</div></div>`;
     }
 
-    // 步驟 4: 整數化
-    let base = finalCoeffs[startIdx];
-    let multiplier = 1;
+    let multiplier = 1, baseVal = finalCoeffs[startIdx];
     finalCoeffs.forEach(c => {
-        let frac = (c / base);
-        for(let d=1; d<=50; d++) { if(Math.abs(frac*d - Math.round(frac*d)) < 0.01) { multiplier = Math.max(multiplier, d); break; } }
+        let f = c / baseVal;
+        for(let d=1; d<=60; d++){ if(Math.abs(f*d - Math.round(f*d)) < 0.01){ multiplier = Math.max(multiplier, d); break; } }
     });
 
-    // 【修正】最終反應式排版：強制顯示係數1、自動換行、置中
-    let compactEqHtml = "";
-    species.forEach((s, i) => {
-        let c = finalCoeffs[i];
-        // 強制顯示係數，包含 1
-        let cDisp = `<span class="coeff" style="font-size: 1.6rem; margin-right: 4px;">${c}</span>`;
-        compactEqHtml += `<div style="display:inline-flex; align-items:center; white-space: nowrap; margin: 5px 8px;">${cDisp}${formatFormula(s.raw)}</div>`;
-        
-        if (i === leftRaw.length - 1) {
-            compactEqHtml += `<div style="display:inline-flex; align-items:center; margin: 0 15px; color:#38bdf8; font-size:1.8rem; font-weight:bold;">→</div>`;
-        } else if (i < species.length - 1) {
-            compactEqHtml += `<div style="display:inline-flex; align-items:center; margin: 0 5px; color:rgba(255,255,255,0.4); font-size:1.2rem;">+</div>`;
-        }
-    });
+    const finalBoxHtml = buildModularEquation(finalCoeffs);
+    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.04); border-radius:15px; border:1px solid rgba(255,255,255,0.1);">${finalBoxHtml}</div></div>`;
 
-    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>目前比例為：<span style="color:#94a3b8;">(${finalCoeffs.map(c => toFraction(c/finalCoeffs[startIdx])).join(' : ')})</span>。<br>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div style="display:flex; flex-wrap:wrap; justify-content:center; align-items:center; text-align:center; margin-top:20px; padding:20px; background:rgba(255,255,255,0.05); border-radius:15px; border: 1px solid rgba(255,255,255,0.1); line-height: 1.2;">${compactEqHtml}</div></div>`;
-    
-    let html = "";
-    species.forEach((s, i) => {
-        html += `<div class="eqn-item"><span class="coeff">${finalCoeffs[i]}</span>${formatFormula(s.raw)}</div>`;
-        if (i === leftRaw.length - 1) html += `<span class="reaction-arrow">→</span>`;
-        else if (i < species.length - 1) html += `<span class="eqn-op">+</span>`;
-    });
+    const btnDom = document.getElementById('steps-toggle-btn');
+    if(btnDom) { btnDom.style.margin = "35px auto 25px auto"; btnDom.style.display = "block"; }
+    const resDom = document.getElementById('balance-result');
+    if(resDom) { resDom.style.marginBottom = "20px"; }
+
+    let html = buildModularEquation(finalCoeffs);
 
     return { html, stepsHtml: stp };
 }
