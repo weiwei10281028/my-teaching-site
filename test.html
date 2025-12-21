@@ -324,10 +324,9 @@
         z-index: 100;
         display: flex; flex-direction: column;
         padding: 0;
-        transform: translateY(calc(100% - 40px));
+        transform: translateY(calc(100% - 45px)); /* 確保把手永遠露出一點 */
         will-change: transform;
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-
     }
 
     #mobile-panel-handle { 
@@ -3410,89 +3409,74 @@ function setupMobilePanel() {
     if(!handle || !panel || window.innerWidth > 768) return;
 
     // --- 設定參數 ---
-    const H = window.innerHeight;
-    const HANDLE_H = 40;
-    const PANEL_H = H * 0.98; // 物理總高度
+    const getPos = () => {
+        const H = window.innerHeight;
+        return {
+            P98: 0,              // 全開
+            P70: H * 0.3,        // 露出 70%
+            P35: H * 0.65,       // 露出 35%
+            PMIN: H - 45         // 最低 (防消失位)
+        };
+    };
 
-    // 定義停靠位置 (Y 軸偏移量)
-    const POS_98 = 0;                     // 露出 98% (全開)
-    const POS_70 = H * (1 - 0.70);        // 露出 70%
-    const POS_35 = H * (1 - 0.35);        // 露出 35% (中等)
-    const POS_MIN = PANEL_H - HANDLE_H;   // 露出 0% (只剩把手)
+    let p = getPos();
+    let startY = 0, startTransY = p.P35, currentTransY = p.P35, isDragging = false;
 
-    let startY = 0, startTransY = POS_35, currentTransY = POS_35, isDragging = false;
+    // 初始位置設定在 35%
+    panel.style.transform = `translateY(${p.P35}px)`;
 
-    // 初始狀態設在 35%
-    panel.style.transform = `translateY(${POS_35}px)`; 
-    panel.classList.add('half-open');
-
-    // 觸摸開始邏輯
+    // 滑動邏輯
     handle.addEventListener('touchstart', (e) => {
-        if(e.cancelable) e.preventDefault();
         isDragging = true;
-        handle.classList.add('active'); 
         startY = e.touches[0].clientY;
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
-        startTransY = matrix.m42; 
+        startTransY = matrix.m42;
         panel.style.transition = 'none';
-    }, {passive: false});
+    }, {passive: true});
 
-    // 觸摸移動邏輯
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        const deltaY = e.touches[0].clientY - startY;
-        let newY = startTransY + deltaY;
-        if (newY < POS_98) newY = newY * 0.4; // 頂部拉不動阻尼
+        let newY = startTransY + (e.touches[0].clientY - startY);
+        if (newY < 0) newY *= 0.3; // 頂部阻尼
         panel.style.transform = `translateY(${newY}px)`;
         currentTransY = newY;
-    }, {passive: false});
+    }, {passive: true});
 
-    // 觸摸放開：自動吸附最近段位
     window.addEventListener('touchend', () => {
         if(!isDragging) return;
         isDragging = false;
-        handle.classList.remove('active');
-        panel.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        p = getPos();
         const dists = [
-            { pos: POS_98, d: Math.abs(currentTransY - POS_98) },
-            { pos: POS_70, d: Math.abs(currentTransY - POS_70) },
-            { pos: POS_35, d: Math.abs(currentTransY - POS_35) },
-            { pos: POS_MIN, d: Math.abs(currentTransY - POS_MIN) }
+            {v: p.P98, d: Math.abs(currentTransY - p.P98)},
+            {v: p.P70, d: Math.abs(currentTransY - p.P70)},
+            {v: p.P35, d: Math.abs(currentTransY - p.P35)},
+            {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
         ];
-        const closest = dists.reduce((prev, curr) => (prev.d < curr.d) ? prev : curr);
-        panel.style.transform = `translateY(${closest.pos}px)`;
-        if (closest.pos <= POS_70) panel.classList.remove('half-open');
-        else panel.classList.add('half-open');
+        const closest = dists.reduce((a, b) => a.d < b.d ? a : b);
+        panel.style.transform = `translateY(${closest.v}px)`;
     });
 
-    // 【核心修正：點擊把手彈出/縮回邏輯】
+    // 【修正：點擊橫槓跳轉】
     handle.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        p = getPos();
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         const curY = matrix.m42;
 
-        // 模擬彈力動畫
         panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        
         let target;
-
-        // 循環跳轉邏輯
-        if (Math.abs(curY - POS_MIN) < 50) {
-            target = POS_35; // 從最低彈到 35%
-        } else if (Math.abs(curY - POS_35) < 50) {
-            target = POS_70; // 從 35% 彈到 70%
-        } else if (Math.abs(curY - POS_70) < 50) {
-            target = POS_98; // 從 70% 彈到 98%
-        } else {
-            target = POS_MIN; // 從最高處直接縮回最低
-        }
+        // 循環判定：底部 -> 35 -> 70 -> 98 -> 回底部
+        if (curY > p.P35 + 50) target = p.P35;
+        else if (curY > p.P70 + 50) target = p.P70;
+        else if (curY > p.P98 + 50) target = p.P98;
+        else target = p.PMIN;
 
         panel.style.transform = `translateY(${target}px)`;
-
-        // 根據目標位置切換 class，控制內容區的滾動空間
-        if (target <= POS_70) panel.classList.remove('half-open');
-        else panel.classList.add('half-open');
     });
 }
 
