@@ -884,6 +884,21 @@
                     <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
                 </button>
                 <div class="glass-content-panel">
+                    <!-- A. 點群對稱分析 (Point Group) -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span>💎 點群對稱分析</span>
+                            <span class="toggle-icon" style="font-size:0.6rem;">▼</span>
+                        </button>
+                        <div class="glass-content-panel">
+                            <div id="pg-group-display" style="color: #facc15; font-weight: bold; text-align: center; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 1px solid rgba(250,204,21,0.3); padding-bottom: 5px;">
+                                點群: -
+                            </div>
+                            <div id="symmetry-elements-list" style="display: flex; flex-direction: column; gap: 5px;">
+                                <div style="color: #888; font-size: 0.85rem; text-align: center;">請載入具備點群標籤的物質</div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- A. 三點成面 -->
                     <div class="panel-wrapper">
                         <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
@@ -1307,12 +1322,50 @@ function solveChemicalEquationWithSteps(eqn) {
         return { index: idx, formula: f, charge: parseCharge(cS), atoms: parseAtoms(f), raw: s };
     });
     const elements = Array.from(new Set(species.flatMap(s => Object.keys(s.atoms))));
+    // 將變數定義在外部作用域，讓後面的詳解步驟也能讀取
+    let redoxInfo = { partnerEl: null, partnerDelta: 0, h2o2Delta: 0, h2o2Idx: -1 };
+
     const finalCoeffs = (function() {
-        let m = Array.from({ length: elements.length + 1 }, () => new Array(species.length).fill(0));
+        // 初始化矩陣：原子守恆(elements.length) + 電子守恆(1) + 電荷守恆(1)
+        let m = Array.from({ length: elements.length + 2 }, () => new Array(species.length).fill(0));
+        const redoxRowIdx = elements.length;
+        const chargeRowIdx = elements.length + 1;
+
+        // --- 氧化還原邏輯判定 ---
+        const h2o2 = species.find(s => s.formula === "H2O2" && s.index < leftRaw.length);
+        if (h2o2) {
+            redoxInfo.h2o2Idx = h2o2.index;
+            elements.filter(e => e !== 'H' && e !== 'O').forEach(el => {
+                const r = species.find(s => s.index < leftRaw.length && s.atoms[el]);
+                const p = species.find(s => s.index >= leftRaw.length && s.atoms[el]);
+                if (r && p) {
+                    const oxR = (r.charge - (r.atoms['O'] || 0) * -2 - (r.atoms['H'] || 0) * 1) / (r.atoms[el] || 1);
+                    const oxP = (p.charge - (p.atoms['O'] || 0) * -2 - (p.atoms['H'] || 0) * 1) / (p.atoms[el] || 1);
+                    if (Math.abs(oxR - oxP) > 0.01) {
+                        redoxInfo.partnerEl = el;
+                        redoxInfo.partnerDelta = oxP - oxR;
+                        redoxInfo.h2o2Delta = (redoxInfo.partnerDelta < 0) ? 1 : -1;
+                    }
+                }
+            });
+        }
+
         species.forEach((s, j) => {
             const sign = (j < leftRaw.length) ? 1 : -1;
+            // 1. 原子守恆
             elements.forEach((el, i) => m[i][j] = (s.atoms[el] || 0) * sign);
-            m[elements.length][j] = s.charge * sign;
+            
+            // 2. 電子守恆 (只有反應物參與電子交換計算)
+            if (redoxInfo.h2o2Delta !== 0 && j < leftRaw.length) {
+                if (s.formula === "H2O2") {
+                    m[redoxRowIdx][j] = 2 * redoxInfo.h2o2Delta; // 每莫耳 H2O2 轉移 2 莫耳電子
+                } else if (redoxInfo.partnerEl && s.atoms[redoxInfo.partnerEl]) {
+                    m[redoxRowIdx][j] = s.atoms[redoxInfo.partnerEl] * redoxInfo.partnerDelta;
+                }
+            }
+
+            // 3. 電荷守恆
+            m[chargeRowIdx][j] = s.charge * sign;
         });
         return gaussElimination(m);
     })();
@@ -1373,6 +1426,27 @@ function solveChemicalEquationWithSteps(eqn) {
         }
     }
     stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可由基準直接推導。"}</div></div>`;
+    // --- 步驟 3：氧化還原守恆說法 ---
+    if (redoxInfo && redoxInfo.h2o2Delta !== 0) {
+        const h2o2Role = redoxInfo.h2o2Delta > 0 ? "還原劑 (氧化成 O<sub>2</sub>)" : "氧化劑 (還原成 H<sub>2</sub>O)";
+        const eFlowPerPartner = Math.abs(redoxInfo.partnerDelta * species[startIdx].atoms[redoxInfo.partnerEl]);
+        const h2o2Coeff = finalCoeffs[redoxInfo.h2o2Idx] / finalCoeffs[startIdx];
+        
+        stp += `<div class="step-box" style="border-left-color: #f472b6; background: rgba(244, 114, 182, 0.05);">
+            <div class="step-title" style="color: #f472b6;">步驟 3：氧化還原守恆 (關鍵限制)</div>
+            偵測到 <span style="color:#f472b6; font-weight:bold;">H<sub>2</sub>O<sub>2</sub></span> 參與反應：<br>
+            • 變價夥伴：<span style="color:#38bdf8; font-weight:bold;">${redoxInfo.partnerEl}</span> 氧化數從基點變化了 <span style="color:#facc15;">${redoxInfo.partnerDelta}</span>。<br>
+            • H<sub>2</sub>O<sub>2</sub> 角色：擔任 <span style="color:#f472b6; font-weight:bold;">${h2o2Role}</span>。<br>
+            • 根據電子得失守恆：<br>
+            <div class="step-formula-box" style="border-color: #f472b6; color: #f472b6; font-weight:bold;">
+                1 × ${eFlowPerPartner}(e⁻) = a(H<sub>2</sub>O<sub>2</sub>) × 2(e⁻) 
+                &nbsp; → &nbsp; <span style="font-size:1.3rem;">a = ${toFraction(h2o2Coeff)}</span>
+            </div>
+            得到 H<sub>2</sub>O<sub>2</sub> 係數後，代數系統即可解出唯一解。
+        </div>`;
+        locked.add(redoxInfo.h2o2Idx);
+        expressions[redoxInfo.h2o2Idx] = toFraction(h2o2Coeff);
+    }
 
     if (locked.size < species.length) {
         let vars = ['a', 'b', 'c', 'd'], vIdx = 0, algebraicSteps = [];
@@ -1781,6 +1855,106 @@ function loadMolecule(key, variantKey = null) {
     document.getElementById("disp-mass").textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
     
     const subtitle = document.getElementById("viewport-subtitle");
+    // --- 點群自動生成器邏輯 ---
+    const pgDisplay = document.getElementById("pg-group-display");
+    const symList = document.getElementById("symmetry-elements-list");
+    
+    if (pgDisplay && symList) {
+        const currentPg = data.pg;
+        
+        if (currentPg) {
+            // 顯示美化：將 "inf" 轉換為 "∞" 符號顯示給學生看
+            const displayPg = currentPg.replace("inf", "∞");
+            pgDisplay.textContent = `點群: ${displayPg}`;
+            
+            // 只有當點群改變時才重置 elements，否則保留勾選狀態
+            if (!data.symmetry || data.symmetry.group !== currentPg) {
+                data.symmetry = { group: currentPg, elements: [] };
+                const addSym = (type, label, vector) => {
+                    data.symmetry.elements.push({ type, label, v: vector, active: false });
+                };
+
+                // --- 1. C 系列 (單一主軸) ---
+                if (currentPg === "C2v") {
+                    addSym('axis', 'C2 (主軸)', [0, 1, 0]);
+                    addSym('plane', 'σv (xz平面)', [0, 0, 1]);
+                    addSym('plane', 'σv\' (yz平面)', [1, 0, 0]);
+                } else if (currentPg === "C3v") {
+                    addSym('axis', 'C3 (主軸)', [0, 1, 0]);
+                    addSym('plane', 'σv (1)', [1, 0, 0]);
+                    addSym('plane', 'σv (2)', [-0.5, 0, 0.866]);
+                    addSym('plane', 'σv (3)', [-0.5, 0, -0.866]);
+                } else if (currentPg === "Cs") { // 只有一個對稱面 (如亞硝酸)
+                    addSym('plane', 'σ (分子平面)', [0, 0, 1]);
+                }
+
+                // --- 2. D 系列 (主軸 + 垂直副軸 + 水平鏡面) ---
+                else if (currentPg === "D2h") { // 如：乙烯
+                    addSym('axis', 'C2 (z)', [0, 0, 1]);
+                    addSym('axis', 'C2 (y)', [0, 1, 0]);
+                    addSym('axis', 'C2 (x)', [1, 0, 0]);
+                    addSym('plane', 'σh (xy)', [0, 0, 1]);
+                } else if (currentPg === "D3h") { // 如：BF3, PCl5
+                    addSym('axis', 'C3 (主軸)', [0, 0, 1]);
+                    addSym('plane', 'σh (水平面)', [0, 0, 1]);
+                    addSym('axis', 'C2 (副軸1)', [0, 1, 0]);
+                    addSym('axis', 'C2 (副軸2)', [0.866, -0.5, 0]);
+                    addSym('axis', 'C2 (副軸3)', [-0.866, -0.5, 0]);
+                } else if (currentPg === "D6h") { // 如：苯
+                    addSym('axis', 'C6 (主軸)', [0, 0, 1]);
+                    addSym('plane', 'σh (分子面)', [0, 0, 1]);
+                    addSym('axis', 'C2 (副軸x3)', [1, 0, 0]); 
+                }
+
+                // --- 3. 高對稱幾何系列 ---
+                else if (currentPg === "Td") { // 如：甲烷
+                    addSym('axis', 'C3 (鍵結軸x4)', [1, 1, 1]);
+                    addSym('axis', 'C2 (對向軸x3)', [1, 0, 0]);
+                    addSym('plane', 'σd (對角面)', [1, -1, 0]);
+                } else if (currentPg === "Oh") { // 如：SF6
+                    addSym('axis', 'C4 (x/y/z)', [1, 0, 0]);
+                    addSym('axis', 'C3 (對角軸)', [1, 1, 1]);
+                    addSym('plane', 'σh (xy/yz/zx)', [0, 0, 1]);
+                } else if (currentPg === "Ih") { // 如：C60 (僅列出主特徵)
+                    addSym('axis', 'C5 (五邊形心)', [0, 1, 1.618]);
+                    addSym('axis', 'C3 (六邊形心)', [1, 1, 1]);
+                }
+
+                // --- 4. 直線型系列 ---
+                else if (currentPg === "Cinfv") { // 直線非中心對稱 (如 CO, HCl)
+                    addSym('axis', 'C∞ (分子軸)', [1, 0, 0]);
+                    addSym('plane', 'σv (範例面)', [0, 1, 0]);
+                } else if (currentPg === "Dinfh") { // 直線中心對稱 (如 CO2, N2)
+                    addSym('axis', 'C∞ (分子軸)', [1, 0, 0]);
+                    addSym('plane', 'σh (垂直中心面)', [1, 0, 0]);
+                    addSym('axis', 'C2 (垂直副軸)', [0, 1, 0]);
+                }
+            }
+
+            // 更新選單 UI
+            symList.innerHTML = "";
+            data.symmetry.elements.forEach(el => {
+                const div = document.createElement("div");
+                div.className = "variant-option";
+                div.style.fontSize = "0.85rem";
+                const chk = document.createElement("input");
+                chk.type = "checkbox";
+                chk.checked = el.active; 
+                chk.onchange = (e) => { el.active = e.target.checked; renderScene(); };
+                const span = document.createElement("span");
+                span.textContent = ` [${el.type==='axis'?'軸':'面'}] ${el.label}`;
+                div.appendChild(chk); div.appendChild(span);
+                symList.appendChild(div);
+            });
+            
+            // 重要：同步到當前運行的分子物件
+            currentMolecule.symmetry = data.symmetry;
+        } else {
+            pgDisplay.textContent = "點群: -";
+            symList.innerHTML = '<div style="color: #888; font-size: 0.85rem; text-align: center;">此物質暫無對稱資料</div>';
+            currentMolecule.symmetry = null;
+        }
+    }
     if(subtitle) subtitle.textContent = `${nameText} (${formulaText})`; 
     
     updateVariantUI(key, variantKey);
@@ -2102,6 +2276,51 @@ function renderScene(time = 0) {
                 c1: a1.color, c2: a2.color, bondIdx: index,
                 opacity: 1, alpha: bondAlpha 
             });
+        });
+    }
+    // --- 渲染點群對稱元素 (放在所有物件都 push 進 renderList 之後) ---
+    if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
+        currentMolecule.symmetry.elements.forEach(el => {
+            if (!el.active) return;
+            if (el.type === 'axis') {
+                const len = 100; 
+                // 正規化運算：算出向量的實際長度，並除以它，確保長度恆定為 1
+                const vLen = Math.sqrt(el.v[0]**2 + el.v[1]**2 + el.v[2]**2) || 1;
+                const nx = el.v[0] / vLen;
+                const ny = el.v[1] / vLen;
+                const nz = el.v[2] / vLen;
+
+                const p1 = project({ x: nx * len, y: ny * len, z: nz * len });
+                const p2 = project({ x: -nx * len, y: -ny * len, z: -nz * len });
+                renderList.push({ 
+                    type: 'axisVector', 
+                    z: (p1.z + p2.z)/2, 
+                    pStart: p1, pEnd: p2, 
+                    label: el.label, 
+                    scale: p1.scale 
+                });
+            } else if (el.type === 'plane') {
+                const s = 70; 
+                let v1 = [0, 1, 0], v2 = [0, 0, 1];
+                if (Math.abs(el.v[0]) < 0.9) { 
+                    v1 = [1, 0, 0]; 
+                    v2 = [0, el.v[2], -el.v[1]]; 
+                }
+                const pts = [
+                    {x: (v1[0]+v2[0])*s, y: (v1[1]+v2[1])*s, z: (v1[2]+v2[2])*s},
+                    {x: (v1[0]-v2[0])*s, y: (v1[1]-v2[1])*s, z: (v1[2]-v2[2])*s},
+                    {x: (-v1[0]-v2[0])*s, y: (-v1[1]-v2[1])*s, z: (-v1[2]-v2[2])*s},
+                    {x: (-v1[0]+v2[0])*s, y: (-v1[1]+v2[1])*s, z: (-v1[2]+v2[2])*s}
+                ];
+                const proj = pts.map(p => project(p));
+                renderList.push({ 
+                    type: 'polyFace', 
+                    z: proj.reduce((sum, p) => sum + p.z, 0) / 4, 
+                    nodes: proj.map(p => ({ px: p.x, py: p.y })), 
+                    colorType: 'cyan', 
+                    alpha: 0.25 
+                });
+            }
         });
     }
 
