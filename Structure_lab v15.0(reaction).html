@@ -418,6 +418,35 @@
         background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(139, 92, 246, 0.3);
         margin-top: -6px; margin-bottom: 15px;
     }
+    /* 子選單專用樣式 */
+    .sub-panel-btn {
+        height: 40px !important;
+        font-size: 0.95rem !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .sub-content {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border-radius: 15px !important;
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* 輸入框適配 */
+    .sub-content .input-group input {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    /* 軌域按鈕微調 */
+    .orbital-btn-group {
+        gap: 5px;
+        margin-bottom: 8px;
+    }
     .panel-wrapper.expanded > .glass-content-panel { display: block; animation: fadeIn 0.3s ease; }
     .panel-wrapper.expanded > .glass-toggle-btn { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
 
@@ -431,6 +460,43 @@
     .info-body strong { color: inherit; font-weight: 700; }
     .highlight-title { color: #38bdf8; font-weight: bold; display: inline-block; margin-right: 4px; }
     .hybrid-tooltip.show { opacity: 1; }
+    .flow-card {
+        width: 100%;
+        max-width: 500px;
+        padding: 20px;
+        border-radius: 16px;
+        border: 2px solid;
+        position: relative;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .branch-card { max-width: 300px; }
+    .step-badge {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        padding: 2px 12px;
+        border-radius: 20px;
+        color: #000;
+        font-size: 0.75rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+    .flow-title { font-weight: bold; font-size: 1.1rem; color: #fff; }
+    .flow-body { margin-top: 10px; color: #94a3b8; line-height: 1.6; }
+    .flow-arrow { color: #334155; font-size: 1.5rem; margin: -5px 0; }
+    .pg-tag { color: #38bdf8; font-weight: bold; margin: 0 4px; font-family: serif; }
+    .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+    .res-box {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 15px 5px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+    }
+    .res-box:hover { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; transform: translateY(-5px); }
+    .pg-final { display: block; margin-top: 8px; font-size: 1.3rem; font-weight: bold; color: #38bdf8; font-family: serif; }
 
     /* 電子閃爍動畫 */
     @keyframes spark-flicker {
@@ -884,26 +950,94 @@
                     <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
                 </button>
                 <div class="glass-content-panel">
-                    <!-- A. 三點成面 -->
+<!-- CC (修改區：置入五大子功能，介面優化版) -->
+                    
+                    <!-- [1] 平衡化學反應式 -->
                     <div class="panel-wrapper">
-                        <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
-                            <span>📐 幾何成面模式</span>
-                            <span class="toggle-icon" style="font-size:0.6rem;">▼</span>
+                        <button class="glass-toggle-btn" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
+                            <div style="display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
+                                <span>⚖️ 平衡化學反應式</span>
+                                <div onclick="event.stopPropagation(); document.getElementById('balance-help-popup').style.display = 'block';" style="width: 18px; height: 18px; border: 1.2px solid #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; color: #10b981;">i</div>
+                            </div>
                         </button>
-                        <div class="glass-content-panel">
-                            <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.85rem; border-color:#fde047; color:#fde047; margin-bottom:12px; background:rgba(0,0,0,0.3);" onclick="toggleFaceBuildMode()">點擊選取狀態: OFF</button>
+                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5); padding: 15px;">
+                            <div id="balance-help-popup" style="display: none; position: absolute; top: 0; left: 0; right: 0; background: #0f172a; border: 1px solid #10b981; padding: 12px; border-radius: 12px; z-index: 120; font-size: 0.8rem; line-height:1.5;">
+                                <b style="color:#10b981;">範例：</b> H2 + O2 = H2O<br>
+                                <button onclick="this.parentElement.style.display='none'" style="width:100%; margin-top:8px; background:#10b981; border:none; border-radius:4px; font-size:0.7rem; padding:2px;">關閉說明</button>
+                            </div>
+                            <!-- 修正：確保輸入組不會溢出 -->
+                            <div style="display: flex; gap: 5px; width: 100%;">
+                                <input type="text" id="equation-input" placeholder="輸入反應式..." style="flex: 1; min-width: 0; background: rgba(0,0,0,0.3); border: 1px solid rgba(16,185,129,0.4); border-radius: 8px; color: white; padding: 8px; font-size: 0.85rem;">
+                                <button id="balance-btn" style="background: #10b981; color: white; border: none; border-radius: 8px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 0.85rem; white-space: nowrap;">平衡</button>
+                            </div>
+                            <div id="balance-result" style="margin-top: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; display: none;"></div>
+                            <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 8px; cursor: pointer; color: #38bdf8; font-size: 0.75rem; text-decoration: underline;">解題思路</div>
+                            <div id="balance-steps" style="display: none; margin-top: 10px; padding: 10px; background: rgba(15, 23, 42, 0.8); border-radius: 8px; font-size: 0.8rem; border-left: 3px solid #facc15;"></div>
+                        </div>
+                    </div>
+
+                    <!-- [2] 點群對稱分析 -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" style="background:rgba(56,189,248,0.15); border-color:rgba(56,189,248,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
+                            <div style="display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
+                                <span>💎 點群對稱分析</span>
+                                <div onclick="event.stopPropagation(); togglePgFlowchart();" style="width: 18px; height: 18px; border: 1.5px solid #38bdf8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; color: #38bdf8;">i</div>
+                            </div>
+                        </button>
+                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                            <div id="pg-group-display" style="color: #facc15; font-weight: bold; text-align: center; margin-bottom: 5px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">點群: -</div>
+                            <div id="symmetry-elements-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- [3] 幾何成面模式 -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" style="background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span>📐 幾何成面模式</span>
+                        </button>
+                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                            <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.8rem; border-color:#fde047; color:#fde047; margin-bottom:10px; background:rgba(0,0,0,0.2);" onclick="toggleFaceBuildMode()">選取狀態: OFF</button>
                             <div style="display: flex; gap: 5px;">
                                 <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
                                 <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
                                 <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
-                                <button class="control-button danger" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.2);" onclick="clearCustomFaces()">清除面</button>
+                                <!-- 補回清除面按鈕，並設定紅色風格與文字置中 -->
+                                <button class="control-button" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.15); border-color:#f87171; color:#f87171; display:flex; align-items:center; justify-content:center;" onclick="clearCustomFaces()">清除面</button>
                             </div>
                         </div>
                     </div>
-                    <!-- B. 電子組態 -->
-                    <button id="btn-open-config" class="glass-toggle-btn"><span>⚛️ 查詢電子組態 (1-118)</span></button>
-                    <!-- C. 原子軌域 (掛載點) -->
-                    <div id="orbital-mount-point"></div>
+
+                    <!-- [4] 電子組態查詢 -->
+                    <div class="panel-wrapper">
+                        <button id="btn-open-config" class="glass-toggle-btn" style="background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.4); color:#c4b5fd;">
+                            <span>⚛️ 查詢電子組態 (1-118)</span>
+                        </button>
+                    </div>
+
+                    <!-- [5] 原子軌域模型選擇 (現在可收合) -->
+                    <div class="panel-wrapper">
+                        <button class="glass-toggle-btn" style="background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.2);" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span>☁️ 原子軌域模型選擇</span>
+                        </button>
+                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                                <button class="orb-btn" onclick="loadOrbital('s')">s</button>
+                                <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+                            </div>
+                            <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 5px;">
+                                <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²</sub></button>
+                                <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+                            </div>
+                            <!-- 節面按鈕縮小化 -->
+                            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; margin-top:10px; height:28px; font-size:0.75rem; border-radius:6px; border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center;" onclick="togglePlanes()">顯示節面: ON</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -1002,6 +1136,17 @@
 // ==========================================
 window.currentMolecule = null;
 window.currentKey = null;
+window.togglePgFlowchart = function() {
+    const overlay = document.getElementById('pg-flowchart-overlay');
+    if (!overlay) return;
+    if (overlay.style.display === 'none' || overlay.style.display === '') {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden'; 
+    } else {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+};
 window.currentVariantKey = null;
 window.moleculeHistory = [];
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -1840,6 +1985,150 @@ function loadMolecule(key, variantKey = null) {
     document.getElementById("disp-mass").textContent = totalMass > 0 ? `${totalMass.toFixed(2)} g/mol` : "N/A";
     
     const subtitle = document.getElementById("viewport-subtitle");
+    
+    // --- 點群自動生成器邏輯 ---
+    const pgDisplay = document.getElementById("pg-group-display");
+    const symList = document.getElementById("symmetry-elements-list");
+    
+    if (pgDisplay && symList) {
+        const currentPg = data.pg;
+        
+        if (currentPg) {
+            // 1. 自動計算幾何重心 (Centroid) - 僅計算原子，排除電子
+            let tX = 0, tY = 0, tZ = 0, atomCount = 0;
+            const realAtoms = data.atomsRaw ? data.atomsRaw.filter(a => !a.isElectron) : [];
+            if (realAtoms.length > 0) {
+                realAtoms.forEach(a => { tX += a.x; tY += a.y; tZ += a.z; atomCount++; });
+                data.centroid = { x: tX / atomCount, y: tY / atomCount, z: tZ / atomCount };
+            } else {
+                data.centroid = { x: 0, y: 0, z: 0 };
+            }
+
+            // 2. 顯示美化與初始化
+            const displayPg = currentPg.replace("inf", "∞");
+            pgDisplay.textContent = `點群: ${displayPg}`;
+            
+            // 每次重新建立 symmetry 結構以確保重心座標同步
+            data.symmetry = { group: currentPg, elements: [] };
+            
+            // 擴充 addSym：支援自定義向量覆寫
+            const addSym = (type, label, defaultVec, colorType = 'cyan', customKey = null) => {
+                let vec = defaultVec;
+                if (data.symVectors && customKey && data.symVectors[customKey]) {
+                    vec = data.symVectors[customKey];
+                }
+                data.symmetry.elements.push({ type, label, v: vec, active: false, colorType: colorType });
+            };
+
+            // 3. 判斷特殊幾何與點群模板
+            const isTShaped = data.shape && data.shape.includes("T型");
+
+            // --- C 系列 ---
+            if (currentPg === "C2v") {
+                // 如果是 ClF3, ICl3 等 T 型分子，主軸須修正為水平 [1, 0, 0]
+                let c2Vec = isTShaped ? [1, 0, 0] : [0, 1, 0];
+                addSym('axis', '1 × C₂ (主軸)', c2Vec, 'cyan', 'C2');
+                addSym('plane', 'σᵥ (分子面-青色)', [0, 0, 1], 'cyan', 'sv');
+                addSym('plane', 'σᵥ\' (垂直面-粉色)', (isTShaped ? [0, 1, 0] : [1, 0, 0]), 'pink', 'sv2');
+            } else if (currentPg === "C3v") {
+                addSym('axis', '1 × C₃ (主軸)', [0, 1, 0], 'cyan', 'C3');
+                addSym('plane', '3 × σᵥ (鉛直面-粉色)', [1, 0, 0], 'pink', 'sv');
+            } else if (currentPg === "C4v") {
+                addSym('axis', '1 × C₄ (主軸)', [0, 0, 1], 'cyan', 'C4');
+                addSym('plane', '2 × σᵥ (鉛直面-青色)', [1, 0, 0], 'cyan', 'sv');
+                addSym('plane', '2 × σ₁ (對角面-粉色)', [1, 1, 0], 'pink', 'sd');
+            } else if (currentPg === "Cs") { 
+                addSym('plane', '1 × σ (對稱面-青色)', [0, 0, 1], 'cyan', 's');
+            } else if (currentPg === "C2h") {
+                addSym('axis', '1 × C₂ (垂直主軸)', [0, 0, 1], 'cyan', 'C2'); 
+                addSym('plane', '1 × σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            }
+
+            // --- D 系列 ---
+            else if (currentPg === "D2h") {
+                addSym('axis', 'C₂ (分子長軸)', [1, 0, 0], 'cyan', 'C2x');
+                addSym('axis', 'C₂ (分子短軸)', [0, 1, 0], 'cyan', 'C2y');
+                addSym('axis', 'C₂ (垂直面主軸)', [0, 0, 1], 'cyan', 'C2z');
+                addSym('plane', 'σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            } else if (currentPg === "D3h") {
+                addSym('axis', '1 × C₃ (主軸)', [0, 0, 1], 'cyan', 'C3');
+                addSym('plane', '1 × σₕ (水平面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('axis', '3 × C₂ (副軸)', [0, 1, 0], 'cyan', 'C2');
+                addSym('plane', '3 × σᵥ (鉛直面-青色)', [1, 0, 0], 'cyan', 'sv');
+            } else if (currentPg === "D4h") {
+                addSym('axis', '1 × C₄ (主軸)', [0, 0, 1], 'cyan', 'C4');
+                addSym('plane', '1 × σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('axis', '4 × C₂ (副軸)', [1, 0, 0], 'cyan', 'C2');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            } else if (currentPg === "D6h") {
+                addSym('axis', '1 × C₆ (主軸)', [0, 0, 1], 'cyan', 'C6');
+                addSym('plane', '1 × σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('axis', '3 × C₂ (穿過原子)', [0, 1, 0], 'cyan', 'C2a'); 
+                addSym('axis', '3 × C₂\' (穿過鍵中心)', [0.866, 0.5, 0], 'cyan', 'C2b'); 
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            }
+
+            // --- 高對稱系列 ---
+            else if (currentPg === "Td") {
+                addSym('axis', '4 × C₃ (頂點軸)', [1, 1, 1], 'cyan', 'C3');
+                addSym('axis', '3 × C₂ (對邊軸)', [1, 0, 0], 'cyan', 'C2');
+                addSym('plane', '6 × σ₁ (對角面-粉色)', [1, -1, 0], 'pink', 'sd');
+            } else if (currentPg === "Oh") {
+                addSym('axis', '3 × C₄ (主軸)', [1, 0, 0], 'cyan', 'C4');
+                addSym('axis', '4 × C₃ (對角軸)', [1, 1, 1], 'cyan', 'C3');
+                addSym('plane', '3 × σₕ (主要面-黃色)', [0, 0, 1], 'yellow', 'sh');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            } else if (currentPg === "Ih") {
+                addSym('axis', '6 × C₅ (五邊形心)', [0, 1, 1.618], 'cyan', 'C5');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            }
+
+            // --- 直線型 ---
+            else if (currentPg === "Cinfv") {
+                addSym('axis', 'C∞ (分子軸)', [1, 0, 0], 'cyan', 'Cinf');
+                addSym('plane', '∞ × σᵥ (鉛直面-青色)', [0, 1, 0], 'cyan', 'sv');
+            } else if (currentPg === "Dinfh") {
+                addSym('axis', 'C∞ (分子軸)', [1, 0, 0], 'cyan', 'Cinf');
+                addSym('plane', '1 × σₕ (中心面-黃色)', [1, 0, 0], 'yellow', 'sh');
+                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            }
+
+            // 4. 更新選單 UI
+            symList.innerHTML = "";
+            data.symmetry.elements.forEach(el => {
+                const div = document.createElement("div");
+                div.className = "variant-option";
+                div.style.fontSize = "0.85rem";
+                div.style.cursor = "pointer";
+                const chk = document.createElement("input");
+                chk.type = "checkbox";
+                chk.checked = el.active; 
+                chk.onchange = (e) => { el.active = e.target.checked; renderScene(); };
+                const span = document.createElement("span");
+                if (el.type === 'plane') {
+                    const colorMap = { 'cyan': '#22d3ee', 'pink': '#f472b6', 'yellow': '#facc15' };
+                    span.style.color = colorMap[el.colorType];
+                } else if (el.type === 'center') { 
+                    span.style.color = "#facc15"; span.style.fontWeight = "bold"; 
+                }
+                const icon = el.type === 'axis' ? '軸' : (el.type === 'center' ? '點' : '面');
+                span.textContent = ` [${icon}] ${el.label}`;
+                div.appendChild(chk); div.appendChild(span);
+                symList.appendChild(div);
+            });
+            
+            // 重要：同步重心與對稱性到當前分子物件
+            currentMolecule.centroid = data.centroid;
+            currentMolecule.symmetry = data.symmetry;
+        } else {
+            pgDisplay.textContent = "點群: -";
+            symList.innerHTML = '<div style="color: #888; font-size: 0.85rem; text-align: center;">此物質暫無對稱資料</div>';
+            currentMolecule.symmetry = null;
+            currentMolecule.centroid = { x: 0, y: 0, z: 0 };
+        }
+    }
     if(subtitle) subtitle.textContent = `${nameText} (${formulaText})`; 
     
     updateVariantUI(key, variantKey);
@@ -2008,7 +2297,7 @@ function renderScene(time = 0) {
     
     // --- 1. 定義濾鏡與漸層 ---
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    // 發光濾鏡 (給邊框用)
+    // 發光濾鏡
     const boxGlowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
     boxGlowFilter.setAttribute("id", "box-glow");
     boxGlowFilter.innerHTML = `<feGaussianBlur stdDeviation="1.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
@@ -2026,8 +2315,15 @@ function renderScene(time = 0) {
         atomGrad.innerHTML = `<stop offset="0%" stop-color="${highlight}" stop-opacity="0.95"/><stop offset="40%" stop-color="${baseColor}" stop-opacity="1"/><stop offset="100%" stop-color="${shadowColor}" stop-opacity="1"/>`;
         defs.appendChild(atomGrad);
     });
+
+    // 【重要修正】確保金色漸層定義在每一幀都存在
+    const goldGrad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+    goldGrad.setAttribute("id", "grad-hyper-gold");
+    goldGrad.setAttribute("x1", "0%"); goldGrad.setAttribute("y1", "0%"); goldGrad.setAttribute("x2", "100%"); goldGrad.setAttribute("y2", "0%");
+    goldGrad.innerHTML = `<stop offset="0%" stop-color="#bf953f"/><stop offset="25%" stop-color="#fcf6ba"/><stop offset="50%" stop-color="#b38728"/><stop offset="75%" stop-color="#fbf5b7"/><stop offset="100%" stop-color="#aa771c"/>`;
+    defs.appendChild(goldGrad);
     
-    // (保留原本的軌域/點擊/電荷光暈定義，為節省篇幅此處不重複列出，請確保您的檔案中有這些)
+    // 其餘光暈定義 (保持原樣)
     const highlightGlowCenter = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
     highlightGlowCenter.setAttribute("id", "highlight-glow-center");
     highlightGlowCenter.setAttribute("cx", "50%"); highlightGlowCenter.setAttribute("cy", "50%"); highlightGlowCenter.setAttribute("r", "50%");
@@ -2060,8 +2356,6 @@ function renderScene(time = 0) {
     const showLPs = document.getElementById('toggle-lp') ? document.getElementById('toggle-lp').checked : true;
     const isAnyHighlighted = currentMolecule.renderObjects.some(o => o.isHighlighted);
     const renderList = [];
-    
-    // 建立原子索引對照表與位置清單
     const atomMap = new Map();
     const atomPosList = [];
 
@@ -2084,96 +2378,113 @@ function renderScene(time = 0) {
             if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
             else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
         }
-
         const renderObj = { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha, z: p.z };
         renderList.push(renderObj);
-
         if (obj.type === 'atom') {
             atomMap.set(obj.originalIndex, renderObj);
             atomPosList.push({ x: obj.x, y: obj.y, z: obj.z, r: obj.r });
         }
     });
-    // --- 手動平面渲染邏輯 ---
+
     if (customFaces.length > 0) {
         customFaces.forEach(faceIndices => {
             const nodes = faceIndices.map(idx => atomMap.get(idx)).filter(n => n);
             if (nodes.length === 3) {
-                // 計算面的深度 (三點平均 Z 值)
                 const avgZ = (nodes[0].z + nodes[1].z + nodes[2].z) / 3;
-                renderList.push({
-                    type: 'polyFace',
-                    z: avgZ,
-                    nodes: nodes,
-                    colorType: faceIndices[3] || 'yellow', // 修正變數名稱 faceData -> faceIndices
-                    alpha: isAnyHighlighted ? 0.1 : 1.0
-                });
+                renderList.push({ type: 'polyFace', z: avgZ, nodes: nodes, colorType: faceIndices[3] || 'yellow', alpha: isAnyHighlighted ? 0.1 : 1.0 });
             }
         });
     }
 
-    // --- 3. 處理晶體邊框 (Box Lines) ---
     if (currentMolecule.extraLines) {
         currentMolecule.extraLines.forEach(line => {
-            const pStart = project(line.start);
-            const pEnd = project(line.end);
+            const pStart = project(line.start); const pEnd = project(line.end);
             const avgZ = (pStart.z + pEnd.z) / 2;
             let alpha = isAnyHighlighted ? 0.1 : 1.0;
-
-            // 尋找端點是否有原子
             const findAtomR = (pt) => {
                 const match = atomPosList.find(a => Math.abs(a.x - pt.x) < 2 && Math.abs(a.y - pt.y) < 2 && Math.abs(a.z - pt.z) < 2);
                 return match ? match.r : 0;
             };
-
-            const rStart = findAtomR(line.start);
-            const rEnd = findAtomR(line.end);
-
-            renderList.push({
-                type: "boxLine", z: avgZ,
-                x1: pStart.x, y1: pStart.y,
-                x2: pEnd.x,   y2: pEnd.y,
-                scale: (pStart.scale + pEnd.scale) / 2,
-                r1: rStart, r2: rEnd, 
-                alpha: alpha
-            });
+            renderList.push({ type: "boxLine", z: avgZ, x1: pStart.x, y1: pStart.y, x2: pEnd.x, y2: pEnd.y, scale: (pStart.scale + pEnd.scale) / 2, r1: findAtomR(line.start), r2: findAtomR(line.end), alpha: alpha });
         });
     }
 
-    // --- 4. 鍵結生成 ---
     if (currentMolecule.bonds3D) {
         currentMolecule.bonds3D.forEach((bond, index) => { 
             const idx1 = bond[0]; const idx2 = bond[1];
             const a1 = atomMap.get(idx1); const a2 = atomMap.get(idx2);
             if (!a1 || !a2) return; 
-
             let drawStyle = bond[2] || "single";
             let bondAlpha = 1.0;
             if (isAnyHighlighted) {
                 const connectedToCenter = (a1.isHighlighted==='center' && a2.isHighlighted==='neighbor') || (a2.isHighlighted==='center' && a1.isHighlighted==='neighbor');
                 if (!connectedToCenter) bondAlpha = 0.05;
             }
-
-            renderList.push({ 
-                type: "bond", z: (a1.pz + a2.pz) / 2, 
-                x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, 
-                r1: a1.r * a1.scale, r2: a2.r * a2.scale,
-                style: drawStyle, scale: (a1.scale + a2.scale) / 2, 
-                c1: a1.color, c2: a2.color, bondIdx: index,
-                opacity: 1, alpha: bondAlpha 
-            });
+            renderList.push({ type: "bond", z: (a1.pz + a2.pz) / 2, x1: a1.px, y1: a1.py, x2: a2.px, y2: a2.py, r1: a1.r * a1.scale, r2: a2.r * a2.scale, style: drawStyle, scale: (a1.scale + a2.scale) / 2, c1: a1.color, c2: a2.color, bondIdx: index, opacity: 1, alpha: bondAlpha });
         });
     }
 
-    // --- 5. 排序並繪製 ---
-    // [修正重點] Z軸排序邏輯：如果 Z 差不多 (在誤差範圍內)，強制讓 boxLine 排在前面 (也就是先畫，被後面的蓋住)
-    renderList.sort((a,b) => {
-        const delta = a.z - b.z;
-        if (Math.abs(delta) < 5) { // 深度非常接近
-            if (a.type === 'boxLine' && b.type === 'atom') return -1; // 線在原子前 -> 先畫線 -> 原子蓋住線
-            if (a.type === 'atom' && b.type === 'boxLine') return 1;
-        }
-        return delta;
-    }).forEach(obj => {
+    // CC (點群對稱元素渲染區塊：重心對齊版)
+    if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
+        // 取得當前分子的重心，若無則預設為原點
+        const mCentroid = currentMolecule.centroid || { x: 0, y: 0, z: 0 };
+        
+        currentMolecule.symmetry.elements.forEach(el => {
+            if (!el.active || !el.v) return;
+            try {
+                if (el.type === 'axis') {
+                    const len = 110; // 軸的視覺長度
+                    // 向量正規化，確保不同角度長度一致
+                    const rawLen = Math.sqrt(el.v[0]**2 + el.v[1]**2 + el.v[2]**2);
+                    const vLen = rawLen < 0.001 ? 1 : rawLen;
+                    const nx = el.v[0] / vLen, ny = el.v[1] / vLen, nz = el.v[2] / vLen;
+
+                    // 從分子重心出發延伸
+                    const p1 = project({ x: mCentroid.x + nx * len, y: mCentroid.y + ny * len, z: mCentroid.z + nz * len });
+                    const p2 = project({ x: mCentroid.x - nx * len, y: mCentroid.y - ny * len, z: mCentroid.z - nz * len });
+                    
+                    renderList.push({ 
+                        type: 'axisVector', z: (p1.z + p2.z)/2, pStart: p1, pEnd: p2, 
+                        label: el.label, scale: p1.scale, 
+                        customColor: "url(#grad-hyper-gold)", labelColor: "#facc15" 
+                    });
+                } else if (el.type === 'center') {
+                    // 反轉中心 (i) 直接定位在重心
+                    const p = project({ x: mCentroid.x, y: mCentroid.y, z: mCentroid.z });
+                    renderList.push({
+                        type: 'atom', z: p.z, px: p.x, py: p.y, scale: p.scale,
+                        r: 6, color: "#facc15", elem: "i", isHighlighted: "center"
+                    });
+                } else if (el.type === 'plane') {
+                    const s = 80; // 平面尺寸
+                    let v1 = [0, 1, 0], v2 = [0, 0, 1];
+                    // 計算垂直於 el.v 的平面基底向量
+                    if (Math.abs(el.v[0]) < 0.9) { 
+                        v1 = [1, 0, 0]; 
+                        v2 = [0, el.v[2], -el.v[1]]; 
+                    }
+                    
+                    // 根據基底向量生成平面的四個頂點，並加上重心位移
+                    const pts = [
+                        {x: mCentroid.x + (v1[0]+v2[0])*s, y: mCentroid.y + (v1[1]+v2[1])*s, z: mCentroid.z + (v1[2]+v2[2])*s},
+                        {x: mCentroid.x + (v1[0]-v2[0])*s, y: mCentroid.y + (v1[1]-v2[1])*s, z: mCentroid.z + (v1[2]-v2[2])*s},
+                        {x: mCentroid.x + (-v1[0]-v2[0])*s, y: mCentroid.y + (-v1[1]-v2[1])*s, z: mCentroid.z + (-v1[2]-v2[2])*s},
+                        {x: mCentroid.x + (-v1[0]+v2[0])*s, y: mCentroid.y + (-v1[1]+v2[1])*s, z: mCentroid.z + (-v1[2]+v2[2])*s}
+                    ];
+                    const proj = pts.map(p => project(p));
+                    renderList.push({ 
+                        type: 'polyFace', 
+                        z: proj.reduce((sum, p) => sum + p.z, 0) / 4, 
+                        nodes: proj.map(p => ({ px: p.x, py: p.y })), 
+                        colorType: el.colorType || 'cyan' 
+                    });
+                }
+            } catch (err) { console.error("對稱元素投影失敗:", err); }
+        });
+    }
+
+    // --- 4. 排序並繪製 ---
+    renderList.sort((a,b) => (a.z - b.z)).forEach(obj => {
         if (obj.type === "bond") drawBond(obj);
         else if (obj.type === "atom") drawAtom(obj);
         else if (obj.type === "lobe") drawLobe(obj);
@@ -2183,24 +2494,18 @@ function renderScene(time = 0) {
         else if (obj.type === "polyFace") {
             const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
             poly.setAttribute("points", obj.nodes.map(n => `${n.px},${n.py}`).join(" "));
-            
-            // 顏色對照表
-            const colors = {
-                'yellow': { f: "rgba(253, 224, 71, 0.15)", s: "rgba(253, 224, 71, 0.5)" },
-                'cyan':   { f: "rgba(34, 211, 238, 0.15)", s: "rgba(34, 211, 238, 0.5)" },
-                'pink':   { f: "rgba(244, 114, 182, 0.15)", s: "rgba(244, 114, 182, 0.5)" }
+            // 【重要修正】顏色對照表必須定義在渲染當下
+            const symmetryColors = {
+                'yellow': { f: "rgba(253, 224, 71, 0.2)", s: "rgba(253, 224, 71, 0.9)" },
+                'cyan':   { f: "rgba(34, 211, 238, 0.2)", s: "rgba(34, 211, 238, 0.9)" },
+                'pink':   { f: "rgba(244, 114, 182, 0.2)", s: "rgba(244, 114, 182, 0.9)" }
             };
-            const config = colors[obj.colorType] || colors.yellow;
-            
-            poly.setAttribute("fill", config.f);
-            poly.setAttribute("stroke", config.s);
-            poly.setAttribute("stroke-width", "1.0");
-            poly.setAttribute("opacity", obj.alpha);
+            const config = symmetryColors[obj.colorType] || symmetryColors.cyan;
+            poly.setAttribute("fill", config.f); poly.setAttribute("stroke", config.s);
+            poly.setAttribute("stroke-width", "3"); poly.setAttribute("opacity", "1.0");
             sceneRoot.appendChild(poly);
         }
-
     });
-    
 }
 
 function drawBoxLine(l) {
@@ -2560,6 +2865,19 @@ function animate() {
 }
 
 function setupInteractions() {
+    // 確保平衡係數按鈕在 DOM 載入後正確綁定
+    const balanceBtn = document.getElementById('balance-btn');
+    if (balanceBtn) {
+        balanceBtn.onclick = () => { /* 執行平衡邏輯 */ };
+    }
+
+    // 更新點群流程圖 Overlay 邏輯
+    window.togglePgFlowchart = function() {
+        const overlay = document.getElementById('pg-flowchart-overlay');
+        if (!overlay) return;
+        overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'block' : 'none';
+        document.body.style.overflow = (overlay.style.display === 'block') ? 'hidden' : '';
+    };
     // 啟動化學方程式平衡器
     setupEquationBalancer();
 
@@ -2863,54 +3181,45 @@ function drawAxisVector(axis) {
 
     const dx = x2 - x1; const dy = y2 - y1;
     const len = Math.sqrt(dx*dx + dy*dy);
-    if (len <= 0) return;
+    
+    // 安全檢查：防止長度為 0 導致 NaN 錯誤
+    if (len < 0.1) return;
 
-    // 單位向量
     const ux = dx/len; const uy = dy/len;
-    
-    // 箭頭尺寸
     const arrowSize = 10 * axis.scale;
-    
-    // 計算線段終點 (停在箭頭底部，避免圓頭凸出)
     const lineEndX = x2 - ux * (arrowSize - 2); 
     const lineEndY = y2 - uy * (arrowSize - 2);
 
-    // 1. 畫線 (銀灰色，平頭 Butt Cap)
+    // 1. 畫線 (支援金色漸層)
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", x1); line.setAttribute("y1", y1);
     line.setAttribute("x2", lineEndX); line.setAttribute("y2", lineEndY);
-    line.setAttribute("stroke", "#B0B0B0"); // 金屬銀灰
-    line.setAttribute("stroke-width", 2.5 * axis.scale);
-    line.setAttribute("stroke-linecap", "butt"); // ★ 關鍵：平頭，消除凸點
+    line.setAttribute("stroke", axis.customColor || "#B0B0B0"); 
+    line.setAttribute("stroke-width", 3 * axis.scale); 
+    line.setAttribute("stroke-linecap", "butt");
     g.appendChild(line);
 
-    // 2. 畫箭頭 (三角形)
+    // 2. 畫箭頭
     const bx = x2 - ux * arrowSize;
     const by = y2 - uy * arrowSize;
     const vx = -uy * arrowSize * 0.5;
     const vy = ux * arrowSize * 0.5;
-
-    const pTip = `${x2},${y2}`;
-    const pLeft = `${bx + vx},${by + vy}`;
-    const pRight = `${bx - vx},${by - vy}`;
-
     const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    polygon.setAttribute("points", `${pTip} ${pLeft} ${pRight}`);
-    polygon.setAttribute("fill", "#B0B0B0"); // 同色箭頭
+    polygon.setAttribute("points", `${x2},${y2} ${bx + vx},${by + vy} ${bx - vx},${by - vy}`);
+    polygon.setAttribute("fill", axis.customColor || "#B0B0B0"); 
     g.appendChild(polygon);
 
-    // 3. 畫文字 (純白 XYZ)
+    // 3. 畫文字 (支援黃色文字)
     if (axis.label) {
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        // 文字位置往外推
         text.setAttribute("x", x2 + ux * 18 * axis.scale);
         text.setAttribute("y", y2 + uy * 18 * axis.scale);
-        text.setAttribute("fill", "#FFFFFF"); // ★ 純白文字
+        text.setAttribute("fill", axis.labelColor || "#FFFFFF"); 
         text.setAttribute("font-size", 16 * axis.scale);
         text.setAttribute("font-weight", "bold");
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
-        text.style.textShadow = "0 0 3px #000000"; // 加一點陰影讓白色更清楚
+        text.style.textShadow = "0 0 5px #000000"; 
         text.textContent = axis.label;
         g.appendChild(text);
     }
