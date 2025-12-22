@@ -837,6 +837,7 @@
 @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
 
+
 </style>
 </head>
 <body>
@@ -1997,12 +1998,7 @@ function loadMolecule(key, variantKey = null) {
             // 1. 自動計算幾何重心 (Centroid) - 僅計算原子，排除電子
             let tX = 0, tY = 0, tZ = 0, atomCount = 0;
             const realAtoms = data.atomsRaw ? data.atomsRaw.filter(a => !a.isElectron) : [];
-            if (realAtoms.length > 0) {
-                realAtoms.forEach(a => { tX += a.x; tY += a.y; tZ += a.z; atomCount++; });
-                data.centroid = { x: tX / atomCount, y: tY / atomCount, z: tZ / atomCount };
-            } else {
-                data.centroid = { x: 0, y: 0, z: 0 };
-            }
+            data.centroid = { x: 0, y: 0, z: 0 };
 
             // 2. 顯示美化與初始化
             const displayPg = currentPg.replace("inf", "∞");
@@ -2065,9 +2061,11 @@ function loadMolecule(key, variantKey = null) {
             } else if (currentPg === "D6h") {
                 addSym('axis', '1 × C₆ (主軸)', [0, 0, 1], 'cyan', 'C6');
                 addSym('plane', '1 × σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
-                addSym('axis', '3 × C₂ (穿過原子)', [0, 1, 0], 'cyan', 'C2a'); 
-                addSym('axis', '3 × C₂\' (穿過鍵中心)', [0.866, 0.5, 0], 'cyan', 'C2b'); 
                 addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+                // 修正：當原子在頂部(90度)時，C2(穿過原子)應包含 90, 210, 330 度
+                addSym('axis', '3 × C₂ (穿過鍵中心)', [0, 1, 0], 'cyan', 'C2a');
+                // 修正：C2'(穿過鍵中心)應包含 0, 60, 120 度
+                addSym('axis', '3 × C₂\' (穿過原子)', [1, 0, 0], 'cyan', 'C2b');
             }
 
             // --- 高對稱系列 ---
