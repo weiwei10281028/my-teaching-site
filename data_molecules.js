@@ -674,10 +674,16 @@ addMol("HOCN|氰酸", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°",
 addMol("PCl5|五氯化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "160.5", "166.8", [{elem:"P",x:0,y:0,z:0}, {elem:"Cl",x:0,y:85,z:0}, {elem:"Cl",x:0,y:-85,z:0}, {elem:"Cl",x:80,y:0,z:0}, {elem:"Cl",x:-40,y:0,z:69}, {elem:"Cl",x:-40,y:0,z:-69}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
 addMol("PBr5|五溴化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "100 (分解)", "106 (分解)", [{elem:"P",x:0,y:0,z:0}, {elem:"Br",x:0,y:90,z:0}, {elem:"Br",x:0,y:-90,z:0}, {elem:"Br",x:85,y:0,z:0}, {elem:"Br",x:-42,y:0,z:74}, {elem:"Br",x:-42,y:0,z:-74}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
 addMol("SF6|六氟化硫", "S", "sp³d²", ["八面體","Octahedral"], "90°", "-50.8", "-63.8 (昇華)", getOcta("S","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("SF4|四氟化硫", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "-121", "-38", [{elem:"S",x:0,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:65,y:0,z:45}, {elem:"F",x:65,y:0,z:-45}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
+addMol("SF4|四氟化硫", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "-121", "-38", [{elem:"S",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]},{elem:"F",x:0,y:0,z:80},{elem:"F",x:0,y:0,z:-80},{elem:"F",x:45,y:65,z:0},{elem:"F",x:-45,y:65,z:0}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
 addMol("ClF3|三氟化氯", "Cl", "sp³d", ["T型","T-shaped"], "<90°", "-76.3", "11.8", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}, {x:-1,y:-0.5,z:0}]}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:70,y:0,z:0}], [[0,1],[0,2],[0,3]], null, null, "C2v");
 addMol("XeF2|二氟化氙", "Xe", "sp³d", ["直線型","Linear"], "180°", "128.6", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0.866,y:-0.5,z:0}, {x:-0.866,y:-0.5,z:0}]}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("XeF4|四氟化氙", "Xe", "sp³d²", ["平面四邊形","Square Planar"], "90°", "117 (昇華)", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"F",x:85,y:0,z:0}, {elem:"F",x:-85,y:0,z:0}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
+
+addMol("XeF4|四氟化氙", "Xe", "sp³d²", ["平面四邊形","Square Planar"], "90°", "117 (昇華)", "-", [
+{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:1,y:0,z:0}, {x:-1,y:0,z:0}]}, 
+{elem:"F",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, 
+{elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}
+], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
+
 addMol("BrF5|五氟化溴", "Br", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", "-61.3", "40.3", [{elem:"Br",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:70,y:0,z:0}, {elem:"F",x:-70,y:0,z:0}, {elem:"F",x:0,y:0,z:70}, {elem:"F",x:0,y:0,z:-70}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "C4v");
 addMol("IF7|七氟化碘", "I", "sp³d³", ["五角雙錐","Pentagonal Bipyramidal"], "72°, 90°", "4.8", "4.8 (昇華)", [{elem:"I",x:0,y:0,z:0,lpCount:0}, {elem:"F",x:0,y:90,z:0}, {elem:"F",x:0,y:-90,z:0}, {elem:"F",x:80,y:0,z:0}, {elem:"F",x:25,y:0,z:76}, {elem:"F",x:25,y:0,z:-76}, {elem:"F",x:-65,y:0,z:47}, {elem:"F",x:-65,y:0,z:-47}], [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]], null, null, "D5h");
 addMol("SeF6|六氟化硒", "Se", "sp³d²", ["八面體","Octahedral"], "90°", "-34.6", "-46.6 (昇華)", getOcta("Se","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
@@ -983,13 +989,11 @@ addMol("C2H4Cl2|二氯乙烷", "C", "sp3", ["正四面體","Tetrahedral"], "109.
     }
 );
 
-addMol("C6H4Cl2|二氯苯", "C", "sp²", ["平面 (苯環)","Planar"], "120°", "-17", "180.5", [], [], 
-    {
-        "C6H4Cl2|鄰二氯苯|1,2-Dichlorobenzene": { pg: "C2v", mp: "-17", bp: "180.5", atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:135,z:0},{elem:"Cl",x:117,y:67,z:0},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]] },
-        "C6H4Cl2|間二氯苯|1,3-Dichlorobenzene": { pg: "C2v", mp: "-24.7", bp: "173", atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:135,z:0},{elem:"Cl",x:117,y:-67,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(3)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[2,7],[1,8],[3,9],[4,10],[5,11]] },
-        "C6H4Cl2|對二氯苯|1,4-Dichlorobenzene": { pg: "D2h", mp: "53.5", bp: "174", atoms: benzBase.map(p=>({elem:"C",...p})).concat([{elem:"Cl",x:0,y:135,z:0},{elem:"Cl",x:0,y:-135,z:0},{elem:"H",...getBenzH(1)},{elem:"H",...getBenzH(2)},{elem:"H",...getBenzH(4)},{elem:"H",...getBenzH(5)}]), bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[3,7],[1,8],[2,9],[4,10],[5,11]] }
-    }
-);
+addMol("C6H4Cl2|二氯苯", "C", "sp²", ["平面 (苯環)","Planar"], "120°", "-17", "180.5", [], [], {
+"C6H4Cl2|鄰二氯苯|1,2-Dichlorobenzene": { pg: "C2v", mp: "-17", bp: "180.5", atoms: [{elem:"C",x:-39,y:68,z:0},{elem:"C",x:39,y:68,z:0},{elem:"C",x:78,y:0,z:0},{elem:"C",x:39,y:-68,z:0},{elem:"C",x:-39,y:-68,z:0},{elem:"C",x:-78,y:0,z:0},{elem:"Cl",x:-68,y:117,z:0},{elem:"Cl",x:68,y:117,z:0},{elem:"H",x:135,y:0,z:0},{elem:"H",x:68,y:-117,z:0},{elem:"H",x:-68,y:-117,z:0},{elem:"H",x:-135,y:0,z:0}], bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]] },
+"C6H4Cl2|間二氯苯|1,3-Dichlorobenzene": { pg: "C2v", mp: "-24.7", bp: "173", atoms: [{elem:"C",x:-68,y:39,z:0},{elem:"C",x:0,y:78,z:0},{elem:"C",x:68,y:39,z:0},{elem:"C",x:68,y:-39,z:0},{elem:"C",x:0,y:-78,z:0},{elem:"C",x:-68,y:-39,z:0},{elem:"Cl",x:-117,y:68,z:0},{elem:"Cl",x:117,y:68,z:0},{elem:"H",x:0,y:135,z:0},{elem:"H",x:117,y:-68,z:0},{elem:"H",x:0,y:-135,z:0},{elem:"H",x:-117,y:-68,z:0}], bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[2,7],[1,8],[3,9],[4,10],[5,11]] },
+"C6H4Cl2|對二氯苯|1,4-Dichlorobenzene": { pg: "D2h", mp: "53.5", bp: "174", symVectors: { "C2_1": [1,0,0], "C2_2": [0,1,0], "C2_3": [0,0,1], "sh": [0,0,1], "sv1": [1,0,0], "sv2": [0,1,0] }, atoms: [{elem:"C",x:78,y:0,z:0},{elem:"C",x:39,y:-68,z:0},{elem:"C",x:-39,y:-68,z:0},{elem:"C",x:-78,y:0,z:0},{elem:"C",x:-39,y:68,z:0},{elem:"C",x:39,y:68,z:0},{elem:"Cl",x:135,y:0,z:0},{elem:"Cl",x:-135,y:0,z:0},{elem:"H",x:68,y:-117,z:0},{elem:"H",x:-68,y:-117,z:0},{elem:"H",x:-68,y:117,z:0},{elem:"H",x:68,y:117,z:0}], bonds: [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[3,7],[1,8],[2,9],[4,10],[5,11]] }
+});
 
 addMol("C2H2Cl4", "C", "sp3", ["四面體","Tetrahedral"], "109.5°", "", "", [], [], 
 {
