@@ -671,7 +671,7 @@ addMol("HOCN|氰酸", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°",
 
 // --- 7. 擴大八隅體與複雜幾何構型 ---
 // P-Cl=80, P-Br=85, S-F=75, S=O=68, Xe=O=76
-addMol("PCl5|五氯化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "160.5", "166.8", [{elem:"P",x:0,y:0,z:0}, {elem:"Cl",x:0,y:85,z:0}, {elem:"Cl",x:0,y:-85,z:0}, {elem:"Cl",x:80,y:0,z:0}, {elem:"Cl",x:-40,y:0,z:69}, {elem:"Cl",x:-40,y:0,z:-69}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
+addMol("PCl5|五氯化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "160.5", "166.8", [{elem:"P",x:0,y:0,z:0},{elem:"Cl",x:0,y:0,z:85},{elem:"Cl",x:0,y:0,z:-85},{elem:"Cl",x:-80,y:0,z:0},{elem:"Cl",x:40,y:69,z:0},{elem:"Cl",x:40,y:-69,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
 addMol("PBr5|五溴化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "100 (分解)", "106 (分解)", [{elem:"P",x:0,y:0,z:0}, {elem:"Br",x:0,y:90,z:0}, {elem:"Br",x:0,y:-90,z:0}, {elem:"Br",x:85,y:0,z:0}, {elem:"Br",x:-42,y:0,z:74}, {elem:"Br",x:-42,y:0,z:-74}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
 addMol("SF6|六氟化硫", "S", "sp³d²", ["八面體","Octahedral"], "90°", "-50.8", "-63.8 (昇華)", getOcta("S","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
 addMol("SF4|四氟化硫", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "-121", "-38", [{elem:"S",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]},{elem:"F",x:0,y:0,z:80},{elem:"F",x:0,y:0,z:-80},{elem:"F",x:45,y:65,z:0},{elem:"F",x:-45,y:65,z:0}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
