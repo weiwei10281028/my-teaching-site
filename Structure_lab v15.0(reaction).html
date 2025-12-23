@@ -2053,10 +2053,12 @@ function loadMolecule(key, variantKey = null) {
                 addSym('plane', '1 × σₕ (水平面-黃色)', [0, 0, 1], 'yellow', 'sh');
                 addSym('axis', '3 × C₂ (副軸)', [0, 1, 0], 'cyan', 'C2');
                 addSym('plane', '3 × σᵥ (鉛直面-青色)', [1, 0, 0], 'cyan', 'sv');
-            } else if (currentPg === "D4h") {
-                addSym('axis', '1 × C₄ (主軸)', [0, 0, 1], 'cyan', 'C4');
-                addSym('plane', '1 × σₕ (分子面-黃色)', [0, 0, 1], 'yellow', 'sh');
-                addSym('axis', '4 × C₂ (副軸)', [1, 0, 0], 'cyan', 'C2');
+            } if (currentPg === "D4h") {
+                addSym('axis', '1 × C₄ (主軸)', [1, 0, 0], 'yellow', 'C4');
+                addSym('axis', '2 × C₂\' (穿過原子)', [0, 1, 0], 'orange', 'C2_atom');
+                addSym('axis', '2 × C₂\'\' (平分鍵角)', [0, 1, 1], 'orange', 'C2_bisect');
+                addSym('plane', '2 × σᵥ (穿過原子-青色)', [0, 1, 0], 'cyan', 'sv');
+                addSym('plane', '2 × σ_d (平分鍵角-粉色)', [0, 1, 1], 'pink', 'sd');
                 addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
             } else if (currentPg === "D6h") {
                 addSym('axis', '1 × C₆ (主軸)', [0, 0, 1], 'cyan', 'C6');
