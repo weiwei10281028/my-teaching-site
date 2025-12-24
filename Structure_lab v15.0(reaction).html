@@ -1521,7 +1521,15 @@ function solveChemicalEquationWithSteps(eqn) {
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
     let startIdx = 0, maxScore = 0;
     species.forEach((s, i) => { 
-        let score = Object.keys(s.atoms).length * 10 + Object.values(s.atoms).reduce((a,b)=>a+b,0);
+        // [修改] 權重邏輯優化：
+        // 舊邏輯：種類*10 + 總數
+        // 新邏輯：(總數) + (最大下標值 * 50)
+        // 這樣 S8 (下標8) 會得到 8 + 400 = 408 分
+        // Cu(NO3)2 (最大下標3) 會得到 9 + 150 = 159 分 -> S8 勝出
+        const atomCounts = Object.values(s.atoms);
+        const maxSub = atomCounts.length > 0 ? Math.max(...atomCounts) : 1;
+        let score = atomCounts.reduce((a,b)=>a+b,0) + (maxSub * 50);
+        
         if (score > maxScore) { maxScore = score; startIdx = i; } 
     });
     stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定結構最複雜的 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 係數為 <span class="coeff">1</span>。</div>`;
@@ -1633,10 +1641,22 @@ function solveChemicalEquationWithSteps(eqn) {
         stp += `<div class="step-box"><div class="step-title">步驟 3：代數法</div><div style="font-size:1.05rem; line-height:1.8;">${algebraicSteps.join('<br>')}</div></div>`;
     }
 
+    // [修改] 最小公倍數 (LCM) 輔助函式
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const lcm = (a, b) => (a * b) / gcd(a, b);
+
     let multiplier = 1, baseV = finalCoeffs[startIdx];
     finalCoeffs.forEach(c => {
         let f = c / baseV;
-        for(let d=1; d<=60; d++){ if(Math.abs(f*d - Math.round(f*d)) < 0.01){ multiplier = Math.max(multiplier, d); break; } }
+        // 找出該係數的分母 d
+        for(let d=1; d<=60; d++){ 
+            if(Math.abs(f*d - Math.round(f*d)) < 0.01){ 
+                // [修改] 這裡原本是 Math.max(multiplier, d)，導致只取了最大分母(8)而忽略了(3)
+                // 改為累積計算 LCM
+                multiplier = lcm(multiplier, d); 
+                break; 
+            } 
+        }
     });
 
     const finalBox = buildModularEq(finalCoeffs);
