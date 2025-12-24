@@ -836,7 +836,13 @@
 
 @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-
+/* --- 高級對稱軸視覺效果 --- */
+.text-symbol { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; fill: white; pointer-events: none; }
+.sub-label { font-size: 0.65em; }
+.glow-white { filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
+.glow-cyan { filter: drop-shadow(0 0 6px rgba(0,242,255,0.8)); }
+.glow-magenta { filter: drop-shadow(0 0 6px rgba(255,0,255,0.8)); }
+.foggy-axis { filter: blur(1px); opacity: 0.4; }
 
 </style>
 </head>
@@ -2073,7 +2079,7 @@ function loadMolecule(key, variantKey = null) {
             else if (currentPg === "D2h") {
                 addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2z');
                 addSym('axis', "1 × C₂ (副軸/長軸)", [1, 0, 0], CY, 'C2x');
-                addSym('axis', "1 × C₂ (副軸/短軸)", [0, 1, 0], CY, 'C2y');
+                addSym('axis', "1 × C₂ (副軸/短軸)", [0, 1, 0], GN, 'C2y');
                 addSym('plane', "1 × σₕ (水平面)", [0, 0, 1], YL, 'sh');
                 addSym('axis', "1 × S₂ (=i)", [0, 0, 0], OG, 'i', true);
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
@@ -2098,7 +2104,7 @@ function loadMolecule(key, variantKey = null) {
             else if (currentPg === "D6h") {
                 addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], YL, 'C6');
                 addSym('plane', "1 × σₕ (分子面/穿原子)", [0, 0, 1], YL, 'sh');
-                addSym('axis', "3 × C₂' (副軸/穿原子)", [0, 1, 0], CY, 'C2p');
+                addSym('axis', "3 × C₂' (副軸/穿原子)", [Math.cos(120*Math.PI/180), Math.sin(120*Math.PI/180), 0], CY, 'C2p');
                 addSym('axis', "3 × C₂'' (副軸/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], GN, 'C2pp');
                 addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
                 addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(60*Math.PI/180), Math.sin(60*Math.PI/180), 0], VT, 'sd');
@@ -2143,7 +2149,7 @@ function loadMolecule(key, variantKey = null) {
             }
             else if (currentPg === "Oh") {
                 addSym('axis', "3 × C₄ (主軸/穿原子)", [1, 0, 0], YL, 'C4');
-                addSym('axis', "4 × C₃ (對角軸/未穿原子)", [1, 1, 1], GN, 'C3');
+                addSym('axis', "4 × C₃ (對角軸/未穿原子)", [1, 1, 1], CY, 'C3');
                 addSym('axis', "6 × C₂ (邊心軸/未穿原子)", [0, 1, 1], GN, 'C2');
                 addSym('plane', "3 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
                 addSym('plane', "6 × σd (二面鏡面/未穿原子)", [0, 1, -1], VT, 'sd');
@@ -2153,7 +2159,7 @@ function loadMolecule(key, variantKey = null) {
             }
             else if (currentPg === "Ih") {
                 addSym('axis', "6 × C₅ (主軸/穿原子)", [0, 1, 1.618], YL, 'C5');
-                addSym('axis', "10 × C₃ (副軸/未穿原子)", [1, 1, 1], GN, 'C3');
+                addSym('axis', "10 × C₃ (副軸/未穿原子)", [1, 1, 1], CY, 'C3');
                 addSym('axis', "15 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
                 addSym('plane', "15 × σ (對稱面/穿原子)", [1, 0, 0], PK, 's');
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
@@ -2386,6 +2392,11 @@ function renderScene(time = 0) {
     boxGlowFilter.setAttribute("id", "box-glow");
     boxGlowFilter.innerHTML = `<feGaussianBlur stdDeviation="1.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
     defs.appendChild(boxGlowFilter);
+    // 霧化漸層 (用於 S 軸)
+    const fogGrad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+    fogGrad.setAttribute("id", "fogGrad");
+    fogGrad.innerHTML = `<stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="50%" stop-color="white" stop-opacity="1"/><stop offset="100%" stop-color="white" stop-opacity="0"/>`;
+    defs.appendChild(fogGrad);
 
     // 原子立體漸層
     const usedColors = new Set();
@@ -2512,26 +2523,21 @@ function renderScene(time = 0) {
 if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
     const mCentroid = currentMolecule.centroid || { x: 0, y: 0, z: 0 };
     
-    // 1. 【隱藏計算】純數學偵測分子的邊界半徑 (不畫出來)
-    let maxR = 60; // 保底半徑
+    // 偵測分子邊界
+    let maxR = 60; 
     currentMolecule.renderObjects.forEach(obj => {
         if (obj.type === 'atom' && !obj.isElectron) {
-            const dist = Math.sqrt(
-                Math.pow(obj.x - mCentroid.x, 2) +
-                Math.pow(obj.y - mCentroid.y, 2) +
-                Math.pow(obj.z - mCentroid.z, 2)
-            );
+            const dist = Math.sqrt(Math.pow(obj.x - mCentroid.x, 2) + Math.pow(obj.y - mCentroid.y, 2) + Math.pow(obj.z - mCentroid.z, 2));
             if (dist > maxR) maxR = dist;
         }
     });
 
-    // 2. 渲染對稱元素 (長度隨隱藏的 maxR 動態調整)
     currentMolecule.symmetry.elements.forEach(el => {
         if (!el.active || !el.v) return;
         try {
             if (el.type === 'axis') {
-                // 軸長度設定：永遠比最遠原子多出 40%
-                const axisHalfLen = maxR * 1.6; 
+                // 軸長度設定
+                const axisHalfLen = maxR * 1.8; 
                 const rawLen = Math.sqrt(el.v[0]**2 + el.v[1]**2 + el.v[2]**2);
                 const vLen = rawLen < 0.001 ? 1 : rawLen;
                 const nx = el.v[0] / vLen, ny = el.v[1] / vLen, nz = el.v[2] / vLen;
@@ -2547,14 +2553,15 @@ if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
                     z: mCentroid.z - nz * axisHalfLen 
                 });
                 
-                const colorMap = { 'yellow': '#facc15', 'cyan': '#22d3ee', 'green': '#a3e635', 'orange': '#fb923c', 'pink': '#f472b6', 'purple': '#a78bfa' };
-                let finalColor = colorMap[el.colorType] || '#facc15';
-                
+                // 將對稱軸推入渲染列表
                 renderList.push({ 
-                    type: 'axisVector', z: (p1.z + p2.z)/2, pStart: p1, pEnd: p2, 
-                    label: el.label, scale: p1.scale, 
-                    customColor: (el.colorType === 'yellow' && !el.isDashed) ? "url(#grad-hyper-gold)" : finalColor, 
-                    labelColor: finalColor,
+                    type: 'axisVector', 
+                    z: (p1.z + p2.z)/2, 
+                    pStart: p1, 
+                    pEnd: p2, 
+                    label: el.label, 
+                    scale: p1.scale, 
+                    colorType: el.colorType, // 重要：傳遞 YL, CY, GN, OG 給繪圖函數
                     isDashed: el.isDashed 
                 });
             } 
@@ -2565,14 +2572,12 @@ if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
                     r: 6, color: "#ffffff", elem: "i", isHighlighted: "center"
                 });
             } else if (el.type === 'plane') {
-                // 平面半寬設定：永遠比最遠原子多出 20%
                 const s = maxR * 1.2; 
                 let v1 = [0, 1, 0], v2 = [0, 0, 1];
                 if (Math.abs(el.v[0]) < 0.9) { 
                     v1 = [1, 0, 0]; 
                     v2 = [0, el.v[2], -el.v[1]]; 
                 }
-                
                 const pts = [
                     {x: mCentroid.x + (v1[0]+v2[0])*s, y: mCentroid.y + (v1[1]+v2[1])*s, z: mCentroid.z + (v1[2]+v2[2])*s},
                     {x: mCentroid.x + (v1[0]-v2[0])*s, y: mCentroid.y + (v1[1]-v2[1])*s, z: mCentroid.z + (v1[2]-v2[2])*s},
@@ -2587,7 +2592,7 @@ if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
                     colorType: el.colorType || 'cyan' 
                 });
             }
-        } catch (err) { console.error("對稱元素投影失敗:", err); }
+        } catch (err) { console.error("對稱元素渲染錯誤:", err); }
     });
 }
 
@@ -3281,64 +3286,90 @@ function drawLobe(lobe) {
     sceneRoot.appendChild(g);
 }
 
-// ★ 新版：高質感金屬軸 (銀灰軸身 + 白色文字 + 無凸點箭頭) ★
 function drawAxisVector(axis) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const x1 = axis.pStart.x; const y1 = axis.pStart.y;
     const x2 = axis.pEnd.x;   const y2 = axis.pEnd.y;
-
     const dx = x2 - x1; const dy = y2 - y1;
     const len = Math.sqrt(dx*dx + dy*dy);
-    
-    // 安全檢查：防止長度為 0 導致 NaN 錯誤
     if (len < 0.1) return;
 
     const ux = dx/len; const uy = dy/len;
-    const arrowSize = 10 * axis.scale;
-    const lineEndX = x2 - ux * (arrowSize - 2); 
-    const lineEndY = y2 - uy * (arrowSize - 2);
+    const scale = axis.scale;
+    
+    // 關鍵修正：對齊 addSym 傳入的字串值 ('yellow', 'cyan', 'green', 'orange')
+    const cType = axis.colorType; 
 
-    // 1. 畫線 (支援金色漸層)
+    let strokeColor = "#ffffff";
+    let strokeWidth = 5 * scale;
+    let dashArray = "";
+    let filterClass = "glow-white";
+    let isFoggy = false;
+
+    // --- 樣式階層控制 ---
+    if (cType === 'yellow') { 
+        // 1. 主軸 (YL): 白色實線
+        strokeColor = "#ffffff";
+        dashArray = ""; // 實線
+        filterClass = "glow-white";
+    } 
+    else if (cType === 'cyan') { 
+        // 2. 副軸 A (CY - 穿原子): 青色長虛線
+        strokeColor = "#00f2ff";
+        strokeWidth = 1.5 * scale; // <--- 加入這一行
+        dashArray = `${14 * scale}, ${7 * scale}`; 
+        filterClass = "glow-cyan";
+    }
+    else if (cType === 'green') { 
+        // 3. 副軸 B (GN - 未穿原子): 洋紅短虛線
+        strokeColor = "#ff00ff";
+        strokeWidth = 1.5 * scale;
+        dashArray = `${4 * scale}, ${4 * scale}`; // 短虛線
+        filterClass = "glow-magenta";
+    }
+    else if (cType === 'orange' || axis.isDashed) { 
+        // 4. 不當軸 (OG): 橙色霧化線
+        strokeColor = "url(#fogGrad)"; 
+        strokeWidth = 5 * scale;
+        dashArray = `${2 * scale}, ${2 * scale}`; 
+        filterClass = "foggy-axis";
+        isFoggy = true;
+    }
+
+    // A. 繪製軸線
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-    line.setAttribute("x2", lineEndX); line.setAttribute("y2", lineEndY);
-    line.setAttribute("stroke", axis.customColor || "#B0B0B0"); 
-    line.setAttribute("stroke-width", 3 * axis.scale); 
-    line.setAttribute("stroke-linecap", "butt");
-    g.appendChild(line);
-    line.setAttribute("stroke", axis.customColor || "#B0B0B0"); 
-    line.setAttribute("stroke-width", 3 * axis.scale); 
-    line.setAttribute("stroke-linecap", "butt");
-    // 如果是 Sn 軸，設定為虛線
-    if (axis.isDashed) {
-        line.setAttribute("stroke-dasharray", "8, 5"); 
-    }
+    line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+    line.setAttribute("stroke", strokeColor);
+    line.setAttribute("stroke-width", strokeWidth);
+    if (dashArray) line.setAttribute("stroke-dasharray", dashArray);
+    line.setAttribute("class", filterClass);
     g.appendChild(line);
 
-    // 2. 畫箭頭
-    const bx = x2 - ux * arrowSize;
-    const by = y2 - uy * arrowSize;
-    const vx = -uy * arrowSize * 0.5;
-    const vy = ux * arrowSize * 0.5;
-    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    polygon.setAttribute("points", `${x2},${y2} ${bx + vx},${by + vy} ${bx - vx},${by - vy}`);
-    polygon.setAttribute("fill", axis.customColor || "#B0B0B0"); 
-    g.appendChild(polygon);
 
-    // 3. 畫文字 (支援黃色文字)
+
+    // C. 繪製標籤 (精確處理化學對稱符號，移除冗長中文與 4x 等字眼)
     if (axis.label) {
+        // 使用正則表達式，只抓取 C2, C3, S4 這種核心符號
+        const match = axis.label.match(/[CS][\d∞'']+/); 
+        const displayLabel = match ? match[0] : axis.label;
+        
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", x2 + ux * 18 * axis.scale);
-        text.setAttribute("y", y2 + uy * 18 * axis.scale);
-        text.setAttribute("fill", axis.labelColor || "#FFFFFF"); 
-        text.setAttribute("font-size", 12 * axis.scale);
-        text.setAttribute("font-weight", "bold");
+        text.setAttribute("x", x2 + ux * 40 * scale);
+        text.setAttribute("y", y2 + uy * 40 * scale);
+        text.setAttribute("class", "text-symbol");
+        text.setAttribute("font-size", 13 * scale);
         text.setAttribute("text-anchor", "middle");
-        text.setAttribute("dominant-baseline", "middle");
-        text.style.textShadow = "0 0 5px #000000"; 
-        text.textContent = axis.label;
+        
+        // 顏色與軸線一致
+        text.style.fill = (cType === 'orange') ? "#fb923c" : (cType === 'cyan' ? "#00f2ff" : (cType === 'green' ? "#ff00ff" : "#ffffff"));
+        text.style.textShadow = "0 0 5px #000";
+
+        // 修正：直接處理完整標籤，並使用 em 單位確保 4 與 C 基準線對齊
+        text.innerHTML = axis.label.replace(/([CS])([\d∞]+)/, '$1<tspan dy="0.45em" style="font-size:0.7em; font-weight:bold;">$2</tspan><tspan dy="-0.45em"></tspan>');
         g.appendChild(text);
     }
+
     sceneRoot.appendChild(g);
 }
 
