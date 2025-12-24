@@ -1987,7 +1987,7 @@ function loadMolecule(key, variantKey = null) {
     
     const subtitle = document.getElementById("viewport-subtitle");
     
-    // --- 點群自動生成器邏輯 ---
+    // --- 點群對稱元素生成器 (回歸原始方位 & 簡約標籤版) ---
     const pgDisplay = document.getElementById("pg-group-display");
     const symList = document.getElementById("symmetry-elements-list");
     
@@ -1995,107 +1995,184 @@ function loadMolecule(key, variantKey = null) {
         const currentPg = data.pg;
         
         if (currentPg) {
-            // 內建下標轉換，防止報錯
+            // 內部工具：下標轉換
             const toSub = (n) => n.toString().split('').map(c => ({'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}[c]||c)).join('');
 
-            // 1. 【核心修正】精確計算幾何重心，確保對稱軸不會移位
+            // 1. 重心計算
             let tX = 0, tY = 0, tZ = 0, atomCount = 0;
             const realAtoms = data.atomsRaw ? data.atomsRaw.filter(a => !a.isElectron) : [];
             realAtoms.forEach(a => { tX += a.x; tY += a.y; tZ += a.z; atomCount++; });
             data.centroid = atomCount > 0 ? { x: tX/atomCount, y: tY/atomCount, z: tZ/atomCount } : { x:0, y:0, z:0 };
 
-            // 2. 顯示美化與初始化
+            // 2. 初始化
             pgDisplay.textContent = `點群: ${currentPg.replace("inf", "∞")}`;
             data.symmetry = { group: currentPg, elements: [] };
             
-            // 【核心修正：支援虛線參數 isDashed】
+            // --- 主網頁 SVG 版：顏色與方位修正 ---
+            const YL = 'yellow', CY = 'cyan', GN = 'green', PK = 'pink', VT = 'purple', OG = 'orange', WT = 'white';
+
             const addSym = (type, label, defaultVec, colorType = 'cyan', customKey = null, isDashed = false) => {
                 let vec = defaultVec;
                 if (data.symVectors && customKey && data.symVectors[customKey]) vec = data.symVectors[customKey];
-                data.symmetry.elements.push({ 
-                    type: type, 
-                    label: label, 
-                    v: vec, 
-                    active: false, 
-                    colorType: colorType,
-                    isDashed: isDashed // 新增虛線標記
-                });
+                data.symmetry.elements.push({ type, label, v: vec, active: false, colorType, isDashed });
             };
 
             const nMatch = currentPg.match(/\d+/);
             const n = nMatch ? parseInt(nMatch[0]) : 1;
             const isTShaped = data.shape && data.shape.includes("T型");
 
-            // --- 3. 全球點群對稱元素模板 (完全覆蓋教科書) ---
-            
-            // Cnv 系列 (例如 C2v, C3v)
-            if (/^C\d+v$/.test(currentPg)) {
+            // 1. 低對稱性
+            if (currentPg === "C1") { /* 只有 E */ }
+            else if (currentPg === "Cs") { addSym('plane', "1 × σ (對稱面)", [0, 0, 1], PK, 's'); }
+            else if (currentPg === "Ci") { addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i'); }
+
+            // 2. Cn 系列
+            else if (currentPg === "C2") { addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], YL, 'C2'); }
+            else if (currentPg === "C3") { addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], YL, 'C3'); }
+
+            // 3. Cnv 系列
+            else if (currentPg === "C2v") {
                 let mainVec = isTShaped ? [1, 0, 0] : [0, 1, 0];
-                addSym('axis', `1 × C${toSub(n)} (主軸)`, mainVec, 'cyan', 'Cn');
-                addSym('plane', `σᵥ (分子面)`, [0, 0, 1], 'cyan', 'sv1');
-                addSym('plane', `${n-1} × σᵥ (鉛直面)`, (isTShaped ? [0, 1, 0] : [1, 0, 0]), 'pink', 'sv2');
-            } 
-            // Cnh 系列 (例如 C2h)
-            else if (/^C\d+h$/.test(currentPg)) {
-                addSym('axis', `1 × C${toSub(n)} (主軸)`, [0, 1, 0], 'cyan', 'Cn');
-                addSym('plane', `1 × σₕ (水平面)`, [0, 1, 0], 'yellow', 'sh');
-                if (n % 2 === 0) addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+                addSym('axis', "1 × C₂ (主軸)", mainVec, YL, 'C2');
+                addSym('plane', "1 × σᵥ (分子面/穿原子)", [0, 0, 1], PK, 'sv1');
+                addSym('plane', "1 × σᵥ' (鉛直面/穿原子)", isTShaped ? [0, 1, 0] : [1, 0, 0], PK, 'sv2');
             }
-            // Dnh 系列 (例如 D2h, D3h, D6h)
-            else if (/^D\d+h$/.test(currentPg)) {
-                addSym('axis', `1 × C${toSub(n)} (主軸)`, [0, 0, 1], 'cyan', 'Cn');
-                addSym('plane', `1 × σₕ (水平面)`, [0, 0, 1], 'yellow', 'sh');
-                addSym('axis', `${n} × C₂ (副軸)`, [1, 0, 0], 'cyan', 'C2');
-                addSym('plane', `${n} × σᵥ (鉛直面)`, [0, 1, 0], 'pink', 'sv');
-                if (n % 2 === 0) addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            else if (currentPg === "C3v") {
+                addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], YL, 'C3');
+                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
             }
-            // Dnd 系列 (例如 D2d, D3d, D4d)
-            else if (/^D\d+d$/.test(currentPg)) {
-                addSym('axis', `1 × C${toSub(n)} (主軸)`, [0, 0, 1], 'cyan', 'Cn');
-                addSym('axis', `${n} × C₂ (副軸)`, [1, 0, 0], 'cyan', 'C2');
-                addSym('plane', `${n} × σd (二面鏡面)`, [1, 1, 0], 'pink', 'sd');
-                // 【教科書規格：不當軸 Sn 為虛線】
-                addSym('axis', `1 × S${toSub(2*n)} (不當軸)`, [0, 0, 1], 'yellow', 'Sn', true);
-                if (n % 2 !== 0) addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            else if (currentPg === "C4v") {
+                addSym('axis', "1 × C₄ (主軸)", [1, 0, 0], YL, 'C4');
+                addSym('plane', "2 × σᵥ (鉛直面/穿原子)", [0, 0, 1], PK, 'sv');
+                addSym('plane', "2 × σd (二面鏡面/未穿原子)", [0, 1, 1], VT, 'sd');
             }
-            // Sn 系列 (例如 S4, S6)
-            else if (/^S\d+$/.test(currentPg)) {
-                addSym('axis', `1 × S${toSub(n)} (不當旋轉軸)`, [0, 0, 1], 'yellow', 'Sn', true);
-                if ((n / 2) % 2 !== 0) addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
-            }
-            // Dn 系列
-            else if (/^D\d+$/.test(currentPg)) {
-                addSym('axis', `1 × C${toSub(n)} (主軸)`, [0, 0, 1], 'cyan', 'Cn');
-                addSym('axis', `${n} × C₂ (副軸)`, [1, 0, 0], 'cyan', 'C2');
-            }
-            // Td (四面體)
-            else if (currentPg === "Td") {
-                addSym('axis', '4 × C₃ (頂點軸)', [1, 1, 1], 'cyan', 'C3');
-                addSym('axis', '3 × C₂ (對邊軸)', [1, 0, 0], 'cyan', 'C2');
-                addSym('plane', '6 × σd (對角面)', [1, -1, 0], 'pink', 'sd');
-            } 
-            // Oh (八面體)
-            else if (currentPg === "Oh") {
-                addSym('axis', '3 × C₄ (主軸)', [1, 0, 0], 'cyan', 'C4');
-                addSym('axis', '4 × C₃ (對角軸)', [1, 1, 1], 'cyan', 'C3');
-                addSym('plane', '3 × σₕ (主要面)', [0, 0, 1], 'yellow', 'sh');
-                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
-            } 
-            // 線性分子
-            else if (currentPg === "Cinfv") {
-                addSym('axis', 'C∞ (分子軸)', [1, 0, 0], 'cyan', 'Cinf');
-                addSym('plane', '∞ × σᵥ (鉛直面)', [0, 1, 0], 'pink', 'sv');
-            } else if (currentPg === "Dinfh") {
-                addSym('axis', 'C∞ (分子軸)', [1, 0, 0], 'cyan', 'Cinf');
-                addSym('plane', '1 × σₕ (中心面)', [1, 0, 0], 'yellow', 'sh');
-                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
-            } else if (currentPg === "Cs") {
-                addSym('plane', '1 × σ (對稱面)', [0, 0, 1], 'cyan', 's');
-            } else if (currentPg === "Ci") {
-                addSym('center', '反轉中心 (i)', [0, 0, 0], 'cyan', 'i');
+            else if (currentPg === "C6v") {
+                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], YL, 'C6');
+                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
+                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], VT, 'sd');
             }
 
-            // 4. 【更新選單 UI】
+            // 4. Cnh 系列
+            else if (currentPg === "C2h") {
+                addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], YL, 'C2');
+                addSym('plane', "1 × σₕ (水平面/穿原子)", [0, 1, 0], YL, 'sh');
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+
+            // 5. Dn 系列
+            else if (currentPg === "D2") {
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2z');
+                addSym('axis', "2 × C₂ (副軸)", [1, 0, 0], GN, 'C2x');
+            }
+            else if (currentPg === "D3") {
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('axis', "3 × C₂ (副軸)", [0, 1, 0], GN, 'C2');
+            }
+
+            // 6. Dnh 系列
+            else if (currentPg === "D2h") {
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2z');
+                addSym('axis', "1 × C₂ (副軸/長軸)", [1, 0, 0], CY, 'C2x');
+                addSym('axis', "1 × C₂ (副軸/短軸)", [0, 1, 0], CY, 'C2y');
+                addSym('plane', "1 × σₕ (水平面)", [0, 0, 1], YL, 'sh');
+                addSym('axis', "1 × S₂ (=i)", [0, 0, 0], OG, 'i', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "D3h") {
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('plane', "1 × σₕ (赤道面/穿原子)", [0, 0, 1], YL, 'sh');
+                addSym('axis', "3 × C₂ (副軸/穿原子)", [0, 1, 0], CY, 'C2');
+                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
+                addSym('axis', "1 × S₃ (不當軸)", [0, 0, 1], OG, 'S3', true);
+            }
+            else if (currentPg === "D4h") {
+                addSym('axis', "1 × C₄ (主軸/穿原子)", [1, 0, 0], YL, 'C4');
+                addSym('plane', "1 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
+                addSym('axis', "2 × C₂' (副軸/穿原子)", [0, 1, 0], CY, 'C2p');
+                addSym('axis', "2 × C₂'' (副軸/未穿原子)", [0, 1, 1], GN, 'C2pp');
+                addSym('plane', "2 × σᵥ (鉛直面/穿原子)", [0, 0, 1], PK, 'sv');
+                addSym('plane', "2 × σd (二面鏡面/未穿原子)", [0, 1, -1], VT, 'sd');
+                addSym('axis', "1 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "D6h") {
+                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], YL, 'C6');
+                addSym('plane', "1 × σₕ (分子面/穿原子)", [0, 0, 1], YL, 'sh');
+                addSym('axis', "3 × C₂' (副軸/穿原子)", [0, 1, 0], CY, 'C2p');
+                addSym('axis', "3 × C₂'' (副軸/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], GN, 'C2pp');
+                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
+                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(60*Math.PI/180), Math.sin(60*Math.PI/180), 0], VT, 'sd');
+                addSym('axis', "1 × S₆ (不當軸)", [0, 0, 1], OG, 'S6', true);
+                addSym('axis', "1 × S₃ (不當軸)", [0, 0, 1], OG, 'S3', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+
+            // 7. Dnd 系列
+            else if (currentPg === "D2d") {
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2');
+                addSym('axis', "1 × S₄ (不當軸)", [0, 0, 1], OG, 'S4', true);
+                addSym('axis', "2 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
+                addSym('plane', "2 × σd (二面鏡面/未穿原子)", [1, 1, 0], VT, 'sd');
+            }
+            else if (currentPg === "D3d") {
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('axis', "1 × S₆ (不當軸)", [0, 0, 1], OG, 'S6', true);
+                addSym('axis', "3 × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
+                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [1, 0, 0], VT, 'sd');
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "D4d") {
+                addSym('axis', "1 × C₄ (主軸)", [0, 0, 1], YL, 'C4');
+                addSym('axis', "1 × S₈ (不當軸)", [0, 0, 1], OG, 'S8', true);
+                addSym('axis', "4 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
+                addSym('plane', "4 × σd (二面鏡面/未穿原子)", [Math.cos(22.5*Math.PI/180), Math.sin(22.5*Math.PI/180), 0], VT, 'sd');
+            }
+
+            // 8. Sn 系列
+            else if (currentPg === "S4") {
+                addSym('axis', "1 × S₄ (不當軸/主軸)", [0, 0, 1], OG, 'S4', true);
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2');
+            }
+
+            // 9. 高對稱點群
+            else if (currentPg === "Td") {
+                addSym('axis', "4 × C₃ (頂點軸/穿原子)", [1, 1, 1], YL, 'C3');
+                addSym('axis', "3 × C₂ (對邊軸/未穿原子)", [1, 0, 0], GN, 'C2');
+                addSym('plane', "6 × σd (二面鏡面/穿原子)", [1, -1, 0], PK, 'sd');
+                addSym('axis', "3 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
+            }
+            else if (currentPg === "Oh") {
+                addSym('axis', "3 × C₄ (主軸/穿原子)", [1, 0, 0], YL, 'C4');
+                addSym('axis', "4 × C₃ (對角軸/未穿原子)", [1, 1, 1], GN, 'C3');
+                addSym('axis', "6 × C₂ (邊心軸/未穿原子)", [0, 1, 1], GN, 'C2');
+                addSym('plane', "3 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
+                addSym('plane', "6 × σd (二面鏡面/未穿原子)", [0, 1, -1], VT, 'sd');
+                addSym('axis', "3 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
+                addSym('axis', "4 × S₆ (不當軸)", [1, 1, 1], OG, 'S6', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "Ih") {
+                addSym('axis', "6 × C₅ (主軸/穿原子)", [0, 1, 1.618], YL, 'C5');
+                addSym('axis', "10 × C₃ (副軸/未穿原子)", [1, 1, 1], GN, 'C3');
+                addSym('axis', "15 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
+                addSym('plane', "15 × σ (對稱面/穿原子)", [1, 0, 0], PK, 's');
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+
+            // 10. 線性點群
+            else if (currentPg === "Cinfv") {
+                addSym('axis', "C∞ (分子軸)", [1, 0, 0], YL, 'Cinf');
+                addSym('plane', "∞ × σᵥ (鉛直面)", [0, 1, 0], PK, 'sv');
+            } 
+            else if (currentPg === "Dinfh") {
+                addSym('axis', "C∞ (分子軸)", [1, 0, 0], YL, 'Cinf');
+                addSym('plane', "1 × σₕ (中心面)", [1, 0, 0], YL, 'sh');
+                addSym('axis', "∞ × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
+                addSym('axis', "S∞ (不當軸)", [1, 0, 0], OG, 'Sinf', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+
+            // 4. 更新選單 UI
             symList.innerHTML = "";
             data.symmetry.elements.forEach(el => {
                 const div = document.createElement("div");
@@ -2107,19 +2184,26 @@ function loadMolecule(key, variantKey = null) {
                 chk.checked = el.active; 
                 chk.onchange = (e) => { el.active = e.target.checked; renderScene(); };
                 const span = document.createElement("span");
-                if (el.type === 'plane') {
-                    const colorMap = { 'cyan': '#22d3ee', 'pink': '#f472b6', 'yellow': '#facc15' };
-                    span.style.color = colorMap[el.colorType];
-                } else if (el.type === 'center') { 
-                    span.style.color = "#facc15"; span.style.fontWeight = "bold"; 
-                }
-                const icon = el.type === 'axis' ? '軸' : (el.type === 'center' ? '點' : '面');
+                const colorMap = { 
+                    'yellow': '#facc15', 
+                    'cyan': '#22d3ee', 
+                    'green': '#a3e635', 
+                    'pink': '#f472b6', 
+                    'purple': '#a78bfa',
+                    'orange': '#fb923c',
+                    'white': '#ffffff'
+                };
+                let displayColor = (el.type === 'center') ? '#ffffff' : (colorMap[el.colorType] || '#ffffff');
+                span.style.color = displayColor;
+                span.style.fontWeight = "bold";
+
+                const icon = el.type === 'axis' ? (el.isDashed ? '虛軸' : '軸') : (el.type === 'center' ? '點' : '面');
                 span.textContent = ` [${icon}] ${el.label}`;
                 div.appendChild(chk); div.appendChild(span);
                 symList.appendChild(div);
             });
             
-            // 同步重心與對稱性到當前分子
+            // 同步重心與對稱性到當前分子物件
             currentMolecule.centroid = data.centroid;
             currentMolecule.symmetry = data.symmetry;
         } else {
@@ -2424,64 +2508,88 @@ function renderScene(time = 0) {
         });
     }
 
-    // CC (點群對稱元素渲染區塊：重心對齊版)
-    if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
-        // 取得當前分子的重心，若無則預設為原點
-        const mCentroid = currentMolecule.centroid || { x: 0, y: 0, z: 0 };
-        
-        currentMolecule.symmetry.elements.forEach(el => {
-            if (!el.active || !el.v) return;
-            try {
-                if (el.type === 'axis') {
-                    const len = 110; // 軸的視覺長度
-                    // 向量正規化，確保不同角度長度一致
-                    const rawLen = Math.sqrt(el.v[0]**2 + el.v[1]**2 + el.v[2]**2);
-                    const vLen = rawLen < 0.001 ? 1 : rawLen;
-                    const nx = el.v[0] / vLen, ny = el.v[1] / vLen, nz = el.v[2] / vLen;
+    // CC (點群對稱元素渲染區塊：隱藏邊界動態伸縮版)
+if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
+    const mCentroid = currentMolecule.centroid || { x: 0, y: 0, z: 0 };
+    
+    // 1. 【隱藏計算】純數學偵測分子的邊界半徑 (不畫出來)
+    let maxR = 60; // 保底半徑
+    currentMolecule.renderObjects.forEach(obj => {
+        if (obj.type === 'atom' && !obj.isElectron) {
+            const dist = Math.sqrt(
+                Math.pow(obj.x - mCentroid.x, 2) +
+                Math.pow(obj.y - mCentroid.y, 2) +
+                Math.pow(obj.z - mCentroid.z, 2)
+            );
+            if (dist > maxR) maxR = dist;
+        }
+    });
 
-                    // 從分子重心出發延伸
-                    const p1 = project({ x: mCentroid.x + nx * len, y: mCentroid.y + ny * len, z: mCentroid.z + nz * len });
-                    const p2 = project({ x: mCentroid.x - nx * len, y: mCentroid.y - ny * len, z: mCentroid.z - nz * len });
-                    
-                    renderList.push({ 
-                        type: 'axisVector', z: (p1.z + p2.z)/2, pStart: p1, pEnd: p2, 
-                        label: el.label, scale: p1.scale, 
-                        customColor: "url(#grad-hyper-gold)", labelColor: "#facc15" 
-                    });
-                } else if (el.type === 'center') {
-                    // 反轉中心 (i) 直接定位在重心
-                    const p = project({ x: mCentroid.x, y: mCentroid.y, z: mCentroid.z });
-                    renderList.push({
-                        type: 'atom', z: p.z, px: p.x, py: p.y, scale: p.scale,
-                        r: 6, color: "#facc15", elem: "i", isHighlighted: "center"
-                    });
-                } else if (el.type === 'plane') {
-                    const s = 80; // 平面尺寸
-                    let v1 = [0, 1, 0], v2 = [0, 0, 1];
-                    // 計算垂直於 el.v 的平面基底向量
-                    if (Math.abs(el.v[0]) < 0.9) { 
-                        v1 = [1, 0, 0]; 
-                        v2 = [0, el.v[2], -el.v[1]]; 
-                    }
-                    
-                    // 根據基底向量生成平面的四個頂點，並加上重心位移
-                    const pts = [
-                        {x: mCentroid.x + (v1[0]+v2[0])*s, y: mCentroid.y + (v1[1]+v2[1])*s, z: mCentroid.z + (v1[2]+v2[2])*s},
-                        {x: mCentroid.x + (v1[0]-v2[0])*s, y: mCentroid.y + (v1[1]-v2[1])*s, z: mCentroid.z + (v1[2]-v2[2])*s},
-                        {x: mCentroid.x + (-v1[0]-v2[0])*s, y: mCentroid.y + (-v1[1]-v2[1])*s, z: mCentroid.z + (-v1[2]-v2[2])*s},
-                        {x: mCentroid.x + (-v1[0]+v2[0])*s, y: mCentroid.y + (-v1[1]+v2[1])*s, z: mCentroid.z + (-v1[2]+v2[2])*s}
-                    ];
-                    const proj = pts.map(p => project(p));
-                    renderList.push({ 
-                        type: 'polyFace', 
-                        z: proj.reduce((sum, p) => sum + p.z, 0) / 4, 
-                        nodes: proj.map(p => ({ px: p.x, py: p.y })), 
-                        colorType: el.colorType || 'cyan' 
-                    });
+    // 2. 渲染對稱元素 (長度隨隱藏的 maxR 動態調整)
+    currentMolecule.symmetry.elements.forEach(el => {
+        if (!el.active || !el.v) return;
+        try {
+            if (el.type === 'axis') {
+                // 軸長度設定：永遠比最遠原子多出 40%
+                const axisHalfLen = maxR * 1.6; 
+                const rawLen = Math.sqrt(el.v[0]**2 + el.v[1]**2 + el.v[2]**2);
+                const vLen = rawLen < 0.001 ? 1 : rawLen;
+                const nx = el.v[0] / vLen, ny = el.v[1] / vLen, nz = el.v[2] / vLen;
+
+                const p1 = project({ 
+                    x: mCentroid.x + nx * axisHalfLen, 
+                    y: mCentroid.y + ny * axisHalfLen, 
+                    z: mCentroid.z + nz * axisHalfLen 
+                });
+                const p2 = project({ 
+                    x: mCentroid.x - nx * axisHalfLen, 
+                    y: mCentroid.y - ny * axisHalfLen, 
+                    z: mCentroid.z - nz * axisHalfLen 
+                });
+                
+                const colorMap = { 'yellow': '#facc15', 'cyan': '#22d3ee', 'green': '#a3e635', 'orange': '#fb923c', 'pink': '#f472b6', 'purple': '#a78bfa' };
+                let finalColor = colorMap[el.colorType] || '#facc15';
+                
+                renderList.push({ 
+                    type: 'axisVector', z: (p1.z + p2.z)/2, pStart: p1, pEnd: p2, 
+                    label: el.label, scale: p1.scale, 
+                    customColor: (el.colorType === 'yellow' && !el.isDashed) ? "url(#grad-hyper-gold)" : finalColor, 
+                    labelColor: finalColor,
+                    isDashed: el.isDashed 
+                });
+            } 
+            else if (el.type === 'center') {
+                const p = project(mCentroid);
+                renderList.push({
+                    type: 'atom', z: p.z, px: p.x, py: p.y, scale: p.scale,
+                    r: 6, color: "#ffffff", elem: "i", isHighlighted: "center"
+                });
+            } else if (el.type === 'plane') {
+                // 平面半寬設定：永遠比最遠原子多出 20%
+                const s = maxR * 1.2; 
+                let v1 = [0, 1, 0], v2 = [0, 0, 1];
+                if (Math.abs(el.v[0]) < 0.9) { 
+                    v1 = [1, 0, 0]; 
+                    v2 = [0, el.v[2], -el.v[1]]; 
                 }
-            } catch (err) { console.error("對稱元素投影失敗:", err); }
-        });
-    }
+                
+                const pts = [
+                    {x: mCentroid.x + (v1[0]+v2[0])*s, y: mCentroid.y + (v1[1]+v2[1])*s, z: mCentroid.z + (v1[2]+v2[2])*s},
+                    {x: mCentroid.x + (v1[0]-v2[0])*s, y: mCentroid.y + (v1[1]-v2[1])*s, z: mCentroid.z + (v1[2]-v2[2])*s},
+                    {x: mCentroid.x + (-v1[0]-v2[0])*s, y: mCentroid.y + (-v1[1]-v2[1])*s, z: mCentroid.z + (-v1[2]-v2[2])*s},
+                    {x: mCentroid.x + (-v1[0]+v2[0])*s, y: mCentroid.y + (-v1[1]+v2[1])*s, z: mCentroid.z + (-v1[2]+v2[2])*s}
+                ];
+                const proj = pts.map(p => project(p));
+                renderList.push({ 
+                    type: 'polyFace', 
+                    z: proj.reduce((sum, p) => sum + p.z, 0) / 4, 
+                    nodes: proj.map(p => ({ px: p.x, py: p.y })), 
+                    colorType: el.colorType || 'cyan' 
+                });
+            }
+        } catch (err) { console.error("對稱元素投影失敗:", err); }
+    });
+}
 
     // --- 4. 排序並繪製 ---
     renderList.sort((a,b) => (a.z - b.z)).forEach(obj => {
@@ -3223,7 +3331,7 @@ function drawAxisVector(axis) {
         text.setAttribute("x", x2 + ux * 18 * axis.scale);
         text.setAttribute("y", y2 + uy * 18 * axis.scale);
         text.setAttribute("fill", axis.labelColor || "#FFFFFF"); 
-        text.setAttribute("font-size", 16 * axis.scale);
+        text.setAttribute("font-size", 12 * axis.scale);
         text.setAttribute("font-weight", "bold");
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
