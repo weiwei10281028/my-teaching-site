@@ -184,6 +184,27 @@
     }
     .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
 
+    /* --- 新增：摺疊選單樣式 (讓 details 看起來像 card) --- */
+    details.control-group {
+        background: var(--card-glass);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        padding: 15px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    details.control-group[open] { background: rgba(20, 20, 20, 0.6); }
+    details.control-group summary {
+        list-style: none; cursor: pointer; font-weight: 700; color: var(--text-highlight);
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;
+        font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;
+    }
+    details.control-group[open] summary { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+    details.control-group summary::-webkit-details-marker { display: none; }
+    details.control-group summary::after { content: '▼'; font-size: 0.8rem; transition: transform 0.3s; }
+    details.control-group[open] summary::after { transform: rotate(180deg); }
+    details.control-group .input-group { width: 100%; }
+
     .card { 
         background: var(--card-glass); border: 1px solid var(--panel-border); 
         border-radius: 16px; padding: 20px; margin-bottom: 20px; 
@@ -896,7 +917,7 @@
         <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
         
         <div class="controls-content">
-            <!-- 1. 核心輸入 -->
+            <!-- 1. ⚛️ 輸入化學式 -->
             <div class="card">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>⚛️ 輸入化學式</span>
@@ -908,14 +929,14 @@
                 </div>
             </div>
 
-            <!-- 化學方程式平衡卡片 -->
+            <!-- 2. ⚖️ 平衡化學反應式 (詳細說明版) -->
             <div class="card" style="border-color: var(--accent-green); position: relative;">
                 <div class="card-title" style="color: var(--accent-green); display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
                     <span>⚖️ 平衡化學反應式</span>
-                    <div id="balance-info-trigger" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                    <div onclick="toggleBalanceInfo(event)" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
                     
-                    <!-- 說明彈窗 -->
-                    <div id="balance-help-popup" style="display: none; position: absolute; top: 60px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
+                    <!-- 詳細說明彈窗 (還原版) -->
+                    <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
                         <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範 ( _ 表示空格 )</div>
                         <div style="margin-bottom: 10px;">
                             1. 物質間用 <span style="color: #facc15; font-weight: bold;">「 _+_ 」</span> 隔開。<br>
@@ -927,6 +948,7 @@
                             <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">正確範例：</div>
                             <code style="color: #facc15; font-family: 'Courier New', monospace; font-size: 0.85rem; word-break: break-all;">MnO4_-_+_H+_+_S2-_=_Mn2+_+_S_+_H2O</code>
                         </div>
+                        <button onclick="document.getElementById('balance-help-popup').style.display='none'" style="margin-top:10px; width:100%; padding:8px; background:#10b981; border:none; border-radius:8px; color:#fff; cursor:pointer;">關閉說明</button>
                     </div>
                 </div>
 
@@ -937,124 +959,105 @@
                 <div id="balance-result" style="margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 12px; display: none; border: 1px dashed rgba(255,255,255,0.1);"></div>
                 <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 12px; cursor: pointer; color: #38bdf8; font-size: 0.85rem; text-decoration: underline; font-weight: bold;">查看解題思路</div>
                 <div id="balance-steps" style="display: none; margin-top: 15px; padding: 20px; background: rgba(15, 23, 42, 0.8); border-radius: 12px; border-left: 5px solid #facc15; font-size: 0.95rem; color: #e2e8f0; line-height: 1.7; text-transform: none;"></div>
+            </div>
 
-            <!-- 2. 顯示開關 (包含整合好的電漿態) -->
-            <div class="card" style="padding: 12px; background: rgba(0,0,0,0.2);">
+            <!-- 3. [摺疊 A] 顯示與模型設定 (預設關閉) -->
+            <details class="control-group">
+                <summary>顯示與模型設定</summary>
                 <div class="switch-container"><input type="checkbox" id="toggle-lp" checked><label for="toggle-lp" class="clickable-label">顯示孤對電子 (3D)</label></div>
                 <div class="switch-container"><input type="checkbox" id="toggle-glow"><label for="toggle-glow" class="clickable-label">顯示原子光暈 (Glow)</label></div>
                 <div class="switch-container"><input type="checkbox" id="toggle-octet" checked><label for="toggle-octet" class="clickable-label">優先遵循八隅體</label></div>
                 <div class="switch-container"><input type="checkbox" id="toggle-auto-rotate" checked><label for="toggle-auto-rotate" class="clickable-label">閒置自動旋轉</label></div>
-                <div class="switch-container" style="margin-bottom:0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <!-- 電漿態移到這裡 -->
+                <div class="switch-container" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 5px;">
                     <input type="checkbox" id="toggle-plasma">
                     <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
                 </div>
-            </div>
+            </details>
 
-            <!-- 3. 🛠️ 其他擴充功能 (唯一入口) -->
-            <div class="panel-wrapper" id="master-other-functions">
-                <button class="glass-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
-                    <span>🛠️ 其他擴充功能</span>
-                    <span class="toggle-icon" style="font-size:0.7rem;">▼</span>
-                </button>
-                <div class="glass-content-panel">
-<!-- CC (修改區：置入五大子功能，介面優化版) -->
-                    
-                    <!-- [1] 平衡化學反應式 -->
-                    <div class="panel-wrapper">
-                        <button class="glass-toggle-btn" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
-                            <div style="display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
-                                <span>⚖️ 平衡化學反應式</span>
-                                <div onclick="event.stopPropagation(); document.getElementById('balance-help-popup').style.display = 'block';" style="width: 18px; height: 18px; border: 1.2px solid #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; color: #10b981;">i</div>
-                            </div>
-                        </button>
-                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5); padding: 15px;">
-                            <div id="balance-help-popup" style="display: none; position: absolute; top: 0; left: 0; right: 0; background: #0f172a; border: 1px solid #10b981; padding: 12px; border-radius: 12px; z-index: 120; font-size: 0.8rem; line-height:1.5;">
-                                <b style="color:#10b981;">範例：</b> H2 + O2 = H2O<br>
-                                <button onclick="this.parentElement.style.display='none'" style="width:100%; margin-top:8px; background:#10b981; border:none; border-radius:4px; font-size:0.7rem; padding:2px;">關閉說明</button>
-                            </div>
-                            <!-- 修正：確保輸入組不會溢出 -->
-                            <div style="display: flex; gap: 5px; width: 100%;">
-                                <input type="text" id="equation-input" placeholder="輸入反應式..." style="flex: 1; min-width: 0; background: rgba(0,0,0,0.3); border: 1px solid rgba(16,185,129,0.4); border-radius: 8px; color: white; padding: 8px; font-size: 0.85rem;">
-                                <button id="balance-btn" style="background: #10b981; color: white; border: none; border-radius: 8px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 0.85rem; white-space: nowrap;">平衡</button>
-                            </div>
-                            <div id="balance-result" style="margin-top: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; display: none;"></div>
-                            <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 8px; cursor: pointer; color: #38bdf8; font-size: 0.75rem; text-decoration: underline;">解題思路</div>
-                            <div id="balance-steps" style="display: none; margin-top: 10px; padding: 10px; background: rgba(15, 23, 42, 0.8); border-radius: 8px; font-size: 0.8rem; border-left: 3px solid #facc15;"></div>
-                        </div>
+            <!-- 4. [摺疊 B] 🛠️ 進階功能與工具 -->
+            <details class="control-group">
+                <summary>🛠️ 進階功能與工具</summary>
+
+                <!-- 子功能: 點群 -->
+                <div class="panel-wrapper">
+                    <button class="glass-toggle-btn" style="background:rgba(56,189,248,0.15); border-color:rgba(56,189,248,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
+                        <div style="display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
+                            <span>💎 點群對稱分析</span>
+                            <div onclick="togglePgFlowchart(event)" style="width: 20px; height: 20px; border: 1.5px solid #38bdf8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; color: #38bdf8; background:rgba(0,0,0,0.3); z-index:100; margin-left:5px;">i</div>
                     </div>
-
-                    <!-- [2] 點群對稱分析 -->
-                    <div class="panel-wrapper">
-                        <button class="glass-toggle-btn" style="background:rgba(56,189,248,0.15); border-color:rgba(56,189,248,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
-                            <div style="display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
-                                <span>💎 點群對稱分析</span>
-                                <div onclick="event.stopPropagation(); togglePgFlowchart();" style="width: 18px; height: 18px; border: 1.5px solid #38bdf8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; color: #38bdf8;">i</div>
-                            </div>
-                        </button>
-                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
-                            <div id="pg-group-display" style="color: #facc15; font-weight: bold; text-align: center; margin-bottom: 5px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">點群: -</div>
-                            <div id="symmetry-elements-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
-                        </div>
+                    </button>
+                    <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                        <div id="pg-group-display" style="color: #facc15; font-weight: bold; text-align: center; margin-bottom: 5px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">點群: -</div>
+                        <div id="symmetry-elements-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
                     </div>
-
-                    <!-- [3] 幾何成面模式 -->
-                    <div class="panel-wrapper">
-                        <button class="glass-toggle-btn" style="background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
-                            <span>📐 幾何成面模式</span>
-                        </button>
-                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
-                            <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.8rem; border-color:#fde047; color:#fde047; margin-bottom:10px; background:rgba(0,0,0,0.2);" onclick="toggleFaceBuildMode()">選取狀態: OFF</button>
-                            <div style="display: flex; gap: 5px;">
-                                <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
-                                <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
-                                <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
-                                <!-- 補回清除面按鈕，並設定紅色風格與文字置中 -->
-                                <button class="control-button" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.15); border-color:#f87171; color:#f87171; display:flex; align-items:center; justify-content:center;" onclick="clearCustomFaces()">清除面</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- [4] 電子組態查詢 -->
-                    <div class="panel-wrapper">
-                        <button id="btn-open-config" class="glass-toggle-btn" style="background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.4); color:#c4b5fd;">
-                            <span>⚛️ 查詢電子組態 (1-118)</span>
-                        </button>
-                    </div>
-
-                    <!-- [5] 原子軌域模型選擇 (現在可收合) -->
-                    <div class="panel-wrapper">
-                        <button class="glass-toggle-btn" style="background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.2);" onclick="this.parentElement.classList.toggle('expanded')">
-                            <span>☁️ 原子軌域模型選擇</span>
-                        </button>
-                        <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
-                            <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr); gap: 4px;">
-                                <button class="orb-btn" onclick="loadOrbital('s')">s</button>
-                                <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
-                            </div>
-                            <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 5px;">
-                                <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²</sub></button>
-                                <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
-                            </div>
-                            <!-- 節面按鈕縮小化 -->
-                            <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; margin-top:10px; height:28px; font-size:0.75rem; border-radius:6px; border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center;" onclick="togglePlanes()">顯示節面: ON</button>
-                        </div>
-                    </div>
-
                 </div>
-            </div>
 
-            <!-- 4. 🟢 異構物選擇區 (確保在功能面板下方) -->
+                <!-- 子功能: 成面 -->
+                <div class="panel-wrapper">
+                    <button class="glass-toggle-btn" style="background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.4);" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span>📐 幾何成面模式</span>
+                    </button>
+                    <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                        <button id="btn-face-mode" class="control-button" style="width:100%; font-size:0.8rem; border-color:#fde047; color:#fde047; margin-bottom:10px; background:rgba(0,0,0,0.2);" onclick="toggleFaceBuildMode()">選取狀態: OFF</button>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="orb-btn face-color-btn active" data-color="yellow" style="flex:1; border-color:#fde047; color:#fde047;" onclick="setFaceColor('yellow')">黃</button>
+                            <button class="orb-btn face-color-btn" data-color="cyan" style="flex:1; border-color:#22d3ee; color:#22d3ee;" onclick="setFaceColor('cyan')">藍</button>
+                            <button class="orb-btn face-color-btn" data-color="pink" style="flex:1; border-color:#f472b6; color:#f472b6;" onclick="setFaceColor('pink')">粉</button>
+                            <button class="control-button" style="flex:1.5; font-size:0.75rem; padding:0; background:rgba(239, 68, 68, 0.15); border-color:#f87171; color:#f87171; display:flex; align-items:center; justify-content:center;" onclick="clearCustomFaces()">清除面</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 子功能: 電子組態 (已更改圖示為 🔍) -->
+                <div class="panel-wrapper">
+                    <button id="btn-open-config" class="glass-toggle-btn" style="background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.4); color:#c4b5fd;">
+                        <span>🔍 查詢電子組態 (1-118)</span>
+                    </button>
+                </div>
+
+                <!-- 子功能: 原子軌域 (已移除箭頭 ▼) -->
+                <div class="panel-wrapper">
+                    <button class="glass-toggle-btn" style="background:rgba(139, 92, 246, 0.15); border-color:rgba(139, 92, 246, 0.4); color:#c4b5fd;" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span>💠 原子軌域模型選擇</span>
+                    </button>
+                    <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
+                        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
+                            <button class="orb-btn" onclick="loadOrbital('s')">s</button>
+                            <button class="orb-btn" onclick="loadOrbital('px')">p<sub>x</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('py')">p<sub>y</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('pz')">p<sub>z</sub></button>
+                        </div>
+                        <div class="orbital-btn-group" style="grid-template-columns: repeat(5, 1fr);">
+                            <button class="orb-btn" onclick="loadOrbital('dxy')">d<sub>xy</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('dyz')">d<sub>yz</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('dxz')">d<sub>xz</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('dx2-y2')">d<sub>x²-y²</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('dz2')">d<sub>z²</sub></button>
+                        </div>
+                        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); margin:5px 0 5px 2px;">f 軌域系列:</div>
+                        <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr); margin-bottom:5px;">
+                            <button class="orb-btn" onclick="loadOrbital('fz3')">f<sub>z³</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('fx3')">f<sub>x³</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('fy3')">f<sub>y³</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('fxyz')">f<sub>xyz</sub></button>
+                        </div>
+                        <div class="orbital-btn-group" style="grid-template-columns: repeat(3, 1fr); margin-bottom:12px;">
+                            <button class="orb-btn" onclick="loadOrbital('f_z_x2y2')">f<sub>z(x²-y²)</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('f_x_z2y2')">f<sub>x(z²-y²)</sub></button>
+                            <button class="orb-btn" onclick="loadOrbital('f_y_z2x2')">f<sub>y(z²-x²)</sub></button>
+                        </div>
+                        <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px; height:36px;" onclick="togglePlanes()">顯示節面: ON</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 5. 🟢 異構物選擇區 -->
             <div id="variant-selector"></div>
 
-            <!-- 5. 🧪 反應按鈕區 (補齊標籤，防止結構吃掉後面) -->
+            <!-- 6. 🧪 反應按鈕區 -->
             <div id="reaction-container">
                 <div class="reaction-row">
-                    <!-- 反應按鈕由 JS 控制顯示，這裡確保清單完整 -->
                     <button id="reaction-btn" class="reaction-btn btn-h2o">🧪 水加成</button>
                     <button id="reaction-h2-btn" class="reaction-btn btn-h2">🧪 氫氣加成</button>
                     <button id="reaction-hcl-btn" class="reaction-btn btn-hcl">🧪 鹵化氫加成</button>
@@ -1079,7 +1082,7 @@
                 </div>
             </div>
 
-            <!-- 6. 小百科 -->
+            <!-- 7. 小百科 -->
             <div class="card knowledge-card" id="knowledge-card" style="display: none;">
                 <div class="card-title" onclick="toggleKnowledge()">
                     <span>💡 小知識</span><span class="toggle-icon">▼</span>
@@ -1087,7 +1090,7 @@
                 <div class="knowledge-content" id="knowledge-text"></div>
             </div>
             
-            
+            <!-- 8. 📊 物質資料 (確保在最下方，修復跑版問題) -->
             <div class="card" id="data-card">
                 <div class="card-title">📊 物質資料</div>
                 <div class="data-row"><span class="data-label" id="lbl-formula">化學式</span><span class="data-value" id="disp-formula"></span></div>
@@ -1100,6 +1103,7 @@
                 <div class="data-row"><span class="data-label" id="lbl-bonds">鍵結統計</span><span class="data-value" id="disp-bonds"></span></div>
                 <div class="data-row"><span class="data-label" id="lbl-mass">分子量</span><span class="data-value" id="disp-mass"></span></div>
             </div>
+
             <div class="spacer-60"></div>
         </div>
     </div>
@@ -1143,25 +1147,113 @@
 // ==========================================
 window.currentMolecule = null;
 window.currentKey = null;
-window.togglePgFlowchart = function() {
-    const overlay = document.getElementById('pg-flowchart-overlay');
-    if (!overlay) return;
-    if (overlay.style.display === 'none' || overlay.style.display === '') {
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden'; 
-    } else {
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
+
+window.togglePgFlowchart = function(e) {
+    if (e) {
+        e.stopPropagation();
+        if(e.preventDefault) e.preventDefault();
     }
+
+    let overlay = document.getElementById('pg-fix-overlay');
+    
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'pg-fix-overlay';
+        // 確保 z-index 足夠高，背景模糊
+        overlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999999; backdrop-filter:blur(8px); justify-content:center; align-items:center; font-family: sans-serif;";
+        
+        overlay.innerHTML = `
+            <div style="background:#0f172a; padding:20px; border-radius:20px; border:1px solid #3b82f6; width:95%; max-width:550px; box-shadow:0 0 40px rgba(59,130,246,0.4); position:relative; color:#fff; overflow:hidden;">
+                <!-- 標題區 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(59,130,246,0.3); padding-bottom:10px;">
+                    <h3 style="margin:0; color:#38bdf8; font-size:1.2rem; display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.5rem;">💎</span> 分子點群判斷流程
+                    </h3>
+                    <div style="cursor:pointer; font-size:1.8rem; color:#94a3b8; line-height:1;" onclick="document.getElementById('pg-fix-overlay').style.display='none'">×</div>
+                </div>
+                
+                <!-- 流程圖區 -->
+                <div style="font-size:0.9rem; line-height:1.4; color:#e2e8f0; max-height:70vh; overflow-y:auto; padding-right:5px;">
+                    
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        
+                        <!-- 步驟 1 -->
+                        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; border-left:4px solid #38bdf8;">
+                            <b style="color:#38bdf8;">STEP 1: 是否為直線型？</b><br>
+                            ├─ 是：有對稱中心 (i)？ <span style="color:#facc15;">→ D<sub>∞h</sub></span> (如 H₂, CO₂)<br>
+                            └─ 否：無對稱中心 (i)？ <span style="color:#facc15;">→ C<sub>∞v</sub></span> (如 HCl, OCS)
+                        </div>
+
+                        <!-- 步驟 2 -->
+                        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; border-left:4px solid #f472b6;">
+                            <b style="color:#f472b6;">STEP 2: 是否為高對稱性？</b><br>
+                            ├─ 正四面體：有 4 個 C₃？ <span style="color:#facc15;">→ T<sub>d</sub></span> (如 CH₄)<br>
+                            ├─ 正八面體：有 3 個 C₄？ <span style="color:#facc15;">→ O<sub>h</sub></span> (如 SF₆)<br>
+                            └─ 足球型：有 12 個 C₅？ <span style="color:#facc15;">→ I<sub>h</sub></span> (如 C₆₀)
+                        </div>
+
+                        <!-- 步驟 3 -->
+                        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; border-left:4px solid #fbbf24;">
+                            <b style="color:#fbbf24;">STEP 3: 尋找最高階主軸 C<sub>n</sub></b><br>
+                            <span style="color:#94a3b8; font-size:0.8rem;">若無 C<sub>n</sub>：只有面 (σ) → Cₛ | 只有中心 (i) → Cᵢ | 皆無 → C₁</span>
+                        </div>
+
+                        <!-- 步驟 4 -->
+                        <div style="background:rgba(56, 189, 248, 0.1); padding:12px; border-radius:10px; border:1px dashed #38bdf8;">
+                            <b style="color:#fff;">STEP 4: 是否有 n 個 垂直 C<sub>n</sub> 的 C₂ 軸？</b><br>
+                            <div style="margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px;">
+                                    <span style="color:#4ade80;">[ 有 ] 進入 D 族</span><br>
+                                    有 σₕ 面？ <span style="color:#facc15;">→ D<sub>nh</sub></span><br>
+                                    有 σ<sub>d</sub> 面？ <span style="color:#facc15;">→ D<sub>nd</sub></span><br>
+                                    皆無？ <span style="color:#facc15;">→ D<sub>n</sub></span>
+                                </div>
+                                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px;">
+                                    <span style="color:#f87171;">[ 無 ] 進入 C / S 族</span><br>
+                                    有 σₕ 面？ <span style="color:#facc15;">→ C<sub>nh</sub></span><br>
+                                    有 n 個 σᵥ？ <span style="color:#facc15;">→ C<sub>nv</sub></span><br>
+                                    皆無？ <span style="color:#facc15;">→ C<sub>n</sub></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:15px; background:rgba(59,130,246,0.1); padding:10px; border-radius:8px; font-size:0.8rem; color:#94a3b8;">
+                        💡 <b>提示：</b>σₕ 代表與主軸垂直的平面（水平面）；σᵥ 代表包含主軸的平面（鉛直面）。
+                    </div>
+                </div>
+
+                <button onclick="document.getElementById('pg-fix-overlay').style.display='none'" style="width:100%; margin-top:15px; padding:12px; background:linear-gradient(90deg, #3b82f6, #2563eb); border:none; border-radius:12px; color:white; font-weight:bold; cursor:pointer; font-size:1rem; box-shadow:0 4px 12px rgba(37,99,235,0.3);">學習完畢</button>
+            </div>
+        `;
+        
+        overlay.onclick = function(ev) { if (ev.target === overlay) overlay.style.display = 'none'; };
+        document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
 };
+
+// 修復：平衡反應式說明開關
+window.toggleBalanceInfo = function(e) {
+    if(e) e.stopPropagation();
+    const box = document.getElementById('balance-help-popup');
+    if(box) box.style.display = (box.style.display === 'block' ? 'none' : 'block');
+};
+
+// 全局點擊監聽 (點擊空白處關閉平衡說明)
+document.addEventListener('click', (e) => {
+    const box = document.getElementById('balance-help-popup');
+    if(box && box.style.display === 'block' && !box.contains(e.target) && !e.target.closest('[onclick*="toggleBalanceInfo"]')) {
+        box.style.display = 'none';
+    }
+});
+
 window.currentVariantKey = null;
-window.moleculeHistory = [];
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 let isReactionRunning = false; 
 let isReactionFinished = false; 
-let isPlasmaMode = false; // [修復] 確保變數存在
-
-
+let isPlasmaMode = false;
 
 // --- [新增] 用來儲存反應歷史紀錄 ---
 let moleculeHistory = [];
@@ -3075,13 +3167,6 @@ function setupInteractions() {
         balanceBtn.onclick = () => { /* 執行平衡邏輯 */ };
     }
 
-    // 更新點群流程圖 Overlay 邏輯
-    window.togglePgFlowchart = function() {
-        const overlay = document.getElementById('pg-flowchart-overlay');
-        if (!overlay) return;
-        overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'block' : 'none';
-        document.body.style.overflow = (overlay.style.display === 'block') ? 'hidden' : '';
-    };
     // 啟動化學方程式平衡器
     setupEquationBalancer();
 
@@ -4566,7 +4651,7 @@ window.togglePlanes = function() {
     if(currentOrbitalMode && currentOrbitalType) loadOrbital(currentOrbitalType);
 };
 
-setTimeout(initOrbitalUI, 500);
+
 
 // ==========================================
 // [系統修復] 解決軌域重疊問題 & 確保畫面清除
