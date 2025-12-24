@@ -1519,21 +1519,91 @@ function solveChemicalEquationWithSteps(eqn) {
     };
 
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
-    let startIdx = 0, maxScore = 0;
-    species.forEach((s, i) => { 
-        // [修改] 權重邏輯優化：
-        // 舊邏輯：種類*10 + 總數
-        // 新邏輯：(總數) + (最大下標值 * 50)
-        // 這樣 S8 (下標8) 會得到 8 + 400 = 408 分
-        // Cu(NO3)2 (最大下標3) 會得到 9 + 150 = 159 分 -> S8 勝出
-        const atomCounts = Object.values(s.atoms);
-        const maxSub = atomCounts.length > 0 ? Math.max(...atomCounts) : 1;
-        let score = atomCounts.reduce((a,b)=>a+b,0) + (maxSub * 50);
-        
-        if (score > maxScore) { maxScore = score; startIdx = i; } 
+    
+    // cc (修改部分：加入 Priority 0 - 單元素大下標優先判定)
+    let startIdx = -1;
+    
+    // Priority 0: 優先尋找單元素物質 (Element) 且原子數 >= 3 的 (如 P4, S8, O3)
+    let maxElemCount = 0;
+    species.forEach((s, i) => {
+        const atoms = Object.keys(s.atoms);
+        // 判斷是否為單一種原子 (length === 1)
+        if (atoms.length === 1) {
+            const count = s.atoms[atoms[0]];
+            // 規則：原子數 >= 3 且是目前找到最大的
+            if (count >= 3 && count > maxElemCount) {
+                maxElemCount = count;
+                startIdx = i;
+            }
+        }
     });
-    stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定結構最複雜的 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 係數為 <span class="coeff">1</span>。</div>`;
 
+    // 如果 Priority 0 沒找到 (startIdx 仍為 -1)，進入 Priority 1 (獨家原子 LCM 法)
+    if (startIdx === -1) {
+        let bestLCM = 0;
+        const gcdCalc = (a, b) => b === 0 ? a : gcdCalc(b, a % b);
+        const lcmCalc = (a, b) => (a * b) / gcdCalc(a, b);
+
+        let atomMap = {}; 
+        let rList = [], pList = [];
+        // 安全獲取列表
+        if (typeof reactants !== 'undefined' && typeof products !== 'undefined') {
+            rList = reactants; pList = products;
+        } else {
+            rList = species.filter(s => s.type === 'reactant' || s.side === 'left' || s.isReactant === true);
+            pList = species.filter(s => s.type === 'product' || s.side === 'right' || s.isReactant === false);
+        }
+
+        if (rList.length > 0 && pList.length > 0) {
+            const scan = (list, sideName, offset) => {
+                list.forEach((s, i) => {
+                    let globalIdx = offset + i; 
+                    Object.entries(s.atoms).forEach(([el, count]) => {
+                        if (!atomMap[el]) atomMap[el] = { reactant: [], product: [] };
+                        atomMap[el][sideName].push({ idx: globalIdx, count });
+                    });
+                });
+            };
+            scan(rList, 'reactant', 0);
+            scan(pList, 'product', rList.length);
+
+            Object.keys(atomMap).forEach(el => {
+                let data = atomMap[el];
+                // 獨家原子 (1對1)
+                if (data.reactant.length === 1 && data.product.length === 1) {
+                    let leftCount = data.reactant[0].count;
+                    let rightCount = data.product[0].count;
+                    let currentLCM = lcmCalc(leftCount, rightCount);
+
+                    if (currentLCM > bestLCM) {
+                        bestLCM = currentLCM;
+                        // 選原子數多的那邊設為 1
+                        if (leftCount >= rightCount) {
+                            startIdx = data.reactant[0].idx;
+                        } else {
+                            startIdx = data.product[0].idx;
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Priority 2: 如果以上都沒結果，回退到複雜度權重法
+    if (startIdx === -1) {
+        let maxScore = 0;
+        startIdx = 0;
+        species.forEach((s, i) => { 
+            const atomCounts = Object.values(s.atoms);
+            const maxSub = atomCounts.length > 0 ? Math.max(...atomCounts) : 1;
+            let score = atomCounts.reduce((a,b)=>a+b,0) + (maxSub * 50);
+            if (score > maxScore) { maxScore = score; startIdx = i; } 
+        });
+    }
+
+    stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 的係數為 <span class="coeff">1</span>。</div>`;
+    
+    // bb (不變的下文)
     let locked = new Set([startIdx]), expressions = new Array(species.length).fill(""), usedConservation = new Set(), obsDetails = [];
     expressions[startIdx] = "1";
     const toMathTerm = (expr, count) => {
