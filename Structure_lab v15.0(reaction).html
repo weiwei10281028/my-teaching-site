@@ -2033,51 +2033,51 @@ function loadMolecule(key, variantKey = null) {
             else if (currentPg === "Ci") { addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i'); }
 
             // 2. Cn 系列
-            else if (currentPg === "C2") { addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], YL, 'C2'); }
-            else if (currentPg === "C3") { addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], YL, 'C3'); }
+            else if (currentPg === "C2") { addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], WT, 'C2'); }
+            else if (currentPg === "C3") { addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], WT, 'C3'); }
 
             // 3. Cnv 系列
             else if (currentPg === "C2v") {
                 let mainVec = isTShaped ? [1, 0, 0] : [0, 1, 0];
-                addSym('axis', "1 × C₂ (主軸)", mainVec, YL, 'C2');
+                addSym('axis', "1 × C₂ (主軸)", mainVec, WT, 'C2');
                 addSym('plane', "1 × σᵥ (分子面/穿原子)", [0, 0, 1], PK, 'sv1');
                 addSym('plane', "1 × σᵥ' (鉛直面/穿原子)", isTShaped ? [0, 1, 0] : [1, 0, 0], PK, 'sv2');
             }
             else if (currentPg === "C3v") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], YL, 'C3');
+                addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], WT, 'C3');
                 addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
             }
             else if (currentPg === "C4v") {
-                addSym('axis', "1 × C₄ (主軸)", [1, 0, 0], YL, 'C4');
+                addSym('axis', "1 × C₄ (主軸)", [1, 0, 0], WT, 'C4');
                 addSym('plane', "2 × σᵥ (鉛直面/穿原子)", [0, 0, 1], PK, 'sv');
                 addSym('plane', "2 × σd (二面鏡面/未穿原子)", [0, 1, 1], VT, 'sd');
             }
             else if (currentPg === "C6v") {
-                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], YL, 'C6');
+                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], WT, 'C6');
                 addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
                 addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], VT, 'sd');
             }
 
             // 4. Cnh 系列
             else if (currentPg === "C2h") {
-                addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], YL, 'C2');
+                addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], WT, 'C2');
                 addSym('plane', "1 × σₕ (水平面/穿原子)", [0, 1, 0], YL, 'sh');
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
 
             // 5. Dn 系列
             else if (currentPg === "D2") {
-                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2z');
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2z');
                 addSym('axis', "2 × C₂ (副軸)", [1, 0, 0], GN, 'C2x');
             }
             else if (currentPg === "D3") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
                 addSym('axis', "3 × C₂ (副軸)", [0, 1, 0], GN, 'C2');
             }
 
             // 6. Dnh 系列
             else if (currentPg === "D2h") {
-                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2z');
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2z');
                 addSym('axis', "1 × C₂ (副軸/長軸)", [1, 0, 0], CY, 'C2x');
                 addSym('axis', "1 × C₂ (副軸/短軸)", [0, 1, 0], GN, 'C2y');
                 addSym('plane', "1 × σₕ (水平面)", [0, 0, 1], YL, 'sh');
@@ -2085,14 +2085,14 @@ function loadMolecule(key, variantKey = null) {
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
             else if (currentPg === "D3h") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
                 addSym('plane', "1 × σₕ (赤道面/穿原子)", [0, 0, 1], YL, 'sh');
                 addSym('axis', "3 × C₂ (副軸/穿原子)", [0, 1, 0], CY, 'C2');
                 addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
                 addSym('axis', "1 × S₃ (不當軸)", [0, 0, 1], OG, 'S3', true);
             }
             else if (currentPg === "D4h") {
-                addSym('axis', "1 × C₄ (主軸/穿原子)", [1, 0, 0], YL, 'C4');
+                addSym('axis', "1 × C₄ (主軸/穿原子)", [1, 0, 0], WT, 'C4');
                 addSym('plane', "1 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
                 addSym('axis', "2 × C₂' (副軸/穿原子)", [0, 1, 0], CY, 'C2p');
                 addSym('axis', "2 × C₂'' (副軸/未穿原子)", [0, 1, 1], GN, 'C2pp');
@@ -2102,7 +2102,7 @@ function loadMolecule(key, variantKey = null) {
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
             else if (currentPg === "D6h") {
-                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], YL, 'C6');
+                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], WT, 'C6');
                 addSym('plane', "1 × σₕ (分子面/穿原子)", [0, 0, 1], YL, 'sh');
                 addSym('axis', "3 × C₂' (副軸/穿原子)", [Math.cos(120*Math.PI/180), Math.sin(120*Math.PI/180), 0], CY, 'C2p');
                 addSym('axis', "3 × C₂'' (副軸/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], GN, 'C2pp');
@@ -2115,20 +2115,20 @@ function loadMolecule(key, variantKey = null) {
 
             // 7. Dnd 系列
             else if (currentPg === "D2d") {
-                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2');
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2');
                 addSym('axis', "1 × S₄ (不當軸)", [0, 0, 1], OG, 'S4', true);
                 addSym('axis', "2 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
                 addSym('plane', "2 × σd (二面鏡面/未穿原子)", [1, 1, 0], VT, 'sd');
             }
             else if (currentPg === "D3d") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], YL, 'C3');
+                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
                 addSym('axis', "1 × S₆ (不當軸)", [0, 0, 1], OG, 'S6', true);
                 addSym('axis', "3 × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
                 addSym('plane', "3 × σd (二面鏡面/未穿原子)", [1, 0, 0], VT, 'sd');
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
             else if (currentPg === "D4d") {
-                addSym('axis', "1 × C₄ (主軸)", [0, 0, 1], YL, 'C4');
+                addSym('axis', "1 × C₄ (主軸)", [0, 0, 1], WT, 'C4');
                 addSym('axis', "1 × S₈ (不當軸)", [0, 0, 1], OG, 'S8', true);
                 addSym('axis', "4 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
                 addSym('plane', "4 × σd (二面鏡面/未穿原子)", [Math.cos(22.5*Math.PI/180), Math.sin(22.5*Math.PI/180), 0], VT, 'sd');
@@ -2137,18 +2137,18 @@ function loadMolecule(key, variantKey = null) {
             // 8. Sn 系列
             else if (currentPg === "S4") {
                 addSym('axis', "1 × S₄ (不當軸/主軸)", [0, 0, 1], OG, 'S4', true);
-                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], YL, 'C2');
+                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2');
             }
 
             // 9. 高對稱點群
             else if (currentPg === "Td") {
-                addSym('axis', "4 × C₃ (頂點軸/穿原子)", [1, 1, 1], YL, 'C3');
+                addSym('axis', "4 × C₃ (頂點軸/穿原子)", [1, 1, 1], WT, 'C3');
                 addSym('axis', "3 × C₂ (對邊軸/未穿原子)", [1, 0, 0], GN, 'C2');
                 addSym('plane', "6 × σd (二面鏡面/穿原子)", [1, -1, 0], PK, 'sd');
                 addSym('axis', "3 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
             }
             else if (currentPg === "Oh") {
-                addSym('axis', "3 × C₄ (主軸/穿原子)", [1, 0, 0], YL, 'C4');
+                addSym('axis', "3 × C₄ (主軸/穿原子)", [1, 0, 0], WT, 'C4');
                 addSym('axis', "4 × C₃ (對角軸/未穿原子)", [1, 1, 1], CY, 'C3');
                 addSym('axis', "6 × C₂ (邊心軸/未穿原子)", [0, 1, 1], GN, 'C2');
                 addSym('plane', "3 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
@@ -2158,7 +2158,7 @@ function loadMolecule(key, variantKey = null) {
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
             else if (currentPg === "Ih") {
-                addSym('axis', "6 × C₅ (主軸/穿原子)", [0, 1, 1.618], YL, 'C5');
+                addSym('axis', "6 × C₅ (主軸/穿原子)", [0, 1, 1.618], WT, 'C5');
                 addSym('axis', "10 × C₃ (副軸/未穿原子)", [1, 1, 1], CY, 'C3');
                 addSym('axis', "15 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
                 addSym('plane', "15 × σ (對稱面/穿原子)", [1, 0, 0], PK, 's');
@@ -2167,11 +2167,11 @@ function loadMolecule(key, variantKey = null) {
 
             // 10. 線性點群
             else if (currentPg === "Cinfv") {
-                addSym('axis', "C∞ (分子軸)", [1, 0, 0], YL, 'Cinf');
+                addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
                 addSym('plane', "∞ × σᵥ (鉛直面)", [0, 1, 0], PK, 'sv');
             } 
             else if (currentPg === "Dinfh") {
-                addSym('axis', "C∞ (分子軸)", [1, 0, 0], YL, 'Cinf');
+                addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
                 addSym('plane', "1 × σₕ (中心面)", [1, 0, 0], YL, 'sh');
                 addSym('axis', "∞ × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
                 addSym('axis', "S∞ (不當軸)", [1, 0, 0], OG, 'Sinf', true);
@@ -2191,13 +2191,13 @@ function loadMolecule(key, variantKey = null) {
                 chk.onchange = (e) => { el.active = e.target.checked; renderScene(); };
                 const span = document.createElement("span");
                 const colorMap = { 
-                    'yellow': '#facc15', 
+                    'yellow': '#facc15', // 平面專用：黃色
+                    'white': '#ffffff',  // 主軸專用：白色
                     'cyan': '#22d3ee', 
-                    'green': '#a3e635', 
+                    'green': '#fbbf24', 
                     'pink': '#f472b6', 
                     'purple': '#a78bfa',
-                    'orange': '#fb923c',
-                    'white': '#ffffff'
+                    'orange': '#94a3b8' 
                 };
                 let displayColor = (el.type === 'center') ? '#ffffff' : (colorMap[el.colorType] || '#ffffff');
                 span.style.color = displayColor;
@@ -2609,9 +2609,10 @@ if (currentMolecule.symmetry && currentMolecule.symmetry.elements) {
             poly.setAttribute("points", obj.nodes.map(n => `${n.px},${n.py}`).join(" "));
             // 【重要修正】顏色對照表必須定義在渲染當下
             const symmetryColors = {
-                'yellow': { f: "rgba(253, 224, 71, 0.2)", s: "rgba(253, 224, 71, 0.9)" },
-                'cyan':   { f: "rgba(34, 211, 238, 0.2)", s: "rgba(34, 211, 238, 0.9)" },
-                'pink':   { f: "rgba(244, 114, 182, 0.2)", s: "rgba(244, 114, 182, 0.9)" }
+                'yellow': { f: "rgba(253, 224, 71, 0.15)", s: "#facc15" },
+                'cyan':   { f: "rgba(34, 211, 238, 0.15)", s: "#00f2ff" },
+                'pink':   { f: "rgba(244, 114, 182, 0.15)", s: "#f472b6" },
+                'purple': { f: "rgba(167, 139, 250, 0.15)", s: "#a78bfa" } // 新增紫色對應
             };
             const config = symmetryColors[obj.colorType] || symmetryColors.cyan;
             poly.setAttribute("fill", config.f); poly.setAttribute("stroke", config.s);
@@ -3307,7 +3308,7 @@ function drawAxisVector(axis) {
     let isFoggy = false;
 
     // --- 樣式階層控制 ---
-    if (cType === 'yellow') { 
+    if (cType === 'white' || cType === 'yellow') { 
         // 1. 主軸 (YL): 白色實線
         strokeColor = "#ffffff";
         dashArray = ""; // 實線
@@ -3316,13 +3317,13 @@ function drawAxisVector(axis) {
     else if (cType === 'cyan') { 
         // 2. 副軸 A (CY - 穿原子): 青色長虛線
         strokeColor = "#00f2ff";
-        strokeWidth = 1.5 * scale; // <--- 加入這一行
+        strokeWidth = 1.5 * scale; 
         dashArray = `${14 * scale}, ${7 * scale}`; 
         filterClass = "glow-cyan";
     }
     else if (cType === 'green') { 
-        // 3. 副軸 B (GN - 未穿原子): 洋紅短虛線
-        strokeColor = "#ff00ff";
+        // 3. 副軸 B (GN - 未穿原子): 琥珀橙
+        strokeColor = "#fbbf24";
         strokeWidth = 1.5 * scale;
         dashArray = `${4 * scale}, ${4 * scale}`; // 短虛線
         filterClass = "glow-magenta";
@@ -3362,7 +3363,8 @@ function drawAxisVector(axis) {
         text.setAttribute("text-anchor", "middle");
         
         // 顏色與軸線一致
-        text.style.fill = (cType === 'orange') ? "#fb923c" : (cType === 'cyan' ? "#00f2ff" : (cType === 'green' ? "#ff00ff" : "#ffffff"));
+        text.style.fill = (cType === 'white') ? "#ffffff" : (cType === 'yellow' ? "#facc15" : (cType === 'cyan' ? "#00f2ff" : (cType === 'green' ? "#fbbf24" : (cType === 'orange' ? "#94a3b8" : "#ffffff"))));
+
         text.style.textShadow = "0 0 5px #000";
 
         // 修正：直接處理完整標籤，並使用 em 單位確保 4 與 C 基準線對齊
@@ -3924,28 +3926,30 @@ function hideHybridTooltip() {
 
 function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
+    const content = document.querySelector('.controls-content'); // 抓取內容層
     const handle = document.getElementById('mobile-panel-handle');
-    
     if(!handle || !panel || window.innerWidth > 768) return;
 
-    // --- 設定參數 ---
     const getPos = () => {
         const H = window.innerHeight;
-        return {
-            P98: 0,              // 全開
-            P70: H * 0.3,        // 露出 70%
-            P35: H * 0.65,       // 露出 35%
-            PMIN: H - 45         // 最低 (防消失位)
-        };
+        return { P98: 0, P70: H * 0.3, P35: H * 0.65, PMIN: H - 45 };
+    };
+
+    // 核心新增：動態調整底部留白
+    const updateContentPadding = (currentY) => {
+        const H = window.innerHeight;
+        // 如果面板 translateY 越大（位置越低）， Padding 就越大
+        // 這樣可以補償掉被擋住的視線空間
+        const neededSpace = Math.max(0, currentY); 
+        content.style.paddingBottom = `${neededSpace + 40}px`;
     };
 
     let p = getPos();
     let startY = 0, startTransY = p.P35, currentTransY = p.P35, isDragging = false;
 
-    // 初始位置設定在 35%
-    panel.style.transform = `translateY(${p.P35}px)`;
+    // 初始 Padding 設定
+    updateContentPadding(p.P35);
 
-    // 滑動邏輯
     handle.addEventListener('touchstart', (e) => {
         isDragging = true;
         startY = e.touches[0].clientY;
@@ -3958,9 +3962,10 @@ function setupMobilePanel() {
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
         let newY = startTransY + (e.touches[0].clientY - startY);
-        if (newY < 0) newY *= 0.3; // 頂部阻尼
+        if (newY < 0) newY *= 0.3;
         panel.style.transform = `translateY(${newY}px)`;
         currentTransY = newY;
+        updateContentPadding(newY); // 拖曳時同步更新
     }, {passive: true});
 
     window.addEventListener('touchend', () => {
@@ -3976,27 +3981,23 @@ function setupMobilePanel() {
         ];
         const closest = dists.reduce((a, b) => a.d < b.d ? a : b);
         panel.style.transform = `translateY(${closest.v}px)`;
+        updateContentPadding(closest.v); // 彈回位置後更新
     });
 
-    // 【修正：點擊橫槓跳轉】
     handle.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
         p = getPos();
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         const curY = matrix.m42;
-
-        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-        
         let target;
-        // 循環判定：底部 -> 35 -> 70 -> 98 -> 回底部
         if (curY > p.P35 + 50) target = p.P35;
         else if (curY > p.P70 + 50) target = p.P70;
         else if (curY > p.P98 + 50) target = p.P98;
         else target = p.PMIN;
 
+        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         panel.style.transform = `translateY(${target}px)`;
+        updateContentPadding(target); // 點擊切換後更新
     });
 }
 
