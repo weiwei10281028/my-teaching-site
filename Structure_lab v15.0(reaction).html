@@ -345,7 +345,7 @@
         z-index: 100;
         display: flex; flex-direction: column;
         padding: 0;
-        transform: translateY(calc(100% - 45px)); /* 確保把手永遠露出一點 */
+        transform: translateY(65vh); /* 對應 P35 段位 (100% - 35%) */
         will-change: transform;
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     }
@@ -4122,8 +4122,8 @@ function setupMobilePanel() {
     let p = getPos();
     let startY = 0, startTransY = p.P35, currentTransY = p.P35, isDragging = false;
 
-    // 初始 Padding 設定
     updateContentPadding(p.P35);
+    panel.style.transform = `translateY(${p.P35}px)`;
 
     handle.addEventListener('touchstart', (e) => {
         isDragging = true;
