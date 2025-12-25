@@ -73,6 +73,14 @@ function checkReactionAvailable(key) {
         if(oxBtn) oxBtn.style.display = "flex";
         if(redBtn) redBtn.style.display = "flex";
     }
+    // --- F. 芳香烴 (苯) ---
+    else if (currentName === "苯") {
+        btnContainer.style.display = "block";
+        ["reaction-benzene-halo", "reaction-benzene-nitro", "reaction-benzene-sulf", "reaction-benzene-alkyl"].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.style.display = "flex";
+        });
+    }
 
     // 只要歷史紀錄不是空的，就顯示重置按鈕 (回到上一步)
     if (moleculeHistory.length > 0) {
@@ -156,10 +164,10 @@ function runEthyleneOxidation() {
 
 // 2. 甲烷系列 (原料: 甲烷)
 function runMethaneSubstitution() {
-    finishReaction("CH3Cl", "一氯甲烷", null, "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl");
+    finishReaction("CH3Cl", "一氯甲烷", null, "甲烷其中一個C-H鍵斷裂，接上Cl原子，脫去的H與另一個Cl原子結合成HCl，另有產物HCl");
 }
 function runMethaneNitration() {
-    finishReaction("CH3NO2", "硝基甲烷", null, "甲烷其中一個C-H鍵斷裂，接上NO₂，脫去的H與硝酸脫去的OH結合成H₂O");
+    finishReaction("CH3NO2", "硝基甲烷", null, "甲烷其中一個C-H鍵斷裂，接上NO₂，烷脫去的H與硝酸脫去的OH結合成H₂O");
 }
 
 // 3. 丙烯系列 (原料: 丙烯)
@@ -211,4 +219,21 @@ function runAcetylenePartialHydrohalogenation() {
 }
 function runAcetyleneHydration() {
     finishReaction("CH3CHO", "乙醛", null, "乙炔在硫酸與硫酸汞(HgSO₄)催化下與水加成，𝝿鍵斷裂後先形成不穩定的乙烯醇，隨即發生『醛酮-烯醇互變異構』，氫原子轉移，最終轉變成乙醛。");
+}
+
+// 6. 芳香烴系列 (原料: 苯)
+function runBenzeneHalogenation() {
+    finishReaction("C6H5Cl", "氯苯", null, "苯與氯氣在鐵粉(或三氯化鐵)催化下發生取代反應，苯環上的一個氫被氯原子取代，生成氯苯，另有產物HCl。");
+}
+
+function runBenzeneNitration() {
+    finishReaction("C6H5NO2", "硝基苯", null, "在濃硫酸催化下，苯環上的氫原子被硝基(-NO₂)取代，生成的硝基苯是淡黃色油狀液體，具有特殊的苦杏仁味，苯脫去的H與硝酸脫去的OH結合成H₂O。");
+}
+
+function runBenzeneSulfonation() {
+    finishReaction("C6H5SO3H", "苯磺酸", null, "使用發煙硫酸或濃硫酸加熱，苯環上的氫原子被磺酸基(-SO₃H)取代。產物苯磺酸是強酸性物質，可溶於水，苯脫去的H與硫酸脫去的OH結合成H₂O。");
+}
+
+function runBenzeneAlkylation() {
+    finishReaction("C7H8", "甲苯", null, "在無水三氯化鋁(AlCl₃)催化下，苯環上的氫被甲基取代，與一氯甲烷反應生成甲苯，是增加芳香環碳鏈的重要方法，另有產物HCl。");
 }
