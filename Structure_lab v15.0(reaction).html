@@ -1078,6 +1078,10 @@
                     <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
                     <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
                     <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-benzene-halo" class="reaction-btn btn-cl2">🧪 鹵化反應</button>
+                    <button id="reaction-benzene-nitro" class="reaction-btn btn-kmno4">🧪 硝化反應</button>
+                    <button id="reaction-benzene-sulf" class="reaction-btn btn-h2o">🧪 磺酸化反應</button>
+                    <button id="reaction-benzene-alkyl" class="reaction-btn btn-hcl">🧪 烷基化反應</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
@@ -3285,6 +3289,18 @@ function setupInteractions() {
 
     const btnAcetH2O = document.getElementById('btn-c2h2-h2o');
     if(btnAcetH2O) btnAcetH2O.addEventListener('click', () => { isReactionRunning = true; runAcetyleneHydration(); });
+    // 芳香烴事件監聽
+    const btnBenzHalo = document.getElementById('reaction-benzene-halo');
+    if(btnBenzHalo) btnBenzHalo.addEventListener('click', () => { isReactionRunning = true; runBenzeneHalogenation(); });
+
+    const btnBenzNitro = document.getElementById('reaction-benzene-nitro');
+    if(btnBenzNitro) btnBenzNitro.addEventListener('click', () => { isReactionRunning = true; runBenzeneNitration(); });
+
+    const btnBenzSulf = document.getElementById('reaction-benzene-sulf');
+    if(btnBenzSulf) btnBenzSulf.addEventListener('click', () => { isReactionRunning = true; runBenzeneSulfonation(); });
+
+    const btnBenzAlkyl = document.getElementById('reaction-benzene-alkyl');
+    if(btnBenzAlkyl) btnBenzAlkyl.addEventListener('click', () => { isReactionRunning = true; runBenzeneAlkylation(); });
 
 // 4. 重置按鈕 (修正為呼叫統一函式)
     const resetBtn = document.getElementById('reset-btn');
