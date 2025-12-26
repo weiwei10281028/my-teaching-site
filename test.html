@@ -879,6 +879,12 @@
                 <div class="info-formula" id="info-formula"></div>
                 <div class="info-name" id="info-name"></div>
             </div>
+            <!-- 新增：物質檢索標籤按鈕 -->
+            <div style="margin-top: 10px; display: flex; gap: 8px; pointer-events: auto;">
+                <div class="suggestion-tag" onclick="openSubstanceModal()" style="width: auto; padding: 6px 15px; background: rgba(56, 189, 248, 0.2); border: 1.2px solid #38bdf8; color: #fff; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 0.85rem; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    🔍 物質檢索
+                </div>
+            </div>
 
             <!-- 猜你想看功能 -->
             <div class="suggestions-container" id="suggestions-container">
@@ -910,6 +916,16 @@
                 <input type="text" class="config-search" id="configSearchInput" placeholder="搜尋元素 (Ex: Fe, 26, Carbon)..." onkeyup="renderConfigList()">
             </div>
             <div class="config-list" id="configListContainer"></div>
+        </div>
+    </div>
+    <!-- 新增：物質檢索專用 Modal -->
+    <div id="substance-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 400; justify-content: center; align-items: center;">
+        <div class="config-panel" style="border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);">
+            <div class="config-header" style="background: rgba(15, 23, 42, 0.9);">
+                <button class="config-close" onclick="closeSubstanceModal()">✕</button>
+                <input type="text" class="config-search" id="substanceSearchInput" placeholder="搜尋化學式或名稱 (如: Na, 硫酸, C4)..." onkeyup="renderSubstanceList()">
+            </div>
+            <div class="config-list" id="substanceListContainer"></div>
         </div>
     </div>
 
@@ -1078,6 +1094,10 @@
                     <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
                     <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
                     <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="reaction-benzene-halo" class="reaction-btn btn-cl2">🧪 鹵化反應</button>
+                    <button id="reaction-benzene-nitro" class="reaction-btn btn-kmno4">🧪 硝化反應</button>
+                    <button id="reaction-benzene-sulf" class="reaction-btn btn-h2o">🧪 磺酸化反應</button>
+                    <button id="reaction-benzene-alkyl" class="reaction-btn btn-hcl">🧪 烷基化反應</button>
                     <button id="reset-btn" class="reset-btn">↺ 重置</button>
                 </div>
             </div>
@@ -1141,6 +1161,7 @@
 <script src="data_static.js"></script>
 <script src="data_molecules.js"></script>
 <script src="data_reactions.js"></script>
+<script src="data_substances.js"></script>
 <script>
 // ==========================================
 // 1. 系統初始化
@@ -1732,7 +1753,7 @@ function solveChemicalEquationWithSteps(eqn) {
             }
         }
     }
-    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "可由基準直接推導。"}</div></div>`;
+    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "此階段無可直接利用觀察法平衡的原子，將進入代數法設定未知數。"}</div></div>`;
     // --- 步驟 3：氧化還原守恆說法 ---
     if (redoxInfo && redoxInfo.h2o2Delta !== 0) {
         const h2o2Role = redoxInfo.h2o2Delta > 0 ? "還原劑 (氧化成 O<sub>2</sub>)" : "氧化劑 (還原成 H<sub>2</sub>O)";
@@ -2186,11 +2207,9 @@ function loadMolecule(key, variantKey = null) {
             // 內部工具：下標轉換
             const toSub = (n) => n.toString().split('').map(c => ({'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}[c]||c)).join('');
 
-            // 1. 重心計算
-            let tX = 0, tY = 0, tZ = 0, atomCount = 0;
-            const realAtoms = data.atomsRaw ? data.atomsRaw.filter(a => !a.isElectron) : [];
-            realAtoms.forEach(a => { tX += a.x; tY += a.y; tZ += a.z; atomCount++; });
-            data.centroid = atomCount > 0 ? { x: tX/atomCount, y: tY/atomCount, z: tZ/atomCount } : { x:0, y:0, z:0 };
+            
+            // 1. 重心定位 (修改點：鎖定原點，不進行自動計算)
+                data.centroid = { x: 0, y: 0, z: 0 };
 
             // 2. 初始化
             pgDisplay.textContent = `點群: ${currentPg.replace("inf", "∞")}`;
@@ -2220,61 +2239,112 @@ function loadMolecule(key, variantKey = null) {
 
             // 3. Cnv 系列
             else if (currentPg === "C2v") {
-                let mainVec = isTShaped ? [1, 0, 0] : [0, 1, 0];
-                addSym('axis', "1 × C₂ (主軸)", mainVec, WT, 'C2');
-                addSym('plane', "1 × σᵥ (分子面/穿原子)", [0, 0, 1], PK, 'sv1');
-                addSym('plane', "1 × σᵥ' (鉛直面/穿原子)", isTShaped ? [0, 1, 0] : [1, 0, 0], PK, 'sv2');
+            // 保持您的邏輯：T-Shaped 分子主軸在 X，一般分子在 Y
+            let mainVec = isTShaped ? [1, 0, 0] : [0, 1, 0];
+            let plane1 = isTShaped ? [0, 1, 0] : [1, 0, 0]; // 垂直於主軸的向量 = 包含主軸的面
+            let plane2 = [0, 0, 1]; // 始終垂直於 X 與 Y，故必包含主軸
+
+            addSym('axis', "1 × C₂ (主軸)", mainVec, WT, 'C2');
+            addSym('plane', "1 × σᵥ (鉛直面1)", plane1, PK, 'sv1');
+            addSym('plane', "1 × σᵥ' (鉛直面2)", plane2, PK, 'sv2');
             }
             else if (currentPg === "C3v") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], WT, 'C3');
-                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
+            addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], WT, 'C3');
+            // 法向量 [1, 0, 0] 垂直於 [0, 1, 0]，故面包含軸
+            addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
             }
             else if (currentPg === "C4v") {
-                addSym('axis', "1 × C₄ (主軸)", [1, 0, 0], WT, 'C4');
-                addSym('plane', "2 × σᵥ (鉛直面/穿原子)", [0, 0, 1], PK, 'sv');
-                addSym('plane', "2 × σd (二面鏡面/未穿原子)", [0, 1, 1], VT, 'sd');
+            addSym('axis', "1 × C₄ (主軸, 包含 C₂)", [1, 0, 0], WT, 'C4');
+            addSym('plane', "2 × σᵥ (鉛直面/穿原子)", [0, 0, 1], PK, 'sv');
+            addSym('plane', "2 × σd (二面鏡面/未穿原子)", [0, 1, 1], VT, 'sd');
+            }
+            else if (currentPg === "C5v") {
+            addSym('axis', "1 × C₅ (主軸)", [0, 1, 0], WT, 'C5');
+            addSym('plane', "5 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
             }
             else if (currentPg === "C6v") {
-                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], WT, 'C6');
-                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
-                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], VT, 'sd');
+            addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], WT, 'C6');
+            addSym('axis', "1 × C₃ (與主軸重合)", [0, 0, 1], WT, 'C3', true);
+            addSym('axis', "1 × C₂ (與主軸重合)", [0, 0, 1], WT, 'C2', true);
+            addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
+            addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], VT, 'sd');
+            }
+            else if (currentPg === "Cinfv") {
+            addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
+            addSym('plane', "∞ × σᵥ (鉛直面)", [0, 1, 0], PK, 'sv');
             }
 
             // 4. Cnh 系列
-            else if (currentPg === "C2h") {
-                addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], WT, 'C2');
-                addSym('plane', "1 × σₕ (水平面/穿原子)", [0, 1, 0], YL, 'sh');
-                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            else if (currentPg === "C2h") { // 範例：反式1,2-二氯乙烯 (trans-C2H2Cl2)
+            addSym('axis', "1 × C₂ (主軸)", [0, 1, 0], WT, 'C2');
+            addSym('plane', "1 × σₕ (水平面)", [0, 1, 0], YL, 'sh');
+            addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "C3h") { // 範例：硼酸 (B(OH)3, 平面構型)
+            addSym('axis', "1 × C₃ (主軸)", [0, 1, 0], WT, 'C3');
+            addSym('plane', "1 × σₕ (水平面)", [0, 1, 0], YL, 'sh');
+            addSym('axis', "1 × S₃ (不當軸)", [0, 1, 0], OG, 'S3', true);
+            }
+            else if (currentPg === "C4h") { // 範例：某些平面金屬配合物 [M(L)4]
+            addSym('axis', "1 × C₄ (主軸, 包含 C₂)", [0, 1, 0], WT, 'C4');
+            addSym('plane', "1 × σₕ (水平面)", [0, 1, 0], YL, 'sh');
+            addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            addSym('axis', "1 × S₄ (不當軸)", [0, 1, 0], OG, 'S4', true);
+            }
+            else if (currentPg === "C5h") { // 範例：五角星形分子 (較罕見)
+            addSym('axis', "1 × C₅ (主軸)", [0, 1, 0], WT, 'C5');
+            addSym('plane', "1 × σₕ (水平面)", [0, 1, 0], YL, 'sh');
+            addSym('axis', "1 × S₅ (不當軸)", [0, 1, 0], OG, 'S5', true);
+            }
+            else if (currentPg === "C6h") { // 範例：六甲氧基苯 (1,2,3,4,5,6-hexamethoxybenzene)
+            addSym('axis', "1 × C₆ (主軸, 包含 C₃, C₂)", [0, 1, 0], WT, 'C6');
+            addSym('plane', "1 × σₕ (水平面)", [0, 1, 0], YL, 'sh');
+            addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            addSym('axis', "1 × S₆ (不當軸, 包含 S₃)", [0, 1, 0], OG, 'S6', true);
             }
 
-            // 5. Dn 系列
-            else if (currentPg === "D2") {
+            // 5. Dn 系列 (n個C2副軸垂直於Cn主軸，且無對稱面)
+            else if (currentPg === "D2") { // 範例：扭船型環己烷 (Twist-boat cyclohexane)
                 addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2z');
                 addSym('axis', "2 × C₂ (副軸)", [1, 0, 0], GN, 'C2x');
             }
-            else if (currentPg === "D3") {
+            else if (currentPg === "D3") { // 範例：[Co(en)₃]³⁺ (乙二胺鈷配合物)、扭轉 90 度的乙烯
                 addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
                 addSym('axis', "3 × C₂ (副軸)", [0, 1, 0], GN, 'C2');
             }
+            else if (currentPg === "D4") { // 範例：特定扭轉角度的環丁烷衍生物或金屬配合物 (較罕見)
+                addSym('axis', "1 × C₄ (主軸, 包含 C₂)", [0, 0, 1], WT, 'C4');
+                addSym('axis', "4 × C₂ (副軸)", [1, 0, 0], GN, 'C2');
+            }
+            else if (currentPg === "D5") { // 範例：某些生物大分子對稱排列或多肽鏈結構
+                addSym('axis', "1 × C₅ (主軸)", [0, 0, 1], WT, 'C5');
+                addSym('axis', "5 × C₂ (副軸)", [1, 0, 0], GN, 'C2');
+            }
+            else if (currentPg === "D6") { // 範例：特定扭轉角度的六苯基苯 (Hexaphenylbenzene) 衍生物
+                addSym('axis', "1 × C₆ (主軸, 包含 C₃, C₂)", [0, 0, 1], WT, 'C6');
+                addSym('axis', "6 × C₂ (副軸)", [1, 0, 0], GN, 'C2');
+            }
 
-            // 6. Dnh 系列
-            else if (currentPg === "D2h") {
+            // 6. Dnh 系列 (Dn 加上水平面 sh)
+            else if (currentPg === "D2h") { // 範例：乙烯 (Ethylene)、萘 (Naphthalene)
                 addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2z');
                 addSym('axis', "1 × C₂ (副軸/長軸)", [1, 0, 0], CY, 'C2x');
                 addSym('axis', "1 × C₂ (副軸/短軸)", [0, 1, 0], GN, 'C2y');
-                addSym('plane', "1 × σₕ (水平面)", [0, 0, 1], YL, 'sh');
-                addSym('axis', "1 × S₂ (=i)", [0, 0, 0], OG, 'i', true);
+                addSym('plane', "1 × σₕ (水平面/xy面)", [0, 0, 1], YL, 'sh');
+                // D2h 共有三個平面，補足另外兩個包含主軸的鉛直面
+                addSym('plane', "1 × σᵥ (鉛直面/xz面)", [0, 1, 0], PK, 'sv1');
+                addSym('plane', "1 × σᵥ' (鉛直面/yz面)", [1, 0, 0], PK, 'sv2');
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
-            else if (currentPg === "D3h") {
+            else if (currentPg === "D3h") { // 範例：BF₃、PCl₅ (三角雙錐)、環丙烷
                 addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
                 addSym('plane', "1 × σₕ (赤道面/穿原子)", [0, 0, 1], YL, 'sh');
                 addSym('axis', "3 × C₂ (副軸/穿原子)", [0, 1, 0], CY, 'C2');
                 addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
                 addSym('axis', "1 × S₃ (不當軸)", [0, 0, 1], OG, 'S3', true);
             }
-            else if (currentPg === "D4h") {
-                addSym('axis', "1 × C₄ (主軸/穿原子)", [1, 0, 0], WT, 'C4');
+            else if (currentPg === "D4h") { // 範例：XeF₄ (平面正方形)、[PtCl₄]²⁻
+                addSym('axis', "1 × C₄ (主軸, 包含 C₂)", [1, 0, 0], WT, 'C4'); 
                 addSym('plane', "1 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
                 addSym('axis', "2 × C₂' (副軸/穿原子)", [0, 1, 0], CY, 'C2p');
                 addSym('axis', "2 × C₂'' (副軸/未穿原子)", [0, 1, 1], GN, 'C2pp');
@@ -2283,80 +2353,114 @@ function loadMolecule(key, variantKey = null) {
                 addSym('axis', "1 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
-            else if (currentPg === "D6h") {
-                addSym('axis', "1 × C₆ (主軸)", [0, 0, 1], WT, 'C6');
+            else if (currentPg === "D5h") { // 範例：二茂鐵 (Ferrocene - 重疊式)、C₇₀
+                addSym('axis', "1 × C₅ (主軸)", [0, 0, 1], WT, 'C5');
+                addSym('plane', "1 × σₕ (水平面)", [0, 0, 1], YL, 'sh');
+                addSym('axis', "5 × C₂ (副軸)", [1, 0, 0], CY, 'C2');
+                addSym('plane', "5 × σᵥ (鉛直面)", [0, 1, 0], PK, 'sv');
+                addSym('axis', "1 × S₅ (不當軸)", [0, 0, 1], OG, 'S5', true);
+            }
+            else if (currentPg === "D6h") { // 範例：苯 (Benzene)
+                addSym('axis', "1 × C₆ (主軸, 包含 C₃, C₂)", [0, 0, 1], WT, 'C6'); 
                 addSym('plane', "1 × σₕ (分子面/穿原子)", [0, 0, 1], YL, 'sh');
-                addSym('axis', "3 × C₂' (副軸/穿原子)", [Math.cos(120*Math.PI/180), Math.sin(120*Math.PI/180), 0], CY, 'C2p');
-                addSym('axis', "3 × C₂'' (副軸/未穿原子)", [Math.cos(30*Math.PI/180), Math.sin(30*Math.PI/180), 0], GN, 'C2pp');
-                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [1, 0, 0], PK, 'sv');
-                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [Math.cos(60*Math.PI/180), Math.sin(60*Math.PI/180), 0], VT, 'sd');
-                addSym('axis', "1 × S₆ (不當軸)", [0, 0, 1], OG, 'S6', true);
-                addSym('axis', "1 × S₃ (不當軸)", [0, 0, 1], OG, 'S3', true);
+                addSym('axis', "3 × C₂' (副軸/穿原子)", [1, 0, 0], CY, 'C2p');
+                addSym('plane', "3 × σᵥ (鉛直面/穿原子)", [0, 1, 0], PK, 'sv');
+                addSym('axis', "3 × C₂'' (副軸/未穿原子)", [0, 1, 0], GN, 'C2pp');
+                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [1, 0, 0], VT, 'sd');
+                addSym('axis', "1 × S₆ (不當軸, 包含 S₃)", [0, 0, 1], OG, 'S6', true);
+                addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
+            }
+            else if (currentPg === "Dinfh") { // 範例：H₂、O₂、N₂、CO₂、乙炔 (C₂H₂)、BeCl₂
+                addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
+                addSym('plane', "1 × σₕ (中心對稱面)", [1, 0, 0], YL, 'sh');
+                addSym('axis', "∞ × C₂ (副軸/垂直於分子軸)", [0, 1, 0], GN, 'C2');
+                addSym('plane', "∞ × σᵥ (鉛直對稱面)", [0, 1, 0], PK, 'sv');               
+                addSym('axis', "S∞ (不當軸)", [1, 0, 0], OG, 'Sinf', true);
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
 
-            // 7. Dnd 系列
-            else if (currentPg === "D2d") {
+            // 7. Dnd 系列 (n個副軸C2平分n個二面鏡面sd之夾角)
+            else if (currentPg === "D2d") { // 範例：丙二烯 (Allene)、四氟化硼陰離子
                 addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2');
                 addSym('axis', "1 × S₄ (不當軸)", [0, 0, 1], OG, 'S4', true);
                 addSym('axis', "2 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
                 addSym('plane', "2 × σd (二面鏡面/未穿原子)", [1, 1, 0], VT, 'sd');
             }
-            else if (currentPg === "D3d") {
-                addSym('axis', "1 × C₃ (主軸)", [0, 0, 1], WT, 'C3');
-                addSym('axis', "1 × S₆ (不當軸)", [0, 0, 1], OG, 'S6', true);
+            else if (currentPg === "D3d") { // 範例：乙烷 (交錯式 staggered)、環己烷 (椅型 chair)
+                addSym('axis', "1 × C₃ (主軸)", [1, 0, 0], WT, 'C3');
+                addSym('axis', "1 × S₆ (不當軸)", [1, 0, 0], OG, 'S6', true);
                 addSym('axis', "3 × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
-                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [1, 0, 0], VT, 'sd');
+                addSym('plane', "3 × σd (二面鏡面/未穿原子)", [0, 0, 1], VT, 'sd');          
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
-            else if (currentPg === "D4d") {
-                addSym('axis', "1 × C₄ (主軸)", [0, 0, 1], WT, 'C4');
+            else if (currentPg === "D4d") { // 範例：八硫分子 (S8 - 皇冠型)、[W(CN)8]3-
+                addSym('axis', "1 × C₄ (主軸, 包含 C₂)", [0, 0, 1], WT, 'C4');
                 addSym('axis', "1 × S₈ (不當軸)", [0, 0, 1], OG, 'S8', true);
                 addSym('axis', "4 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2perp');
                 addSym('plane', "4 × σd (二面鏡面/未穿原子)", [Math.cos(22.5*Math.PI/180), Math.sin(22.5*Math.PI/180), 0], VT, 'sd');
             }
-
-            // 8. Sn 系列
-            else if (currentPg === "S4") {
-                addSym('axis', "1 × S₄ (不當軸/主軸)", [0, 0, 1], OG, 'S4', true);
-                addSym('axis', "1 × C₂ (主軸)", [0, 0, 1], WT, 'C2');
-            }
-
-            // 9. 高對稱點群
-            else if (currentPg === "Td") {
-                addSym('axis', "4 × C₃ (頂點軸/穿原子)", [1, 1, 1], WT, 'C3');
-                addSym('axis', "3 × C₂ (對邊軸/未穿原子)", [1, 0, 0], GN, 'C2');
-                addSym('plane', "6 × σd (二面鏡面/穿原子)", [1, -1, 0], PK, 'sd');
-                addSym('axis', "3 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
-            }
-            else if (currentPg === "Oh") {
-                addSym('axis', "3 × C₄ (主軸/穿原子)", [1, 0, 0], WT, 'C4');
-                addSym('axis', "4 × C₃ (對角軸/未穿原子)", [1, 1, 1], CY, 'C3');
-                addSym('axis', "6 × C₂ (邊心軸/未穿原子)", [0, 1, 1], GN, 'C2');
-                addSym('plane', "3 × σₕ (水平面/穿原子)", [1, 0, 0], YL, 'sh');
-                addSym('plane', "6 × σd (二面鏡面/未穿原子)", [0, 1, -1], VT, 'sd');
-                addSym('axis', "3 × S₄ (不當軸)", [1, 0, 0], OG, 'S4', true);
-                addSym('axis', "4 × S₆ (不當軸)", [1, 1, 1], OG, 'S6', true);
+            else if (currentPg === "D5d") { // 補足 D5d, 範例：二茂鐵 (Ferrocene - 交錯式)
+                addSym('axis', "1 × C₅ (主軸)", [0, 0, 1], WT, 'C5');
+                addSym('axis', "1 × S₁₀ (不當軸)", [0, 0, 1], OG, 'S10', true);
+                addSym('axis', "5 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
+                // σd 位於兩副軸之間，法向量與副軸垂直
+                addSym('plane', "5 × σd (二面鏡面/未穿原子)", [Math.cos(108*Math.PI/180), Math.sin(108*Math.PI/180), 0], VT, 'sd');
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
-            else if (currentPg === "Ih") {
-                addSym('axis', "6 × C₅ (主軸/穿原子)", [0, 1, 1.618], WT, 'C5');
-                addSym('axis', "10 × C₃ (副軸/未穿原子)", [1, 1, 1], CY, 'C3');
-                addSym('axis', "15 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
-                addSym('plane', "15 × σ (對稱面/穿原子)", [1, 0, 0], PK, 's');
+            else if (currentPg === "D6d") { // 補足 D6d, 範例：[12]輪烯 (某些構型)
+                addSym('axis', "1 × C₆ (主軸, 包含 C₃, C₂)", [0, 0, 1], WT, 'C6');
+                addSym('axis', "1 × S₁₂ (不當軸, 包含 S₄)", [0, 0, 1], OG, 'S12', true);
+                addSym('axis', "6 × C₂ (副軸/未穿原子)", [1, 0, 0], GN, 'C2');
+                addSym('plane', "6 × σd (二面鏡面/未穿原子)", [Math.cos(15*Math.PI/180), Math.sin(15*Math.PI/180), 0], VT, 'sd');
+            }
+
+            // 9. 高對稱點群 (Platonic Solids)
+
+            // --- Td: 正四面體對稱 (例如：甲烷 CH₄) ---
+            // 9. 高對稱點群 - Td (正四面體完全版)
+            else if (currentPg === "Td") { // 範例：甲烷 (CH₄)、P₄、SiCl₄
+                addSym('axis', "4 × C₃ (主軸/穿過頂點)", [1, 1, 1], WT, 'C3');
+                addSym('axis', "3 × C₂ (副軸/對邊中點)", [1, 0, 0], GN, 'C2');
+                addSym('axis', "3 × S₄ (虛軸/不當軸)", [1, 0, 0], OG, 'S4', true);
+                addSym('plane', "3 × σd (組1/精確切過 2 個 H 原子)", [1, -1, 0], PK, 'sd1');
+                addSym('plane', "3 × σd (組2/穿過原子間隙)", [0, 1, -1], VT, 'sd2');
+            }
+
+            // --- Oh: 正八面體對稱 (例如：SF₆) ---
+            // 總操作數：48 | 包含 3 個 σh (主面) 與 6 個 σd (對角面)
+            else if (currentPg === "Oh") { 
+                addSym('axis', "3 × C₄ (穿相對頂點/包含C₂)", [1, 0, 0], WT, 'C4');
+                addSym('axis', "4 × C₃ (面心軸/與S₆重合)", [1, 1, 1], CY, 'C3');
+                addSym('axis', "6 × C₂ (邊心軸/不穿原子)", [0, 1, 1], GN, 'C2');
+
+                // 1. σh 水平面：穿過中心與 4 個頂點原子（如 SF6 的赤道面）
+                // 法向量 [1, 0, 0] 包含 Y 軸與 Z 軸
+                addSym('plane', "3 × σₕ (水平面/穿中心與4原子)", [1, 0, 0], YL, 'sh');
+                
+                // 2. σd 二面鏡面：穿過中心與 2 個頂點原子（對角線切法）
+                // 法向量 [0, 1, -1] 包含 X 軸 [1, 0, 0]
+                addSym('plane', "6 × σd (對角面/穿中心與2原子)", [0, 1, -1], VT, 'sd');
+                
+                addSym('axis', "3 × S₄ (不當軸/與C₄重合)", [1, 0, 0], OG, 'S4', true);
+                addSym('axis', "4 × S₆ (不當軸/與C₃重合)", [1, 1, 1], OG, 'S6', true);
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
 
-            // 10. 線性點群
-            else if (currentPg === "Cinfv") {
-                addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
-                addSym('plane', "∞ × σᵥ (鉛直面)", [0, 1, 0], PK, 'sv');
-            } 
-            else if (currentPg === "Dinfh") {
-                addSym('axis', "C∞ (分子軸)", [1, 0, 0], WT, 'Cinf');
-                addSym('plane', "1 × σₕ (中心面)", [1, 0, 0], YL, 'sh');
-                addSym('axis', "∞ × C₂ (副軸/未穿原子)", [0, 1, 0], GN, 'C2');
-                addSym('axis', "S∞ (不當軸)", [1, 0, 0], OG, 'Sinf', true);
+            // --- Ih: 正二十面體對稱 (例如：C₆₀) ---
+            // 總操作數：120 | 包含 15 個鏡面
+            else if (currentPg === "Ih") { 
+                addSym('axis', "6 × C₅ (頂點軸/包含S₁₀)", [0, 1, 1.618], WT, 'C5');
+                addSym('axis', "10 × C₃ (面心軸/包含S₆)", [1, 1, 1], CY, 'C3');
+                addSym('axis', "15 × C₂ (邊心軸/不穿原子)", [1, 0, 0], GN, 'C2');
+                
+                // Ih 具有 15 個鏡面，我們顯示兩組代表性方位以展現立體感
+                // 第一組鏡面：法向量 [1, 0, 0]
+                addSym('plane', "15 × σ (鏡面/穿中心與頂點)", [1, 0, 0], PK, 's1');
+                // 第二組鏡面：旋轉後的代表面 (包含其他軸)
+                addSym('plane', "鏡面代表 (組2)", [0, 1, 0], VT, 's2');
+                
+                addSym('axis', "6 × S₁₀ (不當軸)", [0, 1, 1.618], OG, 'S10', true);
+                addSym('axis', "10 × S₆ (不當軸)", [1, 1, 1], OG, 'S6', true);
                 addSym('center', "反轉中心 (i)", [0, 0, 0], WT, 'i');
             }
 
@@ -3285,6 +3389,18 @@ function setupInteractions() {
 
     const btnAcetH2O = document.getElementById('btn-c2h2-h2o');
     if(btnAcetH2O) btnAcetH2O.addEventListener('click', () => { isReactionRunning = true; runAcetyleneHydration(); });
+    // 芳香烴事件監聽
+    const btnBenzHalo = document.getElementById('reaction-benzene-halo');
+    if(btnBenzHalo) btnBenzHalo.addEventListener('click', () => { isReactionRunning = true; runBenzeneHalogenation(); });
+
+    const btnBenzNitro = document.getElementById('reaction-benzene-nitro');
+    if(btnBenzNitro) btnBenzNitro.addEventListener('click', () => { isReactionRunning = true; runBenzeneNitration(); });
+
+    const btnBenzSulf = document.getElementById('reaction-benzene-sulf');
+    if(btnBenzSulf) btnBenzSulf.addEventListener('click', () => { isReactionRunning = true; runBenzeneSulfonation(); });
+
+    const btnBenzAlkyl = document.getElementById('reaction-benzene-alkyl');
+    if(btnBenzAlkyl) btnBenzAlkyl.addEventListener('click', () => { isReactionRunning = true; runBenzeneAlkylation(); });
 
 // 4. 重置按鈕 (修正為呼叫統一函式)
     const resetBtn = document.getElementById('reset-btn');
@@ -3876,6 +3992,99 @@ function formatConfigHtml(str) {
 function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
 function closeConfigModal() { const modal = document.getElementById('config-modal'); if(modal) modal.style.display = 'none'; }
 
+// 物質檢索功能控制
+function openSubstanceModal() {
+    const modal = document.getElementById('substance-modal');
+    if(modal) {
+        modal.style.display = 'flex';
+        renderSubstanceList(); // 開啟時載入
+    }
+}
+
+function closeSubstanceModal() {
+    const modal = document.getElementById('substance-modal');
+    if(modal) modal.style.display = 'none';
+}
+
+// 2. 渲染與搜尋邏輯 (模仿電子組態邏輯)
+function renderSubstanceList() {
+    const input = document.getElementById('substanceSearchInput');
+    const filter = input ? input.value.toLowerCase().trim() : "";
+    const container = document.getElementById('substanceListContainer');
+    container.innerHTML = "";
+
+    // 合併您在 data_substances.js 中定義的五段列表
+    if (typeof SUBSTANCE_LIST === 'undefined') {
+        container.innerHTML = "<div style='padding:20px; color:#f87171;'>錯誤：未找到資料庫檔案</div>";
+        return;
+    }
+
+    const allSubstances = [
+        ...SUBSTANCE_LIST, 
+        ...(typeof SUBSTANCE_LIST_PART2 !== 'undefined' ? SUBSTANCE_LIST_PART2 : []),
+        ...(typeof SUBSTANCE_LIST_PART3 !== 'undefined' ? SUBSTANCE_LIST_PART3 : []),
+        ...(typeof SUBSTANCE_LIST_PART4 !== 'undefined' ? SUBSTANCE_LIST_PART4 : []),
+        ...(typeof SUBSTANCE_LIST_PART5 !== 'undefined' ? SUBSTANCE_LIST_PART5 : [])
+    ];
+
+    let shownCount = 0;
+    allSubstances.forEach(sub => {
+        // --- 核心搜尋匹配邏輯 ---
+        // A. 化學式以搜尋詞開頭 (如輸入 F 找到 F2, Fe, Fe2O3)
+        const isFormulaStart = sub.formula.toLowerCase().startsWith(filter);
+        // B. 標籤、名稱、俗名包含搜尋詞 (模糊搜尋)
+        const isKeywordMatch = sub.tags.some(tag => tag.toLowerCase().includes(filter)) || 
+                               sub.name.toLowerCase().includes(filter) ||
+                               (sub.common && sub.common.toLowerCase().includes(filter));
+
+        // 如果有輸入且都不符合，就跳過
+        if (filter !== "" && !isFormulaStart && !isKeywordMatch) return;
+        
+        // 效能優化：非搜尋狀態下最多顯示 100 個
+        if (filter === "" && shownCount > 100) return;
+        shownCount++;
+
+        const card = document.createElement('div');
+        card.className = 'element-card';
+        card.style.borderLeft = '4px solid #38bdf8';
+        card.style.cursor = 'pointer';
+        card.style.background = 'rgba(30,41,59,0.4)';
+        
+        card.onclick = () => {
+            loadMolecule(sub.key);
+            closeSubstanceModal();
+            // 如果是手機版，自動縮回面板
+            if (window.innerWidth < 768) {
+                document.body.classList.remove('simulate-mobile-open');
+                const panel = document.querySelector('.controls-area');
+                if (panel) panel.style.transform = 'translateY(70vh)';
+            }
+        };
+
+        // 格式化化學式顯示 (處理下標)
+        const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div style="font-size:1.8rem; font-weight:900; color:#fff; min-width:100px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">
+                        ${displayFormula}
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <span style="font-size:1.1rem; font-weight:bold; color:#38bdf8;">${sub.name}</span>
+                        <span style="font-size:0.8rem; color:#94a3b8;">
+                            ${sub.common ? '俗名: ' + sub.common : '分類: ' + sub.category}
+                        </span>
+                    </div>
+                </div>
+                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem; white-space:nowrap;">
+                    查看模型
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
 
 function checkAtomClick(screenX, screenY) {
     if (!currentMolecule || !currentMolecule.renderObjects) return;
