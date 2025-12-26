@@ -933,25 +933,17 @@
         <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
         
         <div class="controls-content">
-            <!-- 1. ⚛️ 輸入化學式 -->
-            <div class="card">
-                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>⚛️ 輸入化學式</span>
-                    <span style="font-size: 13px; color: #fff; font-weight: bold; text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.4); letter-spacing: 1px;">CREATED BY 林瑋老師</span>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="formula-input" placeholder="Ex: P4O6, C60, 苯..." value="P4O6">
-                    <button id="load-btn">載入</button>
-                </div>
-            </div>
-
-            <!-- 2. ⚖️ 平衡化學反應式 (詳細說明版) -->
+            <!-- 1. ⚖️ 平衡反應式 (已移動至首位並加入 CREATED BY 標籤) -->
             <div class="card" style="border-color: var(--accent-green); position: relative;">
-                <div class="card-title" style="color: var(--accent-green); display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                    <span>⚖️ 平衡化學反應式</span>
-                    <div onclick="toggleBalanceInfo(event)" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--accent-green);">
+                        <span>⚖️ 平衡化學反應式</span>
+                        <div onclick="toggleBalanceInfo(event)" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                    </div>
+                    <!-- 老師標籤移動至此 -->
+                    <span style="font-size: 13px; color: #fff; font-weight: bold; text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.4); letter-spacing: 1px;">CREATED BY 林瑋老師</span>
                     
-                    <!-- 詳細說明彈窗 (還原版) -->
+                    <!-- 詳細說明彈窗 (維持原樣) -->
                     <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
                         <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範 ( _ 表示空格 )</div>
                         <div style="margin-bottom: 10px;">
@@ -959,10 +951,6 @@
                             2. 離子如 <span style="color: #f472b6;">MnO<sub>4</sub>_-</span> 或 <span style="color: #f472b6;">S2-</span>。<br>
                             3. 首字母務必大寫，如 <span style="color: #38bdf8;">NaOH</span>。<br>
                             4. 支援 <span style="color: #38bdf8;">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></span> 括號。
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #facc15;">
-                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">正確範例：</div>
-                            <code style="color: #facc15; font-family: 'Courier New', monospace; font-size: 0.85rem; word-break: break-all;">MnO4_-_+_H+_+_S2-_=_Mn2+_+_S_+_H2O</code>
                         </div>
                         <button onclick="document.getElementById('balance-help-popup').style.display='none'" style="margin-top:10px; width:100%; padding:8px; background:#10b981; border:none; border-radius:8px; color:#fff; cursor:pointer;">關閉說明</button>
                     </div>
@@ -2056,6 +2044,7 @@ function loadMolecule(key, variantKey = null) {
 
     rotVelocity = { x: 0.004, y: 0.004, z: 0 }; 
     currentKey = key;
+    currentVariantKey = variantKey; 
     
     let data = targetData;
     if (variantKey && data.variants && data.variants[variantKey]) {
@@ -4006,19 +3995,19 @@ function closeSubstanceModal() {
     if(modal) modal.style.display = 'none';
 }
 
-// 2. 渲染與搜尋邏輯 (模仿電子組態邏輯)
+// 渲染與搜尋邏輯 (修正智慧載入問題)
 function renderSubstanceList() {
     const input = document.getElementById('substanceSearchInput');
     const filter = input ? input.value.toLowerCase().trim() : "";
     const container = document.getElementById('substanceListContainer');
     container.innerHTML = "";
 
-    // 合併您在 data_substances.js 中定義的五段列表
     if (typeof SUBSTANCE_LIST === 'undefined') {
-        container.innerHTML = "<div style='padding:20px; color:#f87171;'>錯誤：未找到資料庫檔案</div>";
+        container.innerHTML = "<div style='padding:20px; color:#f87171;'>錯誤：資料庫檔案未載入</div>";
         return;
     }
 
+    // 合併您檔案中所有的 PART2 ~ PART5 清單
     const allSubstances = [
         ...SUBSTANCE_LIST, 
         ...(typeof SUBSTANCE_LIST_PART2 !== 'undefined' ? SUBSTANCE_LIST_PART2 : []),
@@ -4027,33 +4016,46 @@ function renderSubstanceList() {
         ...(typeof SUBSTANCE_LIST_PART5 !== 'undefined' ? SUBSTANCE_LIST_PART5 : [])
     ];
 
-    let shownCount = 0;
     allSubstances.forEach(sub => {
-        // --- 核心搜尋匹配邏輯 ---
-        // A. 化學式以搜尋詞開頭 (如輸入 F 找到 F2, Fe, Fe2O3)
-        const isFormulaStart = sub.formula.toLowerCase().startsWith(filter);
-        // B. 標籤、名稱、俗名包含搜尋詞 (模糊搜尋)
+        // 搜尋邏輯：化學式開頭符合 OR 標籤/名稱內含符合
+        const isFormulaMatch = sub.formula.toLowerCase().startsWith(filter);
         const isKeywordMatch = sub.tags.some(tag => tag.toLowerCase().includes(filter)) || 
-                               sub.name.toLowerCase().includes(filter) ||
-                               (sub.common && sub.common.toLowerCase().includes(filter));
+                               sub.name.toLowerCase().includes(filter);
 
-        // 如果有輸入且都不符合，就跳過
-        if (filter !== "" && !isFormulaStart && !isKeywordMatch) return;
-        
-        // 效能優化：非搜尋狀態下最多顯示 100 個
-        if (filter === "" && shownCount > 100) return;
-        shownCount++;
+        if (filter !== "" && !isFormulaMatch && !isKeywordMatch) return;
 
         const card = document.createElement('div');
         card.className = 'element-card';
         card.style.borderLeft = '4px solid #38bdf8';
         card.style.cursor = 'pointer';
-        card.style.background = 'rgba(30,41,59,0.4)';
-        
+/* --- cc (智慧載入與異構物同步修正) --- */
         card.onclick = () => {
-            loadMolecule(sub.key);
+            // 1. 拆解 Key 並清除前後空白 (處理如 "C4H8 | 1-丁烯")
+            const parts = sub.key.split('|').map(p => p.trim());
+            const mainKey = parts[0];
+            let variantKey = parts.length > 1 ? parts[1] : null;
+
+            // 2. 智慧匹配：如果 variantKey 是中文，去對應資料庫內真正的鍵值
+            const rootData = MOLECULE_DB[mainKey];
+            if (rootData && rootData.variants && variantKey) {
+                // 如果直接用變體名找不到 (例如資料庫鍵名是 "1-Butene" 但我們傳 "1-丁烯")
+                if (!rootData.variants[variantKey]) {
+                    const keys = Object.keys(rootData.variants);
+                    // 尋找哪一個變體的 fullKey 包含我們要找的名稱 (例如 "C4H8|1-丁烯")
+                    const bestMatch = keys.find(k => {
+                        const vData = rootData.variants[k];
+                        const fullKey = vData.fullKey || "";
+                        return k === variantKey || fullKey.includes(variantKey);
+                    });
+                    if (bestMatch) variantKey = bestMatch;
+                }
+            }
+
+            // 3. 執行載入 (這會觸發模型繪製與右側選單 updateVariantUI)
+            loadMolecule(mainKey, variantKey);
             closeSubstanceModal();
-            // 如果是手機版，自動縮回面板
+            
+            // 手機版自動處理
             if (window.innerWidth < 768) {
                 document.body.classList.remove('simulate-mobile-open');
                 const panel = document.querySelector('.controls-area');
@@ -4061,24 +4063,21 @@ function renderSubstanceList() {
             }
         };
 
-        // 格式化化學式顯示 (處理下標)
         const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:20px;">
-                    <div style="font-size:1.8rem; font-weight:900; color:#fff; min-width:100px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">
+                    <div style="font-size:1.8rem; font-weight:900; color:#fff; min-width:100px;">
                         ${displayFormula}
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="display:flex; flex-direction:column;">
                         <span style="font-size:1.1rem; font-weight:bold; color:#38bdf8;">${sub.name}</span>
-                        <span style="font-size:0.8rem; color:#94a3b8;">
-                            ${sub.common ? '俗名: ' + sub.common : '分類: ' + sub.category}
-                        </span>
+                        <span style="font-size:0.8rem; color:#94a3b8;">${sub.common ? '俗名: ' + sub.common : sub.category}</span>
                     </div>
                 </div>
-                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem; white-space:nowrap;">
-                    查看模型
+                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem;">
+                    查看
                 </div>
             </div>
         `;
