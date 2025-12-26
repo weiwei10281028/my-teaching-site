@@ -4005,6 +4005,7 @@ function closeSubstanceModal() {
 // 渲染與搜尋邏輯 (修正智慧載入問題)
 function renderSubstanceList() {
     const input = document.getElementById('substanceSearchInput');
+    // 使用 .toLowerCase() 但針對中文保持原始字串匹配
     const filter = input ? input.value.toLowerCase().trim() : "";
     const container = document.getElementById('substanceListContainer');
     container.innerHTML = "";
@@ -4015,61 +4016,60 @@ function renderSubstanceList() {
     }
 
     SUBSTANCE_LIST.forEach(sub => {
-        const isFormulaMatch = sub.formula.toLowerCase().startsWith(filter);
-        const isKeywordMatch = sub.tags.some(tag => tag.toLowerCase().includes(filter)) || 
-                               sub.name.toLowerCase().includes(filter);
+        // 安全獲取屬性，防止 undefined 導致函式崩潰
+        const formula = (sub.formula || "").toLowerCase();
+        const name = (sub.name || "").toLowerCase();
+        const common = (sub.common || "").toLowerCase();
+        const tags = sub.tags || [];
 
-        if (filter !== "" && !isFormulaMatch && !isKeywordMatch) return;
+        // 1. 化學式匹配：英文開頭匹配 (例如打 f 出現 Fe)
+        const isFormulaMatch = formula.startsWith(filter);
+        
+        // 2. 名稱/俗名匹配：支援中文「包含」匹配
+        const isNameMatch = name.includes(filter);
+        const isCommonMatch = common.includes(filter);
+        
+        // 3. 標籤匹配：遍歷 tags 陣列
+        const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
+
+        // 搜尋邏輯：打字時符合任一條件才顯示
+        if (filter !== "" && !isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
 
         const card = document.createElement('div');
         card.className = 'element-card';
         card.style.borderLeft = '4px solid #38bdf8';
         card.style.cursor = 'pointer';
-/* --- cc (智慧載入與異構物同步修正) --- */
+        
         card.onclick = () => {
             const parts = sub.key.split('|').map(p => p.trim());
             const mainKey = parts[0]; 
             const targetName = parts.length > 1 ? parts[1] : null;
-
             const rootData = MOLECULE_DB[mainKey];
 
             if (rootData && rootData.variants) {
                 const vKeys = Object.keys(rootData.variants);
                 let variantKey = null;
-
                 if (targetName) {
-                    // 1. 先找完全匹配的 Key (例如 "Simple")
                     variantKey = vKeys.find(k => k.toLowerCase() === targetName.toLowerCase());
-
-                    // 2. 如果找不到，找 fullKey 裡面包含 targetName 的 (例如 "H2SO4|硫酸" 包含 "硫酸")
                     if (!variantKey) {
                         variantKey = vKeys.find(k => {
                             const vData = rootData.variants[k];
-                            const full = (vData.fullKey || "").toLowerCase();
-                            return full.includes(targetName.toLowerCase());
+                            return (vData.fullKey || "").toLowerCase().includes(targetName.toLowerCase());
                         });
                     }
-
-                    // 3. [防黑屏保險] 如果還是找不到，抓第一個
-                    if (!variantKey) variantKey = vKeys[0];
+                    variantKey = variantKey || vKeys[0];
                 } else {
                     variantKey = vKeys[0];
                 }
-
-                // 強制更新全域變數，確保 loadMolecule 內部邏輯正確
                 window.currentKey = mainKey;
                 window.currentVariantKey = variantKey;
                 loadMolecule(mainKey, variantKey);
             } else {
-                // 沒有變體的普通分子 (如 Cs)
                 window.currentKey = mainKey;
                 window.currentVariantKey = null;
                 loadMolecule(mainKey);
             }
-
             closeSubstanceModal();
-            
-            // 手機版自動縮回
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
                 if (panel) panel.style.transform = 'translateY(70vh)';
@@ -4078,11 +4078,10 @@ function renderSubstanceList() {
         };
 
         const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
-
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:20px;">
-                    <div style="font-size:1.8rem; font-weight:900; color:#fff; min-width:100px;">
+                    <div style="font-size:1.8rem; font-weight:900; color:#fff; min-width:100px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">
                         ${displayFormula}
                     </div>
                     <div style="display:flex; flex-direction:column;">
@@ -4090,9 +4089,7 @@ function renderSubstanceList() {
                         <span style="font-size:0.8rem; color:#94a3b8;">${sub.common ? '俗名: ' + sub.common : sub.category}</span>
                     </div>
                 </div>
-                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem;">
-                    查看
-                </div>
+                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
             </div>
         `;
         container.appendChild(card);
