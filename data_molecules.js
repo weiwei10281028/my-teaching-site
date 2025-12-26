@@ -694,6 +694,9 @@ addMol("AsF3|三氟化砷", "As", "sp³", ["角錐形","Pyramidal"], "96°", "-6
 addMol("SbCl3|三氯化銻", "Sb", "sp³", ["角錐形","Pyramidal"], "97°", "73.4", "220.3", [{elem:"Sb",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"Cl",x:0,y:-55,z:65}, {elem:"Cl",x:55,y:-55,z:-35}, {elem:"Cl",x:-55,y:-55,z:-35}], [[0,1],[0,2],[0,3]], null, null, "C3v");
 addMol("ICl3|三氯化碘|Iodine Trichloride", "I", "sp³d", ["T型","T-shaped"], "<90°", "101 (分解)", "-", [{elem:"I",x:0,y:0,z:0,lpCount:2,lp3d:[{x:-1,y:0.5,z:0},{x:-1,y:-0.5,z:0}]},{elem:"Cl",x:90,y:0,z:0},{elem:"Cl",x:0,y:90,z:0},{elem:"Cl",x:0,y:-90,z:0}], [[0,1],[0,2],[0,3]], null, '<div class="info-section"><div class="info-title">🧪 物質簡介</div><div class="info-body"><strong>三氯化碘 (ICl₃)</strong><br>中心碘原子採取 sp³d 混成。為了減少電子雲斥力，兩對孤對電子佔據水平位置，使分子呈現 T 型結構。</div></div>', "C2v");
 addMol("B2H6|乙硼烷|Diborane", "B", "sp³", ["特殊 (含氫橋鍵)","Banana Bonds"], "120°(端)/97°(橋)", "-164.8", "-92.5", [{elem:"B",x:-40,y:0,z:0,lpCount:0},{elem:"B",x:40,y:0,z:0,lpCount:0},{elem:"H",x:0,y:0,z:50},{elem:"H",x:0,y:0,z:-50},{elem:"H",x:-65,y:43,z:0},{elem:"H",x:-65,y:-43,z:0},{elem:"H",x:65,y:43,z:0},{elem:"H",x:65,y:-43,z:0}], [[0,2],[0,3],[1,2],[1,3],[0,4],[0,5],[1,6],[1,7]], null, '<div class="info-section"><div class="info-title">🍌 結構特性</div><div class="info-body"><strong>乙硼烷 (B₂H₆)</strong><br>具有三中心二電子鍵。每個硼原子與四個氫原子連線，形成類似 sp³ 的幾何排列。</div></div>', "D2h");
+addMol("B(OH)3|硼酸", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", "169 (分解)", "-", [{elem:"O",x:-58,y:0,z:37},{elem:"B",x:0,y:0,z:0},{elem:"O",x:59,y:0,z:35},{elem:"O",x:-5,y:0,z:-69},{elem:"H",x:-96,y:0,z:8},{elem:"H",x:99,y:0,z:8},{elem:"H",x:37,y:0,z:-93}], [[0,1],[0,4],[1,2],[1,3],[2,5],[3,6]], null, null, "C3h");
+
+
 // --- 8. 陰離子群 (Complex Anions) ---
 addMol("SiF62-|六氟矽酸根", "Si", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("Si","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
 addMol("PF6-|六氟磷酸根", "P", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("P","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
@@ -860,47 +863,15 @@ addMol("CH3CN|乙腈|氰甲烷", "C", "sp", ["直線型 (CN端)","Linear"], "180
 addMol("CO(NH2)2|尿素", "C", "sp²", ["平面","Planar"], "120°", "132.7", "分解", [{elem:"C",x:0,y:0,z:0}, {elem:"O",x:0,y:60,z:0}, {elem:"N",x:-50,y:-35,z:0}, {elem:"N",x:50,y:-35,z:0}, {elem:"H",x:-80,y:-15,z:0}, {elem:"H",x:-50,y:-70,z:0}, {elem:"H",x:80,y:-15,z:0}, {elem:"H",x:50,y:-70,z:0}], [[0,1,"double"],[0,2],[0,3],[2,4],[2,5],[3,6],[3,7]], null, null, "C2v");
 addMol("SOCl2|亞硫醯氯|二氯亞碸", "S", "sp³", ["角錐形","Pyramidal"], "106°", "-104.5", "76", [{elem:"S",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"O",x:0,y:-35,z:50}, {elem:"Cl",x:60,y:-35,z:-30}, {elem:"Cl",x:-60,y:-35,z:-30}], [[0,1,"double"],[0,2],[0,3]], null, null, "Cs");
 addMol("POCl3|三氯氧化磷|磷醯氯", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "1.25", "105.8", [{elem:"P",x:0,y:0,z:0}, {elem:"O",x:0,y:65,z:0}, {elem:"Cl",x:55,y:-35,z:35}, {elem:"Cl",x:-55,y:-35,z:35}, {elem:"Cl",x:0,y:0,z:-70}], [[0,1,"double"],[0,2],[0,3],[0,4]], null, null, "C3v");
-// C60 (使用 IIFE 生成資料並添加名稱)
-(function(){
-    const phi=(1+Math.sqrt(5))/2,scale=28;let rawVerts=[];
-    const groups=[[0,1,3*phi],[1,2+phi,2*phi],[phi,2,2*phi+1]];
-    function addPermutations(u,v,w){
-        const cycles=[[u,v,w],[v,w,u],[w,u,v]];
-        cycles.forEach(p=>{
-            for(let i=0;i<8;i++){
-                let x=p[0]*((i&1)?1:-1),y=p[1]*((i&2)?1:-1),z=p[2]*((i&4)?1:-1);
-                rawVerts.push({x,y,z});
-            }
-        });
-    }
-    groups.forEach(g=>addPermutations(g[0],g[1],g[2]));
-    const atoms=[],threshold=0.1;
-    rawVerts.forEach(v=>{
-        if(!atoms.some(a=>Math.abs(a.x-v.x*scale)<threshold&&Math.abs(a.y-v.y*scale)<threshold&&Math.abs(a.z-v.z*scale)<threshold)){
-            atoms.push({elem:"C",x:v.x*scale,y:v.y*scale,z:v.z*scale,lpCount:0,r:5});
-        }
-    });
-    const bonds=[],bondSet=new Set();
-    for(let i=0;i<atoms.length;i++){
-        let distances=[];
-        for(let j=0;j<atoms.length;j++){
-            if(i===j)continue;
-            let d=(atoms[i].x-atoms[j].x)**2+(atoms[i].y-atoms[j].y)**2+(atoms[i].z-atoms[j].z)**2;
-            distances.push({id:j,dist:d});
-        }
-        distances.sort((a,b)=>a.dist-b.dist);
-        for(let k=0;k<3;k++){
-            let neighbor=distances[k].id,id1=Math.min(i,neighbor),id2=Math.max(i,neighbor),key=`${id1}-${id2}`;
-            if(!bondSet.has(key)){
-                let type=(k===0)?"double":"single";
-                bonds.push([id1,id2,type]);
-                bondSet.add(key);
-            }
-        }
-    }
-    // [修正] 加入中文名稱搜尋
-    addMol("C60|碳60|碳六十|富勒烯|足球烯","C","sp²",["球狀 (12個五邊形, 20個六邊形)","Truncated Icosahedron"],"120°", "> 280 (昇華)", "-", atoms,bonds);
-})();
+addMol("C60|碳六十|碳60|富勒烯|足球烯","C","sp²",["足球狀 (12個五邊形, 20個六邊形)","Truncated Icosahedron"],"120°", "> 280 (昇華)", "-", [{elem:"C",x:-76,y:150,z:-58},{elem:"C",x:-133,y:112,z:-34},{elem:"C",x:-39,y:173,z:0},{elem:"C",x:-42,y:129,z:-115},{elem:"C",x:-132,y:112,z:38},{elem:"C",x:-154,y:55,z:-69},{elem:"C",x:-74,y:150,z:60},{elem:"C",x:-152,y:55,z:74},{elem:"C",x:-37,y:129,z:116},
+{elem:"C",x:31,y:175,z:-1},{elem:"C",x:-114,y:34,z:132},{elem:"C",x:-173,y:-4,z:38},{elem:"C",x:-58,y:70,z:152},{elem:"C",x:-112,y:-39,z:132},{elem:"C",x:2,y:35,z:174},{elem:"C",x:35,y:131,z:114},{elem:"C",x:68,y:153,z:57},{elem:"C",x:60,y:73,z:150},{elem:"C",x:128,y:119,z:34},{elem:"C",x:66,y:153,z:-60},{elem:"C",x:31,y:130,z:-116},{elem:"C",x:126,y:118,z:-39},
+{elem:"C",x:54,y:72,z:-153},{elem:"C",x:-63,y:69,z:-151},{elem:"C",x:-118,y:33,z:-128},{elem:"C",x:-4,y:34,z:-174},{elem:"C",x:-117,y:-40,z:-128},{elem:"C",x:-175,y:-4,z:-32},{elem:"C",x:-151,y:-63,z:-68},{elem:"C",x:-149,y:-62,z:74},{elem:"C",x:149,y:62,z:-74},{elem:"C",x:112,y:39,z:-132},{elem:"C",x:173,y:4,z:-38},{elem:"C",x:114,y:-34,z:-132},{elem:"C",x:-2,y:-35,z:-174},
+{elem:"C",x:-60,y:-73,z:-150},{elem:"C",x:58,y:-70,z:-152},{elem:"C",x:-35,y:-131,z:-114},{elem:"C",x:-128,y:-119,z:-34},{elem:"C",x:-126,y:-118,z:39},{elem:"C",x:-69,y:-153,z:-57},{elem:"C",x:-66,y:-153,z:60},{elem:"C",x:-54,y:-72,z:153},{elem:"C",x:4,y:-34,z:174},{elem:"C",x:-31,y:-130,z:116},{elem:"C",x:63,y:-69,z:151},{elem:"C",x:117,y:40,z:128},{elem:"C",x:151,y:63,z:68},
+{elem:"C",x:118,y:-33,z:128},{elem:"C",x:175,y:4,z:32},{elem:"C",x:42,y:-129,z:115},{elem:"C",x:76,y:-150,z:58},{elem:"C",x:154,y:-55,z:69},{elem:"C",x:133,y:-112,z:34},{elem:"C",x:152,y:-55,z:-74},{elem:"C",x:132,y:-112,z:-38},{elem:"C",x:37,y:-129,z:-116},{elem:"C",x:74,y:-150,z:-60},{elem:"C",x:-31,y:-175,z:1},{elem:"C",x:39,y:-173,z:0}], [[0,2,"double"],[0,3],[0,1],[2,9],[2,6],[9,19,"double"],
+[9,16],[19,20],[19,21],[20,3,"double"],[20,22],[3,23],[6,8,"double"],[6,4],[16,18,"double"],[16,15],[21,30,"double"],[21,18],[22,31,"double"],[22,25],[23,25,"double"],[23,24],[1,5],[1,4,"double"],[31,30],[31,33],[30,32],[33,54,"double"],[33,36],[32,54],[32,49,"double"],[8,15],[8,12],[18,47],[54,55],[47,49],[47,46,"double"],[15,17,"double"],[25,34],[24,5],[24,26,"double"],[12,10],[12,14,"double"],[5,27,"double"],
+[4,7],[26,28],[26,35],[27,28],[27,11],[7,11],[7,10,"double"],[49,52],[34,36,"double"],[34,35],[17,14],[17,46],[28,38,"double"],[11,29,"double"],[10,13],[13,29],[13,42,"double"],[14,43],[46,48],[48,45],[48,52,"double"],[29,39],[39,41,"double"],[39,38],[41,44],[41,58],[38,40],[36,56],[45,43,"double"],[45,50],[35,37,"double"],[37,40],[37,56],[43,42],[52,53],[53,55,"double"],[53,51],[42,44],[44,50,"double"],[40,58,"double"],
+[58,59],[50,51],[56,57,"double"],[55,57],[51,59,"double"],[57,59]], null, null, "Ih");
+
 
 // --- 12. 有同分異構物的有機分子與其他有機化合物 (全面修正：Key 統一為 分子式|中文名稱) ---
 // N2F2 (二氟二氮)
@@ -909,12 +880,14 @@ addMol("N2F2", "N", "sp²", ["平面","Planar"], "120°", "-165", "-105", [], []
     "N2F2|反式-二氟二氮": { pg: "C2h", mp: "-172", bp: "-111", atoms: [{elem:"N",x:-32,y:0,z:0},{elem:"N",x:32,y:0,z:0},{elem:"F",x:-67,y:60,z:0},{elem:"F",x:67,y:-60,z:0}], bonds: [[0,1,"double"],[0,2],[1,3]] }
 });
 
+
 // C2H2Cl2 (二氯乙烯)
 addMol("C2H2Cl2|二氯乙烯", "C", "sp²", ["平面","Planar"], "120°", "-81.5", "60.3", [], [], {
     "C2H2Cl2|順-1,2-二氯乙烯": { pg: "C2v", mp: "-81.5", bp: "60.3", atoms: [{elem:"C",x:-32,y:0,z:0},{elem:"C",x:32,y:0,z:0},{elem:"Cl",x:-69,y:65,z:0},{elem:"Cl",x:69,y:65,z:0},{elem:"H",x:-57,y:-43,z:0},{elem:"H",x:57,y:-43,z:0}], bonds: [[0,1,"double"],[0,2],[0,4],[1,3],[1,5]] },
-    "C2H2Cl2|反-1,2-二氯乙烯": { pg: "C2h", mp: "-49.4", bp: "47.5", atoms: [{elem:"C",x:-32,y:0,z:0},{elem:"C",x:32,y:0,z:0},{elem:"Cl",x:-69,y:65,z:0},{elem:"Cl",x:69,y:-65,z:0},{elem:"H",x:-57,y:-43,z:0},{elem:"H",x:57,y:43,z:0}], bonds: [[0,1,"double"],[0,2],[0,4],[1,3],[1,5]] },
-    "C2H2Cl2|1,1-二氯乙烯": { pg: "C2v", mp: "-122.6", bp: "31.6", atoms: [{elem:"C",x:-32,y:0,z:0},{elem:"C",x:32,y:0,z:0},{elem:"Cl",x:-69,y:65,z:0},{elem:"Cl",x:-69,y:-65,z:0},{elem:"H",x:57,y:43,z:0},{elem:"H",x:57,y:-43,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[1,4],[1,5]] }
-});
+    "C2H2Cl2|反-1,2-二氯乙烯": { pg: "C2h", mp: "-49.4", bp: "47.5", atoms: [{elem:"C",x:-32,y:0,z:0},{elem:"C",x:32,y:0,z:0},{elem:"Cl",x:-69,y:0,z:65},{elem:"Cl",x:69,y:0,z:-65},{elem:"H",x:-57,y:0,z:-43},{elem:"H",x:57,y:0,z:43}], bonds: [[0,1,"double"],[0,2],[0,4],[1,3],[1,5]] },
+    "C2H2Cl2|1,1-二氯乙烯": { pg: "C2v", mp: "-122.6", bp: "31.6", atoms: [{elem:"C",x:-28,y:0,z:0},{elem:"C",x:36,y:0,z:0},{elem:"Cl",x:-65,y:65,z:0},{elem:"Cl",x:-65,y:-65,z:0},{elem:"H",x:61,y:43,z:0},{elem:"H",x:61,y:-43,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[1,4],[1,5]] }
+}, null, "");
+
 
 // C5H12 (戊烷)
 addMol("C5H12", "C", "sp³", ["鏈狀/四面體","Chain/Tetra"], "109.5°", "-129.8", "36.1", [], [], {
@@ -1026,7 +999,7 @@ addMol("H2C2O4|乙二酸|草酸", "C", "sp²", ["平面","Planar"], "120°", "18
 addMol("C2H4(OH)2|乙二醇|1,2-乙二醇", "C", "sp³", ["扭轉型/四面體","Gauche/Tetrahedral"], "109.5°", "-12.9", "197.3", [{elem:"O",x:-60,y:36,z:-1},{elem:"O",x:65,y:36,z:12},{elem:"C",x:-29,y:-16,z:19},{elem:"C",x:34,y:-16,z:-8},{elem:"H",x:-54,y:-56,z:5},{elem:"H",x:-27,y:-15,z:68},{elem:"H",x:59,y:-56,z:7},{elem:"H",x:33,y:-15,z:-57},{elem:"H",x:-63,y:34,z:-45},{elem:"H",x:42,y:71,z:-1}], [[0,2],[0,8],[1,3],[1,9],[2,3],[2,4],[2,5],[3,6],[3,7]], null, null, "C2");
 addMol("C3H5(OH)3|丙三醇|甘油", "C", "sp³", ["鏈狀/四面體","Chain/Tetrahedral"], "109.5°", "17.8", "290", [{elem:"O",x:4,y:70,z:3},{elem:"O",x:111,y:10,z:-19},{elem:"O",x:-106,y:10,z:-19},{elem:"C",x:3,y:10,z:-20},{elem:"C",x:59,y:-22,z:3},{elem:"C",x:-54,y:-21,z:3},{elem:"H",x:3,y:14,z:-69},{elem:"H",x:62,y:-23,z:52},{elem:"H",x:61,y:-68,z:-14},{elem:"H",x:-56,y:-68,z:-13},{elem:"H",x:-56,y:-20,z:52},{elem:"H",x:4,y:68,z:47},{elem:"H",x:108,y:51,z:-4},{elem:"H",x:-141,y:-11,z:-3}], [[0,3],[0,11],[1,4],[1,12],[2,5],[2,13],[3,4],[3,5],[3,6],[4,7],[4,8],[5,9],[5,10]], null, null, "C1");
 addMol("C8H9NO2|乙醯胺基苯酚|普拿疼", "C", "sp²", ["平面/四面體","Planar/Tetra"], "120°", "169", ">250", [{elem:"O",x:187,y:-27,z:0},{elem:"O",x:-103,y:-70,z:0},{elem:"N",x:-57,y:26,z:0},{elem:"C",x:4,y:12,z:0},{elem:"C",x:24,y:-47,z:0},{elem:"C",x:46,y:59,z:0},{elem:"C",x:85,y:-60,z:0},{elem:"C",x:108,y:46,z:0},{elem:"C",x:127,y:-14,z:0},{elem:"C",x:-106,y:-15,z:0},{elem:"C",x:-165,y:18,z:0},{elem:"H",x:-6,y:-86,z:0},{elem:"H",x:32,y:106,z:0},{elem:"H",x:-67,y:70,z:0},{elem:"H",x:99,y:-107,z:0},{elem:"H",x:140,y:82,z:0},{elem:"H",x:-169,y:45,z:-41},{elem:"H",x:-202,y:-15,z:1},{elem:"H",x:-168,y:47,z:40},{elem:"H",x:192,y:-70,z:0}], [[0,8],[0,19],[1,9,"double"],[2,3],[2,9],[2,13],[3,4,"double"],[3,5],[4,6],[4,11],[5,7,"double"],[5,12],[6,8,"double"],[6,14],[7,8],[7,15],[9,10],[10,16],[10,17],[10,18]], null, null, "Cs");
-addMol("C7H8|甲苯|Toluene", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-95", "110.6", [{elem:"C",x:-62.5,y:0,z:0},{elem:"C",x:-31.5,y:-54,z:0},{elem:"C",x:-31.5,y:54,z:0},{elem:"C",x:-129.5,y:0,z:0},{elem:"C",x:31.5,y:-54,z:0},{elem:"C",x:31.5,y:54,z:0},{elem:"C",x:62.5,y:0,z:0},{elem:"H",x:-55.5,y:-97,z:0},{elem:"H",x:-55.5,y:97,z:0},{elem:"H",x:-147.5,y:40,z:23},{elem:"H",x:-147.5,y:-40,z:23},{elem:"H",x:-146.5,y:0,z:-46},{elem:"H",x:55.5,y:-97,z:0},{elem:"H",x:55.5,y:97,z:0},{elem:"H",x:111.5,y:0,z:0}], [[0,1,"double"],[0,2],[0,3],[1,4],[1,7],[2,5,"double"],[2,8],[3,9],[3,10],[3,11],[4,6,"double"],[4,12],[5,6],[5,13],[6,14]], null, null, "Cs");
+addMol("C6H5CH3|甲苯|C7H8|Toluene", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-95", "110.6", [{elem:"C",x:-62.5,y:0,z:0},{elem:"C",x:-31.5,y:-54,z:0},{elem:"C",x:-31.5,y:54,z:0},{elem:"C",x:-129.5,y:0,z:0},{elem:"C",x:31.5,y:-54,z:0},{elem:"C",x:31.5,y:54,z:0},{elem:"C",x:62.5,y:0,z:0},{elem:"H",x:-55.5,y:-97,z:0},{elem:"H",x:-55.5,y:97,z:0},{elem:"H",x:-147.5,y:40,z:23},{elem:"H",x:-147.5,y:-40,z:23},{elem:"H",x:-146.5,y:0,z:-46},{elem:"H",x:55.5,y:-97,z:0},{elem:"H",x:55.5,y:97,z:0},{elem:"H",x:111.5,y:0,z:0}], [[0,1,"double"],[0,2],[0,3],[1,4],[1,7],[2,5,"double"],[2,8],[3,9],[3,10],[3,11],[4,6,"double"],[4,12],[5,6],[5,13],[6,14]], null, null, "Cs");
 addMol("C6H6|苯|Benzene", "C", "sp²", ["平面","Planar"], "120°", "5.5", "80.1", [{elem:"C",x:63,y:0,z:0},{elem:"C",x:31.5,y:54.6,z:0},{elem:"C",x:-31.5,y:54.6,z:0},{elem:"C",x:-63,y:0,z:0},{elem:"C",x:-31.5,y:-54.6,z:0},{elem:"C",x:31.5,y:-54.6,z:0},{elem:"H",x:112,y:0,z:0},{elem:"H",x:56,y:97,z:0},{elem:"H",x:-56,y:97,z:0},{elem:"H",x:-112,y:0,z:0},{elem:"H",x:-56,y:-97,z:0},{elem:"H",x:56,y:-97,z:0}], [[0,1,"double"],[1,2],[2,3,"double"],[3,4],[4,5,"double"],[5,0],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]], null, null, "D6h");
 addMol("CH3COOCH3|乙酸甲酯|Methyl Acetate", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-98", "56.9", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:50,z:0},{elem:"O",x:50,y:-30,z:0},{elem:"C",x:90,y:-30,z:0},{elem:"H",x:-35,y:-45,z:0},{elem:"H",x:-65,y:25,z:25},{elem:"H",x:-65,y:25,z:-25},{elem:"H",x:90,y:-70,z:0},{elem:"H",x:120,y:-5,z:25},{elem:"H",x:120,y:-5,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[0,5],[0,6],[0,7],[4,8],[4,9],[4,10]], null, null, "Cs");
 addMol("CH3COOC2H5|乙酸乙酯|Ethyl Acetate", "C", "sp²", ["平面/四面體","Mixed"], "120°", "-83.6", "77.1", [{elem:"C",x:-35,y:0,z:0},{elem:"C",x:10,y:0,z:0},{elem:"O",x:10,y:50,z:0},{elem:"O",x:50,y:-30,z:0},{elem:"C",x:90,y:-30,z:0},{elem:"C",x:125,y:15,z:0},{elem:"H",x:-35,y:-45,z:0},{elem:"H",x:-65,y:25,z:25},{elem:"H",x:-65,y:25,z:-25},{elem:"H",x:90,y:-70,z:0},{elem:"H",x:115,y:-50,z:30},{elem:"H",x:125,y:55,z:0},{elem:"H",x:155,y:-5,z:25},{elem:"H",x:155,y:-5,z:-25}], [[0,1],[1,2,"double"],[1,3],[3,4],[4,5],[0,6],[0,7],[0,8],[4,9],[4,10],[5,11],[5,12],[5,13]], null, null, "Cs");
@@ -1062,6 +1035,7 @@ addMol("C6H5Cl|氯苯", "C", "sp²", ["平面", "Planar"], "120°", "-45.2", "13
 addMol("C6H5Br|溴苯", "C", "sp²", ["平面", "Planar"], "120°", "-30.7", "156.0", [{elem:"Br",x:0,y:164,z:0},{elem:"C",x:0,y:70,z:0},{elem:"C",x:60,y:35,z:0},{elem:"C",x:-60,y:35,z:0},{elem:"C",x:60,y:-35,z:0},{elem:"C",x:-60,y:-35,z:0},{elem:"C",x:0,y:-70,z:0},{elem:"H",x:108,y:61,z:0},{elem:"H",x:-108,y:61,z:0},{elem:"H",x:107,y:-62,z:0},{elem:"H",x:-107,y:-62,z:0},{elem:"H",x:0,y:-124,z:0}], [[0,1],[1,2,"double"],[1,3],[2,4],[2,7],[3,5,"double"],[3,8],[4,6,"double"],[4,9],[5,6],[5,10],[6,11]], null, null, "C2v");
 addMol("C6H5SO3H|苯磺酸", "C", "sp²", ["平面", "Planar"], "120°", "44", "171(分解)", [{elem:"S",x:111,y:-3,z:-11},{elem:"O",x:135,y:-2,z:67},{elem:"O",x:133,y:60,z:-40},{elem:"O",x:131,y:-66,z:-41},{elem:"C",x:24,y:-3,z:-9},{elem:"C",x:-11,y:-63,z:-7},{elem:"C",x:-11,y:58,z:-8},{elem:"C",x:-81,y:-63,z:-5},{elem:"C",x:-81,y:58,z:-6},{elem:"C",x:-116,y:-2,z:-5},{elem:"H",x:15,y:-111,z:-8},{elem:"H",x:15,y:106,z:-8},{elem:"H",x:-108,y:-110,z:-4},{elem:"H",x:-108,y:105,z:-5},{elem:"H",x:-170,y:-2,z:-3},{elem:"H",x:121,y:37,z:93}], [[0,1],[0,2,"double"],[0,3,"double"],[0,4],[1,15],[4,5,"double"],[4,6],[5,7],[5,10],[6,8,"double"],[6,11],[7,9,"double"],[7,12],[8,9],[8,13],[9,14]], null, null, "Cs");
 addMol("C6H5NO2|硝基苯", "C", "sp²", ["平面", "Planar"], "120°", "5.7", "210.8", [{elem:"O",x:55,y:171,z:0},{elem:"O",x:-55,y:171,z:0},{elem:"N",x:0,y:141,z:0},{elem:"C",x:0,y:70,z:0},{elem:"C",x:60,y:35,z:0},{elem:"C",x:-60,y:35,z:0},{elem:"C",x:60,y:-35,z:0},{elem:"C",x:-60,y:-35,z:0},{elem:"C",x:0,y:-70,z:0},{elem:"H",x:108,y:60,z:0},{elem:"H",x:-108,y:60,z:0},{elem:"H",x:107,y:-62,z:0},{elem:"H",x:-107,y:-62,z:0},{elem:"H",x:0,y:-124,z:0}], [[2,0,"coordinate"],[2,1,"double"],[2,3],[3,4,"double"],[3,5],[4,6],[4,9],[5,7,"double"],[5,10],[6,8,"double"],[6,11],[7,8],[7,12],[8,13]], null, null, "C2v");
+addMol("C12H18O6|六甲氧基苯|1,2,3,4,5,6-hexamethoxybenzene", "C", "sp³", ["幾何形狀","Shape"], "角度", "", "", [{elem:"O",x:74,y:4,z:-116},{elem:"O",x:138,y:7,z:6},{elem:"O",x:-64,y:-3,z:-123},{elem:"O",x:64,y:3,z:123},{elem:"O",x:-138,y:-7,z:-6},{elem:"O",x:-74,y:-4,z:116},{elem:"C",x:37,y:1,z:-58},{elem:"C",x:70,y:4,z:3},{elem:"C",x:-32,y:-2,z:-62},{elem:"C",x:32,y:2,z:62},{elem:"C",x:-70,y:-4,z:-3},{elem:"C",x:-37,y:-1,z:58},{elem:"C",x:116,y:61,z:-127},{elem:"C",x:171,y:-46,z:40},{elem:"C",x:-81,y:58,z:-151},{elem:"C",x:74,y:69,z:151},{elem:"C",x:-174,y:46,z:24},{elem:"C",x:-89,y:-68,z:143},{elem:"H",x:167,y:50,z:-110},{elem:"H",x:117,y:71,z:-180},{elem:"H",x:96,y:105,z:-101},{elem:"H",x:142,y:-93,z:39},{elem:"H",x:219,y:-55,z:14},{elem:"H",x:182,y:-31,z:91},{elem:"H",x:-106,y:49,z:-199},{elem:"H",x:-117,y:85,z:-120},{elem:"H",x:-37,y:89,z:-160},{elem:"H",x:107,y:98,z:119},{elem:"H",x:28,y:94,z:160},{elem:"H",x:101,y:62,z:199},{elem:"H",x:-190,y:32,z:74},{elem:"H",x:-146,y:93,z:25},{elem:"H",x:-219,y:55,z:-7},{elem:"H",x:-117,y:-98,z:108},{elem:"H",x:-42,y:-93,z:157},{elem:"H",x:-118,y:-60,z:189}], [[0,6],[0,12],[1,7],[1,13],[2,8],[2,14],[3,9],[3,15],[4,10],[4,16],[5,11],[5,17],[6,7,"double"],[6,8],[7,9],[8,10,"double"],[9,11,"double"],[10,11],[12,18],[12,19],[12,20],[13,21],[13,22],[13,23],[14,24],[14,25],[14,26],[15,27],[15,28],[15,29],[16,30],[16,31],[16,32],[17,33],[17,34],[17,35]], null, null, "C6h");
 
 
 // --- 13.簡單離子化合物
@@ -1095,6 +1069,10 @@ addMol("FeCl3|氯化鐵", "Fe", "-", "-", "-", "306", "315", [{elem:"Fe",x:0,y:0
 addMol("AlCl3|氯化鋁", "Al", "-", "-", "-", "192", "180 (昇華)", [{elem:"Al",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"Cl",x:0,y:90,z:0,r:35,lpCount:0}, {elem:"Cl",x:-78,y:-45,z:0,r:35,lpCount:0}, {elem:"Cl",x:78,y:-45,z:0,r:35,lpCount:0}], [[0, 1, "ionic_thin"], [0, 2, "ionic_thin"], [0, 3, "ionic_thin"]], null, '<div class="info-section"><div class="info-title">🧪 物質性質</div><div class="info-body"><strong>氯化鋁 (AlCl₃)</strong><br>路易斯酸，有機合成催化劑。</div></div>');
 addMol("Al2O3|氧化鋁|剛玉", "Al", "-", "-", "-", "2072", "2977", [{elem:"O",x:-90,y:-20,z:0,r:25,lpCount:0}, {elem:"Al",x:-45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:0,y:-20,z:0,r:25,lpCount:0}, {elem:"Al",x:45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:90,y:-20,z:0,r:25,lpCount:0}], [[0, 1, "ionic_thin"], [1, 2, "ionic_thin"], [2, 3, "ionic_thin"], [3, 4, "ionic_thin"]], null, '<div class="info-section"><div class="info-title">💎 物質性質</div><div class="info-body"><strong>氧化鋁 (Al₂O₃)</strong><br>剛玉，紅寶石與藍寶石的主要成分，硬度高。</div></div>');
 addMol("Fe2O3|氧化鐵|赤鐵礦", "Fe", "-", "-", "-", "1565", "-", [{elem:"O",x:-90,y:-20,z:0,r:25,lpCount:0}, {elem:"Fe",x:-45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:0,y:-20,z:0,r:25,lpCount:0}, {elem:"Fe",x:45,y:40,z:0,r:18,lpCount:0}, {elem:"O",x:90,y:-20,z:0,r:25,lpCount:0}], [[0, 1, "ionic_thin"], [1, 2, "ionic_thin"], [2, 3, "ionic_thin"], [3, 4, "ionic_thin"]], null, '<div class="info-section"><div class="info-title">🧱 物質性質</div><div class="info-body"><strong>氧化鐵 (Fe₂O₃)</strong><br>紅棕色粉末，俗稱鐵鏽或紅土，為赤鐵礦成分。</div></div>');
+
+
+//錯合物
+addMol("Fe(C5H5)2|二茂鐵|Ferrocene", "C", "sp³", ["幾何形狀","Shape"], "角度", "172-174", "249", [{elem:"C",x:-44,y:-35,z:-86},{elem:"Fe",x:0,y:0,z:0},{elem:"C",x:-41,y:36,z:-87},{elem:"C",x:23,y:-60,z:-80},{elem:"C",x:67,y:-4,z:-77},{elem:"C",x:28,y:55,z:-82},{elem:"C",x:18,y:57,z:83},{elem:"C",x:-51,y:43,z:78},{elem:"C",x:-59,y:-28,z:79},{elem:"C",x:5,y:-58,z:85},{elem:"C",x:53,y:-5,z:88},{elem:"H",x:-89,y:-65,z:-88},{elem:"H",x:-83,y:70,z:-91},{elem:"H",x:37,y:-112,z:-77},{elem:"H",x:121,y:-7,z:-72},{elem:"H",x:47,y:106,z:-81},{elem:"H",x:41,y:106,z:84},{elem:"H",x:-91,y:79,z:73},{elem:"H",x:-106,y:-55,z:75},{elem:"H",x:16,y:-111,z:86},{elem:"H",x:107,y:-11,z:92}], [[1,0],[0,2],[3,0],[0,11],[2,1],[3,1],[1,4],[5,1],[6,1],[7,1],[8,1],[1,9],[1,10],[2,5],[2,12],[4,3],[3,13],[4,5],[4,14],[5,15],[7,6],[10,6],[6,16],[8,7],[7,17],[9,8],[8,18],[9,10],[9,19],[10,20]], null, null, "D5h");
 
 
 // ==========================================
