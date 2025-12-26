@@ -8,16 +8,21 @@
 <style>
 /* --- 1. 基礎設定 --- */
     :root {
-        --bg-radial-inner: #000000; 
-        --bg-radial-outer: #000000;
-        --panel-glass: rgba(20, 20, 20, 0.9);
-        --panel-border: rgba(255, 255, 255, 0.15);
-        --card-glass: rgba(255, 255, 255, 0.05);
-        --text-main: #f0f4f8;
+        --bg-radial-inner: #0f172a; /* 深藍灰底色 (S33) */
+        --bg-radial-outer: #020617; /* 極深黑 (S33) */
+        --panel-glass: rgba(15, 23, 42, 0.7); /* HUD 高透明感 (S96) */
+        --panel-border: rgba(0, 242, 255, 0.3); /* 青色雷射邊框 (S96) */
+        --card-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 242, 255, 0.02) 100%); /* 微金屬光澤 (S33) */
+        --text-main: #f1f5f9;
         --text-sub: #94a3b8;
-        --text-highlight: #38bdf8;
+        --text-highlight: #22d3ee; /* HUD 青色高亮 (S96) */
         --accent-blue: #3b82f6;
         --accent-green: #10b981;
+        
+        /* 新增風格變數 */
+        --hud-cyan: #00f2ff;
+        --liquid-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 48%, #475569 100%); /* 液態金屬漸層 (S33) */
+        --hud-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
     }
 
     * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -55,7 +60,8 @@
 
     body {
         margin: 0;
-        font-family: 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
+        /* 改用更具科技感的字體優先順序 (S96) */
+        font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
         background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
         color: var(--text-main);
         height: 100vh; overflow: hidden; display: flex; flex-direction: column;
@@ -67,11 +73,13 @@
 /* --- 3D 顯示區 --- */
     .viewport-area {
         flex: 1; position: relative;
+        /* 將背景網格改為更精細的 HUD 瞄準線風格 (S96) */
         background-image: 
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-        background-size: 60px 60px; 
+            linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), 
+            linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+        background-size: 40px 40px; 
         background-position: center center;
+        box-shadow: inset 0 0 100px rgba(0,0,0,0.8); /* 增加深邃感 (S33) */
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
@@ -100,11 +108,15 @@
 
     .molecule-display-info {
         margin-top: 5px;
-        background: rgba(0, 0, 0, 0.6);
+        /* [S96] HUD 風格：深色高透背景 + 青色邊框 */
+        background: rgba(2, 6, 23, 0.8);
+        border: 1px solid rgba(0, 242, 255, 0.3);
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
         backdrop-filter: blur(4px);
         padding: 10px 15px;
-        border-radius: 12px;
-        border-left: 4px solid var(--accent-blue);
+        /* [S96] 切角設計或科技感左邊框 */
+        border-radius: 4px; 
+        border-left: 4px solid var(--hud-cyan);
         pointer-events: auto;
         display: inline-block;
     }
@@ -114,14 +126,17 @@
         font-weight: 700;
         color: #fff;
         line-height: 1.1;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        /* [S96] 文字發光 */
+        text-shadow: 0 0 10px rgba(0, 242, 255, 0.6);
+        font-family: 'Rajdhani', sans-serif; /* 科技字體 */
     }
     
     .info-name {
         font-size: 1.2rem;
-        color: var(--text-highlight);
+        color: var(--hud-cyan);
         font-weight: 500;
         margin-top: 4px;
+        letter-spacing: 1px;
     }
 
      .suggestions-container {
@@ -132,22 +147,32 @@
 
     .suggestion-label {
         grid-column: 1 / -1; 
-        font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-weight: bold; text-align: right; 
+        font-size: 0.85rem; color: var(--hud-cyan); margin-bottom: 2px;
+        text-shadow: 0 0 5px rgba(0, 242, 255, 0.5); font-weight: bold; text-align: right; 
     }
 
     .suggestion-tag {
-        background: rgba(40, 40, 40, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #eee; padding: 6px 0; border-radius: 12px; font-size: 0.85rem;
-        cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        /* [S33] 液態金屬質感：使用銀灰色漸層模擬金屬反光 */
+        background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.8) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #e2e8f0; 
+        padding: 6px 0; 
+        border-radius: 20px; /* [S33] 流體圓角 */
+        font-size: 0.85rem;
+        cursor: pointer; 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        backdrop-filter: blur(4px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2);
         display: flex; justify-content: center; align-items: center; width: 100%;
     }
 
     .suggestion-tag:hover {
-        background: var(--accent-blue); color: #fff; border-color: var(--accent-blue);
-        transform: translateY(-2px);
+        /* [S33] Hover 時金屬變亮，模擬液態流動 */
+        background: linear-gradient(145deg, rgba(255,255,255,0.3) 0%, var(--hud-cyan) 100%);
+        color: #000; 
+        border-color: #fff;
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 0 15px var(--hud-cyan);
     }
 
     @media (max-width: 768px) {
@@ -178,85 +203,149 @@
 
     .control-button {
         padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
-        border: 1px solid var(--panel-border); cursor: pointer; transition: all 0.3s;
-        background: rgba(0, 0, 0, 0.4); color: var(--text-main);
-        backdrop-filter: blur(4px); box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        cursor: pointer; transition: all 0.3s;
+        /* [S33] 金屬按鈕風格 */
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 1) 100%);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-top: 1px solid rgba(255,255,255,0.4); /* 頂部高光 */
+        color: var(--text-sub);
+        backdrop-filter: blur(4px); 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.5);
     }
-    .control-button.active { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+    .control-button.active { 
+        /* [S96] 激活狀態：HUD 青色光暈 + 金屬底 */
+        background: rgba(6, 182, 212, 0.15); 
+        border-color: var(--hud-cyan); 
+        color: var(--hud-cyan);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.1); 
+    }
 
     /* --- 新增：摺疊選單樣式 (讓 details 看起來像 card) --- */
     details.control-group {
         background: var(--card-glass);
         border: 1px solid var(--panel-border);
-        border-radius: 16px;
+        border-radius: 8px; 
         padding: 15px;
         margin-bottom: 20px;
         transition: all 0.3s ease;
+        /* [S33] 內部微光，增加厚度感 */
+        box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05);
     }
-    details.control-group[open] { background: rgba(20, 20, 20, 0.6); }
+    details.control-group[open] { 
+        background: rgba(15, 23, 42, 0.85); 
+        border-color: rgba(0, 242, 255, 0.5);
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1), inset 0 0 20px rgba(0, 242, 255, 0.05);
+    }
     details.control-group summary {
-        list-style: none; cursor: pointer; font-weight: 700; color: var(--text-highlight);
+        list-style: none; cursor: pointer; 
+        font-weight: 700; 
+        color: var(--text-highlight); /* 青色文字 */
         display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;
-        font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;
+        font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;
+        font-family: 'Rajdhani', sans-serif; /* 科技字體 */
+        text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
     }
-    details.control-group[open] summary { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+    details.control-group[open] summary { margin-bottom: 15px; border-bottom: 1px solid rgba(0, 242, 255, 0.3); padding-bottom: 10px; }
     details.control-group summary::-webkit-details-marker { display: none; }
-    details.control-group summary::after { content: '▼'; font-size: 0.8rem; transition: transform 0.3s; }
-    details.control-group[open] summary::after { transform: rotate(180deg); }
+    details.control-group summary::after { content: '▼'; font-size: 0.8rem; transition: transform 0.3s; color: var(--hud-cyan); }
+    details.control-group[open] summary::after { transform: rotate(180deg); text-shadow: 0 0 8px var(--hud-cyan); }
     details.control-group .input-group { width: 100%; }
 
     .card { 
-        background: var(--card-glass); border: 1px solid var(--panel-border); 
-        border-radius: 16px; padding: 20px; margin-bottom: 20px; 
+        /* [S33] 卡片背景：深色金屬漸層 */
+        background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.4) 100%);
+        border: 1px solid var(--panel-border); 
+        border-radius: 8px; /* HUD 風格較為方正 */
+        padding: 20px; margin-bottom: 20px; 
+        position: relative;
+        backdrop-filter: blur(10px);
     }
     .card-title { 
-        font-size: 1rem; font-weight: 700; color: var(--text-highlight); 
-        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
+        font-size: 1rem; font-weight: 700; color: var(--hud-cyan); 
+        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; 
+        text-transform: uppercase; letter-spacing: 2px;
+        border-left: 3px solid var(--hud-cyan); padding-left: 10px; /* HUD 標記 */
+        text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
     }
-    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .data-label { font-size: 1rem; color: var(--text-sub); }
-    .data-value { font-size: 1.15rem; color: var(--text-main); font-weight: 500; }
+    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .data-label { font-size: 0.95rem; color: var(--text-sub); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
+    .data-value { font-size: 1.15rem; color: #fff; font-weight: 500; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+    
     /* --- 平衡係數與詳解面板樣式 --- */
     #balance-result {
         display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
         padding: 20px; font-family: 'Times New Roman', serif;
+        /* [S96] 終端機顯示風格 */
+        background: rgba(0, 10, 20, 0.6);
+        border: 1px dashed var(--hud-cyan);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
     }
     .eqn-item { display: flex; align-items: center; margin: 0 4px; }
     .coeff { 
         color: #facc15; font-weight: 900; font-size: 1.6rem; 
         margin-right: 4px; font-style: italic;
-        text-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+        text-shadow: 0 0 15px rgba(250, 204, 21, 0.8); /* 增強發光 */
     }
     .eqn-op { color: rgba(255,255,255,0.4); font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
-    .reaction-arrow { color: #38bdf8; font-size: 1.8rem; margin: 0 15px; font-weight: bold; }
+    .reaction-arrow { color: var(--hud-cyan); font-size: 1.8rem; margin: 0 15px; font-weight: bold; text-shadow: 0 0 10px var(--hud-cyan); }
     #balance-result sup { top: -0.6em; font-size: 0.75em; margin-left: 1px; vertical-align: baseline; position: relative; }
     #balance-result sub { bottom: -0.2em; font-size: 0.75em; vertical-align: baseline; position: relative; }
     .step-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .step-title { color: #facc15; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-size: 1.05rem; }
     .step-formula-box { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; font-family: 'Times New Roman', serif; font-size: 1.15rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-    .highlight-atom { color: #38bdf8; font-weight: bold; border-bottom: 2px solid #38bdf8; padding: 0 2px; }
+    .highlight-atom { color: var(--hud-cyan); font-weight: bold; border-bottom: 2px solid var(--hud-cyan); padding: 0 2px; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
-        flex-grow: 1; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; 
-        background: rgba(0,0,0,0.3); color: white; transition: border 0.3s; outline: none; font-size: 1.1rem; 
+        flex-grow: 1; padding: 12px; 
+        /* [S96] 輸入框：深色底 + 底部亮線 */
+        border: 1px solid rgba(255,255,255,0.1); 
+        border-bottom: 2px solid rgba(255,255,255,0.2);
+        border-radius: 4px; 
+        background: rgba(0,0,0,0.5); color: var(--hud-cyan); 
+        transition: all 0.3s; outline: none; font-size: 1.1rem; letter-spacing: 1px;
+    }
+    .input-group input:focus {
+        border-color: var(--hud-cyan);
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        background: rgba(0, 20, 40, 0.8);
     }
     .input-group button { 
-        padding: 10px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; 
-        cursor: pointer; font-weight: bold;
+        padding: 10px 20px; 
+        /* [S33] 按鈕：液態質感 */
+        background: linear-gradient(180deg, var(--accent-blue) 0%, #1e3a8a 100%); 
+        color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; 
+        cursor: pointer; font-weight: bold; text-transform: uppercase;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+    .input-group button:hover {
+        background: var(--hud-cyan); color: #000; box-shadow: 0 0 20px var(--hud-cyan); border-color: #fff;
     }
 
     .switch-container { 
         display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
-        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;
+        background: rgba(255,255,255,0.03); padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);
     }
-    .switch-container input { width: 18px; height: 18px; accent-color: var(--accent-green); cursor: pointer; }
+    .switch-container:hover { border-color: rgba(0, 242, 255, 0.3); background: rgba(0, 242, 255, 0.05); }
+    .switch-container input { width: 18px; height: 18px; accent-color: var(--hud-cyan); cursor: pointer; }
 
     #variant-selector {
-        display: none; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
-        padding: 15px; border-radius: 12px; margin-bottom: 15px;
+        display: none; 
+        background: rgba(16, 185, 129, 0.05); 
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 15px; border-radius: 8px; margin-bottom: 15px;
+        position: relative;
     }
-    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); }
+    /* [S96] 變體選擇器加上角落標記裝飾 */
+    #variant-selector::before {
+        content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
+        border-top: 2px solid var(--accent-green); border-left: 2px solid var(--accent-green);
+    }
+    #variant-selector::after {
+        content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px;
+        border-bottom: 2px solid var(--accent-green); border-right: 2px solid var(--accent-green);
+    }
+    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 
     #variant-selector.acid-theme { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); }
     #variant-selector.acid-theme .variant-header { color: #fbbf24; }
@@ -268,18 +357,39 @@
     .reaction-btn {
         flex: 1 0 42%; max-width: 48%; min-width: 140px; height: 50px;
         padding: 0 10px; font-size: 0.95rem; font-weight: 600; color: white;
-        border: none; border-radius: 50px; cursor: pointer;
-        transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        /* [S33] 液態金屬：移除邊框，改用光影塑造立體感 */
+        border: none; 
+        border-radius: 25px; /* Pill shape */
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         display: none; align-items: center; justify-content: center; white-space: nowrap;
+        position: relative; overflow: hidden;
+        /* 金屬反光層 + 底部陰影 */
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 5px 15px rgba(0,0,0,0.5);
+        font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
     }
-    .reaction-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
-    .reaction-btn:active { transform: translateY(1px); }
+    
+    /* [S33] 液態光澤遮罩 (上半部高光) */
+    .reaction-btn::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 50%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+        border-radius: 25px 25px 0 0; pointer-events: none;
+    }
 
-    .btn-h2o { background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); }
-    .btn-cl2 { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-    .btn-h2  { background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%); }
-    .btn-hcl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    .btn-kmno4 { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
+    .reaction-btn:hover { 
+        transform: translateY(-2px) scale(1.02); 
+        filter: brightness(1.2); 
+        /* 強烈發光 */
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.6); 
+    }
+    .reaction-btn:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+    /* [S33] 各種化學試劑的金屬色調 (深淺漸層模擬金屬) */
+    .btn-h2o { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); border: 1px solid #60a5fa; }
+    .btn-cl2 { background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%); border: 1px solid #38bdf8; }
+    .btn-h2  { background: linear-gradient(180deg, #ec4899 0%, #be185d 100%); border: 1px solid #f472b6; }
+    .btn-hcl { background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%); border: 1px solid #fbbf24; }
+    .btn-kmno4 { background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%); border: 1px solid #a78bfa; }
     
     @keyframes blurOutEffect { 0% { opacity: 1; filter: blur(0px); transform: scale(1); } 100% { opacity: 0; filter: blur(8px) brightness(1.5); transform: scale(1.05); } }
     @keyframes blurInEffect { 0% { opacity: 0; filter: blur(8px); transform: scale(0.95); } 100% { opacity: 1; filter: blur(0px); transform: scale(1); } }
@@ -287,11 +397,19 @@
     .scene-blur-in { animation: blurInEffect 1.5s forwards ease-out; }
 
     .reset-btn {
-        flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1);
-        border: 1px solid var(--panel-border); color: var(--text-sub); border-radius: 12px;
+        flex: 1; padding: 12px; 
+        /* [S96] 重置按鈕：警示風格 HUD */
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        color: var(--text-sub); border-radius: 8px;
         font-weight: bold; cursor: pointer; transition: all 0.2s;
+        font-family: 'Rajdhani', sans-serif; letter-spacing: 2px;
     }
-    .reset-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+    .reset-btn:hover { 
+        background: rgba(239, 68, 68, 0.1); 
+        border-color: #f87171; color: #f87171; 
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
 
     /* 手機版樣式 */
     body.simulate-mobile .app-container { flex-direction: column; }
@@ -299,23 +417,31 @@
     body.simulate-mobile .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     body.simulate-mobile .controls-area {
         position: fixed; bottom: 0; left: 0; width: 100%; height: 98vh; max-height: 98vh;
-        border-left: none; border-top: 1px solid rgba(255,255,255,0.15);
-        border-radius: 20px 20px 0 0; background-color: #1a1a1a; padding: 0; z-index: 100;
+        border-left: none; 
+        /* [S96] 手機面板頂部光條 */
+        border-top: 1px solid var(--hud-cyan);
+        box-shadow: 0 -5px 20px rgba(0, 242, 255, 0.2);
+        border-radius: 20px 20px 0 0; 
+        background-color: rgba(15, 23, 42, 0.95); 
+        padding: 0; z-index: 100;
         transform: translateY(0); transition: transform 0.3s; will-change: transform;
     }
     body.simulate-mobile #mobile-panel-handle {
         display: flex; width: 100%; height: 40px; justify-content: center; align-items: center;
-        cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);
+        cursor: pointer; flex-shrink: 0; 
+        background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     .controls-area { 
         width: 400px; min-width: 320px;
         background-color: var(--panel-glass);
         backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        border-left: 1px solid var(--panel-border);
+        /* [S96] 電腦版左側邊框：青色光刃 */
+        border-left: 1px solid rgba(0, 242, 255, 0.3);
+        box-shadow: -5px 0 30px rgba(0,0,0,0.8);
         display: flex; flex-direction: column; 
         padding: 25px; overflow-y: auto; 
-        box-shadow: -10px 0 30px rgba(0,0,0,0.5); 
         z-index: 20;
     }
     #mobile-panel-handle { display: none; }
@@ -337,11 +463,12 @@
         width: 100%; 
         height: 98vh; 
         max-height: 98vh;
-        background-color: rgba(26, 26, 26, 0.96); 
+        /* [S96] 手機版面板背景：極深藍 */
+        background-color: rgba(10, 15, 30, 0.98); 
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         border-radius: 20px 20px 0 0; 
-        border-top: 1px solid rgba(255,255,255,0.15);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+        border-top: 1px solid var(--hud-cyan);
+        box-shadow: 0 -10px 40px rgba(0, 242, 255, 0.15);
         z-index: 100;
         display: flex; flex-direction: column;
         padding: 0;
@@ -354,18 +481,20 @@
         display: flex; width: 100%; height: 40px; 
         justify-content: center; align-items: center;
         cursor: grab; flex-shrink: 0; 
-        /* 把手背景 */
-        background: rgba(255,255,255,0.02);
+        /* 把手背景：科技掃描感 */
+        background: linear-gradient(90deg, transparent 0%, rgba(0, 242, 255, 0.05) 50%, transparent 100%);
         border-bottom: 1px solid rgba(255,255,255,0.05); 
         touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
     }
     
     /* 修改這裡：把手的樣式 */
     .handle-bar {
-        width: 36px; 
-        height: 5px; 
-        background-color: rgba(255, 255, 255, 0.3); 
-        border-radius: 10px;
+        width: 40px; 
+        height: 4px; 
+        /* [S96] 把手：青色發光條 */
+        background-color: var(--hud-cyan);
+        border-radius: 2px;
+        box-shadow: 0 0 10px var(--hud-cyan);
         /* 加入過渡動畫，讓變大變小很滑順 */
         transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -373,9 +502,9 @@
     /* 新增這裡：當把手被按住 (active) 時的效果 */
     #mobile-panel-handle:active .handle-bar,
     #mobile-panel-handle.active .handle-bar {
-        width: 55px; /* 變寬 */
-        background-color: rgba(255, 255, 255, 0.7); /* 變亮 */
-        box-shadow: 0 0 10px rgba(255,255,255,0.3); /* 加一點發光 */
+        width: 60px; /* 變寬 */
+        background-color: #fff; /* 變亮 */
+        box-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px var(--hud-cyan); /* 強烈發光 */
     }
     
     .controls-content { 
@@ -392,52 +521,74 @@
     }
 }
 
+    /* AA - 上方不變代碼 */
+/* BB - 下方不變代碼 */
     .hybrid-tooltip {
+/* CC - 修改代碼 (懸浮提示 HUD 化、運勢卡片科幻化、電子組態表資料庫化) */
         position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
-        background: rgba(0, 0, 0, 0.9); color: #fff; padding: 15px 25px;
-        border-radius: 12px; border: 2px solid var(--accent-green);
-        font-family: 'Segoe UI', 'Arial', sans-serif; font-size: 1.4rem; font-weight: bold;
+        /* [S96] HUD 標籤風格 */
+        background: rgba(2, 6, 23, 0.9); 
+        color: var(--hud-cyan); 
+        padding: 15px 25px;
+        border: 1px solid var(--hud-cyan);
+        border-radius: 4px; /* 方正導角 */
+        font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: bold;
         pointer-events: none; opacity: 0; transition: opacity 0.2s;
         z-index: 9999; white-space: nowrap; text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-shadow: 0 2px 4px #000;
+        /* 強烈光暈 */
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.4), inset 0 0 10px rgba(0, 242, 255, 0.1);
+        text-shadow: 0 0 5px var(--hud-cyan);
         max-width: 90vw; 
     }
     
     /* --- 知識小百科卡片樣式 --- */
     .knowledge-card {
-        border: 1px solid rgba(251, 191, 36, 0.3); /* 金黃色邊框 */
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+        border: 1px solid rgba(251, 191, 36, 0.5); 
+        /* [S33] 金屬金質感 */
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(0, 0, 0, 0.6) 100%);
         transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
     }
 
     .knowledge-card .card-title {
         color: #fbbf24; cursor: pointer; justify-content: space-between; margin-bottom: 0; 
+        text-shadow: 0 0 5px rgba(251, 191, 36, 0.6);
+        border-left: 3px solid #fbbf24; /* 覆蓋原本的青色設定 */
     }
 
     .toggle-icon { font-size: 0.8rem; transition: transform 0.3s; color: #fbbf24; }
     .knowledge-card.expanded .toggle-icon { transform: rotate(180deg); }
     .knowledge-card.expanded .card-title { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(251, 191, 36, 0.2); }
-    .knowledge-content { display: none; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; text-align: justify; }
-    .knowledge-content strong { color: #38bdf8; }
+    .knowledge-content { display: none; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; text-align: justify; font-family: 'Segoe UI', sans-serif; }
+    .knowledge-content strong { color: var(--hud-cyan); }
     .knowledge-card.expanded .knowledge-content { display: block; animation: fadeIn 0.4s ease; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    /* 統一高亮紫色玻璃風格 */
+    
+    /* 統一高亮紫色玻璃風格 -> 改為 S33 液態金屬按鈕 */
     .glass-toggle-btn {
         width: 100%; height: 46px; margin-bottom: 12px;
-        background: rgba(139, 92, 246, 0.25); 
-        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(139, 92, 246, 0.7); 
-        color: #fff; font-size: 1rem; font-weight: 600; border-radius: 23px;
+        /* [S33] 銀紫色金屬漸層 */
+        background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.3) 100%); 
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(139, 92, 246, 0.5); 
+        color: #c4b5fd; font-size: 1rem; font-weight: 600; border-radius: 8px;
         cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
-        transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease; 
+        font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
     }
-    .glass-toggle-btn:hover { background: rgba(139, 92, 246, 0.35); border-color: #fff; }
+    .glass-toggle-btn:hover { 
+        background: rgba(139, 92, 246, 0.5); 
+        border-color: #fff; 
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
+        color: #fff;
+    }
 
     .glass-content-panel {
-        display: none; padding: 12px; border-radius: 20px;
-        background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(139, 92, 246, 0.3);
+        display: none; padding: 12px; border-radius: 8px;
+        background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(139, 92, 246, 0.3);
         margin-top: -6px; margin-bottom: 15px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
     /* 子選單專用樣式 */
     .sub-panel-btn {
@@ -450,7 +601,7 @@
     
     .sub-content {
         background: rgba(0, 0, 0, 0.4) !important;
-        border-radius: 15px !important;
+        border-radius: 8px !important;
         margin-left: 10px;
         margin-right: 10px;
         padding: 15px !important;
@@ -469,27 +620,27 @@
         margin-bottom: 8px;
     }
     .panel-wrapper.expanded > .glass-content-panel { display: block; animation: fadeIn 0.3s ease; }
-    .panel-wrapper.expanded > .glass-toggle-btn { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
+    .panel-wrapper.expanded > .glass-toggle-btn { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
 
     .glass-content-panel .glass-toggle-btn {
         height: 40px; font-size: 0.95rem;
         background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4);
     }
     .info-section { margin-bottom: 15px; }
-    .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; }
+    .info-title { font-weight: bold; color: #4ade80; margin-bottom: 8px; font-size: 1.05rem; border-left: 3px solid #4ade80; padding-left: 10px; letter-spacing: 1px; font-family: 'Rajdhani', sans-serif; }
     .info-body { padding-left: 6px; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; text-align: justify; }
     .info-body strong { color: inherit; font-weight: 700; }
-    .highlight-title { color: #38bdf8; font-weight: bold; display: inline-block; margin-right: 4px; }
+    .highlight-title { color: var(--hud-cyan); font-weight: bold; display: inline-block; margin-right: 4px; }
     .hybrid-tooltip.show { opacity: 1; }
     .flow-card {
         width: 100%;
         max-width: 500px;
         padding: 20px;
-        border-radius: 16px;
+        border-radius: 8px;
         border: 2px solid;
         position: relative;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
     .branch-card { max-width: 300px; }
     .step-badge {
@@ -497,27 +648,28 @@
         top: -12px;
         left: 20px;
         padding: 2px 12px;
-        border-radius: 20px;
+        border-radius: 4px;
         color: #000;
         font-size: 0.75rem;
         font-weight: 900;
         text-transform: uppercase;
+        font-family: 'Rajdhani', sans-serif;
     }
-    .flow-title { font-weight: bold; font-size: 1.1rem; color: #fff; }
+    .flow-title { font-weight: bold; font-size: 1.1rem; color: #fff; font-family: 'Rajdhani', sans-serif; }
     .flow-body { margin-top: 10px; color: #94a3b8; line-height: 1.6; }
     .flow-arrow { color: #334155; font-size: 1.5rem; margin: -5px 0; }
-    .pg-tag { color: #38bdf8; font-weight: bold; margin: 0 4px; font-family: serif; }
+    .pg-tag { color: var(--hud-cyan); font-weight: bold; margin: 0 4px; font-family: serif; }
     .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
     .res-box {
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.1);
         padding: 15px 5px;
-        border-radius: 12px;
+        border-radius: 4px;
         font-size: 0.85rem;
         transition: all 0.3s;
     }
-    .res-box:hover { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; transform: translateY(-5px); }
-    .pg-final { display: block; margin-top: 8px; font-size: 1.3rem; font-weight: bold; color: #38bdf8; font-family: serif; }
+    .res-box:hover { background: rgba(0, 242, 255, 0.1); border-color: var(--hud-cyan); transform: translateY(-5px); box-shadow: 0 0 10px var(--hud-cyan); }
+    .pg-final { display: block; margin-top: 8px; font-size: 1.3rem; font-weight: bold; color: var(--hud-cyan); font-family: serif; text-shadow: 0 0 8px var(--hud-cyan); }
 
     /* 電子閃爍動畫 */
     @keyframes spark-flicker {
@@ -526,47 +678,80 @@
     }
     .electron-spark { animation: spark-flicker 0.15s linear infinite; }
     /* ========== [請插入這段 CSS] 電子組態表樣式 ========== */
-    #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
-    .config-panel { background: #0f172a; border: 1px solid #334155; display: flex; flex-direction: column; width: 500px; height: 85vh; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; animation: slideUp 0.3s ease-out; }
+    #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
+    .config-panel { 
+        /* [S96] 科幻資料庫面板 */
+        background: #020617; 
+        border: 1px solid var(--hud-cyan); 
+        display: flex; flex-direction: column; width: 500px; height: 85vh; 
+        border-radius: 8px; 
+        box-shadow: 0 0 50px rgba(0, 242, 255, 0.2); 
+        overflow: hidden; animation: slideUp 0.3s ease-out; 
+    }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @media (max-width: 600px) { .config-panel { width: 100%; height: 100%; border-radius: 0; border: none; } }
     
-    .config-header { padding: 15px; background: rgba(30,41,59,0.9); border-bottom: 1px solid #334155; display: flex; gap: 10px; align-items: center; }
-    .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: #fff; }
-    .config-search { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #475569; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
+    .config-header { 
+        padding: 15px; 
+        background: rgba(15, 23, 42, 0.95); 
+        border-bottom: 1px solid rgba(0, 242, 255, 0.3); 
+        display: flex; gap: 10px; align-items: center; 
+    }
+    .config-close { background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 10px; transition: 0.2s; } .config-close:hover { color: var(--hud-cyan); text-shadow: 0 0 10px var(--hud-cyan); }
+    .config-search { 
+        flex: 1; 
+        background: rgba(0,0,0,0.5); 
+        border: 1px solid rgba(255,255,255,0.2); 
+        color: var(--hud-cyan); padding: 12px; border-radius: 4px; font-size: 1rem; outline: none; font-family: 'Rajdhani', sans-serif;
+    }
+    .config-search:focus { border-color: var(--hud-cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
     .config-list { flex: 1; overflow-y: auto; padding: 15px; }
     
-    .element-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #22d3ee; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
+    .element-card { 
+        /* [S96] 元素卡片：HUD 掃描框 */
+        background: rgba(15, 23, 42, 0.6); 
+        border: 1px solid rgba(255,255,255,0.05); 
+        border-left: 3px solid var(--hud-cyan); 
+        border-radius: 4px; 
+        padding: 15px; margin-bottom: 15px; position: relative; 
+    }
     .ec-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
     .ec-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
     .ec-sym-box { display: flex; align-items: center; gap: 25px; }
-    .ec-sym { font-size: 3.8rem; font-weight: 900; color: #fff; line-height: 1; min-width: 80px; text-align: center; text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.2); }
+    .ec-sym { 
+        font-size: 3.8rem; font-weight: 900; color: #fff; line-height: 1; min-width: 80px; text-align: center; 
+        text-shadow: 0 0 15px rgba(0, 242, 255, 0.5); /* 符號發光 */
+    }
     .ec-info { display: flex; flex-direction: column; gap: 2px; }
-    .ec-name { font-size: 0.95rem; font-weight: bold; color: #fff; }
+    .ec-name { font-size: 0.95rem; font-weight: bold; color: #fff; font-family: 'Rajdhani', sans-serif; }
     .ec-meta { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
-    .ec-tag { font-size: 0.75rem; color: #a78bfa; font-weight: 500; background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139, 92, 246, 0.3); width: fit-content; }
-    .ec-config-row { width: 100%; display: flex; justify-content: flex-end; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 6px; }
-    .ec-config { font-family: 'Courier New', monospace; color: #a5f3fc; font-weight: bold; font-size: 1.1rem; letter-spacing: -0.5px; word-spacing: -2px; white-space: nowrap; }
-    .ec-config sup { color: #22d3ee; font-size: 0.75em; vertical-align: super; }
+    .ec-tag { 
+        font-size: 0.75rem; color: var(--hud-cyan); font-weight: 500; 
+        background: rgba(6, 182, 212, 0.1); 
+        padding: 2px 6px; border-radius: 2px; border: 1px solid rgba(6, 182, 212, 0.3); width: fit-content; 
+    }
+    .ec-config-row { width: 100%; display: flex; justify-content: flex-end; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+    .ec-config { font-family: 'Courier New', monospace; color: var(--hud-cyan); font-weight: bold; font-size: 1.1rem; letter-spacing: -0.5px; word-spacing: -2px; white-space: nowrap; text-shadow: 0 0 5px rgba(0,242,255,0.3); }
+    .ec-config sup { color: #fff; font-size: 0.75em; vertical-align: super; }
     /* [修改] 開啟水平捲軸並美化樣式 */
     .ec-scroll { 
         width: 100%; 
-        overflow-x: auto; /* 允許橫向捲動 */
+        overflow-x: auto; 
         padding-top: 5px; 
-        padding-bottom: 8px; /* 增加底部空間給捲軸 */
+        padding-bottom: 8px; 
         border-top: 1px solid rgba(255,255,255,0.05); 
-        scrollbar-width: thin; /* Firefox: 細捲軸 */
-        scrollbar-color: #475569 #0f172a; /* Firefox: 顏色 */
+        scrollbar-width: thin; 
+        scrollbar-color: #475569 #0f172a; 
     }
     
     /* Chrome/Edge/Safari 捲軸樣式 */
-    .ec-scroll::-webkit-scrollbar { height: 6px; display: block; } /* 設定高度並顯示 */
+    .ec-scroll::-webkit-scrollbar { height: 6px; display: block; } 
     .ec-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
     .ec-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-    .ec-scroll::-webkit-scrollbar-thumb:hover { background: #22d3ee; } /* 滑鼠移過去變亮藍色 */
+    .ec-scroll::-webkit-scrollbar-thumb:hover { background: var(--hud-cyan); } 
 
     .ec-row { display: flex; gap: 8px; width: max-content; padding-right: 10px; }
-    .ec-sub { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+    .ec-sub { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
     .ec-boxes { display: flex; gap: 2px; }
     .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
     .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
@@ -587,6 +772,7 @@
     font-weight: bold;
     border-width: 2px !important;
     z-index: 2;
+    box-shadow: 0 0 10px currentColor; /* 按鈕發光 */
 }
 
 .ion-btn.active[data-type="neutral"] { background: #f1f5f9 !important; color: #000 !important; border-color: #fff !important; }
@@ -600,7 +786,7 @@
     border: 1px solid rgba(139, 92, 246, 0.3); 
 }
 #variant-selector.resonance-theme .variant-header { 
-    color: #a78bfa; /* 淺紫色 */
+    color: #a78bfa; 
 }
 #variant-selector.resonance-theme .variant-option { 
     color: #a78bfa; 
@@ -608,18 +794,19 @@
 #variant-selector.resonance-theme .variant-option:hover { 
     background: rgba(139, 92, 246, 0.15); 
     color: #fff;
+    text-shadow: 0 0 8px #a78bfa;
 }
 #variant-selector.resonance-theme input[type="radio"] {
-    accent-color: #8b5cf6; /* 紫色選框 */
+    accent-color: #8b5cf6; 
 }
 
 /* --- [新增] 結構/晶體切換主題 (藍色系) --- */
 #variant-selector.structure-theme { 
-    background: rgba(56, 189, 248, 0.05); /* 天藍色背景 */
+    background: rgba(56, 189, 248, 0.05); 
     border: 1px solid rgba(56, 189, 248, 0.3); 
 }
 #variant-selector.structure-theme .variant-header { 
-    color: #38bdf8; /* 天藍色文字 */
+    color: #38bdf8; 
 }
 #variant-selector.structure-theme .variant-option { 
     color: #38bdf8; 
@@ -627,9 +814,10 @@
 #variant-selector.structure-theme .variant-option:hover { 
     background: rgba(56, 189, 248, 0.15); 
     color: #fff;
+    text-shadow: 0 0 8px #38bdf8;
 }
 #variant-selector.structure-theme input[type="radio"] {
-    accent-color: #0ea5e9; /* 藍色選框 */
+    accent-color: #0ea5e9; 
 }
 
 
@@ -642,25 +830,26 @@
 }
 .orb-btn {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: #38bdf8;
+    border: 1px solid rgba(0, 242, 255, 0.3); /* HUD 青色邊框 */
+    color: var(--hud-cyan);
     padding: 6px 0;
-    border-radius: 8px;
+    border-radius: 4px;
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: 'Times New Roman', serif; /* 讓軌域符號更有學術感 */
+    font-family: 'Times New Roman', serif; 
     font-style: italic;
 }
 .orb-btn:hover {
-    background: rgba(56, 189, 248, 0.2);
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    background: rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 10px var(--hud-cyan);
+    color: #fff;
 }
 .orb-btn.active {
-    background: #38bdf8;
+    background: var(--hud-cyan);
     color: #000;
     font-weight: bold;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 15px var(--hud-cyan);
 }
 
 /* 開關節面按鈕 */
@@ -675,38 +864,22 @@
     background: linear-gradient(90deg, #10b981, #059669);
     border-color: #10b981;
     color: white;
+    box-shadow: 0 0 10px #10b981;
 }
 
-.orbital-btn-group {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;
-}
-.orb-btn {
-    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8;
-    padding: 6px 0; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
-    font-family: 'Times New Roman', serif; font-style: italic;
-}
-.orb-btn:hover { background: rgba(56, 189, 248, 0.2); box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-.orb-btn.active { background: #38bdf8; color: #000; font-weight: bold; box-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
-.plane-toggle {
-    width: 100%; margin-top: 5px; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-    border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0;
-}
-.plane-toggle.active { background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; color: white; }
-
-/* --- 每日運勢 UI (Mystical Theme) --- */
+/* --- 每日運勢 UI (Mystical Theme -> Liquid HUD Theme) --- */
 .fortune-entry-btn {
-    /* ★★★ 位置大修正：改為固定定位，緊貼建議清單下方 ★★★ */
     position: fixed;
-    z-index: 60; /* 與建議標籤同層級 */
+    z-index: 60; 
     
     /* 電腦版位置設定 */
     right: 25px;
-    top: 190px; /* 建議清單約在 top:80px，高度約100px，所以這裡設 190px */
-    width: 170px; /* 寬度與建議清單一致，整齊美觀 */
+    top: 190px; 
+    width: 170px; 
     
-    padding: 8px 0; /* 縮小內距，讓按鈕扁一點，不佔空間 */
-    border-radius: 12px;
-    font-size: 0.85rem; /* 字體稍微縮小 */
+    padding: 8px 0; 
+    border-radius: 20px; /* 液態圓角 */
+    font-size: 0.85rem; 
     font-weight: bold;
     cursor: pointer;
     text-align: center;
@@ -718,44 +891,47 @@
     overflow: hidden;
     pointer-events: auto; 
     
-    /* 星空風格：加深背景色，與黑底融合 */
-    background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    color: #c4b5fd; /* 字體改淡紫，更有質感 */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
-    text-shadow: 0 0 5px rgba(139, 92, 246, 0.5);
+    /* [S33] 液態水銀/多彩漸層背景 */
+    background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #8b5cf6 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff; 
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); 
+    text-shadow: 0 0 5px rgba(255,255,255,0.5);
+    font-family: 'Rajdhani', sans-serif;
 }
 
 /* 手機版特別優化：位置更緊湊 */
 @media (max-width: 768px) {
     .fortune-entry-btn {
         right: 15px;
-        top: 125px; /* 手機版建議清單約在 top:20px，算上高度後，放在 125px 剛好 */
-        width: 160px; /* 手機版寬度 */
+        top: 125px; 
+        width: 160px; 
         
-        padding: 6px 0; /* 手機版再扁一點 */
+        padding: 6px 0; 
         font-size: 0.8rem;
-        background: rgba(2, 6, 23, 0.95); /* 極深色背景，防遮擋 */
-        backdrop-filter: blur(4px);
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* 手機版稍暗，避免太搶眼 */
+        border: 1px solid var(--hud-cyan);
+        color: var(--hud-cyan);
     }
 }
 
 .fortune-entry-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
-    border-color: #a78bfa;
+    box-shadow: 0 0 25px rgba(0, 242, 255, 0.8);
+    background: var(--hud-cyan);
+    color: #000;
 }
 .fortune-entry-btn:active { transform: scale(0.95); }
 
 /* Modal 背景：改用 opacity 做漸變動畫 */
 #fortune-modal {
-    visibility: hidden; /* 預設隱藏 */
+    visibility: hidden; 
     opacity: 0;
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(5, 5, 10, 0.95); /* 更深沈的背景 */
+    background: rgba(2, 6, 23, 0.95); /* 深黑背景 */
     backdrop-filter: blur(8px);
     z-index: 300;
-    display: flex; /* 常駐 flex，用 opacity 控制顯示 */
+    display: flex; 
     justify-content: center; align-items: center; flex-direction: column;
     transition: opacity 0.4s ease, visibility 0.4s;
 }
@@ -768,8 +944,8 @@
 
 .fortune-card-container {
     width: 300px;
-    height: 520px; /* 固定高度，避免破版 */
-    perspective: 1500px; /* 增加透視感 */
+    height: 520px; 
+    perspective: 1500px; 
     cursor: pointer;
     position: relative;
 }
@@ -790,70 +966,70 @@
 .fortune-card-front, .fortune-card-back {
     position: absolute; width: 100%; height: 100%;
     -webkit-backface-visibility: hidden; backface-visibility: hidden;
-    border-radius: 20px;
+    border-radius: 12px; /* HUD 方正角 */
     display: flex; flex-direction: column; align-items: center;
     padding: 25px 20px;
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.2); /* 陰影調暗一點 */
+    box-shadow: 0 0 50px rgba(0, 242, 255, 0.15); 
 }
 
 /* 卡背：深沈宇宙 + 隱約科學格線 (仿造中間圖但更暗) */
 .fortune-card-front {
-    /* 背景底色：極深的黑藍色 */
-    background-color: #020617;
+    /* [S33] 正面：神秘液態質感，深藍到深紫 */
+    background: radial-gradient(circle at center, #1e3a8a 0%, #020617 100%);
     
-    /* 背景圖層：
-       1. 隱約的網格 (模仿週期表格子) 
-       2. 中央的深紫色星雲光暈 
-       3. 頂部的深藍色光暈 
-    */
+    /* 背景圖層：科幻網格 */
     background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        radial-gradient(circle at 50% 50%, #312e81 0%, transparent 60%),
-        radial-gradient(circle at 80% 20%, #1e1b4b 0%, transparent 50%);
+        linear-gradient(rgba(0, 242, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 255, 0.1) 1px, transparent 1px);
         
-    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%; /* 格子大小 */
+    background-size: 50px 50px;
     background-position: center;
     
-    border: 1px solid rgba(139, 92, 246, 0.3); /* 邊框調暗 */
+    border: 2px solid var(--hud-cyan);
     justify-content: center;
 }
 
-/* --- 運勢卡片背面 (上中下結構 + 緊湊版) --- */
-/* --- 運勢卡片背面 (緊湊優化版) --- */
-.fortune-card-back { display:flex; flex-direction:column; padding:18px; background:linear-gradient(180deg,#1e1b4b 0%,#0f172a 100%); border:2px solid #818cf8; color:#e0e7ff; overflow:hidden; transform:rotateY(180deg); justify-content:flex-start; }
+/* --- 運勢卡片背面 (S96 HUD Data Layout) --- */
+.fortune-card-back { 
+    display:flex; flex-direction:column; padding:18px; 
+    /* [S96] 背面：全像數據介面 */
+    background: rgba(2, 6, 23, 0.95);
+    border: 2px solid var(--hud-cyan); 
+    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1);
+    color:#e0e7ff; overflow:hidden; transform:rotateY(180deg); justify-content:flex-start; 
+}
 
-/* 1. 上方資訊列 (修正版：強制滿版與符號置中) */
-.fortune-header { width:100%; flex-shrink:0; display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:12px; margin-bottom:12px; }
-.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; }
-.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 18px rgba(139,92,246,0.9); margin:0; width:100%; text-align:center; transform:translateX(-3px); }
+/* 1. 上方資訊列 */
+.fortune-header { width:100%; flex-shrink:0; display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(0,242,255,0.3); padding-bottom:12px; margin-bottom:12px; }
+.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; border: none !important; border-radius: 4px; background: transparent !important; }
+.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 5px rgba(0, 242, 255, 0.5) !important;; margin:0; width:100%; text-align:center; transform:translateX(-3px); }
 .fortune-info-box { flex:1; display:flex; flex-direction:column; text-align:left; justify-content:center; overflow:hidden; }
-.fortune-meta { font-size:0.8rem; color:#cbd5e1; margin-bottom:2px; font-family:'Segoe UI',sans-serif; }
+.fortune-meta { font-size:0.8rem; color:var(--hud-cyan); margin-bottom:2px; font-family:'Rajdhani',sans-serif; letter-spacing: 1px; }
 .fortune-title-row { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
-.fortune-title { font-size:1.4rem; color:#c4b5fd; font-weight:bold; line-height:1.2; margin:0; }
-.fortune-title-en { font-size:0.85rem; color:#818cf8; font-weight:normal; }
-.fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; }
+.fortune-title { font-size:1.4rem; color:#fff; font-weight:bold; line-height:1.2; margin:0; }
+.fortune-title-en { font-size:0.85rem; color:#94a3b8; font-weight:normal; }
+.fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; text-shadow: 0 0 5px #facc15; }
 
 /* 2. 神諭 */
-.fortune-oracle { flex-shrink:0; font-family:'Georgia','Times New Roman',serif; font-style:italic; color:#67e8f9; font-size:0.95rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(34,211,238,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.fortune-oracle { flex-shrink:0; font-family:'Rajdhani','sans-serif'; font-style:italic; color:var(--hud-cyan); font-size:1rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(0,242,255,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); }
 
-/* 3. 運勢文字區 (縮小字體、緊湊) */
-.fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:#6366f1 rgba(0,0,0,0.1); }
+/* 3. 運勢文字區 */
+.fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.5); border-radius:4px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:var(--hud-cyan) rgba(0,0,0,0.1); }
 .fortune-guide-text { font-size:0.92rem; line-height:1.6; text-align:left; letter-spacing:0.5px; margin-bottom:15px; color:#f8fafc; font-weight:400; }
-.fortune-science { font-size:0.85rem; color:#6ee7b7; background:rgba(16,185,129,0.15); padding:8px; border-radius:6px; border-left:3px solid #10b981; line-height:1.4; text-align:left; letter-spacing:0.5px; }
+.fortune-science { font-size:0.85rem; color:#6ee7b7; background:rgba(16,185,129,0.1); padding:8px; border-radius:2px; border: 1px solid rgba(16, 185, 129, 0.3); line-height:1.4; text-align:left; letter-spacing:0.5px; }
 
-/* 4. 幸運物區塊 (移除數字，橫式滿版) */
-.fortune-lucky { flex-shrink:0; margin-top:12px; background:linear-gradient(90deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03)); border-radius:10px; padding:10px 15px; display:flex; flex-direction:column; gap:4px; border:1px solid rgba(255,255,255,0.15); box-shadow:0 4px 8px rgba(0,0,0,0.3); text-align:left; }
-.lucky-title { color:#38bdf8; font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; }
+/* 4. 幸運物區塊 */
+.fortune-lucky { flex-shrink:0; margin-top:12px; background:linear-gradient(90deg,rgba(0,242,255,0.1),rgba(0,0,0,0)); border-radius:4px; padding:10px 15px; display:flex; flex-direction:column; gap:4px; border:1px solid var(--hud-cyan); box-shadow:0 0 10px rgba(0,242,255,0.1); text-align:left; }
+.lucky-title { color:var(--hud-cyan); font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; text-shadow: 0 0 2px rgba(0, 242, 255, 0.3) !important; }
 .lucky-desc { font-size:0.85rem; color:#e2e8f0; line-height:1.4; opacity:0.95; margin-left:2px; }
 
 .close-fortune {
     margin-top: 25px; padding: 8px 25px;
-    background: rgba(255,255,255,0.1); border: 1px solid #4b5563;
-    color: #cbd5e1; border-radius: 20px; cursor: pointer; transition: 0.2s;
-    font-size: 0.9rem;
+    background: transparent; border: 1px solid var(--hud-cyan);
+    color: var(--hud-cyan); border-radius: 4px; cursor: pointer; transition: 0.2s;
+    font-size: 0.9rem; font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px;
 }
-.close-fortune:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
+.close-fortune:hover { background: var(--hud-cyan); color: #000; box-shadow: 0 0 20px var(--hud-cyan); }
 
 @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
