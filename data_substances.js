@@ -484,7 +484,8 @@ const SUBSTANCE_LIST = [
     { formula: "CH3NO2", name: "硝基甲烷", common: "", category: "有機分子", key: "CH3NO2|硝基甲烷", tags: ["CH3NO2", "硝基甲烷", "Cs"] },
     { formula: "CH3CN", name: "乙腈", common: "氰甲烷", category: "有機分子", key: "CH3CN|乙腈|氰甲烷", tags: ["CH3CN", "乙腈", "C3v"] },
     { formula: "C3H3N", name: "丙烯腈", common: "Acrylonitrile", category: "有機分子", key: "C3H3N|丙烯腈|Acrylonitrile", tags: ["C3H3N", "丙烯腈", "Cs"] },
-
+    { formula: "CH3COOH", name: "乙酸", common: "醋酸", category: "羧酸", key: "CH3COOH|乙酸", tags: ["CH3COOH", "乙酸", "醋酸", "Cs"] },
+    { formula: "HCOOCH3", name: "甲酸甲酯", common: "", category: "酯類", key: "HCOOCH3|甲酸甲酯", tags: ["HCOOCH3", "甲酸甲酯", "Cs"] },
     // --- 醣類 ---
     { formula: "C6H12O6", name: "半乳糖", common: "", category: "醣類", key: "C6H12O6|半乳糖", tags: ["C6H12O6", "半乳糖", "C1"] },
     { formula: "C6H12O6", name: "葡萄糖", common: "", category: "醣類", key: "C6H12O6|葡萄糖", tags: ["C6H12O6", "葡萄糖", "C1"] },
