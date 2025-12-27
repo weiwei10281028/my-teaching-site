@@ -549,7 +549,6 @@ const SUBSTANCE_LIST = [
     { formula: "Na2S", name: "硫化鈉", common: "臭鹼", category: "硫化物", key: "Na2S|硫化鈉", tags: ["Na2S", "硫化鈉"] },
     { formula: "FeCl2", name: "氯化亞鐵", common: "", category: "鹽類", key: "FeCl2|氯化亞鐵", tags: ["FeCl2", "氯化亞鐵"] },
     { formula: "FeCl3", name: "氯化鐵", common: "", category: "鹽類", key: "FeCl3|氯化鐵", tags: ["FeCl3", "氯化鐵"] },
-    { formula: "AlCl3", name: "氯化鋁", common: "", category: "鹽類", key: "AlCl3|氯化鋁", tags: ["AlCl3", "氯化鋁"] },
     { formula: "Al2O3", name: "氧化鋁", common: "剛玉", category: "氧化物", key: "Al2O3|氧化鋁|剛玉", tags: ["Al2O3", "氧化鋁"] },
     { formula: "Fe2O3", name: "氧化鐵", common: "赤鐵礦", category: "氧化物", key: "Fe2O3|氧化鐵|赤鐵礦", tags: ["Fe2O3", "氧化鐵"] },
 
@@ -570,5 +569,9 @@ const SUBSTANCE_LIST = [
     { formula: "C50", name: "碳50", common: "", category: "碳簇", key: "C50|碳50", tags: ["C50", "碳50"] },
     { formula: "C70", name: "碳70", common: "", category: "碳簇", key: "C70|碳70", tags: ["C70", "碳70"] },
     { formula: "C80", name: "碳80", common: "", category: "碳簇", key: "C80|碳80", tags: ["C80", "碳80"] },
-    { formula: "C100", name: "碳100", common: "", category: "碳簇", key: "C100|碳100", tags: ["C100", "碳100"] }
+    { formula: "C100", name: "碳100", common: "", category: "碳簇", key: "C100|碳100", tags: ["C100", "碳100"] },
+    { formula: "N2F2", name: "順式-二氟二氮", common: "", category: "鹵代烴衍生物", key: "N2F2|順式-二氟二氮", tags: ["N2F2", "順式-二氟二氮", "C2v"] },
+    { formula: "N2F2", name: "反式-二氟二氮", common: "", category: "鹵代烴衍生物", key: "N2F2|反式-二氟二氮", tags: ["N2F2", "反式-二氟二氮", "C2h"] },
+
 ];
+
