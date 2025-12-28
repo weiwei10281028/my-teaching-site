@@ -1699,10 +1699,66 @@ function parseAtoms(f) {
 function setupEquationBalancer() {
     const btn = document.getElementById('balance-btn'), input = document.getElementById('equation-input');
     const resDiv = document.getElementById('balance-result'), stpBtn = document.getElementById('steps-toggle-btn'), stpDiv = document.getElementById('balance-steps');
+    
     if (!btn) return;
+
+    // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                btn.click(); // 模擬點擊平衡按鈕
+            }
+        });
+    }
+    
     btn.addEventListener('click', () => {
         const val = input.value.trim();
         if (!val) return;
+
+        // [保留] 隱藏彩蛋：輸入 "人次" 顯示計數器
+        if (val === "人次") {
+            const subEl = document.getElementById("viewport-subtitle");
+            if (subEl) {
+                // 清空並顯示副標題區域
+                subEl.style.display = "block";
+                subEl.style.width = "fit-content";
+                // 使用 S96 風格的樣式
+                subEl.style.border = "1px solid #00f2ff"; 
+                subEl.style.backgroundColor = "rgba(2, 6, 23, 0.9)";
+                subEl.style.color = "#00f2ff"; 
+                subEl.style.boxShadow = "0 0 15px rgba(0, 242, 255, 0.3)";
+                subEl.style.padding = "10px 20px";
+                subEl.style.textAlign = "center";
+                subEl.style.borderRadius = "4px";
+                
+                subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold; font-family:'Rajdhani', sans-serif;">👁️ 本站累積瀏覽人次</div>`;
+                
+                // 重新加載圖片以確保更新
+                const newImg = new Image();
+                newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
+                newImg.alt = "載入中...";
+                newImg.style.height = "28px";
+                newImg.style.display = "block";
+                newImg.style.margin = "0 auto";
+
+                newImg.onerror = function() {
+                    subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
+                };
+                subEl.appendChild(newImg);
+                
+                // 清空輸入框
+                input.value = "";
+                
+                // 清除原本的平衡結果顯示 (如果有的話)
+                resDiv.style.display = 'none';
+                stpBtn.style.display = 'none';
+                stpDiv.style.display = 'none';
+            }
+            return; // 結束函式，不執行化學平衡
+        }
+        // [結束隱藏彩蛋]
+
+        // --- 以下為原本的化學平衡邏輯 ---
         stpDiv.style.display = 'none';
         try {
             const res = solveChemicalEquationWithSteps(val);
@@ -1717,11 +1773,14 @@ function setupEquationBalancer() {
             stpBtn.style.display = 'none';
         }
     });
+
     stpBtn.onclick = () => {
         const isH = stpDiv.style.display === 'none';
         stpDiv.style.display = isH ? 'block' : 'none';
         stpBtn.textContent = isH ? '隱藏解題思路' : '查看解題思路';
     };
+    
+    // 平衡說明彈窗邏輯
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
     if (hBtn && hBox) {
         hBtn.onclick = (e) => { e.stopPropagation(); hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block'; };
@@ -2051,40 +2110,14 @@ function gaussElimination(matrix) {
 }
 
 function handleLoadBtn() {
-    let rawVal = document.getElementById("formula-input").value;
+    // 嘗試獲取舊的輸入框 (如果 HTML 中已移除，這裡會直接返回，不會報錯)
+    let inputEl = document.getElementById("formula-input");
+    if (!inputEl) return; 
+
+    let rawVal = inputEl.value;
     if (!rawVal) return;
 
-    // ========== 隱藏功能：查詢瀏覽人次 ==========
-    if (rawVal === "人次") {
-        const subEl = document.getElementById("viewport-subtitle");
-        if (subEl) {
-            subEl.style.display = "block";
-            subEl.style.width = "fit-content";
-            subEl.style.border = "1px solid #10b981"; 
-            subEl.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
-            subEl.style.color = "#10b981"; 
-            subEl.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.3)";
-            subEl.style.padding = "10px 20px";
-            subEl.style.textAlign = "center";
-            
-            subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold;">👁️ 本站累積瀏覽人次</div>`;
-            
-            const newImg = new Image();
-            newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
-            newImg.alt = "載入中...";
-            newImg.style.height = "28px";
-            newImg.style.display = "block";
-            newImg.style.margin = "0 auto";
-
-            newImg.onerror = function() {
-                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
-            };
-            subEl.appendChild(newImg);
-            document.getElementById("formula-input").value = "";
-        }
-        return; 
-    }
-    // ===============================================
+    // --- [已移除] 舊的人次查詢代碼 ---
 
     // [新增] 手動搜尋時，清空歷史紀錄
     moleculeHistory = [];
@@ -5136,15 +5169,28 @@ function revealFortune() {
     isFortuneRevealed = true;
     document.getElementById('fortune-card').classList.add('flipped');
 
-    // 1. 抽取邏輯
-    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
+    // 1. 抽取邏輯 (修正版：台灣早上 8 點重置)
+    const ENABLE_DAILY_LIMIT = true; 
     let pickIndex;
+    
     if (ENABLE_DAILY_LIMIT) {
-        const todayKey = new Date(new Date().getTime() + (new Date().getTimezoneOffset()*60000) + (3600000*(8-8))).toISOString().split('T')[0]; 
+        // [修改核心] 利用 UTC 日期作為 Key
+        // 台灣 08:00 = UTC 00:00，所以 UTC 日期變更時，剛好就是台灣早上八點
+        const todayKey = new Date().toISOString().split('T')[0]; 
+        
         const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
-        if (record.date === todayKey && record.index !== undefined) { pickIndex = record.index; } 
-        else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); }
-    } else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); }
+        
+        // 比對日期 Key，若相同則給一樣的結果
+        if (record.date === todayKey && record.index !== undefined) { 
+            pickIndex = record.index; 
+        } else { 
+            // 若日期不同 (過了早上八點)，重新隨機
+            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+            localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); 
+        }
+    } else { 
+        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+    }
 
     // 2. 取得資料
     const pick = ELEMENT_FORTUNES[pickIndex];
@@ -5152,7 +5198,7 @@ function revealFortune() {
     const db = (typeof LUCKY_ITEMS_DB !== 'undefined') ? LUCKY_ITEMS_DB : {};
     const lucky = db[pick.z] || { item: "微笑", reason: "保持好心情就是最好的幸運。" };
 
-    // 3. 生成 HTML (移除 lucky-num，版面橫向滿版)
+    // 3. 生成 HTML
     const resultHtml = `
         <div class="fortune-header">
             <div class="fortune-symbol-box"><div class="fortune-symbol">${pick.s}</div></div>
