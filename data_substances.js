@@ -574,5 +574,15 @@ const SUBSTANCE_LIST = [
     { formula: "N2F2", name: "順式-二氟二氮", common: "", category: "鹵代烴衍生物", key: "N2F2|順式-二氟二氮", tags: ["N2F2", "順式-二氟二氮", "C2v"] },
     { formula: "N2F2", name: "反式-二氟二氮", common: "", category: "鹵代烴衍生物", key: "N2F2|反式-二氟二氮", tags: ["N2F2", "反式-二氟二氮", "C2h"] },
 
+
+    { formula: "C", name: "金剛石", common: "鑽石", category: "元素 / 網狀固體", key: "C|金剛石|鑽石", tags: ["C", "金剛石", "鑽石", "Diamond", "Fd3m"] },
+    { formula: "C", name: "石墨", common: "黑鉛", category: "元素 / 網狀固體", key: "C|石墨|黑鉛", tags: ["C", "石墨", "黑鉛", "Graphite", "Layered"] },
+    { formula: "SiO2", name: "二氧化矽", common: "石英", category: "氧化物 / 網狀固體", key: "SiO2|二氧化矽|石英", tags: ["SiO2", "二氧化矽", "石英", "Silica", "Quartz"] },
+    { formula: "BN", name: "氮化硼(立體)", common: "立方氮化硼", category: "氮化物 / 網狀固體", key: "BN|氮化硼(立體)", tags: ["BN", "氮化硼", "c-BN", "Fd-3m"] },
+    { formula: "BN", name: "氮化硼(平面層狀)", common: "層狀氮化硼", category: "氮化物 / 網狀固體", key: "BN|氮化硼(平面層狀)", tags: ["BN", "氮化硼", "h-BN", "白石墨", "Layered"] },
+    { formula: "Si", name: "矽", common: "矽晶體", category: "元素 / 網狀固體", key: "Si|矽|矽晶體", tags: ["Si", "矽", "Silicon", "半導體", "Fd3m"] },
+
+
+
 ];
 
