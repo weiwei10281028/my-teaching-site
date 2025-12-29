@@ -267,9 +267,38 @@
         border-left: 3px solid var(--hud-cyan); padding-left: 10px; /* HUD 標記 */
         text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
     }
-    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .data-label { font-size: 0.95rem; color: var(--text-sub); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
-    .data-value { font-size: 1.15rem; color: #fff; font-weight: 500; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+    /* 1. 修改每一列的對齊方式 */
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* 改為頂端對齊，避免標籤縮到中間 */
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    gap: 15px; /* 增加標籤與數值間的間距 */
+}
+
+/* 2. 修改標籤，確保它不會被擠扁 */
+.data-label {
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    flex-shrink: 0; /* 重要：防止標籤被擠壓換行 */
+    width: 80px;    /* 建議設定固定寬度，視覺會更整齊 */
+    padding-top: 2px; /* 微調讓標籤對齊第一行文字 */
+}
+
+/* 3. 修改數值顯示 */
+.data-value {
+    font-size: 1.1rem; /* 稍微縮小字體以容納更多內容 */
+    color: #fff;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(255,255,255,0.3);
+    text-align: right; /* 文字靠右對齊 */
+    line-height: 1.4;  /* 增加行高，多行時才不會太擠 */
+    word-break: break-word; /* 避免超長英文單字衝破邊框 */
+}
     
     /* --- 平衡係數與詳解面板樣式 --- */
     #balance-result {
@@ -329,28 +358,44 @@
     .switch-container:hover { border-color: rgba(0, 242, 255, 0.3); background: rgba(0, 242, 255, 0.05); }
     .switch-container input { width: 18px; height: 18px; accent-color: var(--hud-cyan); cursor: pointer; }
 
+    /* --- 🟢 異構物選擇區核心定義 (刪除舊代碼後換成這段) --- */
     #variant-selector {
         display: none; 
-        background: rgba(16, 185, 129, 0.05); 
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        padding: 15px; border-radius: 8px; margin-bottom: 15px;
-        position: relative;
+        --t: #10b981; /* 核心主題色變數 */
+        background: rgba(16, 185, 129, 0.12); 
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 15px; border-radius: 4px; margin-bottom: 15px;
+        position: relative; backdrop-filter: blur(10px);
     }
-    /* [S96] 變體選擇器加上角落標記裝飾 */
-    #variant-selector::before {
-        content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
-        border-top: 2px solid var(--accent-green); border-left: 2px solid var(--accent-green);
-    }
-    #variant-selector::after {
-        content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px;
-        border-bottom: 2px solid var(--accent-green); border-right: 2px solid var(--accent-green);
-    }
-    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 
-    #variant-selector.acid-theme { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); }
-    #variant-selector.acid-theme .variant-header { color: #fbbf24; }
-    #variant-selector.acid-theme .variant-option { color: #fbbf24; }
-    #variant-selector.acid-theme .variant-option:hover { background: rgba(245, 158, 11, 0.15); }
+    /* 角落標記：粗度加強且顏色強制同步變數 --t */
+    #variant-selector::before, #variant-selector::after {
+        content: ''; position: absolute; width: 12px; height: 12px;
+        border-color: var(--t) !important;
+        pointer-events: none; z-index: 2;
+    }
+    #variant-selector::before { top: -1.5px; left: -1.5px; border-top: 3px solid var(--t); border-left: 3px solid var(--t); }
+    #variant-selector::after { bottom: -1.5px; right: -1.5px; border-bottom: 3px solid var(--t); border-right: 3px solid var(--t); }
+
+    /* 標題與選項：同步主題色 */
+    .variant-header { font-weight: bold; color: var(--t) !important; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-size: 1rem; }
+    .variant-option { padding: 6px 4px; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--t) !important; font-weight: 600; transition: all 0.2s; }
+    .variant-option span { color: inherit !important; }
+    .variant-option:hover { background: rgba(255, 255, 255, 0.05); color: #fff !important; text-shadow: 0 0 8px var(--t); }
+    
+    /* 自定義 Radio 按鈕 */
+    #variant-selector input[type="radio"] { 
+        appearance: none; width: 14px; height: 14px; border: 2px solid var(--t); 
+        border-radius: 50%; outline: none; cursor: pointer; position: relative;
+    }
+    #variant-selector input[type="radio"]:checked { background: var(--t); box-shadow: 0 0 8px var(--t); }
+
+    /* 各主題切換：只需定義 --t，底色、字、框就會連動 */
+    #variant-selector.acid-theme      { --t: #fbbf24; background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.3); } 
+    #variant-selector.resonance-theme { --t: #a78bfa; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.3); } 
+    #variant-selector.structure-theme { --t: #38bdf8; background: rgba(14, 165, 233, 0.12); border-color: rgba(14, 165, 233, 0.3); } 
+    #variant-selector.allotrope-theme { --t: #f1f5f9; background: rgba(255, 255, 255, 0.1);  border-color: rgba(255, 255, 255, 0.2); } 
+    #variant-selector.polymorph-theme { --t: #ff7f50; background: rgba(255, 127, 80, 0.12); border-color: rgba(255, 127, 80, 0.3); }
 
     #reaction-container { margin-bottom: 30px; width: 100%; }
     .reaction-row { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; }
@@ -780,69 +825,6 @@
 .ion-btn.active[data-type="neg"]     { background: #93c5fd !important; color: #000 !important; border-color: #93c5fd !important; }
 
 
-/* --- [新增] 共振結構主題 (紫色系) --- */
-#variant-selector.resonance-theme { 
-    background: rgba(139, 92, 246, 0.05); 
-    border: 1px solid rgba(139, 92, 246, 0.3); 
-}
-#variant-selector.resonance-theme .variant-header { 
-    color: #a78bfa; 
-}
-#variant-selector.resonance-theme .variant-option { 
-    color: #a78bfa; 
-}
-#variant-selector.resonance-theme .variant-option:hover { 
-    background: rgba(139, 92, 246, 0.15); 
-    color: #fff;
-    text-shadow: 0 0 8px #a78bfa;
-}
-#variant-selector.resonance-theme input[type="radio"] {
-    accent-color: #8b5cf6; 
-}
-
-/* --- [新增] 結構/晶體切換主題 (藍色系) --- */
-#variant-selector.structure-theme { 
-    background: rgba(56, 189, 248, 0.05); 
-    border: 1px solid rgba(56, 189, 248, 0.3); 
-}
-#variant-selector.structure-theme .variant-header { 
-    color: #38bdf8; 
-}
-#variant-selector.structure-theme .variant-option { 
-    color: #38bdf8; 
-}
-#variant-selector.structure-theme .variant-option:hover { 
-    background: rgba(56, 189, 248, 0.15); 
-    color: #fff;
-    text-shadow: 0 0 8px #38bdf8;
-}
-#variant-selector.structure-theme input[type="radio"] {
-    accent-color: #0ea5e9; 
-}
-
-/* --- [修改] 同素異形體主題 (桃紅色系) --- */
-#variant-selector.allotrope-theme { 
-    background: rgba(217, 70, 239, 0.05); 
-    border: 1px solid rgba(217, 70, 239, 0.4); 
-}
-#variant-selector.allotrope-theme .variant-header { color: #d946ef; }
-#variant-selector.allotrope-theme .variant-option { color: #d946ef; }
-#variant-selector.allotrope-theme .variant-option:hover { 
-    background: rgba(217, 70, 239, 0.15); color: #fff; text-shadow: 0 0 10px #d946ef;
-}
-#variant-selector.allotrope-theme input[type="radio"] { accent-color: #d946ef; }
-
-/* --- [新增] 同質異形體主題 (珊瑚紅色系) --- */
-#variant-selector.polymorph-theme { 
-    background: rgba(251, 113, 133, 0.05); 
-    border: 1px solid rgba(251, 113, 133, 0.4); 
-}
-#variant-selector.polymorph-theme .variant-header { color: #fb7185; }
-#variant-selector.polymorph-theme .variant-option { color: #fb7185; }
-#variant-selector.polymorph-theme .variant-option:hover { 
-    background: rgba(251, 113, 133, 0.15); color: #fff; text-shadow: 0 0 10px #fb7185;
-}
-#variant-selector.polymorph-theme input[type="radio"] { accent-color: #fb7185; }
 
 /* --- 軌域控制面板樣式 --- */
 .orbital-btn-group {
@@ -2801,82 +2783,42 @@ function processAtomsData(atomList, bondList, centerElem) {
     return processed;
 }
 
+/* --- JS 渲染函式同步修正 --- */
 function updateVariantUI(key, activeVariant) {
     const rootData = MOLECULE_DB[key];
     variantSelector.innerHTML = ''; 
-    
-    // 清除所有舊的主題 class
-    variantSelector.classList.remove('acid-theme', 'resonance-theme', 'structure-theme');
-    variantSelector.classList.remove('allotrope-theme', 'polymorph-theme');
-    
+    variantSelector.className = ''; 
     if (rootData.variants) {
         variantSelector.style.display = 'block';
-        const variantKeys = Object.keys(rootData.variants);
-        
-        // --- 偵測邏輯 ---
-        const isAllotrope = variantKeys.some(vKey => vKey.includes("金剛石") || vKey.includes("石墨") || vKey.includes("磷") || vKey.includes("硫"));
-        const isPolymorph = variantKeys.some(vKey => vKey.includes("BN") || vKey.includes("碳化矽") || vKey.includes("氧化鈦"));
-        const isResonance = variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("Resonance"));
-        const isStructure = variantKeys.some(vKey => vKey.includes("晶體") || vKey.includes("堆積") || vKey.includes("Crystal"));
-        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽"));
-        
         const hdr = document.createElement('div');
         hdr.className = 'variant-header';
-
-        if (isAllotrope) {
-            variantSelector.classList.add('allotrope-theme');
-            hdr.textContent = '選擇同素異形體 (Allotrope):';
-        } else if (isPolymorph) {
-            variantSelector.classList.add('polymorph-theme');
-            hdr.textContent = '選擇同質異形體 (Polymorph):';
-        } else if (isResonance) {
-            variantSelector.classList.add('resonance-theme');
-            hdr.textContent = '選擇共振結構 (Resonance):';
-        } else if (isStructure) {
-            variantSelector.classList.add('structure-theme'); // [新增] 藍色
-            hdr.textContent = '選擇結構層次 (Structure):';
-        } else if (isAcidSaltSeries) {
-            variantSelector.classList.add('acid-theme'); // 橘色
-            hdr.textContent = '選擇解離狀態 (分子/離子/鹽類):';
-        } else {
-            // 綠色 (預設)
-            hdr.textContent = '選擇同分異構物:';
-        }
-        
+        const TYPE_CONFIG = {
+            "isomer":    { class: "",                title: "選擇同分異構物 (Isomer):" },
+            "resonance": { class: "resonance-theme", title: "選擇共振結構 (Resonance):" },
+            "structure": { class: "structure-theme", title: "選擇結構層次 (Structure):" },
+            "acid":      { class: "acid-theme",      title: "選擇解離狀態 (Dissociation):" },
+            "allotrope": { class: "allotrope-theme", title: "選擇同素異形體 (Allotrope):" },
+            "polymorph": { class: "polymorph-theme", title: "選擇同質異形體 (Polymorph):" }
+        };
+        const config = TYPE_CONFIG[rootData.variantType] || TYPE_CONFIG["isomer"];
+        if (config.class) variantSelector.classList.add(config.class);
+        hdr.textContent = config.title;
         variantSelector.appendChild(hdr);
-        
-        // --- 5. 產生選項 ---
         for (let vKey in rootData.variants) {
             const div = document.createElement('div');
             div.className = 'variant-option';
-            
             const radio = document.createElement('input');
             radio.type = 'radio'; radio.name = 'v';
             if (vKey === activeVariant) radio.checked = true;
-            
             const span = document.createElement('span'); 
-            
-            const variantData = rootData.variants[vKey];
-            const fullKeyString = variantData.fullKey || vKey;
-            const parts = fullKeyString.split('|');
-            
-            // 優先顯示中文名稱
-            let labelText = "";
-            if (parts.length > 1) {
-                labelText = parts[1].trim();
-                span.textContent = ` ${labelText}`; 
-            } else {
-                labelText = parts[0].trim();
-                span.innerHTML = ` ${formatFormula(labelText)}`;
-            }
-            
+            const vData = rootData.variants[vKey];
+            const parts = (vData.fullKey || vKey).split('|');
+            span.innerHTML = parts.length > 1 ? ` ${parts[1].trim()}` : ` ${formatFormula(parts[0].trim())}`;
             div.appendChild(radio); div.appendChild(span);
             div.addEventListener('click', () => loadMolecule(key, vKey));
             variantSelector.appendChild(div);
         }
-    } else {
-        variantSelector.style.display = 'none';
-    }
+    } else { variantSelector.style.display = 'none'; }
 }
 
 
@@ -4248,23 +4190,16 @@ function renderSubstanceList() {
     }
 
     SUBSTANCE_LIST.forEach(sub => {
-        // 安全獲取屬性，防止 undefined 導致函式崩潰
         const formula = (sub.formula || "").toLowerCase();
         const name = (sub.name || "").toLowerCase();
         const common = (sub.common || "").toLowerCase();
         const tags = sub.tags || [];
 
-        // 1. 化學式匹配：英文開頭匹配 (例如打 f 出現 Fe)
         const isFormulaMatch = formula.startsWith(filter);
-        
-        // 2. 名稱/俗名匹配：支援中文「包含」匹配
         const isNameMatch = name.includes(filter);
         const isCommonMatch = common.includes(filter);
-        
-        // 3. 標籤匹配：遍歷 tags 陣列
         const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
 
-        // 搜尋邏輯：打字時符合任一條件才顯示
         if (filter !== "" && !isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
 
         const card = document.createElement('div');
@@ -4272,35 +4207,40 @@ function renderSubstanceList() {
         card.style.borderLeft = '4px solid #38bdf8';
         card.style.cursor = 'pointer';
         
+        // 核心邏輯：點擊搜尋結果執行跨分類精確跳轉
         card.onclick = () => {
-            const parts = sub.key.split('|').map(p => p.trim());
-            const mainKey = parts[0]; 
-            const targetName = parts.length > 1 ? parts[1] : null;
-            const rootData = MOLECULE_DB[mainKey];
+            const searchKey = sub.key; 
+            let targetMainKey = null;
+            let targetVariantID = null;
 
-            if (rootData && rootData.variants) {
-                const vKeys = Object.keys(rootData.variants);
-                let variantKey = null;
-                if (targetName) {
-                    variantKey = vKeys.find(k => k.toLowerCase() === targetName.toLowerCase());
-                    if (!variantKey) {
-                        variantKey = vKeys.find(k => {
-                            const vData = rootData.variants[k];
-                            return (vData.fullKey || "").toLowerCase().includes(targetName.toLowerCase());
-                        });
+            // 1. 在所有分子的變體庫中查找匹配
+            for (let mKey in MOLECULE_DB) {
+                const root = MOLECULE_DB[mKey];
+                if (root.variants) {
+                    for (let vID in root.variants) {
+                        if (vID === searchKey) {
+                            targetMainKey = mKey;
+                            targetVariantID = vID;
+                            break;
+                        }
                     }
-                    variantKey = variantKey || vKeys[0];
-                } else {
-                    variantKey = vKeys[0];
                 }
-                window.currentKey = mainKey;
-                window.currentVariantKey = variantKey;
-                loadMolecule(mainKey, variantKey);
-            } else {
-                window.currentKey = mainKey;
-                window.currentVariantKey = null;
-                loadMolecule(mainKey);
+                if (targetMainKey) break;
             }
+
+            // 2. 執行載入邏輯
+            if (targetMainKey && targetVariantID) {
+                window.currentKey = targetMainKey;
+                window.currentVariantKey = targetVariantID;
+                loadMolecule(targetMainKey, targetVariantID);
+            } else {
+                const rootKey = searchKey.split('|')[0];
+                if (MOLECULE_DB[rootKey]) {
+                    loadMolecule(rootKey);
+                }
+            }
+
+            // 3. UI 狀態收尾
             closeSubstanceModal();
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
@@ -4321,7 +4261,7 @@ function renderSubstanceList() {
                         <span style="font-size:0.8rem; color:#94a3b8;">${sub.common ? '俗名: ' + sub.common : sub.category}</span>
                     </div>
                 </div>
-                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
+                <div style="background:rgba(56, 189, 248, 0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56, 189, 248, 0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
             </div>
         `;
         container.appendChild(card);
