@@ -820,6 +820,29 @@
     accent-color: #0ea5e9; 
 }
 
+/* --- [修改] 同素異形體主題 (桃紅色系) --- */
+#variant-selector.allotrope-theme { 
+    background: rgba(217, 70, 239, 0.05); 
+    border: 1px solid rgba(217, 70, 239, 0.4); 
+}
+#variant-selector.allotrope-theme .variant-header { color: #d946ef; }
+#variant-selector.allotrope-theme .variant-option { color: #d946ef; }
+#variant-selector.allotrope-theme .variant-option:hover { 
+    background: rgba(217, 70, 239, 0.15); color: #fff; text-shadow: 0 0 10px #d946ef;
+}
+#variant-selector.allotrope-theme input[type="radio"] { accent-color: #d946ef; }
+
+/* --- [新增] 同質異形體主題 (珊瑚紅色系) --- */
+#variant-selector.polymorph-theme { 
+    background: rgba(251, 113, 133, 0.05); 
+    border: 1px solid rgba(251, 113, 133, 0.4); 
+}
+#variant-selector.polymorph-theme .variant-header { color: #fb7185; }
+#variant-selector.polymorph-theme .variant-option { color: #fb7185; }
+#variant-selector.polymorph-theme .variant-option:hover { 
+    background: rgba(251, 113, 133, 0.15); color: #fff; text-shadow: 0 0 10px #fb7185;
+}
+#variant-selector.polymorph-theme input[type="radio"] { accent-color: #fb7185; }
 
 /* --- 軌域控制面板樣式 --- */
 .orbital-btn-group {
@@ -2784,30 +2807,30 @@ function updateVariantUI(key, activeVariant) {
     
     // 清除所有舊的主題 class
     variantSelector.classList.remove('acid-theme', 'resonance-theme', 'structure-theme');
+    variantSelector.classList.remove('allotrope-theme', 'polymorph-theme');
     
     if (rootData.variants) {
         variantSelector.style.display = 'block';
-        
         const variantKeys = Object.keys(rootData.variants);
         
-        // --- 1. 判斷是否為「共振結構」 (紫色) ---
+        // --- 偵測邏輯 ---
+        const isAllotrope = variantKeys.some(vKey => vKey.includes("金剛石") || vKey.includes("石墨") || vKey.includes("磷") || vKey.includes("硫"));
+        const isPolymorph = variantKeys.some(vKey => vKey.includes("BN") || vKey.includes("碳化矽") || vKey.includes("氧化鈦"));
         const isResonance = variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("Resonance"));
-
-        // --- 2. [新增] 判斷是否為「結構/晶體切換」 (藍色) ---
-        // 邏輯：變體名稱中包含 "晶體", "堆積", "Simple", "Crystal"
         const isStructure = variantKeys.some(vKey => vKey.includes("晶體") || vKey.includes("堆積") || vKey.includes("Crystal"));
-
-        // --- 3. 判斷是否為「分子/離子/鹽類」 (橘色) ---
-        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || 
-                                 key.includes("H2O") || key.includes("NH3") || 
-                                 variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽") || vKey.includes("Salt") || vKey.includes("Ion"));
+        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽"));
         
-        // --- 4. 設定標題與主題色 ---
         const hdr = document.createElement('div');
         hdr.className = 'variant-header';
 
-        if (isResonance) {
-            variantSelector.classList.add('resonance-theme'); // 紫色
+        if (isAllotrope) {
+            variantSelector.classList.add('allotrope-theme');
+            hdr.textContent = '選擇同素異形體 (Allotrope):';
+        } else if (isPolymorph) {
+            variantSelector.classList.add('polymorph-theme');
+            hdr.textContent = '選擇同質異形體 (Polymorph):';
+        } else if (isResonance) {
+            variantSelector.classList.add('resonance-theme');
             hdr.textContent = '選擇共振結構 (Resonance):';
         } else if (isStructure) {
             variantSelector.classList.add('structure-theme'); // [新增] 藍色
