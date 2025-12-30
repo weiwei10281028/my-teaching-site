@@ -50,7 +50,7 @@
 
 const ELEMENT_PROPS = {
     // --- 第 1 週期 ---
-    "H":  { ve: 1, c3d: "#F0F0F0", r3d: 12, lp: 0, mass: 1.008, en: 2.20 }, // [保留] 白灰
+    "H":  { ve: 1, c3d: "#F0F0F0", r3d: 12, lp: 0, mass: 1.008, en: 2.10 }, // [保留] 白灰
     "He": { ve: 2, c3d: "#A5F3FC", r3d: 11, lp: 1, mass: 4.002, en: 0 },    // [保留] 淡青
 
     // --- 第 2 週期 (半徑漸小: Li > Be > B > C > N > O > F) ---
