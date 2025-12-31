@@ -266,88 +266,65 @@
         .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
 
         @media (max-width: 1024px) {
-            body { 
-                height: 100vh; 
-                display: flex; 
-                flex-direction: column; 
-                overflow: hidden; /* 禁止全頁面滾動 */
-            }
+            body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-            /* A: 網頁標題 (固定高度) */
-            .header { height: 60px; flex-shrink: 0; padding: 0 15px; }
-            .header .system-title { font-size: 1.1rem; letter-spacing: 1px; }
+            /* A: 標題縮小 */
+            .header { height: 50px; flex-shrink: 0; padding: 0 10px; }
+            .header .system-title { font-size: 1rem; letter-spacing: 1px; }
+            .header div:last-child { display: none; } /* 隱藏副標題節省空間 */
 
-            /* 主容器配置為 Grid 佈局 */
             .main-layout { 
                 flex: 1;
                 display: grid !important;
-                grid-template-columns: 100px 1fr; /* 左 B: 100px, 右 C: 剩餘空間 */
-                grid-template-rows: 1fr 180px;    /* 上 B+C, 下 D: 180px */
+                grid-template-columns: 125px 1fr; /* B 區加寬至 125px */
+                grid-template-rows: 1fr 170px;    /* D 區高度 170px */
                 overflow: hidden;
             }
 
-            /* B: 儀器調節與離子選擇 (左側垂直滾動) */
+            /* B: 左側操作欄 (禁止橫移，僅垂直滑動) */
             .side-panel { 
-                grid-column: 1; 
-                grid-row: 1;
+                grid-column: 1; grid-row: 1;
                 width: 100% !important;
-                border-right: 1px solid rgba(0,242,255,0.2);
-                padding: 10px !important;
-                gap: 15px !important;
+                overflow-x: hidden !important;
                 overflow-y: auto !important;
-                background: rgba(15, 23, 42, 0.98);
-            }
-            .side-panel .hud-card { padding: 10px; }
-            .side-panel .card-label { font-size: 0.85rem; margin-bottom: 8px; }
-            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 8px; } /* 手機左側按鈕單欄排版 */
-            .s33-btn { padding: 10px 5px; font-size: 0.9rem; }
-
-            /* C: 本生燈與火焰 (右側固定觀察區) */
-            .viewport { 
-                grid-column: 2; 
-                grid-row: 1;
-                height: 100% !important;
-                min-height: auto !important;
-                overflow: hidden;
-            }
-            .bunsen-burner { transform: scale(0.7); margin-top: 0; }
-            #target-name { font-size: 1.8rem !important; top: 20px !important; right: 20px !important; }
-            #target-symbol { font-size: 0.9rem !important; }
-
-            /* D: 分析數據與顯色原理 (下方橫向滾動) */
-            .data-panel { 
-                grid-column: 1 / span 2; 
-                grid-row: 2;
-                width: 100% !important;
-                height: 100%;
-                border-left: none;
-                border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 10px !important;
-                display: flex !important;
-                flex-direction: row !important; /* 強制橫向排列 */
-                overflow-x: auto !important;  /* 橫向滾動 */
-                overflow-y: hidden !important;
+                padding: 10px 5px !important;
+                border-right: 1px solid rgba(0,242,255,0.2);
                 gap: 12px !important;
-                background: #020617;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
             }
-            .data-panel .hud-card { 
-                flex: 0 0 280px; /* 每張卡片固定寬度 280px */
-                height: 100%;
-                white-space: normal; /* 卡片內容恢復自動換行 */
-                margin-bottom: 0 !important;
-            }
+            .side-panel .hud-card { padding: 8px; margin-bottom: 0; }
+            .side-panel .card-label { font-size: 0.8rem; margin-bottom: 5px; }
+            .side-panel label { font-size: 0.85rem; line-height: 1.1; }
+            .side-panel label small { display: block; font-size: 0.7rem; opacity: 0.6; }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; }
+            .s33-btn { padding: 8px 2px; font-size: 0.85rem; }
 
-            /* E: 光譜儀 (最底部固定) */
-            #bottom-spectra {
-                height: 130px !important;
-                flex-shrink: 0;
-                padding: 10px 15px !important;
-                z-index: 100;
+            /* C: 中央觀察區 (本生燈偏左，修正底座) */
+            .viewport { 
+                grid-column: 2; grid-row: 1;
+                display: flex; justify-content: flex-start; /* 燈偏左 */
+                padding-left: 15px; align-items: flex-end;
+                height: 100% !important; overflow: hidden;
             }
-            .spectrum-labels { font-size: 0.7rem; }
-            .wavelength-label { font-size: 0.8rem !important; }
+            .bunsen-burner { 
+                transform: scale(0.65); /* 縮小本生燈 */
+                transform-origin: center bottom; /* 固定底部對齊 */
+                margin-bottom: 20px;
+            }
+            #target-name { font-size: 1.5rem !important; top: 15px !important; right: 15px !important; }
+
+            /* D: 數據面板 (橫向滑動) */
+            .data-panel { 
+                grid-column: 1 / span 2; grid-row: 2;
+                width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
+                padding: 10px !important; display: flex !important;
+                flex-direction: row !important; overflow-x: auto !important;
+                overflow-y: hidden !important; gap: 10px !important;
+                background: #000;
+            }
+            .data-panel .hud-card { flex: 0 0 260px; height: 100%; white-space: normal; }
+
+            /* E: 光譜儀固定 */
+            #bottom-spectra { height: 120px !important; padding: 10px !important; flex-shrink: 0; }
         }
     </style>
 </head>
@@ -371,19 +348,21 @@
     // 注入 UI - 左側控制面板 (已移除標籤開關)
     document.getElementById('controls').innerHTML = `
         <div class="hud-card">
-            <div class="card-label">儀器調節 (Controls)</div>
-            <div style="margin-bottom:20px;">
-                <label style="font-size:1rem; color:var(--hud-cyan);">燃料流量 (Fuel)</label>
+            <div class="card-label">儀器調節<br><small>Controls</small></div>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--hud-cyan);">燃料流量<br><small>(Fuel)</small></label>
                 <input type="range" id="gasRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="70">
             </div>
-            <div>
-                <label style="font-size:1rem; color:var(--hud-cyan);">空氣混合比 (Air)</label>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--hud-cyan);">空氣混合<br><small>(Air)</small></label>
                 <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
             </div>
-            <div style="margin-top:15px; display:flex; align-items:center; gap:12px; padding:10px; background:rgba(0,100,255,0.1); border-radius:4px;">
-                <input type="checkbox" id="cobaltGlass" style="width:20px; height:20px; cursor:pointer;" onchange="updateFlame(currentIon)">
-                <label for="cobaltGlass" style="font-size:1.1rem; color:#8bafff; font-weight:bold; cursor:pointer;">藍色鈷玻璃濾光 (Cobalt Glass)</label>
-            <div class="info-btn" onclick="togglePopup(event)">i</div>
+            <div style="display:flex; flex-direction:column; gap:5px; background:rgba(0,100,255,0.1); padding:8px; border-radius:4px;">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" id="cobaltGlass" style="width:16px; height:16px;" onchange="updateFlame(currentIon)">
+                    <label for="cobaltGlass" style="font-size:0.85rem; color:#8bafff; font-weight:bold;">鈷玻璃<br><small>(Cobalt)</small></label>
+                    <div class="info-btn" onclick="togglePopup(event)" style="width:18px; height:18px; font-size:0.7rem; margin-left:auto;">i</div>
+                </div>
             </div>
         </div>
         <div class="hud-card">
@@ -428,7 +407,6 @@
 
         <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
             <div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div>
-            <div id="target-symbol" style="color: var(--hud-cyan); font-size: 1.5rem; letter-spacing: 5px;">SCAN_READY</div>
         </div>
     `;
 </script>
@@ -542,15 +520,15 @@
             // 數據分析框優化：全黑背景、文字顏色一致
             // 數據卡片：寬度固定在手機橫滑容器中
             html += `
-                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
-                    <div style="font-size:1.2rem; color:${color}; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
+                    <div style="font-size:1.3rem; color:${color}; font-weight:bold; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                         <span>λ = ${nm} nm</span>
-                        <span style="font-size:0.7rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px; opacity:0.8;">${region}</span>
+                        <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
                     </div>
-                    <div style="font-size:0.9rem; display:grid; grid-template-columns: 1fr 1fr; gap:6px; color: #fff;">
-                        <div>能量: ${energy} eV</div>
-                        <div>頻率: ${freq} THz</div>
-                        <div style="grid-column: span 2; opacity: 0.8; font-size: 0.8rem;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                    <div style="font-size:0.95rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px; color: #fff;">
+                        <div style="color:#fff;">能量: ${energy} eV</div>
+                        <div style="color:#fff;">頻率: ${freq} THz</div>
+                        <div style="grid-column: span 2; color:#fff; opacity:0.8;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
                     </div>
                 </div>`;
         });
