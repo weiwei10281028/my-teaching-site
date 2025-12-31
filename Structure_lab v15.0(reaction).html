@@ -3551,24 +3551,33 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
+    // 1. 預設顏色 (白色)
     let coreColor = "#ffffff";
     let glowFill = "#ffffff";
     let glowOpacity = "0.28";
     
+    // 2. 智慧判斷變色邏輯
     if (e.isNegativeCharge) {
-        coreColor = "#ff9efa"; 
-        glowFill = "#ff9efa"; 
-        glowOpacity = "0.5"; 
+        // 取得當前分子的名稱 (currentKey 是全域變數)
+        // 判斷邏輯：如果名稱包含 "-" (負電) 或 "+" (正電) 或 "ion" (離子)，才允許變色
+        // 這樣 N2O (中性) 就算有形式電荷也會是白色，但 NO3- (離子) 會是粉紅色
+        const isRealIon = currentKey && (currentKey.includes("-") || currentKey.includes("+") || currentKey.includes("ion"));
+
+        if (isRealIon) {
+            coreColor = "#ff9efa"; // 粉紅色核心
+            glowFill = "#ff9efa";  // 粉紅色光暈
+            glowOpacity = "0.5";   // 加強亮度
+        }
     }
 
     if (isPlasmaMode) {
         g.setAttribute("style", "mix-blend-mode: screen;"); 
         const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
-        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); 
+        halo.setAttribute("r", r * 2.0); 
         halo.setAttribute("fill", glowFill);
         halo.setAttribute("opacity", "0.6");
-        halo.setAttribute("filter", "url(#soft-glow)"); // [修正] 強制加濾鏡
+        halo.setAttribute("filter", "url(#soft-glow)"); 
         g.appendChild(halo);
 
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -3583,13 +3592,10 @@ function drawElectron(e) {
         if (useGlow) {
             const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
-            
-            // [關鍵修正] 移除手機特判，強制統一
             glow.setAttribute("r", r * 2.0); 
             glow.setAttribute("fill", glowFill);
             glow.setAttribute("opacity", glowOpacity);
             glow.setAttribute("filter", "url(#soft-glow)"); 
-            
             g.appendChild(glow);
         }
 
