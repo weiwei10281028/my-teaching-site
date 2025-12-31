@@ -278,6 +278,8 @@ const SUBSTANCE_LIST = [
     // --- 具共振結構之離子與特殊分子 ---
     { formula: "SCN-", name: "硫氰酸根 (主要共振)", common: "N=C=S", category: "共振結構", key: "SCN-|主要共振結構 (N=C=S)", tags: ["SCN-", "硫氰酸根", "Cinfv"] },
     { formula: "SCN-", name: "硫氰酸根 (次要共振)", common: "N≡C-S", category: "共振結構", key: "SCN-|次要共振結構 (N≡C-S)", tags: ["SCN-", "硫氰酸根", "Cinfv"] },
+    { formula: "N2O", name: "一氧化二氮 (主要共振)", common: "N≡N-O", category: "共振結構", key: "N2O|主要共振結構 (N≡N-O)", tags: ["N2O", "一氧化二氮", "笑氣", "氧化亞氮", "Cinfv"] },
+    { formula: "N2O", name: "一氧化二氮 (次要共振)", common: "N=N=O", category: "共振結構", key: "N2O|次要共振結構 (N=N=O)", tags: ["N2O", "一氧化二氮", "笑氣", "氧化亞氮", "Cinfv"] },
     { formula: "NO+", name: "亞硝鎓離子", common: "", category: "陽離子", key: "NO+|亞硝鎓離子", tags: ["NO+", "亞硝鎓", "Cinfv"] },
     { formula: "NO2+", name: "硝鎓離子", common: "", category: "陽離子", key: "NO2+|硝鎓離子", tags: ["NO2+", "硝鎓", "Dinfh"] },
     { formula: "N3-", name: "疊氮根 (主要共振1)", common: "N=N=N", category: "共振結構", key: "N3-|主要共振結構 (N=N=N)", tags: ["N3-", "疊氮根", "Dinfh"] },
