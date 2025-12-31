@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HUD 焰色光譜分析儀</title>
+    <!-- 引入與主網頁一致的字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hud-cyan: #00f2ff;
+            --bg-dark: #020617;
+            --panel-glass: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
+            --accent-gold: #facc15;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            border: 2px solid rgba(0, 242, 255, 0.1);
+        }
+
+        /* 頂部 HUD 標籤 */
+        .hud-header {
+            padding: 15px 25px;
+            background: rgba(0, 242, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 242, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 2px;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左側：能階數據監控 */
+        .data-panel {
+            width: 380px;
+            background: var(--panel-glass);
+            border-right: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 中央：視覺觀察艙 */
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at bottom, #1e293b 0%, #020617 80%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 強化：原子能階圖 */
+        .energy-graph {
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .calc-card {
+            background: rgba(0, 242, 255, 0.05);
+            border-left: 3px solid var(--hud-cyan);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        /* 火焰粒子容器 */
+        .flame-chamber {
+            width: 120px;
+            height: 200px;
+            background: var(--flame-color, #3b82f6);
+            filter: blur(25px) contrast(1.5);
+            border-radius: 50% 50% 20% 20%;
+            opacity: 0.7;
+            animation: flicker 0.1s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(1.08) translateY(-5px); }
+        }
+
+        /* 底部：全像光譜儀 */
+        .spectrum-panel {
+            height: 180px;
+            background: #0a0f1e;
+            border-top: 1px solid rgba(0, 242, 255, 0.3);
+            padding: 20px;
+        }
+
+        .spectrum-bar {
+            width: 100%;
+            height: 40px;
+            background: #000;
+            border: 1px solid #333;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .spectral-line {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            box-shadow: 0 0 12px currentColor;
+            transition: left 0.5s ease;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--hud-cyan);
+            color: var(--hud-cyan);
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        button.active {
+            background: var(--hud-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--hud-cyan);
+        }
+
+        .label-tag {
+            font-size: 0.7rem;
+            background: var(--hud-cyan);
+            color: #000;
+            padding: 2px 6px;
+            font-weight: 900;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hud-header">
+    <div><span class="label-tag">MODE</span> EMISSION SPECTROSCOPY ANALYZER</div>
+    <div id="clock">SYSTEM READY</div>
+</div>
+
+<div class="main-layout">
+    <!-- 左側：數據分析區 -->
+    <div class="data-panel">
+        <div style="color: var(--hud-cyan); font-weight: bold; border-bottom: 1px solid rgba(0, 242, 255, 0.3); padding-bottom: 5px;">
+            量子能階躍遷模型 (Quantum Transition)
+        </div>
+        <canvas id="energyCanvas" width="340" height="220" class="energy-graph"></canvas>
+        
+        <div style="color: var(--hud-cyan); font-weight: bold; margin-top: 10px;">
+            能階差計算 (ΔE = hc/λ)
+        </div>
+        <div id="calc-list" style="flex: 1; overflow-y: auto;">
+            <!-- 由 JS 動態注入 -->
+        </div>
+    </div>
+
+    <!-- 中央：觀測視窗 -->
+    <div class="viewport">
+        <div id="main-flame" class="flame-chamber"></div>
+        <div style="position: absolute; bottom: 50px; width: 50px; height: 120px; background: linear-gradient(to bottom, #444, #222); border-radius: 4px;"></div>
+        
+        <!-- HUD 覆蓋文字 -->
+        <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
+            <div id="element-title" style="font-size: 2rem; color: #fff; font-weight: bold;">STANDBY</div>
+            <div id="element-desc" style="color: var(--hud-cyan); font-size: 0.9rem; max-width: 300px;">請選擇目標元素進行激發掃描。</div>
+        </div>
+    </div>
+</div>
+
+<div class="spectrum-panel">
+    <div class="spectrum-bar">
+        <div style="width: 100%; height: 100%; background: linear-gradient(to right, #400040, #0000ff, #00ff00, #ffff00, #ff0000); opacity: 0.1;"></div>
+        <div id="spectral-lines-container"></div>
+    </div>
+    <div class="btn-grid" id="element-btns"></div>
+</div>
+
+<script>
+    // 1. 擴展資料庫：焰色是多重譜線混合的結果
+    const FLAME_DB = {
+        "Na": { name: "鈉 (Sodium)", lines: [589], color: "#ffcc00", info: "最單純的黃色光源，電子由 3p 掉回 3s。" },
+        "Li": { name: "鋰 (Lithium)", lines: [610, 670], color: "#ff0055", info: "主譜線在深紅區，由 2p 掉回 2s。" },
+        "Cu": { name: "銅 (Copper)", lines: [510, 521, 578], color: "#00ffcc", info: "多重綠色與藍色譜線混合，形成典型的藍綠色火焰。" },
+        "K": { name: "鉀 (Potassium)", lines: [404, 766], color: "#d8b2ff", info: "同時具備短波紫光與長波紅光，人眼混合後識別為淺紫色。" },
+        "Ca": { name: "鈣 (Calcium)", lines: [422, 553, 616, 622], color: "#ff8844", info: "包含多條譜線，混合後呈現橘紅色（磚紅）。" },
+        "Sr": { name: "鍶 (Strontium)", lines: [407, 460, 606, 662], color: "#ff3300", info: "強烈的紅色光譜分布，是紅色煙火的主要來源。" }
+    };
+
+    const canvas = document.getElementById('energyCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentElement = null;
+
+    function init() {
+        const btnGroup = document.getElementById('element-btns');
+        for (let key in FLAME_DB) {
+            let btn = document.createElement('button');
+            btn.textContent = FLAME_DB[key].name;
+            btn.onclick = () => selectElement(key);
+            btn.id = `btn-${key}`;
+            btnGroup.appendChild(btn);
+        }
+        drawStaticEnergyLevels();
+    }
+
+    function selectElement(key) {
+        currentElement = FLAME_DB[key];
+        
+        // UI 更新
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${key}`).classList.add('active');
+        document.getElementById('element-title').textContent = currentElement.name;
+        document.getElementById('element-desc').textContent = currentElement.info;
+        document.getElementById('main-flame').style.setProperty('--flame-color', currentElement.color);
+
+        updateCalculations();
+        updateSpectrum();
+        triggerAnimation();
+    }
+
+    function updateCalculations() {
+        const list = document.getElementById('calc-list');
+        list.innerHTML = "";
+        currentElement.lines.forEach(lambda => {
+            const ev = (1240 / lambda).toFixed(2);
+            const card = document.createElement('div');
+            card.className = 'calc-box calc-card';
+            card.innerHTML = `
+                <div style="color: var(--hud-cyan)">λ = ${lambda} nm</div>
+                <div style="color: #fff">ΔE = 1240 / ${lambda} = <span style="color:var(--accent-gold)">${ev} eV</span></div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function updateSpectrum() {
+        const container = document.getElementById('spectral-lines-container');
+        container.innerHTML = "";
+        currentElement.lines.forEach(lambda => {
+            const line = document.createElement('div');
+            line.className = 'spectral-line';
+            const pos = ((lambda - 400) / 400) * 100;
+            line.style.left = `${pos}%`;
+            line.style.color = currentElement.color;
+            line.style.backgroundColor = "currentColor";
+            container.appendChild(line);
+        });
+    }
+
+    // --- 繪製與動畫邏輯 ---
+    function drawStaticEnergyLevels() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "rgba(0, 242, 255, 0.3)";
+        ctx.setLineDash([5, 5]);
+        // 繪製多層能階
+        for(let i=0; i<4; i++) {
+            let y = 50 + i * 40;
+            ctx.beginPath();
+            ctx.moveTo(40, y); ctx.lineTo(300, y);
+            ctx.stroke();
+            ctx.fillStyle = "rgba(0, 242, 255, 0.5)";
+            ctx.font = "10px Rajdhani";
+            ctx.fillText(`n = ${4-i}`, 20, y + 5);
+        }
+    }
+
+    function triggerAnimation() {
+        let startTime = Date.now();
+        const duration = 2000;
+
+        function animate() {
+            if(!currentElement) return;
+            drawStaticEnergyLevels();
+            
+            let elapsed = (Date.now() - startTime) % duration;
+            let progress = elapsed / duration;
+
+            let y;
+            ctx.setLineDash([]);
+            // 電子躍遷動畫
+            if (progress < 0.2) { // 吸收熱能跳上去
+                y = 170 - (progress / 0.2) * 80;
+                drawElectron(170, y, "#fff");
+            } else if (progress < 0.3) { // 激發態停留
+                drawElectron(170, 90, "#fff");
+            } else if (progress < 0.6) { // 掉下來放光 (主要教學點)
+                let dropP = (progress - 0.3) / 0.3;
+                y = 90 + dropP * 80;
+                drawElectron(170, y, currentElement.color);
+                // 畫出光子波浪
+                drawPhoton(170 + dropP * 60, y, currentElement.color);
+            } else { // 回到基態
+                drawElectron(170, 170, "#fff");
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function drawElectron(x, y, color) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawPhoton(x, y, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i=0; i<40; i++) {
+            ctx.lineTo(x + i, y + Math.sin(i * 0.4) * 8);
+        }
+        ctx.stroke();
+    }
+
+    init();
+</script>
+</body>
+</html>
