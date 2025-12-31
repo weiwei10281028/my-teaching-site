@@ -236,8 +236,15 @@
             .viewport { grid-column: 2; grid-row: 1; display: flex; justify-content: flex-start; padding-left: 15px; align-items: flex-end; height: 100% !important; overflow: hidden; }
             .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
             #target-name { font-size: 1.5rem !important; top: 15px !important; right: 15px !important; }
-            .data-panel { grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2); padding: 10px !important; display: flex !important; flex-direction: row !important; overflow-x: auto !important; overflow-y: hidden !important; gap: 10px !important; background: #000; }
-            .data-panel .hud-card { flex: 0 0 260px; height: 100%; white-space: normal; }
+            .data-panel { 
+                grid-column: 1 / span 2; grid-row: 2;
+                width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
+                padding: 10px !important; display: flex !important;
+                flex-direction: row !important; overflow-x: auto !important;
+                overflow-y: hidden !important; gap: 12px !important;
+                background: #000;
+            }
+            .data-panel .hud-card { flex: 0 0 280px !important; width: 280px !important; height: 100%; white-space: normal; }
             #bottom-spectra { height: 120px !important; padding: 10px !important; flex-shrink: 0; }
         }
     </style>
@@ -411,7 +418,7 @@
             const color = nmToRGB(nm);
             let region = nm < 380 ? "UV" : (nm > 780 ? "IR" : "VIS");
             html += `
-                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; width: 260px;">
+                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; width: 100%;">
                     <div style="font-size:1.3rem; color:${color}; font-weight:bold; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                         <span>λ = ${nm} nm</span>
                         <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
@@ -425,7 +432,7 @@
         });
         
         html += `
-        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3); margin-bottom:10px; flex-shrink: 0; width: 280px;">
+        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3); margin-bottom:10px; flex-shrink: 0; width: 100%;">
             <div class="card-label" style="font-size:1rem; color: var(--hud-cyan);">顯色原理</div>
             <div style="font-size:1rem; color:#eee; line-height:1.6; text-align:justify;">${ion.synthesis} ${ion.theory}</div>
         </div>
