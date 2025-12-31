@@ -65,8 +65,10 @@
             color: var(--hud-cyan);
             border: 1px solid var(--hud-cyan);
             border-radius: 50%;
-            width: 22px;
-            height: 22px;
+            width: 22px; /* 固定寬度 */
+            height: 22px; /* 固定高度 */
+            min-width: 22px; /* 強制最小寬度，防止縮小 */
+            min-height: 22px; /* 強制最小高度，防止縮小 */
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -77,13 +79,15 @@
             font-weight: bold;
             line-height: 1;
             vertical-align: middle;
+            flex-shrink: 0; /* 防止在 Flex 佈局中被擠壓 */
         }
 
         #cobalt-popup {
             display: none;
-            position: absolute;
-            left: 390px;
-            top: 150px;
+            position: fixed; /* 改為相對於螢幕固定 */
+            left: 50% !important; /* 強制螢幕置中 */
+            top: 50% !important;
+            transform: translate(-50%, -50%); /* 精確位移 */
             width: 320px;
             background: #0f172a;
             border: 2px solid var(--hud-cyan);
@@ -226,16 +230,29 @@
             .header { height: 50px; flex-shrink: 0; padding: 0 10px; }
             .header .system-title { font-size: 1rem; letter-spacing: 1px; }
             .header div:last-child { display: none; } 
-            .main-layout { flex: 1; display: grid !important; grid-template-columns: 125px 1fr; grid-template-rows: 1fr 170px; overflow: hidden; }
+
+            /* 修正 2: 操作欄寬度調至 170px，主畫面寬度縮窄 */
+            .main-layout { 
+                flex: 1; 
+                display: grid !important; 
+                grid-template-columns: 170px 1fr; 
+                grid-template-rows: 1fr 170px; 
+                overflow: hidden; 
+            }
+            
             .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); overflow-x: hidden !important; overflow-y: auto !important; padding: 10px 5px !important; gap: 12px !important; }
             .side-panel .hud-card { padding: 8px; margin-bottom: 0; }
             .side-panel label { font-size: 0.85rem; line-height: 1.1; display: block; }
             .side-panel label small { display: block; font-size: 0.7rem; opacity: 0.6; }
             .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; }
             .s33-btn { padding: 8px 2px; font-size: 0.85rem; }
-            .viewport { grid-column: 2; grid-row: 1; display: flex; justify-content: flex-start; padding-left: 15px; align-items: flex-end; height: 100% !important; overflow: hidden; }
+            
+            /* 修正 3: 將 justify-content 改為 center 並移除 padding，讓底座水平置中 */
+            .viewport { grid-column: 2; grid-row: 1; display: flex; justify-content: center; align-items: flex-end; height: 100% !important; overflow: hidden; padding-left: 0; }
+            
             .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
             #target-name { font-size: 1.5rem !important; top: 15px !important; right: 15px !important; }
+            
             .data-panel { 
                 grid-column: 1 / span 2; grid-row: 2;
                 width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
@@ -244,7 +261,15 @@
                 overflow-y: hidden !important; gap: 12px !important;
                 background: #000;
             }
-            .data-panel .hud-card { flex: 0 0 280px !important; width: 280px !important; height: 100%; white-space: normal; }
+            
+            /* 修正 5: 數據面板卡片寬度縮小，並強制內部數值 (能量、頻率、波數) 改為垂直排列 */
+            .data-panel .hud-card { flex: 0 0 160px !important; width: 160px !important; height: 100%; white-space: normal; padding: 10px !important; }
+            .data-panel .hud-card div[style*="display:grid"] { 
+                display: flex !important; 
+                flex-direction: column !important; 
+                gap: 2px !important; 
+            }
+            
             #bottom-spectra { height: 120px !important; padding: 10px !important; flex-shrink: 0; }
         }
     </style>
@@ -274,10 +299,17 @@
                 <label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label>
                 <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
             </div>
-            <div style="background:rgba(0,100,255,0.1); padding:8px; border-radius:4px; display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="cobaltGlass" style="width:16px; height:16px;" onchange="updateFlame(window.currentIon)">
-                <label for="cobaltGlass" style="font-size:0.85rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光<br><small>(Cobalt Glass)</small></label>
-                <div class="info-btn" onclick="togglePopup(event)" style="margin-left:auto;">i</div>
+            <div style="background:rgba(0,100,255,0.1); padding:10px; border-radius:4px; display:flex; flex-direction:column; gap:8px;">
+                <!-- 第一行：5個中文字 + 說明圓圈 -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.95rem; color:#8bafff; font-weight:bold; letter-spacing:1px;">鈷玻璃濾光</span>
+                    <div class="info-btn" onclick="togglePopup(event)" style="margin-left:0;">i</div>
+                </div>
+                <!-- 第二行：英文 subtext + 勾選框 -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <small style="color:#8bafff; opacity:0.8; font-family: sans-serif;">(Cobalt Glass)</small>
+                    <input type="checkbox" id="cobaltGlass" style="width:18px; height:18px; cursor:pointer;" onchange="updateFlame(window.currentIon)">
+                </div>
             </div>
         </div>
         <div class="hud-card">
@@ -423,10 +455,11 @@
                         <span>λ = ${nm} nm</span>
                         <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
                     </div>
-                    <div style="font-size:0.95rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px; color: #fff;">
+                    <!-- 修正：改為垂直堆疊 (flex-column)，讓能量、頻率、波數排成一直行 -->
+                    <div style="font-size:0.95rem; display:flex; flex-direction:column; gap:4px; color: #fff;">
                         <div>能量: ${energy} eV</div>
                         <div>頻率: ${freq} THz</div>
-                        <div style="grid-column: span 2; opacity:0.8;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                        <div style="opacity:0.8;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
                     </div>
                 </div>`;
         });
