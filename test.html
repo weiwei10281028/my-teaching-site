@@ -40,13 +40,13 @@
 
     /* 2. 上標設定 (控制電荷的"數字"，如 3- 的 3) */
     sup {
-        font-size: 1.0em;      /* 上標字體大小 */
-        line-height: 1;
+        font-size: 0.75em;      /* 縮小數字，避免頭重腳輕 */
+        line-height: 0;         /* 關鍵：防止數字撐開行高，確保英文置中 */
         position: relative;
         vertical-align: baseline;
-        top: -0.35em;          /* 上標位置：越負越往上 */
-        font-weight: bold;     /* 上標加粗bold，正常為normal */
-        margin-left: 1px;      /* 與主文字的距離 */
+        top: -0.25em;           /* 下調位置，讓數字靠近中心 */
+        font-weight: normal;    /* 數字改為正常粗細，視覺更平衡 */
+        margin-left: 1px;
     }
 
     /* 3. 正負號設定 (專門控制 + 與 -，如 3- 的 -) */
@@ -267,9 +267,38 @@
         border-left: 3px solid var(--hud-cyan); padding-left: 10px; /* HUD 標記 */
         text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
     }
-    .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .data-label { font-size: 0.95rem; color: var(--text-sub); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
-    .data-value { font-size: 1.15rem; color: #fff; font-weight: 500; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+    /* 1. 修改每一列的對齊方式 */
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* 改為頂端對齊，避免標籤縮到中間 */
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    gap: 15px; /* 增加標籤與數值間的間距 */
+}
+
+/* 2. 修改標籤，確保它不會被擠扁 */
+.data-label {
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    flex-shrink: 0; /* 重要：防止標籤被擠壓換行 */
+    width: 80px;    /* 建議設定固定寬度，視覺會更整齊 */
+    padding-top: 2px; /* 微調讓標籤對齊第一行文字 */
+}
+
+/* 3. 修改數值顯示 */
+.data-value {
+    font-size: 1.1rem; /* 稍微縮小字體以容納更多內容 */
+    color: #fff;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(255,255,255,0.3);
+    text-align: right; /* 文字靠右對齊 */
+    line-height: 1.4;  /* 增加行高，多行時才不會太擠 */
+    word-break: break-word; /* 避免超長英文單字衝破邊框 */
+}
     
     /* --- 平衡係數與詳解面板樣式 --- */
     #balance-result {
@@ -329,28 +358,44 @@
     .switch-container:hover { border-color: rgba(0, 242, 255, 0.3); background: rgba(0, 242, 255, 0.05); }
     .switch-container input { width: 18px; height: 18px; accent-color: var(--hud-cyan); cursor: pointer; }
 
+    /* --- 🟢 異構物選擇區核心定義 (刪除舊代碼後換成這段) --- */
     #variant-selector {
         display: none; 
-        background: rgba(16, 185, 129, 0.05); 
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        padding: 15px; border-radius: 8px; margin-bottom: 15px;
-        position: relative;
+        --t: #10b981; /* 核心主題色變數 */
+        background: rgba(16, 185, 129, 0.12); 
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 15px; border-radius: 4px; margin-bottom: 15px;
+        position: relative; backdrop-filter: blur(10px);
     }
-    /* [S96] 變體選擇器加上角落標記裝飾 */
-    #variant-selector::before {
-        content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
-        border-top: 2px solid var(--accent-green); border-left: 2px solid var(--accent-green);
-    }
-    #variant-selector::after {
-        content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px;
-        border-bottom: 2px solid var(--accent-green); border-right: 2px solid var(--accent-green);
-    }
-    .variant-option { padding: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--accent-green); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 
-    #variant-selector.acid-theme { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); }
-    #variant-selector.acid-theme .variant-header { color: #fbbf24; }
-    #variant-selector.acid-theme .variant-option { color: #fbbf24; }
-    #variant-selector.acid-theme .variant-option:hover { background: rgba(245, 158, 11, 0.15); }
+    /* 角落標記：粗度加強且顏色強制同步變數 --t */
+    #variant-selector::before, #variant-selector::after {
+        content: ''; position: absolute; width: 12px; height: 12px;
+        border-color: var(--t) !important;
+        pointer-events: none; z-index: 2;
+    }
+    #variant-selector::before { top: -1.5px; left: -1.5px; border-top: 3px solid var(--t); border-left: 3px solid var(--t); }
+    #variant-selector::after { bottom: -1.5px; right: -1.5px; border-bottom: 3px solid var(--t); border-right: 3px solid var(--t); }
+
+    /* 標題與選項：同步主題色 */
+    .variant-header { font-weight: bold; color: var(--t) !important; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-size: 1rem; }
+    .variant-option { padding: 6px 4px; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--t) !important; font-weight: 600; transition: all 0.2s; }
+    .variant-option span { color: inherit !important; }
+    .variant-option:hover { background: rgba(255, 255, 255, 0.05); color: #fff !important; text-shadow: 0 0 8px var(--t); }
+    
+    /* 自定義 Radio 按鈕 */
+    #variant-selector input[type="radio"] { 
+        appearance: none; width: 14px; height: 14px; border: 2px solid var(--t); 
+        border-radius: 50%; outline: none; cursor: pointer; position: relative;
+    }
+    #variant-selector input[type="radio"]:checked { background: var(--t); box-shadow: 0 0 8px var(--t); }
+
+    /* 各主題切換：只需定義 --t，底色、字、框就會連動 */
+    #variant-selector.acid-theme      { --t: #fbbf24; background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.3); } 
+    #variant-selector.resonance-theme { --t: #a78bfa; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.3); } 
+    #variant-selector.structure-theme { --t: #38bdf8; background: rgba(14, 165, 233, 0.12); border-color: rgba(14, 165, 233, 0.3); } 
+    #variant-selector.allotrope-theme { --t: #f1f5f9; background: rgba(255, 255, 255, 0.1);  border-color: rgba(255, 255, 255, 0.2); } 
+    #variant-selector.polymorph-theme { --t: #ff7f50; background: rgba(255, 127, 80, 0.12); border-color: rgba(255, 127, 80, 0.3); }
 
     #reaction-container { margin-bottom: 30px; width: 100%; }
     .reaction-row { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; }
@@ -537,7 +582,7 @@
         z-index: 9999; white-space: nowrap; text-align: center;
         /* 強烈光暈 */
         box-shadow: 0 0 20px rgba(0, 242, 255, 0.4), inset 0 0 10px rgba(0, 242, 255, 0.1);
-        text-shadow: 0 0 5px var(--hud-cyan);
+        text-shadow: 1px 1px 2px #000;
         max-width: 90vw; 
     }
     
@@ -705,6 +750,39 @@
         color: var(--hud-cyan); padding: 12px; border-radius: 4px; font-size: 1rem; outline: none; font-family: 'Rajdhani', sans-serif;
     }
     .config-search:focus { border-color: var(--hud-cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+    /* 統一標頭基礎：確保高度絕對一致，消除跳動 */
+    .unified-bar {
+        flex: 1 !important; height: 46px !important; display: flex !important;
+        align-items: center !important; padding: 0 15px !important;
+        box-sizing: border-box !important; margin: 0 !important;
+        background: rgba(251, 191, 36, 0.05) !important; border-left: 4px solid #fbbf24 !important;
+    }
+    .status-tag-hud { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; color: #000 !important; background: #fbbf24 !important; padding: 1px 6px; font-weight: 900; border-radius: 2px; margin-right: 15px; letter-spacing: 1px; line-height: 1.2; }
+    .status-text-hud { color: #fbbf24 !important; font-size: 0.85rem; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
+    #quiz-cancel-btn { margin-left: auto; cursor: pointer; color: #f87171; font-size: 0.75rem; border: 1px solid #f87171; padding: 2px 6px; border-radius: 4px; font-family: 'Rajdhani', sans-serif; transition: 0.2s; }
+    #quiz-cancel-btn:hover { background: rgba(248, 113, 113, 0.1); }
+    
+    /* 測驗視圖容器 */
+    #quiz-view { display: none; flex-direction: column; flex: 1; overflow: hidden; padding: 0 !important; }
+    #quiz-setup-area, #quiz-content-area, #quiz-result-area { display: none; padding: 20px 15px; flex-direction: column; gap: 20px; }
+    
+    /* 設定頁面組件 */
+    .setup-label { color: var(--hud-cyan); font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 10px; display: block; border-left: 3px solid var(--hud-cyan); padding-left: 8px; }
+    .setup-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .setup-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.1); padding: 12px 5px; border-radius: 4px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; }
+    .setup-btn.active { background: rgba(0, 242, 255, 0.1); border-color: var(--hud-cyan); color: #fff; }
+    .start-cal-btn { margin-top: 10px; padding: 15px; background: #fbbf24; border: none; border-radius: 4px; color: #000; font-weight: 900; cursor: pointer; font-family: 'Rajdhani', sans-serif; letter-spacing: 2px; transition: 0.2s; }
+    .start-cal-btn:hover { background: #fff; }
+
+    /* 題目與按鈕組件 */
+    .quiz-question-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; }
+    .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #fbbf24; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.8; }
+    .quiz-question-text { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+    .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 15px 10px; border-radius: 6px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-family: 'Rajdhani', sans-serif; }
+    .option-btn:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
+    .option-btn.correct { background: rgba(34, 211, 238, 0.2) !important; border-color: var(--hud-cyan) !important; color: var(--hud-cyan) !important; }
+    .option-btn.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #ef4444 !important; }
     .config-list { flex: 1; overflow-y: auto; padding: 15px; }
     
     .element-card { 
@@ -756,6 +834,93 @@
     .ec-box { width: 32px; height: 32px; border: 1px solid #555; background: #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #facc15; font-weight: bold; }
     .ec-label { margin-top: 4px; font-size: 0.75rem; color: #64748b; font-family: monospace; }
 
+    /* 數據校準分頁與卡片樣式 */
+    .config-tabs { display: flex; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(0, 242, 255, 0.3); }
+    .config-tab { 
+        flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #94a3b8; 
+        font-family: 'Rajdhani', sans-serif; font-weight: bold; letter-spacing: 2px;
+        transition: all 0.3s; border-bottom: 2px solid transparent;
+    }
+    .config-tab.active { color: var(--hud-cyan); border-bottom-color: var(--hud-cyan); background: rgba(0, 242, 255, 0.05); text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+    .quiz-system-header {
+        margin-bottom: 25px;
+        padding: 12px 15px;
+        background: linear-gradient(90deg, rgba(0, 242, 255, 0.1) 0%, transparent 100%);
+        border-left: 4px solid var(--hud-cyan);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .quiz-status-tag {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.75rem;
+        background: var(--hud-cyan);
+        color: #020617;
+        padding: 2px 6px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        border-radius: 2px;
+        text-transform: uppercase;
+    }
+    .quiz-instruction-text {
+        color: #fff;
+        font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+    
+    #quiz-view { display: none; padding: 20px; flex: 1; overflow-y: auto; }
+    .difficulty-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+    .diff-card {
+        background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; padding: 20px; cursor: pointer; transition: all 0.3s;
+        display: flex; justify-content: space-between; align-items: center;
+        position: relative; overflow: hidden;
+    }
+    .diff-card::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: #94a3b8; }
+    .diff-card:hover { background: rgba(0, 242, 255, 0.1); border-color: var(--hud-cyan); transform: translateX(5px); }
+    .diff-card:hover::before { background: var(--hud-cyan); box-shadow: 0 0 10px var(--hud-cyan); }
+    
+    .diff-info { display: flex; flex-direction: column; gap: 4px; }
+    .diff-title { font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 1px; }
+    .diff-range { font-size: 1.0rem; color: #94a3b8; }
+    .diff-tag { font-size: 0.85rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); width: fit-content; }
+    .difficulty-grid { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        width: 100% !important; 
+        gap: 15px; 
+        padding: 20px 15px; 
+        box-sizing: border-box; 
+    }
+    .diff-card {
+        width: 100% !important;
+        display: flex !important; 
+        justify-content: space-between !important; 
+        align-items: center !important;
+        background: rgba(15, 23, 42, 0.6); 
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; 
+        padding: 20px; 
+        cursor: pointer; 
+        transition: all 0.3s;
+        position: relative; 
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    .diff-a::before { background: #10b981 !important; }
+    .diff-b::before { background: #3b82f6 !important; }
+    .diff-c::before { background: #f59e0b !important; }
+    .diff-d::before { background: #ef4444 !important; }
+    /* 數據校準專用組件 */
+    .unified-bar { flex: 1; height: 46px; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; background: rgba(251, 191, 36, 0.05); border-left: 4px solid #fbbf24; margin: 0; }
+    .status-tag-hud { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; color: #000; background: #fbbf24; padding: 1px 6px; font-weight: 900; border-radius: 2px; margin-right: 15px; letter-spacing: 1px; }
+    .status-text-hud { color: #fbbf24; font-size: 0.85rem; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
+    #quiz-cancel-btn { margin-left: auto; cursor: pointer; color: #f87171; font-size: 0.75rem; border: 1px solid #f87171; padding: 2px 6px; border-radius: 4px; font-family: 'Rajdhani', sans-serif; }
+    #quiz-view { padding: 0 !important; }
     /* ========== [新增] 離子按鈕互動樣式 ========== */
     .ion-btn {
     opacity: 0.8;
@@ -779,46 +944,6 @@
 .ion-btn.active[data-type="pos"]     { background: #fca5a5 !important; color: #000 !important; border-color: #fca5a5 !important; }
 .ion-btn.active[data-type="neg"]     { background: #93c5fd !important; color: #000 !important; border-color: #93c5fd !important; }
 
-
-/* --- [新增] 共振結構主題 (紫色系) --- */
-#variant-selector.resonance-theme { 
-    background: rgba(139, 92, 246, 0.05); 
-    border: 1px solid rgba(139, 92, 246, 0.3); 
-}
-#variant-selector.resonance-theme .variant-header { 
-    color: #a78bfa; 
-}
-#variant-selector.resonance-theme .variant-option { 
-    color: #a78bfa; 
-}
-#variant-selector.resonance-theme .variant-option:hover { 
-    background: rgba(139, 92, 246, 0.15); 
-    color: #fff;
-    text-shadow: 0 0 8px #a78bfa;
-}
-#variant-selector.resonance-theme input[type="radio"] {
-    accent-color: #8b5cf6; 
-}
-
-/* --- [新增] 結構/晶體切換主題 (藍色系) --- */
-#variant-selector.structure-theme { 
-    background: rgba(56, 189, 248, 0.05); 
-    border: 1px solid rgba(56, 189, 248, 0.3); 
-}
-#variant-selector.structure-theme .variant-header { 
-    color: #38bdf8; 
-}
-#variant-selector.structure-theme .variant-option { 
-    color: #38bdf8; 
-}
-#variant-selector.structure-theme .variant-option:hover { 
-    background: rgba(56, 189, 248, 0.15); 
-    color: #fff;
-    text-shadow: 0 0 8px #38bdf8;
-}
-#variant-selector.structure-theme input[type="radio"] {
-    accent-color: #0ea5e9; 
-}
 
 
 /* --- 軌域控制面板樣式 --- */
@@ -1001,8 +1126,8 @@
 
 /* 1. 上方資訊列 */
 .fortune-header { width:100%; flex-shrink:0; display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(0,242,255,0.3); padding-bottom:12px; margin-bottom:12px; }
-.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; border: 1px solid var(--hud-cyan); border-radius: 4px; background: rgba(0, 242, 255, 0.05); }
-.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 15px var(--hud-cyan); margin:0; width:100%; text-align:center; transform:translateX(-3px); }
+.fortune-symbol-box { width:75px; height:65px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; border: none !important; border-radius: 4px; background: transparent !important; }
+.fortune-symbol { font-size:3.3rem; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 5px rgba(0, 242, 255, 0.5) !important;; margin:0; width:100%; text-align:center; transform:translateX(-3px); }
 .fortune-info-box { flex:1; display:flex; flex-direction:column; text-align:left; justify-content:center; overflow:hidden; }
 .fortune-meta { font-size:0.8rem; color:var(--hud-cyan); margin-bottom:2px; font-family:'Rajdhani',sans-serif; letter-spacing: 1px; }
 .fortune-title-row { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
@@ -1020,7 +1145,7 @@
 
 /* 4. 幸運物區塊 */
 .fortune-lucky { flex-shrink:0; margin-top:12px; background:linear-gradient(90deg,rgba(0,242,255,0.1),rgba(0,0,0,0)); border-radius:4px; padding:10px 15px; display:flex; flex-direction:column; gap:4px; border:1px solid var(--hud-cyan); box-shadow:0 0 10px rgba(0,242,255,0.1); text-align:left; }
-.lucky-title { color:var(--hud-cyan); font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; text-shadow: 0 0 5px var(--hud-cyan); }
+.lucky-title { color:var(--hud-cyan); font-weight:bold; font-size:1rem; display:flex; align-items:center; gap:8px; text-shadow: 0 0 2px rgba(0, 242, 255, 0.3) !important; }
 .lucky-desc { font-size:0.85rem; color:#e2e8f0; line-height:1.4; opacity:0.95; margin-left:2px; }
 
 .close-fortune {
@@ -1087,23 +1212,107 @@
     </div>
     <div id="config-modal">
         <div class="config-panel">
-            <div class="config-header">
-                <button class="config-close" onclick="closeConfigModal()">✕</button>
-                <input type="text" class="config-search" id="configSearchInput" placeholder="搜尋元素 (Ex: Fe, 26, Carbon)..." oninput="renderConfigList()" oncompositionend="renderConfigList()">
+
+            <div class="config-tabs">
+                <div id="tab-list" class="config-tab active" onclick="switchConfigView('list')">元素清單</div>
+                <div id="tab-quiz" class="config-tab" onclick="switchConfigView('quiz')">數據校準</div>
             </div>
-            <div class="config-list" id="configListContainer"></div>
-        </div>
-    </div>
-    <!-- 新增：物質檢索專用 Modal -->
-    <div id="substance-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 400; justify-content: center; align-items: center;">
-        <div class="config-panel" style="border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);">
-            <div class="config-header" style="background: rgba(15, 23, 42, 0.9);">
-                <button class="config-close" onclick="closeSubstanceModal()">✕</button>
-                <input type="text" class="config-search" id="substanceSearchInput" placeholder="搜尋化學式或名稱 (如: Na, 硫酸, C4)..." oninput="renderSubstanceList()" oncompositionend="renderSubstanceList()">
+            
+            <!-- 視圖 A: 元素清單 -->
+            <div id="list-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div class="config-header">
+                    <button class="config-close" onclick="closeConfigModal()">✕</button>
+                    <input type="text" class="config-search" id="configSearchInput" placeholder="搜尋元素 (Ex: Fe, 26, Carbon)..." oninput="renderConfigList()" oncompositionend="renderConfigList()">
+                </div>
+                <div class="config-list" id="configListContainer"></div>
             </div>
-            <div class="config-list" id="substanceListContainer"></div>
+
+            <!-- 視圖 B: 數據校準 -->
+            <div id="quiz-view">
+                <div class="config-header">
+                    <button class="config-close" onclick="closeConfigModal()">✕</button>
+                    <div class="unified-bar">
+                        <div class="status-tag-hud">READY</div>
+                        <span id="quiz-status-text" class="status-text-hud">Select Level</span>
+                        <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">取消</div>
+                    </div>
+                </div>
+                <div style="flex: 1; overflow-y: auto;">
+                    <div id="quiz-setup-area">
+                        <span class="setup-label">STEP 1: 校準精度 (難度)</span>
+                        <div class="setup-btns">
+                            <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
+                            <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
+                            <button class="setup-btn" onclick="setQuizParam('diff', 3, this)">專家</button>
+                        </div>
+                        <span class="setup-label">STEP 2: 數據通量 (題數)</span>
+                        <div class="setup-btns">
+                            <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
+                            <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
+                            <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
+                        </div>
+                        <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
+                    </div>
+                    <div id="quiz-content-area">
+                        <div class="quiz-question-card">
+                            <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
+                            <div id="quiz-question" class="quiz-question-text">--</div>
+                        </div>
+                        <div id="quiz-options" class="quiz-options-grid"></div>
+                    </div>
+                    <div id="quiz-result-area">
+                        <div id="quiz-result-card" class="quiz-question-card"></div>
+                        <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
+                    </div>
+                    <div class="difficulty-grid" id="difficulty-grid">
+                        <div class="diff-card diff-a" onclick="startQuiz('A')">
+                            <div class="diff-info">
+                                <span class="diff-title">RANK A: 基礎校準</span>
+                                <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
+                                <span class="diff-tag">適合初學者</span>
+                            </div>
+                            <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
+                        </div>
+                        <div class="diff-card diff-b" onclick="startQuiz('B')">
+                            <div class="diff-info">
+                                <span class="diff-title">RANK B: 核心校準</span>
+                                <span class="diff-range">1 ~ 36 + 所有 1A ~ 8A 族元素</span>
+                                <span class="diff-tag">強化主族記憶</span>
+                            </div>
+                            <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
+                        </div>
+                        <div class="diff-card diff-c" onclick="startQuiz('C')">
+                            <div class="diff-info">
+                                <span class="diff-title">RANK C: 專業校準</span>
+                                <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
+                                <span class="diff-tag">涵蓋多數常見元素</span>
+                            </div>
+                            <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
+                        </div>
+                        <div class="diff-card diff-d" onclick="startQuiz('D')">
+                            <div class="diff-info">
+                                <span class="diff-title">RANK D: 全域校準</span>
+                                <span class="diff-range">1 ~ 118 (完整週期表)</span>
+                                <span class="diff-tag">終極考驗</span>
+                            </div>
+                            <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- 結束 config-panel -->
+    </div> <!-- 結束 config-modal -->
+
+<!-- 新增：物質檢索專用 Modal -->
+<div id="substance-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 400; justify-content: center; align-items: center;">
+    <div class="config-panel" style="border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);">
+        <div class="config-header" style="background: rgba(15, 23, 42, 0.9);">
+            <button class="config-close" onclick="closeSubstanceModal()">✕</button>
+            <input type="text" class="config-search" id="substanceSearchInput" placeholder="搜尋化學式或名稱 (如: Na, 硫酸, C4)..." oninput="renderSubstanceList()" oncompositionend="renderSubstanceList()">
         </div>
+        <div class="config-list" id="substanceListContainer"></div>
     </div>
+</div>
 
     <div class="controls-area" id="controls-panel">
         <div id="mobile-panel-handle"><div class="handle-bar"></div></div>
@@ -1205,8 +1414,8 @@
 
                 <!-- 子功能: 原子軌域 (已移除箭頭 ▼) -->
                 <div class="panel-wrapper">
-                    <button class="glass-toggle-btn" style="background:rgba(139, 92, 246, 0.15); border-color:rgba(139, 92, 246, 0.4); color:#c4b5fd;" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span>💠 原子軌域模型選擇</span>
+                    <button class="glass-toggle-btn" style="background:rgba(16, 185, 129, 0.15); border-color:rgba(16, 185, 129, 0.4); color:#6ee7b7;" onclick="this.parentElement.classList.toggle('expanded')">
+                    <span>💠 原子軌域模型選擇</span>
                     </button>
                     <div class="glass-content-panel" style="background: rgba(0,0,0,0.5);">
                         <div class="orbital-btn-group" style="grid-template-columns: repeat(4, 1fr);">
@@ -1236,6 +1445,27 @@
                         </div>
                         <button id="btn-toggle-plane" class="control-button plane-toggle active" style="width:100%; border-radius:12px; height:36px;" onclick="togglePlanes()">顯示節面: ON</button>
                     </div>
+                </div>
+            </details>
+
+            <!-- 5. [摺疊 C] 🧪 化學虛擬實驗室 (新增區塊) -->
+            <details class="control-group">
+                <summary>🧪 化學虛擬實驗室</summary>
+                
+                <div class="panel-wrapper">
+                    <!-- 點擊後跳轉到獨立的實驗室網頁 -->
+                    <button class="glass-toggle-btn" 
+                            style="background:rgba(0, 242, 255, 0.15); border-color:rgba(0, 242, 255, 0.4); color:var(--hud-cyan);"
+                            onclick="window.open('flame_lab.html', '_blank')">
+                        <span>🌈 原子發射光譜觀測站</span>
+                    </button>
+                    
+                    <!-- 未來可以在這裡繼續新增其他實驗室按鈕 -->
+                    <!-- 
+                    <button class="glass-toggle-btn" style="opacity: 0.5;">
+                        <span>🔒 酸鹼滴定實驗 (開發中)</span>
+                    </button> 
+                    -->
                 </div>
             </details>
 
@@ -1699,10 +1929,66 @@ function parseAtoms(f) {
 function setupEquationBalancer() {
     const btn = document.getElementById('balance-btn'), input = document.getElementById('equation-input');
     const resDiv = document.getElementById('balance-result'), stpBtn = document.getElementById('steps-toggle-btn'), stpDiv = document.getElementById('balance-steps');
+    
     if (!btn) return;
+
+    // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                btn.click(); // 模擬點擊平衡按鈕
+            }
+        });
+    }
+    
     btn.addEventListener('click', () => {
         const val = input.value.trim();
         if (!val) return;
+
+        // [保留] 隱藏彩蛋：輸入 "人次" 顯示計數器
+        if (val === "人次") {
+            const subEl = document.getElementById("viewport-subtitle");
+            if (subEl) {
+                // 清空並顯示副標題區域
+                subEl.style.display = "block";
+                subEl.style.width = "fit-content";
+                // 使用 S96 風格的樣式
+                subEl.style.border = "1px solid #00f2ff"; 
+                subEl.style.backgroundColor = "rgba(2, 6, 23, 0.9)";
+                subEl.style.color = "#00f2ff"; 
+                subEl.style.boxShadow = "0 0 15px rgba(0, 242, 255, 0.3)";
+                subEl.style.padding = "10px 20px";
+                subEl.style.textAlign = "center";
+                subEl.style.borderRadius = "4px";
+                
+                subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold; font-family:'Rajdhani', sans-serif;">👁️ 本站累積瀏覽人次</div>`;
+                
+                // 重新加載圖片以確保更新
+                const newImg = new Image();
+                newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
+                newImg.alt = "載入中...";
+                newImg.style.height = "28px";
+                newImg.style.display = "block";
+                newImg.style.margin = "0 auto";
+
+                newImg.onerror = function() {
+                    subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
+                };
+                subEl.appendChild(newImg);
+                
+                // 清空輸入框
+                input.value = "";
+                
+                // 清除原本的平衡結果顯示 (如果有的話)
+                resDiv.style.display = 'none';
+                stpBtn.style.display = 'none';
+                stpDiv.style.display = 'none';
+            }
+            return; // 結束函式，不執行化學平衡
+        }
+        // [結束隱藏彩蛋]
+
+        // --- 以下為原本的化學平衡邏輯 ---
         stpDiv.style.display = 'none';
         try {
             const res = solveChemicalEquationWithSteps(val);
@@ -1717,11 +2003,14 @@ function setupEquationBalancer() {
             stpBtn.style.display = 'none';
         }
     });
+
     stpBtn.onclick = () => {
         const isH = stpDiv.style.display === 'none';
         stpDiv.style.display = isH ? 'block' : 'none';
         stpBtn.textContent = isH ? '隱藏解題思路' : '查看解題思路';
     };
+    
+    // 平衡說明彈窗邏輯
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
     if (hBtn && hBox) {
         hBtn.onclick = (e) => { e.stopPropagation(); hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block'; };
@@ -2051,40 +2340,14 @@ function gaussElimination(matrix) {
 }
 
 function handleLoadBtn() {
-    let rawVal = document.getElementById("formula-input").value;
+    // 嘗試獲取舊的輸入框 (如果 HTML 中已移除，這裡會直接返回，不會報錯)
+    let inputEl = document.getElementById("formula-input");
+    if (!inputEl) return; 
+
+    let rawVal = inputEl.value;
     if (!rawVal) return;
 
-    // ========== 隱藏功能：查詢瀏覽人次 ==========
-    if (rawVal === "人次") {
-        const subEl = document.getElementById("viewport-subtitle");
-        if (subEl) {
-            subEl.style.display = "block";
-            subEl.style.width = "fit-content";
-            subEl.style.border = "1px solid #10b981"; 
-            subEl.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
-            subEl.style.color = "#10b981"; 
-            subEl.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.3)";
-            subEl.style.padding = "10px 20px";
-            subEl.style.textAlign = "center";
-            
-            subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold;">👁️ 本站累積瀏覽人次</div>`;
-            
-            const newImg = new Image();
-            newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
-            newImg.alt = "載入中...";
-            newImg.style.height = "28px";
-            newImg.style.display = "block";
-            newImg.style.margin = "0 auto";
-
-            newImg.onerror = function() {
-                subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
-            };
-            subEl.appendChild(newImg);
-            document.getElementById("formula-input").value = "";
-        }
-        return; 
-    }
-    // ===============================================
+    // --- [已移除] 舊的人次查詢代碼 ---
 
     // [新增] 手動搜尋時，清空歷史紀錄
     moleculeHistory = [];
@@ -2745,82 +3008,42 @@ function processAtomsData(atomList, bondList, centerElem) {
     return processed;
 }
 
+/* --- JS 渲染函式同步修正 --- */
 function updateVariantUI(key, activeVariant) {
     const rootData = MOLECULE_DB[key];
     variantSelector.innerHTML = ''; 
-    
-    // 清除所有舊的主題 class
-    variantSelector.classList.remove('acid-theme', 'resonance-theme', 'structure-theme');
-    
+    variantSelector.className = ''; 
     if (rootData.variants) {
         variantSelector.style.display = 'block';
-        
-        const variantKeys = Object.keys(rootData.variants);
-        
-        // --- 1. 判斷是否為「共振結構」 (紫色) ---
-        const isResonance = variantKeys.some(vKey => vKey.includes("共振") || vKey.includes("Resonance"));
-
-        // --- 2. [新增] 判斷是否為「結構/晶體切換」 (藍色) ---
-        // 邏輯：變體名稱中包含 "晶體", "堆積", "Simple", "Crystal"
-        const isStructure = variantKeys.some(vKey => vKey.includes("晶體") || vKey.includes("堆積") || vKey.includes("Crystal"));
-
-        // --- 3. 判斷是否為「分子/離子/鹽類」 (橘色) ---
-        const isAcidSaltSeries = key.includes("酸") || key.includes("Acid") || 
-                                 key.includes("H2O") || key.includes("NH3") || 
-                                 variantKeys.some(vKey => vKey.includes("根") || vKey.includes("離子") || vKey.includes("鹽") || vKey.includes("Salt") || vKey.includes("Ion"));
-        
-        // --- 4. 設定標題與主題色 ---
         const hdr = document.createElement('div');
         hdr.className = 'variant-header';
-
-        if (isResonance) {
-            variantSelector.classList.add('resonance-theme'); // 紫色
-            hdr.textContent = '選擇共振結構 (Resonance):';
-        } else if (isStructure) {
-            variantSelector.classList.add('structure-theme'); // [新增] 藍色
-            hdr.textContent = '選擇結構層次 (Structure):';
-        } else if (isAcidSaltSeries) {
-            variantSelector.classList.add('acid-theme'); // 橘色
-            hdr.textContent = '選擇解離狀態 (分子/離子/鹽類):';
-        } else {
-            // 綠色 (預設)
-            hdr.textContent = '選擇同分異構物:';
-        }
-        
+        const TYPE_CONFIG = {
+            "isomer":    { class: "",                title: "選擇同分異構物 (Isomer):" },
+            "resonance": { class: "resonance-theme", title: "選擇共振結構 (Resonance):" },
+            "structure": { class: "structure-theme", title: "選擇結構層次 (Structure):" },
+            "acid":      { class: "acid-theme",      title: "選擇解離狀態 (Dissociation):" },
+            "allotrope": { class: "allotrope-theme", title: "選擇同素異形體 (Allotrope):" },
+            "polymorph": { class: "polymorph-theme", title: "選擇同質異形體 (Polymorph):" }
+        };
+        const config = TYPE_CONFIG[rootData.variantType] || TYPE_CONFIG["isomer"];
+        if (config.class) variantSelector.classList.add(config.class);
+        hdr.textContent = config.title;
         variantSelector.appendChild(hdr);
-        
-        // --- 5. 產生選項 ---
         for (let vKey in rootData.variants) {
             const div = document.createElement('div');
             div.className = 'variant-option';
-            
             const radio = document.createElement('input');
             radio.type = 'radio'; radio.name = 'v';
             if (vKey === activeVariant) radio.checked = true;
-            
             const span = document.createElement('span'); 
-            
-            const variantData = rootData.variants[vKey];
-            const fullKeyString = variantData.fullKey || vKey;
-            const parts = fullKeyString.split('|');
-            
-            // 優先顯示中文名稱
-            let labelText = "";
-            if (parts.length > 1) {
-                labelText = parts[1].trim();
-                span.textContent = ` ${labelText}`; 
-            } else {
-                labelText = parts[0].trim();
-                span.innerHTML = ` ${formatFormula(labelText)}`;
-            }
-            
+            const vData = rootData.variants[vKey];
+            const parts = (vData.fullKey || vKey).split('|');
+            span.innerHTML = parts.length > 1 ? ` ${parts[1].trim()}` : ` ${formatFormula(parts[0].trim())}`;
             div.appendChild(radio); div.appendChild(span);
             div.addEventListener('click', () => loadMolecule(key, vKey));
             variantSelector.appendChild(div);
         }
-    } else {
-        variantSelector.style.display = 'none';
-    }
+    } else { variantSelector.style.display = 'none'; }
 }
 
 
@@ -3349,24 +3572,33 @@ function drawElectron(e) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const r = e.r * e.scale;
     
+    // 1. 預設顏色 (白色)
     let coreColor = "#ffffff";
     let glowFill = "#ffffff";
     let glowOpacity = "0.28";
     
+    // 2. 智慧判斷變色邏輯
     if (e.isNegativeCharge) {
-        coreColor = "#ff9efa"; 
-        glowFill = "#ff9efa"; 
-        glowOpacity = "0.5"; 
+        // 取得當前分子的名稱 (currentKey 是全域變數)
+        // 判斷邏輯：如果名稱包含 "-" (負電) 或 "+" (正電) 或 "ion" (離子)，才允許變色
+        // 這樣 N2O (中性) 就算有形式電荷也會是白色，但 NO3- (離子) 會是粉紅色
+        const isRealIon = currentKey && (currentKey.includes("-") || currentKey.includes("+") || currentKey.includes("ion"));
+
+        if (isRealIon) {
+            coreColor = "#ff9efa"; // 粉紅色核心
+            glowFill = "#ff9efa";  // 粉紅色光暈
+            glowOpacity = "0.5";   // 加強亮度
+        }
     }
 
     if (isPlasmaMode) {
         g.setAttribute("style", "mix-blend-mode: screen;"); 
         const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         halo.setAttribute("cx", e.px); halo.setAttribute("cy", e.py);
-        halo.setAttribute("r", r * (e.isNegativeCharge ? 3.0 : 2.0)); 
+        halo.setAttribute("r", r * 2.0); 
         halo.setAttribute("fill", glowFill);
         halo.setAttribute("opacity", "0.6");
-        halo.setAttribute("filter", "url(#soft-glow)"); // [修正] 強制加濾鏡
+        halo.setAttribute("filter", "url(#soft-glow)"); 
         g.appendChild(halo);
 
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -3381,13 +3613,10 @@ function drawElectron(e) {
         if (useGlow) {
             const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             glow.setAttribute("cx", e.px); glow.setAttribute("cy", e.py); 
-            
-            // [關鍵修正] 移除手機特判，強制統一
             glow.setAttribute("r", r * 2.0); 
             glow.setAttribute("fill", glowFill);
             glow.setAttribute("opacity", glowOpacity);
             glow.setAttribute("filter", "url(#soft-glow)"); 
-            
             g.appendChild(glow);
         }
 
@@ -4019,8 +4248,7 @@ function renderConfigList() {
         // 將 "當前電荷" 存在 data-charge 屬性中 (預設0)
         // 將 "顯示模式" 存在 data-mode 屬性中 (預設 'noble')
         
-        let nobleHtml = el.noble.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
-                                .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+        let nobleHtml = formatConfigHtml(el.noble);
         const vizHtml = generateEcViz(el.c);
         
         let periodGroupStr = "";
@@ -4158,11 +4386,458 @@ function toggleConfigMode(symbol, baseConfig) {
 // 輔助：HTML 格式化 (將 [Ar] 變色，將數字變上標)
 function formatConfigHtml(str) {
     return str.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
-              .replace(/([spdf])(\d+)/g, '$1<sup>$2</sup>');
+              .replace(/([spdf])(\d+)/g, '$1<sup style="font-size: 0.75em !important; vertical-align: baseline !important; position: relative !important; top: -0.25em !important; margin-left: 1px !important; font-weight: normal !important; line-height: 0 !important;">$2</sup>');
+}
+// --- 數據校準：化學邏輯運算引擎 ---
+const QUIZ_HELPER = {
+    // 1. 解析電子組態字串
+    parse: (configStr) => {
+        const parts = configStr.split(' ');
+        const result = [];
+        parts.forEach(p => {
+            const m = p.match(/(\d)([spdf])(\d+)/);
+            if (m) result.push({ n: parseInt(m[1]), type: m[2], count: parseInt(m[3]) });
+        });
+        return result;
+    },
+
+    // 修正版：考量過渡金屬與主族差異的價電子計算
+    getValence: (parsed, target) => {
+        if (!target) return 0;
+        const i = target.iupac;
+        if (target.s === 'He') return 2;
+        // 1. 第 3-11 族 (過渡金屬)：價電子 = 族號 (即 (n-1)d + ns)
+        if (i >= 3 && i <= 11) return i;
+        // 2. 第 12 族 (Zn, Cd, Hg)：d 軌域已滿不計，價電子 = 2
+        if (i === 12) return 2;
+        // 3. 第 1-2 族與 13-18 族 (主族)：價電子 = 族號個位數
+        return i > 10 ? i - 10 : i;
+    },
+
+    // 計算特定軌域 (s, p, d, f) 的電子總數
+    getOrbitalSum: (parsed, type) => {
+        return parsed.filter(o => o.type === type).reduce((sum, o) => sum + o.count, 0);
+    },
+
+    // 3. 計算未成對電子數 (洪德定則)
+    getUnpaired: (parsed) => {
+        let totalUnpaired = 0;
+        const capacity = { s: 2, p: 6, d: 10, f: 14 };
+        parsed.forEach(o => {
+            const cap = capacity[o.type];
+            if (o.count > 0 && o.count < cap) {
+                const half = cap / 2;
+                totalUnpaired += (o.count <= half) ? o.count : (cap - o.count);
+            }
+        });
+        return totalUnpaired;
+    },
+
+    // 4. 取得合理的離子電荷 (依據台灣高中化學常見價態)
+    getRandomCharge: (target) => {
+        const i = target.iupac;
+        const sym = target.s;
+        if (sym === 'H') return 1; 
+        if (i === 1) return 1;  // 1A: +1
+        if (i === 2) return 2;  // 2A: +2
+        if (i === 13) return 3; // 3A: +3
+        if (i === 15) return -3; // 5A: -3
+        if (i === 16) return -2; // 6A: -2
+        if (i === 17) return -1; // 7A: -1
+        if (target.type.includes("過渡")) return (Math.random() > 0.5 ? 2 : 3); // 過渡金屬常見 +2, +3
+        return 0;
+    },
+
+    // 5. 電負度處理 (排除惰性氣體與無數據元素)
+    getEN: (symbol) => {
+        const props = ELEMENT_PROPS[symbol];
+        if (!props || props.en === undefined) return null;
+        // 排除惰性氣體 (He, Ne, Ar, Kr, Xe, Rn)
+        if (['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'].includes(symbol)) return null;
+        return props.en;
+    }// 6. 狀態資料標準化 (解決 Mn 等元素判斷 Bug)
+    ,getCleanState: (state) => {
+        if (!state) return "未知";
+        const s = state.trim();
+        if (s.includes("固") || s.includes("金屬")) return "固態";
+        if (s.includes("液")) return "液態";
+        if (s.includes("氣")) return "氣態";
+        return s;
+    },
+    // 7. 尋找等電子粒子夥伴
+    getIsoelectronicParticle: (electrons, excludeZ) => {
+        const candidates = ELECTRON_DATA.filter(el => {
+            const charge = el.z - electrons;
+            return Math.abs(charge) <= 2 && el.z !== excludeZ;
+        });
+        if (candidates.length === 0) return null;
+        const picked = candidates[Math.floor(Math.random() * candidates.length)];
+        const c = picked.z - electrons;
+        const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
+        return `${picked.s}<sup>${sign}</sup>`;
+    }
+};
+
+// --- Modal 控制功能 ---
+function openConfigModal() { 
+    const modal = document.getElementById('config-modal'); 
+    if(modal) { modal.style.display = 'flex'; renderConfigList(); } 
 }
 
-function openConfigModal() { const modal = document.getElementById('config-modal'); if(modal) { modal.style.display = 'flex'; renderConfigList(); } }
-function closeConfigModal() { const modal = document.getElementById('config-modal'); if(modal) modal.style.display = 'none'; }
+function closeConfigModal() { 
+    const modal = document.getElementById('config-modal'); 
+    if(modal) modal.style.display = 'none'; 
+    resetToDifficultySelection(); 
+}
+
+function switchConfigView(view) {
+    document.getElementById('tab-list').classList.toggle('active', view === 'list');
+    document.getElementById('tab-quiz').classList.toggle('active', view === 'quiz');
+    document.getElementById('list-view').style.display = (view === 'list' ? 'flex' : 'none');
+    document.getElementById('quiz-view').style.display = (view === 'quiz' ? 'flex' : 'none');
+    if (view === 'quiz') resetToDifficultySelection();
+}
+
+window.resetToDifficultySelection = function() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-setup-area').style.display = 'none';
+    document.getElementById('quiz-content-area').style.display = 'none';
+    document.getElementById('difficulty-grid').style.setProperty('display', 'flex', 'important');
+    document.getElementById('quiz-cancel-btn').style.display = 'none';
+    const stText = document.getElementById('quiz-status-text');
+    if(stText) stText.textContent = `Select Level`;
+    if(window.quizState) window.quizState.askedZ = [];
+};
+
+window.startQuiz = function(level) {
+    document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
+    document.getElementById('quiz-setup-area').style.display = 'flex';
+    document.getElementById('quiz-cancel-btn').style.display = 'block';
+    
+    window.quizState = {
+        rank: level, difficulty: 1, totalQ: 10, currentQ: 0, correctCount: 0, 
+        pool: [], askedZ: [], typeDeck: [] 
+    };
+
+    // 取得難度名稱映射
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+
+    // 預先根據 Rank 設定範圍池
+    const poolMap = {
+        'A': ELECTRON_DATA.filter(el => el.z <= 36),
+        'B': ELECTRON_DATA.filter(el => el.z <= 36 || (el.g && el.g.includes('A'))),
+        'C': ELECTRON_DATA.filter(el => el.z <= 88 && el.g && !el.g.includes('系')),
+        'D': [...ELECTRON_DATA]
+    };
+    window.quizState.pool = poolMap[level] || poolMap['A'];
+
+    // 立即更新 HUD，避免「選進階顯示基礎」的延遲
+    document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${level} | ${diffMap[1]}`;
+
+    // 產生平衡的題型牌組
+    window.quizState.generateTypeDeck = function(diff, total) {
+        const typePools = {
+            1: [0, 1, 5, 6, 10, 11, 13, 16, 18],             
+            2: [0, 1, 2, 4, 5, 6, 7, 10, 11, 12, 13, 14, 16, 18],    
+            3: [2, 3, 4, 7, 8, 9, 10, 11, 12, 14, 15, 17, 18]      
+        };
+        const types = typePools[diff] || typePools[1];
+        let deck = [];
+        while (deck.length < total) {
+            let tempGroup = [...types].sort(() => 0.5 - Math.random());
+            deck = deck.concat(tempGroup);
+        }
+        deck = deck.slice(0, total); 
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        for (let i = 0; i < deck.length - 1; i++) {
+            if (deck[i] === deck[i+1]) {
+                let swapIdx = (i + 2) % deck.length;
+                [deck[i+1], deck[swapIdx]] = [deck[swapIdx], deck[i+1]];
+            }
+        }
+        return deck;
+    };
+};
+
+// 修正 setQuizParam 讓它也能即時更新 HUD
+window.setQuizParam = function(type, val, btn) {
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+    btn.parentElement.querySelectorAll('.setup-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (type === 'diff') {
+        window.quizState.difficulty = parseInt(val);
+        // 即時更新頂部文字
+        document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${window.quizState.rank} | ${diffMap[window.quizState.difficulty]}`;
+    }
+    if (type === 'count') window.quizState.totalQ = parseInt(val);
+};
+
+window.initiateCalibration = function() {
+    // 1. 生成不連續重複的平衡題型牌組
+    window.quizState.typeDeck = window.quizState.generateTypeDeck(window.quizState.difficulty, window.quizState.totalQ);
+    
+    document.getElementById('quiz-setup-area').style.display = 'none';
+    document.getElementById('quiz-content-area').style.display = 'flex';
+    window.renderNextQuestion();
+};
+
+window.renderNextQuestion = function() {
+    window.quizState.currentQ++;
+    if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
+    
+    // 更新 HUD：顯示 Rank、難度與進度
+    const diffNames = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+    const curDiff = diffNames[window.quizState.difficulty] || "未知";
+    document.getElementById('quiz-status-text').textContent = 
+        `RANK ${window.quizState.rank} | ${curDiff}校準 [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
+    
+    // 元素均等分佈演算法
+    let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
+    if (avail.length === 0) {
+        window.quizState.askedZ = []; 
+        avail = [...window.quizState.pool];
+    }
+    const target = avail[Math.floor(Math.random() * avail.length)];
+    window.quizState.askedZ.push(target.z);
+    
+    // 依照預選牌組類型出題
+    const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
+    const quizData = { question: "", answer: "", type: "" };
+    const parsed = QUIZ_HELPER.parse(target.c);
+    const s = `[ ${target.s} ]`;
+
+    // 3. 題型詳細定義與隨機敘述模板 (全面中文化)
+    if (type === 0) {
+        quizData.type="身分識別：符號 > 名稱"; 
+        quizData.question = [ `${s} 的中文名稱為何？`, `符號 ${s} 代表什麼元素？`, `請選出 ${s} 的正確名稱：` ][Math.floor(Math.random()*3)];
+        quizData.answer=target.cn;
+    } else if (type === 1) {
+        quizData.type="識別校準：原子序 > 符號"; 
+        quizData.question = [ `元素 ${s} 的原子序為何？`, `在週期表中，${s} 的編號是？`, `${s} 原子核內的質子數為？` ][Math.floor(Math.random()*3)];
+        quizData.answer=target.s;
+    } else if (type === 2) {
+        quizData.type="位置定位：座標 > 符號"; 
+        quizData.question = [ `位於第 ${target.p} 週期、${target.g} 族的元素？`, `座標為 (${target.p}P, ${target.iupac}G) 的粒子為何？` ][Math.floor(Math.random()*2)];
+        quizData.answer=target.s;
+    } else if (type === 3) {
+        quizData.type="結構校準：電子組態 > 符號"; 
+        quizData.question = [ `電子組態為 ${target.noble} 的元素為何？`, `誰具備 ${target.noble} 的電子排列方式？` ][Math.floor(Math.random()*2)];
+        quizData.answer=target.s;
+    } else if (type === 4) {
+        quizData.type="特性校準：元素分類"; 
+        quizData.question = [ `元素 ${s} 屬於哪種分類？`, `${s} 在化學性質上被歸類為？`, `關於 ${s} 的分類，下列何者正確？` ][Math.floor(Math.random()*3)];
+        quizData.answer=target.type;
+    } else if (type === 5) {
+        quizData.type="特性校準：常溫狀態"; 
+        quizData.question = [ `${s} 在常溫常壓下呈現何種型態？`, `常溫常壓下，${s} 的物理狀態是？` ][Math.floor(Math.random()*2)];
+        quizData.answer = QUIZ_HELPER.getCleanState(target.state);
+    } else if (type === 6) {
+        quizData.type="身分識別：符號 > 英文名"; 
+        quizData.question = [ `元素 ${s} 的英文名稱為何？`, `符號 ${s} 的英文對應名是：` ][Math.floor(Math.random()*2)];
+        quizData.answer=target.n;
+    } else if (type === 7) {
+        quizData.type="量子結構：價電子數"; 
+        quizData.question = [ `${s} 的價電子數 (Valence e⁻) 共有？`, `${s} 的最外層電子殼層有幾顆電子？` ][Math.floor(Math.random()*2)];
+        quizData.answer=QUIZ_HELPER.getValence(parsed, target).toString();
+    } else if (type === 8) {
+        quizData.type="量子結構：未成對電子"; 
+        quizData.question = [ `${s} 在基態時有幾個未成對電子？`, `${s} 基態下的單顆電子 (Unpaired) 總數？` ][Math.floor(Math.random()*2)];
+        quizData.answer=QUIZ_HELPER.getUnpaired(parsed).toString();
+    } else if (type === 9) {
+        const orb = ['s','p','d'][Math.floor(Math.random()*3)];
+        quizData.type=`量子結構：${orb.toUpperCase()} 軌域總數`; 
+        quizData.question = [ `${s} 的所有 ${orb} 軌域電子加總為何？`, `整個 ${s} 的電子雲中，有多少電子填在 ${orb} 軌域？` ][Math.floor(Math.random()*2)];
+        quizData.answer=QUIZ_HELPER.getOrbitalSum(parsed, orb).toString();
+    } else if (type === 10) {
+        quizData.type="邏輯判斷：同族元素"; 
+        quizData.question = [ `下列何者與 ${s} 位於同一族 (Group)？`, `與 ${s} 化學性質最相近的夥伴元素是？` ][Math.floor(Math.random()*2)];
+        const partners = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        quizData.answer = partners.length > 0 ? partners[Math.floor(Math.random()*partners.length)].s : "無";
+    } else if (type === 11) {
+        quizData.type="位置定位：區塊 (Block)";
+        const i = target.iupac; let block = "f";
+        if (target.s === "He") block = "s";
+        else if (typeof i === 'number') { if (i <= 2) block = "s"; else if (i >= 13) block = "p"; else block = "d"; }
+        quizData.question = [ `${s} 屬於週期表中的哪個區塊 (Block)？`, `${s} 的最後一顆電子填入在？` ][Math.floor(Math.random()*2)];
+        quizData.answer = `${block}-block`;
+    } else if (type === 12 || type === 13) {
+        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 9) - 3 || 1) : 0;
+        const sign = charge === 0 ? "" : (charge > 0 ? `<sup>${charge}+</sup>` : `<sup>${Math.abs(charge)}-</sup>`);
+        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${sign} ]`;
+        if (type === 12) {
+            quizData.type="量子結構：電子總數"; 
+            quizData.question = [ `${particle} 的電子總數為何？`, `${particle} 的核外電子數共有？` ][Math.floor(Math.random()*2)];
+            quizData.answer = (target.z - charge).toString();
+        } else {
+            quizData.type="量子結構：質子總數"; 
+            quizData.question = [ `${particle} 的質子總數為何？`, `${particle} 原子核內帶有多少單位正電荷？` ][Math.floor(Math.random()*2)];
+            quizData.answer = target.z.toString();
+        }
+    } else if (type === 14) {
+        const enPool = window.quizState.pool.filter(el => QUIZ_HELPER.getEN(el.s) !== null);
+        if (enPool.length < 4) { 
+            // 修正：如果電負度資料不足，除了換題目，也要強迫進入 Type 0 的選項生成路徑
+            type = 0; 
+            quizData.type="身分識別"; quizData.question=`${s} 的中文名稱？`; quizData.answer=target.cn; 
+        } else {
+            let sel = [...enPool].sort(() => 0.5 - Math.random()).slice(0, 4);
+            let winner = sel.reduce((p, c) => (QUIZ_HELPER.getEN(c.s) > QUIZ_HELPER.getEN(p.s)) ? c : p);
+            quizData.type="趨勢校準：電負度比較"; 
+            quizData.question = [ `下列誰的電負度最高？`, `哪一個原子對鍵結電子的吸引力最強？` ][Math.floor(Math.random()*2)];
+            quizData.answer = winner.s; quizData.forcedOpts = sel.map(el => el.s);
+        }
+    } else if (type === 15) {
+        quizData.type="邏輯判斷：組態夥伴"; 
+        quizData.question = [ `組態為 ${target.noble} 的元素，與誰同族？`, `哪一個元素具備與 ${target.noble} 相同的價層電子特徵？` ][Math.floor(Math.random()*2)];
+        const partners = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        quizData.answer = partners.length > 0 ? partners[Math.floor(Math.random()*partners.length)].s : "無";
+    } else if (type === 16) {
+        quizData.type="識別校準：質子逆推";
+        quizData.question = [ `質子總數為 ${target.z} 的中性原子是？`, `哪一種原子的核內電荷數為 ${target.z}?` ][Math.floor(Math.random()*2)];
+        quizData.answer = target.s;
+    } else if (type === 17) {
+        let c = Math.floor(Math.random() * 5) - 2; const eCount = target.z - c;
+        const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
+        quizData.type="量子結構：電子逆推";
+        quizData.question = [ `總電子數為 ${eCount} 的粒子可能是？`, `哪種粒子擁有 ${eCount} 個核外電子？` ][Math.floor(Math.random()*2)];
+        quizData.answer = `${target.s}<sup>${sign}</sup>`;
+    } else if (type === 18) {
+        let c = Math.floor(Math.random() * 5) - 2; const eCount = target.z - c;
+        const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
+        const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
+        if (!partner) {
+            // 修正：如果找不到等電子夥伴，強制重設題型與資料，防止無選項
+            type = 0;
+            quizData.type="身分識別"; quizData.question=`元素 ${s} 的中文名稱為何？`; quizData.answer=target.cn;
+        } else {
+            quizData.type="量子結構：等電子序列";
+            quizData.question = [ `誰與 [ ${target.s}<sup>${sign}</sup> ] 互為等電子序列？`, `下列何者與 [ ${target.s}<sup>${sign}</sup> ] 電子組態相同？` ][Math.floor(Math.random()*2)];
+            quizData.answer = partner;
+        }
+    }
+
+    // 4. UI 視覺標準化與渲染
+    const questionEl = document.getElementById('quiz-question');
+    document.getElementById('quiz-type').textContent = `> TYPE: ${quizData.type}`;
+    
+    // 正則渲染：優化 spdf 數字與電荷上標
+    let htmlQ = quizData.question.replace(/([spdf])(\d+)/g, '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.32em; font-weight: normal;">$2</sup>');
+    // 如果是電荷符號 (如 2+ 或 -)，處理其上標內的大小
+    htmlQ = htmlQ.replace(/(\d*[+-])(?=<\/sup>)/g, '<span style="font-size: 0.85em;">$1</span>');
+    
+    questionEl.innerHTML = htmlQ;
+    questionEl.style.fontSize = "1.7rem";
+
+    // 5. 智慧選項生成 (建立 opts 陣列)
+    let opts = [quizData.answer];
+
+    if (type === 4) {
+        // 元素分類選項
+        const allTypes = [...new Set(ELECTRON_DATA.map(el => el.type))].filter(t => t && t !== quizData.answer);
+        while (opts.length < 4 && allTypes.length > 0) {
+            let t = allTypes.splice(Math.floor(Math.random() * allTypes.length), 1)[0];
+            if (!opts.includes(t)) opts.push(t);
+        }
+    } else if (type === 5) {
+        // 常溫狀態選項
+        opts = ["固態", "液態", "氣態"];
+    } else if (type === 7 || type === 8 || type === 9 || type === 12 || type === 13) {
+        // 數字類題目 (價電子、未成對、離子電子/質子數)
+        let ansNum = parseInt(quizData.answer);
+        let safetyCount = 0;
+        while (opts.length < 4 && safetyCount < 50) {
+            safetyCount++;
+            let offset = Math.floor(Math.random() * 7) - 3;
+            let r = Math.max(0, ansNum + offset).toString();
+            if (!opts.includes(r)) opts.push(r);
+        }
+        // 保底邏輯：如果隨機湊不到4個，強行遞增
+        while (opts.length < 4) {
+            opts.push((ansNum + opts.length).toString());
+        }
+    } else if (type === 11) {
+        // 區塊選項
+        opts = ["s-block", "p-block", "d-block", "f-block"];
+    } else if (type === 14) {
+        // 電負度比較：直接套用出題邏輯選好的 4 個強者
+        if (quizData.forcedOpts) opts = quizData.forcedOpts;
+    } else if (type === 17 || type === 18) {
+        // --- 粒子逆推與等電子序列：智慧生成帶電荷的符號 ---
+        let safetyCount = 0;
+        while (opts.length < 4 && safetyCount < 100) {
+            safetyCount++;
+            const randEl = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
+            const c = Math.floor(Math.random() * 5) - 2; 
+            const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
+            const pStr = `${randEl.s}<sup>${sign}</sup>`;
+            // 這裡不需要複雜的電子數判斷（因為是錯題），只需保證符號不重複即可
+            if (!opts.includes(pStr)) opts.push(pStr);
+        }
+    } else {
+        // 處理 0, 1, 2, 3, 6, 10, 15, 16 (身分、座標、組態、同族夥伴)
+        let cand = [...window.quizState.pool].filter(el => {
+            let val;
+            if (type === 0) val = el.cn;
+            else if (type === 6) val = el.n;
+            else val = el.s;
+            if (val === quizData.answer) return false;
+            if ((type === 10 || type === 15) && el.iupac === target.iupac) return false;
+            return true;
+        }).sort(() => 0.5 - Math.random());
+
+        for (let i = 0; i < cand.length && opts.length < 4; i++) {
+            let val;
+            if (type === 0) val = cand[i].cn;
+            else if (type === 6) val = cand[i].n;
+            else val = cand[i].s;
+            if (!opts.includes(val)) opts.push(val);
+        }
+    }
+
+    // 洗牌選項並渲染到按鈕
+    opts.sort(() => 0.5 - Math.random());
+    const container = document.getElementById('quiz-options');
+    container.innerHTML = "";
+    opts.forEach(o => {
+        const b = document.createElement('button'); 
+        b.className = 'option-btn'; 
+        b.innerHTML = o; // 支援上標標籤渲染
+        b.onclick = () => {
+            container.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+            const isCorrect = (o === quizData.answer);
+            if (isCorrect) { 
+                b.classList.add('correct'); 
+                window.quizState.correctCount++; 
+            } else { 
+                b.classList.add('wrong'); 
+                container.querySelectorAll('.option-btn').forEach(btn => { 
+                    // 修正答案顯示比對邏輯，使用 innerHTML
+                    if(btn.innerHTML === quizData.answer) btn.classList.add('correct'); 
+                }); 
+            }
+            const nextBtn = document.createElement('button'); 
+            nextBtn.className = 'start-cal-btn'; 
+            nextBtn.style.marginTop = '20px'; 
+            nextBtn.style.width = '100%';
+            nextBtn.textContent = isCorrect ? "數據正確，點擊繼續 NEXT >" : "校準失敗，繼續程序 NEXT >"; 
+            nextBtn.onclick = window.renderNextQuestion; 
+            container.appendChild(nextBtn); 
+        };
+        container.appendChild(b);
+    });
+};
+
+window.finishCalibration = function() {
+    document.getElementById('quiz-content-area').style.display = 'none';
+    document.getElementById('quiz-result-area').style.display = 'flex';
+    const accuracy = Math.round((window.quizState.correctCount / window.quizState.totalQ) * 100);
+    let rankName = accuracy === 100 ? "數據大師 (MASTER)" : (accuracy >= 80 ? "資深分析師 (SENIOR)" : "校準未完成 (FAILED)");
+    document.getElementById('quiz-result-card').innerHTML = `<div class="quiz-type-label">任務完成</div><div class="quiz-question-text" style="color:var(--hud-cyan); font-size:3.5rem;">${accuracy}%</div><div style="margin-top:10px; color:#fff;">評等: ${rankName}</div>`;
+    document.getElementById('quiz-status-text').textContent = `REPORT: RANK ${window.quizState.rank}`;
+};
 
 // 物質檢索功能控制
 function openSubstanceModal() {
@@ -4192,23 +4867,16 @@ function renderSubstanceList() {
     }
 
     SUBSTANCE_LIST.forEach(sub => {
-        // 安全獲取屬性，防止 undefined 導致函式崩潰
         const formula = (sub.formula || "").toLowerCase();
         const name = (sub.name || "").toLowerCase();
         const common = (sub.common || "").toLowerCase();
         const tags = sub.tags || [];
 
-        // 1. 化學式匹配：英文開頭匹配 (例如打 f 出現 Fe)
         const isFormulaMatch = formula.startsWith(filter);
-        
-        // 2. 名稱/俗名匹配：支援中文「包含」匹配
         const isNameMatch = name.includes(filter);
         const isCommonMatch = common.includes(filter);
-        
-        // 3. 標籤匹配：遍歷 tags 陣列
         const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
 
-        // 搜尋邏輯：打字時符合任一條件才顯示
         if (filter !== "" && !isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
 
         const card = document.createElement('div');
@@ -4216,35 +4884,40 @@ function renderSubstanceList() {
         card.style.borderLeft = '4px solid #38bdf8';
         card.style.cursor = 'pointer';
         
+        // 核心邏輯：點擊搜尋結果執行跨分類精確跳轉
         card.onclick = () => {
-            const parts = sub.key.split('|').map(p => p.trim());
-            const mainKey = parts[0]; 
-            const targetName = parts.length > 1 ? parts[1] : null;
-            const rootData = MOLECULE_DB[mainKey];
+            const searchKey = sub.key; 
+            let targetMainKey = null;
+            let targetVariantID = null;
 
-            if (rootData && rootData.variants) {
-                const vKeys = Object.keys(rootData.variants);
-                let variantKey = null;
-                if (targetName) {
-                    variantKey = vKeys.find(k => k.toLowerCase() === targetName.toLowerCase());
-                    if (!variantKey) {
-                        variantKey = vKeys.find(k => {
-                            const vData = rootData.variants[k];
-                            return (vData.fullKey || "").toLowerCase().includes(targetName.toLowerCase());
-                        });
+            // 1. 在所有分子的變體庫中查找匹配
+            for (let mKey in MOLECULE_DB) {
+                const root = MOLECULE_DB[mKey];
+                if (root.variants) {
+                    for (let vID in root.variants) {
+                        if (vID === searchKey) {
+                            targetMainKey = mKey;
+                            targetVariantID = vID;
+                            break;
+                        }
                     }
-                    variantKey = variantKey || vKeys[0];
-                } else {
-                    variantKey = vKeys[0];
                 }
-                window.currentKey = mainKey;
-                window.currentVariantKey = variantKey;
-                loadMolecule(mainKey, variantKey);
-            } else {
-                window.currentKey = mainKey;
-                window.currentVariantKey = null;
-                loadMolecule(mainKey);
+                if (targetMainKey) break;
             }
+
+            // 2. 執行載入邏輯
+            if (targetMainKey && targetVariantID) {
+                window.currentKey = targetMainKey;
+                window.currentVariantKey = targetVariantID;
+                loadMolecule(targetMainKey, targetVariantID);
+            } else {
+                const rootKey = searchKey.split('|')[0];
+                if (MOLECULE_DB[rootKey]) {
+                    loadMolecule(rootKey);
+                }
+            }
+
+            // 3. UI 狀態收尾
             closeSubstanceModal();
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
@@ -4265,7 +4938,7 @@ function renderSubstanceList() {
                         <span style="font-size:0.8rem; color:#94a3b8;">${sub.common ? '俗名: ' + sub.common : sub.category}</span>
                     </div>
                 </div>
-                <div style="background:rgba(56,189,248,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
+                <div style="background:rgba(56, 189, 248, 0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56, 189, 248, 0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
             </div>
         `;
         container.appendChild(card);
@@ -5136,15 +5809,28 @@ function revealFortune() {
     isFortuneRevealed = true;
     document.getElementById('fortune-card').classList.add('flipped');
 
-    // 1. 抽取邏輯
-    const ENABLE_DAILY_LIMIT = true; // 開關：true=開啟每日限制 (台灣8點重置), false=每次都隨機
+    // 1. 抽取邏輯 (修正版：台灣早上 8 點重置)
+    const ENABLE_DAILY_LIMIT = true; 
     let pickIndex;
+    
     if (ENABLE_DAILY_LIMIT) {
-        const todayKey = new Date(new Date().getTime() + (new Date().getTimezoneOffset()*60000) + (3600000*(8-8))).toISOString().split('T')[0]; 
+        // [修改核心] 利用 UTC 日期作為 Key
+        // 台灣 08:00 = UTC 00:00，所以 UTC 日期變更時，剛好就是台灣早上八點
+        const todayKey = new Date().toISOString().split('T')[0]; 
+        
         const record = JSON.parse(localStorage.getItem('daily_fortune_record') || '{}');
-        if (record.date === todayKey && record.index !== undefined) { pickIndex = record.index; } 
-        else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); }
-    } else { pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); }
+        
+        // 比對日期 Key，若相同則給一樣的結果
+        if (record.date === todayKey && record.index !== undefined) { 
+            pickIndex = record.index; 
+        } else { 
+            // 若日期不同 (過了早上八點)，重新隨機
+            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+            localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); 
+        }
+    } else { 
+        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+    }
 
     // 2. 取得資料
     const pick = ELEMENT_FORTUNES[pickIndex];
@@ -5152,7 +5838,7 @@ function revealFortune() {
     const db = (typeof LUCKY_ITEMS_DB !== 'undefined') ? LUCKY_ITEMS_DB : {};
     const lucky = db[pick.z] || { item: "微笑", reason: "保持好心情就是最好的幸運。" };
 
-    // 3. 生成 HTML (移除 lucky-num，版面橫向滿版)
+    // 3. 生成 HTML
     const resultHtml = `
         <div class="fortune-header">
             <div class="fortune-symbol-box"><div class="fortune-symbol">${pick.s}</div></div>
