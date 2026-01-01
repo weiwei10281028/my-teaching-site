@@ -305,17 +305,17 @@
                 height: 35px; 
                 position: relative !important; 
                 z-index: 1 !important; 
-                background: #000 !important;
-                overflow: visible !important;
+                /* 將漸層直接寫在背景，防止手機 GPU 忽略空圖層渲染 */
+                background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
+                border: 1px solid #444;
             }
-            .spectrum-bg { 
-                z-index: 2 !important; 
-                opacity: 0.9 !important; 
-                display: block !important;
-            }
+            /* 隱藏原本的背景圖層，避免在手機上產生層級混亂 */
+            .spectrum-bg { display: none !important; }
+            
             #lines-layer { 
-                z-index: 5 !important; 
-                display: block !important;
+                position: absolute !important; 
+                top: 0; left: 0; width: 100%; height: 100%; 
+                z-index: 10 !important; /* 譜線層級設定為最高，確保它壓在彩色背景上 */
             }
             .spectrum-labels { font-size: 0.65rem; margin-bottom: 2px; }
             .wavelength-label { font-size: 0.75rem !important; }
