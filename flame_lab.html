@@ -230,59 +230,45 @@
             .main-layout { 
                 display: grid !important; 
                 grid-template-columns: 170px 1fr; 
-                grid-template-rows: 1fr 185px; 
+                grid-template-rows: 1fr 200px; /* 增加底部數據區高度，將卡片往上提 */
             }
             
-            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 12px !important; }
-            .side-panel .hud-card { padding: 8px; }
-            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; }
-            .s33-btn { padding: 8px 2px; font-size: 0.85rem; }
+            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 10px !important; }
             
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
-            .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
+            .bunsen-burner { transform: scale(0.6); transform-origin: center bottom; margin-bottom: 10px; }
 
-            /* 手機版：離子名稱鎖定右上角紅框位置 */
-            .ion-info-display {
-                top: 10px !important;
-                right: 15px !important;
-                position: absolute !important;
-            }
-            #target-name { font-size: 1.4rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
+            /* 離子名稱：保持右上角 */
+            .ion-info-display { top: 8px !important; right: 12px !important; position: absolute !important; }
+            #target-name { font-size: 1.3rem !important; text-shadow: 0 0 10px #000; }
             
-            /* 2. 數據分析面板：卡片寬度與間距優化 */
+            /* 數據面板：上移並調整間距 */
             .data-panel { 
                 grid-column: 1 / span 2; grid-row: 2;
                 width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 8px 10px !important; flex-direction: row !important; 
+                padding: 5px 10px !important; /* 壓縮內距讓卡片上移 */
+                flex-direction: row !important; 
                 overflow-x: auto !important; gap: 10px !important; background: #000;
+                align-items: flex-start !important;
             }
             
-            /* 3. 卡片細節：加寬至 240px，取消底部留白，統一文字亮度 */
+            /* 卡片優化：確保內容完整且不被下方擋住 */
             .data-panel .hud-card { 
-                flex: 0 0 240px !important; 
-                width: 240px !important; 
-                padding: 10px !important; 
-                display: flex !important; 
-                flex-direction: column !important;
-                justify-content: flex-start !important; /* 內容靠上，減少底部空間 */
-                height: auto !important;
-                min-height: 140px !important;
+                flex: 0 0 220px !important; width: 220px !important; 
+                padding: 8px 10px !important; 
+                min-height: 150px !important;
+                margin-bottom: 5px !important;
             }
-            .data-panel .hud-card .data-grid { 
-                display: flex !important; 
-                flex-direction: column !important; 
-                gap: 2px !important; /* 數據行與行之間不擁擠 */
-            }
-            .data-panel .hud-card div { 
-                color: #ffffff !important; 
-                opacity: 1 !important; 
-                font-weight: 700 !important; /* 全部加粗提高清晰度 */
-                line-height: 1.2 !important;
-            } 
             
-            /* 4. 光譜高度加寬 */
-            #bottom-spectra { height: 135px !important; padding: 10px !important; flex-shrink: 0; }
-            .wavelength-label { font-size: 0.85rem !important; opacity: 1 !important; }
+            /* 下方光譜區：壓縮高度並簡化 */
+            #bottom-spectra { 
+                height: 95px !important; /* 大幅縮減高度，解決遮擋問題 */
+                padding: 5px 10px !important; 
+                flex-shrink: 0; 
+                background: #000;
+            }
+            .spectrum-labels { font-size: 0.75rem !important; margin-bottom: 2px !important; }
+            .wavelength-label { font-size: 0.75rem !important; }
         }
     </style>
 </head>
@@ -435,10 +421,22 @@
         const bar = document.getElementById('bottom-spectra');
         bar.innerHTML = `
             <div class="spectrum-container">
-                <div class="spectrum-labels"><div class="label-uv">Ultraviolet (UV)</div><div class="label-vis">Visible Light</div><div class="label-ir">Infrared (IR)</div></div>
-                <div class="spectrum-ui"><div class="spectrum-bg"></div><div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div></div>
-                <div style="display:flex; justify-content:space-between; margin-top:12px; padding: 0 5px;">
-                    <span class="wavelength-label">200nm</span><span class="wavelength-label">400nm</span><span class="wavelength-label">600nm</span><span class="wavelength-label">800nm</span><span class="wavelength-label">1000nm</span>
+                <!-- 簡化標籤：ULTRAVIOLET -> UV, INFRARED -> IR, VISIBLE -> VIS -->
+                <div class="spectrum-labels">
+                    <div class="label-uv" style="width:20%">UV</div>
+                    <div class="label-vis" style="width:55%">VIS</div>
+                    <div class="label-ir" style="width:25%">IR</div>
+                </div>
+                <div class="spectrum-ui">
+                    <div class="spectrum-bg"></div>
+                    <div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; padding: 0 5px;">
+                    <span class="wavelength-label">200nm</span>
+                    <span class="wavelength-label">400nm</span>
+                    <span class="wavelength-label">600nm</span>
+                    <span class="wavelength-label">800nm</span>
+                    <span class="wavelength-label">1000nm</span>
                 </div>
             </div>`;
             
