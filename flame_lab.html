@@ -18,144 +18,237 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0; background: var(--bg-dark); color: var(--text-main);
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-main);
             font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .header {
-            height: 70px; padding: 0 30px; background: rgba(0, 242, 255, 0.05);
-            border-bottom: 2px solid var(--hud-cyan); display: flex;
-            justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 100;
+            height: 70px;
+            padding: 0 30px;
+            background: rgba(0, 242, 255, 0.05);
+            border-bottom: 2px solid var(--hud-cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
-        .system-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 4px; text-shadow: var(--glow); color: #fff; }
+        .system-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-shadow: var(--glow);
+            color: #fff;
+        }
 
-        .ion-info-display { position: absolute; top: 40px; right: 40px; text-align: right; z-index: 50; }
-        #target-name { font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .wavelength-label {
+            color: #fff !important; 
+            font-size: 1.1rem !important; 
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
 
-        .wavelength-label { color: #fff !important; font-size: 1.1rem !important; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        @media (max-width: 600px) {
+            .wavelength-label { font-size: 0.8rem !important; }
+        }
 
         .info-btn {
-            cursor: pointer; font-size: 0.9rem; color: var(--hud-cyan); border: 1px solid var(--hud-cyan);
-            border-radius: 50%; width: 22px; height: 22px; display: inline-flex;
-            align-items: center; justify-content: center; transition: 0.3s;
-            font-family: 'serif'; font-style: italic; font-weight: bold; flex-shrink: 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--hud-cyan);
+            border: 1px solid var(--hud-cyan);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            transition: 0.3s;
+            font-family: 'serif';
+            font-style: italic;
+            font-weight: bold;
+            line-height: 1;
+            vertical-align: middle;
         }
 
         #cobalt-popup {
-            display: none; position: fixed; left: 50% !important; top: 50% !important;
-            transform: translate(-50%, -50%); width: 320px; background: #0f172a;
-            border: 2px solid var(--hud-cyan); border-radius: 12px; padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); z-index: 2000;
+            display: none;
+            position: absolute;
+            left: 390px;
+            top: 150px;
+            width: 320px;
+            background: #0f172a;
+            border: 2px solid var(--hud-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
         }
 
-        #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1999; background: transparent; }
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1999;
+            background: transparent;
+        }
 
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
 
         .side-panel {
-            width: 380px; background: var(--panel-glass); border-right: 2px solid rgba(0, 242, 255, 0.2);
-            padding: 25px; display: flex; flex-direction: column; gap: 25px; overflow-y: auto;
+            width: 380px;
+            background: var(--panel-glass);
+            border-right: 2px solid rgba(0, 242, 255, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
         }
 
-        .viewport { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); display: flex; justify-content: center; align-items: center; }
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
         .data-panel {
-            width: 420px; background: var(--panel-glass); border-left: 2px solid rgba(0, 242, 255, 0.2);
-            padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
+            width: 420px;
+            background: var(--panel-glass);
+            border-left: 2px solid rgba(0, 242, 255, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
         }
 
-        .hud-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 242, 255, 0.3); padding: 20px; position: relative; flex-shrink: 0; }
-        .card-label { font-size: 1.1rem; color: var(--hud-cyan); font-weight: 700; margin-bottom: 15px; border-left: 4px solid var(--hud-cyan); padding-left: 10px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: var(--hud-cyan); border-radius: 3px; }
+
+        .hud-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            padding: 20px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .card-label {
+            font-size: 1.1rem;
+            color: var(--hud-cyan);
+            font-weight: 700;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--hud-cyan);
+            padding-left: 10px;
+        }
 
         .ion-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .s33-btn {
-            background: linear-gradient(145deg, #2d3748, #1a202c); border: 1px solid rgba(255,255,255,0.2);
-            padding: 18px 10px; border-radius: 8px; color: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 18px 10px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        .s33-btn:hover, .s33-btn.active { background: var(--hud-cyan); color: #000; box-shadow: var(--glow); border-color: #fff; }
+        .s33-btn:hover, .s33-btn.active {
+            background: var(--hud-cyan); color: #000;
+            box-shadow: var(--glow); border-color: #fff;
+        }
 
         .bunsen-burner { position: relative; width: 160px; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-top: 80px; }
         .chimney { width: 28px; height: 160px; background: linear-gradient(90deg, #475569, #cbd5e1, #475569); border-radius: 2px 2px 0 0; z-index: 5; border: 1px solid rgba(0,0,0,0.3); }
         .air-collar { width: 34px; height: 32px; background: #334155; margin-top: -2px; z-index: 6; display: flex; justify-content: center; align-items: center; gap: 4px; border-radius: 2px; }
+        .air-hole { width: 8px; height: 18px; background: #000; border-radius: 4px; }
+        .burner-stem { width: 18px; height: 30px; background: #1e293b; margin-top: -2px; z-index: 4; }
         .base { width: 150px; height: 18px; background: #0f172a; border-radius: 75px 75px 4px 4px; z-index: 3; border-bottom: 4px solid #000; }
+        .gas-inlet-tube { position: absolute; bottom: 15px; right: -50px; width: 60px; height: 10px; background: #334155; border-radius: 5px; z-index: 2; }
 
         .flame-vfx {
-            position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%); width: 45px; height: 150px; 
-            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%; mix-blend-mode: screen; pointer-events: none; filter: blur(6px);
-            transition: all 0.2s ease-out; animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out;
+            position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%);
+            width: 45px; height: 150px; 
+            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+            mix-blend-mode: screen; pointer-events: none; filter: blur(6px);
+            transition: all 0.2s ease-out;
+            animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out;
         }
-        .flame-inner { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 50%; background: linear-gradient(to top, #fff, transparent); border-radius: 50%; opacity: 0.8; filter: blur(2px); }
-        @keyframes flame-wiggle { 0% { transform: translateX(-51%) scaleX(1) skewX(0deg); } 100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); } }
-        @keyframes flame-pulse { from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; } to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; } }
+        .flame-inner { 
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 40%; height: 50%; 
+            background: linear-gradient(to top, #fff, transparent);
+            border-radius: 50%; opacity: 0.8; filter: blur(2px);
+        }
+        @keyframes flame-wiggle {
+            0% { transform: translateX(-51%) scaleX(1) skewX(0deg); }
+            100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); }
+        }
+        @keyframes flame-pulse {
+            from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; }
+            to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; }
+        }
 
         .spectrum-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
         .spectrum-labels { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
         .label-uv { color: #a855f7; width: 22.5%; text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 2px; }
         .label-vis { color: #22c55e; width: 50%; text-align: center; border-bottom: 2px solid #22c55e; padding-bottom: 2px; }
         .label-ir { color: #ef4444; width: 27.5%; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 2px; }
-        .spectrum-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4; background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%); }
+        
+        .spectrum-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4;
+            background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%);
+        }
+
         .spectrum-ui { width: 100%; height: 50px; background: #000; border: 2px solid #334155; position: relative; }
         .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
 
         @media (max-width: 1024px) {
-            body { height: 100vh; overflow: hidden; }
-            .header { height: 50px; padding: 0 10px; }
+            body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+            .header { height: 50px; flex-shrink: 0; padding: 0 10px; }
             .header .system-title { font-size: 1rem; letter-spacing: 1px; }
             .header div:last-child { display: none; } 
-
-            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; 
-            grid-template-rows: 1fr 240px; } /* 依照您的紅線，將數據分析區高度增加到 240px */
-            
-            /* 指令：本生登上移與縮放優化 */
-            .viewport { grid-column: 2; grid-row: 1; display: flex !important; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 20px; }
-            .bunsen-burner { transform: scale(0.55); transform-origin: center bottom; margin: 0 !important; } 
-            
-            /* 修正名稱字體大小防止遮擋 */
-            .ion-info-display { top: 10px !important; right: 15px !important; position: absolute !important; }
-            #target-name { font-size: 1.8rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
-            
+            .main-layout { flex: 1; display: grid !important; grid-template-columns: 125px 1fr; grid-template-rows: 1fr 170px; overflow: hidden; }
+            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); overflow-x: hidden !important; overflow-y: auto !important; padding: 10px 5px !important; gap: 12px !important; }
+            .side-panel .hud-card { padding: 8px; margin-bottom: 0; }
+            .side-panel label { font-size: 0.85rem; line-height: 1.1; display: block; }
+            .side-panel label small { display: block; font-size: 0.7rem; opacity: 0.6; }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; }
+            .s33-btn { padding: 8px 2px; font-size: 0.85rem; }
+            .viewport { grid-column: 2; grid-row: 1; display: flex; justify-content: flex-start; padding-left: 15px; align-items: flex-end; height: 100% !important; overflow: hidden; }
+            .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
+            #target-name { font-size: 1.5rem !important; top: 15px !important; right: 15px !important; }
             .data-panel { 
-                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 2px solid var(--hud-cyan);
-                padding: 0 !important; display: flex !important; flex-direction: row !important; 
-                overflow-x: auto !important; overflow-y: hidden !important; background: #000;
-                align-items: stretch; -webkit-overflow-scrolling: touch;
+                grid-column: 1 / span 2; grid-row: 2;
+                width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
+                padding: 10px !important; display: flex !important;
+                flex-direction: row !important; overflow-x: auto !important;
+                overflow-y: hidden !important; gap: 12px !important;
+                background: #000;
             }
-            
-            /* 指令 1：維持橫式文字標題 */
-            .data-panel .card-label { 
-                flex: 0 0 90px !important; width: 90px !important; 
-                writing-mode: horizontal-tb !important; 
-                display: flex !important; align-items: center; justify-content: center;
-                border-left: 4px solid var(--hud-cyan);
-                padding: 10px !important; margin: 0 !important; font-size: 0.9rem !important;
-                background: rgba(0, 242, 255, 0.1); color: var(--hud-cyan);
-                text-align: center; line-height: 1.4; white-space: normal !important;
-            }
-
-            /* 指令 2：確保數據卡片內容在框內均等排列 */
-            .data-panel .hud-card { 
-                flex: 0 0 260px !important; width: 260px !important; 
-                padding: 15px 12px !important; margin: 0 !important;
-                display: flex !important; flex-direction: column !important; 
-                justify-content: space-evenly !important; /* 文字在 240px 高度內均等排列 */
-                box-sizing: border-box; border-right: 1px solid rgba(255,255,255,0.1);
-            }
-            
-            /* 指令 3：過多文字自動分行，確保 100% 看到所有數據 */
-            .data-panel .hud-card div { 
-                color: #ffffff !important; opacity: 1 !important; 
-                font-weight: 600; font-size: 0.95rem !important; 
-                line-height: 1.5; white-space: normal !important;
-            }
-            
-            #bottom-spectra { height: 110px !important; padding: 10px !important; flex-shrink: 0; }
-            .wavelength-label { font-size: 0.75rem !important; }
+            .data-panel .hud-card { flex: 0 0 280px !important; width: 280px !important; height: 100%; white-space: normal; }
+            #bottom-spectra { height: 120px !important; padding: 10px !important; flex-shrink: 0; }
         }
     </style>
 </head>
-
 <body>
 <div class="header">
     <div class="system-title">QUANTUM FLAME CORE</div>
@@ -169,7 +262,7 @@
 <div id="bottom-spectra" style="height: 180px; border-top: 2px solid var(--hud-cyan); background: #070b14; padding: 25px; flex-shrink: 0;"></div>
 
 <script>
-    // 注入 UI - 左側控制面板 (還原穩定佈局與修正鈷玻璃)
+    // 注入 UI - 左側控制面板
     document.getElementById('controls').innerHTML = `
         <div class="hud-card">
             <div class="card-label" style="font-size:0.85rem;">儀器調節<br><small>Controls</small></div>
@@ -181,20 +274,12 @@
                 <label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label>
                 <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
             </div>
-            
-            <!-- 鈷玻璃濾光：兩行式排版優化 -->
-            <div style="background:rgba(0,100,255,0.1); padding:10px; border-radius:4px; display:flex; flex-direction:column; gap:8px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.95rem; color:#8bafff; font-weight:bold;">鈷玻璃濾光</span>
-                    <div class="info-btn" onclick="togglePopup(event)" style="margin:0;">i</div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <small style="color:#8bafff; opacity:0.8; font-family:sans-serif;">(Cobalt Glass)</small>
-                    <input type="checkbox" id="cobaltGlass" style="width:18px; height:18px; cursor:pointer; margin:0;" onchange="updateFlame(window.currentIon)">
-                </div>
+            <div style="background:rgba(0,100,255,0.1); padding:8px; border-radius:4px; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="cobaltGlass" style="width:16px; height:16px;" onchange="updateFlame(window.currentIon)">
+                <label for="cobaltGlass" style="font-size:0.85rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光<br><small>(Cobalt Glass)</small></label>
+                <div class="info-btn" onclick="togglePopup(event)" style="margin-left:auto;">i</div>
             </div>
         </div>
-
         <div class="hud-card">
             <div class="card-label">離子試劑選取 (Ion Matrix)</div>
             <div class="ion-matrix">
@@ -214,7 +299,7 @@
         </div>
     `;
 
-    // 注入 UI - 中央視圖 (本生燈與離子名稱容器)
+    // 注入 UI - 中央視圖 (本生燈)
     document.getElementById('stage').innerHTML = `
         <div class="bunsen-burner" id="burner-container">
             <div id="active-flame" class="flame-vfx">
@@ -226,8 +311,63 @@
             <div class="base"></div>
             <div class="gas-inlet-tube"></div>
         </div>
-        <div class="ion-info-display">
-            <div id="target-name">待機中</div>
+        <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
+            <div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div>
+            <div id="target-symbol" style="display:none;"></div>
+        </div>
+    `;
+</script><script>
+    // 注入 UI - 左側控制面板
+    document.getElementById('controls').innerHTML = `
+        <div class="hud-card">
+            <div class="card-label" style="font-size:0.85rem;">儀器調節<br><small>Controls</small></div>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--hud-cyan); font-size:0.95rem;">燃料流量<br><small>(Fuel)</small></label>
+                <input type="range" id="gasRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="70">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label>
+                <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
+            </div>
+            <div style="background:rgba(0,100,255,0.1); padding:8px; border-radius:4px; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="cobaltGlass" style="width:16px; height:16px;" onchange="updateFlame(window.currentIon)">
+                <label for="cobaltGlass" style="font-size:0.85rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光<br><small>(Cobalt Glass)</small></label>
+                <div class="info-btn" onclick="togglePopup(event)" style="margin-left:auto;">i</div>
+            </div>
+        </div>
+        <div class="hud-card">
+            <div class="card-label">離子試劑選取 (Ion Matrix)</div>
+            <div class="ion-matrix">
+                <button class="s33-btn" onclick="selectIon('Li')">Li⁺ 鋰</button>
+                <button class="s33-btn" onclick="selectIon('Na')">Na⁺ 鈉</button>
+                <button class="s33-btn" onclick="selectIon('K')">K⁺ 鉀</button>
+                <button class="s33-btn" onclick="selectIon('Ca')">Ca²⁺ 鈣</button>
+                <button class="s33-btn" onclick="selectIon('Sr')">Sr²⁺ 鍶</button>
+                <button class="s33-btn" onclick="selectIon('Ba')">Ba²⁺ 鋇</button>
+                <button class="s33-btn" onclick="selectIon('Cu')">Cu²⁺ 銅</button>
+                <button class="s33-btn" onclick="selectIon('Mg')">Mg²⁺ 鎂</button>
+                <button class="s33-btn" onclick="selectIon('Rb')">Rb⁺ 銣</button>
+                <button class="s33-btn" onclick="selectIon('Cs')">Cs⁺ 銫</button>
+                <button class="s33-btn" onclick="selectIon('In')">In³⁺ 銦</button>
+                <button class="s33-btn" onclick="selectIon('B')">B³⁺ 硼</button>
+            </div>
+        </div>
+    `;
+
+    // 注入 UI - 中央視圖 (本生燈)
+    document.getElementById('stage').innerHTML = `
+        <div class="bunsen-burner" id="burner-container">
+            <div id="active-flame" class="flame-vfx">
+                <div id="inner-cone" class="flame-inner"></div>
+            </div>
+            <div class="chimney"></div>
+            <div class="air-collar"><div class="air-hole"></div><div class="air-hole"></div></div>
+            <div class="burner-stem"></div>
+            <div class="base"></div>
+            <div class="gas-inlet-tube"></div>
+        </div>
+        <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
+            <div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div>
             <div id="target-symbol" style="display:none;"></div>
         </div>
     `;
@@ -269,6 +409,7 @@
         if (event && event.target.classList.contains('s33-btn')) event.target.classList.add('active');
 
         document.getElementById('target-name').innerText = ion.name;
+        document.getElementById('target-symbol').innerText = ion.sym;
 
         let html = `<div class="card-label">光譜數據分析 (Data Analytics)</div>`;
         ion.lines.forEach(nm => {
@@ -277,21 +418,21 @@
             const color = nmToRGB(nm);
             let region = nm < 380 ? "UV" : (nm > 780 ? "IR" : "VIS");
             html += `
-                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
-                    <div style="font-size:1.15rem; color:${color}; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; width: 100%;">
+                    <div style="font-size:1.3rem; color:${color}; font-weight:bold; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                         <span>λ = ${nm} nm</span>
-                        <span style="font-size:0.65rem; border:1px solid ${color}; padding:0px 3px; border-radius:2px;">${region}</span>
+                        <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
                     </div>
-                    <div style="font-size:0.95rem; display:flex; flex-direction:column; gap:4px; color: #ffffff;">
+                    <div style="font-size:0.95rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px; color: #fff;">
                         <div>能量: ${energy} eV</div>
                         <div>頻率: ${freq} THz</div>
-                        <div style="font-weight:bold;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                        <div style="grid-column: span 2; opacity:0.8;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
                     </div>
                 </div>`;
         });
         
         html += `
-        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3); flex-shrink: 0; width: 280px;">
+        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3); margin-bottom:10px; flex-shrink: 0; width: 100%;">
             <div class="card-label" style="font-size:1rem; color: var(--hud-cyan);">顯色原理</div>
             <div style="font-size:1rem; color:#eee; line-height:1.6; text-align:justify;">${ion.synthesis} ${ion.theory}</div>
         </div>
@@ -305,21 +446,10 @@
         const bar = document.getElementById('bottom-spectra');
         bar.innerHTML = `
             <div class="spectrum-container">
-                <div class="spectrum-labels">
-                    <div class="label-uv">UV</div>
-                    <div class="label-vis">VIS</div>
-                    <div class="label-ir">IR</div>
-                </div>
-                <div class="spectrum-ui">
-                    <div class="spectrum-bg"></div>
-                    <div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div>
-                </div>
+                <div class="spectrum-labels"><div class="label-uv">Ultraviolet (UV)</div><div class="label-vis">Visible Light</div><div class="label-ir">Infrared (IR)</div></div>
+                <div class="spectrum-ui"><div class="spectrum-bg"></div><div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div></div>
                 <div style="display:flex; justify-content:space-between; margin-top:12px; padding: 0 5px;">
-                    <span class="wavelength-label">200nm</span>
-                    <span class="wavelength-label">400nm</span>
-                    <span class="wavelength-label">600nm</span>
-                    <span class="wavelength-label">800nm</span>
-                    <span class="wavelength-label">1000nm</span>
+                    <span class="wavelength-label">200nm</span><span class="wavelength-label">400nm</span><span class="wavelength-label">600nm</span><span class="wavelength-label">800nm</span><span class="wavelength-label">1000nm</span>
                 </div>
             </div>`;
             
@@ -336,9 +466,7 @@
 
         updateFlame(ion);
     }
-</script>
 
-<script>
     function updateFlame(ion) {
         if (!ion) return;
         const gas = parseInt(document.getElementById('gasRange').value);
@@ -350,13 +478,11 @@
         if(gas < 5) { f.style.opacity = 0; return; }
         f.style.opacity = 1;
         
-        // 火焰物理形狀計算
         const height = 60 + gas * 2.5 - air * 0.8;
         const width = 55 - air * 0.25;
         f.style.height = `${Math.max(60, height)}px`;
         f.style.width = `${Math.max(20, width)}px`;
 
-        // 內錐形 (Inner Cone) 邏輯
         if (air > 25) {
             inner.style.opacity = (air - 20) / 80;
             inner.style.height = `${Math.min(height * 0.7, 20 + air * 0.6)}px`;
@@ -364,31 +490,23 @@
         } else { inner.style.opacity = 0; }
 
         let coreColor, glowColor, outerColor;
-        // 低空氣混合：擴散火焰 (黃色)
         if (air < 45) {
             const yellowIntensity = (45 - air) / 45;
             coreColor = `rgba(255, ${160 + air}, 50, 0.9)`;
             glowColor = `rgba(255, 100, 0, ${0.5 + yellowIntensity*0.5})`;
             outerColor = `rgba(255, 140, 0, ${0.3 + yellowIntensity*0.4})`;
             f.style.filter = 'blur(6px) contrast(1.2)';
-        } 
-        // 高空氣混合：預混火焰 (特徵焰色)
-        else {
+        } else {
             coreColor = `rgba(180, 220, 255, 0.4)`;
             glowColor = `rgba(0, 150, 255, 0.2)`;
             outerColor = `rgba(0, 100, 255, 0.1)`;
             f.style.filter = 'blur(4px) contrast(1.5)';
-            
             if (ion && gas > 15) {
                 let ionColor = ion.color;
                 if (cobalt) {
-                    if (ion.sym.includes('Na')) {
-                        ionColor = 'transparent'; // 鈷玻璃濾除鈉黃光
-                    } else if (ion.sym.includes('K')) {
-                        ionColor = '#a020f0'; // 鈷玻璃下呈現深紫色
-                    } else {
-                        ionColor = `color-mix(in srgb, ${ionColor}, blue 40%)`;
-                    }
+                    if (ion.sym.includes('Na')) ionColor = 'transparent';
+                    else if (ion.sym.includes('K')) ionColor = '#a020f0';
+                    else ionColor = `color-mix(in srgb, ${ionColor}, blue 40%)`;
                 }
                 glowColor = ionColor; outerColor = ionColor;
                 if (ion.sym.includes('Na') && !cobalt) coreColor = ionColor;
@@ -398,38 +516,23 @@
         f.style.boxShadow = `0 -10px 40px ${glowColor}, 0 0 20px ${glowColor}`;
     }
 
-    // 事件監聽：調節桿即時連動
     document.getElementById('gasRange').addEventListener('input', () => updateFlame(window.currentIon));
     document.getElementById('airRange').addEventListener('input', () => updateFlame(window.currentIon));
 
-    // 鈷玻璃說明彈窗功能
     const popupDiv = document.createElement('div');
     popupDiv.innerHTML = `
-        <div id="popup-overlay" onclick="closePopup()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1999; background:rgba(0,0,0,0.5);"></div>
-        <div id="cobalt-popup">
-            <div style="color:var(--hud-cyan); font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                <span style="font-size:1.5rem;">💡</span> 鈷玻璃作用
-            </div>
-            <div style="color:#f1f5f9; font-size:1rem; line-height:1.6; margin-bottom:15px;">
-                1. 濾除黃光干擾：鈉離子 (Na⁺) 的黃光能量極強，即便只有微量雜質也會遮蓋其他焰色。<br><br>
-                2. 觀測特定離子：藍色玻璃能吸收 589nm 的黃光，讓您能清晰觀察到如鉀離子 (K⁺) 的淺紫色。
-            </div>
-            <button style="width:100%; padding:10px; background:rgba(0,242,255,0.1); border:1px solid var(--hud-cyan); color:var(--hud-cyan); border-radius:6px; cursor:pointer; font-weight:bold;" onclick="closePopup()">關閉說明</button>
+        <div id="popup-overlay" onclick="closePopup()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1999; background:transparent;"></div>
+        <div id="cobalt-popup" style="display:none; position:absolute; left:390px; top:150px; width:320px; background:#0f172a; border:2px solid var(--hud-cyan); border-radius:12px; padding:20px; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index:2000;">
+            <div style="color:var(--hud-cyan); font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">💡</span> 鈷玻璃作用</div>
+            <div style="color:#f1f5f9; font-size:1rem; line-height:1.6; margin-bottom:15px;">1. 濾除黃光干擾：鈉離子 (Na⁺) 的黃光能量極強，即便只有微量雜質也會遮蓋其他焰色。<br><br>2. 觀測特定離子：藍色玻璃能吸收 589nm 的黃光，讓您能清晰觀察到如鉀離子 (K⁺) 的淺紫色。</div>
+            <button style="width:100%; padding:8px; background:rgba(0,242,255,0.1); border:1px solid var(--hud-cyan); color:var(--hud-cyan); border-radius:6px; cursor:pointer; font-weight:bold;" onclick="closePopup()">關閉說明</button>
         </div>
     `;
     document.body.appendChild(popupDiv);
 
-    window.togglePopup = function(e) { 
-        e.stopPropagation(); 
-        document.getElementById('cobalt-popup').style.display = 'block'; 
-        document.getElementById('popup-overlay').style.display = 'block'; 
-    };
-    window.closePopup = function() { 
-        document.getElementById('cobalt-popup').style.display = 'none'; 
-        document.getElementById('popup-overlay').style.display = 'none'; 
-    };
+    window.togglePopup = function(e) { e.stopPropagation(); document.getElementById('cobalt-popup').style.display = 'block'; document.getElementById('popup-overlay').style.display = 'block'; };
+    window.closePopup = function() { document.getElementById('cobalt-popup').style.display = 'none'; document.getElementById('popup-overlay').style.display = 'none'; };
 
-    // 系統載入初始化
     window.onload = () => selectIon('Na');
 </script>
 </body>
