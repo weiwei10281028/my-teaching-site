@@ -249,25 +249,40 @@
             }
             #target-name { font-size: 1.4rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
             
+            /* 2. 數據分析面板：卡片寬度與間距優化 */
             .data-panel { 
                 grid-column: 1 / span 2; grid-row: 2;
                 width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 10px !important; flex-direction: row !important; 
-                overflow-x: auto !important; gap: 12px !important; background: #000;
+                padding: 8px 10px !important; flex-direction: row !important; 
+                overflow-x: auto !important; gap: 10px !important; background: #000;
             }
             
-            /* 手機版卡片：寬度優化與數據直排 */
+            /* 3. 卡片細節：加寬至 240px，取消底部留白，統一文字亮度 */
             .data-panel .hud-card { 
-                flex: 0 0 200px !important; width: 200px !important; 
-                padding: 12px 10px !important; display: flex !important; flex-direction: column !important;
+                flex: 0 0 240px !important; 
+                width: 240px !important; 
+                padding: 10px !important; 
+                display: flex !important; 
+                flex-direction: column !important;
+                justify-content: flex-start !important; /* 內容靠上，減少底部空間 */
+                height: auto !important;
+                min-height: 140px !important;
             }
             .data-panel .hud-card .data-grid { 
-                display: flex !important; flex-direction: column !important; gap: 5px !important; 
+                display: flex !important; 
+                flex-direction: column !important; 
+                gap: 2px !important; /* 數據行與行之間不擁擠 */
             }
-            .data-panel .hud-card div { color: #fff !important; opacity: 1 !important; } 
+            .data-panel .hud-card div { 
+                color: #ffffff !important; 
+                opacity: 1 !important; 
+                font-weight: 700 !important; /* 全部加粗提高清晰度 */
+                line-height: 1.2 !important;
+            } 
             
-            #bottom-spectra { height: 115px !important; padding: 10px !important; }
-            .wavelength-label { font-size: 0.8rem !important; }
+            /* 4. 光譜高度加寬 */
+            #bottom-spectra { height: 135px !important; padding: 10px !important; flex-shrink: 0; }
+            .wavelength-label { font-size: 0.85rem !important; opacity: 1 !important; }
         }
     </style>
 </head>
@@ -392,14 +407,15 @@
             let region = nm < 380 ? "UV" : (nm > 780 ? "IR" : "VIS");
             html += `
                 <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
-                    <div style="font-size:1.1rem; color:${color}; font-weight:bold; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; white-space:nowrap;">
+                    <div style="font-size:1.15rem; color:${color}; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                         <span>λ = ${nm} nm</span>
                         <span style="font-size:0.65rem; border:1px solid ${color}; padding:0px 3px; border-radius:2px;">${region}</span>
                     </div>
-                    <div class="data-grid" style="font-size:0.85rem; display:flex; flex-direction:column; gap:5px; color: #fff; line-height:1.4;">
+                    <!-- 數據區：能量、頻率、波數全部統一純白色與亮度 -->
+                    <div class="data-grid" style="font-size:0.95rem; display:flex; flex-direction:column; gap:3px; color: #ffffff;">
                         <div>能量: ${energy} eV</div>
                         <div>頻率: ${freq} THz</div>
-                        <div style="color:${color}; filter:brightness(1.8); opacity:1; font-weight:bold;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                        <div style="margin-top:2px;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
                     </div>
                 </div>`;
         });
