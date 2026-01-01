@@ -302,13 +302,12 @@
                 flex-shrink: 0;
             }
             .spectrum-ui { 
-                height: 35px; 
-                position: relative !important; 
-                /* 邏輯重構：捨棄 CSS 漸層，改用嵌入式 SVG 數據圖。
-                   這能強制手機 GPU 開啟硬體加速，解決彩色背景與動態譜線無法同時顯示的 Bug。 */
-                background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="40" preserveAspectRatio="none"><defs><linearGradient id="g"><stop offset="0%" stop-color="black"/><stop offset="15%" stop-color="%232e003e"/><stop offset="22%" stop-color="%234b0082"/><stop offset="31%" stop-color="blue"/><stop offset="41%" stop-color="green"/><stop offset="47%" stop-color="yellow"/><stop offset="52%" stop-color="orange"/><stop offset="62%" stop-color="red"/><stop offset="75%" stop-color="%233f0000"/><stop offset="100%" stop-color="black"/></linearGradient></defs><rect width="800" height="40" fill="url(%23g)"/></svg>') no-repeat center / 100% 100% !important;
-                border: 1px solid rgba(255,255,255,0.3);
-                z-index: 1 !important; 
+            height: 35px; 
+            position: relative !important; 
+            /* 修正：改回使用標準 CSS 漸層，手機支援度最高且不會有編碼錯誤 */
+            background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
+            border: 1px solid rgba(255,255,255,0.3);
+            z-index: 1 !important; 
             }
             .spectrum-bg { display: none !important; }
             
