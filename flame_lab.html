@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高階量子焰色實驗室 - S96/S33</title>
+    <title>焰色實驗室</title>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -305,12 +305,10 @@
                 height: 35px; 
                 position: relative !important; 
                 z-index: 1 !important; 
-                /* 將漸層直接寫在背景，防止手機 GPU 忽略空圖層渲染 */
-                background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
-                border: 1px solid #444;
+            background: #000;
+            border: 1px solid #444;
             }
-            /* 隱藏原本的背景圖層，避免在手機上產生層級混亂 */
-            .spectrum-bg { display: none !important; }
+            .spectrum-bg { display: block !important; z-index: 0; opacity: 0.8 !important; }
             
             #lines-layer { 
                 position: absolute !important; 
