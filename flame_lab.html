@@ -106,52 +106,50 @@
             .header div:last-child { display: none; } 
 
             .main-layout { display: grid !important; grid-template-columns: 160px 1fr; 
-            grid-template-rows: 1fr 185px; } /* 增加高度，確保所有數據行（波長、能量、頻率、波數）完整顯示不截斷 */
+            grid-template-rows: 1fr 210px; } /* 關鍵：直接撥給數據面板 210px，從上方本生燈區扣除空間 */
             
-            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 8px !important; }
-            .side-panel .hud-card { padding: 8px; }
-            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; } 
-            .s33-btn { padding: 10px 2px; font-size: 0.85rem; }
+            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 8px 5px !important; gap: 5px !important; }
+            .side-panel .hud-card { padding: 6px; }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 4px; } 
+            .s33-btn { padding: 8px 2px; font-size: 0.8rem; }
             
+            /* 縮小本生燈比例，為下方騰出空間 */
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
-            .bunsen-burner { transform: scale(0.6); transform-origin: center bottom; margin-bottom: 20px; }
+            .bunsen-burner { transform: scale(0.55); transform-origin: center bottom; margin-bottom: 5px; }
 
-            .ion-info-display { top: 10px !important; right: 15px !important; position: absolute !important; }
-            #target-name { font-size: 1.4rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
+            .ion-info-display { top: 8px !important; right: 12px !important; position: absolute !important; }
+            #target-name { font-size: 1.2rem !important; }
             
             .data-panel { 
                 grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 2px solid var(--hud-cyan);
                 padding: 0 !important; display: flex !important; flex-direction: row !important; 
-                overflow-x: auto !important; overflow-y: hidden !important; gap: 0 !important; background: #000;
+                overflow-x: auto !important; overflow-y: hidden !important; background: #000;
                 align-items: stretch; -webkit-overflow-scrolling: touch;
             }
             
-            /* 標題修正：強制改為垂直顯示，緊貼左側，與截圖完美對齊 */
+            /* 垂直標題：寬度鎖死，高度撐滿 210px */
             .data-panel .card-label { 
-                flex: 0 0 50px !important; 
-                writing-mode: vertical-lr !important;
-                text-orientation: mixed !important;
+                flex: 0 0 50px !important; width: 50px !important;
+                writing-mode: vertical-lr !important; text-orientation: mixed !important;
                 border-left: 4px solid var(--hud-cyan); border-bottom: none;
-                padding: 10px 5px !important; margin: 0 !important; font-size: 0.9rem !important;
+                padding: 15px 5px !important; margin: 0 !important; font-size: 0.9rem !important;
                 display: flex; align-items: center; justify-content: center;
-                background: rgba(0, 242, 255, 0.05); color: var(--hud-cyan);
+                background: rgba(0, 242, 255, 0.1); color: var(--hud-cyan);
                 white-space: nowrap;
             }
 
-            /* 數據卡片修正：固定寬度並強制分配空間，確保文字「絕不換行」且「絕不上下滑動」 */
+            /* 數據卡片：寬度足夠且高度撐滿，確保所有文字（波數等）都能看見 */
             .data-panel .hud-card { 
-                flex: 0 0 260px !important; width: 260px !important; 
-                padding: 15px !important; margin: 0 !important;
+                flex: 0 0 250px !important; width: 250px !important; 
+                padding: 20px 15px !important; margin: 0 !important;
                 display: flex !important; flex-direction: column !important; 
-                justify-content: center !important; 
+                justify-content: flex-start !important; 
                 box-sizing: border-box; border-right: 1px solid rgba(255,255,255,0.1);
-                background: transparent !important;
             }
             .data-panel .hud-card div { 
                 color: #ffffff !important; opacity: 1 !important; 
-                font-weight: 600; font-size: 0.95rem !important; 
-                line-height: 1.6; /* 增加行高，確保波數等資訊清晰可見 */
-                white-space: nowrap; 
+                font-weight: 600; font-size: 1rem !important; 
+                line-height: 1.6; margin-bottom: 4px; white-space: nowrap;
             }
             
             #bottom-spectra { height: 110px !important; padding: 10px !important; flex-shrink: 0; }
