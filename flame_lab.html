@@ -298,49 +298,32 @@
                 height: 10vh; min-height: 80px; 
                 padding: 10px 15px !important; 
                 border-top: 1px solid var(--hud-cyan);
-                background: #070b14;
+                background: #000;
                 flex-shrink: 0;
             }
-            /* 請替換掉原本 @media (max-width: 1024px) 裡面的 .spectrum-ui */
-
-    .spectrum-ui { 
-    height: 35px; /* 確保有高度，不然譜線沒地方畫 */
-    width: 100%;  /* 確保寬度填滿 */
-    position: relative !important; 
-    
-    /* 修正核心：改用標準 CSS 漸層，手機瀏覽器 100% 支援 */
-    background: linear-gradient(to right, 
-        #000 0%, 
-        #2e003e 15%, 
-        #4b0082 22.5%, 
-        #0000ff 31.25%, 
-        #00ff00 41.25%, 
-        #ffff00 47.5%, 
-        #ff7700 52.5%, 
-        #ff0000 62.5%, 
-        #3f0000 75%, 
-        #000 100%
-    ) !important;
-    
-    border: 1px solid rgba(255,255,255,0.3);
-    z-index: 1 !important; 
-    
-    /* 確保溢出內容不會被切掉（保險起見） */
-    overflow: visible !important; 
-    }
-            .spectrum-bg { display: none !important; } /* 徹底捨棄失效圖層 */
-            .line-marker { 
-                width: 3px !important; /* 加粗譜線確保手機可見 */
-                height: 100% !important; 
-                background-color: currentColor !important; 
-                z-index: 100 !important; /* 強制壓在漸層最上方 */
-                box-shadow: 0 0 8px #fff !important; 
+            .spectrum-ui { 
+                height: 35px; 
+                width: 100%;
+                position: relative !important; 
+                /* 直接在容器繪製漸層，這在任何手機/電腦瀏覽器都是最穩定的做法 */
+                background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
+                border: 1px solid #444;
+                z-index: 1 !important; 
+                overflow: visible !important;
             }
-            
+            .spectrum-bg { display: none !important; }
             #lines-layer { 
                 position: absolute !important; 
                 top: 0; left: 0; width: 100%; height: 100%; 
-                z-index: 10 !important; /* 譜線層級設定為最高，確保它壓在彩色背景上 */
+                z-index: 20 !important; 
+                pointer-events: none;
+            }
+            .line-marker { 
+                width: 3px !important; 
+                height: 100% !important; 
+                background: #fff !important; 
+                box-shadow: 0 0 12px currentColor, 0 0 4px #fff !important;
+                z-index: 30 !important;
             }
             .spectrum-labels { font-size: 0.65rem; margin-bottom: 2px; }
             .wavelength-label { font-size: 0.75rem !important; }
