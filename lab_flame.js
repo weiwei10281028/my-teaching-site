@@ -1,0 +1,200 @@
+// lab_flame.js
+const FlameLab = {
+    // 這裡使用特殊處理，確保內部代碼不會衝突
+    htmlContent: `
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高階量子焰色實驗室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --hud-cyan: #00f2ff; --hud-amber: #ffb700; --bg-dark: #020617; --panel-glass: rgba(15, 23, 42, 0.95); --text-main: #e2e8f0; --glow: 0 0 20px rgba(0, 242, 255, 0.4); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg-dark); color: var(--text-main); font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { height: 70px; padding: 0 30px; background: rgba(0, 242, 255, 0.05); border-bottom: 2px solid var(--hud-cyan); display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 100; }
+        .system-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 4px; text-shadow: var(--glow); color: #fff; }
+        .wavelength-label { color: #fff !important; font-size: 1.1rem !important; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .info-btn { cursor: pointer; font-size: 0.9rem; color: var(--hud-cyan); border: 1px solid var(--hud-cyan); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; transition: 0.3s; font-family: 'serif'; font-style: italic; font-weight: bold; line-height: 1; vertical-align: middle; }
+        #cobalt-popup { display: none; position: absolute; left: 390px; top: 150px; width: 320px; background: #0f172a; border: 2px solid var(--hud-cyan); border-radius: 12px; padding: 20px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); z-index: 2000; }
+        #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1999; background: transparent; }
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .side-panel { width: 380px; background: var(--panel-glass); border-right: 2px solid rgba(0, 242, 255, 0.2); padding: 25px; display: flex; flex-direction: column; gap: 25px; overflow-y: auto; }
+        .viewport { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); display: flex; justify-content: center; align-items: center; }
+        #cobalt-lens-overlay { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: rgba(20, 40, 200, 0.4); border: 6px solid #1e293b; border-radius: 4px; box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(0, 30, 150, 0.3); pointer-events: none; z-index: 100; display: none; backdrop-filter: brightness(0.7) contrast(1.4) saturate(1.8); }
+        .lens-status { position: absolute; bottom: 10px; right: 10px; color: rgba(255, 255, 255, 0.6); font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; }
+        .data-panel { width: 420px; background: var(--panel-glass); border-left: 2px solid rgba(0, 242, 255, 0.2); padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        #bottom-spectra { height: 180px; border-top: 2px solid var(--hud-cyan); background: #070b14; padding: 25px; flex-shrink: 0; }
+        .hud-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 242, 255, 0.3); padding: 20px; position: relative; flex-shrink: 0; }
+        .card-label { font-size: 1.1rem; color: var(--hud-cyan); font-weight: 700; margin-bottom: 15px; border-left: 4px solid var(--hud-cyan); padding-left: 10px; }
+        .ion-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .s33-btn { background: linear-gradient(145deg, #2d3748, #1a202c); border: 1px solid rgba(255,255,255,0.2); padding: 18px 10px; border-radius: 8px; color: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+        .s33-btn:hover, .s33-btn.active { background: var(--hud-cyan); color: #000; box-shadow: var(--glow); border-color: #fff; }
+        .bunsen-burner { position: relative; width: 160px; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-top: 80px; }
+        .chimney { width: 28px; height: 160px; background: linear-gradient(90deg, #475569, #cbd5e1, #475569); border-radius: 2px 2px 0 0; z-index: 5; border: 1px solid rgba(0,0,0,0.3); }
+        .air-collar { width: 34px; height: 32px; background: #334155; margin-top: -2px; z-index: 6; display: flex; justify-content: center; align-items: center; gap: 4px; border-radius: 2px; }
+        .air-hole { width: 8px; height: 18px; background: #000; border-radius: 4px; }
+        .burner-stem { width: 18px; height: 30px; background: #1e293b; margin-top: -2px; z-index: 4; }
+        .base { width: 150px; height: 18px; background: #0f172a; border-radius: 75px 75px 4px 4px; z-index: 3; border-bottom: 4px solid #000; }
+        .gas-inlet-tube { position: absolute; bottom: 15px; right: -50px; width: 60px; height: 10px; background: #334155; border-radius: 5px; z-index: 2; }
+        .flame-vfx { position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%); width: 45px; height: 150px; border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%; mix-blend-mode: screen; pointer-events: none; filter: blur(6px); transition: all 0.2s ease-out; animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out; }
+        .flame-inner { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 50%; background: linear-gradient(to top, #fff, transparent); border-radius: 50%; opacity: 0.8; filter: blur(2px); }
+        @keyframes flame-wiggle { 0% { transform: translateX(-51%) scaleX(1) skewX(0deg); } 100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); } }
+        @keyframes flame-pulse { from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; } to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; } }
+        .spectrum-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .spectrum-labels { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .label-uv { color: #a855f7; width: 22.5%; text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 2px; }
+        .label-vis { color: #22c55e; width: 50%; text-align: center; border-bottom: 2px solid #22c55e; padding-bottom: 2px; }
+        .label-ir { color: #ef4444; width: 27.5%; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 2px; }
+        .spectrum-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4; background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%); }
+        .spectrum-ui { width: 100%; height: 50px; background: #000; border: 2px solid #334155; position: relative; }
+        .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
+
+        @media (max-width: 1024px) {
+            body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+            .header { height: 50px; padding: 0 15px; flex-shrink: 0; border-bottom-width: 1px; }
+            .header .system-title { font-size: 1.1rem; letter-spacing: 1px; }
+            .header div:last-child { display: none; }
+            .main-layout { flex: 1; display: grid !important; grid-template-columns: 135px 1fr; grid-template-rows: 2fr 1fr; overflow: hidden; }
+            .side-panel { grid-row: 1; grid-column: 1; width: 100% !important; height: 100%; padding: 10px 5px !important; gap: 10px !important; border-right: 1px solid rgba(0,242,255,0.2); }
+            .viewport { grid-row: 1; grid-column: 2; height: 100%; width: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px; position: relative; overflow: hidden; }
+            .bunsen-burner { transform: scale(0.75); transform-origin: center bottom; margin: 0 auto; }
+            #target-name { font-size: 1.5rem !important; position: relative; text-align: right; white-space: nowrap; }
+            #target-container { top: 15px !important; right: 15px !important; }
+            .data-panel { grid-row: 2; grid-column: 1 / span 2; height: 100% !important; width: 100% !important; border-left: none; border-top: 1px solid rgba(0,242,255,0.2); padding: 8px !important; display: flex !important; flex-direction: row !important; overflow-x: auto !important; overflow-y: hidden !important; gap: 10px !important; background: #030712; }
+            .data-panel .hud-card { flex: 0 0 240px !important; height: 100% !important; padding: 12px !important; display: flex !important; flex-direction: column !important; border: 1px solid rgba(0, 242, 255, 0.3) !important; background: rgba(0, 0, 0, 0.4); overflow: hidden; }
+            .data-panel .card-label { font-size: 1.1rem !important; margin-bottom: 10px !important; border-left: 4px solid var(--hud-cyan); padding-left: 10px !important; flex-shrink: 0; }
+            .card-content { font-size: 1rem !important; color: #eee; line-height: 1.5; overflow-y: auto !important; flex: 1; padding-right: 5px; text-align: justify; white-space: normal; }
+            #bottom-spectra { height: 100px; padding: 10px 15px !important; border-top: 1px solid var(--hud-cyan); background: #000; flex-shrink: 0; z-index: 10; position: relative; }
+            .spectrum-ui { height: 40px !important; position: relative !important; z-index: 1 !important; background: #111 !important; border: 1px solid #444; transform: translateZ(0); overflow: visible !important; }
+            .spectrum-bg { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.6; z-index: 1; background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important; }
+            #lines-layer { position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; pointer-events: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="system-title">QUANTUM FLAME CORE</div>
+    <div style="font-size: 0.85rem; color: #888; letter-spacing: 2px; font-weight: 600; text-transform: uppercase;">Spectroscopic Analysis System</div>
+</div>
+<div class="main-layout">
+    <div class="side-panel" id="controls"></div>
+    <div class="viewport" id="stage"></div>
+    <div class="data-panel" id="analytics"></div>
+</div>
+<div id="bottom-spectra"></div>
+<script>
+    const ION_DB = {
+        'Li': { name: '鋰離子', sym: 'Li⁺', color: '#ff0055', lines: [670.8], app: '常見於紅色特效煙火、求救信號彈，是提供純淨紅色的主要來源。', theory: '電子從能階 2p 回歸 2s 基態時，釋放特定能量的紅光輻射。', synthesis: '譜線單一且集中在紅光區段，因此不論光強弱，呈現出的顏色都非常穩定且鮮紅樣式。' },
+        'Na': { name: '鈉離子', sym: 'Na⁺', color: '#ffcc00', lines: [589.0, 589.6], app: '金黃色特效煙火，以及穿透霧氣能力強的高壓鈉燈發光源。', theory: '著名的 D 譜線輻射，電子於能階 3p 與 3s 軌域間躍遷釋放強烈光能。', synthesis: '譜線強度極高且人眼對此黃光極為敏感，故其顯色具有極強的主導性。' },
+        'K': { name: '鉀離子', sym: 'K⁺', color: '#d8b2ff', lines: [404.4, 766.5], app: '紫色特效煙火、化學實驗室中鑑定鉀鹽化合物的重要特徵依據。', theory: '電子受激後同時在短波紫光與長波紅光能階釋放混合輻射。', synthesis: '由紫與紅光混合而成，因黃光雜質干擾大，需透過藍色鈷玻璃濾光觀察其淺紫色。' },
+        'Ca': { name: '鈣離子', sym: 'Ca²⁺', color: '#ff8844', lines: [422.7, 616.2, 622.0], app: '橙紅色煙火發色藥劑、特殊救難用橙色信號照明。', theory: '激發態電子回歸基態時，釋放出涵蓋紫、橙、紅等多個波段的光子。', synthesis: '雖然光譜中包含 422.7nm 的紫光線，但因其強度遠低於 610nm 以上的強烈橙紅輻射，紫光被淹沒在背景中，人眼最終判定為磚紅色。' },
+        'Sr': { name: '鍶離子', sym: 'Sr²⁺', color: '#ff3300', lines: [407.7, 460.7, 606.3, 662.8], app: '高品質深紅色煙火、鐵路安全標示紅燈與航海求救信號。', theory: '電子躍遷產生多條譜線，其中位於深紅光區的輻射具有極高強度。', synthesis: '光譜包含藍與紫色譜線，但鍶在深紅區（600nm以上）發射密度極高，視覺合成後呈現比鋰更飽滿、明亮的深紅色。' },
+        'Ba': { name: '鋇離子', sym: 'Ba²⁺', color: '#ccff33', lines: [455.4, 493.4, 553.5], app: '綠色煙火的核心發色劑、軍用綠色信號照明彈。', theory: '電子回歸基態時發射波長約 553nm 的光，位於黃綠色交界。', synthesis: '光譜能量集中在視覺敏感的黃綠光波段，呈現如青蘋果般的嫩綠色。' },
+        'Cu': { name: '銅離子', sym: 'Cu²⁺', color: '#00ffcc', lines: [510.5, 521.8, 578.2], app: '藍綠色煙火特效，以及化學鑑定分析中判斷銅鹽的特徵依據。', theory: '能階跳遷所產生的多條譜線落於藍光與綠光的過渡波段。', synthesis: '由於同時發射藍與綠兩個波段的能量，人眼混合信號後呈現明顯的青綠色視覺。' },
+        'Mg': { name: '鎂離子', sym: 'Mg²⁺', color: 'rgba(255,255,255,0.1)', lines: [285.2], app: '化學系統性分析鑑定，利用其無焰色特性排除其他鹼土金屬干擾。', theory: '鎂離子的主要輻射光譜波長在紫外區，肉眼無法感知。', synthesis: '特徵輻射完全落在 380nm 以下的紫外光區，因此實驗中呈現無色。' },
+        'Rb': { name: '銣離子', sym: 'Rb⁺', color: '#e600ff', lines: [420.2, 780.0, 794.8], app: '特殊紫色火焰特效、科學研究中的光譜頻率標準。', theory: '能階躍遷包含紅光與多條高能藍紫光譜線樣式。', synthesis: '光譜中包含豐富的短波紫光成分，使最終合成的焰色比鉀離子更具飽滿感與層次。' },
+        'Cs': { name: '銫離子', sym: 'Cs⁺', color: '#2e9aff', lines: [455.5, 459.3, 852.1, 894.3], app: '特殊藍色火焰特效、高階物理實驗室的光譜分析樣品。', theory: '特徵譜線精準分布於藍光區以及不可見的近紅外光區。', synthesis: '特徵輻射強烈落在 450nm 附近的藍光頻段，呈現冷艷的藍色焰色。' },
+        'In': { name: '銦離子', sym: 'In³⁺', color: '#4b0082', lines: [410.2, 451.1], app: '特殊靛藍色煙火特效、半導體光學特徵分析鑑定。', theory: '電子受激釋放出兩條極強的 410nm 與 451nm 短波能量。', synthesis: '能量高度集中在深藍色與紫色譜線，形成極具科技感的靛藍色焰色。' },
+        'B': { name: '硼離子', sym: 'B³⁺', color: '#00ff00', lines: [518.0, 521.0, 546.0], app: '高品質綠色火焰特效、特種防護標示與科研發色燃料。', theory: '硼化合物在高溫下釋放出多條密集的特徵綠光輻射帶。', synthesis: '光譜能量精準落在綠光的核心頻率，呈現比鋇離子更具飽和度的純綠色。' }
+    };
+    function nmToRGB(nm) {
+        if (nm < 380) return "#a78bfa"; if (nm > 780) return "#7f1d1d";
+        let r, g, b;
+        if (nm < 440) { r = -(nm-440)/60; g = 0; b = 1; } else if (nm < 490) { r = 0; g = (nm-440)/50; b = 1; } else if (nm < 510) { r = 0; g = 1; b = -(nm-510)/20; } else if (nm < 580) { r = (nm-510)/70; g = 1; b = 0; } else if (nm < 645) { r = 1; g = -(nm-645)/65; b = 0; } else { r = 1; g = 0; b = 0; }
+        return "rgb(" + (r*255) + "," + (g*255) + "," + (b*255) + ")";
+    }
+    document.getElementById('controls').innerHTML = '<div class="hud-card"><div class="card-label" style="font-size:0.85rem;">儀器調節<br><small>Controls</small></div><div style="margin-bottom:12px;"><label style="color:var(--hud-cyan); font-size:0.95rem;">燃料流量<br><small>(Fuel)</small></label><input type="range" id="gasRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="70"></div><div style="margin-bottom:12px;"><label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label><input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80"></div><input type="checkbox" id="cobaltGlass" style="display:none;" onchange="updateFlame(window.currentIon)"><div id="cobaltToggleBtn" onclick="const cb = document.getElementById(\\'cobaltGlass\\'); cb.checked = !cb.checked; this.style.background = cb.checked ? \\'rgba(0,242,255,0.25)\\' : \\'rgba(0,100,255,0.1)\\'; this.style.borderColor = cb.checked ? \\'var(--hud-cyan)\\' : \\'rgba(0,242,255,0.3)\\'; updateFlame(window.currentIon);" style="background:rgba(0,100,255,0.1); padding:10px 12px; border-radius:6px; display:flex; align-items:center; border:1px solid rgba(0,242,255,0.3); cursor:pointer; transition:0.2s; position:relative; overflow:hidden;"><div style="flex:1; pointer-events:none;"><div style="font-size:0.95rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光</div><div style="font-size:0.75rem; color:#8bafff; opacity:0.7; line-height:1.2;">(Cobalt Glass)</div></div><div class="info-btn" onclick="event.stopPropagation(); togglePopup(event)" style="width:25px; height:25px; font-size:1rem; margin:0; flex-shrink:0; position:relative; z-index:2;">i</div></div></div><div class="hud-card"><div class="card-label">離子試劑選取 (Ion Matrix)</div><div class="ion-matrix">' + Object.keys(ION_DB).map(k => '<button class="s33-btn" onclick="selectIon(\\''+k+'\\')">'+ION_DB[k].sym+' '+ION_DB[k].name.charAt(0)+'</button>').join('') + '</div></div>';
+    document.getElementById('stage').innerHTML = '<div id="cobalt-lens-overlay"><div class="lens-status">Co</div></div><div class="bunsen-burner" id="burner-container"><div id="active-flame" class="flame-vfx"><div id="inner-cone" class="flame-inner"></div></div><div class="chimney"></div><div class="air-collar"><div class="air-hole"></div><div class="air-hole"></div></div><div class="burner-stem"></div><div class="base"></div><div class="gas-inlet-tube"></div></div><div id="target-container" style="position: absolute; top: 40px; right: 40px; text-align: right;"><div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div><div id="target-symbol" style="display:none;"></div></div>';
+    function selectIon(key) {
+        const ion = ION_DB[key]; window.currentIon = ion;
+        document.querySelectorAll('.s33-btn').forEach(b => b.classList.remove('active'));
+        if (event && event.target.classList.contains('s33-btn')) event.target.classList.add('active');
+        document.getElementById('target-name').innerText = ion.name;
+        document.getElementById('target-symbol').innerText = ion.sym;
+        let html = '<div class="hud-card" style="background: transparent; border:none; padding:0 5px; flex: 0 0 130px !important; display:flex; flex-direction:column; justify-content:center; align-items:center;"><div class="card-label" style="margin:0; writing-mode: horizontal-tb; border-left:none; padding:0; font-size:1.05rem; line-height:1.3; letter-spacing:1px; text-align:center; white-space:nowrap;">光譜分析<br>數據 (Data)</div></div>';
+        ion.lines.forEach(nm => {
+            const energy = (1240 / nm).toFixed(3); const freqVal = 3e8 / (nm * 1e-9); const freqExp = Math.floor(Math.log10(freqVal)); const freqBase = (freqVal / Math.pow(10, freqExp)).toFixed(2); const freqStr = freqBase + " × 10<sup>" + freqExp + "</sup> Hz"; const waveNum = Math.round(1/(nm*1e-7)); const color = nmToRGB(nm); let region = nm < 380 ? "UV" : (nm > 780 ? "IR" : "VIS");
+            html += '<div class="hud-card"><div class="card-label" style="color:'+color+';">λ = '+nm+' nm ('+region+')</div><div class="card-content">能量: '+energy+' eV<br>頻率: '+freqStr+'<br>波數: '+waveNum+' cm⁻¹</div></div>';
+        });
+        html += '<div class="hud-card"><div class="card-label">顯色原理</div><div class="card-content">'+ion.synthesis+' '+ion.theory+'</div></div><div class="hud-card"><div class="card-label">焰色應用</div><div class="card-content">'+ion.app+'</div></div>';
+        document.getElementById('analytics').innerHTML = html;
+        const bar = document.getElementById('bottom-spectra');
+        if (!document.querySelector('.spectrum-container')) {
+            bar.innerHTML = '<div class="spectrum-container"><div class="spectrum-labels"><div class="label-uv">UV</div><div class="label-vis">Visible Light</div><div class="label-ir">IR</div></div><div class="spectrum-ui"><div class="spectrum-bg"></div><div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div></div><div style="display:flex; justify-content:space-between; margin-top:8px; padding: 0 5px;"><span class="wavelength-label">200nm</span><span class="wavelength-label">400nm</span><span class="wavelength-label">600nm</span><span class="wavelength-label">800nm</span><span class="wavelength-label">1000nm</span></div></div>';
+        }
+        const layer = document.getElementById('lines-layer'); layer.innerHTML = '';
+        ion.lines.forEach(nm => {
+            const line = document.createElement('div'); line.className = 'line-marker'; line.style.left = ((nm-200)/800)*100 + '%'; line.style.color = nmToRGB(nm); line.style.backgroundColor = "currentColor"; line.style.boxShadow = "0 0 8px #fff, 0 0 15px currentColor"; if(window.innerWidth <= 1024) line.style.width = "3px"; layer.appendChild(line);
+        });
+        updateFlame(ion);
+    }
+    function updateFlame(ion) {
+        const gas = parseInt(document.getElementById('gasRange').value); const air = parseInt(document.getElementById('airRange').value); const cobalt = document.getElementById('cobaltGlass').checked; const f = document.getElementById('active-flame'); const inner = document.getElementById('inner-cone'); const lens = document.getElementById('cobalt-lens-overlay'); lens.style.display = cobalt ? 'block' : 'none';
+        if(gas < 5) { f.style.opacity = 0; return; } f.style.opacity = 1;
+        const height = 60 + gas * 2.5 - air * 0.8; const width = 55 - air * 0.25; f.style.height = Math.max(60, height) + "px"; f.style.width = Math.max(20, width) + "px";
+        if (air > 25) { inner.style.opacity = (air - 20) / 80; inner.style.height = Math.min(height * 0.7, 20 + air * 0.6) + "px"; inner.style.background = "linear-gradient(to top, #00f2ff, rgba(0,242,255,0))"; } else { inner.style.opacity = 0; }
+        let coreColor = "rgba(100, 200, 255, 0.4)", glowColor = "rgba(0, 100, 255, 0.3)", outerColor = "rgba(0, 80, 255, 0.15)";
+        if (air < 45) { const yellowIntensity = (45 - air) / 45; coreColor = "rgba(255, " + (160+air) + ", 50, 0.9)"; glowColor = "rgba(255, 100, 0, " + (0.5 + yellowIntensity*0.5) + ")"; outerColor = "rgba(255, 140, 0, " + (0.3 + yellowIntensity*0.4) + ")"; f.style.filter = "blur(6px) contrast(1.2)"; }
+        else { f.style.filter = "blur(4px) contrast(1.5)"; if (ion && gas > 15) { let ionColor = ion.color; if (cobalt) { if (ion.sym.includes('Na')) ionColor = 'rgba(0, 100, 255, 0.1)'; else if (ion.sym.includes('K')) ionColor = '#a020f0'; else ionColor = "color-mix(in srgb, " + ionColor + ", blue 40%)"; } else { if (ion.sym.includes('Na')) coreColor = ionColor; if (ion.sym.includes('Mg')) { coreColor = "rgba(100, 200, 255, 0.4)"; glowColor = "rgba(0, 100, 255, 0.3)"; outerColor = "rgba(0, 80, 255, 0.15)"; } } glowColor = ionColor; outerColor = ionColor; } }
+        f.style.background = "radial-gradient(ellipse at bottom, " + coreColor + " 0%, " + outerColor + " 50%, rgba(0,0,0,0) 90%)"; f.style.boxShadow = "0 -10px 40px " + glowColor + ", 0 0 20px " + glowColor;
+    }
+    document.getElementById('gasRange').addEventListener('input', () => updateFlame(window.currentIon));
+    document.getElementById('airRange').addEventListener('input', () => updateFlame(window.currentIon));
+    const popupDiv = document.createElement('div');
+    popupDiv.innerHTML = '<div id="popup-overlay" onclick="closePopup()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1999; background:transparent;"></div><div id="cobalt-popup" style="display:none; position:absolute; left:390px; top:150px; width:320px; background:#0f172a; border:2px solid var(--hud-cyan); border-radius:12px; padding:20px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); z-index:2000;"><div style="color:var(--hud-cyan); font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">💡</span> 鈷玻璃作用</div><div style="color:#f1f5f9; font-size:1rem; line-height:1.6; margin-bottom:15px;">1. 濾除黃光干擾：鈉離子的黃光能量極強，即便只有微量雜質也會遮蓋其他焰色。<br><br>2. 觀測特定離子：藍色玻璃能吸收 589nm 的黃光，讓您能清晰觀察到如鉀離子的淺紫色。</div><button style="width:100%; padding:8px; background:rgba(0,242,255,0.1); border:1px solid var(--hud-cyan); color:var(--hud-cyan); border-radius:6px; cursor:pointer; font-weight:bold;" onclick="closePopup()">關閉說明</button></div>';
+    document.body.appendChild(popupDiv);
+    window.togglePopup = function(e) { e.stopPropagation(); const popup = document.getElementById('cobalt-popup'); if(window.innerWidth <= 1024) { popup.style.left = '50%'; popup.style.top = '50%'; popup.style.transform = 'translate(-50%, -50%)'; } popup.style.display = 'block'; document.getElementById('popup-overlay').style.display = 'block'; };
+    window.closePopup = function() { document.getElementById('cobalt-popup').style.display = 'none'; document.getElementById('popup-overlay').style.display = 'none'; };
+    window.onload = () => { window.currentIon = null; updateFlame(null); };
+</script>
+</body>
+</html>
+`,
+
+    open: function() {
+        if (!document.getElementById('flame-lab-overlay')) {
+            this.init();
+        }
+        document.getElementById('flame-lab-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden'; 
+    },
+
+    close: function() {
+        document.getElementById('flame-lab-overlay').style.display = 'none';
+        document.body.style.overflow = '';
+    },
+
+    init: function() {
+        const modal = document.createElement('div');
+        modal.id = 'flame-lab-overlay';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 99999; display: none; flex-direction: column;
+        `;
+        
+        const closeBtn = document.createElement('div');
+        closeBtn.innerHTML = "✕ CLOSE EXIT";
+        closeBtn.style.cssText = `
+            position: absolute; top: 15px; right: 20px; z-index: 100000;
+            color: #00f2ff; border: 1.5px solid #00f2ff; padding: 6px 12px;
+            cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: bold;
+            background: rgba(2, 6, 23, 0.9); border-radius: 4px; font-size: 14px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        `;
+        closeBtn.onclick = () => this.close();
+
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = "width: 100%; height: 100%; border: none; background: #020617;";
+        
+        modal.appendChild(closeBtn);
+        modal.appendChild(iframe);
+        document.body.appendChild(modal);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(this.htmlContent);
+        doc.close();
+    }
+};
