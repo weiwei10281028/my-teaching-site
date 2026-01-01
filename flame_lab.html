@@ -105,7 +105,8 @@
             .header .system-title { font-size: 1rem; letter-spacing: 1px; }
             .header div:last-child { display: none; } 
 
-            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; grid-template-rows: 1fr 140px; } /* 縮減數據面板佔用的網格高度 */
+            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; 
+            grid-template-rows: 1fr 185px; } /* 增加高度，確保所有數據行（波長、能量、頻率、波數）完整顯示不截斷 */
             
             .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 8px !important; }
             .side-panel .hud-card { padding: 8px; }
@@ -113,33 +114,45 @@
             .s33-btn { padding: 10px 2px; font-size: 0.85rem; }
             
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
-            .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
+            .bunsen-burner { transform: scale(0.6); transform-origin: center bottom; margin-bottom: 20px; }
 
             .ion-info-display { top: 10px !important; right: 15px !important; position: absolute !important; }
             #target-name { font-size: 1.4rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
             
             .data-panel { 
-                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 6px 10px !important; display: flex !important; flex-direction: row !important; 
-                overflow-x: auto !important; overflow-y: hidden !important; gap: 10px !important; background: #000;
-                align-items: stretch;
+                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 2px solid var(--hud-cyan);
+                padding: 0 !important; display: flex !important; flex-direction: row !important; 
+                overflow-x: auto !important; overflow-y: hidden !important; gap: 0 !important; background: #000;
+                align-items: stretch; -webkit-overflow-scrolling: touch;
             }
             
-            /* 優化標題文字：形成窄長垂直條，完美對齊左側 */
+            /* 標題修正：強制改為垂直顯示，緊貼左側，與截圖完美對齊 */
             .data-panel .card-label { 
-                flex: 0 0 45px !important; border-left: 4px solid var(--hud-cyan); border-bottom: none;
-                padding: 0 8px !important; margin: 0 !important; font-size: 0.85rem !important;
-                display: flex; align-items: center; white-space: normal; line-height: 1.2;
+                flex: 0 0 50px !important; 
+                writing-mode: vertical-lr !important;
+                text-orientation: mixed !important;
+                border-left: 4px solid var(--hud-cyan); border-bottom: none;
+                padding: 10px 5px !important; margin: 0 !important; font-size: 0.9rem !important;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(0, 242, 255, 0.05); color: var(--hud-cyan);
+                white-space: nowrap;
             }
 
-            /* 數據卡片：固定寬度、高度適應數據內容 */
+            /* 數據卡片修正：固定寬度並強制分配空間，確保文字「絕不換行」且「絕不上下滑動」 */
             .data-panel .hud-card { 
-                flex: 0 0 240px !important; width: 240px !important; 
-                padding: 10px 12px !important; margin: 0 !important;
-                display: flex !important; flex-direction: column !important; justify-content: center;
-                box-sizing: border-box; height: 100%;
+                flex: 0 0 260px !important; width: 260px !important; 
+                padding: 15px !important; margin: 0 !important;
+                display: flex !important; flex-direction: column !important; 
+                justify-content: center !important; 
+                box-sizing: border-box; border-right: 1px solid rgba(255,255,255,0.1);
+                background: transparent !important;
             }
-            .data-panel .hud-card div { color: #ffffff !important; opacity: 1 !important; font-weight: 600; font-size: 0.85rem; line-height: 1.5; }
+            .data-panel .hud-card div { 
+                color: #ffffff !important; opacity: 1 !important; 
+                font-weight: 600; font-size: 0.95rem !important; 
+                line-height: 1.6; /* 增加行高，確保波數等資訊清晰可見 */
+                white-space: nowrap; 
+            }
             
             #bottom-spectra { height: 110px !important; padding: 10px !important; flex-shrink: 0; }
             .wavelength-label { font-size: 0.75rem !important; }
