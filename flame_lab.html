@@ -301,15 +301,33 @@
                 background: #070b14;
                 flex-shrink: 0;
             }
-            .spectrum-ui { 
-            height: 35px; 
-            position: relative !important; 
-            /* 核心修復：直接在容器層繪製光譜，不再依賴不可見的子圖層 */
-                background: linear-gradient(to right, #000 0%, #4b0082 15%, #00f 30%, #0f0 45%, #ff0 60%, #f00 80%, #000 100%) !important;
-                border: 1px solid #666 !important;
-                z-index: 5 !important;
-                display: block !important;
-            }
+            /* 請替換掉原本 @media (max-width: 1024px) 裡面的 .spectrum-ui */
+
+    .spectrum-ui { 
+    height: 35px; /* 確保有高度，不然譜線沒地方畫 */
+    width: 100%;  /* 確保寬度填滿 */
+    position: relative !important; 
+    
+    /* 修正核心：改用標準 CSS 漸層，手機瀏覽器 100% 支援 */
+    background: linear-gradient(to right, 
+        #000 0%, 
+        #2e003e 15%, 
+        #4b0082 22.5%, 
+        #0000ff 31.25%, 
+        #00ff00 41.25%, 
+        #ffff00 47.5%, 
+        #ff7700 52.5%, 
+        #ff0000 62.5%, 
+        #3f0000 75%, 
+        #000 100%
+    ) !important;
+    
+    border: 1px solid rgba(255,255,255,0.3);
+    z-index: 1 !important; 
+    
+    /* 確保溢出內容不會被切掉（保險起見） */
+    overflow: visible !important; 
+    }
             .spectrum-bg { display: none !important; } /* 徹底捨棄失效圖層 */
             .line-marker { 
                 width: 3px !important; /* 加粗譜線確保手機可見 */
