@@ -105,11 +105,11 @@
             .header .system-title { font-size: 1rem; letter-spacing: 1px; }
             .header div:last-child { display: none; } 
 
-            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; grid-template-rows: 1fr 180px; }
+            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; grid-template-rows: 1fr 140px; } /* 縮減數據面板佔用的網格高度 */
             
             .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 8px !important; }
             .side-panel .hud-card { padding: 8px; }
-            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; } /* 保持單行排列，適合窄面 */
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; } 
             .s33-btn { padding: 10px 2px; font-size: 0.85rem; }
             
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
@@ -120,25 +120,26 @@
             
             .data-panel { 
                 grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 12px !important; display: flex !important; flex-direction: row !important; 
-                overflow-x: auto !important; overflow-y: hidden !important; gap: 12px !important; background: #000;
-                align-items: stretch; /* 讓內容物高度對齊 */
+                padding: 6px 10px !important; display: flex !important; flex-direction: row !important; 
+                overflow-x: auto !important; overflow-y: hidden !important; gap: 10px !important; background: #000;
+                align-items: stretch;
             }
             
-            /* 修正標題在水平排列下的顯示 */
-            .data-panel .card-label { flex: 0 0 auto; width: 40px; border-left: none; border-right: 4px solid var(--hud-cyan); writing-mode: vertical-lr; text-orientation: mixed; margin: 0; display: flex; align-items: center; }
-
-            /* 卡片自適應與固定寬度優化 */
-            .data-panel .hud-card { 
-                flex: 0 0 280px !important; /* 強制寬度，防止左右擠壓 */
-                width: 280px !important; 
-                padding: 15px !important; 
-                display: flex !important; 
-                flex-direction: column !important; 
-                overflow-y: auto !important; /* 當文字太長時，卡片內部可上下滑動確保資訊完整 */
-                box-sizing: border-box;
+            /* 優化標題文字：形成窄長垂直條，完美對齊左側 */
+            .data-panel .card-label { 
+                flex: 0 0 45px !important; border-left: 4px solid var(--hud-cyan); border-bottom: none;
+                padding: 0 8px !important; margin: 0 !important; font-size: 0.85rem !important;
+                display: flex; align-items: center; white-space: normal; line-height: 1.2;
             }
-            .data-panel .hud-card div { color: #ffffff !important; opacity: 1 !important; font-weight: 600; }
+
+            /* 數據卡片：固定寬度、高度適應數據內容 */
+            .data-panel .hud-card { 
+                flex: 0 0 240px !important; width: 240px !important; 
+                padding: 10px 12px !important; margin: 0 !important;
+                display: flex !important; flex-direction: column !important; justify-content: center;
+                box-sizing: border-box; height: 100%;
+            }
+            .data-panel .hud-card div { color: #ffffff !important; opacity: 1 !important; font-weight: 600; font-size: 0.85rem; line-height: 1.5; }
             
             #bottom-spectra { height: 110px !important; padding: 10px !important; flex-shrink: 0; }
             .wavelength-label { font-size: 0.75rem !important; }
