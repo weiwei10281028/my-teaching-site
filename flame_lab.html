@@ -122,6 +122,32 @@
             justify-content: center;
             align-items: center;
         }
+        /* 實體鈷玻璃片 */
+        #cobalt-lens-overlay {
+            position: absolute;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px; height: 200px; /* 玻璃片大小 */
+            background: rgba(20, 40, 200, 0.4);
+            border: 6px solid #1e293b; /* 專業金屬邊框 */
+            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 
+                        inset 0 0 30px rgba(0, 30, 150, 0.3);
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            backdrop-filter: brightness(0.7) contrast(1.4) saturate(1.8);
+        }
+        /* 玻璃標籤：簡化為 Co */
+        .lens-status {
+            position: absolute;
+            bottom: 10px; right: 10px; /* 移到右下角 */
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
 
         .data-panel {
             width: 420px;
@@ -422,6 +448,9 @@
 
     // 注入 UI - 中央視圖 (本生燈)
     document.getElementById('stage').innerHTML = `
+        <div id="cobalt-lens-overlay">
+            <div class="lens-status">Co</div>
+        </div>
         <div class="bunsen-burner" id="burner-container">
             <div id="active-flame" class="flame-vfx">
                 <div id="inner-cone" class="flame-inner"></div>
@@ -559,6 +588,10 @@
         const cobalt = document.getElementById('cobaltGlass').checked;
         const f = document.getElementById('active-flame');
         const inner = document.getElementById('inner-cone');
+        const lens = document.getElementById('cobalt-lens-overlay');
+        
+        // 控制濾鏡顯示
+        lens.style.display = cobalt ? 'block' : 'none';
         
         if(gas < 5) { f.style.opacity = 0; return; }
         f.style.opacity = 1;
@@ -582,19 +615,36 @@
             outerColor = `rgba(255, 140, 0, ${0.3 + yellowIntensity*0.4})`;
             f.style.filter = 'blur(6px) contrast(1.2)';
         } else {
-            coreColor = `rgba(180, 220, 255, 0.4)`;
-            glowColor = `rgba(0, 150, 255, 0.2)`;
-            outerColor = `rgba(0, 100, 255, 0.1)`;
+            // 修正：標準甲烷完全燃燒火焰為淡藍色
+            coreColor = `rgba(100, 200, 255, 0.4)`;
+            glowColor = `rgba(0, 100, 255, 0.3)`;
+            outerColor = `rgba(0, 80, 255, 0.15)`;
             f.style.filter = 'blur(4px) contrast(1.5)';
+
+            // 修正判斷式：必須有選取離子才改變顏色
             if (ion && gas > 15) {
                 let ionColor = ion.color;
                 if (cobalt) {
-                    if (ion.sym.includes('Na')) ionColor = 'transparent';
-                    else if (ion.sym.includes('K')) ionColor = '#a020f0';
-                    else ionColor = `color-mix(in srgb, ${ionColor}, blue 40%)`;
+                    if (ion.sym.includes('Na')) {
+                        // 鈷玻璃完全濾除鈉黃光，回到甲烷藍色
+                        ionColor = 'rgba(0, 100, 255, 0.1)'; 
+                    } else if (ion.sym.includes('K')) {
+                        ionColor = '#a020f0'; // 鉀的特徵紫
+                    } else {
+                        ionColor = `color-mix(in srgb, ${ionColor}, blue 40%)`;
+                    }
+                    glowColor = ionColor; outerColor = ionColor;
+                } else {
+                    // 未開啟鈷玻璃，顯示離子顏色
+                    glowColor = ionColor; outerColor = ionColor;
+                    if (ion.sym.includes('Na')) coreColor = ionColor;
+                    // 若是鎂，維持甲烷藍色
+                    if (ion.sym.includes('Mg')) {
+                        coreColor = `rgba(100, 200, 255, 0.4)`;
+                        glowColor = `rgba(0, 100, 255, 0.3)`;
+                        outerColor = `rgba(0, 80, 255, 0.15)`;
+                    }
                 }
-                glowColor = ionColor; outerColor = ionColor;
-                if (ion.sym.includes('Na') && !cobalt) coreColor = ionColor;
             }
         }
         f.style.background = `radial-gradient(ellipse at bottom, ${coreColor} 0%, ${outerColor} 50%, rgba(0,0,0,0) 90%)`;
@@ -626,8 +676,11 @@
         document.getElementById('popup-overlay').style.display = 'block'; 
     };
     window.closePopup = function() { document.getElementById('cobalt-popup').style.display = 'none'; document.getElementById('popup-overlay').style.display = 'none'; };
-
-    window.onload = () => selectIon('Na');
+    // 修正：初始不載入鈉，呈現純甲烷火焰，點擊離子才會啟動分析
+    window.onload = () => {
+        window.currentIon = null;
+        updateFlame(null);
+    };
 </script>
 </body>
 </html>
