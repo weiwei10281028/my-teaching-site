@@ -106,44 +106,52 @@
             .header div:last-child { display: none; } 
 
             .main-layout { display: grid !important; grid-template-columns: 160px 1fr; 
-            grid-template-rows: 1fr 225px; } /* 1. 指令：數據分析高度增加約1.5倍，鎖定為 225px */
+            grid-template-rows: 1fr 180px; } /* 增加數據分析高度至 1.5 倍 (180px) */
+            
+            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 8px 5px !important; gap: 5px !important; }
+            .side-panel .hud-card { padding: 6px; }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 4px; } 
+            .s33-btn { padding: 8px 2px; font-size: 0.8rem; }
             
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
-            .bunsen-burner { transform: scale(0.5); transform-origin: center bottom; margin-bottom: 5px; } /* 縮小上方以騰出空間 */
+            .bunsen-burner { transform: scale(0.6); transform-origin: center bottom; margin-bottom: 10px; }
 
+            /* 關鍵：強制縮小上方字體，防止名稱重疊本生燈 */
+            .ion-info-display { top: 10px !important; right: 15px !important; position: absolute !important; }
+            #target-name { font-size: 1.5rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
+            
             .data-panel { 
-                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 3px solid var(--hud-cyan);
+                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 2px solid var(--hud-cyan);
                 padding: 0 !important; display: flex !important; flex-direction: row !important; 
-                overflow-x: auto !important; overflow-y: hidden !important; gap: 0 !important; background: #000;
+                overflow-x: auto !important; overflow-y: hidden !important; background: #000;
                 align-items: stretch; -webkit-overflow-scrolling: touch;
             }
             
-            /* 1. 指令：光譜數據分析標題維持「橫式文字」 */
+            /* 指令：橫式標題，並給予固定寬度 */
             .data-panel .card-label { 
-                flex: 0 0 95px !important; width: 95px !important; 
-                writing-mode: horizontal-tb !important; /* 強制橫式 */
-                white-space: normal !important; text-align: center;
+                flex: 0 0 85px !important; width: 85px !important; 
+                writing-mode: horizontal-tb !important; /* 橫式文字 */
+                display: flex !important; align-items: center; justify-content: center;
                 border-left: 4px solid var(--hud-cyan); border-bottom: none;
-                padding: 15px 10px !important; margin: 0 !important; font-size: 0.95rem !important;
-                display: flex; align-items: center; justify-content: center;
-                background: rgba(0, 242, 255, 0.1); color: var(--hud-cyan); line-height: 1.4;
+                padding: 10px !important; margin: 0 !important; font-size: 0.85rem !important;
+                background: rgba(0, 242, 255, 0.1); color: var(--hud-cyan);
+                text-align: center; line-height: 1.3; white-space: normal !important;
             }
 
-            /* 2. 指令：確保所有文字在框內「均等排列」且「只能左右滑動」 */
+            /* 指令：數據卡片均等排列，確保 4 行文字完整顯示 */
             .data-panel .hud-card { 
-                flex: 0 0 270px !important; width: 270px !important; 
-                padding: 15px 20px !important; margin: 0 !important;
+                flex: 0 0 250px !important; width: 250px !important; 
+                padding: 10px 15px !important; margin: 0 !important;
                 display: flex !important; flex-direction: column !important; 
-                justify-content: space-evenly !important; /* 指令：文字在框內均等排列 */
+                justify-content: space-evenly !important; /* 垂直均等排列文字 */
                 box-sizing: border-box; border-right: 1px solid rgba(255,255,255,0.1);
-                height: 100%;
             }
-
-            /* 3. 指令：文字過多就「分行」，確保完全看到所有文字 */
+            
+            /* 指令：文字分行，確保內容不被截斷 */
             .data-panel .hud-card div { 
                 color: #ffffff !important; opacity: 1 !important; 
-                font-weight: 600; font-size: 1rem !important; 
-                line-height: 1.5; white-space: normal !important; /* 指令：自動分行 */
+                font-weight: 600; font-size: 0.9rem !important; 
+                line-height: 1.4; white-space: normal !important; /* 自動分行 */
                 margin: 0 !important;
             }
             
