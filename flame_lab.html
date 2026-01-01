@@ -1,4 +1,3 @@
---- START OF FILE flame_lab.html ---
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -226,100 +225,85 @@
         .spectrum-ui { width: 100%; height: 50px; background: #000; border: 2px solid #334155; position: relative; }
         .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
 
-        /* 手機版優化核心 CSS */
+        /* 手機版優化 CSS */
         @media (max-width: 1024px) {
-            body { 
-                height: 100vh; 
-                display: flex; 
-                flex-direction: column; 
-                overflow: hidden; 
-            }
+            body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
             
-            /* 最上層顯示名稱佔 5% */
-            .header { 
-                height: 5vh; 
-                min-height: 40px;
-                padding: 0 15px;
-                flex-shrink: 0;
-            }
-            .header .system-title { font-size: 1.1rem; letter-spacing: 1px; }
+            /* 1. 上層標題 5% */
+            .header { height: 5vh; min-height: 40px; padding: 0 15px; flex-shrink: 0; border-bottom-width: 1px; }
+            .header .system-title { font-size: 1.2rem; letter-spacing: 1px; }
             .header div:last-child { display: none; }
 
-            /* 中間主畫面佔 60% (包含側邊按鈕與主畫面) */
+            /* 2. 中間主畫面佔 60% (調整比例：縮減左側寬度) */
             .main-layout { 
-                height: 60vh; 
-                display: grid !important; 
-                grid-template-columns: 130px 1fr; 
-                grid-template-rows: 100%;
                 flex: none;
+                height: 85vh; 
+                display: grid !important; 
+                grid-template-columns: 153px 1fr; /* 左側面板寬度減少 15% (由180px降至153px) */
+                grid-template-rows: 60vh 25vh; 
                 overflow: hidden;
             }
 
+            /* 左側按鈕區域 */
             .side-panel { 
-                grid-column: 1; 
-                width: 100% !important; 
-                height: 100%;
-                border-right: 1px solid rgba(0,242,255,0.2); 
-                padding: 10px 8px !important; 
-                gap: 10px !important; 
-                overflow-y: auto;
+                grid-row: 1; grid-column: 1;
+                width: 100% !important; height: 60vh;
+                padding: 10px 5px !important; gap: 10px !important;
+                border-right: 1px solid rgba(0,242,255,0.2);
             }
-            /* 側邊文字大小與物件不更動，僅微調間距以符合容器 */
             .side-panel .hud-card { padding: 10px 5px; }
             .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 8px; }
 
+            /* 中央畫面區域 */
             .viewport { 
-                grid-column: 2; 
-                height: 100%; 
-                background: #020617; 
-                display: flex; 
-                justify-content: center; 
-                align-items: flex-end; 
-                padding-bottom: 20px;
+                grid-row: 1; grid-column: 2;
+                height: 60vh; width: 100%;
+                display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px;
+                position: relative;
             }
-            .bunsen-burner { 
-                transform: scale(0.6); 
-                transform-origin: center bottom; 
-                margin-top: 0;
-                margin-bottom: 0;
+            /* 保持放大後的本生燈比例 */
+            .bunsen-burner { transform: scale(0.85); transform-origin: center bottom; margin: 0 auto; }
+            /* 離子名稱：完全比照電腦版位置 (40px, 40px)，並維持橫式顯示 */
+            #target-name { 
+                font-size: 2.5rem !important;   
+                position: relative;              
+                text-align: right;             
+                writing-mode: horizontal-tb !important; 
+                white-space: nowrap;           
             }
-            #target-name { font-size: 2rem !important; top: 10px !important; right: 10px !important; }
+            /* 調整外層容器位置，讓顯示可以到達真正的邊緣 */
+            #target-container {
+                top: 10px !important;            
+                right: 15px !important;         
+            }
 
-            /* 下方光譜數據分析佔 25% */
+            /* 3. 下方數據分析卡片佔 25% (原本的 data-panel) */
             .data-panel { 
-                height: 25vh; 
-                width: 100% !important; 
-                border-left: none;
-                border-top: 1px solid rgba(0,242,255,0.2);
+                grid-row: 2; grid-column: 1 / span 2;
+                height: 25vh !important; width: 100% !important; 
+                border-left: none; border-top: 1px solid rgba(0,242,255,0.2);
                 padding: 10px !important; 
-                display: flex !important;
-                flex-direction: row !important; /* 改為橫向捲動優化空間 */
-                overflow-x: auto !important;
-                overflow-y: hidden !important; 
-                gap: 10px !important;
-                background: #000;
-                flex: none;
+                display: flex !important; flex-direction: row !important; /* 卡片橫向排列 */
+                overflow-x: auto !important; overflow-y: hidden !important; 
+                gap: 15px !important; background: #030712;
             }
-            /* 分析卡片大小微調以適應 25vh */
             .data-panel .hud-card { 
-                flex: 0 0 280px !important; 
-                height: 100% !important; 
-                padding: 10px !important;
-                overflow-y: auto;
+                flex: 0 0 280px !important; /* 固定卡片寬度確保文字不變小 */
+                height: 100%; padding: 12px !important; 
+                display: flex; flex-direction: column;
             }
-            .data-panel .card-label { margin-bottom: 8px; font-size: 0.9rem; }
 
-            /* 下方光譜佔 10% */
+            /* 4. 下方光譜佔 10% */
             #bottom-spectra { 
-                height: 10vh; 
-                min-height: 80px;
-                padding: 5px 15px !important; 
+                height: 10vh; min-height: 80px; 
+                padding: 10px 15px !important; 
                 border-top: 1px solid var(--hud-cyan);
+                background: #000;
                 flex-shrink: 0;
             }
-            .spectrum-ui { height: 30px; }
-            .spectrum-labels { font-size: 0.6rem; margin-bottom: 2px; }
-            .wavelength-label { font-size: 0.7rem !important; }
+            .spectrum-ui { height: 35px; }
+            .spectrum-labels { font-size: 0.65rem; margin-bottom: 2px; }
+            .wavelength-label { font-size: 0.75rem !important; }
         }
     </style>
 </head>
@@ -348,10 +332,21 @@
                 <label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label>
                 <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
             </div>
-            <div style="background:rgba(0,100,255,0.1); padding:8px; border-radius:4px; display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="cobaltGlass" style="width:16px; height:16px;" onchange="updateFlame(window.currentIon)">
-                <label for="cobaltGlass" style="font-size:0.85rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光<br><small>(Cobalt Glass)</small></label>
-                <div class="info-btn" onclick="togglePopup(event)" style="margin-left:auto;">i</div>
+            <!-- 隱藏原始 Checkbox 僅保留邏輯功能 -->
+            <input type="checkbox" id="cobaltGlass" style="display:none;" onchange="updateFlame(window.currentIon)">
+            
+            <div id="cobaltToggleBtn" 
+                 onclick="const cb = document.getElementById('cobaltGlass'); cb.checked = !cb.checked; this.style.background = cb.checked ? 'rgba(0,242,255,0.25)' : 'rgba(0,100,255,0.1)'; this.style.borderColor = cb.checked ? 'var(--hud-cyan)' : 'rgba(0,242,255,0.3)'; updateFlame(window.currentIon);" 
+                 style="background:rgba(0,100,255,0.1); padding:10px 12px; border-radius:6px; display:flex; align-items:center; border:1px solid rgba(0,242,255,0.3); cursor:pointer; transition:0.2s; position:relative; overflow:hidden;">
+                
+                <div style="flex:1; pointer-events:none;">
+                    <div style="font-size:0.95rem; color:#8bafff; font-weight:bold; line-height:1.2;">鈷玻璃濾光</div>
+                    <div style="font-size:0.75rem; color:#8bafff; opacity:0.7; line-height:1.2;">(Cobalt Glass)</div>
+                </div>
+
+                <div class="info-btn" 
+                     onclick="event.stopPropagation(); togglePopup(event)" 
+                     style="width:20px; height:20px; font-size:0.8rem; margin:0; flex-shrink:0; position:relative; z-index:2;">i</div>
             </div>
         </div>
         <div class="hud-card">
@@ -385,7 +380,7 @@
             <div class="base"></div>
             <div class="gas-inlet-tube"></div>
         </div>
-        <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
+        <div id="target-container" style="position: absolute; top: 40px; right: 40px; text-align: right;">
             <div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div>
             <div id="target-symbol" style="display:none;"></div>
         </div>
@@ -428,44 +423,59 @@
         document.getElementById('target-name').innerText = ion.name;
         document.getElementById('target-symbol').innerText = ion.sym;
 
-        let html = `<div class="hud-card" style="background: transparent; border:none; padding:0; flex: 0 0 auto; width: auto;"><div class="card-label">數據分析 (Data)</div></div>`;
+        let html = `
+            <div class="hud-card" style="background: transparent; border:none; padding:0 5px; flex: 0 0 100px !important; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <div class="card-label" style="margin:0; writing-mode: horizontal-tb; border-left:none; border-bottom:3px solid var(--hud-cyan); padding:0 0 5px 0; font-size:1.05rem; line-height:1.3; letter-spacing:1px; text-align:center; white-space:nowrap;">
+                    光譜分析<br>數據 (Data)
+                </div>
+            </div>`;
+        
         ion.lines.forEach(nm => {
             const energy = (1240 / nm).toFixed(3);
-            const freq = (3.0e8 / (nm * 1e-9) / 1e12).toFixed(1);
+            // 頻率科學記號轉換邏輯
+            const freqVal = 3e8 / (nm * 1e-9);
+            const freqExp = Math.floor(Math.log10(freqVal));
+            const freqBase = (freqVal / Math.pow(10, freqExp)).toFixed(2);
+            const freqStr = `${freqBase} × 10<sup>${freqExp}</sup> Hz`;
+
+            const waveNum = Math.round(1/(nm*1e-7));
             const color = nmToRGB(nm);
             let region = nm < 380 ? "UV" : (nm > 780 ? "IR" : "VIS");
+            
             html += `
-                <div class="hud-card" style="background: #000; border-left: 4px solid ${color}; padding:12px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size:1.3rem; color:${color}; font-weight:bold; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>λ = ${nm} nm</span>
+                <div class="hud-card" style="border-left: 4px solid ${color};">
+                    <div style="font-size:1.6rem; color:${color}; font-weight:bold; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>λ = ${nm} nm</span> <!-- 調整此處 1.6rem 即可改變波長數值大小 -->
                         <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
                     </div>
-                    <div style="font-size:0.95rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px; color: #fff;">
+                    <!-- 改用 flex column 確保能量、頻率、波數垂直排列，並統一文字大小與顏色 -->
+                    <div style="font-size:1.1rem; display:flex; flex-direction:column; gap:6px; color: #fff;">
                         <div>能量: ${energy} eV</div>
-                        <div>頻率: ${freq} THz</div>
-                        <div style="grid-column: span 2; opacity:0.8;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                        <div>頻率: ${freqStr}</div>
+                        <div>波數: ${waveNum} cm⁻¹</div>
                     </div>
                 </div>`;
         });
         
         html += `
-        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3);">
+        <div class="hud-card" style="border: 1px solid rgba(0, 242, 255, 0.3);">
             <div class="card-label" style="font-size:1rem; color: var(--hud-cyan);">顯色原理</div>
-            <div style="font-size:1rem; color:#eee; line-height:1.6; text-align:justify;">${ion.synthesis} ${ion.theory}</div>
+            <div style="font-size:1rem; color:#eee; line-height:1.4; text-align:justify; overflow:auto;">${ion.synthesis} ${ion.theory}</div>
         </div>
-        <div class="hud-card" style="background: #000; border: 1px solid rgba(0, 242, 255, 0.3);">
+        <div class="hud-card" style="border: 1px solid rgba(0, 242, 255, 0.3);">
             <div class="card-label" style="font-size:1rem; color: var(--hud-cyan);">焰色應用</div>
-            <div style="font-size:1rem; color:#eee; line-height:1.6;">${ion.app}</div>
+            <div style="font-size:1rem; color:#eee; line-height:1.4; overflow:auto;">${ion.app}</div>
         </div>`;
         
         document.getElementById('analytics').innerHTML = html;
 
+        // 注入底部光譜條
         const bar = document.getElementById('bottom-spectra');
         bar.innerHTML = `
             <div class="spectrum-container">
                 <div class="spectrum-labels"><div class="label-uv">Ultraviolet (UV)</div><div class="label-vis">Visible Light</div><div class="label-ir">Infrared (IR)</div></div>
                 <div class="spectrum-ui"><div class="spectrum-bg"></div><div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div></div>
-                <div style="display:flex; justify-content:space-between; margin-top:12px; padding: 0 5px;">
+                <div style="display:flex; justify-content:space-between; margin-top:8px; padding: 0 5px;">
                     <span class="wavelength-label">200nm</span><span class="wavelength-label">400nm</span><span class="wavelength-label">600nm</span><span class="wavelength-label">800nm</span><span class="wavelength-label">1000nm</span>
                 </div>
             </div>`;
@@ -551,8 +561,7 @@
         e.stopPropagation(); 
         const popup = document.getElementById('cobalt-popup');
         if(window.innerWidth <= 1024) {
-            popup.style.left = '50%';
-            popup.style.top = '50%';
+            popup.style.left = '50%'; popup.style.top = '50%';
             popup.style.transform = 'translate(-50%, -50%)';
         }
         popup.style.display = 'block'; 
