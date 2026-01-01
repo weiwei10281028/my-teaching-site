@@ -252,11 +252,13 @@
 
             /* 修正 3: 離子名稱縮小，並移動到更靠近右上角 (避免重疊) */
             #target-name { 
-                font-size: 1.4rem !important; /* 微增字體大小提升辨識度 */
-                top: 20px !important;        /* 從 10px 調整至 20px，下移避開邊框 */
-                right: 20px !important;      /* 從 15px 調整至 20px，向右推離火焰 */
-                opacity: 0.85;                /* 稍微增加透明度，減少刺眼感 */
-                text-align: right;  
+                position: absolute !important; /* 核心修正：強制開啟定位功能 */
+                top: 15px !important;          /* 距離頂部 15 像素 */
+                right: 15px !important;        /* 距離右邊 15 像素，確保在您要求的框框處 */
+                font-size: 1.4rem !important;  /* 適度調整大小，確保閱讀舒適 */
+                opacity: 0.95;                 /* 提高透明度，使其更鮮明 */
+                white-space: nowrap;           /* 確保離子名稱不會因為空間擠壓而斷行 */
+                text-shadow: 0 0 8px rgba(0,0,0,0.8); /* 增加文字陰影，避免與背景混合 */
             }
             
             .data-panel { 
