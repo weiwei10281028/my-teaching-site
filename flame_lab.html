@@ -18,206 +18,84 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0;
-            background: var(--bg-dark);
-            color: var(--text-main);
+            margin: 0; background: var(--bg-dark); color: var(--text-main);
             font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
 
         .header {
-            height: 70px;
-            padding: 0 30px;
-            background: rgba(0, 242, 255, 0.05);
-            border-bottom: 2px solid var(--hud-cyan);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            z-index: 100;
+            height: 70px; padding: 0 30px; background: rgba(0, 242, 255, 0.05);
+            border-bottom: 2px solid var(--hud-cyan); display: flex;
+            justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 100;
         }
 
-        .system-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            text-shadow: var(--glow);
-            color: #fff;
-        }
+        .system-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 4px; text-shadow: var(--glow); color: #fff; }
 
-        /* 電腦版離子名稱位置 */
-        .ion-info-display {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            text-align: right;
-            z-index: 50;
-        }
+        .ion-info-display { position: absolute; top: 40px; right: 40px; text-align: right; z-index: 50; }
+        #target-name { font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
 
-        #target-name {
-            font-size: 4rem;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
-
-        .wavelength-label {
-            color: #fff !important; 
-            font-size: 1.1rem !important; 
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
+        .wavelength-label { color: #fff !important; font-size: 1.1rem !important; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
         .info-btn {
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: var(--hud-cyan);
-            border: 1px solid var(--hud-cyan);
-            border-radius: 50%;
-            width: 22px; height: 22px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-            font-family: 'serif';
-            font-style: italic;
-            font-weight: bold;
-            flex-shrink: 0;
+            cursor: pointer; font-size: 0.9rem; color: var(--hud-cyan); border: 1px solid var(--hud-cyan);
+            border-radius: 50%; width: 22px; height: 22px; display: inline-flex;
+            align-items: center; justify-content: center; transition: 0.3s;
+            font-family: 'serif'; font-style: italic; font-weight: bold; flex-shrink: 0;
         }
 
         #cobalt-popup {
-            display: none;
-            position: fixed;
-            left: 50% !important;
-            top: 50% !important;
-            transform: translate(-50%, -50%);
-            width: 320px;
-            background: #0f172a;
-            border: 2px solid var(--hud-cyan);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            z-index: 2000;
+            display: none; position: fixed; left: 50% !important; top: 50% !important;
+            transform: translate(-50%, -50%); width: 320px; background: #0f172a;
+            border: 2px solid var(--hud-cyan); border-radius: 12px; padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); z-index: 2000;
         }
 
-        #popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1999;
-            background: transparent;
-        }
+        #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1999; background: transparent; }
 
         .main-layout { display: flex; flex: 1; overflow: hidden; }
 
         .side-panel {
-            width: 380px;
-            background: var(--panel-glass);
-            border-right: 2px solid rgba(0, 242, 255, 0.2);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            overflow-y: auto;
+            width: 380px; background: var(--panel-glass); border-right: 2px solid rgba(0, 242, 255, 0.2);
+            padding: 25px; display: flex; flex-direction: column; gap: 25px; overflow-y: auto;
         }
 
-        .viewport {
-            flex: 1;
-            position: relative;
-            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        .viewport { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); display: flex; justify-content: center; align-items: center; }
 
         .data-panel {
-            width: 420px;
-            background: var(--panel-glass);
-            border-left: 2px solid rgba(0, 242, 255, 0.2);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
+            width: 420px; background: var(--panel-glass); border-left: 2px solid rgba(0, 242, 255, 0.2);
+            padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
         }
 
-        .hud-card {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(0, 242, 255, 0.3);
-            padding: 20px;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .card-label {
-            font-size: 1.1rem;
-            color: var(--hud-cyan);
-            font-weight: 700;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--hud-cyan);
-            padding-left: 10px;
-        }
+        .hud-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 242, 255, 0.3); padding: 20px; position: relative; flex-shrink: 0; }
+        .card-label { font-size: 1.1rem; color: var(--hud-cyan); font-weight: 700; margin-bottom: 15px; border-left: 4px solid var(--hud-cyan); padding-left: 10px; }
 
         .ion-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .s33-btn {
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 18px 10px;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 1.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
+            background: linear-gradient(145deg, #2d3748, #1a202c); border: 1px solid rgba(255,255,255,0.2);
+            padding: 18px 10px; border-radius: 8px; color: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
         }
-        .s33-btn:hover, .s33-btn.active {
-            background: var(--hud-cyan); color: #000;
-            box-shadow: var(--glow); border-color: #fff;
-        }
+        .s33-btn:hover, .s33-btn.active { background: var(--hud-cyan); color: #000; box-shadow: var(--glow); border-color: #fff; }
 
         .bunsen-burner { position: relative; width: 160px; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-top: 80px; }
         .chimney { width: 28px; height: 160px; background: linear-gradient(90deg, #475569, #cbd5e1, #475569); border-radius: 2px 2px 0 0; z-index: 5; border: 1px solid rgba(0,0,0,0.3); }
         .air-collar { width: 34px; height: 32px; background: #334155; margin-top: -2px; z-index: 6; display: flex; justify-content: center; align-items: center; gap: 4px; border-radius: 2px; }
-        .air-hole { width: 8px; height: 18px; background: #000; border-radius: 4px; }
-        .burner-stem { width: 18px; height: 30px; background: #1e293b; margin-top: -2px; z-index: 4; }
         .base { width: 150px; height: 18px; background: #0f172a; border-radius: 75px 75px 4px 4px; z-index: 3; border-bottom: 4px solid #000; }
-        .gas-inlet-tube { position: absolute; bottom: 15px; right: -50px; width: 60px; height: 10px; background: #334155; border-radius: 5px; z-index: 2; }
 
         .flame-vfx {
-            position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%);
-            width: 45px; height: 150px; 
-            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
-            mix-blend-mode: screen; pointer-events: none; filter: blur(6px);
-            transition: all 0.2s ease-out;
-            animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out;
+            position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%); width: 45px; height: 150px; 
+            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%; mix-blend-mode: screen; pointer-events: none; filter: blur(6px);
+            transition: all 0.2s ease-out; animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out;
         }
-        .flame-inner { 
-            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 40%; height: 50%; 
-            background: linear-gradient(to top, #fff, transparent);
-            border-radius: 50%; opacity: 0.8; filter: blur(2px);
-        }
-        @keyframes flame-wiggle {
-            0% { transform: translateX(-51%) scaleX(1) skewX(0deg); }
-            100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); }
-        }
-        @keyframes flame-pulse {
-            from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; }
-            to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; }
-        }
+        .flame-inner { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 50%; background: linear-gradient(to top, #fff, transparent); border-radius: 50%; opacity: 0.8; filter: blur(2px); }
+        @keyframes flame-wiggle { 0% { transform: translateX(-51%) scaleX(1) skewX(0deg); } 100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); } }
+        @keyframes flame-pulse { from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; } to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; } }
 
         .spectrum-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
         .spectrum-labels { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
         .label-uv { color: #a855f7; width: 22.5%; text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 2px; }
         .label-vis { color: #22c55e; width: 50%; text-align: center; border-bottom: 2px solid #22c55e; padding-bottom: 2px; }
         .label-ir { color: #ef4444; width: 27.5%; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 2px; }
-        .spectrum-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4;
-            background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%);
-        }
+        .spectrum-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4; background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%); }
         .spectrum-ui { width: 100%; height: 50px; background: #000; border: 2px solid #334155; position: relative; }
         .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
 
@@ -227,47 +105,29 @@
             .header .system-title { font-size: 1rem; letter-spacing: 1px; }
             .header div:last-child { display: none; } 
 
-            .main-layout { 
-                display: grid !important; 
-                grid-template-columns: 170px 1fr; 
-                grid-template-rows: 1fr 200px; /* 增加底部數據區高度，將卡片往上提 */
-            }
+            .main-layout { display: grid !important; grid-template-columns: 160px 1fr; grid-template-rows: 1fr 180px; }
             
-            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 10px !important; }
+            .side-panel { grid-column: 1; grid-row: 1; width: 100% !important; border-right: 1px solid rgba(0,242,255,0.2); padding: 10px 5px !important; gap: 8px !important; }
+            .side-panel .hud-card { padding: 8px; }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 5px; } /* 保持單行排列，適合窄面 */
+            .s33-btn { padding: 10px 2px; font-size: 0.85rem; }
             
             .viewport { grid-column: 2; grid-row: 1; position: relative !important; align-items: flex-end; }
-            .bunsen-burner { transform: scale(0.6); transform-origin: center bottom; margin-bottom: 10px; }
+            .bunsen-burner { transform: scale(0.65); transform-origin: center bottom; margin-bottom: 20px; }
 
-            /* 離子名稱：保持右上角 */
-            .ion-info-display { top: 8px !important; right: 12px !important; position: absolute !important; }
-            #target-name { font-size: 1.3rem !important; text-shadow: 0 0 10px #000; }
+            .ion-info-display { top: 10px !important; right: 15px !important; position: absolute !important; }
+            #target-name { font-size: 1.4rem !important; text-shadow: 0 0 10px #000; white-space: nowrap; }
             
-            /* 數據面板：上移並調整間距 */
             .data-panel { 
-                grid-column: 1 / span 2; grid-row: 2;
-                width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 5px 10px !important; /* 壓縮內距讓卡片上移 */
-                flex-direction: row !important; 
-                overflow-x: auto !important; gap: 10px !important; background: #000;
-                align-items: flex-start !important;
+                grid-column: 1 / span 2; grid-row: 2; width: 100% !important; border-top: 1px solid rgba(0,242,255,0.2);
+                padding: 10px !important; flex-direction: row !important; overflow-x: auto !important; gap: 12px !important; background: #000;
             }
             
-            /* 卡片優化：確保內容完整且不被下方擋住 */
-            .data-panel .hud-card { 
-                flex: 0 0 220px !important; width: 220px !important; 
-                padding: 8px 10px !important; 
-                min-height: 150px !important;
-                margin-bottom: 5px !important;
-            }
+            /* 核心優化：卡片自適應寬度，保證文字不換行 */
+            .data-panel .hud-card { flex: 0 0 250px !important; width: 250px !important; padding: 12px 10px !important; display: flex !important; flex-direction: column !important; }
+            .data-panel .hud-card div { color: #ffffff !important; opacity: 1 !important; font-weight: 600; } 
             
-            /* 下方光譜區：壓縮高度並簡化 */
-            #bottom-spectra { 
-                height: 95px !important; /* 大幅縮減高度，解決遮擋問題 */
-                padding: 5px 10px !important; 
-                flex-shrink: 0; 
-                background: #000;
-            }
-            .spectrum-labels { font-size: 0.75rem !important; margin-bottom: 2px !important; }
+            #bottom-spectra { height: 110px !important; padding: 10px !important; flex-shrink: 0; }
             .wavelength-label { font-size: 0.75rem !important; }
         }
     </style>
@@ -286,7 +146,7 @@
 <div id="bottom-spectra" style="height: 180px; border-top: 2px solid var(--hud-cyan); background: #070b14; padding: 25px; flex-shrink: 0;"></div>
 
 <script>
-    // 注入 UI - 左側控制面板 (優化結構)
+    // 注入 UI - 左側控制面板 (還原穩定佈局與修正鈷玻璃)
     document.getElementById('controls').innerHTML = `
         <div class="hud-card">
             <div class="card-label" style="font-size:0.85rem;">儀器調節<br><small>Controls</small></div>
@@ -298,7 +158,8 @@
                 <label style="color:var(--hud-cyan); font-size:0.95rem;">空氣混合<br><small>(Air)</small></label>
                 <input type="range" id="airRange" style="width:100%; accent-color:var(--hud-cyan);" min="0" max="100" value="80">
             </div>
-            <!-- 鈷玻璃：兩行式排版修正 -->
+            
+            <!-- 鈷玻璃濾光：兩行式排版優化 -->
             <div style="background:rgba(0,100,255,0.1); padding:10px; border-radius:4px; display:flex; flex-direction:column; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:0.95rem; color:#8bafff; font-weight:bold;">鈷玻璃濾光</span>
@@ -310,6 +171,7 @@
                 </div>
             </div>
         </div>
+
         <div class="hud-card">
             <div class="card-label">離子試劑選取 (Ion Matrix)</div>
             <div class="ion-matrix">
@@ -397,11 +259,10 @@
                         <span>λ = ${nm} nm</span>
                         <span style="font-size:0.65rem; border:1px solid ${color}; padding:0px 3px; border-radius:2px;">${region}</span>
                     </div>
-                    <!-- 數據區：能量、頻率、波數全部統一純白色與亮度 -->
-                    <div class="data-grid" style="font-size:0.95rem; display:flex; flex-direction:column; gap:3px; color: #ffffff;">
+                    <div style="font-size:0.95rem; display:flex; flex-direction:column; gap:4px; color: #ffffff;">
                         <div>能量: ${energy} eV</div>
                         <div>頻率: ${freq} THz</div>
-                        <div style="margin-top:2px;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
+                        <div style="font-weight:bold;">波數: ${Math.round(1/(nm*1e-7))} cm⁻¹</div>
                     </div>
                 </div>`;
         });
@@ -421,17 +282,16 @@
         const bar = document.getElementById('bottom-spectra');
         bar.innerHTML = `
             <div class="spectrum-container">
-                <!-- 簡化標籤：ULTRAVIOLET -> UV, INFRARED -> IR, VISIBLE -> VIS -->
                 <div class="spectrum-labels">
-                    <div class="label-uv" style="width:20%">UV</div>
-                    <div class="label-vis" style="width:55%">VIS</div>
-                    <div class="label-ir" style="width:25%">IR</div>
+                    <div class="label-uv">UV</div>
+                    <div class="label-vis">VIS</div>
+                    <div class="label-ir">IR</div>
                 </div>
                 <div class="spectrum-ui">
                     <div class="spectrum-bg"></div>
                     <div id="lines-layer" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-top:8px; padding: 0 5px;">
+                <div style="display:flex; justify-content:space-between; margin-top:12px; padding: 0 5px;">
                     <span class="wavelength-label">200nm</span>
                     <span class="wavelength-label">400nm</span>
                     <span class="wavelength-label">600nm</span>
@@ -453,8 +313,9 @@
 
         updateFlame(ion);
     }
+</script>
 
-    
+<script>
     function updateFlame(ion) {
         if (!ion) return;
         const gas = parseInt(document.getElementById('gasRange').value);
@@ -521,7 +382,7 @@
     // 鈷玻璃說明彈窗功能
     const popupDiv = document.createElement('div');
     popupDiv.innerHTML = `
-        <div id="popup-overlay" onclick="closePopup()"></div>
+        <div id="popup-overlay" onclick="closePopup()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1999; background:rgba(0,0,0,0.5);"></div>
         <div id="cobalt-popup">
             <div style="color:var(--hud-cyan); font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
                 <span style="font-size:1.5rem;">💡</span> 鈷玻璃作用
@@ -545,7 +406,7 @@
         document.getElementById('popup-overlay').style.display = 'none'; 
     };
 
-    // 啟動系統
+    // 系統載入初始化
     window.onload = () => selectIon('Na');
 </script>
 </body>
