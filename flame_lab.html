@@ -304,12 +304,20 @@
             .spectrum-ui { 
             height: 35px; 
             position: relative !important; 
-            /* 修正：改回使用標準 CSS 漸層，手機支援度最高且不會有編碼錯誤 */
-            background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
-            border: 1px solid rgba(255,255,255,0.3);
-            z-index: 1 !important; 
+            /* 核心修復：直接在容器層繪製光譜，不再依賴不可見的子圖層 */
+                background: linear-gradient(to right, #000 0%, #4b0082 15%, #00f 30%, #0f0 45%, #ff0 60%, #f00 80%, #000 100%) !important;
+                border: 1px solid #666 !important;
+                z-index: 5 !important;
+                display: block !important;
             }
-            .spectrum-bg { display: none !important; }
+            .spectrum-bg { display: none !important; } /* 徹底捨棄失效圖層 */
+            .line-marker { 
+                width: 3px !important; /* 加粗譜線確保手機可見 */
+                height: 100% !important; 
+                background-color: currentColor !important; 
+                z-index: 100 !important; /* 強制壓在漸層最上方 */
+                box-shadow: 0 0 8px #fff !important; 
+            }
             
             #lines-layer { 
                 position: absolute !important; 
