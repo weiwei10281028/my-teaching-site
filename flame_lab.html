@@ -130,6 +130,21 @@
             justify-content: center;
             align-items: center;
         }
+        /* 電腦版預設位置 */
+        .ion-info-display {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            text-align: right;
+            z-index: 10;
+        }
+
+        #target-name {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
 
         .data-panel {
             width: 420px;
@@ -362,8 +377,8 @@
             <div class="base"></div>
             <div class="gas-inlet-tube"></div>
         </div>
-        <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
-            <div id="target-name" style="font-size: 4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);">待機中</div>
+        <div class="ion-info-display"> <!-- 移除 inline style，改用 class 控制 -->
+            <div id="target-name">待機中</div>
             <div id="target-symbol" style="display:none;"></div>
         </div>
     `;
