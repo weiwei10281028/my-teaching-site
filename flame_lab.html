@@ -282,15 +282,18 @@
                 grid-row: 2; grid-column: 1 / span 2;
                 height: 100% !important; width: 100% !important; 
                 border-left: none; border-top: 1px solid rgba(0,242,255,0.2);
-                padding: 10px !important; 
+                padding: 8px !important; 
                 display: flex !important; flex-direction: row !important; 
                 overflow-x: auto !important; overflow-y: hidden !important; 
-                gap: 15px !important; background: #030712;
+                gap: 10px !important; background: #030712;
             }
             .data-panel .hud-card { 
-                flex: 0 0 280px !important; /* 固定卡片寬度確保文字不變小 */
-                height: 100%; padding: 12px !important; 
+                flex: 0 0 240px !important; /* 稍微縮小寬度，讓第二張卡片露出一點提示可滑動 */
+                height: calc(100% - 4px); /* 留一點點底邊空隙 */
+                padding: 10px !important; 
                 display: flex; flex-direction: column;
+                justify-content: center; /* 讓內容垂直居中 */
+                overflow: hidden;
             }
 
             /* 4. 下方光譜佔 10% */
@@ -470,12 +473,12 @@
             
             html += `
                 <div class="hud-card" style="border-left: 4px solid ${color};">
-                    <div style="font-size:1.6rem; color:${color}; font-weight:bold; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>λ = ${nm} nm</span> <!-- 調整此處 1.6rem 即可改變波長數值大小 -->
-                        <span style="font-size:0.75rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
+                    <div style="font-size:1.3rem; color:${color}; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>λ = ${nm} nm</span> 
+                        <span style="font-size:0.7rem; border:1px solid ${color}; padding:1px 4px; border-radius:3px;">${region}</span>
                     </div>
-                    <!-- 改用 flex column 確保能量、頻率、波數垂直排列，並統一文字大小與顏色 -->
-                    <div style="font-size:1.1rem; display:flex; flex-direction:column; gap:6px; color: #fff;">
+                    <!-- 縮小手機版的字體與間距 -->
+                    <div style="font-size:0.95rem; display:flex; flex-direction:column; gap:4px; color: #fff; line-height:1.2;">
                         <div>能量: ${energy} eV</div>
                         <div>頻率: ${freqStr}</div>
                         <div>波數: ${waveNum} cm⁻¹</div>
