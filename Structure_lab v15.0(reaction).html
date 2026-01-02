@@ -3151,7 +3151,7 @@ function renderScene(time = 0) {
         const p = project(obj);
         let alpha = 1.0;
         if (isAnyHighlighted) {
-            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
+            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.5;
             else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
         }
         const renderObj = { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha, z: p.z };
@@ -4886,44 +4886,48 @@ function renderSubstanceList() {
         
         // 核心邏輯：點擊搜尋結果執行跨分類精確跳轉
         card.onclick = () => {
-            const searchKey = sub.key; 
-            let targetMainKey = null;
-            let targetVariantID = null;
+            // 1. 立即解除輸入框焦點，確保虛擬鍵盤關閉
+            if (input) input.blur();
 
-            // 1. 在所有分子的變體庫中查找匹配
-            for (let mKey in MOLECULE_DB) {
-                const root = MOLECULE_DB[mKey];
-                if (root.variants) {
-                    for (let vID in root.variants) {
-                        if (vID === searchKey) {
-                            targetMainKey = mKey;
-                            targetVariantID = vID;
-                            break;
-                        }
-                    }
-                }
-                if (targetMainKey) break;
-            }
-
-            // 2. 執行載入邏輯
-            if (targetMainKey && targetVariantID) {
-                window.currentKey = targetMainKey;
-                window.currentVariantKey = targetVariantID;
-                loadMolecule(targetMainKey, targetVariantID);
-            } else {
-                const rootKey = searchKey.split('|')[0];
-                if (MOLECULE_DB[rootKey]) {
-                    loadMolecule(rootKey);
-                }
-            }
-
-            // 3. UI 狀態收尾
+            // 2. 優先執行關閉視窗與收合面板，讓瀏覽器先處理 UI 變化
             closeSubstanceModal();
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
                 if (panel) panel.style.transform = 'translateY(70vh)';
                 document.body.classList.remove('simulate-mobile-open');
             }
+
+            // 3. 延遲 150 毫秒後再執行重大的 3D 載入邏輯，避開效能高峰，解決卡頓
+            setTimeout(() => {
+                const searchKey = sub.key; 
+                let targetMainKey = null;
+                let targetVariantID = null;
+
+                for (let mKey in MOLECULE_DB) {
+                    const root = MOLECULE_DB[mKey];
+                    if (root.variants) {
+                        for (let vID in root.variants) {
+                            if (vID === searchKey) {
+                                targetMainKey = mKey;
+                                targetVariantID = vID;
+                                break;
+                            }
+                        }
+                    }
+                    if (targetMainKey) break;
+                }
+
+                if (targetMainKey && targetVariantID) {
+                    window.currentKey = targetMainKey;
+                    window.currentVariantKey = targetVariantID;
+                    loadMolecule(targetMainKey, targetVariantID);
+                } else {
+                    const rootKey = searchKey.split('|')[0];
+                    if (MOLECULE_DB[rootKey]) {
+                        loadMolecule(rootKey);
+                    }
+                }
+            }, 150);
         };
 
         const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
