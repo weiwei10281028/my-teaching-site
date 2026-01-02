@@ -4866,18 +4866,30 @@ function renderSubstanceList() {
         return;
     }
 
-    SUBSTANCE_LIST.forEach(sub => {
+    // 1. 根據是否有搜尋過濾器來決定資料池
+    let targetList = [...SUBSTANCE_LIST];
+    
+    if (filter === "") {
+        // 沒搜尋時：隨機打亂並只取前 20 個
+        targetList.sort(() => 0.5 - Math.random());
+        targetList = targetList.slice(0, 20);
+    }
+
+    // 2. 開始渲染處理後的清單
+    targetList.forEach(sub => {
         const formula = (sub.formula || "").toLowerCase();
         const name = (sub.name || "").toLowerCase();
         const common = (sub.common || "").toLowerCase();
         const tags = sub.tags || [];
 
-        const isFormulaMatch = formula.startsWith(filter);
-        const isNameMatch = name.includes(filter);
-        const isCommonMatch = common.includes(filter);
-        const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
-
-        if (filter !== "" && !isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
+        // 如果有搜尋字串，執行過濾邏輯
+        if (filter !== "") {
+            const isFormulaMatch = formula.startsWith(filter);
+            const isNameMatch = name.includes(filter);
+            const isCommonMatch = common.includes(filter);
+            const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
+            if (!isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
+        }
 
         const card = document.createElement('div');
         card.className = 'element-card';
