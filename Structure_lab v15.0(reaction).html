@@ -40,23 +40,27 @@
 
     /* 2. 上標設定 (控制電荷的"數字"，如 3- 的 3) */
     sup {
-        font-size: 0.75em;      /* 縮小數字，避免頭重腳輕 */
-        line-height: 0;         /* 關鍵：防止數字撐開行高，確保英文置中 */
-        position: relative;
-        vertical-align: baseline;
-        top: -0.25em;           /* 下調位置，讓數字靠近中心 */
-        font-weight: normal;    /* 數字改為正常粗細，視覺更平衡 */
-        margin-left: 1px;
+    font-size: 0.8em;         /* 稍微放大整體上標 */
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+    top: -0.5em;              /* 顯著調高位置，實現真正的「右上角」 */
+    margin-left: 2px;
     }
 
-    /* 3. 正負號設定 (專門控制 + 與 -，如 3- 的 -) */
+    /* 3. 特殊處理電荷的正負號 (+, -) */
     .charge-sign {
-        font-size: 1.4em;      /* 正負號可以設大一點，比較清楚 */
-        font-weight: bold;     /* 正負號加粗 */
-        position: relative;
-        top: 0.05em;           /* 正負號微調：正值往下，負值往上 */
-        margin-left: 0px;      /* 正負號與數字的距離 */
-    }
+    font-size: 1.4em;         /* 保持 1.4em 的大視覺感 */
+    font-weight: bold;        
+    display: inline-block;    
+    margin-left: 1px;         
+    line-height: 1;
+    
+    /* 微調關鍵： */
+    position: relative;
+    top: 0.02em;              /* 如果符號太高，正值往下壓；如果太低，負值往上提 */
+    vertical-align: baseline; /* 改用 baseline 配合 top 微調會比 middle 更穩定 */
+ }
 
     body {
         margin: 0;
@@ -1265,35 +1269,109 @@
                         <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
                     </div>
                     <div class="difficulty-grid" id="difficulty-grid">
+                        <!-- 數據校準任務指引 (固定高度 & 取消標題固定) -->
+                        <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; margin-bottom: 5px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
+                            <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
+                                <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
+                            </div>
+                            <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
+                                <div style="margin-bottom: 12px;"><strong style="color:#38bdf8;">1. 選擇 RANK (範圍)：</strong>決定校準數據的原子序區間。</div>
+                                <div style="margin-bottom: 8px;"><strong style="color:#fbbf24;">2. 設定精度 (題型組合)：</strong>點擊 RANK 後選擇對應難度。</div>
+                                
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                                    <!-- 基礎級 -->
+                                    <div style="margin-bottom: 15px;">
+                                        <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
+                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
+                                            ．符號辨識中文名稱<br>
+                                            ．原子序辨識符號<br>
+                                            ．常溫常壓物理狀態（固、液、氣）<br>
+                                            ．符號辨識英文名稱<br>
+                                            ．同族夥伴元素辨識<br>
+                                            ．區塊（s, p, d, f 區）判定<br>
+                                            ．原子核質子總數計算<br>
+                                            ．質子數逆推元素符號<br>
+                                            ．等電子序列粒子辨識
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 進階級 -->
+                                    <div style="margin-bottom: 15px;">
+                                        <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
+                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
+                                            ．符號辨識中文名稱<br>
+                                            ．原子序辨識符號<br>
+                                            ．座標定位元素（週期、族）<br>
+                                            ．元素分類判斷（鹼金屬、鹵素等）<br>
+                                            ．常溫常壓物理狀態<br>
+                                            ．符號辨識英文名稱<br>
+                                            ．價電子數計算<br>
+                                            ．同族夥伴元素辨識<br>
+                                            ．區塊判定<br>
+                                            ．離子或原子的電子總數計算<br>
+                                            ．原子核質子總數計算<br>
+                                            ．電負度大小比較趨勢<br>
+                                            ．質子數逆推元素符號<br>
+                                            ．等電子序列粒子辨識
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 專家級 -->
+                                    <div style="margin-bottom: 5px;">
+                                        <span style="color:#f472b6; font-weight: bold; display: block; margin-bottom: 6px;">[ 專家級 (Expert) ]</span>
+                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f472b6;">
+                                            ．座標定位元素（週期、族）<br>
+                                            ．電子組態辨識元素<br>
+                                            ．元素分類判斷（鹼金屬、鹵素等）<br>
+                                            ．價電子數計算<br>
+                                            ．未成對電子數計算（洪德定則）<br>
+                                            ．特定軌域（s, p, d）電子總數統計<br>
+                                            ．同族夥伴元素辨識<br>
+                                            ．區塊判定<br>
+                                            ．離子或原子的電子總數計算<br>
+                                            ．電負度大小比較趨勢<br>
+                                            ．同族組態特徵辨識<br>
+                                            ．電子總數逆推粒子（含離子）<br>
+                                            ．等電子序列粒子辨識
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RANK 選擇卡片 -->
                         <div class="diff-card diff-a" onclick="startQuiz('A')">
                             <div class="diff-info">
-                                <span class="diff-title">RANK A: 基礎校準</span>
+                                <span class="diff-title">RANK A: 初級數據流</span>
                                 <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
-                                <span class="diff-tag">適合初學者</span>
+                                <span class="diff-tag">適合基礎同步</span>
                             </div>
                             <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
                         </div>
+
                         <div class="diff-card diff-b" onclick="startQuiz('B')">
                             <div class="diff-info">
-                                <span class="diff-title">RANK B: 核心校準</span>
-                                <span class="diff-range">1 ~ 36 + 所有 1A ~ 8A 族元素</span>
-                                <span class="diff-tag">強化主族記憶</span>
+                                <span class="diff-title">RANK B: 核心數據流</span>
+                                <span class="diff-range">1 ~ 36 + 所有主族元素 (1A~8A)</span>
+                                <span class="diff-tag">主族元素完整覆蓋</span>
                             </div>
                             <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
                         </div>
+
                         <div class="diff-card diff-c" onclick="startQuiz('C')">
                             <div class="diff-info">
-                                <span class="diff-title">RANK C: 專業校準</span>
+                                <span class="diff-title">RANK C: 專業數據流</span>
                                 <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
-                                <span class="diff-tag">涵蓋多數常見元素</span>
+                                <span class="diff-tag">涵蓋常用物質數據</span>
                             </div>
                             <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
                         </div>
+
                         <div class="diff-card diff-d" onclick="startQuiz('D')">
                             <div class="diff-info">
-                                <span class="diff-title">RANK D: 全域校準</span>
-                                <span class="diff-range">1 ~ 118 (完整週期表)</span>
-                                <span class="diff-tag">終極考驗</span>
+                                <span class="diff-title">RANK D: 全域數據流</span>
+                                <span class="diff-range">1 ~ 118 (完整元素週期表)</span>
+                                <span class="diff-tag">終極數據同步考驗</span>
                             </div>
                             <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
                         </div>
@@ -1563,6 +1641,7 @@
 <script src="data_reactions.js"></script>
 <script src="data_substances.js"></script>
 <script src="lab_flame.js"></script>
+<script src="data_fortune.js"></script>
 <script>
 // ==========================================
 // 1. 系統初始化
@@ -4478,7 +4557,7 @@ const QUIZ_HELPER = {
     }
 };
 
-// --- Modal 控制功能 ---
+// --- Modal 校準模式控制功能 ---
 function openConfigModal() { 
     const modal = document.getElementById('config-modal'); 
     if(modal) { modal.style.display = 'flex'; renderConfigList(); } 
@@ -4534,32 +4613,55 @@ window.startQuiz = function(level) {
     // 立即更新 HUD，避免「選進階顯示基礎」的延遲
     document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${level} | ${diffMap[1]}`;
 
-    // 產生平衡的題型牌組
-    window.quizState.generateTypeDeck = function(diff, total) {
-        const typePools = {
-            1: [0, 1, 5, 6, 10, 11, 13, 16, 18],             
-            2: [0, 1, 2, 4, 5, 6, 7, 10, 11, 12, 13, 14, 16, 18],    
-            3: [2, 3, 4, 7, 8, 9, 10, 11, 12, 14, 15, 17, 18]      
-        };
-        const types = typePools[diff] || typePools[1];
-        let deck = [];
-        while (deck.length < total) {
-            let tempGroup = [...types].sort(() => 0.5 - Math.random());
-            deck = deck.concat(tempGroup);
-        }
-        deck = deck.slice(0, total); 
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-        for (let i = 0; i < deck.length - 1; i++) {
-            if (deck[i] === deck[i+1]) {
-                let swapIdx = (i + 2) % deck.length;
-                [deck[i+1], deck[swapIdx]] = [deck[swapIdx], deck[i+1]];
-            }
-        }
-        return deck;
+    // 產生平衡且限制重複簡單題型的牌組
+window.quizState.generateTypeDeck = function(diff, total) {
+    const typePools = {
+        // 基礎級：移除 11 (區塊) 與 18 (等電子數)，專注於最基本的原子組成與識別
+        1: [0, 1, 5, 6, 13, 16],             
+        
+        // 進階級：移除 11 (區塊)，移除簡單的 5 (常溫) 與 6 (英文名)，增加應用類題目
+        2: [0, 1, 2, 4, 7, 10, 12, 13, 14, 16, 18],    
+        
+        // 專家級：保留 11 (區塊)，專注於量子結構與深層邏輯判斷
+        3: [2, 3, 4, 7, 8, 9, 10, 11, 12, 14, 15, 17, 18]      
     };
+    
+    // 定義「簡單題型」白名單 (一輪只出現一次)
+    const simpleTypes = [0, 5, 6]; 
+    const types = typePools[diff] || typePools[1];
+    
+    let deck = [];
+    
+    // 1. 先處理簡單題型：如果該難度有這些題型，各抽一題放入
+    const allowedSimple = types.filter(t => simpleTypes.includes(t));
+    allowedSimple.forEach(t => deck.push(t));
+    
+    // 2. 準備剩餘的專業題型池
+    const professionalTypes = types.filter(t => !simpleTypes.includes(t));
+    
+    // 3. 填滿剩餘題數
+    while (deck.length < total) {
+        // 從專業題型池中隨機抽取
+        let randType = professionalTypes[Math.floor(Math.random() * professionalTypes.length)];
+        deck.push(randType);
+    }
+    
+    // 4. 洗牌：打亂順序，但確保簡單題型分佈在整輪中
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    
+    // 5. 二次校驗：避免連續兩題一樣
+    for (let i = 0; i < deck.length - 1; i++) {
+        if (deck[i] === deck[i+1]) {
+            let swapIdx = (i + 2) % deck.length;
+            [deck[i+1], deck[swapIdx]] = [deck[swapIdx], deck[i+1]];
+        }
+    }
+    
+    return deck;
+};
 };
 
 // 修正 setQuizParam 讓它也能即時更新 HUD
@@ -4605,126 +4707,189 @@ window.renderNextQuestion = function() {
     
     // 依照預選牌組類型出題
     const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
-    const quizData = { question: "", answer: "", type: "" };
+    const quizData = { question: "", answer: "", type: "", displayMode: "symbol" }; 
     const parsed = QUIZ_HELPER.parse(target.c);
     const s = `[ ${target.s} ]`;
 
-    // 3. 題型詳細定義與隨機敘述模板 (全面中文化)
-    if (type === 0) {
-        quizData.type="身分識別：符號 > 名稱"; 
-        quizData.question = [ `${s} 的中文名稱為何？`, `符號 ${s} 代表什麼元素？`, `請選出 ${s} 的正確名稱：` ][Math.floor(Math.random()*3)];
-        quizData.answer=target.cn;
-    } else if (type === 1) {
-        quizData.type="識別校準：原子序 > 符號"; 
-        quizData.question = [ `元素 ${s} 的原子序為何？`, `在週期表中，${s} 的編號是？`, `${s} 原子核內的質子數為？` ][Math.floor(Math.random()*3)];
-        quizData.answer=target.s;
-    } else if (type === 2) {
-        quizData.type="位置定位：座標 > 符號"; 
-        quizData.question = [ `位於第 ${target.p} 週期、${target.g} 族的元素？`, `座標為 (${target.p}P, ${target.iupac}G) 的粒子為何？` ][Math.floor(Math.random()*2)];
-        quizData.answer=target.s;
-    } else if (type === 3) {
-        quizData.type="結構校準：電子組態 > 符號"; 
-        quizData.question = [ `電子組態為 ${target.noble} 的元素為何？`, `誰具備 ${target.noble} 的電子排列方式？` ][Math.floor(Math.random()*2)];
-        quizData.answer=target.s;
-    } else if (type === 4) {
-        quizData.type="特性校準：元素分類"; 
-        quizData.question = [ `元素 ${s} 屬於哪種分類？`, `${s} 在化學性質上被歸類為？`, `關於 ${s} 的分類，下列何者正確？` ][Math.floor(Math.random()*3)];
-        quizData.answer=target.type;
-    } else if (type === 5) {
-        quizData.type="特性校準：常溫狀態"; 
-        quizData.question = [ `${s} 在常溫常壓下呈現何種型態？`, `常溫常壓下，${s} 的物理狀態是？` ][Math.floor(Math.random()*2)];
-        quizData.answer = QUIZ_HELPER.getCleanState(target.state);
-    } else if (type === 6) {
-        quizData.type="身分識別：符號 > 英文名"; 
-        quizData.question = [ `元素 ${s} 的英文名稱為何？`, `符號 ${s} 的英文對應名是：` ][Math.floor(Math.random()*2)];
-        quizData.answer=target.n;
-    } else if (type === 7) {
-        quizData.type="量子結構：價電子數"; 
-        quizData.question = [ `${s} 的價電子數 (Valence e⁻) 共有？`, `${s} 的最外層電子殼層有幾顆電子？` ][Math.floor(Math.random()*2)];
-        quizData.answer=QUIZ_HELPER.getValence(parsed, target).toString();
-    } else if (type === 8) {
-        quizData.type="量子結構：未成對電子"; 
-        quizData.question = [ `${s} 在基態時有幾個未成對電子？`, `${s} 基態下的單顆電子 (Unpaired) 總數？` ][Math.floor(Math.random()*2)];
-        quizData.answer=QUIZ_HELPER.getUnpaired(parsed).toString();
-    } else if (type === 9) {
-        const orb = ['s','p','d'][Math.floor(Math.random()*3)];
-        quizData.type=`量子結構：${orb.toUpperCase()} 軌域總數`; 
-        quizData.question = [ `${s} 的所有 ${orb} 軌域電子加總為何？`, `整個 ${s} 的電子雲中，有多少電子填在 ${orb} 軌域？` ][Math.floor(Math.random()*2)];
-        quizData.answer=QUIZ_HELPER.getOrbitalSum(parsed, orb).toString();
-    } else if (type === 10) {
-        quizData.type="邏輯判斷：同族元素"; 
-        quizData.question = [ `下列何者與 ${s} 位於同一族 (Group)？`, `與 ${s} 化學性質最相近的夥伴元素是？` ][Math.floor(Math.random()*2)];
-        const partners = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
-        quizData.answer = partners.length > 0 ? partners[Math.floor(Math.random()*partners.length)].s : "無";
-    } else if (type === 11) {
-        quizData.type="位置定位：區塊 (Block)";
-        const i = target.iupac; let block = "f";
-        if (target.s === "He") block = "s";
-        else if (typeof i === 'number') { if (i <= 2) block = "s"; else if (i >= 13) block = "p"; else block = "d"; }
-        quizData.question = [ `${s} 屬於週期表中的哪個區塊 (Block)？`, `${s} 的最後一顆電子填入在？` ][Math.floor(Math.random()*2)];
-        quizData.answer = `${block}-block`;
-    } else if (type === 12 || type === 13) {
-        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 9) - 3 || 1) : 0;
-        const sign = charge === 0 ? "" : (charge > 0 ? `<sup>${charge}+</sup>` : `<sup>${Math.abs(charge)}-</sup>`);
-        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${sign} ]`;
-        if (type === 12) {
-            quizData.type="量子結構：電子總數"; 
-            quizData.question = [ `${particle} 的電子總數為何？`, `${particle} 的核外電子數共有？` ][Math.floor(Math.random()*2)];
-            quizData.answer = (target.z - charge).toString();
-        } else {
-            quizData.type="量子結構：質子總數"; 
-            quizData.question = [ `${particle} 的質子總數為何？`, `${particle} 原子核內帶有多少單位正電荷？` ][Math.floor(Math.random()*2)];
-            quizData.answer = target.z.toString();
-        }
-    } else if (type === 14) {
-        const enPool = window.quizState.pool.filter(el => QUIZ_HELPER.getEN(el.s) !== null);
-        if (enPool.length < 4) { 
-            // 修正：如果電負度資料不足，除了換題目，也要強迫進入 Type 0 的選項生成路徑
-            type = 0; 
-            quizData.type="身分識別"; quizData.question=`${s} 的中文名稱？`; quizData.answer=target.cn; 
-        } else {
-            let sel = [...enPool].sort(() => 0.5 - Math.random()).slice(0, 4);
-            let winner = sel.reduce((p, c) => (QUIZ_HELPER.getEN(c.s) > QUIZ_HELPER.getEN(p.s)) ? c : p);
-            quizData.type="趨勢校準：電負度比較"; 
-            quizData.question = [ `下列誰的電負度最高？`, `哪一個原子對鍵結電子的吸引力最強？` ][Math.floor(Math.random()*2)];
-            quizData.answer = winner.s; quizData.forcedOpts = sel.map(el => el.s);
-        }
-    } else if (type === 15) {
-        quizData.type="邏輯判斷：組態夥伴"; 
-        quizData.question = [ `組態為 ${target.noble} 的元素，與誰同族？`, `哪一個元素具備與 ${target.noble} 相同的價層電子特徵？` ][Math.floor(Math.random()*2)];
-        const partners = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
-        quizData.answer = partners.length > 0 ? partners[Math.floor(Math.random()*partners.length)].s : "無";
-    } else if (type === 16) {
-        quizData.type="識別校準：質子逆推";
-        quizData.question = [ `質子總數為 ${target.z} 的中性原子是？`, `哪一種原子的核內電荷數為 ${target.z}?` ][Math.floor(Math.random()*2)];
-        quizData.answer = target.s;
-    } else if (type === 17) {
-        let c = Math.floor(Math.random() * 5) - 2; const eCount = target.z - c;
-        const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
-        quizData.type="量子結構：電子逆推";
-        quizData.question = [ `總電子數為 ${eCount} 的粒子可能是？`, `哪種粒子擁有 ${eCount} 個核外電子？` ][Math.floor(Math.random()*2)];
-        quizData.answer = `${target.s}<sup>${sign}</sup>`;
-    } else if (type === 18) {
-        let c = Math.floor(Math.random() * 5) - 2; const eCount = target.z - c;
-        const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
-        const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
-        if (!partner) {
-            // 修正：如果找不到等電子夥伴，強制重設題型與資料，防止無選項
-            type = 0;
-            quizData.type="身分識別"; quizData.question=`元素 ${s} 的中文名稱為何？`; quizData.answer=target.cn;
-        } else {
-            quizData.type="量子結構：等電子序列";
-            quizData.question = [ `誰與 [ ${target.s}<sup>${sign}</sup> ] 互為等電子序列？`, `下列何者與 [ ${target.s}<sup>${sign}</sup> ] 電子組態相同？` ][Math.floor(Math.random()*2)];
-            quizData.answer = partner;
-        }
+    // 3. 題型詳細定義與隨機敘述模板 (全面中文化與渲染優化)
+if (type === 0) {
+    if (Math.random() > 0.5) {
+        quizData.type        = "身分識別：符號 > 中文名"; 
+        quizData.question    = [ `${s} 的中文名稱為何？`, `化學符號 ${s} 指的是哪種元素？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.cn;
+        quizData.displayMode = "chinese";
+    } else {
+        quizData.type        = "身分識別：中文名 > 符號"; 
+        quizData.question    = [ `元素「${target.cn}」的正確化學符號為何？`, `下列哪一個符號代表「${target.cn}」？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
     }
+} else if (type === 1) {
+    quizData.type        = "識別校準：符號 > 原子序"; 
+    quizData.question    = [ `${s} 的「原子序」為何？`, `${s} 原子核內的質子數為？` ][Math.floor(Math.random() * 2)];
+    quizData.answer      = target.z.toString();
+    quizData.displayMode = "number";
+} else if (type === 2) {
+    quizData.type        = "位置定位：座標 > 符號"; 
+    quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素符號是？`;
+    quizData.answer      = target.s;
+    quizData.displayMode = "symbol";
+} else if (type === 3) {
+    quizData.type        = "量子結構：組態辨識"; 
+    quizData.question    = [ `基態電子組態為 ${target.noble} 的元素為何？`, `下列何種元素具備 ${target.noble} 的電子排列？` ][Math.floor(Math.random() * 2)];
+    quizData.answer      = target.s;
+    quizData.displayMode = "symbol";
+} else if (type === 4) {
+    quizData.type        = "特性校準：元素分類"; 
+    quizData.question    = `元素 ${s} 在化學性質分類上屬於下列何者？`;
+    quizData.answer      = target.type;
+    quizData.displayMode = "raw";
+} else if (type === 5) {
+    quizData.type        = "特性校準：常溫狀態"; 
+    quizData.question    = `在常溫常壓 (25°C, 1atm) 下，${s} 的物理狀態為何？`;
+    quizData.answer      = QUIZ_HELPER.getCleanState(target.state);
+    quizData.displayMode = "raw";
+} else if (type === 6) {
+    quizData.type        = "身分識別：符號 > 英文名"; 
+    quizData.question    = `元素 ${s} 的英文名稱 (English Name) 為何？`;
+    quizData.answer      = target.n;
+    quizData.displayMode = "english";
+} else if (type === 7) {
+    quizData.type        = "量子結構：價電子數"; 
+    quizData.question    = [ `${s} 的「價電子數」共有多少個？`, `${s} 最外層殼層的電子數為何？` ][Math.floor(Math.random() * 2)];
+    quizData.answer      = QUIZ_HELPER.getValence(parsed, target).toString();
+    quizData.displayMode = "number";
+} else if (type === 8) {
+    quizData.type        = "量子結構：未成對電子"; 
+    quizData.question    = [ `${s} 在基態下，其「未成對電子」（單電子）總數為？`, `${s} 基態原子中，填充在軌域中不成對的電子數為何？` ][Math.floor(Math.random() * 2)];
+    quizData.answer      = QUIZ_HELPER.getUnpaired(parsed).toString();
+    quizData.displayMode = "number";
+} else if (type === 9) {
+    const isTransition   = target.iupac >= 3 && target.iupac <= 12;
+    const maxN           = Math.max(...parsed.map(o => o.n));
+    if (Math.random() > 0.5) {
+        let availOrbs = ['s'];
+        if (QUIZ_HELPER.getOrbitalSum(parsed, 'p') > 0) availOrbs.push('p');
+        if (QUIZ_HELPER.getOrbitalSum(parsed, 'd') > 0) availOrbs.push('d');
+        const orb            = availOrbs[Math.floor(Math.random() * availOrbs.length)];
+        quizData.type        = `量子結構：${orb.toUpperCase()} 軌域總數統計`;
+        quizData.question    = [ `在 ${s} 的基態電子組態中，填充在「所有能階」之 ${orb} 軌域的電子總數為何？`, `${s} 基態原子內有多少顆電子位於 ${orb} 軌域中（不分能階）？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = QUIZ_HELPER.getOrbitalSum(parsed, orb).toString();
+    } else {
+        let vOrb = 's', vCount = 0, orbName = "";
+        if (isTransition) {
+            const askD = Math.random() > 0.5;
+            if (askD) { vOrb = 'd'; vCount = parsed.find(o => o.n === (maxN - 1) && o.type === 'd')?.count || 0; orbName = `(n-1)d`; }
+            else { vOrb = 's'; vCount = parsed.find(o => o.n === maxN && o.type === 's')?.count || 0; orbName = `ns`; }
+        } else {
+            const hasP = parsed.some(o => o.n === maxN && o.type === 'p');
+            const askP = hasP && Math.random() > 0.5;
+            if (askP) { vOrb = 'p'; vCount = parsed.find(o => o.n === maxN && o.type === 'p')?.count || 0; orbName = `np`; }
+            else { vOrb = 's'; vCount = parsed.find(o => o.n === maxN && o.type === 's')?.count || 0; orbName = `ns`; }
+        }
+        quizData.type        = `量子結構：價電子能階統計`;
+        quizData.question    = [ `根據價電子定義，${s} 填充在「${orbName}」軌域中的電子數為何？`, `針對 ${s} 的價電子分佈，其中有多少顆電子位於 ${orbName} 軌域？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = vCount.toString();
+    }
+    quizData.displayMode = "number";
+} else if (type === 10) {
+    quizData.type        = "邏輯判斷：同族元素"; 
+    quizData.question    = `下列哪一個元素與 ${s} 位於週期表的「同一族」？`;
+    const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+    quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
+    quizData.displayMode = "symbol";
+} else if (type === 11) {
+    quizData.type        = "位置定位：區塊 (Block)";
+    const i = target.iupac; let blockName = "f";
+    if (target.s === "He") blockName = "s";
+    else if (typeof i === 'number') { if (i <= 2) blockName = "s"; else if (i >= 13) blockName = "p"; else blockName = "d"; }
+    quizData.question    = `元素 ${s} 屬於週期表中的哪一個區塊 (Block)？`;
+    quizData.answer      = `${blockName} 區`;
+    quizData.displayMode = "raw";
+} else if (type === 12 || type === 13) {
+    let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
+    
+    // 修正：將 + / - 包在 span 中單獨放大，並處理 1 隱藏
+    let signHTML = "";
+    if (charge !== 0) {
+        let val = Math.abs(charge);
+        let sign = charge > 0 ? "+" : "-";
+        let styledSign = `<span class="charge-sign">${sign}</span>`;
+        signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
+    }
+    
+    const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
+    if (type === 12) {
+        quizData.type     = "計算：電子總數";
+        quizData.question = `${particle} 的「核外電子總數」為何？`;
+        quizData.answer   = (target.z - charge).toString();
+    } else {
+        quizData.type     = "計算：質子總數";
+        quizData.question = `${particle} 的「原子核內質子數」為何？`;
+        quizData.answer   = target.z.toString();
+    }
+    quizData.displayMode = "number";
+} else if (type === 14) {
+    const enPool         = window.quizState.pool.filter(el => QUIZ_HELPER.getEN(el.s) !== null);
+    let sel              = [...enPool].sort(() => 0.5 - Math.random()).slice(0, 4);
+    let winner           = sel.reduce((p, c) => (QUIZ_HELPER.getEN(c.s) > QUIZ_HELPER.getEN(p.s)) ? c : p);
+    quizData.type        = "性質趨勢：電負度比較";
+    quizData.question    = `下列哪一個原子的「電負度」最大？`;
+    quizData.answer      = winner.s;
+    quizData.forcedOpts  = sel.map(el => el.s);
+    quizData.displayMode = "symbol";
+} else if (type === 15) {
+    quizData.type        = "邏輯判斷：化學性質相似"; 
+    quizData.question    = `根據電子組態特徵，下列哪一個元素與 ${s} 的「化學性質」最相似？`;
+    const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+    quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
+    quizData.displayMode = "symbol";
+} else if (type === 16) {
+    quizData.type        = "識別校準：質子數逆推";
+    quizData.question    = `原子核內質子總數為 ${target.z} 的元素符號為何？`;
+    quizData.answer      = target.s;
+    quizData.displayMode = "symbol";
+} else if (type === 17) {
+    let c = Math.floor(Math.random() * 5) - 2;
+    const eCount = target.z - c;
+    quizData.type = "計算：電子數逆推";
+    quizData.question = `總電子數為 ${eCount} 的粒子，可能為下列何者？`;
+    
+    if (c === 0) {
+        quizData.answer = target.s;
+    } else {
+        let val = Math.abs(c);
+        let sign = c > 0 ? "+" : "-";
+        let styledSign = `<span class="charge-sign">${sign}</span>`;
+        // 修正：答案按鈕也使用相同的結構以確保美觀一致
+        quizData.answer = `${target.s}<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
+    }
+    quizData.displayMode = "ion";
+} else if (type === 18) {
+    let c = Math.floor(Math.random() * 5) - 2;
+    const eCount = target.z - c;
+    const signHTML = c === 0 ? "" : `<sup>${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign">${c > 0 ? "+" : "-"}</span></sup>`;
+    const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
+    quizData.type = "邏輯判斷 : 等電子序列";
+    quizData.question = `下列哪一個粒子與 [ ${target.s}${signHTML} ] 具備相同的電子排列？`;
+    if (partner) {
+        // 使用精確匹配，只替換標籤內的正負號，不破壞 class 名稱
+        quizData.answer = partner.replace(/<sup>(\d+)?([\+\-])<\/sup>/, (match, num, sign) => {
+            return `<sup>${(num === "1" || !num) ? "" : num}<span class="charge-sign">${sign}</span></sup>`;
+        });
+    } else {
+        quizData.answer = "無";
+    }
+    quizData.displayMode = "ion";
+}
 
     // 4. UI 視覺標準化與渲染
     const questionEl = document.getElementById('quiz-question');
     document.getElementById('quiz-type').textContent = `> TYPE: ${quizData.type}`;
     
     // 正則渲染：優化 spdf 數字與電荷上標
-    let htmlQ = quizData.question.replace(/([spdf])(\d+)/g, '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.32em; font-weight: normal;">$2</sup>');
+    let htmlQ = quizData.question.replace(/([spdf])(\d+)/g, 
+    '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">$2</sup>');
     // 如果是電荷符號 (如 2+ 或 -)，處理其上標內的大小
     htmlQ = htmlQ.replace(/(\d*[+-])(?=<\/sup>)/g, '<span style="font-size: 0.85em;">$1</span>');
     
@@ -4732,69 +4897,58 @@ window.renderNextQuestion = function() {
     questionEl.style.fontSize = "1.7rem";
 
     // 5. 智慧選項生成 (建立 opts 陣列)
-    let opts = [quizData.answer];
-
-    if (type === 4) {
-        // 元素分類選項
-        const allTypes = [...new Set(ELECTRON_DATA.map(el => el.type))].filter(t => t && t !== quizData.answer);
-        while (opts.length < 4 && allTypes.length > 0) {
-            let t = allTypes.splice(Math.floor(Math.random() * allTypes.length), 1)[0];
-            if (!opts.includes(t)) opts.push(t);
-        }
-    } else if (type === 5) {
-        // 常溫狀態選項
-        opts = ["固態", "液態", "氣態"];
-    } else if (type === 7 || type === 8 || type === 9 || type === 12 || type === 13) {
-        // 數字類題目 (價電子、未成對、離子電子/質子數)
-        let ansNum = parseInt(quizData.answer);
-        let safetyCount = 0;
-        while (opts.length < 4 && safetyCount < 50) {
-            safetyCount++;
-            let offset = Math.floor(Math.random() * 7) - 3;
-            let r = Math.max(0, ansNum + offset).toString();
-            if (!opts.includes(r)) opts.push(r);
-        }
-        // 保底邏輯：如果隨機湊不到4個，強行遞增
-        while (opts.length < 4) {
-            opts.push((ansNum + opts.length).toString());
-        }
-    } else if (type === 11) {
-        // 區塊選項
-        opts = ["s-block", "p-block", "d-block", "f-block"];
-    } else if (type === 14) {
-        // 電負度比較：直接套用出題邏輯選好的 4 個強者
-        if (quizData.forcedOpts) opts = quizData.forcedOpts;
-    } else if (type === 17 || type === 18) {
-        // --- 粒子逆推與等電子序列：智慧生成帶電荷的符號 ---
-        let safetyCount = 0;
-        while (opts.length < 4 && safetyCount < 100) {
-            safetyCount++;
-            const randEl = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
-            const c = Math.floor(Math.random() * 5) - 2; 
-            const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
-            const pStr = `${randEl.s}<sup>${sign}</sup>`;
-            // 這裡不需要複雜的電子數判斷（因為是錯題），只需保證符號不重複即可
-            if (!opts.includes(pStr)) opts.push(pStr);
-        }
+    let opts = [quizData.answer]; 
+    if (quizData.forcedOpts) {
+    opts = quizData.forcedOpts;
     } else {
-        // 處理 0, 1, 2, 3, 6, 10, 15, 16 (身分、座標、組態、同族夥伴)
-        let cand = [...window.quizState.pool].filter(el => {
-            let val;
-            if (type === 0) val = el.cn;
-            else if (type === 6) val = el.n;
-            else val = el.s;
-            if (val === quizData.answer) return false;
-            if ((type === 10 || type === 15) && el.iupac === target.iupac) return false;
-            return true;
-        }).sort(() => 0.5 - Math.random());
+    let safety = 0;
+    while (opts.length < 4 && safety < 100) {
+        safety++;
+        let cand = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
+        let val = "";
 
-        for (let i = 0; i < cand.length && opts.length < 4; i++) {
-            let val;
-            if (type === 0) val = cand[i].cn;
-            else if (type === 6) val = cand[i].n;
-            else val = cand[i].s;
-            if (!opts.includes(val)) opts.push(val);
-        }
+        // 根據 displayMode 決定抓取什麼類型的錯誤選項
+        switch (quizData.displayMode) {
+    case "symbol": val = cand.s; break;
+    case "chinese": val = cand.cn; break;
+    case "english": val = cand.n; break;
+    case "number":
+        let offset = Math.floor(Math.random() * 11) - 5;
+        val = Math.max(0, parseInt(quizData.answer) + offset).toString();
+        break;
+    case "ion":
+                let rC = Math.floor(Math.random() * 5) - 2;
+                if (rC === 0) {
+                    val = cand.s;
+                } else {
+                    let rVal = Math.abs(rC);
+                    let rSign = rC > 0 ? "+" : "-";
+                    // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
+                    val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                }
+                break;
+            case "raw":
+                // (此處保持原有的分類/狀態邏輯)
+                const attr = type === 4 ? "type" : "state";
+                const allVals = [...new Set(ELECTRON_DATA.map(el => {
+                    if (type === 5) return QUIZ_HELPER.getCleanState(el.state);
+                    if (type === 4) return el.type;
+                    if (type === 11) {
+                        const i = el.iupac; let b = "f";
+                        if (el.s === "He") b = "s";
+                        else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
+                        return `${b} 區`;
+                    }
+                    return el.s;
+                }))];
+                val = allVals[Math.floor(Math.random() * allVals.length)];
+                break;
+            default: val = cand.s; break;
+}
+        
+        // 確保選項不重複，且不是空的
+        if (val && !opts.includes(val)) opts.push(val);
+    }
     }
 
     // 洗牌選項並渲染到按鈕
@@ -5828,6 +5982,8 @@ function closeFortuneModal() {
     }
 }
 
+
+//每日運勢操作邏輯
 function revealFortune() {
     if (isFortuneRevealed) return;
     isFortuneRevealed = true;
