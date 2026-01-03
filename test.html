@@ -1450,7 +1450,7 @@
 
             <!-- 5. [摺疊 C] 🧪 化學虛擬實驗室 (新增區塊) -->
             <details class="control-group">
-                <summary>🧪 化學虛擬實驗室</summary>
+                <summary>🧪 化學實驗室</summary>
                 
                 <div class="panel-wrapper">
                     <button class="glass-toggle-btn" 
@@ -1561,7 +1561,9 @@
 <script src="data_static.js"></script>
 <script src="data_molecules.js"></script>
 <script src="data_reactions.js"></script>
+<script src="data_substances.js"></script>
 <script src="lab_flame.js"></script>
+<script src="data_fortune.js"></script>
 <script>
 // ==========================================
 // 1. 系統初始化
@@ -3150,7 +3152,7 @@ function renderScene(time = 0) {
         const p = project(obj);
         let alpha = 1.0;
         if (isAnyHighlighted) {
-            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.1;
+            if (obj.type === 'atom') alpha = obj.isHighlighted ? 1.0 : 0.5;
             else if (obj.type === 'electron') alpha = obj.parentAtom && obj.parentAtom.isHighlighted ? 1.0 : 0.1;
         }
         const renderObj = { ...obj, px: p.x, py: p.y, pz: p.z, scale: p.scale, idx: i, alpha: alpha, z: p.z };
@@ -4865,18 +4867,30 @@ function renderSubstanceList() {
         return;
     }
 
-    SUBSTANCE_LIST.forEach(sub => {
+    // 1. 根據是否有搜尋過濾器來決定資料池
+    let targetList = [...SUBSTANCE_LIST];
+    
+    if (filter === "") {
+        // 沒搜尋時：隨機打亂並只取前 20 個
+        targetList.sort(() => 0.5 - Math.random());
+        targetList = targetList.slice(0, 20);
+    }
+
+    // 2. 開始渲染處理後的清單
+    targetList.forEach(sub => {
         const formula = (sub.formula || "").toLowerCase();
         const name = (sub.name || "").toLowerCase();
         const common = (sub.common || "").toLowerCase();
         const tags = sub.tags || [];
 
-        const isFormulaMatch = formula.startsWith(filter);
-        const isNameMatch = name.includes(filter);
-        const isCommonMatch = common.includes(filter);
-        const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
-
-        if (filter !== "" && !isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
+        // 如果有搜尋字串，執行過濾邏輯
+        if (filter !== "") {
+            const isFormulaMatch = formula.startsWith(filter);
+            const isNameMatch = name.includes(filter);
+            const isCommonMatch = common.includes(filter);
+            const isTagMatch = tags.some(tag => tag.toLowerCase().includes(filter));
+            if (!isFormulaMatch && !isNameMatch && !isCommonMatch && !isTagMatch) return;
+        }
 
         const card = document.createElement('div');
         card.className = 'element-card';
@@ -4885,44 +4899,56 @@ function renderSubstanceList() {
         
         // 核心邏輯：點擊搜尋結果執行跨分類精確跳轉
         card.onclick = () => {
-            const searchKey = sub.key; 
-            let targetMainKey = null;
-            let targetVariantID = null;
+            // 1. 立即解除焦點並隱藏鍵盤
+            if (input) input.blur();
 
-            // 1. 在所有分子的變體庫中查找匹配
-            for (let mKey in MOLECULE_DB) {
-                const root = MOLECULE_DB[mKey];
-                if (root.variants) {
-                    for (let vID in root.variants) {
-                        if (vID === searchKey) {
-                            targetMainKey = mKey;
-                            targetVariantID = vID;
-                            break;
-                        }
-                    }
-                }
-                if (targetMainKey) break;
+            // 2. [關鍵修正] 立即強制關閉濾鏡與清空內容，徹底釋放 GPU 記憶體
+            const modal = document.getElementById('substance-modal');
+            const listContainer = document.getElementById('substanceListContainer');
+            if (modal) {
+                modal.style.backdropFilter = "none"; // 立即拔掉最耗能的濾鏡
+                modal.style.display = "none";       // 立即讓它從渲染樹消失
             }
+            if (listContainer) listContainer.innerHTML = ""; // 立即清空長清單，釋放 DOM 壓力
 
-            // 2. 執行載入邏輯
-            if (targetMainKey && targetVariantID) {
-                window.currentKey = targetMainKey;
-                window.currentVariantKey = targetVariantID;
-                loadMolecule(targetMainKey, targetVariantID);
-            } else {
-                const rootKey = searchKey.split('|')[0];
-                if (MOLECULE_DB[rootKey]) {
-                    loadMolecule(rootKey);
-                }
-            }
-
-            // 3. UI 狀態收尾
-            closeSubstanceModal();
+            // 3. 收合手機面板
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
                 if (panel) panel.style.transform = 'translateY(70vh)';
                 document.body.classList.remove('simulate-mobile-open');
             }
+
+            // 4. 給予足夠的延遲 (250ms)，確保 GPU 已經完全清空 Modal 記憶體
+            setTimeout(() => {
+                const searchKey = sub.key; 
+                let targetMainKey = null;
+                let targetVariantID = null;
+
+                for (let mKey in MOLECULE_DB) {
+                    const root = MOLECULE_DB[mKey];
+                    if (root.variants) {
+                        for (let vID in root.variants) {
+                            if (vID === searchKey) {
+                                targetMainKey = mKey;
+                                targetVariantID = vID;
+                                break;
+                            }
+                        }
+                    }
+                    if (targetMainKey) break;
+                }
+
+                if (targetMainKey && targetVariantID) {
+                    window.currentKey = targetMainKey;
+                    window.currentVariantKey = targetVariantID;
+                    loadMolecule(targetMainKey, targetVariantID);
+                } else {
+                    const rootKey = searchKey.split('|')[0];
+                    if (MOLECULE_DB[rootKey]) {
+                        loadMolecule(rootKey);
+                    }
+                }
+            }, 250);
         };
 
         const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
@@ -5803,6 +5829,8 @@ function closeFortuneModal() {
     }
 }
 
+
+//每日運勢操作邏輯
 function revealFortune() {
     if (isFortuneRevealed) return;
     isFortuneRevealed = true;
