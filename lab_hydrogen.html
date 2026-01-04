@@ -201,13 +201,14 @@
         }
 
         .data-tag {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: var(--pearl-gold);
             font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 12px;
+            letter-spacing: 1px;
+            margin-bottom: 0; /* 取消間距 */
             display: flex;
             align-items: center;
+            white-space: nowrap;
         }
 
         .data-tag::before {
@@ -222,8 +223,11 @@
         .data-value-wrapper {
             display: flex;
             align-items: center;
+            justify-content: space-between; /* 讓數值與躍遷標籤分居左右 */
             gap: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 5px; /* 縮小底部間距 */
+            border-bottom: 1px solid rgba(222, 184, 135, 0.1);
+            padding-bottom: 8px;
         }
 
         .color-dot {
@@ -895,10 +899,12 @@
                 const color = nmToRGB(nm);
                 html += `
                     <div class="analysis-card">
-                        <div class="data-tag">躍遷: n=${n} → n=${s.low}</div>
                         <div class="data-value-wrapper">
-                            <div class="color-dot" style="background:${color}; box-shadow: 0 0 10px ${color};"></div>
-                            <div class="data-value">${nm.toFixed(1)}<span style="font-size:1.4rem; margin-left:4px; font-weight:400; opacity:0.7;">nm</span></div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="color-dot" style="background:${color}; box-shadow: 0 0 10px ${color};"></div>
+                                <div class="data-value">${nm.toFixed(1)}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                            </div>
+                            <div class="data-tag">n=${n} → n=${s.low}</div>
                         </div>
                         <div class="data-scroll-area">
                             <div class="math-block">
@@ -927,25 +933,26 @@
             const nmLimit = 91.2 / limitFactor;
             html += `
                 <div class="analysis-card" style="border: 1px dashed var(--pearl-gold);">
-                    <div class="data-tag">極限: n=∞ → n=${s.low}</div>
                     <div class="data-value-wrapper">
-                        <div class="color-dot" style="background:white; box-shadow: 0 0 10px white;"></div>
-                        <div class="data-value">${nmLimit.toFixed(1)}<span style="font-size:1.4rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="color-dot" style="background:white; box-shadow: 0 0 10px white;"></div>
+                            <div class="data-value">${nmLimit.toFixed(1)}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                        </div>
+                        <div class="data-tag">n=∞ → n=${s.low}</div>
                     </div>
                     <div class="data-scroll-area">
                         <div class="math-block">
                             <div class="math-row">
-                                <span class="math-label">能量：</span>1312 × <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span> = ${kjLimit.toFixed(1)} kJ/mol
+                                <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${kjLimit.toFixed(1)} kJ/mol</span>
                             </div>
                             <div class="math-row">
-                                <span class="math-label">頻率：</span>3.29 × 10<span class="math-exp">15</span> × <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span> = ${freqLimit.toFixed(4)} × 10<span class="math-exp">15</span> Hz
+                                <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${freqLimit.toFixed(4)} × 10<span class="math-exp">15</span> Hz</span>
                             </div>
                             <div class="math-row">
-                                <span class="math-label">波長：</span>91.2 × <div class="math-frac" style="transform: translateY(12px);">
+                                <span class="math-label">波長：</span><span class="math-op">91.2 × </span><div class="math-frac" style="transform: translateY(12px);">
                                     <span class="math-num">1</span>
-                                    <div class="math-line"></div>
-                                    <div class="math-den"><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span></div>
-                                </div> = ${nmLimit.toFixed(1)} nm
+                                    <div class="math-den"><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span></div>
+                                </div> <span class="math-op">= ${nmLimit.toFixed(1)} nm</span>
                             </div>
                         </div>
                     </div>
