@@ -36,9 +36,9 @@
         }
 
         .header {
-            height: 70px;
-            padding: 0 40px;
-            background: rgba(0, 0, 0, 0.2);
+            height: 28px; /* 高度縮減 */
+            padding: 0 15px;
+            background: rgba(0, 0, 0, 0.5);
             border-bottom: 1px solid var(--pearl-border);
             backdrop-filter: var(--glass-blur);
             display: flex;
@@ -49,7 +49,7 @@
 
         .system-title {
             font-weight: 700;
-            font-size: 1.3rem;
+            font-size: 0.75rem; /* 字體同步縮減 */
             letter-spacing: -0.5px;
             color: var(--pearl-text);
             font-family: 'Inter', sans-serif;
@@ -559,8 +559,8 @@
             .main-layout { 
                 flex: 1; 
                 display: grid !important; 
-                grid-template-columns: 160px 1fr; /* 從 135px 增加到 160px */
-                grid-template-rows: 1.8fr 1.2fr; 
+                grid-template-columns: 160px 1fr; 
+                grid-template-rows: 2.1fr 1.4fr; /* 僅將節省空間移至第二行，主畫面維持足夠高度 */
                 overflow: hidden;
             }
 
@@ -608,11 +608,16 @@
             /* 中央畫面區域：填滿 grid row */
             .viewport { 
                 grid-row: 1; grid-column: 2;
-                height: 100%; width: 100%;
-                display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px;
-                position: relative;
+                height: 100% !important; 
+                width: 100% !important;
+                display: flex !important; 
+                align-items: stretch !important; /* 強制內容拉伸填滿高度 */
+                justify-content: center;
+                padding: 0 !important;
                 overflow: hidden;
             }
+            #energy-level-stage { height: 100% !important; width: 100% !important; }
+            #main-svg { height: 100% !important; width: 100% !important; }
             /* 調整本生燈縮放 */
             .bunsen-burner { transform: scale(0.75); transform-origin: center bottom; margin: 0 auto; }
             
@@ -695,11 +700,11 @@
                 white-space: normal; /* 自動分行 */
             }
 
-            /* 4. 下方光譜佔 10% */
+            /* 4. 極致縮小底部光譜 */
             #bottom-spectra { 
-                height: 100px; 
-                padding: 10px 15px !important; 
-                border-top: 1px solid var(--hud-cyan);
+                height: 60px; /* 高度由 85 降至 60 */
+                padding: 0px 15px 5px 15px !important; /* 移除頂部 padding 以減少黑邊 */
+                border-top: 1px solid var(--pearl-border);
                 background: #000;
                 flex-shrink: 0;
                 z-index: 10;
@@ -709,7 +714,7 @@
                 height: 40px !important; 
                 position: relative !important; 
                 z-index: 1 !important; 
-                background: #111 !important;
+                /* 移除 background: #111 !important 以允許 JS 顯色 */
                 border: 1px solid #444;
                 /* 強制啟動 GPU 加速，防止 iPhone 渲染遺失 */
                 transform: translateZ(0);
@@ -739,7 +744,7 @@
 <div class="header">
     <div class="system-title">
         <div style="width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(to right, var(--pearl-gold), var(--pearl-gold-dark));"></div>
-        <span>QUANTUM SPECTRA <small>ATOMIC</small></span>
+        <span>QUANTUM SPECTRA</span>
     </div>
 </div>
 <div class="main-layout">
@@ -972,14 +977,14 @@
         const vMin = 90; 
         const vMax = 2500; 
 
-        // --- 1. 背景與容器設定 ---
+        // --- 1. 背景與容器設定 (恢復原始暗色調版本，避免過亮) ---
         let dynamicBg = isWave ? 
             `linear-gradient(to right, #080010 0%, #000033 15%, #002244 20%, #004422 30%, #444400 35%, #440000 45%, #1a0505 70%, #000000 100%)` : 
             '#051622';
         
         bar.innerHTML = `
             <div class="spectrum-container">
-                <div class="spectrum-labels" style="margin-bottom: 30px; font-family: 'Inter', sans-serif;">
+                <div class="spectrum-labels" style="margin-bottom: 2px; font-family: 'Inter', sans-serif;">
                     <div class="label-uv" style="text-align: left; color: #a855f7;">(UV)</div>
                     <div class="label-vis" style="text-align: center; color: #22c55e;">(VISIBLE)</div>
                     <div class="label-ir" style="text-align: right; color: #ef4444;">(IR)</div>
@@ -1064,10 +1069,28 @@
     function drawEnergyLevels(activeKey) {
         const levelLayer = document.getElementById('levels-layer');
         const transLayer = document.getElementById('transitions-layer');
-        if (!levelLayer || !transLayer) return;
+        const svgEl = document.getElementById('main-svg');
+        if (!levelLayer || !transLayer || !svgEl) return;
         levelLayer.innerHTML = ''; transLayer.innerHTML = '';
         
-        const getY = (n) => (n === Infinity) ? 50 : ([0, 520, 320, 220, 165, 130, 105, 90, 80][n] || 50);
+        const isMobile = window.innerWidth <= 1024;
+        
+        // 核心修正：手機版使用超高畫布並強制「不固定比例」拉伸
+        if (isMobile) {
+            svgEl.setAttribute('viewBox', '0 0 800 1100'); 
+            svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet'); 
+        } else {
+            svgEl.setAttribute('viewBox', '0 0 800 600');
+            svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        }
+
+        const pcLevels = [0, 520, 320, 220, 165, 130, 105, 90, 80];
+        const mobileLevels = [0, 1010, 540, 340, 240, 180, 140, 110, 90];
+        
+        const currentLevels = isMobile ? mobileLevels : pcLevels;
+        const limitY = isMobile ? 50 : 50; 
+
+        const getY = (n) => (n === Infinity) ? limitY : (currentLevels[n] || limitY);
         const eV_labels = ["", "-13.60 eV", "-3.40 eV", "-1.51 eV", "-0.85 eV", "-0.54 eV", "-0.38 eV", "-0.28 eV", "-0.21 eV"];
 
         // 1. 繪製珍珠風格能階線
