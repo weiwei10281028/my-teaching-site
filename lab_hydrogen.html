@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光譜實驗室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --pearl-bg: #051622;
+            --pearl-gold: #deb887;
+            --pearl-gold-dark: #c4a484;
+            --pearl-panel: rgba(5, 35, 40, 0.75);
+            --pearl-text: #ced4da;
+            --pearl-text-dim: #7a8a8c;
+            --pearl-border: rgba(222, 184, 135, 0.15);
+            --glass-blur: blur(25px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            background-color: var(--pearl-bg);
+            background-image: 
+                radial-gradient(circle at 50% -20%, #0a3d42 0%, transparent 60%),
+                radial-gradient(circle at 0% 100%, #042124 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--pearl-text);
+            font-family: 'Inter', 'Noto Serif TC', serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 70px;
+            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--pearl-border);
+            backdrop-filter: var(--glass-blur);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .system-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+            color: var(--pearl-text);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .system-title small {
+            font-weight: 300;
+            opacity: 0.5;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .wavelength-label {
+            color: var(--pearl-text) !important; 
+            font-size: 1rem !important; 
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .info-btn {
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--hud-cyan);
+            border: 1px solid var(--hud-cyan);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            transition: 0.3s;
+            font-family: 'serif';
+            font-style: italic;
+            font-weight: bold;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        #cobalt-popup {
+            display: none;
+            position: absolute;
+            left: 390px;
+            top: 150px;
+            width: 320px;
+            background: #0f172a;
+            border: 2px solid var(--hud-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1999;
+            background: transparent;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .side-panel {
+            width: 380px;
+            background: var(--pearl-panel);
+            backdrop-filter: var(--glass-blur);
+            border-right: 1px solid var(--pearl-border);
+            padding: 30px 25px; /* 修正：增加左右間距的平衡感 */
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+        }
+
+        /* 全新精品數據卡片風格 */
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--pearl-border);
+            border-radius: 20px;
+            padding: 16px 20px;
+            width: 360px; /* 電腦版加寬以容納算式 */
+            height: 210px; 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0; 
+            transition: 0.4s var(--apple-ease);
+        }
+        /* 模擬 LaTeX 分式樣式 */
+        .math-block { font-family: 'Inter', 'Noto Serif TC', serif; font-style: italic; font-size: 0.85rem; margin-top: 10px; color: #e2e8f0; }
+        .math-row { display: flex; align-items: center; margin-bottom: 15px; white-space: nowrap; height: 50px; } /* 固定高度確保對齊 */
+        .math-label { min-width: 45px; color: var(--pearl-gold); font-weight: bold; font-style: normal; }
+        
+        /* 核心分式結構 */
+        .math-frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 4px; }
+        .math-num { border-bottom: 1.5px solid #fff; padding: 0 4px 2px 4px; width: 100%; text-align: center; line-height: 1; }
+        .math-den { padding: 5px 3px 0 3px; width: 100%; text-align: center; line-height: 1; }
+        
+        /* 指數樣式：徹底分離，不帶任何邊框 */
+        .math-exp { font-size: 0.65rem; position: relative; top: -0.5em; margin-left: 3px; font-style: normal; border: none !important; text-decoration: none !important; }
+        
+        /* 括號樣式：垂直延展 */
+        .math-parens { font-size: 2rem; font-weight: 100; vertical-align: middle; padding: 0 2px; line-height: 1; }
+
+        .data-value-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px; /* 縮小間距 */
+        }
+
+        .data-value {
+            font-size: 1.8rem; /* 配合方框縮小字體 */
+            font-weight: 700;
+            color: var(--pearl-text);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        /* 內容捲動區與細滑桿設計 */
+        .data-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 8px;
+            padding-bottom: 10px;
+            margin-top: 10px;
+        }
+
+        /* 午夜珍珠風格細滑桿 */
+        .data-scroll-area::-webkit-scrollbar {
+            width: 3px;
+        }
+        .data-scroll-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .data-scroll-area::-webkit-scrollbar-thumb {
+            background: var(--pearl-gold);
+            border-radius: 10px;
+            opacity: 0.3;
+        }
+
+        .data-tag {
+            font-size: 0.95rem;
+            color: var(--pearl-gold);
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .data-tag::before {
+            content: "";
+            width: 3px;
+            height: 14px;
+            background: var(--pearl-gold);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .data-value-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .data-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--pearl-text);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -1px;
+        }
+
+        .data-unit {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--pearl-text-dim);
+            margin-left: 5px;
+        }
+
+        .orbital-transition {
+            font-size: 1rem !important;
+            color: var(--pearl-gold);
+            opacity: 0.7;
+            font-family: 'Inter', sans-serif;
+            margin-left: 12px;
+            font-weight: 300;
+            background: rgba(222, 184, 135, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .data-details {
+            font-size: 0.9rem;
+            color: var(--pearl-text-dim);
+            line-height: 1.8;
+            font-family: 'Inter', sans-serif;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 12px;
+        }
+
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #0a242d 0%, #051622 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0;
+            transition: background 0.8s var(--apple-ease);
+        }
+        /* 實體鈷玻璃片 */
+        #cobalt-lens-overlay {
+            position: absolute;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px; height: 200px; /* 玻璃片大小 */
+            background: rgba(20, 40, 200, 0.4);
+            border: 6px solid #1e293b; /* 專業金屬邊框 */
+            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 
+                        inset 0 0 30px rgba(0, 30, 150, 0.3);
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            backdrop-filter: brightness(0.7) contrast(1.4) saturate(1.8);
+        }
+        /* 玻璃標籤：簡化為 Co */
+        .lens-status {
+            position: absolute;
+            bottom: 10px; right: 10px; /* 移到右下角 */
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .data-panel {
+            width: 420px;
+            background: var(--panel-glass);
+            border-left: 2px solid rgba(0, 242, 255, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center; /* 電腦版水平置中，解決留白 */
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        #bottom-spectra {
+            height: 180px; 
+            border-top: 1px solid var(--pearl-border); 
+            background: rgba(5, 22, 34, 0.9); 
+            padding: 30px; 
+            flex-shrink: 0;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: var(--hud-cyan); border-radius: 3px; }
+
+        .hud-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--pearl-border);
+            padding: 22px;
+            border-radius: 24px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .card-label {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1rem;
+            color: var(--pearl-gold);
+            font-weight: 700;
+            margin-bottom: 18px;
+            border-left: 3px solid var(--pearl-gold);
+            letter-spacing: 1px;
+            padding-left: 10px;
+        }
+
+        .ion-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .s33-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--pearl-border);
+            padding: 16px 20px;
+            border-radius: 20px;
+            color: var(--pearl-text);
+            font-size: 1rem;
+            font-family: 'Noto Serif TC', serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.4s var(--apple-ease);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .s33-btn small {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.7rem; /* 關鍵：縮小字體 */
+            opacity: 0.5;      /* 降低透明度讓層次更分明 */
+            letter-spacing: 0.8px; /* 稍微拉開字距增加高級感 */
+            margin-left: 10px;
+        }
+        .s33-btn:hover, .s33-btn.active {
+            background: linear-gradient(135deg, var(--pearl-gold), var(--pearl-gold-dark));
+            color: #051622;
+            box-shadow: 0 10px 25px rgba(222, 184, 135, 0.2);
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+        /* 珍珠午夜風格切換開關 */
+        .mode-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--pearl-border);
+            padding: 12px 18px;
+            border-radius: 50px;
+            margin-bottom: 10px;
+        }
+        .toggle-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--pearl-text-dim);
+            transition: 0.3s;
+            letter-spacing: 1px;
+        }
+        .toggle-label.active {
+            color: var(--pearl-gold);
+            text-shadow: 0 0 10px rgba(222, 184, 135, 0.5);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 70px;
+            height: 34px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(5, 35, 40, 0.8);
+            border: 1px solid var(--pearl-border);
+            transition: .4s var(--apple-ease);
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "λ";
+            height: 26px; width: 26px;
+            left: 4px; bottom: 3px;
+            background: white;
+            box-shadow: 0 0 15px rgba(255,255,255,0.8);
+            transition: .4s var(--apple-ease);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #051622;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        input:checked + .slider {
+            background-color: rgba(222, 184, 135, 0.2);
+            border-color: var(--pearl-gold);
+        }
+        input:checked + .slider:before {
+            transform: translateX(34px);
+            content: "E";
+            background: var(--pearl-gold);
+            box-shadow: 0 0 15px rgba(222, 184, 135, 0.8);
+        }
+
+        .bunsen-burner { position: relative; width: 160px; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-top: 80px; }
+        .chimney { width: 28px; height: 160px; background: linear-gradient(90deg, #475569, #cbd5e1, #475569); border-radius: 2px 2px 0 0; z-index: 5; border: 1px solid rgba(0,0,0,0.3); }
+        .air-collar { width: 34px; height: 32px; background: #334155; margin-top: -2px; z-index: 6; display: flex; justify-content: center; align-items: center; gap: 4px; border-radius: 2px; }
+        .air-hole { width: 8px; height: 18px; background: #000; border-radius: 4px; }
+        .burner-stem { width: 18px; height: 30px; background: #1e293b; margin-top: -2px; z-index: 4; }
+        .base { width: 150px; height: 18px; background: #0f172a; border-radius: 75px 75px 4px 4px; z-index: 3; border-bottom: 4px solid #000; }
+        .gas-inlet-tube { display: none; } /* 移除紅框橫條 */
+
+        .flame-vfx {
+            position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%);
+            width: 45px; height: 150px; 
+            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+            mix-blend-mode: screen; pointer-events: none; filter: blur(6px);
+            transition: all 0.2s ease-out;
+            animation: flame-wiggle 0.15s infinite alternate ease-in-out, flame-pulse 0.8s infinite alternate ease-in-out;
+        }
+        .flame-inner { 
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 40%; height: 50%; 
+            background: linear-gradient(to top, #fff, transparent);
+            border-radius: 50%; opacity: 0.8; filter: blur(2px);
+        }
+        @keyframes flame-wiggle {
+            0% { transform: translateX(-51%) scaleX(1) skewX(0deg); }
+            100% { transform: translateX(-49%) scaleX(1.02) skewX(1deg); }
+        }
+        @keyframes flame-pulse {
+            from { transform: translateX(-50%) scaleX(1) scaleY(1); opacity: 0.85; }
+            to { transform: translateX(-50%) scaleX(1.08) scaleY(1.05); opacity: 1; }
+        }
+
+        .spectrum-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .spectrum-labels { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .label-uv { color: #a855f7; width: 22.5%; text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 2px; }
+        .label-vis { color: #22c55e; width: 50%; text-align: center; border-bottom: 2px solid #22c55e; padding-bottom: 2px; }
+        .label-ir { color: #ef4444; width: 27.5%; text-align: center; border-bottom: 2px solid #ef4444; padding-bottom: 2px; }
+        
+        .spectrum-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4;
+            background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%);
+        }
+
+        .spectrum-ui { width: 100%; height: 50px; background: #000; border: 2px solid #334155; position: relative; }
+        .line-marker { position: absolute; width: 2px; height: 100%; box-shadow: 0 0 15px currentColor; z-index: 10; }
+        .line-label {
+            position: absolute;
+            top: -24px; /* 移到上方 */
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            font-size: 0.75rem;
+            color: var(--pearl-text-dim);
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+            pointer-events: none;
+        }
+        /* 雙波浪斷裂符號 */
+        .energy-break {
+            position: absolute;
+            left: 55%;
+            top: -10%;
+            width: 12px;
+            height: 120%;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+        }
+        .energy-break::before, .energy-break::after {
+            content: "";
+            width: 2.5px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.35); /* 白偏灰 */
+            border-radius: 5px;
+            transform: skewX(-15deg); 
+        }
+        /* 移除標題橫線並抬高 */
+        .label-uv, .label-vis, .label-ir { border-bottom: none !important; padding-bottom: 5px; }
+
+        /* 手機版優化 CSS */
+        @media (max-width: 1024px) {
+            body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+            /* 修正切換開關在手機側邊欄的排版 */
+            .mode-toggle-container {
+                padding: 12px 5px !important;
+                flex-direction: column !important; /* 改為垂直排列避免擠壓 */
+                gap: 8px;
+                border-radius: 15px !important;
+            }
+            .switch { transform: scale(0.9); }
+            .toggle-label { font-size: 0.75rem !important; }
+
+            /* 修正下方光譜高度，解決標籤被切掉與比例太窄的問題 */
+            #bottom-spectra { 
+                height: 165px !important; 
+                padding: 5px 15px 15px 15px !important; 
+                display: flex;
+                align-items: flex-end; 
+            }
+            .spectrum-container { height: 140px !important; width: 100%; }
+            .spectrum-ui { height: 35px !important; }
+            .line-marker { width: 0.3px !important; } /* 這裡調整手機版譜線寬度 */
+            
+            /* 1. 調整側邊欄寬度，給按鈕更多空間 */
+            .main-layout { 
+                flex: 1; 
+                display: grid !important; 
+                grid-template-columns: 160px 1fr; /* 從 135px 增加到 160px */
+                grid-template-rows: 1.8fr 1.2fr; 
+                overflow: hidden;
+            }
+
+            /* 2. 讓右上角離子名稱自動縮放，不超出螢幕 */
+            #target-name { 
+                font-size: 1.4rem !important; /* 原 1.8rem 太大，縮小至 1.4rem */
+                white-space: nowrap;
+                position: absolute;
+                top: 25px; /* 增加頂部間距 */
+                right: 25px; /* 增加右側間距 */
+                font-style: italic;
+                font-family: 'Noto Serif TC', serif;
+                letter-spacing: 0.5px;
+            }
+
+            /* 左側按鈕區域：填滿 grid row */
+            .side-panel { 
+                grid-row: 1; grid-column: 1;
+                width: 100% !important; height: 100%;
+                padding: 15px 10px !important; /* 減少內距 */
+                gap: 12px !important;
+                background: rgba(5, 22, 34, 0.8);
+            }
+            
+            /* 縮小控制項卡片 */
+            .side-panel .hud-card {
+                padding: 12px 8px !important;
+                border-radius: 16px !important;
+            }
+            .side-panel .ion-matrix { grid-template-columns: 1fr; gap: 8px; }
+            .s33-btn {
+                padding: 8px 10px !important;
+                font-size: 0.85rem !important;
+                flex-direction: column; /* 改為垂直排列 */
+                align-items: flex-start !important;
+                gap: 2px;
+            }
+            .s33-btn small {
+                font-size: 0.55rem !important;
+                margin-left: 0 !important;
+                display: block; /* 確保小字換行 */
+                opacity: 0.7;
+            }
+
+            /* 中央畫面區域：填滿 grid row */
+            .viewport { 
+                grid-row: 1; grid-column: 2;
+                height: 100%; width: 100%;
+                display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px;
+                position: relative;
+                overflow: hidden;
+            }
+            /* 調整本生燈縮放 */
+            .bunsen-burner { transform: scale(0.75); transform-origin: center bottom; margin: 0 auto; }
+            
+            /* 修正：將外框定位，內文字體設定樣式即可，避免雙重絕對定位衝突 */
+            #target-container {
+                display: none !important;
+            }
+            .data-panel .analysis-card {
+                height: 90% !important;
+                width: 420px !important;
+            }
+
+            #target-name { 
+                font-family: 'Noto Serif TC', serif;
+                font-size: 1.2rem !important; /* 精品級小字號，防止溢出 */
+                font-weight: 500; 
+                font-style: italic;
+                color: var(--pearl-text);
+                text-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+                white-space: nowrap; 
+                display: block;
+            }
+
+            /* 3. 下方數據分析卡片：確保橫向滑動且垂直居中 */
+            .data-panel { 
+                grid-row: 2; grid-column: 1 / span 2;
+                height: 100% !important; width: 100% !important; 
+                border-left: none; 
+                border-top: 1px solid var(--pearl-border);
+                padding: 10px 15px !important; 
+                display: flex !important; 
+                flex-direction: row !important; 
+                justify-content: flex-start !important;
+                align-items: center !important; /* 手機版維持垂直居中 */
+                overflow-x: auto !important; 
+                overflow-y: hidden !important;
+                gap: 15px !important; 
+                background: #030712;
+            }
+
+            .data-panel .analysis-card {
+                height: 90% !important; /* 在手機版容器內佔比一致 */
+                width: 420px !important; /* 手機版略窄一點點更美觀 */
+            }
+            .data-panel .hud-card { 
+                flex: 0 0 350px !important; /* 原 240px * 1.3 = 312px */
+                height: 100% !important; 
+                padding: 18px !important; 
+                border-radius: 20px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important; /* 讓內部控制滾動 */
+            }
+
+            /* 強化內部文字滾動 */
+            .data-details, .card-content {
+                overflow-y: auto !important;
+                flex: 1;
+                padding-right: 5px;
+            }
+
+            /* 規格化標題：大小與目前的"顯色原理"一致 */
+            .data-panel .card-label {
+                font-size: 1rem !important; 
+                margin-bottom: 12px !important;
+                border-left: 3px solid var(--pearl-gold);
+                padding-left: 10px !important;
+                flex-shrink: 0; /* 標題不縮放 */
+            }
+
+            /* 規格化內容容器：可上下滑動，文字自動換行 */
+            .card-content {
+                font-size: 1rem !important; 
+                color: #eee;
+                line-height: 1.5;
+                overflow-y: auto !important; /* 內容過長可滑動 */
+                flex: 1; /* 佔滿剩餘高度 */
+                padding-right: 5px;
+                text-align: justify;
+                white-space: normal; /* 自動分行 */
+            }
+
+            /* 4. 下方光譜佔 10% */
+            #bottom-spectra { 
+                height: 100px; 
+                padding: 10px 15px !important; 
+                border-top: 1px solid var(--hud-cyan);
+                background: #000;
+                flex-shrink: 0;
+                z-index: 10;
+                position: relative;
+            }
+            .spectrum-ui { 
+                height: 40px !important; 
+                position: relative !important; 
+                z-index: 1 !important; 
+                background: #111 !important;
+                border: 1px solid #444;
+                /* 強制啟動 GPU 加速，防止 iPhone 渲染遺失 */
+                transform: translateZ(0);
+                overflow: visible !important;
+            }
+            .spectrum-bg { 
+                display: block !important; 
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                opacity: 0.6;
+                z-index: 1;
+                background: linear-gradient(to right, #000 0%, #2e003e 15%, #4b0082 22.5%, #0000ff 31.25%, #00ff00 41.25%, #ffff00 47.5%, #ff7700 52.5%, #ff0000 62.5%, #3f0000 75%, #000 100%) !important;
+            }
+            
+            #lines-layer { 
+                position: absolute !important; 
+                top: 0; left: 0; width: 100%; height: 100%; 
+                z-index: 10 !important; 
+                pointer-events: none;
+            }
+            .spectrum-labels { font-size: 0.65rem; margin-bottom: 2px; }
+            .wavelength-label { font-size: 0.75rem !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="system-title">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(to right, var(--pearl-gold), var(--pearl-gold-dark));"></div>
+        <span>QUANTUM SPECTRA <small>ATOMIC</small></span>
+    </div>
+</div>
+<div class="main-layout">
+    <div class="side-panel" id="controls"></div>
+    <div class="viewport" id="stage"></div>
+    <div class="data-panel" id="analytics"></div>
+</div>
+<div id="bottom-spectra"></div>
+
+<script>
+    // 注入 UI - 左側控制面板
+    document.getElementById('controls').innerHTML = `
+        <div class="hud-card">
+            <div class="card-label">數據單位切換 <small>Unit Switch</small></div>
+            <div class="mode-toggle-container">
+                <span id="label-wave" class="toggle-label active">波長 λ</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-switch" onchange="toggleDisplayMode()">
+                    <span class="slider"></span>
+                </label>
+                <span id="label-energy" class="toggle-label">能量 E</span>
+            </div>
+        </div>
+        <div class="hud-card">
+            <div class="card-label">譜系系列選取<br><small>Spectrum Series Matrix</small></div>
+            <div class="ion-matrix" style="grid-template-columns: 1fr;">
+                <button class="s33-btn" onclick="selectSeries('all')">顯示全部系列 <small>Show All Series</small></button>
+                <button class="s33-btn" onclick="selectSeries('Lyman')">來曼系列 <small>Lyman (n → 1)</small></button>
+                <button class="s33-btn" onclick="selectSeries('Balmer')">巴耳末系列 <small>Balmer (n → 2)</small></button>
+                <button class="s33-btn" onclick="selectSeries('Paschen')">帕申系列 <small>Paschen (n → 3)</small></button>
+                <button class="s33-btn" onclick="selectSeries('Brackett')">布拉克系列 <small>Brackett (n → 4)</small></button>
+                <button class="s33-btn" onclick="selectSeries('Pfund')">佈芬土系列 <small>Pfund (n → 5)</small></button>
+            </div>
+        </div>
+    `;
+
+    // 注入 UI - 中央視圖 (本生燈)
+    document.getElementById('stage').innerHTML = `
+        <div id="energy-level-stage" style="width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <svg width="100%" height="100%" viewBox="0 0 800 600" id="main-svg">
+                <defs>
+                    <filter id="glow-neon" filterUnits="userSpaceOnUse" x="-100%" y="-100%" width="300%" height="300%">
+                        <feGaussianBlur stdDeviation="1.2" result="blur1"/>
+                        <feGaussianBlur stdDeviation="3.5" result="blur2"/>
+                        <feMerge>
+                            <feMergeNode in="blur2"/>
+                            <feMergeNode in="blur1"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <!-- 精密雷射圓點標記 (帶白色核心漸層) -->
+                    <radialGradient id="grad-Lyman"><stop offset="0%" stop-color="white"/><stop offset="40%" stop-color="white"/><stop offset="100%" stop-color="#bf00ff"/></radialGradient>
+                    <radialGradient id="grad-Balmer"><stop offset="0%" stop-color="white"/><stop offset="40%" stop-color="white"/><stop offset="100%" stop-color="#00ffff"/></radialGradient>
+                    <radialGradient id="grad-Paschen"><stop offset="0%" stop-color="white"/><stop offset="40%" stop-color="white"/><stop offset="100%" stop-color="#ff4444"/></radialGradient>
+                    <radialGradient id="grad-Brackett"><stop offset="0%" stop-color="white"/><stop offset="40%" stop-color="white"/><stop offset="100%" stop-color="#ffaa00"/></radialGradient>
+                    <radialGradient id="grad-Pfund"><stop offset="0%" stop-color="white"/><stop offset="40%" stop-color="white"/><stop offset="100%" stop-color="#ffee00"/></radialGradient>
+
+                    <marker id="dot-Lyman" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><circle cx="5" cy="5" r="3" fill="url(#grad-Lyman)" filter="url(#glow-neon)"/></marker>
+                    <marker id="dot-Balmer" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><circle cx="5" cy="5" r="3" fill="url(#grad-Balmer)" filter="url(#glow-neon)"/></marker>
+                    <marker id="dot-Paschen" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><circle cx="5" cy="5" r="3" fill="url(#grad-Paschen)" filter="url(#glow-neon)"/></marker>
+                    <marker id="dot-Brackett" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><circle cx="5" cy="5" r="3" fill="url(#grad-Brackett)" filter="url(#glow-neon)"/></marker>
+                    <marker id="dot-Pfund" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><circle cx="5" cy="5" r="3" fill="url(#grad-Pfund)" filter="url(#glow-neon)"/></marker>
+                </defs>
+                <g id="levels-layer"></g>
+                <g id="transitions-layer"></g>
+            </svg>
+        </div>
+        <div id="target-container" style="display:none;"></div>
+        <div id="target-symbol" style="display:none;"></div>
+    `;
+
+    // 全域模式狀態
+    window.displayMode = 'wavelength'; // wavelength 或 energy
+
+    function toggleDisplayMode() {
+        const isChecked = document.getElementById('mode-switch').checked;
+        window.displayMode = isChecked ? 'energy' : 'wavelength';
+        
+        // 更新標籤高亮
+        document.getElementById('label-wave').classList.toggle('active', !isChecked);
+        document.getElementById('label-energy').classList.toggle('active', isChecked);
+        
+        // 觸發重新繪製 (將在後續段落實作)
+        if (window.currentSeriesKey) {
+            selectSeries(window.currentSeriesKey);
+        } else {
+            selectSeries('all');
+        }
+    }
+
+    const SERIES_DB = {
+        'Lyman': { low: 1, name: '來曼系列', sym: 'n → 1', color: '#bf00ff', app: '分佈於紫外光區，是研究高能原子躍遷與星際氣體電離的重要依據。', synthesis: '電子由高能階直接跳遷回基態 (n=1)。由於能階差極大，釋放出的波長極短。' },
+        'Balmer': { low: 2, name: '巴耳末系列', sym: 'n → 2', color: '#00ffff', app: '唯一落在可見光區的系列，是天文觀測恆星組成最直觀、最基礎的光譜指標。', synthesis: '電子躍遷至第二能階 (n=2)。其中 n=3 到 n=2 的跳遷產生了著名的 656.3nm 紅色譜線。' },
+        'Paschen': { low: 3, name: '帕申系列', sym: 'n → 3', color: '#ff4444', app: '位於近紅外光區，常透過精密光譜儀觀測被塵埃遮蔽的深空天體。', synthesis: '電子躍遷至第三能階 (n=3)。能量釋放較低，譜線分佈於肉眼不可見的紅外線範圍。' },
+        'Brackett': { low: 4, name: '布拉克系列', sym: 'n → 4', color: '#ffaa00', app: '分佈於中紅外光區，主要用於紅外天文學與高激發態的量子研究。', synthesis: '電子躍遷至第四能階 (n=4)。產生的譜線較為密集，能量釋放弱於巴耳末系。' },
+        'Pfund': { low: 5, name: '佈芬土系列', sym: 'n → 5', color: '#ffee00', app: '分佈於遠紅外光區，多用於極端實驗環境下的高階量子態模擬觀測。', synthesis: '電子躍遷至第五能階 (n=5)。這是氫原子光譜中已知波長最長、能量最低的系列之一。' }
+    };
+
+    function nmToRGB(nm) {
+        if (nm < 380) return "#a855f7"; // 紫外光
+        if (nm > 780) return "#ff4444"; // 紅外光
+        let r, g, b;
+        if (nm < 440) { r = -(nm-440)/60; g = 0; b = 1; }
+        else if (nm < 490) { r = 0; g = (nm-440)/50; b = 1; }
+        else if (nm < 510) { r = 0; g = 1; b = -(nm-510)/20; }
+        else if (nm < 580) { r = (nm-510)/70; g = 1; b = 0; }
+        else if (nm < 645) { r = 1; g = -(nm-645)/65; b = 0; }
+        else { r = 1; g = 0; b = 0; }
+        return `rgb(${r*255}, ${g*255}, ${b*255})`;
+    }
+
+    // 量子座標引擎
+    function getPosPct(nm) {
+        const E = 119627.4 / nm;
+        if (window.displayMode === 'wavelength') {
+            const minW = 90;
+            const maxW = 2500;
+            return ((nm - minW) / (maxW - minW)) * 100;
+        } else {
+            // 能量模式：分段權重線性映射 (V2 改進版)
+            // 0-450 (權重50%) | 450-950 (權重10%) | 950-1350 (權重40%)
+            if (E <= 450) {
+                return (E / 450) * 50;
+            } else if (E <= 950) {
+                return 50 + ((E - 450) / 500) * 10;
+            } else {
+                return 60 + ((E - 950) / 400) * 40;
+            }
+        }
+    }
+
+    function selectSeries(key) {
+        window.currentSeriesKey = key; // 紀錄 key 供切換模式連動
+        const s = SERIES_DB[key];
+        window.currentSeries = s;
+        document.querySelectorAll('.s33-btn').forEach(b => b.classList.remove('active'));
+        // 增加安全檢查，確保 key 有對應按鈕
+        const btns = Array.from(document.querySelectorAll('.s33-btn'));
+        const targetBtn = btns.find(b => (key === 'all' && b.innerText.includes('顯示全部')) || (key !== 'all' && b.innerText.includes(key)));
+        if (targetBtn) targetBtn.classList.add('active');
+
+        let html = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-width:120px; padding: 15px 10px; flex-shrink: 0;">
+                <div style="font-family:'Noto Serif TC',serif; font-size:1.1rem; color:var(--pearl-gold); font-weight:700; line-height:1.2;">譜線數據</div>
+                <div style="font-family:'Inter',sans-serif; font-size:0.7rem; color:var(--pearl-gold); opacity:0.6; letter-spacing:1px; margin-top:4px;">(DATA)</div>
+            </div>`;
+        
+        if (key === 'all') {
+            html += `<div style="color:var(--pearl-text-dim); display:flex; align-items:center; padding-left:20px; font-size:0.9rem;">目前顯示完整氫原子能階躍遷圖。</div>`;
+            updateBottomSpectrum('all');
+        } else if (s) {
+            for (let n = s.low + 1; n <= s.low + 5; n++) {
+                const factor = (1 / (s.low ** 2) - 1 / (n ** 2));
+                const kj = 1312 * factor;
+                const freq = 3.29 * factor;
+                const nm = 91.2 / factor;
+                const color = nmToRGB(nm);
+                html += `
+                    <div class="analysis-card">
+                        <div class="data-tag">躍遷: n=${n} → n=${s.low}</div>
+                        <div class="data-value-wrapper">
+                            <div class="color-dot" style="background:${color}; box-shadow: 0 0 10px ${color};"></div>
+                            <div class="data-value">${nm.toFixed(1)}<span style="font-size:1.4rem; margin-left:4px; font-weight:400; opacity:0.7;">nm</span></div>
+                        </div>
+                        <div class="data-scroll-area">
+                            <div class="math-block">
+                                <div class="math-row">
+                                    <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${kj.toFixed(0)} kJ/mol</span>
+                                </div>
+                                <div class="math-row">
+                                    <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${freq.toFixed(4)} × 10<span class="math-exp">15</span> Hz</span>
+                                </div>
+                                <div class="math-row">
+                                    <span class="math-label">波長：</span><span class="math-op">91.2 × </span><div class="math-frac" style="transform: translateY(12px);">
+                                        <span class="math-num">1</span>
+                                        <div class="math-den">
+                                            <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span>
+                                        </div>
+                                    </div> <span class="math-op">= ${nm.toFixed(1)} nm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            // 插入極限線數據 (n=∞)
+            const limitFactor = (1 / (s.low ** 2));
+            const kjLimit = 1312 * limitFactor;
+            const freqLimit = 3.29 * limitFactor;
+            const nmLimit = 91.2 / limitFactor;
+            html += `
+                <div class="analysis-card" style="border: 1px dashed var(--pearl-gold);">
+                    <div class="data-tag">極限: n=∞ → n=${s.low}</div>
+                    <div class="data-value-wrapper">
+                        <div class="color-dot" style="background:white; box-shadow: 0 0 10px white;"></div>
+                        <div class="data-value">${nmLimit.toFixed(1)}<span style="font-size:1.4rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                    </div>
+                    <div class="data-scroll-area">
+                        <div class="math-block">
+                            <div class="math-row">
+                                <span class="math-label">能量：</span>1312 × <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span> = ${kjLimit.toFixed(1)} kJ/mol
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">頻率：</span>3.29 × 10<span class="math-exp">15</span> × <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span> = ${freqLimit.toFixed(4)} × 10<span class="math-exp">15</span> Hz
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">波長：</span>91.2 × <div class="math-frac" style="transform: translateY(12px);">
+                                    <span class="math-num">1</span>
+                                    <div class="math-line"></div>
+                                    <div class="math-den"><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><div class="math-line"></div><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> - 0<span class="math-parens">)</span></div>
+                                </div> = ${nmLimit.toFixed(1)} nm
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            html += `
+                    <div class="analysis-card"><div class="data-tag">物理原理</div><div class="data-scroll-area"><div style="font-size:0.9rem; line-height:1.7; color:var(--pearl-text-dim);">${s.synthesis}</div></div></div>
+                    <div class="analysis-card"><div class="data-tag">觀測應用</div><div class="data-scroll-area"><div style="font-size:0.9rem; line-height:1.7; color:var(--pearl-text-dim);">${s.app}</div></div></div>`;
+            }
+            document.getElementById('analytics').innerHTML = html;
+            updateBottomSpectrum(s || 'all');
+            drawEnergyLevels(key);
+        }
+
+    function updateBottomSpectrum(s) {
+        const bar = document.getElementById('bottom-spectra');
+        const isWave = window.displayMode === 'wavelength';
+        const vMin = 90; 
+        const vMax = 2500; 
+
+        // --- 1. 背景與容器設定 ---
+        let dynamicBg = isWave ? 
+            `linear-gradient(to right, #080010 0%, #000033 15%, #002244 20%, #004422 30%, #444400 35%, #440000 45%, #1a0505 70%, #000000 100%)` : 
+            '#051622';
+        
+        bar.innerHTML = `
+            <div class="spectrum-container">
+                <div class="spectrum-labels" style="margin-bottom: 30px; font-family: 'Inter', sans-serif;">
+                    <div class="label-uv" style="text-align: left; color: #a855f7;">(UV)</div>
+                    <div class="label-vis" style="text-align: center; color: #22c55e;">(VISIBLE)</div>
+                    <div class="label-ir" style="text-align: right; color: #ef4444;">(IR)</div>
+                </div>
+                <div class="spectrum-ui" style="background: ${dynamicBg}; border: 1px solid rgba(255,255,255,0.1); overflow: visible;">
+                    <div id="lines-layer"></div>
+                    ${!isWave ? '<div class="energy-break"></div>' : ''}
+                </div>
+                <div id="axis-labels" style="display:flex; justify-content:space-between; margin-top:10px;">
+                    ${isWave ? `
+                        <span class="wavelength-label">90nm</span>
+                        <span class="wavelength-label">400nm</span>
+                        <span class="wavelength-label">700nm</span>
+                        <span class="wavelength-label">1000nm</span>
+                        <span class="wavelength-label">1500nm</span>
+                        <span class="wavelength-label">2500nm</span>
+                    ` : `
+                        <span class="wavelength-label">0</span>
+                        <span class="wavelength-label" style="position:absolute; left:50%; transform:translateX(-50%);">450 kJ/mol</span>
+                        <span class="wavelength-label" style="position:absolute; left:60%; transform:translateX(-50%); opacity:0.5;">950</span>
+                        <span class="wavelength-label">1350 kJ/mol</span>
+                    `}
+                </div>
+            </div>`;
+
+        const layer = document.getElementById('lines-layer');
+        const allowedKeys = ['Lyman', 'Balmer', 'Paschen', 'Brackett'];
+
+        // --- 2. 繪圖邏輯 (只繪製前四系) ---
+        const drawSeries = (seriesObj) => {
+            if (!seriesObj) return;
+            // 繪製前 7 條
+            for (let n = seriesObj.low + 1; n <= seriesObj.low + 7; n++) {
+                const kj = 1312 * (1 / (seriesObj.low ** 2) - 1 / (n ** 2));
+                const nm = 119627.4 / kj;
+                const pct = getPosPct(nm);
+                if (pct >= 0 && pct <= 100) {
+                    const line = document.createElement('div');
+                line.className = 'line-marker';
+                line.style.left = `${pct}%`;
+                // 統一使用系列專屬顏色 (與能量模式及上方主畫面同步)
+                const color = seriesObj.color; 
+                line.style.backgroundColor = color;
+                line.style.boxShadow = `0 0 10px ${color}`;
+                    
+                    layer.appendChild(line);
+                }
+            }
+            // 繪製 ∞ 極限線
+            const nmLimit = 1240 / (13.6 * (1 / (seriesObj.low ** 2)));
+            const limitPct = getPosPct(nmLimit);
+            if (limitPct >= 0 && limitPct <= 100) {
+                const limitLine = document.createElement('div');
+                limitLine.className = 'line-marker';
+                limitLine.style.left = `${limitPct}%`;
+                const color = seriesObj.color;
+                
+                // 質感調整：更粗的同色虛線
+                limitLine.style.width = '0'; 
+                limitLine.style.borderLeft = `3px dashed ${color}`;
+                limitLine.style.boxShadow = `0 0 15px ${color}`;
+                limitLine.style.zIndex = '15';
+
+                const limitLabel = document.createElement('div');
+                limitLabel.className = 'line-label';
+                limitLabel.style.color = seriesObj.color;
+                limitLabel.style.fontWeight = '700';
+                // 無限符號放大
+                limitLabel.innerHTML = `<span style="font-size: 1.1rem; vertical-align: middle;">∞</span>→${seriesObj.low}`;
+                limitLine.appendChild(limitLabel);
+                layer.appendChild(limitLine);
+            }
+        };
+
+        if (s === 'all') {
+            allowedKeys.forEach(key => drawSeries(SERIES_DB[key]));
+        } else if (allowedKeys.includes(window.currentSeriesKey)) {
+            drawSeries(s);
+        }
+    }
+
+    function drawEnergyLevels(activeKey) {
+        const levelLayer = document.getElementById('levels-layer');
+        const transLayer = document.getElementById('transitions-layer');
+        if (!levelLayer || !transLayer) return;
+        levelLayer.innerHTML = ''; transLayer.innerHTML = '';
+        
+        const getY = (n) => (n === Infinity) ? 50 : ([0, 520, 320, 220, 165, 130, 105, 90, 80][n] || 50);
+        const eV_labels = ["", "-13.60 eV", "-3.40 eV", "-1.51 eV", "-0.85 eV", "-0.54 eV", "-0.38 eV", "-0.28 eV", "-0.21 eV"];
+
+        // 1. 繪製珍珠風格能階線
+        let levelsHTML = '';
+        for (let n = 1; n <= 8; n++) {
+            const y = getY(n);
+            levelsHTML += `
+                <text x="15" y="${y+4}" fill="rgba(222, 184, 135, 0.4)" font-size="11" font-weight="600">${eV_labels[n]}</text>
+                <line x1="85" y1="${y}" x2="740" y2="${y}" stroke="rgba(255,255,255,${n===1?0.5:0.15})" stroke-width="${n===1?2.5:1}" />
+                <text x="750" y="${y+5}" fill="rgba(122, 138, 140, 0.8)" font-size="12" font-weight="700">n=${n}</text>`;
+        }
+        levelsHTML += `<line x1="85" y1="50" x2="740" y2="50" stroke="rgba(255,255,255,0.3)" stroke-dasharray="4,4" />
+                       <text x="750" y="55" fill="#fff" font-size="12" font-weight="700">n=∞</text>`;
+        levelLayer.innerHTML = levelsHTML;
+
+        // 2. 譜系資料 (同步顏色並套用對應箭頭標記)
+        const seriesData = {
+            'Lyman':    { xStart: 160, color: SERIES_DB.Lyman.color, count: 7, low: 1 },
+            'Balmer':   { xStart: 300, color: SERIES_DB.Balmer.color, count: 6, low: 2 },
+            'Paschen':  { xStart: 430, color: SERIES_DB.Paschen.color, count: 5, low: 3 },
+            'Brackett': { xStart: 540, color: SERIES_DB.Brackett.color, count: 4, low: 4 },
+            'Pfund':    { xStart: 640, color: SERIES_DB.Pfund.color, count: 3, low: 5 }
+        };
+
+        // 3. 繪製譜線與發光箭頭
+        let transHTML = '';
+        Object.keys(seriesData).forEach(key => {
+            const cfg = seriesData[key];
+            const isActive = (activeKey === 'all' || activeKey === key);
+            
+            // 1. 繪製一般躍遷線 (n = low+1 ~ count)
+            for (let n = cfg.low + 1; n <= cfg.low + cfg.count; n++) {
+                const xLine = cfg.xStart + (n - cfg.low - 1) * 16;
+                const yS = getY(n);
+                const yE = getY(cfg.low);
+                
+                if (isActive) {
+                    // 螢光層 + 白色核心 (帶圓點)
+                    transHTML += `<line x1="${xLine}" y1="${yS}" x2="${xLine}" y2="${yE}" stroke="${cfg.color}" stroke-width="2.5" opacity="0.3" filter="url(#glow-neon)" />`;
+                    transHTML += `<line x1="${xLine}" y1="${yS}" x2="${xLine}" y2="${yE}" stroke="white" stroke-width="0.8" opacity="1.0" marker-end="url(#dot-${key})" />`;
+                } else {
+                    transHTML += `<line x1="${xLine}" y1="${yS}" x2="${xLine}" y2="${yE}" stroke="${cfg.color}" stroke-width="0.5" opacity="0.08" />`;
+                }
+            }
+
+            // 2. 新增：繪製 n=∞ 躍遷線 (每個譜系的最後一條)
+            const xInf = cfg.xStart + (cfg.count) * 16;
+            const yInfS = getY(Infinity); // 對應頂部虛線 (y=50)
+            const yInfE = getY(cfg.low);
+            
+            if (isActive) {
+                // 螢光層 + 白色核心 (帶圓點)
+                transHTML += `<line x1="${xInf}" y1="${yInfS}" x2="${xInf}" y2="${yInfE}" stroke="${cfg.color}" stroke-width="2.5" opacity="0.3" filter="url(#glow-neon)" />`;
+                transHTML += `<line x1="${xInf}" y1="${yInfS}" x2="${xInf}" y2="${yInfE}" stroke="white" stroke-width="0.8" opacity="1.0" marker-end="url(#dot-${key})" />`;
+            } else {
+                transHTML += `<line x1="${xInf}" y1="${yInfS}" x2="${xInf}" y2="${yInfE}" stroke="${cfg.color}" stroke-width="0.5" opacity="0.08" />`;
+            }
+
+            transHTML += `
+                <text x="${cfg.xStart + (cfg.count * 8) - 8}" y="${getY(cfg.low) + 38}" fill="${cfg.color}" 
+                      font-size="13" font-weight="900" text-anchor="middle"
+                      opacity="${isActive ? 1.0 : 0.15}" style="letter-spacing:1px; font-family:'Inter', sans-serif; text-transform:uppercase; transition: 0.3s;">
+                    ${key}
+                </text>`;
+        });
+        transLayer.innerHTML = transHTML;
+    }
+
+    const popupDiv = document.createElement('div');
+    popupDiv.innerHTML = `
+        <div id="popup-overlay" onclick="closePopup()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1999; background:transparent;"></div>
+        <div id="cobalt-popup" style="display:none; position:absolute; left:390px; top:150px; width:320px; background:#0f172a; border:2px solid var(--pearl-gold); border-radius:12px; padding:20px; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index:2000;">
+            <div style="color:var(--pearl-gold); font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;"><span style="font-size:1.5rem;">💡</span> 系統提示</div>
+            <div style="color:#ced4da; font-size:1rem; line-height:1.6; margin-bottom:15px;">氫原子光譜研究是量子力學發展的基石。透過觀測不同能階間的跳遷，我們能精確推算出電子的能量分佈。</div>
+            <button style="width:100%; padding:8px; background:rgba(222,184,135,0.1); border:1px solid var(--pearl-gold); color:var(--pearl-gold); border-radius:6px; cursor:pointer; font-weight:bold;" onclick="closePopup()">關閉</button>
+        </div>
+    `;
+    document.body.appendChild(popupDiv);
+
+    window.togglePopup = function(e) { 
+        e.stopPropagation(); 
+        const popup = document.getElementById('cobalt-popup');
+        if(window.innerWidth <= 1024) {
+            popup.style.left = '50%'; popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+        }
+        popup.style.display = 'block'; 
+        document.getElementById('popup-overlay').style.display = 'block'; 
+    };
+
+    window.closePopup = function() { document.getElementById('cobalt-popup').style.display = 'none'; document.getElementById('popup-overlay').style.display = 'none'; };
+
+    window.onload = () => {
+        selectSeries('all'); // 網頁開啟時預設點選「顯示全部系列」
+    };
+</script>
+</body>
+</html>
