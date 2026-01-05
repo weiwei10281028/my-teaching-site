@@ -31,7 +31,7 @@
     
     /* 1. 下標設定 (控制原子數量，如 H2 的 2) */
     sub {
-        font-size: 1.0em;      /* 下標字體大小 */
+        font-size: 0.8em;      /* 下標字體大小 */
         line-height: 1;
         position: relative;
         vertical-align: baseline;
@@ -1950,18 +1950,34 @@ function toggleMode() {
 function formatFormula(str) {
     if (!str) return "";
     let s = str.trim();
-    let mainPart = s;
-    let chargePart = "";
-    const chargeRegex = /\s*(\d*[+-]+)$/;
-    const match = s.match(chargeRegex);
-    if (match) {
-        let rawCharge = match[1];
-        mainPart = s.replace(chargeRegex, "");
-        let chargeDisplay = rawCharge.replace(/(\d+)/g, '$1').replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
-        chargePart = `<sup>${chargeDisplay}</sup>`;
+
+    // 優先以「空格」拆分
+    let parts = s.split(/\s+/);
+    let mainPart = parts[0];
+    let chargePart = parts.length > 1 ? parts[1] : "";
+
+    // 自動相容沒有空格的舊資料 (備案)
+    if (parts.length === 1) {
+        const autoChargeRegex = /([+-]+|\d+[+-]+)$/;
+        const match = mainPart.match(autoChargeRegex);
+        if (match) {
+            chargePart = match[0];
+            mainPart = mainPart.replace(autoChargeRegex, "");
+        }
     }
-    mainPart = mainPart.replace(/(\d+)(?![^<]*>)/g, '<sub>$1</sub>');
-    return mainPart + chargePart;
+
+    // 數字變下標
+    let formattedMain = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+
+    // 電荷變上標
+    let formattedCharge = "";
+    if (chargePart) {
+        // 美化正負號，套用你原本 CSS 裡的 .charge-sign
+        let chargeDisplay = chargePart.replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
+        formattedCharge = `<sup>${chargeDisplay}</sup>`;
+    }
+
+    return formattedMain + formattedCharge;
 }
 
 function toFraction(val) {
@@ -2604,7 +2620,7 @@ function loadMolecule(key, variantKey = null) {
         if (cIdx !== -1) {
             if (isOctetMode) {
                 if (type === 'double') {
-                    const resonanceMols = ["SO2", "二氧化硫", "亞硫酸", "H2SO3", "SO3", "亞硫酸根", "HSO3"];
+                    const resonanceMols = ["三氧化硫", "二氧化硫"];
                     const isResonance = resonanceMols.some(n => currentKey.includes(n));
 
                     if (isResonance && keptDoubleBonds === 0) {
@@ -2612,6 +2628,7 @@ function loadMolecule(key, variantKey = null) {
                     } else {
                         bond[2] = 'coordinate';
                         bond[0] = cIdx;
+                    
                         bond[1] = tIdx;
                     }
                 }
@@ -5106,7 +5123,7 @@ function renderSubstanceList() {
             }, 250);
         };
 
-        const displayFormula = sub.formula.replace(/(\d+)/g, '<sub style="font-size:0.6em; bottom:-0.1em;">$1</sub>');
+        const displayFormula = formatFormula(sub.formula);
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:20px;">
