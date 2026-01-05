@@ -73,6 +73,7 @@ function checkReactionAvailable(key) {
         if(oxBtn) oxBtn.style.display = "flex";
         if(redBtn) redBtn.style.display = "flex";
     }
+    
     // --- F. 芳香烴 (苯) ---
     else if (currentName === "苯") {
         btnContainer.style.display = "block";
@@ -189,10 +190,10 @@ function runEthanolMildOxidation() {
     finishReaction("CH3CHO", "乙醛", null, "乙醇為1級醇，接O的C上具有H，一般氧化劑會先將乙醇氧化成乙醛");
 }
 function runEthanolStrongOxidation() {
-    finishReaction("CH3COOH", "乙酸", null, "乙醇為1級醇，接O的C上具有H，由於過錳酸鉀氧化力較強，故乙醇直接氧化成乙酸");
+    finishReaction("C2H4O2", "乙酸", "CH3COOH|乙酸", "乙醇為1級醇，接O的C上具有H，由於過錳酸鉀氧化力較強，故乙醇直接氧化成乙酸");
 }
 function runAcetaldehydeOxidation() {
-    finishReaction("CH3COOH", "乙酸", null, "乙醛接O的C上具有H，經過氧化可以形成乙酸");
+    finishReaction("C2H4O2", "乙酸", "CH3COOH|乙酸", "乙醛接O的C上具有H，經過氧化可以形成乙酸");
 }
 function runAcetaldehydeReduction() {
     finishReaction("C2H5OH", "乙醇", null, "醛類可以還原，變回1級醇，乙醛還原後形成乙醇");
