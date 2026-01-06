@@ -2084,6 +2084,18 @@ function setupEquationBalancer() {
             return; // 結束函式，不執行化學平衡
         }
         // [結束隱藏彩蛋]
+        if (val === "原子構造") {
+            resDiv.style.display = 'flex';
+            resDiv.innerHTML = `<div style="width:100%; text-align:center; padding:15px; background:rgba(0, 242, 255, 0.05); border:1px solid var(--hud-cyan); border-radius:8px;">
+                <a href="https://gitmind.com/app/docs/msua80li" target="_blank" style="color:var(--hud-cyan); font-weight:bold; text-decoration:none; font-family:'Rajdhani', sans-serif; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span style="font-size:1.2rem;">🔍</span> 原子構造心智圖
+                </a>
+            </div>`;
+            input.value = "";
+            stpBtn.style.display = 'none';
+            stpDiv.style.display = 'none';
+            return;
+        }
 
         // --- 以下為原本的化學平衡邏輯 ---
         stpDiv.style.display = 'none';
