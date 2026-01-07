@@ -1169,6 +1169,48 @@
 .glow-cyan { filter: drop-shadow(0 0 6px rgba(0,242,255,0.8)); }
 .glow-magenta { filter: drop-shadow(0 0 6px rgba(255,0,255,0.8)); }
 .foggy-axis { filter: blur(1px); opacity: 0.4; }
+/* --- 元素介紹：奶茶大地色彈窗 (Warm Milk Tea Theme) --- */
+    #element-intro-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(43, 30, 22, 0.7); backdrop-filter: blur(8px); z-index: 2000;
+        justify-content: center; align-items: center;
+    }
+    .intro-modal {
+        background: #FFFEF9; width: 92%; max-width: 700px; max-height: 82vh;
+        border-radius: 28px; position: relative; display: flex; flex-direction: column;
+        box-shadow: 0 25px 50px -12px rgba(93, 64, 55, 0.4); overflow: hidden;
+        border: 1px solid #EADDCA; 
+        animation: modalFadeInScale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalFadeInScale { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    
+    .intro-modal-header {
+        padding: 25px 35px; background: #FDF5E6; border-bottom: 1px solid #EADDCA;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .intro-modal-title { 
+        color: #5D4037; font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif; font-weight: 800; 
+        font-size: 1.6rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px;
+    }
+    .intro-modal-close { 
+        width: 40px; height: 40px; background: #FF9F67; color: white; 
+        border-radius: 14px; display: flex; justify-content: center; align-items: center;
+        font-size: 1.8rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(255, 159, 103, 0.3);
+    }
+    .intro-modal-close:hover { background: #F57C00; transform: rotate(90deg) scale(1.1); }
+    
+    .intro-modal-body {
+        padding: 40px; overflow-y: auto; color: #4E342E; font-size: 1.15rem; 
+        line-height: 2.0; text-align: justify; font-family: 'Microsoft JhengHei', sans-serif;
+        scrollbar-width: thin; scrollbar-color: #D2B48C #FDF5E6;
+    }
+    .intro-modal-body::-webkit-scrollbar { width: 8px; }
+    .intro-modal-body::-webkit-scrollbar-track { background: #FDF5E6; }
+    .intro-modal-body::-webkit-scrollbar-thumb { background: #D2B48C; border-radius: 10px; }
+    
+    /* 強調標題樣式 */
+    .intro-section-title { color: #D87D4A; font-weight: bold; border-left: 4px solid #FF9F67; padding-left: 12px; margin: 25px 0 15px 0; font-size: 1.25rem; }
+    .intro-modal-body p { margin-bottom: 25px; }
 
 </style>
 </head>
@@ -1636,6 +1678,20 @@
     </div>
     <button class="close-fortune" onclick="closeFortuneModal()">關閉</button>
 </div>
+<!-- 元素介紹：全螢幕大地色系彈窗 -->
+<div id="element-intro-overlay" onclick="if(event.target===this) closeElementIntro()">
+    <div class="intro-modal">
+        <div class="intro-modal-header">
+            <div class="intro-modal-title">
+                <span id="intro-modal-title-text">關於元素的故事</span>
+            </div>
+            <div class="intro-modal-close" onclick="closeElementIntro()">&times;</div>
+        </div>
+        <div class="intro-modal-body" id="intro-modal-body">
+            <!-- 內容由 JS 自動分段注入 -->
+        </div>
+    </div>
+</div>
 
 <script src="data_static.js"></script>
 <script src="data_molecules.js"></script>
@@ -1644,6 +1700,7 @@
 <script src="lab_flame.js"></script>
 <script src="lab_hydrogen.js"></script>
 <script src="data_fortune.js"></script>
+<script src="data_element_descriptions.js"></script>
 <script>
 // ==========================================
 // 1. 系統初始化
@@ -4410,19 +4467,24 @@ function renderConfigList() {
                             <span class="ec-name">${el.cn ? el.cn + " " : ""}${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span>
                             <span class="ec-tag">${periodGroupStr}</span>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
-                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">分類: ${el.type || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">狀態: ${el.state || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">熔點: ${el.mp || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">沸點: ${el.bp || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">分類: ${el.type || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">狀態: ${el.state || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">熔點: ${el.mp || "-"}</div>
+                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">沸點: ${el.bp || "-"}</div>
                             </div>
                         </div>
                     </div>
-                
-                <!-- 顯示模式切換按鈕 -->
-                <button onclick="toggleConfigMode('${el.s}', '${el.c}')" style="font-size:0.75rem; background:rgba(255,255,255,0.1); border:1px solid #555; color:#aaa; border-radius:4px; padding:2px 6px; cursor:pointer;" id="${cardId}-mode-btn">
-                    模式: 縮寫
-                </button>
-            </div>
+
+                    <!-- 右側垂直按鈕區 -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end; justify-content: flex-start;">
+                        <button onclick="toggleConfigMode('${el.s}', '${el.c}')" style="font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid #555; color:#aaa; border-radius:4px; padding:2px 8px; cursor:pointer;" id="${cardId}-mode-btn">
+                            模式: 縮寫
+                        </button>
+                        <button onclick="toggleElementIntro('${el.s}')" style="padding: 5px 12px; background: rgba(251, 113, 133, 0.12); border: 1.5px solid #fb7185; color: #fda4af; border-radius: 20px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; transition: 0.3s; box-shadow: 0 4px 10px rgba(251, 113, 133, 0.15);">
+                            Info ✨
+                        </button>
+                    </div>
+                </div>
             
             <!-- 離子控制 -->
             <div id="ion-group-${el.s}" style="display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; align-items:center;">
@@ -4447,7 +4509,7 @@ function renderConfigList() {
                 <!-- 隱藏欄位：儲存當前電荷與模式 -->
                 <input type="hidden" id="${cardId}-charge" value="0">
                 <input type="hidden" id="${cardId}-mode" value="noble">
-
+                
                 <div class="ec-config-row ec-scroll" id="${cardId}-text" style="justify-content: flex-start;">
                     <div class="ec-config" style="white-space: nowrap;">${nobleHtml}</div>
                 </div>
@@ -6105,11 +6167,51 @@ function revealFortune() {
     setTimeout(() => {
         const container = document.getElementById('fortune-result');
         if (container) {
+ 
+    
             container.style.opacity = 0; container.innerHTML = resultHtml;
             requestAnimationFrame(() => { container.style.transition = 'opacity 0.5s ease'; container.style.opacity = 1; });
         }
     }, 1500);
 }
+/**
+ * 奶茶色系全螢幕彈窗邏輯
+ */
+window.toggleElementIntro = function(symbol) {
+    const overlay = document.getElementById('element-intro-overlay');
+    const titleText = document.getElementById('intro-modal-title-text');
+    const body = document.getElementById('intro-modal-body');
+    const db = window.ELEMENT_DESCRIPTIONS;
+
+    if (!db || !overlay || !body) {
+        console.error("資料庫或彈窗元件未就緒");
+        return;
+    }
+
+    const description = db[symbol] || "目前資料庫中尚未建立該元素的詳細敘述。";
+    const elementInfo = ELECTRON_DATA.find(e => e.s === symbol);
+    const chineseName = elementInfo ? elementInfo.cn : symbol;
+    if (titleText) titleText.innerText = `關於 ${chineseName} 的故事`;
+    
+    // 強化排版：將 \n 轉換為獨立段落，並過濾掉空行
+    const paragraphs = description.split('\n').map(p => p.trim()).filter(p => p !== '');
+    
+    // 生成 HTML：每個段落包在 <p> 裡面，並對特定標籤進行顏色高亮
+    body.innerHTML = paragraphs.map(p => {
+        // 如果段落包含「發現」或「應用」等字眼，自動加上小標題風格
+        if (p.length < 15 && (p.includes("：") || p.includes(":"))) {
+            return `<div class="intro-section-title">${p}</div>`;
+        }
+        return `<p>${p}</p>`;
+    }).join('');
+
+    overlay.style.display = 'flex';
+};
+
+window.closeElementIntro = function() {
+    const overlay = document.getElementById('element-intro-overlay');
+    if (overlay) overlay.style.display = 'none';
+};
 
 </script>
 </body>
