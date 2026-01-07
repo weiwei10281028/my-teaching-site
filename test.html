@@ -4038,10 +4038,8 @@ function setupInteractions() {
     };
 
     const handleMove = (x, y, sensitivity) => {
-        const dist = Math.hypot(x - startX, y - startY);
-        if (dist > MOVE_TOLERANCE) {
+        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) {
             clearTimeout(longPressTimer);
-            // 當產生實質移動（旋轉）時，才隱藏標籤，防止標籤擋住觀察視角
             hideHybridTooltip(); 
         }
         if (!isDragging) return;
