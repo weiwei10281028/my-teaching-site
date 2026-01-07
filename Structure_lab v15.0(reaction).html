@@ -4360,6 +4360,37 @@ function renderConfigList() {
         
         let nobleHtml = formatConfigHtml(el.noble);
         const vizHtml = generateEcViz(el.c);
+        // 1. 強制每一圈都清空 ieTableHtml，防止數據殘留
+        let ieTableHtml = ""; 
+        if (el.ie && Array.isArray(el.ie) && el.ie.length > 0) {
+            const headers = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+            let headCells = "";
+            let bodyCells = "";
+
+            headers.forEach((h, i) => {
+                let val = el.ie[i];
+                let dispVal = "-";
+                if (val !== undefined && val !== null) {
+                    // 數據處理：移除 k 縮寫判斷，直接顯示原始數值並保留一位小數
+                    dispVal = (typeof val === 'number') ? val.toFixed(1) : val;
+                }
+                headCells += `<th style="padding: 6px 4px; border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; font-weight: 900;">${h}</th>`;
+                bodyCells += `<td style="padding: 8px 4px; border: 1px solid rgba(251, 191, 36, 0.2); color: #f1f5f9; font-size: 0.8rem; font-family: monospace;">${dispVal}</td>`;
+            });
+
+            ieTableHtml = `
+                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; width: 100%;">
+                    <div style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 8px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-weight: bold; padding-left: 2px;">
+                        游離能 Ionization Energy <span style="font-size: 0.7rem; opacity: 0.7;">(kJ/mol)</span>
+                    </div>
+                    <div class="ec-scroll" style="background: rgba(251, 191, 36, 0.03); border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.12);">
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; min-width: 650px;">
+                            <thead><tr style="background: rgba(251, 191, 36, 0.08);">${headCells}</tr></thead>
+                            <tbody><tr>${bodyCells}</tr></tbody>
+                        </table>
+                    </div>
+                </div>`;
+        }
         
         let periodGroupStr = "";
         if (el.g === "鑭系" || el.g === "錒系") {
@@ -4426,6 +4457,7 @@ function renderConfigList() {
                     ${vizHtml}
                 </div>
             </div>
+            ${ieTableHtml}
         `;
         container.appendChild(card);
     });
