@@ -4019,7 +4019,7 @@ function setupInteractions() {
     const handleStart = (x, y) => { 
         isDragging = true; isLongPressActive = false; 
         startX = x; startY = y; lastMouse = { x, y }; 
-        rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
+        rotVelocity = { x: 0, y: 0, z: 0 }; 
         clearTimeout(longPressTimer);
 
         if (isFaceBuildMode) {
@@ -4122,7 +4122,6 @@ function setupInteractions() {
     });
     viewport.addEventListener("wheel", e => {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
-        hideHybridTooltip();
     });
 
     setupMobilePanel();
@@ -5433,42 +5432,72 @@ function showHybridInfo(atomObj, x, y) {
     let fcStr = fc > 0 ? `+${fc}` : `${fc}`;
     let fcColor = fc === 0 ? "#9ca3af" : (fc > 0 ? "#f87171" : "#60a5fa");
 
-    // [修改] 計算過程字串：線 -> 鍵
-    const calcStr = `<div style="font-size:0.8em; color:#bbb; margin-top:4px; border-top:1px solid #444; padding-top:2px;">(價${ve} - 點${dots} - 鍵${bondLines})</div>`;
+    // --- 1. 氧化數 (Oxidation Number) 核心運算 ---
+    let oxState = 0;
+    let oxDetailParts = [];
+    if (currentMolecule.bonds3D) {
+        currentMolecule.bonds3D.forEach(b => {
+            if (b[0] === atomIdx || b[1] === atomIdx) {
+                const isSelfIdx0 = (b[0] === atomIdx);
+                const otherIdx = isSelfIdx0 ? b[1] : b[0];
+                const otherAtomObj = currentMolecule.renderObjects.find(o => o.type === 'atom' && o.originalIndex === otherIdx);
+                if (!otherAtomObj) return;
 
-    let contentHtml = `<span style="color:var(--accent-blue);font-size:1.5em;line-height:1.2;font-weight:bold;">${atomObj.elem}</span>`;
-    
-    // [修改] 調整顯示順序
-    if (sigmaCount >= 2) { 
-        let hybrid = "";
-        let hybridColor = "#ffffff"; 
-        if (sum === 2) { hybrid = "sp"; hybridColor = "#22d3ee"; } 
-        else if (sum === 3) { hybrid = "sp²"; hybridColor = "#a3e635"; } 
-        else if (sum === 4) { hybrid = "sp³"; hybridColor = "#fbbf24"; } 
-        else if (sum === 5) { hybrid = "sp³d"; hybridColor = "#f472b6"; } 
-        else if (sum === 6) { hybrid = "sp³d²"; hybridColor = "#818cf8"; } 
-        else { hybrid = "-"; }
+                const enSelf = props ? (props.en || 0) : 0;
+                const enOther = ELEMENT_PROPS[otherAtomObj.elem]?.en || 0;
+                const bType = b[2] || "single";
+                let c = 0; // 此鍵對 self 的貢獻
 
-        // 1. 顯示混成
-        contentHtml += `<div style="margin-top:4px;">混成: <span style="color:${hybridColor};font-size:1.2em">${hybrid}</span></div>`;
-        
-        // 2. 顯示 Sigma + LP 計算 (移到混成下方)
-        contentHtml += `<div style="font-size:0.8em;color:#888;margin-top:2px;margin-bottom:6px;">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
-        
-        // 3. 顯示形式電荷 (文字改為 "形式電荷")
-        contentHtml += `<div>形式電荷: <span style="color:${fcColor};font-size:1.2em;font-weight:bold">${fcStr}</span></div>`;
-        
-        // 4. 顯示形式電荷計算公式 (放在最下方)
-        contentHtml += calcStr;
-        // =====================================
-
-    } else {  
-        contentHtml += `<div style="margin-top:4px;">電荷: <span style="color:${fcColor};font-size:1.4em;font-weight:bold">${fcStr}</span></div>`;
-        if(atomObj.elem === 'H') contentHtml += `<div style="font-size:0.8em;color:#888;">(1s)</div>`;
-        
-        // [修改] 計算過程放在最後
-        contentHtml += calcStr;
+                if (bType.includes("coordinate")) {
+                    // 配位鍵邏輯
+                    const isDonor = isSelfIdx0; // 假設資料庫定義 b[0] 為 Donor
+                    if (atomObj.elem === otherAtomObj.elem) {
+                        // 規則 3：同原子配位，Donor+1, Acceptor-1
+                        c = isDonor ? 1 : -1;
+                    } else if (isDonor) {
+                        // 規則 2：Donor 判斷，EN小給EN大=+2，否則=0
+                        c = (enSelf < enOther) ? 2 : 0;
+                    } else {
+                        // 規則 2：Acceptor 判斷，EN小給EN大=-2，否則=0
+                        c = (enOther < enSelf) ? -2 : 0;
+                    }
+                } else {
+                    // 一般共價鍵邏輯
+                    let lines = bType.includes("triple") ? 3 : (bType.includes("double") ? 2 : 1);
+                    if (atomObj.elem === otherAtomObj.elem) {
+                        // 規則 3：同原子一般鍵=0
+                        c = 0;
+                    } else {
+                        // 規則 1：EN大=-1, EN小=+1
+                        c = (enSelf > enOther) ? -lines : lines;
+                    }
+                }
+                oxState += c;
+                oxDetailParts.push(c > 0 ? `+${c}` : c);
+            }
+        });
     }
+    const oxStr = oxState > 0 ? `+${oxState}` : `${oxState}`;
+    const oxColor = oxState === 0 ? "#9ca3af" : (oxState > 0 ? "#f87171" : "#60a5fa");
+
+    // --- 2. 構造統一的 HTML 內容 ---
+    const subStyle = 'font-size:0.75em; color:rgba(255,255,255,0.5); margin-top:1px; margin-bottom:8px;';
+    let contentHtml = `<span style="color:var(--accent-blue); font-size:1.6em; font-weight:bold; display:block; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">${atomObj.elem}</span>`;
+    
+    // 區塊 A: 混成軌域 (僅中心原子顯示)
+    if (sigmaCount >= 2) {
+        let hybrid = (sum === 2) ? "sp" : (sum === 3) ? "sp²" : (sum === 4) ? "sp³" : (sum === 5) ? "sp³d" : (sum === 6) ? "sp³d²" : "-";
+        contentHtml += `<div>混成: <span style="color:#22d3ee; font-size:1.2em; font-weight:bold;">${hybrid}</span></div>`;
+        contentHtml += `<div style="${subStyle}">(&sigma;:${sigmaCount} + LP:${lpCount} = ${sum})</div>`;
+    }
+
+    // 區塊 B: 形式電荷
+    contentHtml += `<div>形式電荷: <span style="color:${fcColor}; font-size:1.2em; font-weight:bold;">${fcStr}</span></div>`;
+    contentHtml += `<div style="${subStyle}">(價${ve} - 點${dots} - 鍵${bondLines})</div>`;
+
+    // 區塊 C: 氧化數
+    contentHtml += `<div>氧化數: <span style="color:${oxColor}; font-size:1.2em; font-weight:bold;">${oxStr}</span></div>`;
+    contentHtml += `<div style="${subStyle}">(Σ貢獻: ${oxDetailParts.join(', ') || '0'})</div>`;
 
     tooltip.innerHTML = contentHtml;
     tooltip.classList.add('show');
