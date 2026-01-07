@@ -4019,16 +4019,18 @@ function setupInteractions() {
     const handleStart = (x, y) => { 
         isDragging = true; isLongPressActive = false; 
         startX = x; startY = y; lastMouse = { x, y }; 
-        rotVelocity = { x: 0, y: 0, z: 0 }; hideHybridTooltip(); 
+        rotVelocity = { x: 0, y: 0, z: 0 }; 
         clearTimeout(longPressTimer);
 
         if (isFaceBuildMode) {
+            // 手機版優化：成面模式需停留 0.2 秒才觸發，防止旋轉誤觸導致選取失敗
             longPressTimer = setTimeout(() => {
                 checkAtomClick(startX, startY);
-                isLongPressActive = true; 
+                isLongPressActive = true; // 標記已觸發，防止放開時重複選取
                 if (navigator.vibrate) navigator.vibrate(30); 
             }, 200);
         } else {
+            // 正常模式：長按 0.5 秒顯示混成軌域
             longPressTimer = setTimeout(() => {
                 isDragging = false; isLongPressActive = true; 
                 checkAtomClick(startX, startY); 
@@ -4038,10 +4040,7 @@ function setupInteractions() {
     };
 
     const handleMove = (x, y, sensitivity) => {
-        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) {
-            clearTimeout(longPressTimer);
-            hideHybridTooltip(); 
-        }
+        if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) clearTimeout(longPressTimer);
         if (!isDragging) return;
         const dx = x - lastMouse.x; const dy = y - lastMouse.y;
         if (currentMode === 1 || (currentMode === 2 && !altKeyIsDown)) {
@@ -4123,7 +4122,6 @@ function setupInteractions() {
     });
     viewport.addEventListener("wheel", e => {
         scale = Math.max(0.5, Math.min(6, scale - e.deltaY * 0.001));
-        hideHybridTooltip();
     });
 
     setupMobilePanel();
