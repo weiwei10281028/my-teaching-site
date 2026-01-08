@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DESIGN EXPERIMENT | 有機鑑定系統 v7.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Serif+TC:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- 基礎佈局 --- */
+        * { box-sizing: border-box; transition: all 0.5s cubic-bezier(0.2, 0, 0, 1); -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* 上方圓弧膠囊切換紐 */
+        .style-switcher {
+            height: 75px; background: #fff; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: flex-start; gap: 10px;
+            z-index: 1000; padding: 0 20px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .style-switcher::-webkit-scrollbar { display: none; }
+        
+        .switcher-btn {
+            padding: 10px 20px; border: 1px solid #ddd; background: #fff; cursor: pointer;
+            border-radius: 50px; font-size: 0.75rem; font-weight: 600; color: #666; flex-shrink: 0;
+            letter-spacing: 1px;
+        }
+        .switcher-btn:hover { background: #f8f8f8; }
+        .switcher-btn.active { background: #000; color: #fff; border-color: #000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; flex-direction: row; }
+
+        /* 側邊與數據面板 */
+        .side-panel { width: 300px; padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .viewport { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .data-panel { width: 380px; padding: 35px; overflow-y: auto; }
+        
+        /* 通用按鈕樣式 */
+        .lab-btn { 
+            width: 100%; padding: 15px 20px; margin-bottom: 12px; cursor: pointer; 
+            text-align: left; font-size: 0.9rem; border: none; border-radius: 14px; 
+            font-weight: 500; display: block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .info-card { padding: 30px; margin-bottom: 25px; border-radius: 22px; position: relative; overflow: hidden; }
+        .report-label { font-size: 0.6rem; letter-spacing: 4px; margin-bottom: 20px; opacity: 0.6; font-weight: 900; text-transform: uppercase; }
+
+        /* 試管基礎視覺 */
+        .test-tube { width: 55px; height: 250px; border-width: 2px; border-style: solid; border-radius: 0 0 28px 28px; position: relative; overflow: hidden; background: rgba(255,255,255,0.05); }
+        .liquid { position: absolute; bottom: 0; width: 100%; height: 120px; transition: 1.5s ease-in-out; }
+        .content-wrap { display: flex; flex-direction: column; align-items: center; z-index: 10; text-align: center; }
+
+        /* 行動端適配 */
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; overflow-y: auto; }
+            .side-panel, .data-panel { width: 100%; height: auto; padding: 20px; }
+            .side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .lab-btn { margin-bottom: 0; font-size: 0.8rem; padding: 12px; }
+            .viewport { min-height: 400px; }
+            #mol-name { font-size: 1.2rem !important; letter-spacing: 6px !important; }
+        }
+
+        /* =========================================
+           1. 日落餘暉 (Ember Glow - 原新版日落)
+           ========================================= */
+        .theme-sunset-new { background: linear-gradient(160deg, #0F172A 0%, #1E293B 35%, #92400E 75%, #F59E0B 100%); color: #fff; }
+        .theme-sunset-new .lab-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 12px; }
+        .theme-sunset-new .lab-btn.active { background: #fff; color: #92400E; box-shadow: 0 15px 35px rgba(245,158,11,0.4); }
+        .theme-sunset-new .info-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        .theme-sunset-new .test-tube { border-color: #F59E0B; }
+
+        /* =========================================
+           2. 日落漸層 (Sunset Gradient - 套用 51 版)
+           ========================================= */
+        .theme-sunset-old { background: linear-gradient(135deg, #2D3E50 0%, #C89678 100%); color: #FFF; }
+        .theme-sunset-old .side-panel, .theme-sunset-old .data-panel { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
+        .theme-sunset-old .lab-btn { 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 50px; color: #FFF; backdrop-filter: blur(10px); text-align: center; 
+        }
+        .theme-sunset-old .lab-btn.active { background: #FFF; color: #2D3E50; box-shadow: 0 0 20px rgba(255,255,255,0.4); }
+        .theme-sunset-old .test-tube { border-color: rgba(255,255,255,0.5); }
+        .theme-sunset-old .liquid { background: rgba(255,255,255,0.3); }
+        .theme-sunset-old .info-card { background: rgba(0,0,0,0.2); border-radius: 20px; }
+
+        /* =========================================
+           3. 深海極光 (Oceanic Pulse)
+           ========================================= */
+        .theme-ocean { background: radial-gradient(circle at top left, #050b1a 0%, #1E3A8A 45%, #7E22CE 100%); color: #fff; }
+        .theme-ocean .lab-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #93C5FD; }
+        .theme-ocean .lab-btn.active { background: #fff; color: #1E3A8A; box-shadow: 0 0 25px #93C5FD; }
+        .theme-ocean .info-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); }
+        .theme-ocean .test-tube { border-color: #fff; }
+
+        /* =========================================
+           4. 礦石大地 (Mineral Earth)
+           ========================================= */
+        .theme-mineral { background: #F5F5F2; color: #444; }
+        .theme-mineral .lab-btn { background: #F5F5F2; border: 1px solid #E5E5E0; color: #444; box-shadow: 4px 4px 10px rgba(0,0,0,0.04), -4px -4px 10px #FFF; }
+        .theme-mineral .lab-btn.active { color: #D4B16A; box-shadow: inset 3px 3px 6px rgba(0,0,0,0.08); border-color: #D4B16A; background: #F5F5F2; }
+        .theme-mineral .info-card { background: #FFF; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+        .theme-mineral .test-tube { border-color: #D4B16A; }
+
+        /* =========================================
+           5. 金屬鎢絲 (Cyber Tungsten)
+           ========================================= */
+        .theme-tungsten { background: #080808; color: #B08C5E; }
+        .theme-tungsten .lab-btn { background: transparent; border: 1px solid rgba(176, 140, 94, 0.3); color: #888; border-radius: 0; }
+        .theme-tungsten .lab-btn.active { background: #B08C5E; color: #000; box-shadow: 0 0 20px rgba(176, 140, 94, 0.4); }
+        .theme-tungsten .info-card { border: 1px solid rgba(176, 140, 94, 0.15); background: rgba(255,255,255,0.02); }
+        .theme-tungsten .test-tube { border-color: #B08C5E; }
+
+        /* =========================================
+           6. 薔薇暮色 (Dusk Rose)
+           ========================================= */
+        .theme-rose { background: linear-gradient(135deg, #2D2D2D 0%, #B06AB3 70%, #4568DC 100%); color: #F8BBD0; }
+        .theme-rose .lab-btn { background: rgba(0,0,0,0.2); color: #fff; border-radius: 25px; }
+        .theme-rose .lab-btn.active { background: #F8BBD0; color: #333; }
+        .theme-rose .test-tube { border-color: #F8BBD0; }
+
+        /* =========================================
+           7. 京都苔霧 (Misty Matcha)
+           ========================================= */
+        .theme-matcha { background: radial-gradient(at bottom right, #1A2421 0%, #2D3A3A 50%, #4A5D4E 100%); color: #C5D1C9; }
+        .theme-matcha .lab-btn { background: rgba(255,255,255,0.04); border-bottom: 2px solid #3A4A40; border-radius: 4px; color: #C5D1C9; }
+        .theme-matcha .lab-btn.active { background: #4A5D4E; color: #FFF; border-bottom-color: #C5D1C9; }
+        .theme-matcha .test-tube { border-color: #C5D1C9; border-style: dashed; }
+
+        /* =========================================
+           8. 極地冰川 (Glacial Ice)
+           ========================================= */
+        .theme-ice { background: linear-gradient(180deg, #E0F2F1 0%, #80CBC4 50%, #26A69A 100%); color: #004D40; }
+        .theme-ice .lab-btn { background: rgba(255,255,255,0.5); border: 1px solid #fff; color: #004D40; }
+        .theme-ice .lab-btn.active { background: #004D40; color: #fff; }
+        .theme-ice .test-tube { border-color: #004D40; background: #fff; }
+
+        /* =========================================
+           9. 撒哈拉金 (Sahara Sand)
+           ========================================= */
+        .theme-sahara { background: linear-gradient(45deg, #2C1810 0%, #634832 50%, #D4A373 100%); color: #FAEDCD; }
+        .theme-sahara .lab-btn { background: rgba(0,0,0,0.2); color: #FAEDCD; }
+        .theme-sahara .lab-btn.active { background: #FAEDCD; color: #2C1810; box-shadow: 0 8px 0px #A67C52; transform: translateY(-3px); }
+        .theme-sahara .test-tube { border-color: #FAEDCD; border-width: 3px; }
+
+        /* =========================================
+           10. 大濛往事 (Vintage Fog)
+           ========================================= */
+        .theme-vintage { background: #E2D9C8; color: #4D3B4D; background-image: url('https://www.transparenttextures.com/patterns/parchment.png'); }
+        .theme-vintage .lab-btn { background: transparent; border-bottom: 1.5px solid #8C7A66; border-radius: 0; color: #4D3B4D; font-family: 'Noto Serif TC'; }
+        .theme-vintage .lab-btn.active { background: #4D3B4D; color: #E2D9C8; border-bottom: none; }
+        .theme-vintage .test-tube { border-color: #8C7A66; border-style: dashed; }
+
+    </style>
+</head>
+<body class="theme-sunset-new">
+
+    <!-- STYLE SWITCHER -->
+    <div class="style-switcher">
+        <button class="switcher-btn active" onclick="switchTheme('sunset-new', this)">日落餘暉</button>
+        <button class="switcher-btn" onclick="switchTheme('sunset-old', this)">日落漸層</button>
+        <button class="switcher-btn" onclick="switchTheme('ocean', this)">深海極光</button>
+        <button class="switcher-btn" onclick="switchTheme('mineral', this)">礦石大地</button>
+        <button class="switcher-btn" onclick="switchTheme('tungsten', this)">金屬鎢絲</button>
+        <button class="switcher-btn" onclick="switchTheme('rose', this)">薔薇暮色</button>
+        <button class="switcher-btn" onclick="switchTheme('matcha', this)">京都苔霧</button>
+        <button class="switcher-btn" onclick="switchTheme('ice', this)">極地冰川</button>
+        <button class="switcher-btn" onclick="switchTheme('sahara', this)">撒哈拉金</button>
+        <button class="switcher-btn" onclick="switchTheme('vintage', this)">大濛往事</button>
+    </div>
+
+    <div class="app-container">
+        <!-- 左側面板 -->
+        <div class="side-panel">
+            <div class="report-label">01. Source Material</div>
+            <div class="side-grid">
+                <button class="lab-btn active">乙烯 Ethylene</button>
+                <button class="lab-btn">乙炔 Acetylene</button>
+                <button class="lab-btn">苯酚 Phenol</button>
+                <button class="lab-btn">乙酸 Acetic Acid</button>
+            </div>
+            
+            <div class="report-label" style="margin-top: 20px;">02. Reagent</div>
+            <div class="side-grid">
+                <button class="lab-btn">溴水試驗</button>
+                <button class="lab-btn">氧化反應</button>
+            </div>
+        </div>
+
+        <!-- 中央視角 -->
+        <div class="viewport">
+            <div class="content-wrap">
+                <div class="test-tube">
+                    <div class="liquid"></div>
+                </div>
+                <div style="margin-top: 45px; font-weight: 900; letter-spacing: 12px; font-size: 1.4rem; text-transform: uppercase; font-family: 'Noto Serif TC', serif;" id="mol-name">Molecular Observation</div>
+                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px; font-family: 'Space Mono';">PROCESS: SPECTRAL ANALYSIS</div>
+            </div>
+        </div>
+
+        <!-- 右側報告 -->
+        <div class="data-panel">
+            <div class="report-label">03. Structural Report</div>
+            <div class="info-card">
+                <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; font-family: 'Noto Serif TC', serif;">光學觀察結論</div>
+                <div style="line-height: 2.2; opacity: 0.8; font-size: 0.9rem;">
+                    於標準光源下觀察，滴入試劑後液位交界處發生了極速的色彩坍縮。此光學現象暗示電子雲發生了重新排列，π 鍵斷裂並與鹵素原子形成了穩定的共價連結。
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <div class="report-label" style="margin-bottom: 15px;">Kinetic Equation</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 600;">
+                    C2H4 + Br2 <br>
+                    → CH2Br-CH2Br
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTheme(themeName, btn) {
+            document.querySelectorAll('.switcher-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.body.className = 'theme-' + themeName;
+            btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        document.querySelectorAll('.lab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const parent = this.parentElement;
+                parent.querySelectorAll('.lab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
