@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DESIGN EXPERIMENT | 有機鑑定系統 v13.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Serif+TC:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           1. 參數定義區域
+           ========================================= */
+        :root {
+            --header-h: 65px;
+            --substrate-h: 75px;
+            --report-h: 180px; 
+            --accent-gold: #FFD2A8; 
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --bg-gradient: linear-gradient(135deg, #2D3E50 0%, #C89678 100%);
+            --drawer-bg: rgba(10, 10, 12, 0.98);
+            --desc-size: 0.9rem; /* 自定義：說明文字大小 */
+            --desc-color: rgba(255, 255, 255, 0.4); /* 自定義：預設文字顏色 */
+            --desc-hover-color: #FFD2A8; /* 自定義：滑過時的顏色 (accent-gold) */
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-gradient); color: #FFF; }
+
+        /* --- 區域 1: Header --- */
+        .area-1-header { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--glass-border); backdrop-filter: blur(15px); flex-shrink: 0; position: relative; z-index: 2000; }
+        .header-title-wrap { flex: 1; text-align: center; pointer-events: none; }
+        .main-title { font-family: 'Noto Serif TC'; font-weight: 900; letter-spacing: 4px; font-size: 0.85rem; }
+        .sub-title { font-family: 'Space Mono'; font-size: 0.65rem; letter-spacing: 6px; opacity: 0.7; }
+        .top-btn { font-family: 'Space Mono'; font-size: 0.65rem; border: 1px solid var(--glass-border); padding: 5px 12px; border-radius: 50px; cursor: pointer; background: rgba(255,255,255,0.1); color: #FFF; }
+
+        /* --- 區域 2: Substrate Bar --- */
+        .area-2-substrate { height: var(--substrate-h); background: rgba(0, 0, 0, 0.15); display: flex; align-items: center; gap: 15px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+        .area-2-substrate::-webkit-scrollbar { display: none; }
+        .pill { padding: 10px 22px; border-radius: 50px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); font-size: 0.8rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; color: rgba(255,255,255,0.4); transition: 0.4s; cursor: pointer; }
+        .pill.active { background: #FFF; color: #000; box-shadow: 0 0 25px rgba(255,255,255,0.4); border-color: #FFF; }
+
+        /* --- 區域 3: Viewport (核心動畫區) --- */
+        .area-3-viewport { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; padding: 20px 0; }
+        .observation-pad { width: 340px; height: 100%; max-height: 520px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); border-radius: 60px; border: 1.5px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 40px 100px rgba(0,0,0,0.3); z-index: 1; }
+        
+        .test-tube { width: 80px; height: 320px; border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; border-radius: 0 0 40px 40px; position: relative; background: linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.1) 100%); margin-bottom: 25px; box-shadow: inset 1.5px 0 2px rgba(255,255,255,0.1), 0 30px 60px rgba(0,0,0,0.45); overflow: hidden; }
+        .test-tube::before { content: ""; position: absolute; top: -4px; left: -6px; right: -6px; height: 10px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(3px); border: 1.2px solid rgba(255, 255, 255, 0.3); border-radius: 12px / 6px; z-index: 10; }
+        .test-tube::after { content: ""; position: absolute; top: 10%; left: 15%; width: 8px; height: 75%; background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%); border-radius: 10px; filter: blur(1.5px); pointer-events: none; }
+
+        .liquid { position: absolute; bottom: 0; width: 100%; height: 0; background: rgba(255, 255, 255, 0.2); border-radius: 0 0 39px 39px; transition: height 1s, background 1.5s; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.1); }
+        
+        /* 動態器材：導管與滴管 */
+        #gas-tube { position: absolute; top: -100px; width: 6px; height: 280px; background: rgba(255,255,255,0.3); left: 50%; transform: translateX(-50%); border-radius: 0 0 4px 4px; transition: 0.8s; opacity: 0; z-index: 15; }
+        #dropper { position: absolute; top: -80px; width: 12px; height: 100px; background: rgba(255,255,255,0.4); left: 50%; transform: translateX(-50%); border-radius: 2px 2px 10px 10px; transition: 0.8s; opacity: 0; z-index: 15; }
+
+        /* 氣泡動畫 */
+        .bubble { position: absolute; background: rgba(255,255,255,0.4); border-radius: 50%; bottom: 10px; animation: rise 1s infinite; opacity: 0; }
+        @keyframes rise { 0% { bottom: 10px; opacity: 0; transform: translateX(0); } 50% { opacity: 1; } 100% { bottom: 45%; opacity: 0; transform: translateX(var(--x)); } }
+        .drop { position: absolute; width: 4px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 2px; left: 50%; transform: translateX(-50%); animation: fall 0.4s linear forwards; z-index: 12; }
+        @keyframes fall { 0% { top: 60px; opacity: 1; } 100% { top: 55%; opacity: 0; } }
+
+        .mol-label-zh { font-family: 'Noto Serif TC'; font-weight: 900; font-size: 1.7rem; letter-spacing: 12px; margin-bottom: 6px; }
+        .mol-label-en { font-family: 'Space Mono'; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 5px; }
+
+        /* --- 區域 4+5: 資訊面板 --- */
+        .info-panel { height: var(--report-h); background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .area-4-equation { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; scrollbar-width: none; }
+        .eq-content { font-family: 'Space Mono'; font-size: 1.2rem; color: var(--accent-gold); white-space: nowrap; }
+        .area-5-report { flex: 1; overflow-y: auto; padding: 15px 25px; scrollbar-width: none; }
+        .report-content { font-family: 'Noto Serif TC'; font-size: 0.9rem; line-height: 1.9; opacity: 0.8; }
+
+        /* --- 漢堡選單樣式 --- */
+        .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; background: var(--drawer-bg); backdrop-filter: blur(50px); z-index: 3000; transform: translateX(-100%); transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); padding: 80px 25px; border-right: 1px solid rgba(255,255,255,0.05); }
+        .drawer.open { transform: translateX(0); box-shadow: 40px 0 100px rgba(0,0,0,0.8); }
+        .drawer { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .drawer::-webkit-scrollbar { display: none; }
+        .reagent-btn { width: 100%; padding: 24px; background: transparent; border: none; border-left: 2px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); text-align: left; font-size: 1.1rem; font-family: 'Noto Serif TC'; margin-bottom: 20px; cursor: pointer; transition: 0.5s; }
+        .reagent-btn:hover { color: #FFF; border-left-color: var(--accent-gold); }
+        .reagent-btn.active { background: var(--accent-gold); color: #000; border-left-color: #FFF; font-weight: 900; }
+        .reagent-en { font-size: 0.7rem; font-weight: 400; opacity: 0.6; display: block; margin-top: 4px; }
+        .reagent-desc { font-size: var(--desc-size); font-weight: 400; color: var(--desc-color); display: block; margin-top: 2px; transition: 0.4s; }
+        .reagent-btn:hover .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        .reagent-btn.active .reagent-desc { color: rgba(0,0,0,0.6); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; opacity: 0; visibility: hidden; transition: 0.7s; backdrop-filter: blur(5px); }
+        .overlay.active { opacity: 1; visibility: visible; }
+        
+        .hamburger { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 3100; }
+        .hamburger span { width: 100%; height: 2px; background: #FFF; transition: 0.3s; }
+        .hamburger.open span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
+    </style>
+</head>
+<body>
+
+    <header class="area-1-header">
+        <div class="hamburger" id="ham" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
+        <div class="header-title-wrap"><div class="main-title">ORGANIC</div><div class="sub-title">ANALYSIS</div></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><div class="top-btn" onclick="location.reload()">RESET</div><div class="top-btn" style="width: 32px; text-align: center; padding: 5px 0;">✕</div></div>
+    </header>
+
+    <nav class="area-2-substrate" id="substrateBar"><div style="opacity: 0.3; font-size: 0.65rem; letter-spacing: 4px;">Waiting for reagent...</div></nav>
+
+    <main class="area-3-viewport">
+        <div class="observation-pad">
+            <div class="test-tube">
+                <div id="gas-tube"></div>
+                <div id="dropper"></div>
+                <div class="liquid" id="liquid"></div>
+                <div id="bubble-container"></div>
+            </div>
+            <div class="mol-label-zh" id="molZh">STANDBY</div>
+            <div class="mol-label-en" id="molEn">(READY FOR LAB)</div>
+        </div>
+    </main>
+
+    <footer class="info-panel">
+        <div class="area-4-equation"><div class="eq-content" id="equationContent">---</div></div>
+        <div class="area-5-report"><div class="report-content" id="reportContent">請開啟左側選單選擇鑑定試劑。</div></div>
+    </footer>
+
+    <div class="drawer" id="drawer">
+        <div style="font-size: 0.6rem; letter-spacing: 5px; opacity: 0.4; margin-bottom: 40px;">REAGENT REPOSITORY</div>
+        <!-- 第一階段：烴類與不飽和度 -->
+        <button class="reagent-btn" id="btn-br2" onclick="initExperiment('br2')">溴水試驗<span class="reagent-en">(Bromine Water Test)</span><span class="reagent-desc">檢驗烯、炔的 π 鍵不飽和性</span></button>
+        <button class="reagent-btn" id="btn-kmno4" onclick="initExperiment('kmno4')">過錳酸鉀試驗<span class="reagent-en">(KMnO₄ Test)</span><span class="reagent-desc">檢驗烯、炔或甲苯衍生物之氧化反應</span></button>
+        <button class="reagent-btn" id="btn-alkyne" onclick="initExperiment('alkyne')">末端炔鑑定<span class="reagent-en">(Terminal Alkyne Test)</span><span class="reagent-desc">利用銀離子、亞銅離子產生金屬炔化物沉澱</span></button>
+        
+        <!-- 第二階段：活性氫探測 -->
+        <button class="reagent-btn" id="btn-na" onclick="initExperiment('na')">金屬鈉試驗<span class="reagent-en">(Sodium Test)</span><span class="reagent-desc">檢驗醇、酚、羧酸中的氫鍵反應</span></button>
+        <button class="reagent-btn" id="btn-fecl3" onclick="initExperiment('fecl3')">氯化鐵顯色反應<span class="reagent-en">(Ferric Chloride Test)</span><span class="reagent-desc">檢驗酚類官能基產生紫色錯合物反應</span></button>
+        <button class="reagent-btn" id="btn-nahco3" onclick="initExperiment('nahco3')">碳酸氫鈉試驗<span class="reagent-en">(NaHCO₃ Test)</span><span class="reagent-desc">檢驗酸性較強的羧酸 (產生二氧化碳)</span></button>
+
+        <!-- 第三階段：醛酮還原性 -->
+        <button class="reagent-btn" id="btn-tollens" onclick="initExperiment('tollens')">銀鏡反應<span class="reagent-en">(Silver Mirror Test)</span><span class="reagent-desc">檢驗醛類與甲酸之強還原性性質</span></button>
+        <button class="reagent-btn" id="btn-fehling" onclick="initExperiment('fehling')">斐林/本氏液試驗<span class="reagent-en">(Fehling's/Benedict's Test)</span><span class="reagent-desc">檢驗脂肪族醛類與還原糖之性質</span></button>
+
+        <!-- 第四階段：醇類分級與氧化 -->
+        <button class="reagent-btn" id="btn-lucas" onclick="initExperiment('lucas')">醇的分級鑑定<span class="reagent-en">(Alcohol Classification)</span><span class="reagent-desc">利用混濁速率區分一、二、三級醇</span></button>
+        <button class="reagent-btn" id="btn-k2cr2o7" onclick="initExperiment('k2cr2o7')">二鉻酸鉀氧化反應<span class="reagent-en">(K₂Cr₂O₇ Oxidation)</span><span class="reagent-desc">檢驗一、二級醇之氧化變色反應</span></button>
+
+        <!-- 第六階段：醣類與多醣 -->
+        <button class="reagent-btn" id="btn-iodine" onclick="initExperiment('iodine')">澱粉碘液試驗<span class="reagent-en">(Iodine-Starch Test)</span><span class="reagent-desc">利用澱粉與碘分子形成深藍色錯合物</span></button>
+
+        <!-- 第七、八階段：油脂與鹵化烷 -->
+        <button class="reagent-btn" id="btn-soap" onclick="initExperiment('soap')">油脂皂化與鹽析<span class="reagent-en">(Saponification)</span><span class="reagent-desc">油脂在鹼中水解並利用鹽析分離肥皂</span></button>
+        <button class="reagent-btn" id="btn-halide" onclick="initExperiment('halide')">鹵化烷水解檢驗<span class="reagent-en">(Halide Hydrolysis Test)</span><span class="reagent-desc">鑑定鹵化烷水解後之鹵素離子種類</span></button>
+
+        <!-- 第十階段：萃取分離 -->
+        <button class="reagent-btn" id="btn-extract" onclick="initExperiment('extract')">酸鹼萃取分離<span class="reagent-en">(Acid-Base Extraction)</span><span class="reagent-desc">利用溶解度與酸鹼性分離混合物質</span></button>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+
+    <script>
+        const experimentData = {
+            'br2': {
+                reagentColor: 'rgba(165, 42, 42, 0.85)',
+                substrates: [
+                    { zh: '乙 烷', en: 'Ethane', state: 'gas', react: false, eq: 'CH₃CH₃ + Br₂ → (No Reaction)', text: '通入乙烷氣體後，紅褐色溴水無明顯變化。烷烴不含不飽和鍵，在無光照下不反應。' },
+                    { zh: '乙 烯', en: 'Ethylene', state: 'gas', react: true, eq: 'CH₂=CH₂ + Br₂ → CH₂Br-CH₂Br', text: '通入乙烯氣體，觀察到溶液迅速由紅褐色轉變為無色。加成反應破壞了 π 鍵。' },
+                    { zh: '乙 炔', en: 'Acetylene', state: 'gas', react: true, eq: 'HC≡CH + 2Br₂ → CHBr₂-CHBr₂', text: '乙炔氣體通入後紅褐色極速坍縮。碳碳參鍵具備高度不飽和性，發生加成反應。' },
+                    { zh: ' 苯 ', en: 'Benzene', state: 'liquid', react: false, eq: 'C₆H₆ + Br₂ → (No Reaction)', text: '滴入液態苯，液體分層且紅褐色維持不變。苯環共軛體系極其穩定，常溫下不發生加成反應。' }
+                ]
+            }
+        };
+
+        let activeReagent = null;
+        let isProcessing = false;
+        let currentSubIdx = -1; // -1 表示目前試管內是純試劑，無受質
+
+        function toggleDrawer() {
+            document.getElementById('drawer').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+            document.getElementById('ham').classList.toggle('open');
+        }
+
+        async function initExperiment(type) {
+            activeReagent = type;
+            currentSubIdx = -1; 
+            const data = experimentData[type];
+            toggleDrawer();
+            
+            // 步驟 1: 填充初始試劑
+            const liquid = document.getElementById('liquid');
+            liquid.style.height = '45%';
+            liquid.style.background = data.reagentColor;
+            
+            // 渲染按鈕
+            const bar = document.getElementById('substrateBar');
+            bar.innerHTML = ''; 
+            data.substrates.forEach((sub, idx) => {
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.innerText = sub.zh;
+                pill.onclick = () => runTest(idx);
+                bar.appendChild(pill);
+            });
+            
+            document.getElementById('reportContent').innerText = "已裝填溴水試劑。請選擇上方受質進行檢驗。";
+        }
+
+        async function runTest(subIdx) {
+            if (isProcessing) return;
+            isProcessing = true;
+            const data = experimentData[activeReagent];
+            const sub = data.substrates[subIdx];
+            const pills = document.querySelectorAll('.pill');
+            const liquid = document.getElementById('liquid');
+
+            // --- 邏輯 A：點選同一個物質（取消實驗） ---
+            if (currentSubIdx === subIdx) {
+                pills[subIdx].classList.remove('active');
+                currentSubIdx = -1; // 標記為純試劑狀態
+                await resetToStandard();
+                isProcessing = false;
+                return;
+            }
+
+            // --- 邏輯 B：切換不同物質 或 第一次點選 ---
+            const needsCleaning = (currentSubIdx !== -1); // 如果原本有物質，才需要清洗
+            pills.forEach(p => p.classList.remove('active'));
+            pills[subIdx].classList.add('active');
+
+            if (needsCleaning) {
+                document.getElementById('reportContent').innerText = "清理試管中...";
+                liquid.style.height = '0';
+                await new Promise(r => setTimeout(r, 800));
+                liquid.style.background = data.reagentColor;
+                liquid.style.height = '45%';
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            currentSubIdx = subIdx; // 更新當前物質索引
+
+            // --- 物理添加動作 ---
+            document.getElementById('reportContent').innerText = `準備加入 ${sub.zh}...`;
+            document.getElementById('molZh').innerText = sub.zh;
+            document.getElementById('molEn').innerText = `(${sub.en})`;
+            
+            if (sub.state === 'gas') {
+                await animateGas();
+            } else {
+                await animateDropper();
+            }
+
+            // --- 反應結果 ---
+            if (sub.react) {
+                liquid.style.background = 'rgba(255,255,255,0.2)';
+            }
+            document.getElementById('equationContent').innerText = sub.eq;
+            document.getElementById('reportContent').innerText = sub.text;
+            
+            isProcessing = false;
+        }
+
+        function animateGas() {
+            return new Promise(resolve => {
+                const tube = document.getElementById('gas-tube');
+                const container = document.getElementById('bubble-container');
+                tube.style.top = '30px'; tube.style.opacity = '1'; 
+                
+                let count = 0;
+                const interval = setInterval(() => {
+                    createBubble(container);
+                    if (count++ > 15) {
+                        clearInterval(interval);
+                        tube.style.top = '-100px'; tube.style.opacity = '0';
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
+        function animateDropper() {
+            return new Promise(resolve => {
+                const drop = document.getElementById('dropper');
+                drop.style.top = '10px'; drop.style.opacity = '1';
+                let count = 0;
+                const interval = setInterval(() => {
+                    const d = document.createElement('div'); d.className = 'drop';
+                    document.querySelector('.test-tube').appendChild(d);
+                    setTimeout(() => d.remove(), 400);
+                    if (count++ > 2) {
+                        clearInterval(interval);
+                        setTimeout(() => { drop.style.top = '-80px'; drop.style.opacity = '0'; resolve(); }, 600);
+                    }
+                }, 300);
+            });
+        }
+
+        function createBubble(container) {
+            const b = document.createElement('div');
+            b.className = 'bubble';
+            const size = Math.random() * 8 + 4 + 'px';
+            b.style.width = size; b.style.height = size;
+            b.style.left = 30 + Math.random() * 20 + 'px';
+            b.style.setProperty('--x', (Math.random() - 0.5) * 30 + 'px');
+            container.appendChild(b);
+            setTimeout(() => b.remove(), 1000);
+        }
+
+        async function resetToStandard() {
+            const liquid = document.getElementById('liquid');
+            liquid.style.height = '0';
+            document.getElementById('molZh').innerText = 'STANDBY';
+            document.getElementById('molEn').innerText = '(READY)';
+            document.getElementById('equationContent').innerText = '---';
+            document.getElementById('reportContent').innerText = "請選擇待測物質。";
+            await new Promise(r => setTimeout(r, 1000));
+            liquid.style.background = experimentData[activeReagent].reagentColor;
+            liquid.style.height = '45%';
+        }
+    </script>
+</body>
+</html>
