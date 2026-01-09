@@ -74,13 +74,22 @@
         .drawer.open { transform: translateX(0); box-shadow: 40px 0 100px rgba(0,0,0,0.8); }
         .drawer { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
         .drawer::-webkit-scrollbar { display: none; }
-        .reagent-btn { width: 100%; padding: 24px; background: transparent; border: none; border-left: 2px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); text-align: left; font-size: 1.1rem; font-family: 'Noto Serif TC'; margin-bottom: 20px; cursor: pointer; transition: 0.5s; }
+        .reagent-btn { width: 100%; padding: 24px; background: transparent; border: none; border-left: 2px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); text-align: left; font-size: 1.1rem; font-family: 'Noto Serif TC'; margin-bottom: 20px; cursor: pointer; transition: 0.25s; }
         .reagent-btn:hover { color: #FFF; border-left-color: var(--accent-gold); }
-        .reagent-btn.active { background: var(--accent-gold); color: #000; border-left-color: #FFF; font-weight: 900; }
+        /* 正式選取後 (點第二次) 的樣式：維持淡底色 */
+        .reagent-btn.active { color: #FFF; border-left-color: var(--accent-gold); background: rgba(255, 255, 255, 0.08); }
+        /* 手機第一次點擊：完全透明底色，僅邊框與文字發亮 */
+        .reagent-btn.focus-pending { background: transparent !important; border-left-color: var(--accent-gold); color: #FFF; }
         .reagent-en { font-size: 0.7rem; font-weight: 400; opacity: 0.6; display: block; margin-top: 4px; }
+        /* 手機端首選發亮與狀態持久化樣式 */
+        .reagent-btn.focus-pending { background: rgba(255, 210, 168, 0.15); border-left-color: var(--accent-gold); }
+        .reagent-btn.focus-pending .reagent-desc { color: var(--accent-gold); opacity: 1; }
         .reagent-desc { font-size: var(--desc-size); font-weight: 400; color: var(--desc-color); display: block; margin-top: 2px; transition: 0.4s; }
         .reagent-btn:hover .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
-        .reagent-btn.active .reagent-desc { color: rgba(0,0,0,0.6); }
+        /* 當點擊第一次 (focus-pending) 或滑鼠經過時，文字向右移動 5px 並變色 */
+        .reagent-btn.focus-pending .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        /* 正式選取後 (active)，文字維持金色但不位移 */
+        .reagent-btn.active .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(0); }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; opacity: 0; visibility: hidden; transition: 0.7s; backdrop-filter: blur(5px); }
         .overlay.active { opacity: 1; visibility: visible; }
         
@@ -177,7 +186,25 @@
         async function initExperiment(type) {
             activeReagent = type;
             currentSubIdx = -1; 
-            const data = experimentData[type];
+            const btn = document.getElementById('btn-' + type);
+            const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+
+            // 1. 手機版兩段式邏輯：第一下點擊僅發亮
+            if (isMobile && btn && !btn.classList.contains('focus-pending')) {
+                document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('focus-pending'));
+                btn.classList.add('focus-pending');
+                return; // 攔截，不執行進入動作
+            }
+
+            // 2. 選取持久化邏輯：清除所有按鈕狀態，為當前按鈕加上 active
+            document.querySelectorAll('.reagent-btn').forEach(b => {
+                b.classList.remove('active');
+                b.classList.remove('focus-pending');
+            });
+            if (btn) btn.classList.add('active');
+
+            // 3. 資料檢查邏輯：確保尚未製作內容的實驗也能「進得去」
+            const data = experimentData[type] || { reagentColor: 'rgba(255,255,255,0.1)', substrates: [] };
             toggleDrawer();
             
             // 步驟 1: 填充初始試劑
@@ -302,6 +329,8 @@
         async function resetToStandard() {
             const liquid = document.getElementById('liquid');
             liquid.style.height = '0';
+            const color = (experimentData[activeReagent]) ? experimentData[activeReagent].reagentColor : 'rgba(255,255,255,0.1)';
+            liquid.style.background = color;
             document.getElementById('molZh').innerText = 'STANDBY';
             document.getElementById('molEn').innerText = '(READY)';
             document.getElementById('equationContent').innerText = '---';
