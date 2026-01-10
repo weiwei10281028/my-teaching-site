@@ -119,6 +119,34 @@
         .reagent-btn.active .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(0); }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; opacity: 0; visibility: hidden; transition: 0.7s; backdrop-filter: blur(5px); }
         .overlay.active { opacity: 1; visibility: visible; }
+        /* 末端炔鑑定：橫向切換開關 (高質感版) */
+        .toggle-container { 
+            display: flex !important; flex-direction: row !important; align-items: center; 
+            background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 30px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; 
+            position: relative; width: 120px; height: 44px; flex-shrink: 0; margin-right: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .toggle-slider { 
+            position: absolute; top: 4px; left: 4px; width: 56px; height: 34px; 
+            border-radius: 25px; transition: 0.2s cubic-bezier(0.23, 1, 0.32, 1); z-index: 1; 
+        }
+        .toggle-container.ag-active .toggle-slider { 
+            transform: translateX(0); 
+            background: linear-gradient(135deg, #E0E0E0 0%, #909090 100%); 
+            box-shadow: 0 4px 12px rgba(255,255,255,0.2);
+        }
+        .toggle-container.cu-active .toggle-slider { 
+            transform: translateX(56px); 
+            background: linear-gradient(135deg, #FF6B6B 0%, #8B0000 100%); 
+            box-shadow: 0 4px 12px rgba(255,107,107,0.3);
+        }
+        .toggle-label { 
+            flex: 1; text-align: center; font-family: 'Space Mono'; font-size: 0.75rem; 
+            font-weight: 800; z-index: 2; transition: 0.2s; color: rgba(255,255,255,0.3); 
+            line-height: 36px; pointer-events: none;
+        }
+        .toggle-container.ag-active .label-ag, .toggle-container.cu-active .label-cu { color: #000; text-shadow: 0 1px 2px rgba(255,255,255,0.2); }
         
         .hamburger { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 3100; }
         .hamburger span { width: 100%; height: 2px; background: #FFF; transition: 0.3s; }
@@ -191,8 +219,9 @@
     <script>
         let activeReagent = null;
         let isProcessing = false;
-         let activeSubObject = null; // 追蹤目前選中的受質物件
+        let activeSubObject = null; // 追蹤目前選中的受質物件
         let kmno4Env = 'neutral'; // 'neutral' 或 'acidic'
+        let alkyneReagent = 'ag'; // 'ag' 或 'cu'
 
         const experimentData = {
             'br2': {
@@ -299,6 +328,37 @@
                         ]
                     }
                 ]
+            },
+            'alkyne': {
+                agColor: 'rgba(255, 255, 255, 0.15)', // 銀氨溶液：透明極淺白
+                cuColor: 'rgba(173, 216, 230, 0.3)',  // 亞銅氨溶液：淺藍色
+                substrates: [
+                    { zh: '乙 烯', en: 'Ethylene', state: 'gas', 
+                        ag: { react: false, eq: 'No Reaction', text: '乙烯不含末端炔氫，不與銀氨溶液反應。' },
+                        cu: { react: false, eq: 'No Reaction', text: '乙烯不含末端炔氫，不與亞銅氨溶液反應。' }
+                    },
+                    { 
+                        zh: ' 炔 ', isGroup: true, 
+                        children: [
+                            { zh: '乙 炔', en: 'Acetylene', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'HC≡CH + 2Ag(NH₃)₂⁺ → AgC≡CAg↓ + 2NH₄⁺ + 2NH₃', text: '乙炔通入銀氨溶液，產生白色乙炔銀沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'HC≡CH + 2Cu(NH₃)₂⁺ → CuC≡CCu↓ + 2NH₄⁺ + 2NH₃', text: '乙炔通入亞銅氨溶液，產生磚紅色乙炔亞銅沉澱。' }
+                            },
+                            { zh: '丙 炔', en: 'Propyne', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'CH₃C≡CH + Ag(NH₃)₂⁺ → CH₃C≡CAg↓ + NH₄⁺ + NH₃', text: '丙炔具有末端炔氫，與銀氨溶液產生白色沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'CH₃C≡CH + Cu(NH₃)₂⁺ → CH₃C≡CCu↓ + NH₄⁺ + NH₃', text: '丙炔具有末端炔氫，與亞銅氨溶液產生磚紅色沉澱。' }
+                            },
+                            { zh: '1-丁炔', en: '1-Butyne', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'C₂H₅C≡CH + Ag(NH₃)₂⁺ → C₂H₅C≡CAg↓ + NH₄⁺ + NH₃', text: '1-丁炔為末端炔，與銀氨溶液產生白色沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'C₂H₅C≡CH + Cu(NH₃)₂⁺ → C₂H₅C≡CCu↓ + NH₄⁺ + NH₃', text: '1-丁炔與亞銅氨溶液產生磚紅色沉澱。' }
+                            },
+                            { zh: '2-丁炔', en: '2-Butyne', state: 'liquid', 
+                                ag: { react: false, eq: 'No Reaction', text: '2-丁炔為內端炔，無酸性氫，故不與銀氨溶液反應。' },
+                                cu: { react: false, eq: 'No Reaction', text: '2-丁炔為內端炔，無酸性氫，故不與亞銅氨溶液反應。' }
+                            }
+                        ]
+                    }
+                ]
             }
         };
 
@@ -307,6 +367,32 @@
             bar.innerHTML = '';
             const data = experimentData[activeReagent];
             if (!data) return;
+
+            // --- 末端炔鑑定：Ag⁺/Cu⁺ 切換開關邏輯 ---
+            if (activeReagent === 'alkyne' && !isSubLevel) {
+                const toggle = document.createElement('div');
+                toggle.className = `toggle-container ${alkyneReagent}-active`;
+                toggle.innerHTML = `
+                    <div class="toggle-slider"></div>
+                    <div class="toggle-label label-ag">Ag⁺</div>
+                    <div class="toggle-label label-cu">Cu⁺</div>
+                `;
+                toggle.onclick = async () => {
+                    // 切換試劑類型
+                    alkyneReagent = (alkyneReagent === 'ag' ? 'cu' : 'ag');
+                    activeSubObject = null; // 強制取消選中物質
+                    
+                    // 立即清空所有文字介面，避免顯示舊數據
+                    document.getElementById('equationContent').innerText = '---';
+                    document.getElementById('reportContent').innerText = `已切換至 ${alkyneReagent === 'ag' ? '銀氨' : '亞銅氨'} 溶液。請選擇受質。`;
+                    document.getElementById('molZh').innerText = 'STANDBY';
+                    document.getElementById('molEn').innerText = '(READY)';
+
+                    await resetToStandard(); // 執行包含沉澱清空的重置動畫
+                    renderSubstrateBar(); // 重新渲染開關與按鈕狀態
+                };
+                bar.appendChild(toggle);
+            }
 
             const displayItems = items || data.substrates;
 
@@ -373,6 +459,8 @@
             liquid.style.height = '45%';
             const initialColor = (type === 'kmno4') 
                 ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor) 
+                : (type === 'alkyne')
+                ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor)
                 : data.reagentColor;
             liquid.style.background = initialColor;
             activeSubObject = null;
@@ -384,19 +472,19 @@
         async function runTest(subObject) {
             if (isProcessing) return;
             isProcessing = true;
-             // 重置沉澱層
-            document.getElementById('precipitate').style.height = '0';
-            document.getElementById('precipitate').style.opacity = '0';
+            // 1. 初始化環境：徹底清空沉澱層外觀，防止舊實驗顏色殘留
+            const pre = document.getElementById('precipitate');
+            pre.style.height = '0';
+            pre.style.opacity = '0';
+            pre.style.backgroundColor = 'transparent';
 
             const data = experimentData[activeReagent];
             const sub = subObject;
             
-            // 自動判定環境
-            if (activeReagent === 'kmno4') {
-                kmno4Env = sub.env || 'neutral';
-            }
-
-            const subData = (activeReagent === 'kmno4') ? sub[kmno4Env] : sub;
+            // 2. 獲取對應分支數據：自動判斷 KMnO4 環境或末端炔試劑 (Ag/Cu)
+            if (activeReagent === 'kmno4') kmno4Env = sub.env || 'neutral';
+            const subData = (activeReagent === 'kmno4') ? sub[kmno4Env] : 
+                            (activeReagent === 'alkyne') ? sub[alkyneReagent] : sub;
             const liquid = document.getElementById('liquid');
 
             if (activeSubObject === sub) {
@@ -417,9 +505,13 @@
                 liquid.style.height = '0';
                 await new Promise(r => setTimeout(r, 800));
                 
-                // 重裝時先維持「中性紫色」
-                const initialFill = (activeReagent === 'kmno4') ? data.neutralColor : data.reagentColor;
-                liquid.style.background = initialFill;
+                const refillColor = (activeReagent === 'kmno4') 
+                    ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor) 
+                    : (activeReagent === 'alkyne')
+                    ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor)
+                    : data.reagentColor;
+                    
+                liquid.style.background = refillColor;
                 liquid.style.height = '45%';
                 await new Promise(r => setTimeout(r, 500));
             }
@@ -450,16 +542,21 @@
             if (subData.react) {
                 liquid.style.background = subData.resultColor || 'rgba(255,255,255,0.2)';
             if (subData.precipitate) {
-                    // 階段 1: 溶液變為混濁黃褐色 (subData.resultColor 應設為較深色)
-                    const pre = document.getElementById('precipitate');
+                    // 根據數據設定沉澱顏色 (銀:白色 #FFFFFF / 銅:磚紅 #B22222)
+                    const pptColor = subData.pptColor || '#4D2600';
+                    pre.style.backgroundColor = pptColor;
+                    pre.style.background = `radial-gradient(circle at 50% 50%, ${pptColor} 1px, transparent 1px)`;
+                    pre.style.backgroundSize = '4px 4px';
                     
-                    // 階段 2: 開始產生沉降顆粒
-                    await animatePrecipitation();
+                    // 執行沉澱顆粒下沉動畫，並傳入該反應對應的顏色
+                    await animatePrecipitation(pptColor);
                     
-                    // 階段 3: 底部堆積層升起，同時溶液變淡
+                    // 最終堆積效果
                     pre.style.opacity = '1'; 
-                    pre.style.height = '5%'; 
-                    liquid.style.background = 'rgba(184, 134, 11, 0.35)'; // 參數：沉澱後變淡的溶液顏色
+                    pre.style.height = '12%'; 
+                    
+                    // 反應後溶液清澈化：末端炔變透明水感，KMnO4 則維持淡黃褐
+                    liquid.style.background = (activeReagent === 'alkyne') ? 'rgba(255,255,255,0.1)' : 'rgba(184, 134, 11, 0.35)';
                 }
                 // 如果反應後有氣泡需求 (如 CO2)，呼叫劇烈發泡動畫，不再觸發氣管
                 if (subData.bubble) {
@@ -562,13 +659,14 @@
                 }, 30); 
             });
         }
-        async function animatePrecipitation() {
+        async function animatePrecipitation(customColor = '#4D2600') {
             const container = document.querySelector('.test-tube');
-            const particleCount = 12; // 參數：沉澱顆粒數量
+            const particleCount = 15; // 參數：沉澱顆粒數量
             
             for (let i = 0; i < particleCount; i++) {
                 const p = document.createElement('div');
                 p.className = 'solid-particle';
+                p.style.backgroundColor = customColor; // 套用傳入的顏色
                 p.style.left = (20 + Math.random() * 60) + '%';
                 p.style.top = (55 + Math.random() * 10) + '%'; // 從液體中段開始出現
                 p.style.setProperty('--dist', (80 + Math.random() * 40) + 'px');
@@ -594,12 +692,19 @@
         async function resetToStandard() {
             const liquid = document.getElementById('liquid');
             liquid.style.height = '0';
+            // 徹底清空沉澱層高度、透明度與底色，防止殘留
+            const pre = document.getElementById('precipitate');
+            pre.style.height = '0';
+            pre.style.opacity = '0';
+            pre.style.backgroundColor = 'transparent';
             const data = experimentData[activeReagent];
             let color = 'rgba(255,255,255,0.1)';
             
             if (data) {
                 if (activeReagent === 'kmno4') {
                     color = (kmno4Env === 'neutral') ? data.neutralColor : data.acidicColor;
+                } else if (activeReagent === 'alkyne') {
+                    color = (alkyneReagent === 'ag') ? data.agColor : data.cuColor;
                 } else {
                     color = data.reagentColor;
                 }
@@ -614,6 +719,8 @@
             const finalData = experimentData[activeReagent];
             const finalColor = (activeReagent === 'kmno4' && finalData) 
                 ? (kmno4Env === 'neutral' ? finalData.neutralColor : finalData.acidicColor) 
+                : (activeReagent === 'alkyne' && finalData)
+                ? (alkyneReagent === 'ag' ? finalData.agColor : finalData.cuColor)
                 : (finalData ? finalData.reagentColor : 'rgba(255,255,255,0.1)');
                 
             liquid.style.background = finalColor;
