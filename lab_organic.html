@@ -54,20 +54,42 @@
         #dropper { position: absolute; top: -80px; width: 12px; height: 100px; background: rgba(255,255,255,0.4); left: 50%; transform: translateX(-50%); border-radius: 2px 2px 10px 10px; transition: 0.8s; opacity: 0; z-index: 15; }
 
         #dropper-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-family: 'Space Mono'; font-size: 0.6rem; color: #FFF; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; white-space: nowrap; opacity: 0; transition: 0.3s; }
-        #precipitate { position: absolute; bottom: 0; width: 100%; height: 0; background: radial-gradient(circle at 50% 50%, #4D2600 1px, transparent 1px); background-size: 4px 4px; background-color: #5C3317; border-radius: 0 0 40px 40px; transition: height 2s ease-in; opacity: 0; z-index: 5; /* 新增：不規則頂部堆積形狀與顆粒模糊感 */
-            clip-path: polygon(0% 100%, 0% 30%, 15% 10%, 35% 35%, 50% 15%, 70% 40%, 85% 5%, 100% 25%, 100% 100%);
-            filter: blur(0.4px); 
+        #precipitate { 
+            position: absolute; bottom: 0; width: 100%; height: 0; 
+            background-color: #5C3317; border-radius: 0 0 40px 40px; 
+            transition: height 4.5s cubic-bezier(0.215, 0.61, 0.355, 1); /* 延長時間讓它慢慢長出來 */
+            opacity: 0; z-index: 5;
+            /* 改為更像沙堆的緩坡形狀 */
+            clip-path: polygon(0% 100%, 0% 45%, 15% 40%, 30% 25%, 50% 15%, 75% 30%, 90% 42%, 100% 45%, 100% 100%);
+            filter: blur(1.5px); 
         }
+        .bubble.output {
+    background: rgba(255, 255, 255, 0.7); /* 更白 */
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)); /* 發光感 */
+    box-shadow: inset 0 0 4px rgba(255,255,255,1);
+    }
         
         .solid-particle { position: absolute; width: 4px; height: 4px; background: #4D2600; border-radius: 50%; z-index: 6; opacity: 0; pointer-events: none; }
         @keyframes settling {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            20% { opacity: 1; }
-            100% { transform: translateY(var(--dist)) translateX(var(--side)); opacity: 0; }
+            0% { transform: translateY(0) scale(0.5); opacity: 0; filter: blur(1px); }
+            20% { opacity: 0.8; filter: blur(0px); }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(var(--dist)) scale(1.2); opacity: 0; }
         }
-        /* 氣泡動畫 */
-        .bubble { position: absolute; background: rgba(255,255,255,0.4); border-radius: 50%; bottom: 10px; animation: rise 1s infinite; opacity: 0; }
-        @keyframes rise { 0% { bottom: 10px; opacity: 0; transform: translateX(0); } 50% { opacity: 1; } 100% { bottom: 45%; opacity: 0; transform: translateX(var(--x)); } }
+        /* 氣泡基礎樣式 */
+        .bubble { position: absolute; background: rgba(255,255,255,0.4); border-radius: 50%; border: 0.5px solid rgba(255,255,255,0.6); pointer-events: none; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.1); }
+        /* 通入氣體：從管口集中升起 */
+        @keyframes rise-in { 
+            0% { bottom: 10px; opacity: 0; transform: scale(0.5) translateX(-50%); } 
+            20% { opacity: 0.7; }
+            100% { bottom: 45%; opacity: 0; transform: scale(1.2) translateX(calc(-50% + var(--x))); } 
+        }
+        /* 反應產氣：全液體隨機冒出 */
+        @keyframes rise-out { 
+            0% { bottom: var(--start-y); opacity: 0; transform: scale(0.3); } 
+            30% { opacity: 0.8; }
+            100% { bottom: 45%; opacity: 0; transform: scale(1) translateX(var(--x)); } 
+        }
         /* 加強版液滴：水滴狀與發亮效果 */
         .drop { 
             position: absolute; 
@@ -217,6 +239,17 @@
     <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
     <script>
+        const LAB_PARAMS = {
+    liquidLevel: 0.45,     // 液面高度 (45%)
+    gasInSpeed: 120,
+    effervSpeed: 30,       // 調快產氣頻率
+    bubbleLife: 1500,
+    pptDensity: 35,        // 增加顆粒感
+    settleTime: 3.0,
+    bubbleSizeMin: 4,      // 產物氣泡最小尺寸
+    bubbleSizeMax: 10      // 產物氣泡最大尺寸
+};
+
         let activeReagent = null;
         let isProcessing = false;
         let activeSubObject = null; // 追蹤目前選中的受質物件
@@ -487,6 +520,10 @@
                             (activeReagent === 'alkyne') ? sub[alkyneReagent] : sub;
             const liquid = document.getElementById('liquid');
 
+            // 【1. 總開關重置】：點選新物質立即清空舊數據
+            document.getElementById('equationContent').innerText = '---';
+            document.getElementById('reportContent').innerText = `準備檢驗：${sub.zh}...`;
+
             if (activeSubObject === sub) {
                 activeSubObject = null;
                 renderSubstrateBar();
@@ -541,21 +578,18 @@
             // --- 反應結果與發泡判定 ---
             if (subData.react) {
                 liquid.style.background = subData.resultColor || 'rgba(255,255,255,0.2)';
-            if (subData.precipitate) {
-                    // 根據數據設定沉澱顏色 (銀:白色 #FFFFFF / 銅:磚紅 #B22222)
+                if (subData.precipitate) {
                     const pptColor = subData.pptColor || '#4D2600';
                     pre.style.backgroundColor = pptColor;
-                    pre.style.background = `radial-gradient(circle at 50% 50%, ${pptColor} 1px, transparent 1px)`;
-                    pre.style.backgroundSize = '4px 4px';
+                    pre.style.opacity = '1';
                     
-                    // 執行沉澱顆粒下沉動畫，並傳入該反應對應的顏色
+                    // 【2. 堆積結合】：先啟動背景高度緩慢增長
+                    setTimeout(() => { pre.style.height = '10%'; }, 500); 
+                    
+                    // 同步執行顆粒下沉，營造顆粒落入堆積層的視覺感
                     await animatePrecipitation(pptColor);
-                    
-                    // 最終堆積效果
-                    pre.style.opacity = '1'; 
-                    pre.style.height = '12%'; 
-                    
-                    // 反應後溶液清澈化：末端炔變透明水感，KMnO4 則維持淡黃褐
+
+                    // 反應後溶液清澈化
                     liquid.style.background = (activeReagent === 'alkyne') ? 'rgba(255,255,255,0.1)' : 'rgba(184, 134, 11, 0.35)';
                 }
                 // 如果反應後有氣泡需求 (如 CO2)，呼叫劇烈發泡動畫，不再觸發氣管
@@ -588,8 +622,8 @@
             return new Promise(resolve => {
                 let count = 0;
                 const interval = setInterval(() => {
-                    createBubble(container);
-                    if (count++ > 15) {
+                    createBubble(container, 'input');
+                    if (count++ > 18) {
                         clearInterval(interval);
                         tube.style.top = '-100px'; 
                         tube.style.opacity = '0';
@@ -654,48 +688,81 @@
             return new Promise(resolve => {
                 let count = 0;
                 const interval = setInterval(() => {
-                    createBubble(container);
-                    if (count++ > 40) { clearInterval(interval); resolve(); }
-                }, 30); 
+                    createBubble(container, 'output');
+                    if (count++ > 50) { clearInterval(interval); resolve(); }
+                }, LAB_PARAMS.effervSpeed); 
             });
         }
         async function animatePrecipitation(customColor = '#4D2600') {
             const container = document.querySelector('.test-tube');
-            const particleCount = 15; // 參數：沉澱顆粒數量
+            const particleCount = LAB_PARAMS.pptDensity;
+            const liquidTop = (1 - LAB_PARAMS.liquidLevel) * 100; // 計算液面在試管中的百分比位置
             
             for (let i = 0; i < particleCount; i++) {
                 const p = document.createElement('div');
                 p.className = 'solid-particle';
-                p.style.backgroundColor = customColor; // 套用傳入的顏色
-                p.style.left = (20 + Math.random() * 60) + '%';
-                p.style.top = (55 + Math.random() * 10) + '%'; // 從液體中段開始出現
-                p.style.setProperty('--dist', (80 + Math.random() * 40) + 'px');
-                p.style.setProperty('--side', (Math.random() * 20 - 10) + 'px');
-                p.style.animation = `settling ${2 + Math.random()}s linear forwards`;
+                p.style.backgroundColor = customColor;
+                p.style.left = (15 + Math.random() * 70) + '%';
+                // 從液面下方一點點開始產生，確保不會出現在空氣中
+                p.style.top = (liquidTop + 5 + Math.random() * 20) + '%'; 
+                const distValue = (100 - liquidTop) * 2; // 動態計算下沉距離
+                p.style.setProperty('--dist', (distValue + Math.random() * 30) + 'px');
+                p.style.animation = `settling ${LAB_PARAMS.settleTime + Math.random()}s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards`;
                 container.appendChild(p);
-                setTimeout(() => p.remove(), 3000);
-                if (i % 3 === 0) await new Promise(r => setTimeout(r, 200)); // 間隔析出
+                setTimeout(() => p.remove(), LAB_PARAMS.settleTime * 1500);
+                if (i % 3 === 0) await new Promise(r => setTimeout(r, 100));
             }
         }
 
-        function createBubble(container) {
-            const b = document.createElement('div');
-            b.className = 'bubble';
-            const size = Math.random() * 8 + 4 + 'px';
-            b.style.width = size; b.style.height = size;
-            b.style.left = 30 + Math.random() * 20 + 'px';
-            b.style.setProperty('--x', (Math.random() - 0.5) * 30 + 'px');
-            container.appendChild(b);
-            setTimeout(() => b.remove(), 1000);
+        function createBubble(container, type = 'input') {
+    const b = document.createElement('div');
+    // 如果是產生氣體，加入 output class 以套用 CSS 的發光濾鏡
+    b.className = `bubble ${type === 'output' ? 'output' : ''}`;
+
+    // 根據類型計算尺寸：通入氣體較平均，產物氣體則依據參數隨機化
+    const size = (type === 'input' 
+        ? Math.random() * 5 + 5 
+        : Math.random() * (LAB_PARAMS.bubbleSizeMax - LAB_PARAMS.bubbleSizeMin) + LAB_PARAMS.bubbleSizeMin) + 'px';
+    
+    b.style.width = size;
+    b.style.height = size;
+
+    if (type === 'input') {
+        // 【1. 加入氣體物質】：從導管口(50%)集中升起
+        b.style.left = '50%';
+        b.style.setProperty('--x', (Math.random() - 0.5) * 25 + 'px');
+        b.style.animation = `rise-in ${LAB_PARAMS.bubbleLife}ms ease-out forwards`;
+    } else {
+        // 【2. 產生氣體生成物】：全液體範圍隨機析出
+        b.style.left = (15 + Math.random() * 70) + '%';
+        // 隨機起始高度，確保從液體內部冒出而非底端
+        const startY = (5 + Math.random() * 35) + '%'; 
+        b.style.setProperty('--start-y', startY);
+        b.style.setProperty('--x', (Math.random() - 0.5) * 45 + 'px');
+        b.style.animation = `rise-out ${LAB_PARAMS.bubbleLife * 0.8}ms ease-in forwards`;
+    }
+
+    container.appendChild(b);
+
+    // 統一根據壽命參數移除元素
+    setTimeout(() => {
+        if (b.parentElement === container) {
+            b.remove();
         }
+    }, LAB_PARAMS.bubbleLife);
+}
 
         async function resetToStandard() {
             const liquid = document.getElementById('liquid');
             liquid.style.height = '0';
-            // 徹底清空沉澱層高度、透明度與底色，防止殘留
+            // 1. 移除所有運行中的物理顆粒與氣泡
+            document.querySelectorAll('.solid-particle, .bubble').forEach(el => el.remove());
+            // 2. 隱藏沉澱層與歸零參數
             const pre = document.getElementById('precipitate');
+            pre.style.transition = 'none'; // 立即歸零，不等待過渡
             pre.style.height = '0';
             pre.style.opacity = '0';
+            setTimeout(() => pre.style.transition = 'height 2s cubic-bezier(0.4, 0, 0.2, 1)', 50);
             pre.style.backgroundColor = 'transparent';
             const data = experimentData[activeReagent];
             let color = 'rgba(255,255,255,0.1)';
