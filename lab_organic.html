@@ -642,6 +642,26 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
                 { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, resultColor: 'rgba(218, 165, 32, 0.18)', eq: 'No Reaction', text: '普通醇類不具備酚羥基，不發生顯色反應。' },
                 { zh: '柳酸甲酯', en: 'Methyl Salicylate', state: 'liquid', react: true, resultColor: 'rgba(90, 45, 115, 0.6)', eq: 'C₆H₄(OH)COOCH₃ + Fe³⁺ → Violet Complex', text: '冬青油仍保有酚羥基，顯色速度較慢，呈現紫紅色。' }
             ]
+            },
+            'nahco3': {
+            reagentColor: 'rgba(255,255,255,0.1)', // 待測液初色
+            substrates: [
+                { 
+                    zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 12, eq: 'H₂C₂O₄ + 2NaHCO₃ → Na₂C₂O₄ + 2H₂O + 2CO₂↑', text: '草酸酸性極強，加入碳酸氫鈉後氣泡呈噴發狀劇烈產生。',
+                    x: 0, y: 0, s: 1.2,
+                    structure: `<svg viewBox="0 0 200 120"><g stroke="white" stroke-width="2.5" fill="none"><line x1="60" y1="60" x2="100" y2="60"/><line x1="60" y1="60" x2="40" y2="40"/><line x1="60" y1="60" x2="40" y2="80"/><line x1="100" y1="60" x2="120" y2="40"/><line x1="100" y1="60" x2="120" y2="80"/></g><text x="10" y="45" fill="white" font-size="14">HO</text><text x="125" y="45" fill="white" font-size="14">OH</text><text x="45" y="95" fill="white" font-size="14">O</text><text x="110" y="95" fill="white" font-size="14">O</text></svg>`
+                },
+                { 
+                    zh: '苯甲酸', en: 'Benzoic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 25, eq: 'C₆H₅COOH + NaHCO₃ → C₆H₅COONa + H₂O + CO₂↑', text: '苯甲酸酸性大於乙酸，滴入藥劑後觀察到明顯且快速的二氧化碳氣泡。',
+                    x: -20, y: 0, s: 1.4,
+                    structure: `<svg viewBox="0 0 200 120"><g stroke="white" stroke-width="2.5" fill="none"><path d="M40 35 L60 47 L60 72 L40 85 L20 72 L20 47 Z"/><line x1="60" y1="47" x2="85" y2="35"/></g><text x="90" y="38" fill="white" font-family="Space Mono" font-weight="bold" font-size="16">COOH</text></svg>`
+                },
+                { 
+                    zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 45, eq: 'CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑', text: '乙酸為一般羧酸，與碳酸氫鈉反應產生穩定的二氧化碳氣泡。' 
+                },
+                { zh: '苯 酚', en: 'Phenol', state: 'liquid', react: false, eq: 'No Reaction', text: '酚類酸性極弱，不足以與碳酸氫鈉反應產生氣泡（可用此區分羧酸）。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '醇類幾近中性，不與碳酸氫鈉發生反應。' }
+            ]
         }
         };
 
@@ -839,7 +859,7 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
                 safeTimeout(() => { pre.style.opacity = '1'; pre.style.height = LAB_PARAMS.pptFinalHeight; }, 1800);  
                 await pptAnimation;
             }
-            if (subData.react && subData.bubble) await animateEffervescence();
+            if (subData.react && subData.bubble) await animateEffervescence(subData.bSpeed || 30);
 
             document.getElementById('equationContent').innerText = subData.eq;
             document.getElementById('reportContent').innerText = subData.text;
@@ -982,14 +1002,14 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
             drop.style.left = '50%'; // 重置回中央
         }
 
-        async function animateEffervescence() {
+        async function animateEffervescence(speed = LAB_PARAMS.effervSpeed) {
             const container = document.getElementById('bubble-container');
             return new Promise(resolve => {
                 let count = 0;
                 const interval = setInterval(() => {
                     createBubble(container, 'output');
-                    if (count++ > 50) { clearInterval(interval); resolve(); }
-                }, LAB_PARAMS.effervSpeed); 
+                    if (count++ > 60) { clearInterval(interval); resolve(); }
+                }, speed); 
             });
         }
 
