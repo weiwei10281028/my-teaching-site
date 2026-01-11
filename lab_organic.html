@@ -40,7 +40,13 @@
         .pill.active { background: #FFF; color: #000; box-shadow: 0 0 25px rgba(255,255,255,0.4); border-color: #FFF; }
 
         /* --- 區域 3: Viewport (核心動畫區) --- */
-        .area-3-viewport { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; padding: 20px 0; }
+        .scroll-wrapper {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+            scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;
+        padding-bottom: 250px; /* 【關鍵】增加底部隱形留白，讓你滑得更高 */
+        }
+        .scroll-wrapper::-webkit-scrollbar { display: none; }
+        .area-3-viewport { position: relative; display: flex; justify-content: center; align-items: center; padding: 20px 0; min-height: 620px; flex-shrink: 0; }
         .observation-pad { width: 340px; height: 100%; max-height: 520px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); border-radius: 60px; border: 1.5px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 40px 100px rgba(0,0,0,0.3); z-index: 1; }
         
         .test-tube { width: 80px; height: 320px; border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; border-radius: 0 0 40px 40px; position: relative; background: linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.1) 100%); margin-bottom: 25px; box-shadow: inset 1.5px 0 2px rgba(255,255,255,0.1), 0 30px 60px rgba(0,0,0,0.45); overflow: hidden; }
@@ -267,7 +273,7 @@
         .info-panel { height: var(--report-h); background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; flex-shrink: 0; }
         .area-4-equation { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; scrollbar-width: none; }
         .eq-content { font-family: 'Space Mono'; font-size: 1.2rem; color: var(--accent-gold); white-space: nowrap; }
-        .area-5-report { flex: 1; overflow-y: auto; padding: 15px 25px; scrollbar-width: none; }
+        .area-5-report { flex: 1; overflow: visible; padding: 15px 25px; scrollbar-width: none; }
         .report-content { font-family: 'Noto Serif TC'; font-size: 0.9rem; line-height: 1.9; opacity: 0.8; }
 
         /* --- 漢堡選單樣式 --- */
@@ -342,7 +348,8 @@
 
     <nav class="area-2-substrate" id="substrateBar"><div style="opacity: 0.3; font-size: 0.65rem; letter-spacing: 4px;">Waiting for reagent...</div></nav>
 
-    <main class="area-3-viewport">
+    <div class="scroll-wrapper">
+        <main class="area-3-viewport">
         <div class="observation-pad">
             <!-- 上方固定結構式儀表板 -->
             <div id="structure-banner"></div>
@@ -366,6 +373,7 @@
         <div class="area-4-equation"><div class="eq-content" id="equationContent">---</div></div>
         <div class="area-5-report"><div class="report-content" id="reportContent">請開啟左側選單選擇鑑定試劑。</div></div>
     </footer>
+    </div>
 
     <div class="drawer" id="drawer">
         <div style="font-size: 0.6rem; letter-spacing: 5px; opacity: 0.4; margin-bottom: 40px;">REAGENT REPOSITORY</div>
