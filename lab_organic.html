@@ -86,6 +86,45 @@
             transform: scale(var(--struct-scale, 1.2));
             transform-origin: center center;
         }
+        /* === 修正 1：針對化學鍵 (幾何圖形) === */
+        /* 必須填滿 (fill) 也要描邊 (stroke)，才會顯示為實心粗線 */
+        #structure-banner svg path, 
+        #structure-banner svg line, 
+        #structure-banner svg polyline, 
+        #structure-banner svg polygon, 
+        #structure-banner svg rect {
+            fill: white !important;       /* 【關鍵】填滿內部，解決空心框問題 */
+            stroke: white !important;     /* 【關鍵】加粗邊緣，讓線條更飽滿 */
+            stroke-width: 2px !important; /* 設定適當粗度 */
+            stroke-linecap: round;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* === 修正 2：針對原子 (文字) === */
+        /* 文字絕對不能有描邊 (stroke)，且強制使用 Arial */
+        #structure-banner svg text, 
+        #structure-banner svg tspan {
+            fill: white !important;       /* 實心白字 */
+            stroke: none !important;      /* 【關鍵】去除文字邊框，解決變肥/糊掉 */
+            font-family: Arial, sans-serif !important; /* 【關鍵】改回 3000 的通用字體 */
+            font-weight: 700 !important;  /* 粗體 */
+            cursor: pointer;
+        }
+
+        /* === 修正 3：互動螢光 (.h) === */
+        /* 鍵結變紫色 */
+        #structure-banner svg .h {
+            fill: #E9D5FF !important;
+            stroke: #E9D5FF !important;
+            filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) !important;
+        }
+        /* 文字變紫色 (特例：依然不可有邊框) */
+        #structure-banner svg text.h, 
+        #structure-banner svg tspan.h {
+            stroke: none !important;
+            fill: #E9D5FF !important;
+        }
 
         .experiment-zone {
             flex: 1; width: 100%; display: flex; flex-direction: column;
@@ -237,11 +276,14 @@
         .drawer { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
         .drawer::-webkit-scrollbar { display: none; }
         .reagent-btn { width: 100%; padding: 24px; background: transparent; border: none; border-left: 2px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); text-align: left; font-size: 1.1rem; font-family: 'Noto Serif TC'; margin-bottom: 20px; cursor: pointer; transition: 0.25s; }
-        .reagent-btn:hover { color: #FFF; border-left-color: var(--accent-gold); }
-        /* 正式選取後 (點第二次) 的樣式：維持淡底色 */
-        .reagent-btn.active { color: #FFF; border-left-color: var(--accent-gold); background: rgba(255, 255, 255, 0.08); }
-        /* 手機第一次點擊：完全透明底色，僅邊框與文字發亮 */
+         @media (hover: hover) {
+            .reagent-btn:hover { color: #FFF; border-left-color: var(--accent-gold); }
+            .reagent-btn:hover .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        }
+        .reagent-btn.active { color: #FFF; border-left-color: var(--accent-gold); background: rgba(255, 210, 168, 0.1) !important; }
+        .reagent-btn.active .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
         .reagent-btn.focus-pending { background: transparent !important; border-left-color: var(--accent-gold); color: #FFF; }
+        .reagent-btn.focus-pending .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
         .reagent-en { font-size: 0.7rem; font-weight: 400; opacity: 0.6; display: block; margin-top: 4px; }
         /* 手機端首選發亮與狀態持久化樣式 */
         .reagent-btn.focus-pending { background: rgba(255, 210, 168, 0.15); border-left-color: var(--accent-gold); }
@@ -385,7 +427,7 @@
     function universalCleanup() {
         // 1. 中斷背景鬧鐘
         activeTimers.forEach(clearTimeout);
-        activeTimers = [];
+         activeTimers = [];
         // 2. 物理清除所有動態零件 (包含顯色粒子 .grain)
         document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
         // 3. 視覺與結構儀表板重置
@@ -393,8 +435,6 @@
         if (liq) { liq.style.transition = 'none'; liq.style.background = 'transparent'; }
         const sb = document.getElementById('structure-banner');
         if (sb) sb.classList.remove('show');
-        // 4. 按鈕熄滅 (修復手機殘留發亮)
-        document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('active', 'focus-pending'));
     }
 
         let activeReagent = null;
@@ -589,8 +629,10 @@
                 },
                 { 
                     zh: '柳 酸', en: 'Salicylic Acid', state: 'liquid', react: true, resultColor: 'rgba(75, 35, 105, 0.68)', eq: 'C₆H₄(OH)COOH + Fe³⁺ → Purple Complex', text: '柳酸具備酚羥基與羧基。鄰位的 -OH 基使其能與鐵離子產生深紫色反應。', 
-                    x: -11, y: -2, s: 1.45,
-                    structure: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#E9D5FF"/></filter></defs><style>line{stroke:white;stroke-width:2.5;stroke-linecap:round;cursor:pointer}text{fill:white;font:500 26px 'Space Mono';cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:url(#glow)}</style><line onclick="tBond(3)" x1="221.7" y1="75.0" x2="264.9" y2="50.0"/><line class="h" onclick="tBond(4)" x1="135.1" y1="75.0" x2="135.1" y2="125.0"/><line class="h" onclick="tBond(4)" x1="141.6" y1="75.0" x2="141.6" y2="125.0"/><line class="h" onclick="tBond(5)" x1="135.1" y1="125.0" x2="178.3" y2="150.0"/><line class="h" onclick="tBond(6)" x1="178.3" y1="150.0" x2="221.7" y2="125.0"/><line class="h" onclick="tBond(6)" x1="175.1" y1="144.4" x2="218.4" y2="119.4"/><line class="h" onclick="tBond(7)" x1="221.7" y1="125.0" x2="221.7" y2="75.0"/><line class="h" onclick="tBond(8)" x1="221.7" y1="75.0" x2="178.3" y2="50.0"/><line class="h" onclick="tBond(8)" x1="218.4" y1="80.6" x2="175.1" y2="55.6"/><line class="h" onclick="tBond(9)" x1="178.3" y1="50.0" x2="135.1" y2="75.0"/><line class="h" onclick="tBond(10)" x1="221.7" y1="125.0" x2="264.9" y2="150.0"/><text class="h" onclick="tAtom(7)" x="270.9" y="157.0">OH</text><text onclick="tAtom(8)" x="270.9" y="57.0">COOH</text></svg>` 
+                    x: 0, y: 0, s: 1,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 209 131" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1519.6,4482.23 L 1499.6,4493.77 L 1499.6,3882.23 L 1519.6,3893.77 L 1519.6,4482.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1591.6,4446.43 L 1571.6,4446.43 L 1571.6,3929.57 L 1591.6,3929.57 L 1591.6,4446.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2029.2,4776.45 L 2029.2,4799.55 L 1499.6,4493.77 L 1519.6,4482.23 L 2029.2,4776.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2538.8,4482.23 L 2548.8,4488 L 2548.8,4499.55 L 2029.2,4799.55 L 2029.2,4776.45 L 2538.8,4482.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2471.8,4437.77 L 2481.8,4455.09 L 2034.2,4713.52 L 2024.2,4696.2 L 2471.8,4437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2538.8,3893.77 L 2548.8,3888 L 2558.8,3893.77 L 2558.8,4482.23 L 2548.8,4488 L 2538.8,4482.23 L 2538.8,3893.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2029.2,3599.55 L 2029.2,3576.45 L 2548.8,3876.45 L 2548.8,3888 L 2538.8,3893.77 L 2029.2,3599.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2024.2,3679.8 L 2034.2,3662.48 L 2481.8,3920.91 L 2471.8,3938.23 L 2024.2,3679.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1519.6,3893.77 L 1499.6,3882.23 L 2029.2,3576.45 L 2029.2,3599.55 L 1519.6,3893.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 125.15 26.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+COOH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2931.87,3655.28 L 2941.87,3672.6 L 2558.8,3893.77 L 2548.8,3888 L 2548.8,3876.45 L 2931.87,3655.28 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 124.4 126.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" class="h">
+OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2945.16,4705.3 L 2935.16,4722.62 L 2548.8,4499.55 L 2548.8,4488 L 2558.8,4482.23 L 2945.16,4705.3 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
                 },
                 { 
                     zh: '阿斯匹靈', en: 'Aspirin', state: 'liquid', react: false, resultColor: 'rgba(218, 165, 32, 0.18)', eq: 'No Reaction', text: '阿斯匹靈因酚羥基已被酯化（變為乙醯基），滴入試劑後不顯色。', 
@@ -676,12 +718,17 @@
             currentSubIdx = -1; 
             const btn = document.getElementById('btn-' + type);
             const isMobile = window.matchMedia("(max-width: 1024px)").matches;
-
+            
+            // 手機端第一次點擊邏輯：若按鈕沒被標記 focus-pending，則先發亮並 return
             if (isMobile && btn && !btn.classList.contains('focus-pending')) {
-                document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('focus-pending'));
+                document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('active', 'focus-pending'));
                 btn.classList.add('focus-pending');
                 return; 
             }
+            
+            // 第二次點擊或電腦版：正式選取並執行
+            document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('active', 'focus-pending'));
+            if (btn) btn.classList.add('active');
 
             // 0.1秒極速反應：清理並收回選單
             universalCleanup();
