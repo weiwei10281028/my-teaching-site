@@ -260,10 +260,12 @@
         .eq-content { font-family: 'Space Mono'; font-size: 1.5rem; color: var(--accent-gold); font-weight: bold; }
         .report-content { font-family: 'Noto Serif TC'; font-size: 1.1rem; line-height: 1.8; opacity: 0.9; }
         .bubble.output {
-    background: rgba(255, 255, 255, 0.7); /* 更白 */
-    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)); /* 發光感 */
-    box-shadow: inset 0 0 4px rgba(255,255,255,1);
-    }
+    /* 效能優化：移除濾鏡 post-processing，改用硬體加速的漸層繪製發光感 */
+            background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0) 100%);
+            box-shadow: inset -1px -1px 3px rgba(0,0,0,0.05);
+            transform: translateZ(0); /* 強制 GPU 分層，大幅提升滑動與反應流暢度 */
+            will-change: transform, opacity;
+        }
         .solid-particle { position: absolute; width: 4px; height: 4px; background: #4D2600; border-radius: 50%; z-index: 6; opacity: 0; pointer-events: none; }
         @keyframes settling {
             0% { transform: translateY(0) scale(0.5); opacity: 0; filter: blur(1px); }
@@ -1216,6 +1218,10 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
         function createBubble(container, type = 'input') {
     const b = document.createElement('div');
     // 如果是產生氣體，加入 output class 以套用 CSS 的發光濾鏡
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // 手機端自動跳過 50% 的產氣氣泡，減少 DOM 數量以維持流暢度
+    if (isMobile && type === 'output' && Math.random() > 0.5) return;
+
     b.className = `bubble ${type === 'output' ? 'output' : ''}`;
 
     // 根據類型計算尺寸：通入氣體較平均，產物氣體則依據參數隨機化
