@@ -299,33 +299,98 @@
     color: #fff;
     font-weight: 500;
     text-shadow: 0 0 5px rgba(255,255,255,0.3);
-    text-align: right; /* 文字靠右對齊 */
-    line-height: 1.4;  /* 增加行高，多行時才不會太擠 */
-    word-break: break-word; /* 避免超長英文單字衝破邊框 */
+    text-align: right; 
+    line-height: 1.4;  
+    word-break: break-word; 
 }
-    
-    /* --- 平衡係數與詳解面板樣式 --- */
-    #balance-result {
-        display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-        padding: 20px; font-family: 'Times New Roman', serif;
-        /* [S96] 終端機顯示風格 */
-        background: rgba(0, 10, 20, 0.6);
-        border: 1px dashed var(--hud-cyan);
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-    }
-    .eqn-item { display: flex; align-items: center; margin: 0 4px; }
-    .coeff { 
-        color: #facc15; font-weight: 900; font-size: 1.6rem; 
-        margin-right: 4px; font-style: italic;
-        text-shadow: 0 0 15px rgba(250, 204, 21, 0.8); /* 增強發光 */
-    }
+
+#balance-result {
+    display: none;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--hud-cyan);
+    box-shadow: 0 10px 15px -10px rgba(0, 242, 255, 0.4);
+    padding: 20px 0;
+    margin-top: 15px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    cursor: grab;
+    user-select: none;
+}
+#balance-result::-webkit-scrollbar { display: none; }
+
+.balance-tools {
+    display: none; /* 由 JS 開啟為 flex */
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center; /* 新增：確保垂直置中 */
+}
+
+.bal-tool-btn {
+    flex: 1; /* 核心：強迫兩個按鈕平分空間 */
+    display: flex;
+    height: 44px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid var(--hud-cyan);
+    color: var(--hud-cyan);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.bal-tool-btn:hover {
+    background: var(--hud-cyan);
+    color: #020617;
+    box-shadow: 0 0 15px var(--hud-cyan);
+}
+
+.bal-tool-btn.btn-danger {
+    border-color: #f87171;
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.05);
+}
+
+.bal-tool-btn.btn-danger:hover {
+    background: #f87171;
+    color: #fff;
+    box-shadow: 0 0 15px #f87171;
+}
     .eqn-op { color: rgba(255,255,255,0.4); font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
     .reaction-arrow { color: var(--hud-cyan); font-size: 1.8rem; margin: 0 15px; font-weight: bold; text-shadow: 0 0 10px var(--hud-cyan); }
     #balance-result sup { top: -0.6em; font-size: 0.75em; margin-left: 1px; vertical-align: baseline; position: relative; }
     #balance-result sub { bottom: -0.2em; font-size: 0.75em; vertical-align: baseline; position: relative; }
     .step-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .step-title { color: #facc15; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-size: 1.05rem; }
-    .step-formula-box { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; font-family: 'Times New Roman', serif; font-size: 1.15rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+    .step-formula-box { 
+        background: rgba(255, 255, 255, 0.05); 
+        padding: 12px; 
+        border-radius: 8px; 
+        margin: 8px 0; 
+        font-family: 'Times New Roman', serif; 
+        font-size: 1.15rem; 
+        border: 1px solid rgba(255,255,255,0.1); 
+        /* 橫向滾動關鍵 */
+        overflow-x: auto;
+        white-space: nowrap;
+        cursor: grab;
+        display: block;
+        scrollbar-width: none; /* Firefox */
+        user-select: none;
+    }
+    .step-formula-box::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+    .step-formula-box:active { cursor: grabbing; }
     .highlight-atom { color: var(--hud-cyan); font-weight: bold; border-bottom: 2px solid var(--hud-cyan); padding: 0 2px; }
     
     .input-group { display: flex; gap: 8px; }
@@ -994,6 +1059,7 @@
     box-shadow: 0 0 15px var(--hud-cyan);
 }
 
+
 /* 開關節面按鈕 */
 .plane-toggle {
     width: 100%;
@@ -1485,8 +1551,12 @@
                     <input type="text" id="equation-input" placeholder="請輸入反應式 (如: H2 + O2 = H2O)" style="border-color: rgba(16, 185, 129, 0.3);">
                     <button id="balance-btn" style="background: var(--accent-green);">平衡</button>
                 </div>
-                <div id="balance-result" style="margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 12px; display: none; border: 1px dashed rgba(255,255,255,0.1);"></div>
-                <div id="steps-toggle-btn" style="display: none; text-align: center; margin-top: 12px; cursor: pointer; color: #38bdf8; font-size: 0.85rem; text-decoration: underline; font-weight: bold;">查看解題思路</div>
+                <div id="balance-result" style="margin-top: 15px; display: none; position: relative;"></div>
+                
+                <div class="balance-tools" id="balance-tools-area">
+                    <div id="steps-toggle-btn" class="bal-tool-btn">解題思路</div>
+                    <div id="balance-clear-btn" class="bal-tool-btn btn-danger">清除重置</div>
+                </div>
                 <div id="balance-steps" style="display: none; margin-top: 15px; padding: 20px; background: rgba(15, 23, 42, 0.8); border-radius: 12px; border-left: 5px solid #facc15; font-size: 0.95rem; color: #e2e8f0; line-height: 1.7; text-transform: none;"></div>
             </div>
 
@@ -1597,7 +1667,7 @@
                     <button class="glass-toggle-btn" 
                             style="background:rgba(167, 139, 250, 0.15); border-color:rgba(167, 139, 250, 0.4); color:#c4b5fd;"
                             onclick="HydrogenLab.open()">
-                        <span>氫原子光譜觀測站</span>
+                        <span>氫原子光譜</span>
                     </button>
                 </div>
             </details>
@@ -2096,7 +2166,8 @@ function parseAtoms(f) {
 function setupEquationBalancer() {
     const btn = document.getElementById('balance-btn'), input = document.getElementById('equation-input');
     const resDiv = document.getElementById('balance-result'), stpBtn = document.getElementById('steps-toggle-btn'), stpDiv = document.getElementById('balance-steps');
-    
+    const toolsArea = document.getElementById('balance-tools-area');
+    const clearBtn = document.getElementById('balance-clear-btn');
     if (!btn) return;
 
     // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
@@ -2171,11 +2242,24 @@ function setupEquationBalancer() {
         stpDiv.style.display = 'none';
         try {
             const res = solveChemicalEquationWithSteps(val);
-            resDiv.innerHTML = `<div style="width:100%; color:#94a3b8; font-size:0.85rem; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); text-transform:none;">⚖️ 平衡結果：</div>${res.html}`;
-            resDiv.style.display = 'flex';
+            // 徹底移除提示文字，將結果包在 inline-flex 中強制撐開寬度
+            resDiv.innerHTML = `<div style="display: inline-flex; align-items: center; min-width: 100%;">${res.html}</div>`;
+            resDiv.style.display = 'block'; 
+            const enableDrag = (el) => {
+                let isDown = false, sX, sL;
+                el.onmousedown = (e) => { isDown = true; el.style.cursor = 'grabbing'; sX = e.pageX - el.offsetLeft; sL = el.scrollLeft; };
+                const stop = () => { isDown = false; el.style.cursor = 'grab'; };
+                el.onmouseleave = stop; el.onmouseup = stop;
+                el.onmousemove = (e) => { if(!isDown) return; e.preventDefault(); el.scrollLeft = sL - (e.pageX - el.offsetLeft - sX); };
+            };
+            resDiv.style.display = 'block'; 
+            enableDrag(resDiv); // 綁定上方主結果
+
             stpDiv.innerHTML = res.stepsHtml;
-            stpBtn.style.display = 'block';
-            stpBtn.textContent = '查看解題思路';
+            stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag); // 綁定思路內的方程式
+            // 修正關鍵：改為 flex 讓 CSS 的 flex:1 生效，按鈕才會平行
+            if(toolsArea) toolsArea.style.display = 'flex'; 
+            stpBtn.textContent = '解題思路';
         } catch (e) {
             resDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
             resDiv.style.display = 'flex';
@@ -2186,8 +2270,20 @@ function setupEquationBalancer() {
     stpBtn.onclick = () => {
         const isH = stpDiv.style.display === 'none';
         stpDiv.style.display = isH ? 'block' : 'none';
-        stpBtn.textContent = isH ? '隱藏解題思路' : '查看解題思路';
+        stpBtn.textContent = isH ? '隱藏思路' : '解題思路';
     };
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            input.value = "";
+            resDiv.style.display = 'none';
+            resDiv.innerHTML = "";
+            stpDiv.style.display = 'none';
+            stpDiv.innerHTML = "";
+            if(toolsArea) toolsArea.style.display = 'none';
+            const subEl = document.getElementById("viewport-subtitle");
+            if(subEl) { subEl.style.display = "none"; subEl.innerHTML = ""; }
+        };
+    }
     
     // 平衡說明彈窗邏輯
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
@@ -2262,12 +2358,12 @@ function solveChemicalEquationWithSteps(eqn) {
     const buildModularEq = (coeffs) => {
         let itemsHtml = "";
         species.forEach((s, i) => {
-            let unit = `<div style="display: inline-flex; align-items: baseline; background: #1e293b; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 8px rgba(0,0,0,0.3); margin: 4px 2px; gap: 4px; vertical-align: middle;"><span style="font-size: 1.1rem; color: #facc15; font-weight: 900; font-style: italic;">${coeffs[i]}</span><span style="font-size: 1.1rem; color: #fff; font-weight: 500;">${formatFormula(s.raw)}</span></div>`;
+            let unit = `<div style="display: inline-flex; align-items: baseline; background: #1e293b; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 8px rgba(0,0,0,0.3); margin: 0 4px; gap: 4px; flex-shrink: 0;"><span style="font-size: 1.1rem; color: #facc15; font-weight: 900; font-style: italic;">${coeffs[i]}</span><span style="font-size: 1.1rem; color: #fff; font-weight: 500;">${formatFormula(s.raw)}</span></div>`;
             itemsHtml += unit;
-            if (i === leftRaw.length - 1) itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 8px; color: #38bdf8; font-size: 1.2rem; font-weight: bold;">→</span>`;
-            else if (i < species.length - 1) itemsHtml += `<span style="display: inline-flex; align-items: center; margin: 0 2px; color: rgba(255,255,255,0.8); font-size: 1rem;">+</span>`;
+            if (i === leftRaw.length - 1) itemsHtml += `<span style="display: inline-flex; flex-shrink: 0; align-items: center; margin: 0 10px; color: #38bdf8; font-size: 1.4rem; font-weight: bold;">→</span>`;
+            else if (i < species.length - 1) itemsHtml += `<span style="display: inline-flex; flex-shrink: 0; align-items: center; margin: 0 4px; color: rgba(255,255,255,0.6); font-size: 1.1rem;">+</span>`;
         });
-        return `<div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">${itemsHtml}</div>`;
+        return `<div style="display: flex; flex-wrap: nowrap; align-items: center; width: max-content; min-width: 100%; padding-bottom: 5px;">${itemsHtml}</div>`;
     };
 
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
@@ -2352,6 +2448,28 @@ function solveChemicalEquationWithSteps(eqn) {
             if (score > maxScore) { maxScore = score; startIdx = i; } 
         });
     }
+    // 檢查原定的基準物質 startIdx，是否會因為「獨家原子」腳標較小而導致下一個物質變成分數
+    let finalStartIdx = startIdx;
+    const currentAtoms = species[startIdx].atoms;
+    for (let el in currentAtoms) {
+        let countSelf = currentAtoms[el];
+        // 尋找包含此原子的其他物質
+        let relatives = species.filter(s => s.atoms[el] > 0);
+        
+        // 如果是「獨家原子」(只出現在反應前後各一個物質中)
+        if (relatives.length === 2) {
+            let other = relatives.find(s => s.index !== startIdx);
+            let countOther = other.atoms[el];
+            
+            // 如果對方的原子數更多 (例如 2 > 1)，則切換基準到對方身上
+            // 這樣設定對方為 1 時，我方的係數就會是整數 (或至少比例較合理)
+            if (countOther > countSelf) {
+                finalStartIdx = other.index;
+                break; // 找到一個需要修正的原子即可停止
+            }
+        }
+    }
+    startIdx = finalStartIdx;
 
     stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 的係數為 <span class="coeff">1</span>。</div>`;
     
@@ -2482,10 +2600,9 @@ function solveChemicalEquationWithSteps(eqn) {
     });
 
     const finalBox = buildModularEq(finalCoeffs);
-    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>目前比例：<span style="color:#94a3b8;">(${finalCoeffs.map(c => toFraction(c/baseV)).join(' : ')})</span>。<br>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.03); border-radius:15px; border:1px solid rgba(255,255,255,0.08);">${finalBox}</div></div>`;
+     stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>目前比例：<span style="color:#94a3b8;">(${finalCoeffs.map(c => toFraction(c/baseV)).join(' : ')})</span>。<br>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div class="step-formula-box">${finalBox}</div></div>`;
 
-    const btnDom = document.getElementById('steps-toggle-btn');
-    if(btnDom) { btnDom.style.margin = "35px auto 25px auto"; btnDom.style.display = "block"; }
+    
     const resDom = document.getElementById('balance-result');
     if(resDom) { resDom.style.marginBottom = "20px"; }
 
