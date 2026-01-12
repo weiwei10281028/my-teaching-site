@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Serif+TC:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
     
     <style>
-        /* =========================================
+        /* =========================================å
            1. 參數定義區域
            ========================================= */
         :root {
@@ -154,6 +154,44 @@
             overflow: hidden; 
             box-shadow: inset 0 -2px 10px rgba(0,0,0,0.1);
         }
+        /* 銀鏡層：初始透明度為 0 */
+        .liquid::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, #444 0%, #aaa 25%, #eee 50%, #aaa 75%, #444 100%);
+            opacity: 0; 
+            z-index: 5; pointer-events: none;
+        }
+        /* 激活銀鏡：僅在此處定義 6 秒過渡，消失時則無動畫 */
+        .liquid.silver-mirror::after { 
+            opacity: 1; 
+            transition: opacity 6s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+        /* 斐林層：磚紅色漸層 */
+        .liquid::before {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, #800 0%, #B22222 20%, #E35D5D 50%, #B22222 80%, #800 100%);
+            opacity: 0; z-index: 4; pointer-events: none;
+        }
+        /* 斐林反應：在此處定義 5 秒過渡，切換時移除 class 會立即消失 */
+        .liquid.fehling-react::before { opacity: 1; transition: opacity 5s ease-in-out; }
+        .liquid.fehling-react { background: rgba(60, 20, 20, 0.6) !important; }
+
+        /* 沈澱專屬區：高度設為 45% (液面位置)，確保粒子從液面開始落下 */
+        #ppt-zone {
+            position: absolute; bottom: 0; width: 100%; height: 45%; 
+            overflow: hidden; border-radius: 0 0 38px 38px; pointer-events: none; z-index: 10;
+        }
+        #precipitate { 
+            position: absolute; bottom: 0; width: 100%; height: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.2), transparent), #5C3317; 
+            opacity: 0; z-index: 5;
+            transition: none; /* 預設不執行過渡，避免切換時慢慢消失 */
+        }
+        /* 反應時才套用過渡曲線 */
+        #precipitate.growing {
+            opacity: 1;
+            transition: height 5s cubic-bezier(0.33, 1, 0.68, 1), opacity 2s ease-in;
+        }
 
         /* 樣式 3：溶解顆粒基礎樣式 */
         .grain {
@@ -226,7 +264,6 @@
     filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)); /* 發光感 */
     box-shadow: inset 0 0 4px rgba(255,255,255,1);
     }
-        
         .solid-particle { position: absolute; width: 4px; height: 4px; background: #4D2600; border-radius: 50%; z-index: 6; opacity: 0; pointer-events: none; }
         @keyframes settling {
             0% { transform: translateY(0) scale(0.5); opacity: 0; filter: blur(1px); }
@@ -357,10 +394,12 @@
             <!-- 下方固定實驗顯示區 -->
             <div class="experiment-zone">
                 <div class="test-tube">
+                    <div id="ppt-zone">
+                        <div id="precipitate"></div>
+                    </div>
                     <div id="gas-tube"></div>
                     <div id="dropper"><div id="dropper-label"></div></div>
                     <div class="liquid" id="liquid"></div>
-                    <div id="precipitate"></div>
                     <div id="bubble-container"></div>
                 </div>
                 <div class="mol-label-zh" id="molZh">STANDBY</div>
@@ -435,12 +474,18 @@
     function universalCleanup() {
         // 1. 中斷背景鬧鐘
         activeTimers.forEach(clearTimeout);
-         activeTimers = [];
-        // 2. 物理清除所有動態零件 (包含顯色粒子 .grain)
+        activeTimers = [];
+        // 2. 物理清除所有動態零件
         document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
-        // 3. 視覺與結構儀表板重置
+        // 3. 視覺重置：立即移除所有專屬類名與底層沈澱
         const liq = document.getElementById('liquid');
-        if (liq) { liq.style.transition = 'none'; liq.style.background = 'transparent'; }
+        const pre = document.getElementById('precipitate');
+        if (liq) { liq.classList.remove('silver-mirror', 'fehling-react'); liq.style.transition = 'none'; liq.style.background = 'transparent'; }
+        if (pre) { 
+            pre.classList.remove('growing');
+            pre.style.height = '0'; 
+            pre.style.opacity = '0'; 
+        }
         const sb = document.getElementById('structure-banner');
         if (sb) sb.classList.remove('show');
     }
@@ -670,6 +715,56 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
                 { zh: '苯 酚', en: 'Phenol', state: 'liquid', react: false, eq: 'No Reaction', text: '酚類酸性極弱，不足以與碳酸氫鈉反應產生氣泡（可用此區分羧酸）。' },
                 { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '醇類幾近中性，不與碳酸氫鈉發生反應。' }
             ]
+        },
+        'tollens': {
+            reagentColor: 'rgba(230, 230, 230, 0.25)', // 多倫試劑：透明淡灰色
+            substrates: [
+                { zh: '乙 醛', en: 'Acetaldehyde', state: 'liquid', react: true, isMirror: true, eq: 'CH₃CHO + 2Ag(NH₃)₂⁺ + 3OH⁻ → CH₃COO⁻ + 2Ag↓ + 4NH₃ + 2H₂O', text: '乙醛具備醛基，還原性極強，滴入後迅速在管壁析出晶亮的銀鏡。' },
+                { zh: '丙 酮', en: 'Acetone', state: 'liquid', react: false, eq: 'No Reaction', text: '酮類官能基無法被多倫試劑氧化，故不產生銀鏡反應。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '普通醇類不具還原性，無法將銀氨錯離子還原為金屬銀。' },
+                { zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '草酸雖具還原性，但在多倫試劑的弱鹼環境下反應極慢，通常不視為陽性。' },
+                { zh: '羧 酸', isGroup: true, children: [
+                    { zh: '甲 酸', en: 'Formic Acid', state: 'liquid', react: true, isMirror: true, eq: 'HCOO⁻ + 2Ag(NH₃)₂⁺ → CO₃²⁻ + 2Ag↓', text: '甲酸結構中含有醛基特徵，是唯一能產生銀鏡反應的羧酸。' },
+                    { zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '乙酸不具備醛基結構，無法產生銀鏡。' }
+                ]},
+                { zh: '苯甲醛', en: 'Benzaldehyde', state: 'liquid', react: true, isMirror: true, eq: 'C₆H₅CHO + [Ag]⁺ → C₆H₅COO⁻ + Ag↓', text: '芳香醛亦可產生銀鏡，反應速率較脂肪醛慢，但實驗顯色依然明顯。' },
+                { zh: '單 醣', isGroup: true, children: [
+                    { zh: '葡萄糖', en: 'Glucose', state: 'liquid', react: true, isMirror: true, eq: 'R-CHO + [Ag]⁺ → R-COO⁻ + Ag↓', text: '葡萄糖為還原醣，環狀與鏈狀結構平衡中暴露醛基，產生銀鏡。' },
+                    { zh: '果 糖', en: 'Fructose', state: 'liquid', react: true, isMirror: true, text: '果糖雖為酮醣，但在多倫試劑的鹼性條件下會異構化為醛醣，呈現陽性反應。' },
+                    { zh: '半乳糖', en: 'Galactose', state: 'liquid', react: true, isMirror: true, text: '半乳糖具備還原性，能順利析出金屬銀鏡。' }
+                ]},
+                { zh: '雙 醣', isGroup: true, children: [
+                    { zh: '麥芽糖', en: 'Maltose', state: 'liquid', react: true, isMirror: true, text: '麥芽糖具有游離的半縮醛羥基，屬於還原醣，可產生銀鏡。' },
+                    { zh: '蔗 糖', en: 'Sucrose', state: 'liquid', react: false, eq: 'No Reaction', text: '蔗糖由葡萄糖與果糖的醛基與酮基縮合，無還原性，不產生銀鏡。' },
+                    { zh: '乳 糖', en: 'Lactose', state: 'liquid', react: true, isMirror: true, text: '乳糖亦屬還原醣，測試結果呈現陽性銀鏡。' }
+                ]},
+                { zh: '澱 粉', en: 'Starch', state: 'liquid', react: false, eq: 'No Reaction', text: '澱粉為多醣，還原末端極少且結構複雜，不發生銀鏡反應。' }
+            ]
+        },
+        'fehling': {
+            reagentColor: 'rgba(0, 0, 255, 0.45)', // 斐林/本氏液：深藍色
+            substrates: [
+                { zh: '乙 醛', en: 'Acetaldehyde', state: 'liquid', react: true, isFehling: true, eq: 'CH₃CHO + 2Cu²⁺ + 5OH⁻ → CH₃COO⁻ + Cu₂O↓ + 3H₂O', text: '【強陽性】脂肪醛可被還原，溶液由深藍轉為磚紅色氧化亞銅沈澱。' },
+                { zh: '丙 酮', en: 'Acetone', state: 'liquid', react: false, eq: 'No Reaction', text: '酮類無法被弱氧化劑斐林試劑氧化，維持深藍色。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '醇類不具還原性，不發生反應。' },
+                { zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '草酸在此條件下穩定，無明顯現象。' },
+                { zh: '羧 酸', isGroup: true, children: [
+                    { zh: '甲 酸', en: 'Formic Acid', state: 'liquid', react: true, isFehling: true, eq: 'HCOO⁻ + 2Cu²⁺ + 5OH⁻ → CO₃²⁻ + Cu₂O↓ + 3H₂O', text: '甲酸具醛基特徵，可使斐林試液產生磚紅色沈澱。' },
+                    { zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '乙酸無還原性。' }
+                ]},
+                { zh: '苯甲醛', en: 'Benzaldehyde', state: 'liquid', react: false, eq: 'No Reaction', text: '【關鍵區別】斐林試劑氧化力不足，無法氧化芳香醛，此點與銀鏡反應不同。' },
+                { zh: '單 醣', isGroup: true, children: [
+                    { zh: '葡萄糖', en: 'Glucose', state: 'liquid', react: true, isFehling: true, text: '葡萄糖為還原醣，反應產生明顯磚紅色沈澱。' },
+                    { zh: '果 糖', en: 'Fructose', state: 'liquid', react: true, isFehling: true, text: '果糖雖為酮醣，但在鹼性試液中會異構化為醛醣，呈現陽性反應。' },
+                    { zh: '半乳糖', en: 'Galactose', state: 'liquid', react: true, isFehling: true, text: '半乳糖具備還原性，呈現陽性反應。' }
+                ]},
+                { zh: '雙 醣', isGroup: true, children: [
+                    { zh: '麥芽糖', en: 'Maltose', state: 'liquid', react: true, isFehling: true, text: '麥芽糖具備游離半縮醛羥基，可產生磚紅色沈澱。' },
+                    { zh: '蔗 糖', en: 'Sucrose', state: 'liquid', react: false, eq: 'No Reaction', text: '蔗糖結構中無還原末端，不發生斐林反應。' },
+                    { zh: '乳 糖', en: 'Lactose', state: 'liquid', react: true, isFehling: true, text: '乳糖為還原醣，反應呈現陽性。' }
+                ]},
+                { zh: '澱 粉', en: 'Starch', state: 'liquid', react: false, eq: 'No Reaction', text: '澱粉分子量巨大，不具明顯還原性。' }
+            ]
         }
         };
 
@@ -859,12 +954,26 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
             } else if (subData.react) {
                 liquid.style.background = subData.resultColor || 'rgba(255,255,255,0.2)';
             }
+            if (subData.react && subData.isMirror) {
+                safeTimeout(() => liquid.classList.add('silver-mirror'), 800);
+            }
+            if (subData.react && subData.isFehling) {
+                safeTimeout(() => liquid.classList.add('fehling-react'), 800);
+                // 斐林反應特有：沈澱顏色設為磚紅色 (#B22222)
+                subData.precipitate = true;
+                subData.pptColor = '#8B0000'; // 使用較深的磚紅粒子
+            }
 
             if (subData.react && subData.precipitate) {
                 const pptColor = subData.pptColor || '#4D2600';
                 pre.style.backgroundColor = pptColor;
                 const pptAnimation = animatePrecipitation(pptColor);
-                safeTimeout(() => { pre.style.opacity = '1'; pre.style.height = LAB_PARAMS.pptFinalHeight; }, 1800);  
+                // 延後 2.5 秒開始生長，並將高度設定為 20% 以確保在裁切區域內清晰可見
+                safeTimeout(() => { 
+                    pre.classList.add('growing');
+                    pre.style.opacity = '1'; // 修正：強制覆蓋清理函式的 inline opacity: 0
+                    pre.style.height = '15%'; // 修正：在 45% 的容器中 15% 才有明顯沈澱感
+                }, 2500);  
                 await pptAnimation;
             }
             if (subData.react && subData.bubble) await animateEffervescence(subData.bSpeed || 30);
@@ -1086,21 +1195,20 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
 
         async function animatePrecipitation(customColor = '#4D2600') {
             const container = document.querySelector('.test-tube');
+            const zone = document.getElementById('ppt-zone');
             const particleCount = LAB_PARAMS.pptDensity;
-            const liquidTop = (1 - LAB_PARAMS.liquidLevel) * 100; // 計算液面在試管中的百分比位置
             
             for (let i = 0; i < particleCount; i++) {
                 const p = document.createElement('div');
                 p.className = 'solid-particle';
                 p.style.backgroundColor = customColor;
                 p.style.left = (15 + Math.random() * 70) + '%';
-                // 從液面下方一點點開始產生，確保不會出現在空氣中
-                p.style.top = (liquidTop + 5 + Math.random() * 20) + '%'; 
-                const distValue = (100 - liquidTop) * 2; // 動態計算下沉距離
-                p.style.setProperty('--dist', (distValue + Math.random() * 30) + 'px');
-                p.style.animation = `settling ${LAB_PARAMS.settleTime + Math.random()}s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards`;
-                container.appendChild(p);
-                setTimeout(() => p.remove(), LAB_PARAMS.settleTime * 1500);
+                p.style.top = '0px'; // 【關鍵】從 ppt-zone 頂部 (液面) 開始落下
+                const distValue = zone.offsetHeight || 120; 
+                p.style.setProperty('--dist', (distValue + Math.random() * 20) + 'px');
+                p.style.animation = `settling ${LAB_PARAMS.settleTime}s linear forwards`;
+                zone.appendChild(p);
+                setTimeout(() => p.remove(), LAB_PARAMS.settleTime * 1000);
                 if (i % 3 === 0) await new Promise(r => setTimeout(r, 100));
             }
         }
