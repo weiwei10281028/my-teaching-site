@@ -1,39 +1,1411 @@
-// lab_organic.js 容器
-const OrganicLab = {
-    open: function() {
-        console.log("嘗試開啟官能基鑑定實驗室...");
-        let container = document.getElementById('organic-lab-wrapper');
-        
-        // 新增：監聽來自內部的關閉訊息 (解決關不掉的問題)
-        if (!window._organicListenerAdded) {
-            window.addEventListener('message', (e) => {
-                if (e.data === 'closeOrganicLab') OrganicLab.close();
-            });
-            window._organicListenerAdded = true;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DESIGN EXPERIMENT | 有機鑑定系統 v13.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Serif+TC:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================å
+           1. 參數定義區域
+           ========================================= */
+        :root {
+            --header-h: 65px;
+            --substrate-h: 75px;
+            --report-h: 180px; 
+            --accent-gold: #FFD2A8; 
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --bg-gradient: linear-gradient(135deg, #2D3E50 0%, #C89678 100%);
+            --drawer-bg: rgba(10, 10, 12, 0.98);
+            --desc-size: 0.9rem; /* 自定義：說明文字大小 */
+            --desc-hover-color: #FFD2A8; /* 自定義：滑過時的顏色 (accent-gold) */
+            --liquid-water: rgba(255, 255, 255, 0.25); /* 新增：褪色後的水溶液視覺色 */
         }
 
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'organic-lab-wrapper';
-            container.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 999999; background: #020617; display: none; flex-direction: column;
-            `;
-            // 修正：iframe 必須設定 height: 100% 才能撐開
-            container.innerHTML = `<iframe src="lab_organic.html" style="width:100%; height:100%; border:none;"></iframe>`;
-            document.body.appendChild(container);
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-gradient); color: #FFF; }
+
+        /* --- 區域 1: Header --- */
+        .area-1-header { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--glass-border); backdrop-filter: blur(15px); flex-shrink: 0; position: relative; z-index: 2000; }
+        .header-title-wrap { flex: 1; text-align: center; pointer-events: none; }
+        .main-title { font-family: 'Noto Serif TC'; font-weight: 900; letter-spacing: 4px; font-size: 0.85rem; }
+        .sub-title { font-family: 'Space Mono'; font-size: 0.65rem; letter-spacing: 6px; opacity: 0.7; }
+        .top-btn { font-family: 'Space Mono'; font-size: 0.65rem; border: 1px solid var(--glass-border); padding: 5px 12px; border-radius: 50px; cursor: pointer; background: rgba(255,255,255,0.1); color: #FFF; }
+
+        /* --- 區域 2: Substrate Bar --- */
+        .area-2-substrate { height: var(--substrate-h); background: rgba(0, 0, 0, 0.15); display: flex; align-items: center; gap: 15px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+        .area-2-substrate::-webkit-scrollbar { display: none; }
+        .pill { padding: 10px 22px; border-radius: 50px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); font-size: 0.8rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; color: rgba(255,255,255,0.4); transition: 0.4s; cursor: pointer; }
+        .pill.active { background: #FFF; color: #000; box-shadow: 0 0 25px rgba(255,255,255,0.4); border-color: #FFF; }
+
+        /* --- 區域 3: Viewport (核心動畫區) --- */
+        .scroll-wrapper {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+            scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;
+        padding-bottom: 250px; /* 【關鍵】增加底部隱形留白，讓你滑得更高 */
+        }
+        .scroll-wrapper::-webkit-scrollbar { display: none; }
+        .area-3-viewport { position: relative; display: flex; justify-content: center; align-items: center; padding: 20px 0; min-height: 620px; flex-shrink: 0; }
+        .observation-pad { width: 340px; height: 100%; max-height: 520px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); border-radius: 60px; border: 1.5px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 40px 100px rgba(0,0,0,0.3); z-index: 1; }
+        
+        .test-tube { width: 80px; height: 320px; border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; border-radius: 0 0 40px 40px; position: relative; background: linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.1) 100%); margin-bottom: 25px; box-shadow: inset 1.5px 0 2px rgba(255,255,255,0.1), 0 30px 60px rgba(0,0,0,0.45); overflow: hidden; }
+        /* --- 修正版佈局：縮小試管與儀表板以符合高度限制 --- */
+        .observation-pad { 
+            padding: 20px 0; 
+            justify-content: flex-start !important; /* 從頂部開始排，確保不擠壓底部 */
+        }
+
+        #structure-banner {
+            width: 85%; height: 110px; /* 高度從 135 降至 110 */
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            display: flex; justify-content: center; align-items: center;
+            position: relative; z-index: 5; margin-bottom: 12px;
+            opacity: 1; /* 儀表板改為常駐顯示 */
         }
         
-        container.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // 鎖定主頁滾動
-    },
-
-    close: function() {
-        console.log("關閉實驗室");
-        const container = document.getElementById('organic-lab-wrapper');
-        if (container) {
-            container.style.display = 'none';
+        /* 內部 SVG 動態效果 */
+        #structure-banner svg { 
+            width: 100%; height: 100%; 
+            opacity: 0; 
+            /* 徹底移除 CSS 內的 transform 通則，改由 JS 直接控制 */
+            transition: 0.8s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.5s; 
         }
-        document.body.style.overflow = 'auto'; // 恢復滾動
+        #structure-banner.show svg { opacity: 1; }
+
+        .test-tube { 
+            width: 76px; height: 275px; /* 增長試管長度 */
+            border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; 
+            border-radius: 0 0 38px 38px; position: relative; margin-bottom: 18px;
+        }
+
+        /* 最終優化：強制 SVG 內容留白並居中 */
+        #structure-banner svg {
+            width: 100%; height: 100%;
+            padding: 5px; /* 縮減留白空間 */
+            box-sizing: border-box;
+            display: block;
+            /* 套用 JS 定義的縮放參數 */
+            transform: scale(var(--struct-scale, 1.2));
+            transform-origin: center center;
+        }
+        /* === 修正 1：針對化學鍵 (幾何圖形) === */
+        /* 必須填滿 (fill) 也要描邊 (stroke)，才會顯示為實心粗線 */
+        #structure-banner svg path, 
+        #structure-banner svg line, 
+        #structure-banner svg polyline, 
+        #structure-banner svg polygon, 
+        #structure-banner svg rect {
+            fill: white !important;       /* 【關鍵】填滿內部，解決空心框問題 */
+            stroke: white !important;     /* 【關鍵】加粗邊緣，讓線條更飽滿 */
+            stroke-width: 2px !important; /* 設定適當粗度 */
+            stroke-linecap: round;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* === 修正 2：針對原子 (文字) === */
+        /* 文字絕對不能有描邊 (stroke)，且強制使用 Arial */
+        #structure-banner svg text, 
+        #structure-banner svg tspan {
+            fill: white !important;       /* 實心白字 */
+            stroke: none !important;      /* 【關鍵】去除文字邊框，解決變肥/糊掉 */
+            font-family: Arial, sans-serif !important; /* 【關鍵】改回 3000 的通用字體 */
+            font-weight: 700 !important;  /* 粗體 */
+            cursor: pointer;
+        }
+
+        /* === 修正 3：互動螢光 (.h) - 強制原子與鍵結同步 Bloom === */
+        /* 1. 標準化基礎樣式：設定全局預設值，避免使用 !important */
+        #structure-banner svg path, 
+        #structure-banner svg line,
+        #structure-banner svg polyline,
+        #structure-banner svg polygon {
+            fill: none;
+            stroke: #fff;
+            stroke-width: 3px;
+            stroke-linecap: round;
+            transition: stroke 0.2s, filter 0.3s;
+        }
+
+        #structure-banner svg text, 
+        #structure-banner svg tspan {
+            fill: #fff;
+            stroke: none;
+            font-family: 'Space Mono', Arial, sans-serif;
+            font-weight: 700;
+            transition: fill 0.2s, filter 0.3s;
+        }
+
+        /* 2. 高質感霓虹效果：使用權重覆寫，並疊加多層次柔和光暈 */
+        #structure-banner svg .h {
+            stroke: #f3e8ff; /* 核心帶一點點極淺紫 */
+            /* 三層 Bloom：核心強光 -> 中層色偏 -> 外層擴散 */
+            filter: drop-shadow(0 0 2px #fff) 
+                    drop-shadow(0 0 6px #A855F7) 
+                    drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
+        }
+
+        #structure-banner svg text.h, 
+        #structure-banner svg tspan.h,
+        #structure-banner svg .h tspan {
+            fill: #f3e8ff;
+            filter: drop-shadow(0 0 2px #fff) 
+                    drop-shadow(0 0 8px #A855F7);
+        }
+
+        .experiment-zone {
+            flex: 1; width: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
+        /* 文字明顯縮小，字重減輕增加精緻感 */
+        .mol-label-zh { 
+            font-family: 'Noto Serif TC'; font-weight: 700; font-size: 1.1rem; 
+            letter-spacing: 8px; margin-bottom: 2px;
+        }
+        .mol-label-en { 
+            font-family: 'Space Mono'; font-size: 0.55rem; opacity: 0.5; 
+            text-transform: uppercase; letter-spacing: 3px;
+        }
+        .test-tube::before { content: ""; position: absolute; top: -4px; left: -6px; right: -6px; height: 10px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(3px); border: 1.2px solid rgba(255, 255, 255, 0.3); border-radius: 12px / 6px; z-index: 10; }
+        .test-tube::after { content: ""; position: absolute; top: 10%; left: 15%; width: 8px; height: 75%; background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%); border-radius: 10px; filter: blur(1.5px); pointer-events: none; }
+
+        .liquid { position: absolute; bottom: 0; width: 100%; height: 0; background: rgba(255, 255, 255, 0.2); border-radius: 0 0 39px 39px; 
+            transition: height 1s, background 5s cubic-bezier(0.22, 1, 0.36, 1); 
+            overflow: hidden; 
+            box-shadow: inset 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        /* 銀鏡層：初始透明度為 0 */
+        .liquid::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, #444 0%, #aaa 25%, #eee 50%, #aaa 75%, #444 100%);
+            opacity: 0; 
+            z-index: 5; pointer-events: none;
+        }
+        /* 激活銀鏡：僅在此處定義 6 秒過渡，消失時則無動畫 */
+        .liquid.silver-mirror::after { 
+            opacity: 1; 
+            transition: opacity 6s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+        /* 斐林層：磚紅色漸層 */
+        .liquid::before {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, #800 0%, #B22222 20%, #E35D5D 50%, #B22222 80%, #800 100%);
+            opacity: 0; z-index: 4; pointer-events: none;
+        }
+        /* 斐林反應：在此處定義 5 秒過渡，切換時移除 class 會立即消失 */
+        .liquid.fehling-react::before { opacity: 1; transition: opacity 5s ease-in-out; }
+        .liquid.fehling-react { background: rgba(60, 20, 20, 0.6) !important; }
+
+        /* 沈澱專屬區：高度設為 45% (液面位置)，確保粒子從液面開始落下 */
+        #ppt-zone {
+            position: absolute; bottom: 0; width: 100%; height: 45%; 
+            overflow: hidden; border-radius: 0 0 38px 38px; pointer-events: none; z-index: 10;
+        }
+        #precipitate { 
+            position: absolute; bottom: 0; width: 100%; height: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.2), transparent), #5C3317; 
+            opacity: 0; z-index: 5;
+            transition: none; /* 預設不執行過渡，避免切換時慢慢消失 */
+        }
+        /* 反應時才套用過渡曲線 */
+        #precipitate.growing {
+            opacity: 1;
+            transition: height 5s cubic-bezier(0.33, 1, 0.68, 1), opacity 2s ease-in;
+        }
+
+        /* 樣式 3：溶解顆粒基礎樣式 */
+        .grain {
+            position: absolute; width: 4px; height: 4px; border-radius: 50%;
+            filter: blur(2px); opacity: 0; pointer-events: none;
+        }
+
+        /* 溶解動畫：從細小顆粒擴散成雲霧 */
+        @keyframes dissolve {
+            0% { opacity: 0; transform: scale(1); }
+            30% { opacity: 0.7; }
+            100% { opacity: 0.9; transform: scale(18); filter: blur(12px); }
+        }
+        
+        /* 動態器材：導管與滴管 */
+        #gas-tube { position: absolute; top: -100px; width: 6px; height: 235px; background: rgba(255,255,255,0.3); left: 50%; transform: translateX(-50%); border-radius: 0 0 4px 4px; transition: 0.8s; opacity: 0; z-index: 15; }
+        #dropper { position: absolute; top: -80px; width: 12px; height: 100px; background: rgba(255,255,255,0.4); left: 50%; transform: translateX(-50%); border-radius: 2px 2px 10px 10px; transition: 0.8s; opacity: 0; z-index: 15; }
+
+        #dropper-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-family: 'Space Mono'; font-size: 0.6rem; color: #FFF; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; white-space: nowrap; opacity: 0; transition: 0.3s; }
+         #precipitate { 
+            position: absolute; bottom: 0; width: 100%; height: 0; 
+            background: 
+                radial-gradient(circle at 50% 0%, rgba(255,255,255,0.2) 0%, transparent 60%),
+                linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 100%);
+            background-color: #5C3317; 
+            border-radius: 0 0 40px 40px; 
+            transition: height 6.0s cubic-bezier(0.25, 0.1, 0.25, 1.0), opacity 2.5s ease-in;
+            opacity: 0; z-index: 5;
+            clip-path: polygon(0% 100%, 0% 48%, 15% 42%, 35% 45%, 50% 38%, 65% 44%, 85% 40%, 100% 48%, 100% 100%);
+            filter: blur(0.8px);
+        }
+        /* 鑷子容器：改為從最上方降下 */
+        #tweezer {
+            position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 180px; z-index: 30; 
+            transition: top 1s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.3s;
+            pointer-events: none; opacity: 0;
+        }
+        /* 鑷子頂部連接處 */
+        .tweezer-joint {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 12px; height: 8px; background: #999; border-radius: 2px 2px 0 0;
+        }
+        /* 鑷子手臂：帶有斜度與金屬漸層 */
+        .tweezer-arm {
+            position: absolute; top: 4px; width: 4px; height: 100%;
+            background: linear-gradient(to right, #DDD, #888, #AAA);
+            border-radius: 2px; transform-origin: top center;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .arm-left { left: 14px; transform: rotate(5deg); }
+        .arm-right { right: 14px; transform: rotate(-5deg); }
+        /* 鑷子開啟狀態：手臂向外撐開 */
+        #tweezer.open .arm-left { transform: rotate(-3deg); }
+        #tweezer.open .arm-right { transform: rotate(3deg); }
+
+        #na-cube {
+            position: absolute; width: 14px; height: 14px;
+            background: linear-gradient(135deg, #F0F0F0 0%, #A0A0A0 50%, #707070 100%);
+            bottom: 350px; left: 50%; transform: translateX(-50%);
+            border-radius: 1px; box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            opacity: 0; z-index: 25; 
+            transition: bottom 0.8s cubic-bezier(0.47, 0, 0.745, 0.715), opacity 0.2s, transform 0.1s;
+        }
+        /* 優化：文字放大 */
+        .eq-content { font-family: 'Space Mono'; font-size: 1.5rem; color: var(--accent-gold); font-weight: bold; }
+        .report-content { font-family: 'Noto Serif TC'; font-size: 1.1rem; line-height: 1.8; opacity: 0.9; }
+        .bubble.output {
+    /* 效能優化：移除濾鏡 post-processing，改用硬體加速的漸層繪製發光感 */
+            background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0) 100%);
+            box-shadow: inset -1px -1px 3px rgba(0,0,0,0.05);
+            transform: translateZ(0); /* 強制 GPU 分層，大幅提升滑動與反應流暢度 */
+            will-change: transform, opacity;
+        }
+        .solid-particle { position: absolute; width: 4px; height: 4px; background: #4D2600; border-radius: 50%; z-index: 6; opacity: 0; pointer-events: none; }
+        @keyframes settling {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; filter: blur(1px); }
+            20% { opacity: 0.8; filter: blur(0px); }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(var(--dist)) scale(1.2); opacity: 0; }
+        }
+        /* 氣泡基礎樣式 */
+        .bubble { position: absolute; background: rgba(255,255,255,0.4); border-radius: 50%; border: 0.5px solid rgba(255,255,255,0.6); pointer-events: none; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.1); }
+        /* 通入氣體：從管口集中升起 */
+        @keyframes rise-in { 
+            0% { bottom: var(--start-y, 10px); opacity: 0; transform: scale(0.5) translateX(-50%); } 
+            20% { opacity: 0.7; }
+            100% { bottom: 45%; opacity: 0; transform: scale(1.2) translateX(calc(-50% + var(--x))); }  
+        }
+        /* 反應產氣：全液體隨機冒出 */
+        @keyframes rise-out { 
+            0% { bottom: var(--start-y); opacity: 0; transform: scale(0.3); } 
+            30% { opacity: 0.8; }
+            100% { bottom: 45%; opacity: 0; transform: scale(1) translateX(var(--x)); } 
+        }
+        /* 加強版液滴：水滴狀與發亮效果 */
+        .drop { 
+            position: absolute; 
+            width: 8px;             /* 參數：液滴寬度 */
+            height: 14px;            /* 參數：液滴長度 */
+            background: rgba(255,255,255,0.7); 
+            border-radius: 40% 40% 50% 50% / 10% 10% 90% 90%; /* 水滴造型 */
+            left: 50%; 
+            transform: translateX(-50%); 
+            animation: fall 0.5s cubic-bezier(0.5, 0, 0.7, 0.5) forwards; 
+            z-index: 12;
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.5));
+        }
+        @keyframes fall { 
+            0% { top: 70px; opacity: 0; transform: translateX(-50%) scale(0.5); } 
+            20% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+            100% { top: 45%; opacity: 0.8; transform: translateX(-50%) scale(1); } 
+        }
+        .mol-label-zh { font-family: 'Noto Serif TC'; font-weight: 900; font-size: 1.7rem; letter-spacing: 12px; margin-bottom: 6px; }
+        .mol-label-en { font-family: 'Space Mono'; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 5px; }
+
+        /* --- 區域 4+5: 資訊面板 --- */
+        .info-panel { height: var(--report-h); background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .area-4-equation { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; scrollbar-width: none; }
+        .eq-content { font-family: 'Space Mono'; font-size: 1.2rem; color: var(--accent-gold); white-space: nowrap; }
+        .area-5-report { flex: 1; overflow: visible; padding: 15px 25px; scrollbar-width: none; }
+        .report-content { font-family: 'Noto Serif TC'; font-size: 0.9rem; line-height: 1.9; opacity: 0.8; }
+
+        /* --- 漢堡選單樣式 --- */
+        .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; background: var(--drawer-bg); backdrop-filter: blur(50px); z-index: 3000; transform: translateX(-100%); transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); padding: 80px 25px; border-right: 1px solid rgba(255,255,255,0.05); }
+        .drawer.open { transform: translateX(0); box-shadow: 40px 0 100px rgba(0,0,0,0.8); }
+        .drawer { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .drawer::-webkit-scrollbar { display: none; }
+        .reagent-btn { width: 100%; padding: 24px; background: transparent; border: none; border-left: 2px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); text-align: left; font-size: 1.1rem; font-family: 'Noto Serif TC'; margin-bottom: 20px; cursor: pointer; transition: 0.25s; }
+         @media (hover: hover) {
+            .reagent-btn:hover { color: #FFF; border-left-color: var(--accent-gold); }
+            .reagent-btn:hover .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        }
+        .reagent-btn.active { color: #FFF; border-left-color: var(--accent-gold); background: rgba(255, 210, 168, 0.1) !important; }
+        .reagent-btn.active .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        .reagent-btn.focus-pending { background: transparent !important; border-left-color: var(--accent-gold); color: #FFF; }
+        .reagent-btn.focus-pending .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        .reagent-en { font-size: 0.7rem; font-weight: 400; opacity: 0.6; display: block; margin-top: 4px; }
+        /* 手機端首選發亮與狀態持久化樣式 */
+        .reagent-btn.focus-pending { background: rgba(255, 210, 168, 0.15); border-left-color: var(--accent-gold); }
+        .reagent-btn.focus-pending .reagent-desc { color: var(--accent-gold); opacity: 1; }
+        .reagent-desc { font-size: var(--desc-size); font-weight: 400; color: var(--desc-color); display: block; margin-top: 2px; transition: 0.4s; }
+        .reagent-btn:hover .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        /* 當點擊第一次 (focus-pending) 或滑鼠經過時，文字向右移動 5px 並變色 */
+        .reagent-btn.focus-pending .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(5px); }
+        /* 正式選取後 (active)，文字維持金色但不位移 */
+        .reagent-btn.active .reagent-desc { color: var(--desc-hover-color); opacity: 1; transform: translateX(0); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; opacity: 0; visibility: hidden; transition: 0.7s; backdrop-filter: blur(5px); }
+        .overlay.active { opacity: 1; visibility: visible; }
+        /* 末端炔鑑定：橫向切換開關 (高質感版) */
+        .toggle-container { 
+            display: flex !important; flex-direction: row !important; align-items: center; 
+            background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 30px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; 
+            position: relative; width: 120px; height: 44px; flex-shrink: 0; margin-right: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .toggle-slider { 
+            position: absolute; top: 4px; left: 4px; width: 56px; height: 34px; 
+            border-radius: 25px; transition: 0.2s cubic-bezier(0.23, 1, 0.32, 1); z-index: 1; 
+        }
+        .toggle-container.ag-active .toggle-slider { 
+            transform: translateX(0); 
+            background: linear-gradient(135deg, #E0E0E0 0%, #909090 100%); 
+            box-shadow: 0 4px 12px rgba(255,255,255,0.2);
+        }
+        .toggle-container.cu-active .toggle-slider { 
+            transform: translateX(56px); 
+            background: linear-gradient(135deg, #FF6B6B 0%, #8B0000 100%); 
+            box-shadow: 0 4px 12px rgba(255,107,107,0.3);
+        }
+        .toggle-label { 
+            flex: 1; text-align: center; font-family: 'Space Mono'; font-size: 0.75rem; 
+            font-weight: 800; z-index: 2; transition: 0.2s; color: rgba(255,255,255,0.3); 
+            line-height: 36px; pointer-events: none;
+        }
+        .toggle-container.ag-active .label-ag, .toggle-container.cu-active .label-cu { color: #000; text-shadow: 0 1px 2px rgba(255,255,255,0.2); }
+        
+        .hamburger { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 3100; }
+        .hamburger span { width: 100%; height: 2px; background: #FFF; transition: 0.3s; }
+        .hamburger.open span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
+    </style>
+</head>
+<body>
+
+    <header class="area-1-header">
+        <div class="hamburger" id="ham" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
+        <div class="header-title-wrap"><div class="main-title">ORGANIC</div><div class="sub-title">ANALYSIS</div></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><div class="top-btn" onclick="location.reload()">RESET</div><div class="top-btn" style="width: 32px; text-align: center; padding: 5px 0;" onclick="window.parent.postMessage('closeOrganicLab', '*')">✕</div></div>
+    </header>
+
+    <nav class="area-2-substrate" id="substrateBar"><div style="opacity: 0.3; font-size: 0.65rem; letter-spacing: 4px;">Waiting for reagent...</div></nav>
+
+    <div class="scroll-wrapper">
+        <main class="area-3-viewport">
+        <div class="observation-pad">
+            <!-- 上方固定結構式儀表板 -->
+            <div id="structure-banner"></div>
+
+            <!-- 下方固定實驗顯示區 -->
+            <div class="experiment-zone">
+                <div class="test-tube">
+                    <div id="ppt-zone">
+                        <div id="precipitate"></div>
+                    </div>
+                    <div id="gas-tube"></div>
+                    <div id="dropper"><div id="dropper-label"></div></div>
+                    <div class="liquid" id="liquid"></div>
+                    <div id="bubble-container"></div>
+                </div>
+                <div class="mol-label-zh" id="molZh">STANDBY</div>
+                <div class="mol-label-en" id="molEn">(READY FOR LAB)</div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="info-panel">
+        <div class="area-4-equation"><div class="eq-content" id="equationContent">---</div></div>
+        <div class="area-5-report"><div class="report-content" id="reportContent">請開啟左側選單選擇鑑定試劑。</div></div>
+    </footer>
+    </div>
+
+    <div class="drawer" id="drawer">
+        <div style="font-size: 0.6rem; letter-spacing: 5px; opacity: 0.4; margin-bottom: 40px;">REAGENT REPOSITORY</div>
+        <!-- 第一階段：烴類與不飽和度 -->
+        <button class="reagent-btn" id="btn-br2" onclick="initExperiment('br2')">溴水試驗<span class="reagent-en">(Bromine Water Test)</span><span class="reagent-desc">檢驗烯、炔的 π 鍵不飽和性</span></button>
+        <button class="reagent-btn" id="btn-kmno4" onclick="initExperiment('kmno4')">過錳酸鉀試驗<span class="reagent-en">(KMnO₄ Test)</span><span class="reagent-desc">檢驗烯、炔或甲苯衍生物之氧化反應</span></button>
+        <button class="reagent-btn" id="btn-alkyne" onclick="initExperiment('alkyne')">末端炔鑑定<span class="reagent-en">(Terminal Alkyne Test)</span><span class="reagent-desc">利用銀離子、亞銅離子產生金屬炔化物沉澱</span></button>
+        
+        <!-- 第二階段：活性氫探測 -->
+        <button class="reagent-btn" id="btn-na" onclick="initExperiment('na')">金屬鈉試驗<span class="reagent-en">(Sodium Test)</span><span class="reagent-desc">檢驗醇、酚、羧酸中的氫鍵反應</span></button>
+        <button class="reagent-btn" id="btn-fecl3" onclick="initExperiment('fecl3')">氯化鐵顯色反應<span class="reagent-en">(Ferric Chloride Test)</span><span class="reagent-desc">檢驗酚類官能基產生紫色錯合物反應</span></button>
+        <button class="reagent-btn" id="btn-nahco3" onclick="initExperiment('nahco3')">碳酸氫鈉試驗<span class="reagent-en">(NaHCO₃ Test)</span><span class="reagent-desc">檢驗酸性較強的羧酸 (產生二氧化碳)</span></button>
+
+        <!-- 第三階段：醛酮還原性 -->
+        <button class="reagent-btn" id="btn-tollens" onclick="initExperiment('tollens')">銀鏡反應<span class="reagent-en">(Silver Mirror Test)</span><span class="reagent-desc">檢驗醛類與甲酸之強還原性性質</span></button>
+        <button class="reagent-btn" id="btn-fehling" onclick="initExperiment('fehling')">斐林/本氏液試驗<span class="reagent-en">(Fehling's/Benedict's Test)</span><span class="reagent-desc">檢驗脂肪族醛類與還原糖之性質</span></button>
+
+        <!-- 第四階段：醇類分級與氧化 -->
+        <button class="reagent-btn" id="btn-lucas" onclick="initExperiment('lucas')">醇的分級鑑定<span class="reagent-en">(Alcohol Classification)</span><span class="reagent-desc">利用混濁速率區分一、二、三級醇</span></button>
+        <button class="reagent-btn" id="btn-k2cr2o7" onclick="initExperiment('k2cr2o7')">二鉻酸鉀氧化反應<span class="reagent-en">(K₂Cr₂O₇ Oxidation)</span><span class="reagent-desc">檢驗一、二級醇之氧化變色反應</span></button>
+
+        <!-- 第六階段：醣類與多醣 -->
+        <button class="reagent-btn" id="btn-iodine" onclick="initExperiment('iodine')">澱粉碘液試驗<span class="reagent-en">(Iodine-Starch Test)</span><span class="reagent-desc">利用澱粉與碘分子形成深藍色錯合物</span></button>
+
+        <!-- 第七、八階段：油脂與鹵化烷 -->
+        <button class="reagent-btn" id="btn-soap" onclick="initExperiment('soap')">油脂皂化與鹽析<span class="reagent-en">(Saponification)</span><span class="reagent-desc">油脂在鹼中水解並利用鹽析分離肥皂</span></button>
+        <button class="reagent-btn" id="btn-halide" onclick="initExperiment('halide')">鹵化烷水解檢驗<span class="reagent-en">(Halide Hydrolysis Test)</span><span class="reagent-desc">鑑定鹵化烷水解後之鹵素離子種類</span></button>
+
+        <!-- 第十階段：萃取分離 -->
+        <button class="reagent-btn" id="btn-extract" onclick="initExperiment('extract')">酸鹼萃取分離<span class="reagent-en">(Acid-Base Extraction)</span><span class="reagent-desc">利用溶解度與酸鹼性分離混合物質</span></button>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+
+    <script>
+        const LAB_PARAMS = {
+    liquidLevel: 0.45,     // 液面高度 (45%)
+    gasInSpeed: 120,
+    effervSpeed: 30,       
+    bubbleLife: 1500,
+    pptDensity: 20,        
+    pptFinalHeight: '8%',  
+    settleTime: 3.5,
+    bubbleSizeMin: 4,      
+    bubbleSizeMax: 10,      
+    naConsumeSpeed: { 'acid': 1500, 'water': 2500, 'ethanol': 5000 }, 
+    naBubbleFreq: { 'acid': 20, 'water': 40, 'ethanol': 80 },        
+    structureScale: 1.2
+    };
+
+    // --- Master Logic：全域管理核心 ---
+    let activeTimers = [];
+
+    function safeTimeout(fn, delay) {
+        const t = setTimeout(fn, delay);
+        activeTimers.push(t);
+        return t;
     }
-};
+
+    function universalCleanup() {
+        // 1. 中斷背景鬧鐘
+        activeTimers.forEach(clearTimeout);
+        activeTimers = [];
+        // 2. 物理清除所有動態零件
+        document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
+        // 3. 視覺重置：立即移除所有專屬類名與底層沈澱
+        const liq = document.getElementById('liquid');
+        const pre = document.getElementById('precipitate');
+        if (liq) { liq.classList.remove('silver-mirror', 'fehling-react'); liq.style.transition = 'none'; liq.style.background = 'transparent'; }
+        if (pre) { 
+            pre.classList.remove('growing');
+            pre.style.height = '0'; 
+            pre.style.opacity = '0'; 
+        }
+        const sb = document.getElementById('structure-banner');
+        if (sb) sb.classList.remove('show');
+    }
+
+        let activeReagent = null;
+        let isProcessing = false;
+        let activeSubObject = null; // 追蹤目前選中的受質物件
+        let kmno4Env = 'neutral'; // 'neutral' 或 'acidic'
+        let alkyneReagent = 'ag'; // 'ag' 或 'cu'
+
+        /* =========================================================================
+        【 結構式自定義教學：SVG viewBox 四個數字的秘密 】
+   
+        用法範例：structure: `<svg viewBox="X Y W H">...</svg>`
+        你可以把 viewBox 想像成一個「攝影機鏡頭」，這四個數字決定了鏡頭拍哪裡、拍多大。
+
+        1. [X] 碼 (min-x)：鏡頭水平移動
+        - 數字變大：鏡頭往左移（結構式看起來會往「右」靠）
+        - 數字變小：鏡頭往右移（結構式看起來會往「左」靠）
+
+        2. [Y] 碼 (min-y)：鏡頭垂直移動
+        - 數字變大：鏡頭往下移（結構式看起來會往「上」靠）
+        - 數字變小：鏡頭往上移（結構式看起來會往「下」靠）
+
+        3. [W] 碼 (width)：鏡頭寬度視野 (Zoom)
+        - 數字越小：鏡頭拉近，結構式變「寬」、變「大」
+        - 數字越大：鏡頭拉遠，結構式變「窄」、變「小」
+
+        4. [H] 碼 (height)：鏡頭高度視野 (Zoom)
+        - 數字越小：鏡頭拉近，結構式變「高」、變「大」
+        - 數字越大：鏡頭拉遠，結構式變「矮」、變「小」
+
+        ★ 黃金調整順序：
+        Step A：先縮減 [W] 與 [H]，直到結構式的大小達到「八成滿」。
+        Step B：再微調 [X] 與 [Y]，把放大後的結構式移動到方框正中央。
+   ========================================================================= */
+
+
+
+
+        const experimentData = {
+            'br2': {
+                reagentColor: 'rgba(165, 42, 42, 0.85)',
+                substrates: [
+                    { zh: '乙 烷', en: 'Ethane', state: 'gas', react: false, eq: 'CH₃CH₃ + Br₂ → (No Reaction)', text: '通入乙烷氣體後，紅褐色溴水無明顯變化。',
+                    x: 5, y: 0, s: 0.8,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 177 116" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 53.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4288.2,3788.5 L 4288.2,3808.5 L 3970.2,3808.5 L 3970.2,3788.5 L 4288.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3357.2,3808.5 L 3357.2,3788.5 L 3688.2,3788.5 L 3688.2,3808.5 L 3357.2,3808.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 128.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4622.54,3441.03 L 4639.86,3451.03 L 4512.04,3672.41 L 4494.72,3662.41 L 4622.54,3441.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 153.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4898.2,3788.5 L 4898.2,3808.5 L 4570.2,3808.5 L 4570.2,3788.5 L 4898.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 128.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                     },
+                    { zh: ' 烯 ', isGroup: true, children: [
+                        { zh: '乙 烯', en: 'Ethylene', state: 'gas', react: true, eq: 'CH₂=CH₂ + Br₂ → CH₂Br-CH₂Br', text: '通入乙烯氣體，紅褐色轉變為無色。',
+                        x: 0, y: 0, s: 0.85,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 127 116" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 78.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4288.2,3752.5 L 4288.2,3772.5 L 3970.2,3772.5 L 3970.2,3752.5 L 4288.2,3752.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4288.2,3824.5 L 4288.2,3844.5 L 3970.2,3844.5 L 3970.2,3824.5 L 4288.2,3824.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4622.54,3441.03 L 4639.86,3451.03 L 4512.04,3672.41 L 4494.72,3662.41 L 4622.54,3441.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                        { zh: '丙 烯', en: 'Propylene', state: 'gas', react: true, eq: 'CH₃CH=CH₂ + Br₂ → CH₃CHBr-CH₂Br', text: '通入丙烯氣體，發生加成反應褪色。', 
+                        x: 0, y: 0, s: 0.85,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 157 117" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 70.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 78.425 70.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4288.2,3752.5 L 4288.2,3772.5 L 3970.2,3772.5 L 3970.2,3752.5 L 4288.2,3752.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4288.2,3824.5 L 4288.2,3844.5 L 3970.2,3844.5 L 3970.2,3824.5 L 4288.2,3824.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 113.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 26.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 26.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+CH</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 141.941 32.4071)" font-style="normal" font-weight="normal" font-size="240px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+3</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4636.42,3416.98 L 4653.75,3426.98 L 4512.04,3672.41 L 4494.72,3662.41 L 4636.42,3416.98 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 113.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                    ]},
+                    { zh: '乙 炔', en: 'Acetylene', state: 'gas', react: true, eq: 'HC≡CH + 2Br₂ → CHBr₂-CHBr₂', text: '乙炔氣體通入後紅褐色極速坍縮。',
+                    x: 0, y: 0, s: 0.6,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 177 30" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 53.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3716.5 L 4288.2,3736.5 L 3970.2,3736.5 L 3970.2,3716.5 L 4288.2,3716.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3788.5 L 4288.2,3808.5 L 3970.2,3808.5 L 3970.2,3788.5 L 4288.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3860.5 L 4288.2,3880.5 L 3970.2,3880.5 L 3970.2,3860.5 L 4288.2,3860.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 3357.2,3808.5 L 3357.2,3788.5 L 3688.2,3788.5 L 3688.2,3808.5 L 3357.2,3808.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 153.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4898.2,3788.5 L 4898.2,3808.5 L 4570.2,3808.5 L 4570.2,3788.5 L 4898.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                    { zh: ' 苯 ', en: 'Benzene', state: 'liquid', react: false, eq: 'C₆H₆ + Br₂ → (No Reaction)', text: '苯環穩定，常溫下不與溴水發生加成反應。' ,
+                    x: 0, y: 0, s: 0.8,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 110" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3571.58,4026.23 L 3551.58,4037.77 L 3551.58,3426.23 L 3571.58,3437.77 L 3571.58,4026.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3643.58,3990.43 L 3623.58,3990.43 L 3623.58,3473.57 L 3643.58,3473.57 L 3643.58,3990.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4081.2,4320.45 L 4081.2,4343.55 L 3551.58,4037.77 L 3571.58,4026.23 L 4081.2,4320.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4590.82,4026.23 L 4610.82,4037.77 L 4081.2,4343.55 L 4081.2,4320.45 L 4590.82,4026.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4523.82,3981.77 L 4533.82,3999.09 L 4086.2,4257.52 L 4076.2,4240.2 L 4523.82,3981.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4590.82,3437.77 L 4610.82,3426.23 L 4610.82,4037.77 L 4590.82,4026.23 L 4590.82,3437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4081.2,3143.55 L 4081.2,3120.45 L 4610.82,3426.23 L 4590.82,3437.77 L 4081.2,3143.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4076.2,3223.8 L 4086.2,3206.48 L 4533.82,3464.91 L 4523.82,3482.23 L 4076.2,3223.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3571.58,3437.77 L 3551.58,3426.23 L 4081.2,3120.45 L 4081.2,3143.55 L 3571.58,3437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                ]
+            },
+            'kmno4': {
+                neutralColor: 'rgba(75, 0, 130, 0.9)', 
+                acidicColor: 'rgba(238, 130, 238, 0.8)', 
+                substrates: [
+                    { zh: '乙 烷', en: 'Ethane', state: 'gas', env: 'neutral',
+                        neutral: { react: false, eq: 'No Reaction', text: '中性環境下，飽和烷烴不與過錳酸鉀反應，維持紫色。' }
+                    },
+                    { 
+                        zh: ' 烯 ', isGroup: true, env: 'neutral',
+                        children: [
+                            { zh: '乙 烯', en: 'Ethylene', state: 'gas', env: 'neutral',
+                                neutral: { react: true, resultColor: 'rgba(139, 69, 19, 0.75)', precipitate: true, eq: '3C₂H₄ + 2MnO₄⁻ + 4H₂O → 3C₂H₄(OH)₂ + 2MnO₂', text: '中性下發生加成氧化產生乙二醇，並生成棕色二氧化錳沉澱。' }
+                            },
+                            { zh: '丙 烯', en: 'Propylene', state: 'gas', env: 'neutral',
+                                neutral: { react: true, resultColor: 'rgba(139, 69, 19, 0.75)', precipitate: true, eq: '3C₃H₆ + 2MnO₄⁻ + 4H₂O → 3C₃H₆(OH)₂ + 2MnO₂', text: '中性下氧化為丙二醇，觀察到紫色褪去並產生棕色沉澱。' }
+                            }
+                        ]
+                    },
+                    { zh: '乙 炔', en: 'Acetylene', state: 'gas', env: 'neutral',
+                        neutral: { react: true, resultColor: 'rgba(139, 69, 19, 0.8)', precipitate: true, eq: 'C₂H₂ + 2MnO₄⁻ → (COO⁻)₂ + 2MnO₂', text: '中性下乙炔被氧化為草酸根離子，並產生棕色沉澱。' }
+                    },
+                    { 
+                        zh: '芳香烴', isGroup: true, env: 'acidic',
+                        children: [
+                            { zh: ' 苯 ', en: 'Benzene', state: 'liquid', env: 'acidic',
+                                acidic:  { react: false, eq: 'No Reaction', text: '酸性下苯環依然穩定，不發生氧化反應。' }
+                            },
+                            { zh: '甲 苯', en: 'Toluene', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'C₆H₅CH₃ + 3[O] → C₆H₅COOH + H₂O', text: '酸性環境下側鏈甲基被氧化為苯甲酸，溶液褪色。' }
+                            },
+                            { zh: '乙 苯', en: 'Ethylbenzene', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', bubble: true, eq: 'C₆H₅CH₂CH₃ + [O] → C₆H₅COOH + CO₂', text: '酸性下長側鏈發生斷裂氧化，生成苯甲酸與二氧化碳氣泡。' }
+                            },
+                            { zh: '鄰二甲苯', en: 'o-Xylene', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'C₆H₄(CH₃)₂ + 6[O] → C₆H₄(COOH)₂ + 2H₂O', text: '酸性下兩個側鏈甲基皆被氧化，生成鄰苯二甲酸並褪色。' }
+                            },
+                            { zh: '三級丁基苯', en: 'tert-Butylbenzene', state: 'liquid', env: 'acidic',
+                                acidic:  { react: false, eq: 'No Reaction', text: '側鏈碳上無 α-H，酸性條件下亦無法被氧化，維持紫紅色。' }
+                            }
+                        ]
+                    },
+                    {
+                        zh: ' 醇 ',
+                        isGroup: true,
+                        env: 'acidic',
+                        children: [
+                            { zh: '甲 醇', en: 'Methanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', bubble: true, eq: 'CH₃OH + [O] → CO₂ + H₂O', text: '酸性下，甲醇被氧化為二氧化碳氣泡（經甲酸中間體），溶液褪色。' }
+                            },
+                            { zh: '乙 醇', en: 'Ethanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'CH₃CH₂OH + [O] → CH₃COOH', text: '酸性環境下，1° 醇氧化為乙酸，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '1-丙醇', en: '1-Propanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'CH₃CH₂CH₂OH + [O] → CH₃CH₂COOH', text: '酸性環境下，1° 醇氧化為丙酸，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '2-丙醇', en: '2-Propanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'CH₃CH(OH)CH₃ + [O] → CH₃COCH₃', text: '酸性環境下，2° 醇氧化為丙酮，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '1-丁醇', en: '1-Butanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'C₄H₉OH + [O] → C₃H₇COOH', text: '酸性環境下，1° 醇氧化為丁酸，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '2-丁醇', en: '2-Butanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: 'C₂H₅CH(OH)CH₃ + [O] → C₂H₅COCH₃', text: '酸性環境下，2° 醇氧化為丁酮，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '2-甲基-1-丙醇', en: 'Isobutanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: '(CH₃)₂CHCH₂OH + [O] → (CH₃)₂CHCOOH', text: '酸性下氧化為異丁酸，溶液由紫紅褪為無色。' }
+                            },
+                            { zh: '2-甲基-2-丙醇', en: 'tert-Butanol', state: 'liquid', env: 'acidic',
+                                acidic:  { react: false, eq: 'No Reaction', text: '3° 醇結構中無 α-H，在酸性下不被氧化，維持紫紅色。' }
+                            }
+                        ]
+                    },
+                    { zh: '丙 醛', en: 'Propionaldehyde', state: 'liquid', env: 'acidic',
+                        acidic:  { react: true, resultColor: 'var(--liquid-water)', eq: '5RCHO + 2MnO₄⁻ + 6H⁺ → 5RCOOH + 2Mn²⁺ + 3H₂O', text: '酸性下醛類氧化為丙酸，溶液由紫紅褪為無色。' }
+                    },
+                    { zh: '丙 酮', en: 'Acetone', state: 'liquid', env: 'acidic',
+                        acidic:  { react: false, eq: 'No Reaction', text: '酮類對酸性過錳酸鉀具備抗性，不發生反應，維持紫紅色。' }
+                    },
+                    {
+                        zh: '羧 酸', isGroup: true, env: 'acidic', children: [
+                            { zh: '甲 酸', en: 'Formic Acid', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', bubble: true, eq: 'HCOOH + [O] → CO₂ + H₂O', text: '酸性下甲酸具還原性，氧化產生二氧化碳氣泡並褪色。' }
+                            },
+                            { zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', env: 'acidic',
+                                acidic:  { react: false, eq: 'No Reaction', text: '一般羧酸性質穩定，不與酸性過錳酸鉀反應，維持紫紅色。' }
+                            },
+                            { zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', env: 'acidic',
+                                acidic:  { react: true, resultColor: 'var(--liquid-water)', bubble: true, eq: '5C₂H₂O₄ + 2MnO₄⁻ + 6H⁺ → 10CO₂ + 2Mn²⁺ + 8H₂O', text: '酸性下草酸被氧化為二氧化碳氣泡，溶液極速褪色。' }
+                            }
+                        ]
+                    }
+                ]
+            },
+            'alkyne': {
+                agColor: 'rgba(255, 255, 255, 0.15)', // 銀氨溶液：透明極淺白
+                cuColor: 'rgba(173, 216, 230, 0.3)',  // 亞銅氨溶液：淺藍色
+                substrates: [
+                    { zh: '乙 烯', en: 'Ethylene', state: 'gas', 
+                        ag: { react: false, eq: 'No Reaction', text: '乙烯不含末端炔氫，不與銀氨溶液反應。' },
+                        cu: { react: false, eq: 'No Reaction', text: '乙烯不含末端炔氫，不與亞銅氨溶液反應。' }
+                    },
+                    { 
+                        zh: ' 炔 ', isGroup: true, 
+                        children: [
+                            { zh: '乙 炔', en: 'Acetylene', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'HC≡CH + 2Ag(NH₃)₂⁺ → AgC≡CAg↓ + 2NH₄⁺ + 2NH₃', text: '乙炔通入銀氨溶液，產生白色乙炔銀沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'HC≡CH + 2Cu(NH₃)₂⁺ → CuC≡CCu↓ + 2NH₄⁺ + 2NH₃', text: '乙炔通入亞銅氨溶液，產生磚紅色乙炔亞銅沉澱。' }
+                            },
+                            { zh: '丙 炔', en: 'Propyne', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'CH₃C≡CH + Ag(NH₃)₂⁺ → CH₃C≡CAg↓ + NH₄⁺ + NH₃', text: '丙炔具有末端炔氫，與銀氨溶液產生白色沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'CH₃C≡CH + Cu(NH₃)₂⁺ → CH₃C≡CCu↓ + NH₄⁺ + NH₃', text: '丙炔具有末端炔氫，與亞銅氨溶液產生磚紅色沉澱。' }
+                            },
+                            { zh: '1-丁炔', en: '1-Butyne', state: 'gas', 
+                                ag: { react: true, resultColor: 'rgba(255, 255, 255, 0.5)', precipitate: true, pptColor: '#FFFFFF', eq: 'C₂H₅C≡CH + Ag(NH₃)₂⁺ → C₂H₅C≡CAg↓ + NH₄⁺ + NH₃', text: '1-丁炔為末端炔，與銀氨溶液產生白色沉澱。' },
+                                cu: { react: true, resultColor: 'rgba(128, 0, 0, 0.4)', precipitate: true, pptColor: '#B22222', eq: 'C₂H₅C≡CH + Cu(NH₃)₂⁺ → C₂H₅C≡CCu↓ + NH₄⁺ + NH₃', text: '1-丁炔與亞銅氨溶液產生磚紅色沉澱。' }
+                            },
+                            { zh: '2-丁炔', en: '2-Butyne', state: 'liquid', 
+                                ag: { react: false, eq: 'No Reaction', text: '2-丁炔為內端炔，無酸性氫，故不與銀氨溶液反應。' },
+                                cu: { react: false, eq: 'No Reaction', text: '2-丁炔為內端炔，無酸性氫，故不與亞銅氨溶液反應。' }
+                            }
+                        ]
+                    }
+                ]
+            },
+            'na': {
+        reagentColor: 'rgba(255,255,255,0.1)', // 初始液體為透明
+        substrates: [
+        { zh: '乙 酸', en: 'Acetic Acid', state: 'special', type: 'acid', eq: '2CH₃COOH + 2Na → 2CH₃COONa + H₂↑', text: '酸性最強，反應極其劇烈，鈉塊迅速消失並大量噴發氣泡。' },
+        { zh: ' 水 ', en: 'Water', state: 'special', type: 'water', eq: '2H₂O + 2Na → 2NaOH + H₂↑', text: '反應劇烈且放熱，產生大量氫氣。現實中鈉塊會劇烈竄動。' },
+        { zh: '乙 醇', en: 'Ethanol', state: 'special', type: 'ethanol', eq: '2C₂H₅OH + 2Na → 2C₂H₅ONa + H₂↑', text: '反應速率適中，產生持續細小的氫氣泡，鈉塊穩步溶解。' },
+        { zh: '乙 醚', en: 'Diethyl Ether', state: 'special', type: 'none', eq: 'No Reaction', text: '醚類無活潑氫，金屬鈉沉於底部，觀察不到氣泡反應。' }
+        ]
+        },
+        'fecl3': {
+            reagentColor: 'rgba(255,255,255,0.15)', // 試管先裝填透明的受質溶液
+            substrates: [
+                { 
+                    zh: '苯 酚', en: 'Phenol', state: 'liquid', react: true, resultColor: 'rgba(55, 25, 90, 0.72)', eq: '6C₆H₅OH + Fe³⁺ → [Fe(OC₆H₅)₆]³⁻ + 6H⁺', text: '加入氯化鐵後產生深紫色錯合物。其結構中的 -OH 直接相連於苯環。', 
+                    x: 0, y: 0, s: 1.6, 
+                    structure: `<svg viewBox="0 0 200 120"><g stroke="white" stroke-width="2.5" fill="none"><path d="M40 35 L60 47 L60 72 L40 85 L20 72 L20 47 Z"/><circle cx="40" cy="60" r="14" stroke-width="1.2" opacity="0.3"/><line x1="60" y1="47" x2="85" y2="35"/></g><text x="90" y="38" fill="white" font-family="Space Mono" font-weight="bold" font-size="16">OH</text></svg>`
+                },
+                { 
+                    zh: '柳 酸', en: 'Salicylic Acid', state: 'liquid', react: true, resultColor: 'rgba(75, 35, 105, 0.68)', eq: 'C₆H₄(OH)COOH + Fe³⁺ → Purple Complex', text: '柳酸具備酚羥基與羧基。鄰位的 -OH 基使其能與鐵離子產生深紫色反應。', 
+                    x: 0, y: 0, s: 1,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 209 131" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1519.6,4482.23 L 1499.6,4493.77 L 1499.6,3882.23 L 1519.6,3893.77 L 1519.6,4482.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1591.6,4446.43 L 1571.6,4446.43 L 1571.6,3929.57 L 1591.6,3929.57 L 1591.6,4446.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2029.2,4776.45 L 2029.2,4799.55 L 1499.6,4493.77 L 1519.6,4482.23 L 2029.2,4776.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2538.8,4482.23 L 2548.8,4488 L 2548.8,4499.55 L 2029.2,4799.55 L 2029.2,4776.45 L 2538.8,4482.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2471.8,4437.77 L 2481.8,4455.09 L 2034.2,4713.52 L 2024.2,4696.2 L 2471.8,4437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2538.8,3893.77 L 2548.8,3888 L 2558.8,3893.77 L 2558.8,4482.23 L 2548.8,4488 L 2538.8,4482.23 L 2538.8,3893.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2029.2,3599.55 L 2029.2,3576.45 L 2548.8,3876.45 L 2548.8,3888 L 2538.8,3893.77 L 2029.2,3599.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2024.2,3679.8 L 2034.2,3662.48 L 2481.8,3920.91 L 2471.8,3938.23 L 2024.2,3679.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 1519.6,3893.77 L 1499.6,3882.23 L 2029.2,3576.45 L 2029.2,3599.55 L 1519.6,3893.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 125.15 26.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+COOH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2931.87,3655.28 L 2941.87,3672.6 L 2558.8,3893.77 L 2548.8,3888 L 2548.8,3876.45 L 2931.87,3655.28 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 124.4 126.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" class="h">
+OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -120.925 -283)" d="M 2945.16,4705.3 L 2935.16,4722.62 L 2548.8,4499.55 L 2548.8,4488 L 2558.8,4482.23 L 2945.16,4705.3 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                { 
+                    zh: '阿斯匹靈', en: 'Aspirin', state: 'liquid', react: false, resultColor: 'rgba(218, 165, 32, 0.18)', eq: 'No Reaction', text: '阿斯匹靈因酚羥基已被酯化（變為乙醯基），滴入試劑後不顯色。', 
+                    x: 0, y: 0, s: 1.3,
+                    structure: `<svg viewBox="0 0 220 120"><g stroke="white" stroke-width="2.5" fill="none"><path d="M30 45 L50 33 L70 45 L70 69 L50 81 L30 69 Z"/><line x1="36" y1="48" x2="50" y2="40" stroke-width="1.2"/><line x1="64" y1="48" x2="64" y2="66" stroke-width="1.2"/><line x1="36" y1="66" x2="50" y2="74" stroke-width="1.2"/><line x1="70" y1="45" x2="95" y2="35"/><line x1="70" y1="69" x2="95" y2="79"/></g><text x="100" y="38" fill="white" font-family="Space Mono" font-weight="bold" font-size="16">COOH</text><text x="100" y="82" fill="#FFD2A8" font-family="Space Mono" font-weight="bold" font-size="16">OCOCH₃</text></svg>` 
+                },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, resultColor: 'rgba(218, 165, 32, 0.18)', eq: 'No Reaction', text: '普通醇類不具備酚羥基，不發生顯色反應。' },
+                { zh: '柳酸甲酯', en: 'Methyl Salicylate', state: 'liquid', react: true, resultColor: 'rgba(90, 45, 115, 0.6)', eq: 'C₆H₄(OH)COOCH₃ + Fe³⁺ → Violet Complex', text: '冬青油仍保有酚羥基，顯色速度較慢，呈現紫紅色。' }
+            ]
+            },
+            'nahco3': {
+            reagentColor: 'rgba(255,255,255,0.1)', // 待測液初色
+            substrates: [
+                { 
+                    zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 12, eq: 'H₂C₂O₄ + 2NaHCO₃ → Na₂C₂O₄ + 2H₂O + 2CO₂↑', text: '草酸酸性極強，加入碳酸氫鈉後氣泡呈噴發狀劇烈產生。',
+                    x: 0, y: 0, s: 1.2,
+                    structure: `<svg viewBox="0 0 200 120"><g stroke="white" stroke-width="2.5" fill="none"><line x1="60" y1="60" x2="100" y2="60"/><line x1="60" y1="60" x2="40" y2="40"/><line x1="60" y1="60" x2="40" y2="80"/><line x1="100" y1="60" x2="120" y2="40"/><line x1="100" y1="60" x2="120" y2="80"/></g><text x="10" y="45" fill="white" font-size="14">HO</text><text x="125" y="45" fill="white" font-size="14">OH</text><text x="45" y="95" fill="white" font-size="14">O</text><text x="110" y="95" fill="white" font-size="14">O</text></svg>`
+                },
+                { 
+                    zh: '苯甲酸', en: 'Benzoic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 25, eq: 'C₆H₅COOH + NaHCO₃ → C₆H₅COONa + H₂O + CO₂↑', text: '苯甲酸酸性大於乙酸，滴入藥劑後觀察到明顯且快速的二氧化碳氣泡。',
+                    x: -20, y: 0, s: 1.4,
+                    structure: `<svg viewBox="0 0 200 120"><g stroke="white" stroke-width="2.5" fill="none"><path d="M40 35 L60 47 L60 72 L40 85 L20 72 L20 47 Z"/><line x1="60" y1="47" x2="85" y2="35"/></g><text x="90" y="38" fill="white" font-family="Space Mono" font-weight="bold" font-size="16">COOH</text></svg>`
+                },
+                { 
+                    zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: true, bubble: true, bSpeed: 45, eq: 'CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑', text: '乙酸為一般羧酸，與碳酸氫鈉反應產生穩定的二氧化碳氣泡。' 
+                },
+                { zh: '苯 酚', en: 'Phenol', state: 'liquid', react: false, eq: 'No Reaction', text: '酚類酸性極弱，不足以與碳酸氫鈉反應產生氣泡（可用此區分羧酸）。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '醇類幾近中性，不與碳酸氫鈉發生反應。' }
+            ]
+        },
+        'tollens': {
+            reagentColor: 'rgba(230, 230, 230, 0.25)', // 多倫試劑：透明淡灰色
+            substrates: [
+                { zh: '乙 醛', en: 'Acetaldehyde', state: 'liquid', react: true, isMirror: true, eq: 'CH₃CHO + 2Ag(NH₃)₂⁺ + 3OH⁻ → CH₃COO⁻ + 2Ag↓ + 4NH₃ + 2H₂O', text: '乙醛具備醛基，還原性極強，滴入後迅速在管壁析出晶亮的銀鏡。' },
+                { zh: '丙 酮', en: 'Acetone', state: 'liquid', react: false, eq: 'No Reaction', text: '酮類官能基無法被多倫試劑氧化，故不產生銀鏡反應。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '普通醇類不具還原性，無法將銀氨錯離子還原為金屬銀。' },
+                { zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '草酸雖具還原性，但在多倫試劑的弱鹼環境下反應極慢，通常不視為陽性。' },
+                { zh: '羧 酸', isGroup: true, children: [
+                    { zh: '甲 酸', en: 'Formic Acid', state: 'liquid', react: true, isMirror: true, eq: 'HCOO⁻ + 2Ag(NH₃)₂⁺ → CO₃²⁻ + 2Ag↓', text: '甲酸結構中含有醛基特徵，是唯一能產生銀鏡反應的羧酸。' },
+                    { zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '乙酸不具備醛基結構，無法產生銀鏡。' }
+                ]},
+                { zh: '苯甲醛', en: 'Benzaldehyde', state: 'liquid', react: true, isMirror: true, eq: 'C₆H₅CHO + [Ag]⁺ → C₆H₅COO⁻ + Ag↓', text: '芳香醛亦可產生銀鏡，反應速率較脂肪醛慢，但實驗顯色依然明顯。' },
+                { zh: '單 醣', isGroup: true, children: [
+                    { zh: '葡萄糖', en: 'Glucose', state: 'liquid', react: true, isMirror: true, eq: 'R-CHO + [Ag]⁺ → R-COO⁻ + Ag↓', text: '葡萄糖為還原醣，環狀與鏈狀結構平衡中暴露醛基，產生銀鏡。' },
+                    { zh: '果 糖', en: 'Fructose', state: 'liquid', react: true, isMirror: true, text: '果糖雖為酮醣，但在多倫試劑的鹼性條件下會異構化為醛醣，呈現陽性反應。' },
+                    { zh: '半乳糖', en: 'Galactose', state: 'liquid', react: true, isMirror: true, text: '半乳糖具備還原性，能順利析出金屬銀鏡。' }
+                ]},
+                { zh: '雙 醣', isGroup: true, children: [
+                    { zh: '麥芽糖', en: 'Maltose', state: 'liquid', react: true, isMirror: true, text: '麥芽糖具有游離的半縮醛羥基，屬於還原醣，可產生銀鏡。' },
+                    { zh: '蔗 糖', en: 'Sucrose', state: 'liquid', react: false, eq: 'No Reaction', text: '蔗糖由葡萄糖與果糖的醛基與酮基縮合，無還原性，不產生銀鏡。' },
+                    { zh: '乳 糖', en: 'Lactose', state: 'liquid', react: true, isMirror: true, text: '乳糖亦屬還原醣，測試結果呈現陽性銀鏡。' }
+                ]},
+                { zh: '澱 粉', en: 'Starch', state: 'liquid', react: false, eq: 'No Reaction', text: '澱粉為多醣，還原末端極少且結構複雜，不發生銀鏡反應。' }
+            ]
+        },
+        'fehling': {
+            reagentColor: 'rgba(0, 0, 255, 0.45)', // 斐林/本氏液：深藍色
+            substrates: [
+                { zh: '乙 醛', en: 'Acetaldehyde', state: 'liquid', react: true, isFehling: true, eq: 'CH₃CHO + 2Cu²⁺ + 5OH⁻ → CH₃COO⁻ + Cu₂O↓ + 3H₂O', text: '【強陽性】脂肪醛可被還原，溶液由深藍轉為磚紅色氧化亞銅沈澱。' },
+                { zh: '丙 酮', en: 'Acetone', state: 'liquid', react: false, eq: 'No Reaction', text: '酮類無法被弱氧化劑斐林試劑氧化，維持深藍色。' },
+                { zh: '乙 醇', en: 'Ethanol', state: 'liquid', react: false, eq: 'No Reaction', text: '醇類不具還原性，不發生反應。' },
+                { zh: '草 酸', en: 'Oxalic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '草酸在此條件下穩定，無明顯現象。' },
+                { zh: '羧 酸', isGroup: true, children: [
+                    { zh: '甲 酸', en: 'Formic Acid', state: 'liquid', react: true, isFehling: true, eq: 'HCOO⁻ + 2Cu²⁺ + 5OH⁻ → CO₃²⁻ + Cu₂O↓ + 3H₂O', text: '甲酸具醛基特徵，可使斐林試液產生磚紅色沈澱。' },
+                    { zh: '乙 酸', en: 'Acetic Acid', state: 'liquid', react: false, eq: 'No Reaction', text: '乙酸無還原性。' }
+                ]},
+                { zh: '苯甲醛', en: 'Benzaldehyde', state: 'liquid', react: false, eq: 'No Reaction', text: '【關鍵區別】斐林試劑氧化力不足，無法氧化芳香醛，此點與銀鏡反應不同。' },
+                { zh: '單 醣', isGroup: true, children: [
+                    { zh: '葡萄糖', en: 'Glucose', state: 'liquid', react: true, isFehling: true, text: '葡萄糖為還原醣，反應產生明顯磚紅色沈澱。' },
+                    { zh: '果 糖', en: 'Fructose', state: 'liquid', react: true, isFehling: true, text: '果糖雖為酮醣，但在鹼性試液中會異構化為醛醣，呈現陽性反應。' },
+                    { zh: '半乳糖', en: 'Galactose', state: 'liquid', react: true, isFehling: true, text: '半乳糖具備還原性，呈現陽性反應。' }
+                ]},
+                { zh: '雙 醣', isGroup: true, children: [
+                    { zh: '麥芽糖', en: 'Maltose', state: 'liquid', react: true, isFehling: true, text: '麥芽糖具備游離半縮醛羥基，可產生磚紅色沈澱。' },
+                    { zh: '蔗 糖', en: 'Sucrose', state: 'liquid', react: false, eq: 'No Reaction', text: '蔗糖結構中無還原末端，不發生斐林反應。' },
+                    { zh: '乳 糖', en: 'Lactose', state: 'liquid', react: true, isFehling: true, text: '乳糖為還原醣，反應呈現陽性。' }
+                ]},
+                { zh: '澱 粉', en: 'Starch', state: 'liquid', react: false, eq: 'No Reaction', text: '澱粉分子量巨大，不具明顯還原性。' }
+            ]
+        }
+        };
+
+        function renderSubstrateBar(items = null, isSubLevel = false) {
+            const bar = document.getElementById('substrateBar');
+            bar.innerHTML = '';
+            const data = experimentData[activeReagent];
+            if (!data) return;
+
+            // --- 末端炔鑑定：Ag⁺/Cu⁺ 切換開關邏輯 ---
+            if (activeReagent === 'alkyne' && !isSubLevel) {
+                const toggle = document.createElement('div');
+                toggle.className = `toggle-container ${alkyneReagent}-active`;
+                toggle.innerHTML = `
+                    <div class="toggle-slider"></div>
+                    <div class="toggle-label label-ag">Ag⁺</div>
+                    <div class="toggle-label label-cu">Cu⁺</div>
+                `;
+                toggle.onclick = async () => {
+                    // 切換試劑類型
+                    alkyneReagent = (alkyneReagent === 'ag' ? 'cu' : 'ag');
+                    activeSubObject = null; // 強制取消選中物質
+                    
+                    // 立即清空所有文字介面，避免顯示舊數據
+                    document.getElementById('equationContent').innerText = '---';
+                    document.getElementById('reportContent').innerText = `已切換至 ${alkyneReagent === 'ag' ? '銀氨' : '亞銅氨'} 溶液。請選擇受質。`;
+                    document.getElementById('molZh').innerText = 'STANDBY';
+                    document.getElementById('molEn').innerText = '(READY)';
+
+                    await resetToStandard(); // 執行包含沉澱清空的重置動畫
+                    renderSubstrateBar(); // 重新渲染開關與按鈕狀態
+                };
+                bar.appendChild(toggle);
+            }
+
+            const displayItems = items || data.substrates;
+
+            // 如果在第二層，新增一個返回按鈕
+            if (isSubLevel) {
+                const backPill = document.createElement('div');
+                backPill.className = 'pill';
+                backPill.innerHTML = '← 返回';
+                backPill.onclick = () => renderSubstrateBar();
+                bar.appendChild(backPill);
+            }
+
+            displayItems.forEach((sub) => {
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                
+                // 邏輯：如果這個組別裡的任何一個子項被選中，標籤顯示該子項名稱並發亮
+                if (sub.isGroup) {
+                    const activeChild = sub.children.find(c => c === activeSubObject);
+                    pill.innerText = activeChild ? activeChild.zh : sub.zh;
+                    if (activeChild) pill.classList.add('active');
+                    pill.onclick = () => renderSubstrateBar(sub.children, true);
+                } else {
+                    pill.innerText = sub.zh;
+                    if (sub === activeSubObject) pill.classList.add('active');
+                    pill.onclick = () => runTest(sub);
+                }
+                bar.appendChild(pill);
+            });
+        }
+
+        function toggleDrawer() {
+            document.getElementById('drawer').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+            document.getElementById('ham').classList.toggle('open');
+        }
+
+        async function initExperiment(type) {
+            activeReagent = type;
+            currentSubIdx = -1; 
+            const btn = document.getElementById('btn-' + type);
+            const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+            
+            // 手機端第一次點擊邏輯：若按鈕沒被標記 focus-pending，則先發亮並 return
+            if (isMobile && btn && !btn.classList.contains('focus-pending')) {
+                document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('active', 'focus-pending'));
+                btn.classList.add('focus-pending');
+                return; 
+            }
+            
+            // 第二次點擊或電腦版：正式選取並執行
+            document.querySelectorAll('.reagent-btn').forEach(b => b.classList.remove('active', 'focus-pending'));
+            if (btn) btn.classList.add('active');
+
+            // 0.1秒極速反應：清理並收回選單
+            universalCleanup();
+            toggleDrawer(); 
+
+            const liquid = document.getElementById('liquid');
+            liquid.style.transition = 'height 0.4s ease-in'; 
+            liquid.style.height = '0'; 
+
+            safeTimeout(() => {
+                const data = experimentData[type] || { reagentColor: 'rgba(255,255,255,0.1)', substrates: [] };
+                const initialColor = (type === 'kmno4') ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor) 
+                                 : (type === 'alkyne') ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor) : data.reagentColor;
+
+                liquid.style.background = initialColor;
+                liquid.style.transition = 'height 1s cubic-bezier(0.22, 1, 0.36, 1), background 3s';
+                liquid.style.height = '45%'; 
+                
+                activeSubObject = null;
+                renderSubstrateBar();
+                document.getElementById('reportContent').innerText = "已裝填新試劑。請選擇上方受質進行檢驗。";
+                if (btn) btn.classList.add('active');
+            }, 450);
+        }
+
+        async function runTest(subObject) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            // 1. 瞬間清理與 UI 同步
+            universalCleanup();
+            const pre = document.getElementById('precipitate');
+            pre.style.height = '0'; pre.style.opacity = '0'; pre.style.backgroundColor = 'transparent';
+
+            const data = experimentData[activeReagent];
+            const sub = subObject;
+            if (activeReagent === 'kmno4') kmno4Env = sub.env || 'neutral';
+            const subData = (activeReagent === 'kmno4') ? sub[kmno4Env] : 
+                            (activeReagent === 'alkyne') ? sub[alkyneReagent] : sub;
+
+            // 文字與方程式瞬間切換
+            document.getElementById('molZh').innerText = sub.zh;
+            document.getElementById('molEn').innerText = `(${sub.en})`;
+            document.getElementById('equationContent').innerText = '---';
+            document.getElementById('reportContent').innerText = `準備檢驗：${sub.zh}...`;
+
+            // 【結構儀表板秒出】：這裡宣告一次 banner 變數，解決 Redeclare 錯誤
+            const banner = document.getElementById('structure-banner');
+            banner.classList.remove('show');
+            if (sub.structure) {
+                banner.innerHTML = sub.structure;
+                const targetSVG = banner.querySelector('svg');
+                
+                // 強制清理：移除所有會干擾 CSS 的 ChemDraw 內聯顏色屬性
+                targetSVG.querySelectorAll('*').forEach(el => {
+                    el.removeAttribute('fill');
+                    el.removeAttribute('stroke');
+                    el.removeAttribute('font-family');
+                });
+
+                if (targetSVG) {
+                    const posX = sub.x || 0, posY = -(sub.y || 0), scale = sub.s || 1.0;
+                    targetSVG.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+                }
+                safeTimeout(() => banner.classList.add('show'), 10);
+            } else { banner.innerHTML = ''; }
+
+            const liquid = document.getElementById('liquid');
+
+            if (activeSubObject === sub) {
+                activeSubObject = null;
+                renderSubstrateBar();
+                await resetToStandard();
+                isProcessing = false;
+                return;
+            }
+
+            activeSubObject = sub;
+            renderSubstrateBar(); 
+
+            // 執行物理過場：倒掉與重新填裝
+            liquid.style.height = '0'; 
+            await new Promise(r => safeTimeout(r, 1000));
+            liquid.innerHTML = '';
+            const refillColor = (activeReagent === 'kmno4') ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor) : (activeReagent === 'alkyne') ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor) : data.reagentColor;
+            liquid.style.transition = 'none'; 
+            liquid.style.background = refillColor;
+            void liquid.offsetWidth;
+            liquid.style.transition = 'height 1s, background 5s cubic-bezier(0.22, 1, 0.36, 1)';
+            liquid.style.height = '45%';
+            await new Promise(r => safeTimeout(r, 1000));
+
+            // 2. 實驗過程動畫
+            if (activeReagent === 'kmno4' && kmno4Env === 'acidic') {
+                document.getElementById('reportContent').innerText = "正在加入稀硫酸酸化...";
+                await animateAcidDrop();
+                liquid.style.background = data.acidicColor;
+                await new Promise(r => safeTimeout(r, 500));
+            }
+            if (sub.state === 'gas') { await animateGas(); }
+            else if (sub.state === 'special') { await animateSodium(sub.type); }
+            else { await animateDropper(); }
+
+            // 3. 處理反應結果 (Fe3+ 採用安全顯色)
+            if (activeReagent === 'fecl3') {
+                if (subData.react) { triggerInkyReaction(subData.resultColor); }
+                else { liquid.style.background = subData.resultColor; }
+            } else if (subData.react) {
+                liquid.style.background = subData.resultColor || 'rgba(255,255,255,0.2)';
+            }
+            if (subData.react && subData.isMirror) {
+                safeTimeout(() => liquid.classList.add('silver-mirror'), 800);
+            }
+            if (subData.react && subData.isFehling) {
+                safeTimeout(() => liquid.classList.add('fehling-react'), 800);
+                // 斐林反應特有：沈澱顏色設為磚紅色 (#B22222)
+                subData.precipitate = true;
+                subData.pptColor = '#8B0000'; // 使用較深的磚紅粒子
+            }
+
+            if (subData.react && subData.precipitate) {
+                const pptColor = subData.pptColor || '#4D2600';
+                pre.style.backgroundColor = pptColor;
+                const pptAnimation = animatePrecipitation(pptColor);
+                // 延後 2.5 秒開始生長，並將高度設定為 20% 以確保在裁切區域內清晰可見
+                safeTimeout(() => { 
+                    pre.classList.add('growing');
+                    pre.style.opacity = '1'; // 修正：強制覆蓋清理函式的 inline opacity: 0
+                    pre.style.height = '15%'; // 修正：在 45% 的容器中 15% 才有明顯沈澱感
+                }, 2500);  
+                await pptAnimation;
+            }
+            if (subData.react && subData.bubble) await animateEffervescence(subData.bSpeed || 30);
+
+            document.getElementById('equationContent').innerText = subData.eq;
+            document.getElementById('reportContent').innerText = subData.text;
+            isProcessing = false;
+        }
+
+        function triggerInkyReaction(color) {
+            const liquid = document.getElementById('liquid');
+            liquid.innerHTML = ''; 
+            for (let i = 0; i < 80; i++) {
+                const g = document.createElement('div');
+                g.className = 'grain';
+                g.style.left = (Math.random() * 100) + '%';
+                g.style.top = (Math.random() * 100) + '%';
+                g.style.background = color;
+                g.style.animation = `dissolve ${5+Math.random()*5}s ease-out ${Math.random()*5}s forwards`;
+                liquid.appendChild(g);
+            }
+            // 關鍵：將顯色鬧鐘納入管理，切換物質時會被強制關閉
+            safeTimeout(() => {
+                liquid.style.transition = 'background 10s ease-in-out';
+                liquid.style.background = color;
+            }, 3000);
+        }
+
+        // 【Reset 鍵修復】：調用全域清理核心，實現瞬間淨空
+        async function resetToStandard() {
+            const liq = document.getElementById('liquid');
+            liq.style.transition = 'height 0.8s ease-in';
+            liq.style.height = '0';
+            
+            // 瞬間清除所有現象、背景變色指令與計時器
+            universalCleanup();
+            
+            const data = experimentData[activeReagent];
+            let color = 'rgba(255,255,255,0.1)';
+            if (data) {
+                color = (activeReagent === 'kmno4') ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor) 
+                      : (activeReagent === 'alkyne') ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor) : data.reagentColor;
+            }
+            
+            document.getElementById('reportContent').innerText = "請選擇待測物質。";
+            await new Promise(r => safeTimeout(r, 900));
+            
+            liq.style.background = color;
+            liq.style.transition = 'height 1s cubic-bezier(0.22, 1, 0.36, 1)';
+            liq.style.height = '45%';
+        }
+
+        async function animateGas() {
+            const tube = document.getElementById('gas-tube');
+            const container = document.getElementById('bubble-container');
+            
+            // 調整參數：速度與深度
+            const moveSpeed = 1500;  // 管子移動時間 (ms)
+            const startDelay = 800;  // 到位後停頓多久才通氣 (ms)
+            const tubeDepth = '0px'; // 離底部遠一點 (0px 離底約 40px, 30px 離底約 10px)
+
+            tube.style.transition = `all ${moveSpeed}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+            tube.style.top = tubeDepth; 
+            tube.style.opacity = '1'; 
+            
+            // 等待管子到位
+            await new Promise(r => setTimeout(r, moveSpeed + startDelay));
+
+            return new Promise(resolve => {
+                let count = 0;
+                const interval = setInterval(() => {
+                    createBubble(container, 'input');
+                    if (count++ > 18) {
+                        clearInterval(interval);
+                        tube.style.top = '-100px'; 
+                        tube.style.opacity = '0';
+                        setTimeout(resolve, moveSpeed); // 等管子退場後才結束
+                    }
+                }, 100);
+            });
+        }
+
+        async function animateDropper() {
+            const drop = document.getElementById('dropper');
+            const label = document.getElementById('dropper-label');
+
+            // 根據實驗類型設定滴管標籤內容與顯示
+            if (activeReagent === 'fecl3') {
+                label.innerText = "FeCl₃";
+                label.style.opacity = '1';
+            } else {
+                label.style.opacity = '0'; // 其他實驗如過錳酸鉀不顯示文字
+            }
+            const moveSpeed = 1500;  // 滴管移動速度
+            const startDelay = 600;  // 定位後停頓時間
+
+            drop.style.transition = `all ${moveSpeed}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+            drop.style.top = '10px'; 
+            drop.style.opacity = '1';
+
+            await new Promise(r => setTimeout(r, moveSpeed + startDelay));
+
+            return new Promise(resolve => {
+                let count = 0;
+                const totalDrops = 4;
+                const interval = setInterval(() => {
+                    const d = document.createElement('div'); d.className = 'drop';
+                    // 如果是氯化鐵實驗，滴下的液體呈現黃褐色試劑色
+                    if (activeReagent === 'fecl3') {
+                        d.style.background = 'rgba(218, 165, 32, 0.9)';
+                        d.style.filter = 'drop-shadow(0 0 2px rgba(218, 165, 32, 0.5))';
+                    }
+                    document.querySelector('.test-tube').appendChild(d);
+                    setTimeout(() => d.remove(), 500);
+                    if (count++ >= totalDrops - 1) {
+                        clearInterval(interval);
+                        setTimeout(() => { 
+                            drop.style.top = '-80px'; 
+                            drop.style.opacity = '0'; 
+                            resolve(); 
+                        }, 800);
+                    }
+                }, 500);
+            });
+        }
+        async function animateAcidDrop() {
+            const drop = document.getElementById('dropper');
+            const label = document.getElementById('dropper-label');
+            label.innerText = "H₂SO₄";
+            drop.style.left = '35%'; // 側邊滴入
+            drop.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            drop.style.top = '10px'; drop.style.opacity = '1'; label.style.opacity = '1';
+            await new Promise(r => setTimeout(r, 1500));
+            for(let i=0; i<2; i++) {
+                const d = document.createElement('div'); d.className = 'drop';
+                d.style.left = '35%';
+                document.querySelector('.test-tube').appendChild(d);
+                setTimeout(() => d.remove(), 500);
+                await new Promise(r => setTimeout(r, 400));
+            }
+            drop.style.top = '-80px'; drop.style.opacity = '0'; label.style.opacity = '0';
+            await new Promise(r => setTimeout(r, 1000));
+            drop.style.left = '50%'; // 重置回中央
+        }
+
+        async function animateEffervescence(speed = LAB_PARAMS.effervSpeed) {
+            const container = document.getElementById('bubble-container');
+            return new Promise(resolve => {
+                let count = 0;
+                const interval = setInterval(() => {
+                    createBubble(container, 'output');
+                    if (count++ > 60) { clearInterval(interval); resolve(); }
+                }, speed); 
+            });
+        }
+
+        async function animateSodium(type) {
+            const tube = document.querySelector('.test-tube');
+            
+            // 1. 初始化 DOM 與物理狀態
+            let tw = document.getElementById('tweezer') || document.createElement('div');
+            tw.id = 'tweezer'; tw.innerHTML = '<div class="tweezer-joint"></div><div class="tweezer-arm arm-left"></div><div class="tweezer-arm arm-right"></div>';
+            if(!tw.parentElement) tube.appendChild(tw);
+            let na = document.getElementById('na-cube') || document.createElement('div');
+            na.id = 'na-cube'; if(!na.parentElement) tube.appendChild(na);
+
+            const al = tw.querySelector('.arm-left'), ar = tw.querySelector('.arm-right');
+            
+            // 2. 初始「夾取」姿態：尖端貼合 14px 鈉塊，並移至試管上方視線外
+            tw.classList.remove('open');
+            al.style.transform = 'rotate(-1.1deg)'; ar.style.transform = 'rotate(1.1deg)';
+            tw.style.transition = 'none'; tw.style.top = '-200px'; tw.style.opacity = '1';
+            na.style.transition = 'none'; na.style.bottom = '295px'; na.style.opacity = '1'; na.style.transform = 'translateX(-50%)';
+            await new Promise(r => setTimeout(r, 50));
+
+            // 3. 等速率同步下降 (1.2秒)
+            tw.style.transition = 'top 1.2s linear';
+            na.style.transition = 'bottom 1.2s linear';
+            tw.style.top = '-60px';  // 鑷子停留高度
+            na.style.bottom = '155px'; // 修正座標：使金屬塊出現在鑷子最末端 (原本為 200px)
+            await new Promise(r => setTimeout(r, 1300));
+
+            // 4. 放開動作：依照示意圖，夾子先向兩側大開 (15度)，鈉塊隨即垂直墜落
+            al.style.transform = 'rotate(-15deg)'; ar.style.transform = 'rotate(15deg)';
+            await new Promise(r => setTimeout(r, 150)); // 0.15秒微小延遲增加真實感
+            
+            na.style.transition = 'bottom 0.6s cubic-bezier(0.47, 0, 0.745, 0.715)';
+            na.style.bottom = '10px';
+            tw.style.transition = 'top 0.8s ease-in, opacity 0.4s';
+            tw.style.top = '-200px'; tw.style.opacity = '0';
+            await new Promise(r => setTimeout(r, 700));
+
+            if (type === 'none') return; // 乙醚等不反應物質在此停止
+
+            // 5. 開始產生氣泡與消耗鈉塊 (反應階段)
+            const container = document.getElementById('bubble-container');
+            const freq = LAB_PARAMS.naBubbleFreq[type] || 50;
+            const duration = LAB_PARAMS.naConsumeSpeed[type] || 3000;
+            
+            return new Promise(resolve => {
+                let elapsed = 0;
+                const interval = setInterval(() => {
+                    // 氣泡從鈉塊位置噴出
+                    createBubble(container, 'output'); 
+                    elapsed += freq;
+                    
+                    // 鈉塊逐漸縮小
+                    const scale = 1 - (elapsed / duration);
+                    na.style.transform = `translateX(-50%) scale(${scale})`;
+                    
+                    if (elapsed >= duration) {
+                        clearInterval(interval);
+                        na.style.opacity = '0';
+                        resolve();
+                    }
+                }, freq);
+            });
+        }
+
+        async function animatePrecipitation(customColor = '#4D2600') {
+            const container = document.querySelector('.test-tube');
+            const zone = document.getElementById('ppt-zone');
+            const particleCount = LAB_PARAMS.pptDensity;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const p = document.createElement('div');
+                p.className = 'solid-particle';
+                p.style.backgroundColor = customColor;
+                p.style.left = (15 + Math.random() * 70) + '%';
+                p.style.top = '0px'; // 【關鍵】從 ppt-zone 頂部 (液面) 開始落下
+                const distValue = zone.offsetHeight || 120; 
+                p.style.setProperty('--dist', (distValue + Math.random() * 20) + 'px');
+                p.style.animation = `settling ${LAB_PARAMS.settleTime}s linear forwards`;
+                zone.appendChild(p);
+                setTimeout(() => p.remove(), LAB_PARAMS.settleTime * 1000);
+                if (i % 3 === 0) await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        function createBubble(container, type = 'input') {
+    const b = document.createElement('div');
+    // 如果是產生氣體，加入 output class 以套用 CSS 的發光濾鏡
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // 手機端自動跳過 50% 的產氣氣泡，減少 DOM 數量以維持流暢度
+    if (isMobile && type === 'output' && Math.random() > 0.5) return;
+
+    b.className = `bubble ${type === 'output' ? 'output' : ''}`;
+
+    // 根據類型計算尺寸：通入氣體較平均，產物氣體則依據參數隨機化
+    const size = (type === 'input' 
+        ? Math.random() * 5 + 5 
+        : Math.random() * (LAB_PARAMS.bubbleSizeMax - LAB_PARAMS.bubbleSizeMin) + LAB_PARAMS.bubbleSizeMin) + 'px';
+    
+    b.style.width = size;
+    b.style.height = size;
+
+    if (type === 'input') {
+        // 【1. 加入氣體物質】：從導管口(50%)集中升起
+        b.style.left = '50%';
+        b.style.setProperty('--start-y', '40px'); // 修正為 40px，使其從 235px 長度的導管末端開始升起
+        b.style.setProperty('--x', (Math.random() - 0.5) * 20 + 'px');
+        b.style.animation = `rise-in ${LAB_PARAMS.bubbleLife}ms ease-out forwards`;
+    } else {
+        // 【2. 產生氣體生成物】：全液體範圍隨機析出
+        b.style.left = (15 + Math.random() * 70) + '%';
+        // 隨機起始高度，確保從液體內部冒出而非底端
+        const startY = (5 + Math.random() * 35) + '%'; 
+        b.style.setProperty('--start-y', startY);
+        b.style.setProperty('--x', (Math.random() - 0.5) * 45 + 'px');
+        b.style.animation = `rise-out ${LAB_PARAMS.bubbleLife * 0.8}ms ease-in forwards`;
+    }
+
+    container.appendChild(b);
+
+    // 統一根據壽命參數移除元素
+    setTimeout(() => {
+        if (b.parentElement === container) {
+            b.remove();
+        }
+    }, LAB_PARAMS.bubbleLife);
+    }
+    /**
+     * 執行隨機顯色效果 (模板 1 + 3 混合版)
+     * @param {string} color 目標紫色
+     */
+    function triggerInkyReaction(color) {
+        const liquid = document.getElementById('liquid');
+        liquid.innerHTML = ''; 
+        
+        const grainCount = 80; 
+        for (let i = 0; i < grainCount; i++) {
+            const g = document.createElement('div');
+            g.className = 'grain';
+            g.style.left = (Math.random() * 100) + '%';
+            g.style.top = (Math.random() * 100) + '%';
+            g.style.background = color;
+            
+            const delay = Math.random() * 5.0; 
+            const duration = 5 + Math.random() * 5; 
+            
+            g.style.animation = `dissolve ${duration}s ease-out ${delay}s forwards`;
+            liquid.appendChild(g);
+        }
+        
+        // 使用極長過渡時間，讓背景底色隨粒子慢慢顯現
+        setTimeout(() => {
+            liquid.style.transition = 'background 10s ease-in-out';
+            liquid.style.background = color;
+        }, 3000);
+    }
+
+        async function resetToStandard() {
+            const liquid = document.getElementById('liquid');
+            liquid.style.height = '0';
+            liquid.innerHTML = ''; // 徹底清理隨機顯色粒子
+            const banner = document.getElementById('structure-banner');
+            banner.style.removeProperty('--struct-scale'); // 清除縮放變數
+            banner.classList.remove('show');
+            setTimeout(() => { banner.innerHTML = ''; }, 600);
+            // 物理移除所有元素，確保切換或重置時試管完全淨空
+            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop').forEach(el => el.remove());
+            
+            // 隱藏沉澱層與歸零所有外觀參數
+            const pre = document.getElementById('precipitate');
+            pre.style.transition = 'none'; 
+            pre.style.height = '0';
+            pre.style.opacity = '0';
+            pre.style.backgroundColor = 'transparent';
+            const data = experimentData[activeReagent];
+            let color = 'rgba(255,255,255,0.1)';
+            
+            if (data) {
+                if (activeReagent === 'kmno4') {
+                    color = (kmno4Env === 'neutral') ? data.neutralColor : data.acidicColor;
+                } else if (activeReagent === 'alkyne') {
+                    color = (alkyneReagent === 'ag') ? data.agColor : data.cuColor;
+                } else {
+                    color = data.reagentColor;
+                }
+            }
+            
+            document.getElementById('molZh').innerText = 'STANDBY';
+            document.getElementById('molEn').innerText = '(READY)';
+            document.getElementById('equationContent').innerText = '---';
+            document.getElementById('reportContent').innerText = "請選擇待測物質。";
+            
+            await new Promise(r => setTimeout(r, 1000));
+            const finalData = experimentData[activeReagent];
+            const finalColor = (activeReagent === 'kmno4' && finalData) 
+                ? (kmno4Env === 'neutral' ? finalData.neutralColor : finalData.acidicColor) 
+                : (activeReagent === 'alkyne' && finalData)
+                ? (alkyneReagent === 'ag' ? finalData.agColor : finalData.cuColor)
+                : (finalData ? finalData.reagentColor : 'rgba(255,255,255,0.1)');
+                
+            liquid.style.background = finalColor;
+            liquid.style.height = '45%';
+        }
+    </script>
+</body>
+</html>
