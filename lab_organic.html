@@ -118,18 +118,43 @@
             cursor: pointer;
         }
 
-        /* === 修正 3：互動螢光 (.h) === */
-        /* 鍵結變紫色 */
-        #structure-banner svg .h {
-            fill: #E9D5FF !important;
-            stroke: #E9D5FF !important;
-            filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) !important;
+        /* === 修正 3：互動螢光 (.h) - 強制原子與鍵結同步 Bloom === */
+        /* 1. 標準化基礎樣式：設定全局預設值，避免使用 !important */
+        #structure-banner svg path, 
+        #structure-banner svg line,
+        #structure-banner svg polyline,
+        #structure-banner svg polygon {
+            fill: none;
+            stroke: #fff;
+            stroke-width: 3px;
+            stroke-linecap: round;
+            transition: stroke 0.2s, filter 0.3s;
         }
-        /* 文字變紫色 (特例：依然不可有邊框) */
+
+        #structure-banner svg text, 
+        #structure-banner svg tspan {
+            fill: #fff;
+            stroke: none;
+            font-family: 'Space Mono', Arial, sans-serif;
+            font-weight: 700;
+            transition: fill 0.2s, filter 0.3s;
+        }
+
+        /* 2. 高質感霓虹效果：使用權重覆寫，並疊加多層次柔和光暈 */
+        #structure-banner svg .h {
+            stroke: #f3e8ff; /* 核心帶一點點極淺紫 */
+            /* 三層 Bloom：核心強光 -> 中層色偏 -> 外層擴散 */
+            filter: drop-shadow(0 0 2px #fff) 
+                    drop-shadow(0 0 6px #A855F7) 
+                    drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
+        }
+
         #structure-banner svg text.h, 
-        #structure-banner svg tspan.h {
-            stroke: none !important;
-            fill: #E9D5FF !important;
+        #structure-banner svg tspan.h,
+        #structure-banner svg .h tspan {
+            fill: #f3e8ff;
+            filter: drop-shadow(0 0 2px #fff) 
+                    drop-shadow(0 0 8px #A855F7);
         }
 
         .experiment-zone {
@@ -532,13 +557,53 @@
             'br2': {
                 reagentColor: 'rgba(165, 42, 42, 0.85)',
                 substrates: [
-                    { zh: '乙 烷', en: 'Ethane', state: 'gas', react: false, eq: 'CH₃CH₃ + Br₂ → (No Reaction)', text: '通入乙烷氣體後，紅褐色溴水無明顯變化。' },
+                    { zh: '乙 烷', en: 'Ethane', state: 'gas', react: false, eq: 'CH₃CH₃ + Br₂ → (No Reaction)', text: '通入乙烷氣體後，紅褐色溴水無明顯變化。',
+                    x: 5, y: 0, s: 0.8,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 177 116" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 53.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4288.2,3788.5 L 4288.2,3808.5 L 3970.2,3808.5 L 3970.2,3788.5 L 4288.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3357.2,3808.5 L 3357.2,3788.5 L 3688.2,3788.5 L 3688.2,3808.5 L 3357.2,3808.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 128.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4622.54,3441.03 L 4639.86,3451.03 L 4512.04,3672.41 L 4494.72,3662.41 L 4622.54,3441.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 153.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4898.2,3788.5 L 4898.2,3808.5 L 4570.2,3808.5 L 4570.2,3788.5 L 4898.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 128.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -258)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                     },
                     { zh: ' 烯 ', isGroup: true, children: [
-                        { zh: '乙 烯', en: 'Ethylene', state: 'gas', react: true, eq: 'CH₂=CH₂ + Br₂ → CH₂Br-CH₂Br', text: '通入乙烯氣體，紅褐色轉變為無色。' },
-                        { zh: '丙 烯', en: 'Propylene', state: 'gas', react: true, eq: 'CH₃CH=CH₂ + Br₂ → CH₃CHBr-CH₂Br', text: '通入丙烯氣體，發生加成反應褪色。' }
+                        { zh: '乙 烯', en: 'Ethylene', state: 'gas', react: true, eq: 'CH₂=CH₂ + Br₂ → CH₂Br-CH₂Br', text: '通入乙烯氣體，紅褐色轉變為無色。',
+                        x: 0, y: 0, s: 0.85,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 127 116" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 78.425 69.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4288.2,3752.5 L 4288.2,3772.5 L 3970.2,3772.5 L 3970.2,3752.5 L 4288.2,3752.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4288.2,3824.5 L 4288.2,3844.5 L 3970.2,3844.5 L 3970.2,3824.5 L 4288.2,3824.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 25.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4622.54,3441.03 L 4639.86,3451.03 L 4512.04,3672.41 L 4494.72,3662.41 L 4622.54,3441.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 112.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -258)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                        { zh: '丙 烯', en: 'Propylene', state: 'gas', react: true, eq: 'CH₃CH=CH₂ + Br₂ → CH₃CHBr-CH₂Br', text: '通入丙烯氣體，發生加成反應褪色。', 
+                        x: 0, y: 0, s: 0.85,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 157 117" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 28.425 70.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 78.425 70.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4288.2,3752.5 L 4288.2,3772.5 L 3970.2,3772.5 L 3970.2,3752.5 L 4288.2,3752.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4288.2,3824.5 L 4288.2,3844.5 L 3970.2,3844.5 L 3970.2,3824.5 L 4288.2,3824.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 113.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 3623.34,4172.47 L 3606.02,4162.47 L 3736.42,3936.59 L 3753.75,3946.59 L 3623.34,4172.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 26.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 3615.54,3451.03 L 3632.86,3441.03 L 3764.23,3668.56 L 3746.9,3678.56 L 3615.54,3451.03 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 26.7404)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+CH</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 141.941 32.4071)" font-style="normal" font-weight="normal" font-size="240px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+3</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4636.42,3416.98 L 4653.75,3426.98 L 4512.04,3672.41 L 4494.72,3662.41 L 4636.42,3416.98 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 113.343)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -280.925 -257)" d="M 4649.38,4162.47 L 4632.06,4172.47 L 4504.22,3951.04 L 4521.54,3941.04 L 4649.38,4162.47 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
                     ]},
-                    { zh: '乙 炔', en: 'Acetylene', state: 'gas', react: true, eq: 'HC≡CH + 2Br₂ → CHBr₂-CHBr₂', text: '乙炔氣體通入後紅褐色極速坍縮。' },
-                    { zh: ' 苯 ', en: 'Benzene', state: 'liquid', react: false, eq: 'C₆H₆ + Br₂ → (No Reaction)', text: '苯環穩定，常溫下不與溴水發生加成反應。' }
+                    { zh: '乙 炔', en: 'Acetylene', state: 'gas', react: true, eq: 'HC≡CH + 2Br₂ → CHBr₂-CHBr₂', text: '乙炔氣體通入後紅褐色極速坍縮。',
+                    x: 0, y: 0, s: 0.6,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 177 30" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 53.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 103.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3716.5 L 4288.2,3736.5 L 3970.2,3736.5 L 3970.2,3716.5 L 4288.2,3716.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3788.5 L 4288.2,3808.5 L 3970.2,3808.5 L 3970.2,3788.5 L 4288.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4288.2,3860.5 L 4288.2,3880.5 L 3970.2,3880.5 L 3970.2,3860.5 L 4288.2,3860.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 3.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 3357.2,3808.5 L 3357.2,3788.5 L 3688.2,3788.5 L 3688.2,3808.5 L 3357.2,3808.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 153.425 26.0417)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
+H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -255.925 -301)" d="M 4898.2,3788.5 L 4898.2,3808.5 L 4570.2,3808.5 L 4570.2,3788.5 L 4898.2,3788.5 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
+                    { zh: ' 苯 ', en: 'Benzene', state: 'liquid', react: false, eq: 'C₆H₆ + Br₂ → (No Reaction)', text: '苯環穩定，常溫下不與溴水發生加成反應。' ,
+                    x: 0, y: 0, s: 0.8,
+                    structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 110" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3571.58,4026.23 L 3551.58,4037.77 L 3551.58,3426.23 L 3571.58,3437.77 L 3571.58,4026.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3643.58,3990.43 L 3623.58,3990.43 L 3623.58,3473.57 L 3643.58,3473.57 L 3643.58,3990.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4081.2,4320.45 L 4081.2,4343.55 L 3551.58,4037.77 L 3571.58,4026.23 L 4081.2,4320.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4590.82,4026.23 L 4610.82,4037.77 L 4081.2,4343.55 L 4081.2,4320.45 L 4590.82,4026.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4523.82,3981.77 L 4533.82,3999.09 L 4086.2,4257.52 L 4076.2,4240.2 L 4523.82,3981.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4590.82,3437.77 L 4610.82,3426.23 L 4610.82,4037.77 L 4590.82,4026.23 L 4590.82,3437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4081.2,3143.55 L 4081.2,3120.45 L 4610.82,3426.23 L 4590.82,3437.77 L 4081.2,3143.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 4076.2,3223.8 L 4086.2,3206.48 L 4533.82,3464.91 L 4523.82,3482.23 L 4076.2,3223.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -291.925 -256)" d="M 3571.58,3437.77 L 3551.58,3426.23 L 4081.2,3120.45 L 4081.2,3143.55 L 3571.58,3437.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>` 
+                },
                 ]
             },
             'kmno4': {
@@ -906,6 +971,14 @@ OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833
             if (sub.structure) {
                 banner.innerHTML = sub.structure;
                 const targetSVG = banner.querySelector('svg');
+                
+                // 強制清理：移除所有會干擾 CSS 的 ChemDraw 內聯顏色屬性
+                targetSVG.querySelectorAll('*').forEach(el => {
+                    el.removeAttribute('fill');
+                    el.removeAttribute('stroke');
+                    el.removeAttribute('font-family');
+                });
+
                 if (targetSVG) {
                     const posX = sub.x || 0, posY = -(sub.y || 0), scale = sub.s || 1.0;
                     targetSVG.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
