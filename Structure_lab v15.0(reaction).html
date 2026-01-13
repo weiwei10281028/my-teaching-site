@@ -5429,18 +5429,14 @@ function renderSubstanceList() {
         card.style.borderLeft = `4px solid ${themeColor}`;
         card.onclick = () => {
             // 1. 立即解除焦點並隱藏鍵盤
-            if (input) input.blur();
+            if (input) input.blur();// 2. 呼叫正式關閉函式，這會觸發 resumeSystem() 重新啟動 3D 引擎
+            closeSubstanceModal();
 
-            // 2. [關鍵修正] 立即強制關閉濾鏡與清空內容，徹底釋放 GPU 記憶體
-            const modal = document.getElementById('substance-modal');
+            // 3. 清空長清單釋放 DOM 壓力
             const listContainer = document.getElementById('substanceListContainer');
-            if (modal) {
-                modal.style.backdropFilter = "none"; // 立即拔掉最耗能的濾鏡
-                modal.style.display = "none";       // 立即讓它從渲染樹消失
-            }
-            if (listContainer) listContainer.innerHTML = ""; // 立即清空長清單，釋放 DOM 壓力
+            if (listContainer) listContainer.innerHTML = "";
 
-            // 3. 收合手機面板
+            // 4. 收合手機面板
             if (window.innerWidth < 768) {
                 const panel = document.querySelector('.controls-area');
                 if (panel) panel.style.transform = 'translateY(70vh)';
