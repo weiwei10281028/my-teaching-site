@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用者導覽 | CHEM STUDIO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           1. 風格變數定義
+           ========================================= */
+        :root {
+            /* 預設：大濛往事 (完全依照提供代碼) */
+            --bg-body: #2D2A26;
+            --bg-paper: #E2D9C8;
+            --ink-black: #362E2B;
+            --ink-content: #1A1513;
+            --ink-red: #8B3E2F;
+            --ink-title: #000000;
+            --title-glow: 0 0 1px #fff, 0 0 2px rgba(255, 255, 255, 0.8);
+            --ink-sepia: #8C7A66;
+            --paper-texture: url('https://www.transparenttextures.com/patterns/parchment.png');
+        }
+
+        /* 宮廷版：僅改變顏色與背景，結構與文字樣式完全相同 */
+        .theme-royal {
+            --bg-body: #0a0a0a;
+            --bg-paper: #1a1a1a;
+            --ink-black: #e2e2e2;
+            --ink-content: #e2e2e2;
+            --ink-red: #D4AF37;
+            --ink-title: #ffffff;
+            --title-glow: 0 0 3px rgba(212, 175, 55, 0.5);
+            --ink-sepia: #444444;    /* 深色輔助線 */
+            --paper-texture: url('https://www.transparenttextures.com/patterns/black-linen.png');
+        }
+
+        /* =========================================
+           2. 基礎佈局 (完全依照大濛代碼)
+           ========================================= */
+        * { box-sizing: border-box; transition: background-color 0.5s, color 0.5s; }
+        
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-body);
+            font-family: 'Noto Serif TC', serif;
+            color: var(--ink-black);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+
+        .guide-container {
+            position: relative;
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            background-color: var(--bg-paper);
+            background-image: var(--paper-texture);
+            padding: 50px 40px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.5),
+                -5px 0 0 -2px var(--ink-sepia),
+                5px 0 0 -2px var(--ink-sepia);
+            overflow-y: auto;
+            border-radius: 2px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--ink-sepia);
+            transition: 0.3s;
+        }
+        .close-btn:hover { color: var(--ink-red); transform: scale(1.1); }
+
+        header {
+            text-align: center;
+            border-top: 3px double var(--ink-sepia);
+            border-bottom: 1px solid var(--ink-sepia);
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 900;
+            font-size: 2.3rem;
+            letter-spacing: 5px;
+            color: var(--ink-red);
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: var(--ink-sepia);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .section {
+            margin-bottom: 35px;
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 15px;
+        }
+
+        .section-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--ink-red);
+            font-weight: bold;
+            border-right: 1px solid var(--ink-sepia);
+            padding-right: 10px;
+            text-align: right;
+            height: fit-content;
+        }
+
+        .section-title {
+            font-weight: 900;
+            letter-spacing: 1px;
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+            color: var(--ink-title);
+            /* 關鍵：text-shadow 設為變數，且移除透明度干擾 */
+            text-shadow: var(--title-glow); 
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--ink-sepia), transparent);
+            margin-left: 15px;
+            opacity: 0.3;
+        }
+
+        .section-content {
+            font-size: 0.95rem;
+            line-height: 1.9;
+            color: var(--ink-content);
+            font-weight: 600;
+            opacity: 1;                 /* 移除透明度，解決字體發虛問題 */
+            text-align: justify;
+        }
+
+        .point {
+            color: var(--ink-red);
+            font-weight: 600;
+            border-bottom: 1px dashed var(--ink-red);
+            padding: 0 2px;
+        }
+
+        .guide-container::-webkit-scrollbar { width: 4px; }
+        .guide-container::-webkit-scrollbar-track { background: transparent; }
+        .guide-container::-webkit-scrollbar-thumb { background: var(--ink-sepia); }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9rem;          /* 稍微放大一點 */
+            color: var(--ink-black);    /* 使用標題色等級的深度 */
+            font-weight: 600;           /* 加粗一點 */
+            opacity: 0.8;               /* 提高可讀性 */
+            font-style: italic;
+        }
+    </style>
+</head>
+<body id="guide-body">
+
+    <div class="guide-container">
+        <div class="close-btn" onclick="parent.postMessage('closeGuide', '*')">×</div>
+        
+        <header>
+            <h1>CHEM STUDIO 使用指南</h1>
+        </header>
+
+        <!-- 1 -->
+        <div class="section">
+            <div class="section-num">01</div>
+            <div>
+                <div class="section-title">物質檢索與 3D 模型</div>
+                <div class="section-content">
+                    您可以在 <span class="point">物質檢索</span> 欄位直接輸入中文名稱、化學式或英文學名，系統將即時顯示 3D 幾何模型。此外，點擊模型中的原子會顯示其 <span class="point">混成軌域種類、形式電荷與氧化數</span>。鍵結若呈現 <span class="point">雙色</span> 代表一般共價鍵，<span class="point">單色</span> 則代表配位共價鍵。
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="section">
+            <div class="section-num">02</div>
+            <div>
+                <div class="section-title">平衡化學反應式</div>
+                <div class="section-content">
+                    在 <span class="point">平衡化學反應式輸入欄</span> 中，輸入未平衡的反應式（例如：H2 + O2 = H2O）。系統除了產出正確係數外，更提供 <span class="point">「解題思路」</span>，將代數法的運算邏輯透明化，輔助理解平衡過程。
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="section">
+            <div class="section-num">03</div>
+            <div>
+                <div class="section-title">顯示與模型設定</div>
+                <div class="section-content">
+                    於選單中您可以開啟原子光暈、<span class="point">電漿態模式</span>，或停止模型的自動旋轉。若將「優先遵循八隅體」開關關閉，系統則會以符合 <span class="point">形式電荷為 0</span> 的穩定結構優先呈現。
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="section">
+            <div class="section-num">04</div>
+            <div>
+                <div class="section-title">特定物質變體與晶體結構</div>
+                <div class="section-content">
+                    系統針對特定物質提供變體切換：包含 <span class="point">同分異構物、共振結構、結構層次（含離子對與晶體結構）、解離狀態、同素異形體及同質異形體</span>。此外，在離子或金屬晶體模型中，點擊原子可標示其鄰近關係並強調 <span class="point">配位數</span>。
+                </div>
+            </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="section">
+            <div class="section-num">05</div>
+            <div>
+                <div class="section-title">進階工具：點群對稱分析</div>
+                <div class="section-content">
+                    於選單中開啟此功能，系統將以 <span class="point">視覺化標籤</span> 呈現該分子所屬的點群操作，包含對稱軸、對稱面或反轉中心。透過動態圖形標記，協助您更直觀地識別分子在空間中的幾何對稱特徵。
+                </div>
+            </div>
+        </div>
+
+        <!-- 6 -->
+        <div class="section">
+            <div class="section-num">06</div>
+            <div>
+                <div class="section-title">進階工具：幾何成面模式</div>
+                <div class="section-content">
+                    透過 <span class="point">幾何成面模式</span>，您可以手動選取模型中任意三個原子來建構自定義平面，並切換不同色彩。此功能有助於分析分子的空間平面關係與幾何對稱性。
+                </div>
+            </div>
+        </div>
+
+        <!-- 7 -->
+        <div class="section">
+            <div class="section-num">07</div>
+            <div>
+                <div class="section-title">進階工具：電子組態與校準測驗</div>
+                <div class="section-content">
+                    提供元素在 <span class="point">各軌域的電子排列</span> 狀況，並支援離子組態，點擊「Info」可調閱詳盡的背景介紹。此外，測驗模式可選擇 RANK A 至 D 的 <span class="point">出題範圍</span>，並在內部自由挑選合適的校準難度。
+                </div>
+            </div>
+        </div>
+
+        <!-- 8 -->
+        <div class="section">
+            <div class="section-num">08</div>
+            <div>
+                <div class="section-title">進階工具：軌域與節面</div>
+                <div class="section-content">
+                    透過 <span class="point">示意點雲</span> 將 s, p, d, f 軌域轉化為具體的立體形狀，並能同步標示出節面（Nodal Plane）的位置，更直覺地建立起 <span class="point">軌域的立體觀念</span>。
+                </div>
+            </div>
+        </div>
+
+        <!-- 9 -->
+        <div class="section">
+            <div class="section-num">09</div>
+            <div>
+                <div class="section-title">每日元素運勢</div>
+                <div class="section-content">
+                    系統結合 <span class="point">元素物理與化學性質</span>，每日隨機為您生成專屬的元素占星。除了揭示與元素特質相關的指引與科學冷知識外，更會根據元素特性為您推薦今日的 <span class="point">幸運物</span>。
+                </div>
+            </div>
+        </div>
+
+        <!-- 10 -->
+        <div class="section">
+            <div class="section-num">10</div>
+            <div>
+                <div class="section-title">化學實驗室：焰色反應</div>
+                <div class="section-content">
+                    在「焰色實驗室」中，您可以選取不同的離子試劑觀察其特徵焰色。系統模擬了本生燈的 <span class="point">進氣與燃料調節</span>，並提供 <span class="point">鈷玻璃濾光</span> 功能，協助您觀察隔絕鈉離子干擾的鉀離子淺紫色反應。
+                </div>
+            </div>
+        </div>
+
+        <!-- 11 -->
+        <div class="section">
+            <div class="section-num">11</div>
+            <div>
+                <div class="section-title">化學實驗室：氫原子光譜</div>
+                <div class="section-content">
+                    此模組呈現了氫原子的能階躍遷圖與譜線系列。您可以切換 <span class="point">波長或能量單位</span>，並觀察來曼、巴耳末等不同譜系的躍遷路徑。內建 <span class="point">譜線計算器</span>，可方便運算不同能階間跳遷產生的能量與波數，並附上完整數學計算式。
+                </div>
+            </div>
+        </div>
+
+        <!-- 12 -->
+        <div class="section">
+            <div class="section-num">12</div>
+            <div>
+                <div class="section-title">化學實驗室：官能基檢驗</div>
+                <div class="section-content">
+                    這是一個全功能的「有機鑑定系統」。您可以從 <span class="point">試劑庫</span> 中選取溴水、多倫或斐林等試劑，對乙烯、乙醛或醇類進行檢驗。實驗過程包含滴管加藥、金屬鈉夾取等 <span class="point">動態操作模擬</span>，並即時產出反應現象。
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            林瑋老師的化學實驗室 • 致力於直觀化的科學教育
+        </footer>
+    </div>
+
+    <script>
+        // 隨機切換配色邏輯
+        (function() {
+            const themes = ['', 'theme-royal']; // 空字串為原版大濛，theme-royal 為宮廷版
+            const randomPick = themes[Math.floor(Math.random() * themes.length)];
+            if (randomPick) {
+                document.getElementById('guide-body').classList.add(randomPick);
+            }
+        })();
+    </script>
+</body>
+</html>
