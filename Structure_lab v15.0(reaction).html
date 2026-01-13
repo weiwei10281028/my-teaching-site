@@ -5316,9 +5316,12 @@ function renderSubstanceList() {
         const card = document.createElement('div');
         card.className = 'element-card';
         card.style.borderLeft = '4px solid #38bdf8';
-        card.style.cursor = 'pointer';
-        
-        // 核心邏輯：點擊搜尋結果執行跨分類精確跳轉
+        // 判斷是否為反應物質，若是則改為綠色，否則維持藍色
+        const themeColor = sub.canReact ? "#00ff88" : "#38bdf8";
+        const themeBg = sub.canReact ? "rgba(0, 255, 136, 0.12)" : "rgba(56, 189, 248, 0.1)";
+        const themeBorder = sub.canReact ? "rgba(0, 255, 136, 0.5)" : "rgba(56, 189, 248, 0.3)";
+
+        card.style.borderLeft = `4px solid ${themeColor}`;
         card.onclick = () => {
             // 1. 立即解除焦點並隱藏鍵盤
             if (input) input.blur();
@@ -5384,7 +5387,7 @@ function renderSubstanceList() {
                         <span style="font-size:0.8rem; color:#94a3b8;">${sub.common ? '俗名: ' + sub.common : sub.category}</span>
                     </div>
                 </div>
-                <div style="background:rgba(56, 189, 248, 0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(56, 189, 248, 0.3); color:#38bdf8; font-size:0.75rem;">查看</div>
+                <div style="background:${themeBg}; padding:4px 10px; border-radius:6px; border:1px solid ${themeBorder}; color:${themeColor}; font-size:0.75rem; font-weight:900; text-shadow: 0 0 8px ${sub.canReact ? 'rgba(0,255,136,0.6)' : 'transparent'};">查看</div>
             </div>
         `;
         container.appendChild(card);
