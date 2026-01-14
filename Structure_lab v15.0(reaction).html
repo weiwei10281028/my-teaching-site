@@ -6418,7 +6418,8 @@ function revealFortune() {
     const pick = ELEMENT_FORTUNES[pickIndex];
     let stars = ""; for(let i=0; i<5; i++) stars += (i < pick.score) ? "★" : "☆";
     const db = (typeof LUCKY_ITEMS_DB !== 'undefined') ? LUCKY_ITEMS_DB : {};
-    const lucky = db[pick.z] || { item: "微笑", reason: "保持好心情就是最好的幸運。" };
+    const luckyGroup = db[pick.z];
+    const lucky = (luckyGroup && luckyGroup[pick.type]) ? luckyGroup[pick.type] : { item: "微笑", reason: "保持好心情就是最好的幸運。" };
 
     // 3. 生成 HTML
     const resultHtml = `
