@@ -40,13 +40,8 @@
         .pill.active { background: #FFF; color: #000; box-shadow: 0 0 25px rgba(255,255,255,0.4); border-color: #FFF; }
 
         /* --- 區域 3: Viewport (核心動畫區) --- */
-        .scroll-wrapper {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column;
-            scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;
-        padding-bottom: 250px; /* 【關鍵】增加底部隱形留白，讓你滑得更高 */
-        }
-        .scroll-wrapper::-webkit-scrollbar { display: none; }
-        .area-3-viewport { position: relative; display: flex; justify-content: center; align-items: center; padding: 20px 0; min-height: 620px; flex-shrink: 0; }
+        .scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
+        .area-3-viewport { position: relative; display: flex; justify-content: center; align-items: flex-start; padding: 10px 0; min-height: 560px; flex-shrink: 0; }
         .observation-pad { width: 340px; height: 100%; max-height: 520px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); border-radius: 60px; border: 1.5px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 40px 100px rgba(0,0,0,0.3); z-index: 1; }
         
         .test-tube { width: 80px; height: 320px; border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; border-radius: 0 0 40px 40px; position: relative; background: linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.1) 100%); margin-bottom: 25px; box-shadow: inset 1.5px 0 2px rgba(255,255,255,0.1), 0 30px 60px rgba(0,0,0,0.45); overflow: hidden; }
@@ -335,10 +330,14 @@
 
         /* --- 區域 4+5: 資訊面板 --- */
         .info-panel { height: var(--report-h); background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; flex-shrink: 0; }
-        .area-4-equation { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; scrollbar-width: none; }
-        .eq-content { font-family: 'Space Mono'; font-size: 1.2rem; color: var(--accent-gold); white-space: nowrap; }
-        .area-5-report { flex: 1; overflow: visible; padding: 15px 25px; scrollbar-width: none; }
-        .report-content { font-family: 'Noto Serif TC'; font-size: 1.35rem; line-height: 1.8; opacity: 1; color: #F0F0F0; }
+        .area-4-equation { height: 60px; padding: 0 25px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; overflow-y: hidden; display: flex; align-items: center; scrollbar-width: none; flex-shrink: 0; }
+        .area-4-equation::-webkit-scrollbar { display: none; }
+        .eq-content { font-family: 'Space Mono'; font-size: 1.25rem; color: var(--accent-gold); white-space: nowrap; font-weight: bold; }
+        .area-5-report { height: 120px; overflow-y: auto; padding: 12px 25px; scrollbar-width: none; -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch; /* 關鍵：解決行動裝置滑動卡頓，開啟流暢慣性 */
+            overscroll-behavior: contain; /* 避免文字滑到底時，帶動整個網頁背景跟著動 */ }
+        .area-5-report::-webkit-scrollbar { display: none; }
+        .report-content { font-family: 'Noto Serif TC'; font-size: 1.2rem; line-height: 1.7; opacity: 1; color: #F0F0F0; }
         .substance-highlight { color: #E9D5FF; font-weight: 700; font-style: italic; text-shadow: 0 0 8px rgba(233, 213, 255, 0.4); padding: 0 4px; }
 
 
