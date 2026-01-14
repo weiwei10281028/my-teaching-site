@@ -38,7 +38,13 @@
         .area-2-substrate::-webkit-scrollbar { display: none; }
         .pill { padding: 10px 22px; border-radius: 50px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); font-size: 0.8rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; color: rgba(255,255,255,0.4); transition: 0.4s; cursor: pointer; }
         .pill.active { background: #FFF; color: #000; box-shadow: 0 0 25px rgba(255,255,255,0.4); border-color: #FFF; }
-
+        /* 修改：改為單色亮金（奶油黃），並搭配強烈的亮色發光效果 */
+        .pill.group-active { 
+            background: #ffeda5; 
+            color: #000; 
+            box-shadow: 0 0 35px rgba(255, 249, 225, 0.8); 
+            border-color: #ffe786; 
+        }
         /* --- 區域 3: Viewport (核心動畫區) --- */
         .scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
         .area-3-viewport { position: relative; display: flex; justify-content: center; align-items: flex-start; padding: 10px 0; min-height: 560px; flex-shrink: 0; }
@@ -2134,7 +2140,8 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                 if (sub.isGroup) {
                     const activeChild = sub.children.find(c => c === activeSubObject);
                     pill.innerText = activeChild ? activeChild.zh : sub.zh;
-                    if (activeChild) pill.classList.add('active');
+                     // 修改：如果子物質被選中，父群組按鈕改套用 group-active (黃光)
+                    if (activeChild) pill.classList.add('group-active');
                     pill.onclick = () => renderSubstrateBar(sub.children, true);
                 } else {
                     pill.innerText = sub.zh;
