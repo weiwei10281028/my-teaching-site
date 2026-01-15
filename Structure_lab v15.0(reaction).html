@@ -1730,6 +1730,11 @@
                     <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
                     <button id="btn-c2h2-hcl-part" class="reaction-btn btn-hcl" style="border: 2px dashed #fbbf24;">🧪 鹵化氫 (部分)</button> 
                     <button id="btn-c2h2-h2o" class="reaction-btn btn-h2o">🧪 水加成</button>
+                    <button id="btn-c3h4-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
+                    <button id="btn-c3h4-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)
+                        <button id="btn-tol-halo-ring" class="reaction-btn btn-cl2">🧪 鹵化 (Fe)</button>
+                    <button id="btn-tol-halo-uv" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵化 (UV)</button>
+                    <button id="btn-tol-ox" class="reaction-btn btn-kmno4">🧪 強氧化</button>
                     <button id="reaction-benzene-halo" class="reaction-btn btn-cl2">🧪 鹵化反應</button>
                     <button id="reaction-benzene-nitro" class="reaction-btn btn-kmno4">🧪 硝化反應</button>
                     <button id="reaction-benzene-sulf" class="reaction-btn btn-h2o">🧪 磺酸化反應</button>
@@ -4210,7 +4215,16 @@ function setupInteractions() {
 
     const btnAcetH2O = document.getElementById('btn-c2h2-h2o');
     if(btnAcetH2O) btnAcetH2O.addEventListener('click', () => { isReactionRunning = true; runAcetyleneHydration(); });
+
+    //丙炔系列
+    const btnPropnyneH2Full = document.getElementById('btn-c3h4-h2-full');
+    if(btnPropnyneH2Full) btnPropnyneH2Full.addEventListener('click', () => { isReactionRunning = true; runPropyneFullHydrogenation(); });
+    
+    const btnPropnyneH2Part = document.getElementById('btn-c3h4-h2-part');
+    if(btnPropnyneH2Part) btnPropnyneH2Part.addEventListener('click', () => { isReactionRunning = true; runPropynePartialHydrogenation(); });
+
     // 芳香烴事件監聽
+    //苯
     const btnBenzHalo = document.getElementById('reaction-benzene-halo');
     if(btnBenzHalo) btnBenzHalo.addEventListener('click', () => { isReactionRunning = true; runBenzeneHalogenation(); });
 
@@ -4222,6 +4236,18 @@ function setupInteractions() {
 
     const btnBenzAlkyl = document.getElementById('reaction-benzene-alkyl');
     if(btnBenzAlkyl) btnBenzAlkyl.addEventListener('click', () => { isReactionRunning = true; runBenzeneAlkylation(); });
+
+    //甲苯
+    const btnTolHaloR = document.getElementById('btn-tol-halo-ring');
+    if(btnTolHaloR) btnTolHaloR.addEventListener('click', () => { isReactionRunning = true; runTolueneHaloRing(); });
+    
+    const btnTolHaloU = document.getElementById('btn-tol-halo-uv');
+    if(btnTolHaloU) btnTolHaloU.addEventListener('click', () => { isReactionRunning = true; runTolueneHaloSide(); });
+    
+    const btnTolOx = document.getElementById('btn-tol-ox');
+    if(btnTolOx) btnTolOx.addEventListener('click', () => { isReactionRunning = true; runTolueneOxidation(); });
+
+
 
 // 4. 重置按鈕 (修正為呼叫統一函式)
     const resetBtn = document.getElementById('reset-btn');
