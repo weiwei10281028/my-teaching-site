@@ -2868,13 +2868,13 @@ function loadMolecule(key, variantKey = null) {
         const a1 = processedAtoms[idx1], a2 = processedAtoms[idx2];
         let cIdx = -1, tIdx = -1;
 
-        if (expandableCenters.includes(a1.elem) && a2.elem === 'O') { cIdx = idx1; tIdx = idx2; }
-        else if (expandableCenters.includes(a2.elem) && a1.elem === 'O') { cIdx = idx2; tIdx = idx1; }
+        if (expandableCenters.includes(a1.elem) && (a2.elem === 'O' || a2.elem === 'S')) { cIdx = idx1; tIdx = idx2; }
+        else if (expandableCenters.includes(a2.elem) && (a1.elem === 'O' || a1.elem === 'S')) { cIdx = idx2; tIdx = idx1; }
 
         if (cIdx !== -1) {
             if (isOctetMode) {
                 if (type === 'double') {
-                    const resonanceMols = ["三氧化硫", "二氧化硫"];
+                    const resonanceMols = ["三氧化硫", "二氧化硫", "硫代硫酸"];
                     const isResonance = resonanceMols.some(n => currentKey.includes(n));
 
                     if (isResonance && keptDoubleBonds === 0) {
