@@ -1725,6 +1725,8 @@
                     <button id="reaction-red-btn" class="reaction-btn btn-h2">🧪 還原</button>
                     <button id="btn-c2h2-h2-full" class="reaction-btn btn-h2">🧪 氫氣 (完全)</button>
                     <button id="btn-c2h2-h2-part" class="reaction-btn btn-h2" style="border: 2px dashed #f472b6;">🧪 氫氣 (部分)</button>
+                    <button id="btn-ethanol-elimination" class="reaction-btn btn-hcl">🧪 消去反應 (180°C)</button>
+                    <button id="btn-ethanol-dehydration" class="reaction-btn btn-h2o">🧪 脫水醚化 (140°C)</button>
                     <button id="btn-c2h2-cl2-full" class="reaction-btn btn-cl2">🧪 鹵素 (完全)</button>
                     <button id="btn-c2h2-cl2-part" class="reaction-btn btn-cl2" style="border: 2px dashed #38bdf8;">🧪 鹵素 (部分)</button>       
                     <button id="btn-c2h2-hcl-full" class="reaction-btn btn-hcl">🧪 鹵化氫 (完全)</button>
@@ -4174,6 +4176,12 @@ function setupInteractions() {
     const btnRed = document.getElementById('reaction-red-btn');
     if(btnRed) btnRed.addEventListener('click', () => { isReactionRunning = true; runAcetaldehydeReduction(); });
 
+    const btnEli = document.getElementById('btn-ethanol-elimination');
+    if(btnEli) btnEli.addEventListener('click', () => { isReactionRunning = true; runEthanolElimination(); });
+
+    const btnDeh = document.getElementById('btn-ethanol-dehydration');
+    if(btnDeh) btnDeh.addEventListener('click', () => { isReactionRunning = true; runEthanolDehydration(); });
+    
     // 甲烷反應
     const btnSub = document.getElementById('reaction-sub-btn');
     if(btnSub) btnSub.addEventListener('click', () => { isReactionRunning = true; runMethaneSubstitution(); });
