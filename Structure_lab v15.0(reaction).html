@@ -545,6 +545,14 @@
         cursor: pointer; flex-shrink: 0; 
         background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent);
         border-bottom: 1px solid rgba(255,255,255,0.05);
+        position: relative;
+        z-index: 1001; /* 提高z-index，確保在面板最上方且高於所有內容 */
+        pointer-events: auto;
+        /* 確保橫條區域完全可點擊，不會穿透到後方 */
+        -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none; /* 鎖定瀏覽器預設滑動 */
     }
 
     .controls-area { 
@@ -599,6 +607,12 @@
         background: linear-gradient(90deg, transparent 0%, rgba(0, 242, 255, 0.05) 50%, transparent 100%);
         border-bottom: 1px solid rgba(255,255,255,0.05); 
         touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
+        /* 確保點擊區域完全獨立，不會觸發後方元素 */
+        position: relative;
+        z-index: 1001;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
     }
     
     /* 修改這裡：把手的樣式 */
@@ -1380,7 +1394,6 @@
                         <div class="setup-btns">
                             <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
                             <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
-                            <button class="setup-btn" onclick="setQuizParam('diff', 3, this)">專家</button>
                         </div>
                         <span class="setup-label">STEP 2: 數據通量 (題數)</span>
                         <div class="setup-btns">
@@ -1416,15 +1429,14 @@
                                     <div style="margin-bottom: 15px;">
                                         <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
                                         <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
-                                            ．符號辨識中文名稱<br>
-                                            ．原子序辨識符號<br>
-                                            ．常溫常壓物理狀態（固、液、氣）<br>
-                                            ．符號辨識英文名稱<br>
-                                            ．同族夥伴元素辨識<br>
-                                            ．區塊（s, p, d, f 區）判定<br>
-                                            ．原子核質子總數計算<br>
-                                            ．質子數逆推元素符號<br>
-                                            ．等電子序列粒子辨識
+                                            ．符號、中文名、英文全名互相辨識<br>
+                                            ．原子序與符號互相辨識<br>
+                                            ．座標定位（週期、族）<br>
+                                            ．元素分類判斷<br>
+                                            ．常溫常壓物理狀態<br>
+                                            ．計算與逆推（電子數、質子數、等電子序列）<br>
+                                            ．同族或同一週期元素辨識<br>
+                                            ．電負度比較
                                         </div>
                                     </div>
                                     
@@ -1432,42 +1444,16 @@
                                     <div style="margin-bottom: 15px;">
                                         <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
                                         <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
-                                            ．符號辨識中文名稱<br>
-                                            ．原子序辨識符號<br>
-                                            ．座標定位元素（週期、族）<br>
-                                            ．元素分類判斷（鹼金屬、鹵素等）<br>
-                                            ．常溫常壓物理狀態<br>
-                                            ．符號辨識英文名稱<br>
+                                            ．基礎級所有題型<br>
+                                            ．電子組態辨識元素<br>
                                             ．價電子數計算<br>
-                                            ．同族夥伴元素辨識<br>
+                                            ．未成對電子數計算<br>
+                                            ．軌域電子統計<br>
                                             ．區塊判定<br>
-                                            ．離子或原子的電子總數計算<br>
-                                            ．原子核質子總數計算<br>
-                                            ．電負度大小比較趨勢<br>
-                                            ．質子數逆推元素符號<br>
-                                            ．等電子序列粒子辨識
+                                            ．化學性質相似判斷
                                         </div>
                                     </div>
                                     
-                                    <!-- 專家級 -->
-                                    <div style="margin-bottom: 5px;">
-                                        <span style="color:#f472b6; font-weight: bold; display: block; margin-bottom: 6px;">[ 專家級 (Expert) ]</span>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f472b6;">
-                                            ．座標定位元素（週期、族）<br>
-                                            ．電子組態辨識元素<br>
-                                            ．元素分類判斷（鹼金屬、鹵素等）<br>
-                                            ．價電子數計算<br>
-                                            ．未成對電子數計算（洪德定則）<br>
-                                            ．特定軌域（s, p, d）電子總數統計<br>
-                                            ．同族夥伴元素辨識<br>
-                                            ．區塊判定<br>
-                                            ．離子或原子的電子總數計算<br>
-                                            ．電負度大小比較趨勢<br>
-                                            ．同族組態特徵辨識<br>
-                                            ．電子總數逆推粒子（含離子）<br>
-                                            ．等電子序列粒子辨識
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4270,18 +4256,8 @@ function setupInteractions() {
 
 
     // 5. 手機面板與鍵盤
-    const mobileHandle = document.getElementById('mobile-panel-handle');
-    if (mobileHandle) {
-        mobileHandle.addEventListener('click', () => {
-            const body = document.body;
-            body.classList.toggle('simulate-mobile-open');
-            const panel = document.querySelector('.controls-area');
-            if (panel) {
-                if (body.classList.contains('simulate-mobile-open')) panel.style.transform = 'translateY(0)';
-                else panel.style.transform = 'translateY(70vh)';
-            }
-        });
-    }
+    // 注意：手機面板的點擊和拖曳邏輯已移至 setupMobilePanel() 函數中
+    // 這裡不再需要單獨的 click 事件處理，避免與拖曳邏輯衝突
     window.addEventListener('keydown', (e) => { if (e.key === 'Alt') altKeyIsDown = true; });
     window.addEventListener('keyup', (e) => { if (e.key === 'Alt') altKeyIsDown = false; });
 
@@ -4992,7 +4968,14 @@ window.resetToDifficultySelection = function() {
     document.getElementById('quiz-cancel-btn').style.display = 'none';
     const stText = document.getElementById('quiz-status-text');
     if(stText) stText.textContent = `Select Level`;
-    if(window.quizState) window.quizState.askedZ = [];
+    // 重置問題狀態，但保留題數設置
+    if(window.quizState) {
+        window.quizState.askedZ = [];
+        window.quizState.askedQuestions = [];
+        window.quizState.currentQ = 0;
+        window.quizState.correctCount = 0;
+        // 保留totalQ設置，不重置
+    }
 };
 
 window.startQuiz = function(level) {
@@ -5000,13 +4983,16 @@ window.startQuiz = function(level) {
     document.getElementById('quiz-setup-area').style.display = 'flex';
     document.getElementById('quiz-cancel-btn').style.display = 'block';
     
+    // 保留之前的totalQ设置，如果没有则默认为10
+    const previousTotalQ = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
+    
     window.quizState = {
-        rank: level, difficulty: 1, totalQ: 10, currentQ: 0, correctCount: 0, 
-        pool: [], askedZ: [], typeDeck: [] 
+        rank: level, difficulty: 1, totalQ: previousTotalQ, currentQ: 0, correctCount: 0, 
+        pool: [], askedZ: [], typeDeck: [], askedQuestions: [] 
     };
 
     // 取得難度名稱映射
-    const diffMap = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+    const diffMap = { 1: "基礎級", 2: "進階級" };
 
     // 預先根據 Rank 設定範圍池
     const poolMap = {
@@ -5019,47 +5005,75 @@ window.startQuiz = function(level) {
 
     // 立即更新 HUD，避免「選進階顯示基礎」的延遲
     document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${level} | ${diffMap[1]}`;
+    
+    // 更新按鈕狀態以反映保留的設置
+    setTimeout(() => {
+        if (typeof window.updateSetupButtons === 'function') {
+            window.updateSetupButtons();
+        }
+    }, 100);
 
     // 產生平衡且限制重複簡單題型的牌組
 window.quizState.generateTypeDeck = function(diff, total) {
+    // 定義電子組態相關題型（不在基礎級出現）
+    const electronConfigTypes = [3, 7, 8, 9, 11, 15];
+    
+    // 根據難度分配題型池
     const typePools = {
-        // 基礎級：移除 11 (區塊) 與 18 (等電子數)，專注於最基本的原子組成與識別
-        1: [0, 1, 5, 6, 13, 16],             
+        // 基礎級：不包含電子組態相關問題（沒有type3、7、8、9、11）
+        // 包含：符號識別、原子序、座標、分類、狀態、計算與逆推、同族/同週期、區塊、電負度
+        1: [0, 1, 2, 4, 5, 6, 10, 14],             
         
-        // 進階級：移除 11 (區塊)，移除簡單的 5 (常溫) 與 6 (英文名)，增加應用類題目
-        2: [0, 1, 2, 4, 7, 10, 12, 13, 14, 16, 18],    
-        
-        // 專家級：保留 11 (區塊)，專注於量子結構與深層邏輯判斷
-        3: [2, 3, 4, 7, 8, 9, 10, 11, 12, 14, 15, 17, 18]      
+        // 進階級：包含所有題型
+        // 包含：基礎級題型 + 所有電子組態相關題型（3、7、8、9、11、15）
+        2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]      
     };
     
-    // 定義「簡單題型」白名單 (一輪只出現一次)
-    const simpleTypes = [0, 5, 6]; 
     const types = typePools[diff] || typePools[1];
+    
+    // 驗證：確保基礎級不包含電子組態題型
+    if (diff === 1) {
+        electronConfigTypes.forEach(eType => {
+            if (types.includes(eType)) {
+                console.warn(`警告：基礎級不應包含電子組態題型 ${eType}，已自動移除`);
+                const index = types.indexOf(eType);
+                if (index > -1) types.splice(index, 1);
+            }
+        });
+    }
     
     let deck = [];
     
-    // 1. 先處理簡單題型：如果該難度有這些題型，各抽一題放入
-    const allowedSimple = types.filter(t => simpleTypes.includes(t));
-    allowedSimple.forEach(t => deck.push(t));
+    // 優化分配：盡量讓每種題型都有出現到
+    const typeCounts = {};
+    types.forEach(t => typeCounts[t] = 0);
     
-    // 2. 準備剩餘的專業題型池
-    const professionalTypes = types.filter(t => !simpleTypes.includes(t));
+    // 計算每種題型應該出現的次數（盡量平均分配）
+    const typesPerQuestion = Math.floor(total / types.length);
+    const remainder = total % types.length;
     
-    // 3. 填滿剩餘題數
-    while (deck.length < total) {
-        // 從專業題型池中隨機抽取
-        let randType = professionalTypes[Math.floor(Math.random() * professionalTypes.length)];
-        deck.push(randType);
+    // 先為每種題型分配基本次數
+    types.forEach(t => {
+        for (let i = 0; i < typesPerQuestion; i++) {
+            deck.push(t);
+            typeCounts[t]++;
+        }
+    });
+    
+    // 剩餘的題數隨機分配給不同題型
+    const shuffledTypes = [...types].sort(() => 0.5 - Math.random());
+    for (let i = 0; i < remainder; i++) {
+        deck.push(shuffledTypes[i]);
+        typeCounts[shuffledTypes[i]]++;
     }
     
-    // 4. 洗牌：打亂順序，但確保簡單題型分佈在整輪中
+    // 洗牌：打亂順序
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
     
-    // 5. 二次校驗：避免連續兩題一樣
+    // 二次校驗：避免連續兩題一樣
     for (let i = 0; i < deck.length - 1; i++) {
         if (deck[i] === deck[i+1]) {
             let swapIdx = (i + 2) % deck.length;
@@ -5073,16 +5087,169 @@ window.quizState.generateTypeDeck = function(diff, total) {
 
 // 修正 setQuizParam 讓它也能即時更新 HUD
 window.setQuizParam = function(type, val, btn) {
-    const diffMap = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+    const diffMap = { 1: "基礎級", 2: "進階級" };
     btn.parentElement.querySelectorAll('.setup-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (type === 'diff') {
-        window.quizState.difficulty = parseInt(val);
-        // 即時更新頂部文字
-        document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${window.quizState.rank} | ${diffMap[window.quizState.difficulty]}`;
+        if (window.quizState) {
+            window.quizState.difficulty = parseInt(val);
+            // 即時更新頂部文字
+            document.getElementById('quiz-status-text').textContent = `PARAMETERS: RANK ${window.quizState.rank} | ${diffMap[window.quizState.difficulty]}`;
+        }
     }
-    if (type === 'count') window.quizState.totalQ = parseInt(val);
+    if (type === 'count') {
+        if (window.quizState) {
+            window.quizState.totalQ = parseInt(val);
+        }
+    }
 };
+
+// 初始化按鈕狀態（當重新選擇rank時）
+window.updateSetupButtons = function() {
+    if (!window.quizState) return;
+    
+    // 更新難度按鈕
+    const diffBtns = document.querySelectorAll('.setup-btns button[onclick*="setQuizParam(\'diff\'"]');
+    diffBtns.forEach(btn => {
+        const match = btn.getAttribute('onclick').match(/setQuizParam\('diff',\s*(\d+)/);
+        if (match && parseInt(match[1]) === window.quizState.difficulty) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // 更新題數按鈕
+    const countBtns = document.querySelectorAll('.setup-btns button[onclick*="setQuizParam(\'count\'"]');
+    countBtns.forEach(btn => {
+        const match = btn.getAttribute('onclick').match(/setQuizParam\('count',\s*(\d+)/);
+        if (match && parseInt(match[1]) === window.quizState.totalQ) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+};
+
+// 生成問題的唯一標識（用於重複檢查）
+// 智能識別問題的核心內容，允許同一type但不同問法，但禁止完全相同問題
+function generateQuestionKey(type, quizData, target) {
+    // 提取問題的核心內容（去除HTML標籤和格式化）
+    let coreQuestion = quizData.question.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    
+    // 根據題型生成唯一標識
+    switch(type) {
+        case 0: // 身分識別：中文名 ↔ 簡寫 ↔ 英文全名
+            // 區分方向：簡寫→中文名、中文名→簡寫、簡寫→英文全名、英文全名→簡寫、中文名→英文全名、英文全名→中文名
+            // 同一方向只允許問一次（無論什麼元素）
+            if (coreQuestion.includes('化學符號') && (coreQuestion.includes('中文名稱') || coreQuestion.includes('中文名'))) {
+                return `type0-簡寫→中文名`;
+            } else if ((coreQuestion.includes('元素「') || coreQuestion.includes('「')) && coreQuestion.includes('符號') && !coreQuestion.includes('英文')) {
+                // 中文名→簡寫：問題中包含中文名和符號，但不包含英文
+                return `type0-中文名→簡寫`;
+            } else if (coreQuestion.includes('化學符號') && (coreQuestion.includes('英文名稱') || coreQuestion.includes('英文名'))) {
+                return `type0-簡寫→英文全名`;
+            } else if ((coreQuestion.includes('元素「') || coreQuestion.includes('「')) && coreQuestion.includes('符號') && coreQuestion.includes('英文')) {
+                // 英文全名→簡寫：問題中包含英文名和符號
+                return `type0-英文全名→簡寫`;
+            } else if ((coreQuestion.includes('元素「') || coreQuestion.includes('「')) && coreQuestion.includes('英文') && !coreQuestion.includes('符號')) {
+                // 中文名→英文全名：問題中包含中文名和英文，但不包含符號
+                return `type0-中文名→英文全名`;
+            } else if ((coreQuestion.includes('元素「') || coreQuestion.includes('「')) && coreQuestion.includes('中文') && !coreQuestion.includes('符號')) {
+                // 英文全名→中文名：問題中包含英文名和中文，但不包含符號
+                return `type0-英文全名→中文名`;
+            }
+            return `type0-${coreQuestion}`;
+            
+        case 1: // 識別校準：符號 ↔ 原子序
+            // 區分方向：符號→原子序、原子序→符號
+            // 同一方向只允許問一次（無論什麼元素）
+            // 例如：問了"N的原子序是多少"，就不能再問"F的原子序是多少"
+            // 但可以問"原子序為9的元素符號為何"（反向）
+            if (coreQuestion.includes('原子序') && (coreQuestion.includes('為何') || coreQuestion.includes('為')) && !coreQuestion.includes('原子序為') && !coreQuestion.includes('質子數為')) {
+                return `type1-符號→原子序`;
+            } else if (coreQuestion.includes('原子序為') || coreQuestion.includes('質子數為') || (coreQuestion.includes('原子核內有') && coreQuestion.includes('個質子'))) {
+                return `type1-原子序→符號`;
+            }
+            return `type1-${coreQuestion}`;
+            
+        case 2: // 位置定位：座標 ↔ 符號 ↔ 原子序
+            // 區分4種方向：座標→符號、符號→座標、原子序→座標、座標→原子序
+            if (coreQuestion.includes('位於週期表') && coreQuestion.includes('元素符號')) {
+                return `type2-座標→符號`;
+            } else if (coreQuestion.includes('位於週期表') && !coreQuestion.includes('元素符號')) {
+                return `type2-座標→原子序`;
+            } else if (coreQuestion.includes('第幾週期') && coreQuestion.includes('第幾族')) {
+                if (coreQuestion.includes('原子序為')) {
+                    return `type2-原子序→座標`;
+                } else {
+                    return `type2-符號→座標`;
+                }
+            }
+            return `type2-${coreQuestion}`;
+            
+        case 4: // 特性校準：元素 ↔ 分類
+            // 區分方向：元素→分類、分類→元素
+            if (coreQuestion.includes('屬於下列何者') || coreQuestion.includes('化學性質分類')) {
+                return `type4-元素→分類`;
+            } else if (coreQuestion.includes('屬於「') || coreQuestion.includes('為「')) {
+                return `type4-分類→元素`;
+            }
+            return `type4-${coreQuestion}`;
+            
+        case 5: // 特性校準：元素 ↔ 常溫狀態
+            // 區分方向：元素→狀態、狀態→元素
+            if (coreQuestion.includes('物理狀態為何')) {
+                return `type5-元素→狀態`;
+            } else if (coreQuestion.includes('為「') && coreQuestion.includes('狀態')) {
+                return `type5-狀態→元素`;
+            }
+            return `type5-${coreQuestion}`;
+            
+        case 6: // 計算與逆推（融合了12、13、16、17、18）
+            // 根據子類型區分
+            if (quizData.type.includes('電子總數') && !quizData.type.includes('逆推')) {
+                return `type6-計算電子總數`;
+            } else if (quizData.type.includes('質子總數') && !quizData.type.includes('逆推')) {
+                return `type6-計算質子總數`;
+            } else if (quizData.type.includes('質子數逆推')) {
+                return `type6-質子數逆推`;
+            } else if (quizData.type.includes('電子數逆推')) {
+                return `type6-電子數逆推`;
+            } else if (quizData.type.includes('等電子序列')) {
+                return `type6-等電子序列`;
+            }
+            return `type6-${quizData.type}`;
+            
+        case 10: // 邏輯判斷：同族元素或同一週期
+            // 區分：同族、同一週期
+            if (quizData.type.includes('同族')) {
+                return `type10-同族元素`;
+            } else if (quizData.type.includes('同一週期')) {
+                return `type10-同一週期`;
+            }
+            return `type10-${coreQuestion}`;
+            
+        default:
+            // 其他題型：使用題型+問題核心內容
+            // 對於單向題型，同一題型只允許問一次（無論什麼元素）
+            // 提取問題中的關鍵信息（元素符號、數值等）
+            const elementMatch = coreQuestion.match(/\[?\s*([A-Z][a-z]?)\s*\]?/);
+            const elementSymbol = elementMatch ? elementMatch[1] : '';
+            const numberMatch = coreQuestion.match(/\d+/);
+            const number = numberMatch ? numberMatch[0] : '';
+            
+            // 對於單向題型，使用題型作為唯一標識（同一題型只問一次）
+            // 對於需要區分元素的題型，加上元素符號
+            if ([3, 7, 8, 9, 11, 14, 15].includes(type)) {
+                // 這些題型需要區分元素，因為不同元素答案不同
+                return `type${type}-${elementSymbol}-${coreQuestion.substring(0, 50)}`;
+            } else {
+                // 其他題型：同一題型只問一次
+                return `type${type}-${coreQuestion.substring(0, 50)}`;
+            }
+    }
+}
 
 window.initiateCalibration = function() {
     // 1. 生成不連續重複的平衡題型牌組
@@ -5098,10 +5265,13 @@ window.renderNextQuestion = function() {
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     
     // 更新 HUD：顯示 Rank、難度與進度
-    const diffNames = { 1: "基礎級", 2: "進階級", 3: "專家級" };
+    const diffNames = { 1: "基礎級", 2: "進階級" };
     const curDiff = diffNames[window.quizState.difficulty] || "未知";
     document.getElementById('quiz-status-text').textContent = 
         `RANK ${window.quizState.rank} | ${curDiff}校準 [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
+    
+    // 依照預選牌組類型出題
+    const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
     
     // 元素均等分佈演算法
     let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
@@ -5109,58 +5279,403 @@ window.renderNextQuestion = function() {
         window.quizState.askedZ = []; 
         avail = [...window.quizState.pool];
     }
-    const target = avail[Math.floor(Math.random() * avail.length)];
+    let target = avail[Math.floor(Math.random() * avail.length)];
     window.quizState.askedZ.push(target.z);
     
-    // 依照預選牌組類型出題
-    const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
     const quizData = { question: "", answer: "", type: "", displayMode: "symbol" }; 
-    const parsed = QUIZ_HELPER.parse(target.c);
-    const s = `[ ${target.s} ]`;
+    let parsed = QUIZ_HELPER.parse(target.c);
+    let s = `[ ${target.s} ]`;
+    
+    // 重複問題檢查：生成問題後檢查是否已問過，如果重複則重新生成（最多嘗試20次）
+    let questionKey = "";
+    let attempts = 0;
+    let questionGenerated = false;
+    
+    while (!questionGenerated && attempts < 20) {
+        attempts++;
+        // 如果已經嘗試過，重新選擇元素
+        if (attempts > 1) {
+            avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
+            if (avail.length === 0) {
+                window.quizState.askedZ = []; 
+                avail = [...window.quizState.pool];
+            }
+            target = avail[Math.floor(Math.random() * avail.length)];
+            window.quizState.askedZ.push(target.z);
+            parsed = QUIZ_HELPER.parse(target.c);
+            s = `[ ${target.s} ]`;
+        }
+        
+        // 重置quizData
+        quizData.question = "";
+        quizData.answer = "";
+        quizData.type = "";
+        quizData.displayMode = "symbol";
+        quizData.forcedOpts = undefined;
 
     // 3. 題型詳細定義與隨機敘述模板 (全面中文化與渲染優化)
 if (type === 0) {
-    if (Math.random() > 0.5) {
-        quizData.type        = "身分識別：符號 > 中文名"; 
-        quizData.question    = [ `${s} 的中文名稱為何？`, `化學符號 ${s} 指的是哪種元素？` ][Math.floor(Math.random() * 2)];
+    // 三向：中文名 ↔ 簡寫 ↔ 英文全名
+    const direction = Math.random();
+    if (direction < 0.33) {
+        // 簡寫 → 中文名
+        quizData.type        = "身分識別：簡寫 > 中文名"; 
+        quizData.question    = [ `化學符號 ${s} 的中文名稱為何？`, `化學符號 ${s} 指的是哪種元素？` ][Math.floor(Math.random() * 2)];
         quizData.answer      = target.cn;
         quizData.displayMode = "chinese";
-    } else {
-        quizData.type        = "身分識別：中文名 > 符號"; 
+    } else if (direction < 0.67) {
+        // 中文名 → 簡寫
+        quizData.type        = "身分識別：中文名 > 簡寫"; 
         quizData.question    = [ `元素「${target.cn}」的正確化學符號為何？`, `下列哪一個符號代表「${target.cn}」？` ][Math.floor(Math.random() * 2)];
         quizData.answer      = target.s;
         quizData.displayMode = "symbol";
+    } else if (direction < 0.78) {
+        // 簡寫 → 英文全名
+        quizData.type        = "身分識別：簡寫 > 英文全名"; 
+        quizData.question    = [ `化學符號 ${s} 的英文名稱為何？`, `化學符號 ${s} 的英文全名是？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.n;
+        quizData.displayMode = "english";
+    } else if (direction < 0.89) {
+        // 英文全名 → 簡寫
+        quizData.type        = "身分識別：英文全名 > 簡寫"; 
+        quizData.question    = [ `元素「${target.n}」的正確化學符號為何？`, `下列哪一個符號代表「${target.n}」？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
+    } else if (direction < 0.95) {
+        // 中文名 → 英文全名
+        quizData.type        = "身分識別：中文名 > 英文全名"; 
+        quizData.question    = [ `元素「${target.cn}」的英文名稱為何？`, `元素「${target.cn}」的英文全名是？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.n;
+        quizData.displayMode = "english";
+    } else {
+        // 英文全名 → 中文名
+        quizData.type        = "身分識別：英文全名 > 中文名"; 
+        quizData.question    = [ `元素「${target.n}」的中文名稱為何？`, `元素「${target.n}」指的是哪種元素？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.cn;
+        quizData.displayMode = "chinese";
     }
 } else if (type === 1) {
-    quizData.type        = "識別校準：符號 > 原子序"; 
-    quizData.question    = [ `${s} 的「原子序」為何？`, `${s} 原子核內的質子數為？` ][Math.floor(Math.random() * 2)];
-    quizData.answer      = target.z.toString();
-    quizData.displayMode = "number";
+    // 雙向：符號 ↔ 原子序
+    const direction = Math.random();
+    if (direction > 0.5) {
+        // 符號 → 原子序
+        quizData.type        = "識別校準：符號 > 原子序"; 
+        quizData.question    = [ `${s} 的「原子序」為何？`, `${s} 原子核內的質子數為？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.z.toString();
+        quizData.displayMode = "number";
+    } else {
+        // 原子序 → 符號
+        quizData.type        = "識別校準：原子序 > 符號"; 
+        quizData.question    = [ `原子序為 ${target.z} 的元素符號為何？`, `原子核內有 ${target.z} 個質子的元素，其化學符號是？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
+    }
 } else if (type === 2) {
-    quizData.type        = "位置定位：座標 > 符號"; 
-    quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素符號是？`;
-    quizData.answer      = target.s;
-    quizData.displayMode = "symbol";
+    // 多向：座標 ↔ 符號 ↔ 原子序
+    const direction = Math.random();
+    if (direction < 0.25) {
+        // 座標 → 符號
+        quizData.type        = "位置定位：座標 > 符號"; 
+        quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素符號是？`;
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
+    } else if (direction < 0.5) {
+        // 符號 → 座標
+        quizData.type        = "位置定位：符號 > 座標"; 
+        const coordOptions = [
+            `元素 ${s} 位於週期表的第幾週期、第幾族？`,
+            `元素 ${s} 在週期表中的位置（週期與族）為何？`,
+            `元素 ${s} 屬於第幾週期、第幾族？`
+        ];
+        quizData.question    = coordOptions[Math.floor(Math.random() * coordOptions.length)];
+        quizData.answer      = `第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})`;
+        quizData.displayMode = "raw";
+    } else if (direction < 0.75) {
+        // 原子序 → 座標
+        quizData.type        = "位置定位：原子序 > 座標"; 
+        quizData.question    = [ `原子序為 ${target.z} 的元素位於週期表的第幾週期、第幾族？`, `原子序 ${target.z} 的元素在週期表中的位置為何？` ][Math.floor(Math.random() * 2)];
+        quizData.answer      = `第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})`;
+        quizData.displayMode = "raw";
+    } else {
+        // 座標 → 原子序
+        quizData.type        = "位置定位：座標 > 原子序"; 
+        quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素，其原子序為何？`;
+        quizData.answer      = target.z.toString();
+        quizData.displayMode = "number";
+    }
 } else if (type === 3) {
     quizData.type        = "量子結構：組態辨識"; 
     quizData.question    = [ `基態電子組態為 ${target.noble} 的元素為何？`, `下列何種元素具備 ${target.noble} 的電子排列？` ][Math.floor(Math.random() * 2)];
     quizData.answer      = target.s;
     quizData.displayMode = "symbol";
 } else if (type === 4) {
-    quizData.type        = "特性校準：元素分類"; 
-    quizData.question    = `元素 ${s} 在化學性質分類上屬於下列何者？`;
-    quizData.answer      = target.type;
-    quizData.displayMode = "raw";
+    // 雙向：元素 ↔ 分類，反向時元素可用中文/英文/原子序
+    const direction = Math.random();
+    if (direction > 0.5) {
+        // 元素 → 分類
+        const elementDisplay = Math.random();
+        let elementText = s;
+        let answerDisplayMode = "raw";
+        
+        if (elementDisplay < 0.33) {
+            // 使用符號
+            elementText = s;
+        } else if (elementDisplay < 0.67) {
+            // 使用中文名
+            elementText = `「${target.cn}」`;
+        } else {
+            // 使用原子序
+            elementText = `原子序為 ${target.z} 的元素`;
+        }
+        
+        quizData.type        = "特性校準：元素 > 分類"; 
+        quizData.question    = `元素 ${elementText} 在化學性質分類上屬於下列何者？`;
+        quizData.answer      = target.type;
+        quizData.displayMode = "raw";
+    } else {
+        // 分類 → 元素（元素可用中文/英文/原子序）
+        const elementFormat = Math.random();
+        let answerValue, answerDisplayMode;
+        
+        if (elementFormat < 0.33) {
+            // 答案為中文名
+            answerValue = target.cn;
+            answerDisplayMode = "chinese";
+        } else if (elementFormat < 0.67) {
+            // 答案為英文名
+            answerValue = target.n;
+            answerDisplayMode = "english";
+        } else {
+            // 答案為原子序
+            answerValue = target.z.toString();
+            answerDisplayMode = "number";
+        }
+        
+        // 生成選項：正確答案 + 3個不同分類的元素（確保只有一個正確答案）
+        const diffTypeElements = window.quizState.pool.filter(el => el.type !== target.type);
+        let forcedOpts = [];
+        
+        // 添加正確答案
+        if (answerDisplayMode === "chinese") {
+            forcedOpts.push(target.cn);
+        } else if (answerDisplayMode === "english") {
+            forcedOpts.push(target.n);
+        } else {
+            forcedOpts.push(target.z.toString());
+        }
+        
+        // 添加不同類型的元素（3個，確保都是錯誤選項）
+        const shuffledDiff = [...diffTypeElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            if (answerDisplayMode === "chinese") {
+                forcedOpts.push(el.cn);
+            } else if (answerDisplayMode === "english") {
+                forcedOpts.push(el.n);
+            } else {
+                forcedOpts.push(el.z.toString());
+            }
+        });
+        
+        // 如果選項不足4個，從不同類型的元素中隨機補充
+        while (forcedOpts.length < 4 && diffTypeElements.length > 0) {
+            const randomEl = diffTypeElements[Math.floor(Math.random() * diffTypeElements.length)];
+            let val = "";
+            if (answerDisplayMode === "chinese") val = randomEl.cn;
+            else if (answerDisplayMode === "english") val = randomEl.n;
+            else val = randomEl.z.toString();
+            if (!forcedOpts.includes(val)) forcedOpts.push(val);
+        }
+        
+        quizData.type        = "特性校準：分類 > 元素"; 
+        const questionTemplates = [
+            `下列哪個元素屬於「${target.type}」？`,
+            `下列何者為「${target.type}」元素？`,
+            `「${target.type}」類別中包含下列哪個元素？`
+        ];
+        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        quizData.answer      = answerValue;
+        quizData.displayMode = answerDisplayMode;
+        quizData.forcedOpts  = forcedOpts.slice(0, 4); // 確保只有4個選項
+    }
 } else if (type === 5) {
-    quizData.type        = "特性校準：常溫狀態"; 
-    quizData.question    = `在常溫常壓 (25°C, 1atm) 下，${s} 的物理狀態為何？`;
-    quizData.answer      = QUIZ_HELPER.getCleanState(target.state);
-    quizData.displayMode = "raw";
+    // 雙向：元素 ↔ 常溫狀態，反向時元素可用中文/英文/原子序
+    const direction = Math.random();
+    if (direction > 0.5) {
+        // 元素 → 狀態
+        const elementDisplay = Math.random();
+        let elementText = s;
+        
+        if (elementDisplay < 0.33) {
+            // 使用符號
+            elementText = s;
+        } else if (elementDisplay < 0.67) {
+            // 使用中文名
+            elementText = `「${target.cn}」`;
+        } else {
+            // 使用原子序
+            elementText = `原子序為 ${target.z} 的元素`;
+        }
+        
+        quizData.type        = "特性校準：元素 > 常溫狀態"; 
+        quizData.question    = `在常溫常壓 (25°C, 1atm) 下，${elementText} 的物理狀態為何？`;
+        quizData.answer      = QUIZ_HELPER.getCleanState(target.state);
+        quizData.displayMode = "raw";
+    } else {
+        // 狀態 → 元素（元素可用中文/英文/原子序）
+        const cleanState = QUIZ_HELPER.getCleanState(target.state);
+        const elementFormat = Math.random();
+        let answerValue, answerDisplayMode;
+        
+        if (elementFormat < 0.33) {
+            // 答案為中文名
+            answerValue = target.cn;
+            answerDisplayMode = "chinese";
+        } else if (elementFormat < 0.67) {
+            // 答案為英文名
+            answerValue = target.n;
+            answerDisplayMode = "english";
+        } else {
+            // 答案為原子序
+            answerValue = target.z.toString();
+            answerDisplayMode = "number";
+        }
+        
+        // 生成選項：正確答案 + 3個不同狀態的元素（確保只有一個正確答案）
+        const diffStateElements = window.quizState.pool.filter(el => {
+            const elState = QUIZ_HELPER.getCleanState(el.state);
+            return elState !== cleanState; // 只選擇不同狀態的元素作為錯誤選項
+        });
+        let forcedOpts = [];
+        
+        // 添加正確答案
+        if (answerDisplayMode === "chinese") {
+            forcedOpts.push(target.cn);
+        } else if (answerDisplayMode === "english") {
+            forcedOpts.push(target.n);
+        } else {
+            forcedOpts.push(target.z.toString());
+        }
+        
+        // 添加不同狀態的元素（3個，確保都是錯誤選項）
+        const shuffledDiff = [...diffStateElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            if (answerDisplayMode === "chinese") {
+                forcedOpts.push(el.cn);
+            } else if (answerDisplayMode === "english") {
+                forcedOpts.push(el.n);
+            } else {
+                forcedOpts.push(el.z.toString());
+            }
+        });
+        
+        // 如果選項不足4個，從不同狀態的元素中隨機補充
+        while (forcedOpts.length < 4 && diffStateElements.length > 0) {
+            const randomEl = diffStateElements[Math.floor(Math.random() * diffStateElements.length)];
+            let val = "";
+            if (answerDisplayMode === "chinese") val = randomEl.cn;
+            else if (answerDisplayMode === "english") val = randomEl.n;
+            else val = randomEl.z.toString();
+            if (!forcedOpts.includes(val)) forcedOpts.push(val);
+        }
+        
+        quizData.type        = "特性校準：常溫狀態 > 元素"; 
+        const questionTemplates = [
+            `下列哪個元素在常溫常壓 (25°C, 1atm) 下為「${cleanState}」？`,
+            `在常溫常壓下呈「${cleanState}」狀態的元素是？`,
+            `下列何者在常溫常壓下為「${cleanState}」？`
+        ];
+        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        quizData.answer      = answerValue;
+        quizData.displayMode = answerDisplayMode;
+        quizData.forcedOpts  = forcedOpts.slice(0, 4); // 確保只有4個選項
+    }
 } else if (type === 6) {
-    quizData.type        = "身分識別：符號 > 英文名"; 
-    quizData.question    = `元素 ${s} 的英文名稱 (English Name) 為何？`;
-    quizData.answer      = target.n;
-    quizData.displayMode = "english";
+    // 融合計算與逆推題型：電子總數、質子總數、質子數逆推、電子數逆推、等電子序列
+    const subType = Math.random();
+    if (subType < 0.2) {
+        // Type 12: 計算：電子總數
+        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
+        let signHTML = "";
+        if (charge !== 0) {
+            let val = Math.abs(charge);
+            let sign = charge > 0 ? "+" : "-";
+            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
+        }
+        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
+        quizData.type     = "計算：電子總數";
+        quizData.question = `${particle} 的「核外電子總數」為何？`;
+        quizData.answer   = (target.z - charge).toString();
+        quizData.displayMode = "number";
+    } else if (subType < 0.4) {
+        // Type 13: 計算：質子總數
+        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
+        let signHTML = "";
+        if (charge !== 0) {
+            let val = Math.abs(charge);
+            let sign = charge > 0 ? "+" : "-";
+            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
+        }
+        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
+        quizData.type     = "計算：質子總數";
+        quizData.question = `${particle} 的「原子核內質子數」為何？`;
+        quizData.answer   = target.z.toString();
+        quizData.displayMode = "number";
+    } else if (subType < 0.6) {
+        // Type 16: 識別校準：質子數逆推
+        quizData.type        = "識別校準：質子數逆推";
+        const questionTemplates = [
+            `原子核內質子總數為 ${target.z} 的元素符號為何？`,
+            `原子核內有 ${target.z} 個質子的元素，其化學符號是？`,
+            `質子數為 ${target.z} 的元素為何？`
+        ];
+        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
+    } else if (subType < 0.8) {
+        // Type 17: 計算：電子數逆推
+        let c = Math.floor(Math.random() * 5) - 2;
+        const eCount = target.z - c;
+        quizData.type = "計算：電子數逆推";
+        const questionTemplates = [
+            `總電子數為 ${eCount} 的粒子，可能為下列何者？`,
+            `核外電子總數為 ${eCount} 的粒子為何？`,
+            `具有 ${eCount} 個電子的粒子是？`
+        ];
+        quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        
+        if (c === 0) {
+            quizData.answer = target.s;
+        } else {
+            let val = Math.abs(c);
+            let sign = c > 0 ? "+" : "-";
+            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            quizData.answer = `${target.s}<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
+        }
+        quizData.displayMode = "ion";
+    } else {
+        // Type 18: 邏輯判斷：等電子序列
+        let c = Math.floor(Math.random() * 5) - 2;
+        const eCount = target.z - c;
+        const signHTML = c === 0 ? "" : `<sup>${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign">${c > 0 ? "+" : "-"}</span></sup>`;
+        const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
+        quizData.type = "邏輯判斷：等電子序列";
+        const questionTemplates = [
+            `下列哪一個粒子與 [ ${target.s}${signHTML} ] 具備相同的電子排列？`,
+            `與 [ ${target.s}${signHTML} ] 等電子的粒子是？`,
+            `下列何者與 [ ${target.s}${signHTML} ] 具有相同的電子數？`
+        ];
+        quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        if (partner) {
+            quizData.answer = partner.replace(/<sup>(\d+)?([\+\-])<\/sup>/, (match, num, sign) => {
+                return `<sup>${(num === "1" || !num) ? "" : num}<span class="charge-sign">${sign}</span></sup>`;
+            });
+        } else {
+            quizData.answer = "無";
+        }
+        quizData.displayMode = "ion";
+    }
 } else if (type === 7) {
     quizData.type        = "量子結構：價電子數"; 
     quizData.question    = [ `${s} 的「價電子數」共有多少個？`, `${s} 最外層殼層的電子數為何？` ][Math.floor(Math.random() * 2)];
@@ -5200,11 +5715,33 @@ if (type === 0) {
     }
     quizData.displayMode = "number";
 } else if (type === 10) {
-    quizData.type        = "邏輯判斷：同族元素"; 
-    quizData.question    = `下列哪一個元素與 ${s} 位於週期表的「同一族」？`;
-    const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
-    quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
-    quizData.displayMode = "symbol";
+    // 擴展：同族元素或同一週期
+    const direction = Math.random();
+    if (direction > 0.5) {
+        // 同族元素
+        quizData.type        = "邏輯判斷：同族元素"; 
+        const questionTemplates = [
+            `下列哪一個元素與 ${s} 位於週期表的「同一族」？`,
+            `與 ${s} 屬於同一族的元素是？`,
+            `下列何者與 ${s} 位於週期表的相同族？`
+        ];
+        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
+        quizData.displayMode = "symbol";
+    } else {
+        // 同一週期
+        quizData.type        = "邏輯判斷：同一週期"; 
+        const questionTemplates = [
+            `下列哪一個元素與 ${s} 位於週期表的「同一週期」？`,
+            `與 ${s} 屬於同一週期的元素是？`,
+            `下列何者與 ${s} 位於週期表的相同週期？`
+        ];
+        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
+        const partners       = ELECTRON_DATA.filter(el => el.p === target.p && el.z !== target.z);
+        quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
+        quizData.displayMode = "symbol";
+    }
 } else if (type === 11) {
     quizData.type        = "位置定位：區塊 (Block)";
     const i = target.iupac; let blockName = "f";
@@ -5213,29 +5750,6 @@ if (type === 0) {
     quizData.question    = `元素 ${s} 屬於週期表中的哪一個區塊 (Block)？`;
     quizData.answer      = `${blockName} 區`;
     quizData.displayMode = "raw";
-} else if (type === 12 || type === 13) {
-    let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
-    
-    // 修正：將 + / - 包在 span 中單獨放大，並處理 1 隱藏
-    let signHTML = "";
-    if (charge !== 0) {
-        let val = Math.abs(charge);
-        let sign = charge > 0 ? "+" : "-";
-        let styledSign = `<span class="charge-sign">${sign}</span>`;
-        signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
-    }
-    
-    const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
-    if (type === 12) {
-        quizData.type     = "計算：電子總數";
-        quizData.question = `${particle} 的「核外電子總數」為何？`;
-        quizData.answer   = (target.z - charge).toString();
-    } else {
-        quizData.type     = "計算：質子總數";
-        quizData.question = `${particle} 的「原子核內質子數」為何？`;
-        quizData.answer   = target.z.toString();
-    }
-    quizData.displayMode = "number";
 } else if (type === 14) {
     const enPool         = window.quizState.pool.filter(el => QUIZ_HELPER.getEN(el.s) !== null);
     let sel              = [...enPool].sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -5251,44 +5765,26 @@ if (type === 0) {
     const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
     quizData.displayMode = "symbol";
-} else if (type === 16) {
-    quizData.type        = "識別校準：質子數逆推";
-    quizData.question    = `原子核內質子總數為 ${target.z} 的元素符號為何？`;
-    quizData.answer      = target.s;
-    quizData.displayMode = "symbol";
-} else if (type === 17) {
-    let c = Math.floor(Math.random() * 5) - 2;
-    const eCount = target.z - c;
-    quizData.type = "計算：電子數逆推";
-    quizData.question = `總電子數為 ${eCount} 的粒子，可能為下列何者？`;
-    
-    if (c === 0) {
-        quizData.answer = target.s;
-    } else {
-        let val = Math.abs(c);
-        let sign = c > 0 ? "+" : "-";
-        let styledSign = `<span class="charge-sign">${sign}</span>`;
-        // 修正：答案按鈕也使用相同的結構以確保美觀一致
-        quizData.answer = `${target.s}<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
-    }
-    quizData.displayMode = "ion";
-} else if (type === 18) {
-    let c = Math.floor(Math.random() * 5) - 2;
-    const eCount = target.z - c;
-    const signHTML = c === 0 ? "" : `<sup>${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign">${c > 0 ? "+" : "-"}</span></sup>`;
-    const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
-    quizData.type = "邏輯判斷 : 等電子序列";
-    quizData.question = `下列哪一個粒子與 [ ${target.s}${signHTML} ] 具備相同的電子排列？`;
-    if (partner) {
-        // 使用精確匹配，只替換標籤內的正負號，不破壞 class 名稱
-        quizData.answer = partner.replace(/<sup>(\d+)?([\+\-])<\/sup>/, (match, num, sign) => {
-            return `<sup>${(num === "1" || !num) ? "" : num}<span class="charge-sign">${sign}</span></sup>`;
-        });
-    } else {
-        quizData.answer = "無";
-    }
-    quizData.displayMode = "ion";
 }
+        
+        // 生成問題的唯一標識（用於重複檢查）
+        // 智能識別問題的核心內容，允許同一type但不同問法，但禁止完全相同問題
+        questionKey = generateQuestionKey(type, quizData, target);
+        
+        // 檢查是否已問過相同問題
+        if (!window.quizState.askedQuestions.includes(questionKey)) {
+            // 問題不重複，標記為已問過
+            window.quizState.askedQuestions.push(questionKey);
+            questionGenerated = true;
+        }
+        // 如果重複，繼續循環重新生成
+    }
+    
+    // 如果嘗試20次後仍然重複，使用最後生成的問題（避免無限循環）
+    if (!questionGenerated) {
+        console.warn(`警告：嘗試20次後仍有重複問題，使用最後生成的問題`);
+        window.quizState.askedQuestions.push(questionKey);
+    }
 
     // 4. UI 視覺標準化與渲染
     const questionEl = document.getElementById('quiz-question');
@@ -5335,20 +5831,28 @@ if (type === 0) {
                 }
                 break;
             case "raw":
-                // (此處保持原有的分類/狀態邏輯)
-                const attr = type === 4 ? "type" : "state";
-                const allVals = [...new Set(ELECTRON_DATA.map(el => {
-                    if (type === 5) return QUIZ_HELPER.getCleanState(el.state);
-                    if (type === 4) return el.type;
-                    if (type === 11) {
-                        const i = el.iupac; let b = "f";
-                        if (el.s === "He") b = "s";
-                        else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
-                        return `${b} 區`;
-                    }
-                    return el.s;
-                }))];
-                val = allVals[Math.floor(Math.random() * allVals.length)];
+                // 根據題型生成對應的選項格式
+                if (type === 2) {
+                    // Type 2: 座標格式 "第 X 週期、第 Y 族 (Z)"
+                    const randomEl = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
+                    val = `第 ${randomEl.p} 週期、第 ${randomEl.iupac} 族 (${randomEl.g})`;
+                } else if (type === 4) {
+                    // Type 4: 元素分類
+                    const allTypes = [...new Set(ELECTRON_DATA.map(el => el.type))];
+                    val = allTypes[Math.floor(Math.random() * allTypes.length)];
+                } else if (type === 5) {
+                    // Type 5: 常溫狀態
+                    const allStates = [...new Set(ELECTRON_DATA.map(el => QUIZ_HELPER.getCleanState(el.state)))];
+                    val = allStates[Math.floor(Math.random() * allStates.length)];
+                } else if (type === 11) {
+                    // Type 11: 區塊
+                    const i = cand.iupac; let b = "f";
+                    if (cand.s === "He") b = "s";
+                    else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
+                    val = `${b} 區`;
+                } else {
+                    val = cand.s;
+                }
                 break;
             default: val = cand.s; break;
 }
@@ -5785,11 +6289,16 @@ function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const content = document.querySelector('.controls-content'); // 抓取內容層
     const handle = document.getElementById('mobile-panel-handle');
-    if(!handle || !panel || window.innerWidth > 768) return;
+    // 檢查是否在移動模式（包括F12開發者工具的移動模式）
+    const isMobileMode = window.innerWidth <= 768 || document.body.classList.contains('simulate-mobile');
+    if(!handle || !panel || !isMobileMode) return;
 
     const getPos = () => {
         const H = window.innerHeight;
-        return { P98: 0, P70: H * 0.3, P35: H * 0.65, PMIN: H - 45 };
+        // 考慮iOS安全區域，底部留出空間（避免被切換APP的橫線擋住）
+        // 但仍然允許滑到底部看最下方資訊，所以只留出必要的安全區域
+        const safeAreaBottom = 60; // 適中的安全區域高度，既能避免被擋住，又能滑到底部
+        return { P98: 0, P70: H * 0.3, P35: H * 0.65, PMIN: H - safeAreaBottom };
     };
 
     // 核心新增：動態調整底部留白
@@ -5798,63 +6307,306 @@ function setupMobilePanel() {
         // 如果面板 translateY 越大（位置越低）， Padding 就越大
         // 這樣可以補償掉被擋住的視線空間
         const neededSpace = Math.max(0, currentY); 
-        content.style.paddingBottom = `${neededSpace + 10}px`;
+        if (content) {
+            content.style.paddingBottom = `${neededSpace + 10}px`;
+        }
     };
 
     let p = getPos();
     let startY = 0, startTransY = p.P35, currentTransY = p.P35, isDragging = false;
+    let rafId = null; // requestAnimationFrame ID
+    let hasMoved = false; // 標記是否發生了拖曳移動
+    let clickTimer = null; // 點擊計時器，用於區分點擊和拖曳
 
     updateContentPadding(p.P35);
     panel.style.transform = `translateY(${p.P35}px)`;
 
+    // 使用 requestAnimationFrame 優化拖曳流暢度
+    const updatePanelPosition = (newY) => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+            panel.style.transform = `translateY(${newY}px)`;
+            currentTransY = newY;
+            updateContentPadding(newY);
+        });
+    };
+
+    // 阻止橫條點擊事件冒泡，避免觸發後方按鈕
     handle.addEventListener('touchstart', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        e.preventDefault(); // 阻止默認行為
         isDragging = true;
+        hasMoved = false; // 重置移動標記
         startY = e.touches[0].clientY;
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         startTransY = matrix.m42;
+        currentTransY = startTransY; // 初始化當前位置
         panel.style.transition = 'none';
-    }, {passive: true});
+        handle.classList.add('active'); // 添加視覺反饋
+        
+        // 設置點擊計時器：如果200ms內沒有移動，視為點擊
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+            // 如果200ms後仍然沒有移動，標記為準備點擊
+            // 這個計時器主要用於調試，實際判斷在touchend中進行
+        }, 200);
+    }, {passive: false}); // 改為非被動，以便使用preventDefault
 
+    // 優化拖曳邏輯，使用 requestAnimationFrame 提升流暢度
     window.addEventListener('touchmove', (e) => {
         if(!isDragging) return;
-        let newY = startTransY + (e.touches[0].clientY - startY);
-        if (newY < 0) newY *= 0.3;
-        panel.style.transform = `translateY(${newY}px)`;
-        currentTransY = newY;
-        updateContentPadding(newY); // 拖曳時同步更新
-    }, {passive: true});
+        e.preventDefault(); // 阻止默認滾動
+        e.stopPropagation(); // 阻止事件冒泡
+        
+        const touch = e.touches[0];
+        const deltaY = touch.clientY - startY;
+        
+        // 如果移動距離超過10px，標記為已移動（提高閾值，避免輕微觸碰觸發點擊）
+        // 這樣可以確保真正的點擊不會被誤判為拖曳
+        if (Math.abs(deltaY) > 10) {
+            hasMoved = true;
+        }
+        
+        let newY = startTransY + deltaY;
+        
+        // 優化邊界處理：使用彈性效果
+        if (newY < 0) {
+            // 向上拉超過頂部時，使用彈性效果
+            newY = newY * 0.3;
+        } else if (newY > p.PMIN) {
+            // 向下拉超過底部時，使用彈性效果
+            const over = newY - p.PMIN;
+            newY = p.PMIN + over * 0.3;
+        }
+        
+        updatePanelPosition(newY);
+    }, {passive: false}); // 改為非被動，以便使用preventDefault
 
-    window.addEventListener('touchend', () => {
+    window.addEventListener('touchend', (e) => {
         if(!isDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 清除點擊計時器
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+        }
+        
+        const wasDragging = isDragging;
+        const didMove = hasMoved;
         isDragging = false;
-        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        handle.classList.remove('active'); // 移除視覺反饋
+        
+        if (rafId) cancelAnimationFrame(rafId);
+        
+        // 如果沒有發生移動（只是點擊），觸發位置切換
+        if (wasDragging && !didMove) {
+            // 這是點擊事件，觸發位置切換
+            p = getPos();
+            const style = window.getComputedStyle(panel);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            const curY = matrix.m42;
+            
+            // 優化切換邏輯：根據當前位置智能切換到下一個位置（循環切換）
+            let target;
+            const threshold = 30;
+            
+            // 判斷當前位置並切換到下一個位置
+            if (curY >= p.PMIN - threshold) {
+                // 在最底部（或接近），切換到中間位置
+                target = p.P35;
+            } else if (curY >= p.P35 - threshold) {
+                // 在中間位置（或接近），切換到上方
+                target = p.P70;
+            } else if (curY >= p.P70 - threshold) {
+                // 在上方（或接近），切換到最上方
+                target = p.P98;
+            } else {
+                // 在最上方（或接近），切換到中間位置（形成循環）
+                target = p.P35;
+            }
+            
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            panel.style.transform = `translateY(${target}px)`;
+            currentTransY = target;
+            updateContentPadding(target);
+            hasMoved = false; // 重置標記
+            return;
+        }
+        
+        // 如果有移動，執行正常的拖曳結束邏輯
+        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 更流暢的過渡
         p = getPos();
+        
+        // 優化位置判斷：考慮拖曳方向和速度
         const dists = [
             {v: p.P98, d: Math.abs(currentTransY - p.P98)},
             {v: p.P70, d: Math.abs(currentTransY - p.P70)},
             {v: p.P35, d: Math.abs(currentTransY - p.P35)},
             {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
         ];
-        const closest = dists.reduce((a, b) => a.d < b.d ? a : b);
-        panel.style.transform = `translateY(${closest.v}px)`;
-        updateContentPadding(closest.v); // 彈回位置後更新
-    });
+        
+        // 找到最近的兩個位置
+        dists.sort((a, b) => a.d - b.d);
+        const closest = dists[0];
+        const secondClosest = dists[1];
+        
+        // 如果距離很近，選擇更合適的位置（優先向上）
+        let target = closest.v;
+        if (closest.d < 50 && secondClosest.d < 100) {
+            // 如果兩個位置都很近，優先選擇更靠近頂部的位置
+            target = Math.min(closest.v, secondClosest.v);
+        }
+        
+        panel.style.transform = `translateY(${target}px)`;
+        currentTransY = target;
+        updateContentPadding(target);
+        hasMoved = false; // 重置標記
+    }, {passive: false});
 
-    handle.addEventListener('click', (e) => {
+    // 統一點擊處理函數：智能位置切換
+    const handleClick = (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        e.preventDefault(); // 阻止默認行為
+        
         p = getPos();
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         const curY = matrix.m42;
+        
+        // 優化切換邏輯：根據當前位置智能切換到下一個位置
         let target;
-        if (curY > p.P35 + 50) target = p.P35;
-        else if (curY > p.P70 + 50) target = p.P70;
-        else if (curY > p.P98 + 50) target = p.P98;
-        else target = p.PMIN;
+        const threshold = 30; // 降低閾值，更容易觸發切換
+        
+        if (curY >= p.PMIN - threshold) {
+            // 在最底部，切換到中間位置
+            target = p.P35;
+        } else if (curY >= p.P35 - threshold) {
+            // 在中間位置，切換到上方
+            target = p.P70;
+        } else if (curY >= p.P70 - threshold) {
+            // 在上方，切換到最上方
+            target = p.P98;
+        } else {
+            // 在最上方，切換到中間位置
+            target = p.P35;
+        }
 
-        panel.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         panel.style.transform = `translateY(${target}px)`;
-        updateContentPadding(target); // 點擊切換後更新
+        currentTransY = target;
+        updateContentPadding(target);
+    };
+
+    // 點擊事件（用於桌面/F12開發者工具）
+    handle.addEventListener('click', (e) => {
+        // 如果發生了拖曳移動，不觸發點擊事件
+        if (hasMoved || isDragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+        }
+        handleClick(e);
+    });
+    
+    // 添加鼠標拖曳支持（用於F12開發者工具的觸摸模擬）
+    let mouseStartY = 0, mouseStartTransY = p.P35, isMouseDragging = false;
+    
+    handle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        isMouseDragging = true;
+        hasMoved = false;
+        mouseStartY = e.clientY;
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        mouseStartTransY = matrix.m42;
+        panel.style.transition = 'none';
+        handle.classList.add('active');
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const deltaY = e.clientY - mouseStartY;
+        if (Math.abs(deltaY) > 10) {
+            hasMoved = true;
+        }
+        
+        let newY = mouseStartTransY + deltaY;
+        p = getPos();
+        
+        if (newY < 0) {
+            newY = newY * 0.3;
+        } else if (newY > p.PMIN) {
+            const over = newY - p.PMIN;
+            newY = p.PMIN + over * 0.3;
+        }
+        
+        updatePanelPosition(newY);
+    });
+    
+    window.addEventListener('mouseup', (e) => {
+        if (!isMouseDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const wasDragging = isMouseDragging;
+        const didMove = hasMoved;
+        isMouseDragging = false;
+        handle.classList.remove('active');
+        
+        if (rafId) cancelAnimationFrame(rafId);
+        
+        // 如果沒有移動（只是點擊），觸發位置切換
+        if (wasDragging && !didMove) {
+            handleClick(e);
+            hasMoved = false;
+            return;
+        }
+        
+        // 如果有移動，執行正常的拖曳結束邏輯
+        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        p = getPos();
+        
+        const dists = [
+            {v: p.P98, d: Math.abs(currentTransY - p.P98)},
+            {v: p.P70, d: Math.abs(currentTransY - p.P70)},
+            {v: p.P35, d: Math.abs(currentTransY - p.P35)},
+            {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
+        ];
+        
+        dists.sort((a, b) => a.d - b.d);
+        const closest = dists[0];
+        const secondClosest = dists[1];
+        
+        let target = closest.v;
+        if (closest.d < 50 && secondClosest.d < 100) {
+            target = Math.min(closest.v, secondClosest.v);
+        }
+        
+        panel.style.transform = `translateY(${target}px)`;
+        currentTransY = target;
+        updateContentPadding(target);
+        hasMoved = false;
+    });
+
+    // 處理視窗大小變化
+    window.addEventListener('resize', () => {
+        p = getPos();
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const curY = matrix.m42;
+        
+        // 確保位置不超出範圍
+        if (curY > p.PMIN) {
+            panel.style.transform = `translateY(${p.PMIN}px)`;
+            updateContentPadding(p.PMIN);
+        }
     });
 }
 
