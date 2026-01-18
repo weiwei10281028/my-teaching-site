@@ -6289,12 +6289,15 @@ function setupMobilePanel() {
     const panel = document.querySelector('.controls-area');
     const content = document.querySelector('.controls-content'); // 抓取內容層
     const handle = document.getElementById('mobile-panel-handle');
-    if(!handle || !panel || window.innerWidth > 768) return;
+    // 檢查是否在移動模式（包括F12開發者工具的移動模式）
+    const isMobileMode = window.innerWidth <= 768 || document.body.classList.contains('simulate-mobile');
+    if(!handle || !panel || !isMobileMode) return;
 
     const getPos = () => {
         const H = window.innerHeight;
-        // 考慮iOS安全區域，底部留出更多空間（避免被切換APP的橫線擋住）
-        const safeAreaBottom = 80; // 增加安全區域高度
+        // 考慮iOS安全區域，底部留出空間（避免被切換APP的橫線擋住）
+        // 但仍然允許滑到底部看最下方資訊，所以只留出必要的安全區域
+        const safeAreaBottom = 60; // 適中的安全區域高度，既能避免被擋住，又能滑到底部
         return { P98: 0, P70: H * 0.3, P35: H * 0.65, PMIN: H - safeAreaBottom };
     };
 
@@ -6313,6 +6316,7 @@ function setupMobilePanel() {
     let startY = 0, startTransY = p.P35, currentTransY = p.P35, isDragging = false;
     let rafId = null; // requestAnimationFrame ID
     let hasMoved = false; // 標記是否發生了拖曳移動
+    let clickTimer = null; // 點擊計時器，用於區分點擊和拖曳
 
     updateContentPadding(p.P35);
     panel.style.transform = `translateY(${p.P35}px)`;
@@ -6337,8 +6341,16 @@ function setupMobilePanel() {
         const style = window.getComputedStyle(panel);
         const matrix = new WebKitCSSMatrix(style.transform);
         startTransY = matrix.m42;
+        currentTransY = startTransY; // 初始化當前位置
         panel.style.transition = 'none';
         handle.classList.add('active'); // 添加視覺反饋
+        
+        // 設置點擊計時器：如果200ms內沒有移動，視為點擊
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+            // 如果200ms後仍然沒有移動，標記為準備點擊
+            // 這個計時器主要用於調試，實際判斷在touchend中進行
+        }, 200);
     }, {passive: false}); // 改為非被動，以便使用preventDefault
 
     // 優化拖曳邏輯，使用 requestAnimationFrame 提升流暢度
@@ -6350,8 +6362,9 @@ function setupMobilePanel() {
         const touch = e.touches[0];
         const deltaY = touch.clientY - startY;
         
-        // 如果移動距離超過5px，標記為已移動（避免輕微觸碰觸發點擊）
-        if (Math.abs(deltaY) > 5) {
+        // 如果移動距離超過10px，標記為已移動（提高閾值，避免輕微觸碰觸發點擊）
+        // 這樣可以確保真正的點擊不會被誤判為拖曳
+        if (Math.abs(deltaY) > 10) {
             hasMoved = true;
         }
         
@@ -6375,11 +6388,55 @@ function setupMobilePanel() {
         e.preventDefault();
         e.stopPropagation();
         
+        // 清除點擊計時器
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+        }
+        
+        const wasDragging = isDragging;
+        const didMove = hasMoved;
         isDragging = false;
         handle.classList.remove('active'); // 移除視覺反饋
         
         if (rafId) cancelAnimationFrame(rafId);
         
+        // 如果沒有發生移動（只是點擊），觸發位置切換
+        if (wasDragging && !didMove) {
+            // 這是點擊事件，觸發位置切換
+            p = getPos();
+            const style = window.getComputedStyle(panel);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            const curY = matrix.m42;
+            
+            // 優化切換邏輯：根據當前位置智能切換到下一個位置（循環切換）
+            let target;
+            const threshold = 30;
+            
+            // 判斷當前位置並切換到下一個位置
+            if (curY >= p.PMIN - threshold) {
+                // 在最底部（或接近），切換到中間位置
+                target = p.P35;
+            } else if (curY >= p.P35 - threshold) {
+                // 在中間位置（或接近），切換到上方
+                target = p.P70;
+            } else if (curY >= p.P70 - threshold) {
+                // 在上方（或接近），切換到最上方
+                target = p.P98;
+            } else {
+                // 在最上方（或接近），切換到中間位置（形成循環）
+                target = p.P35;
+            }
+            
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            panel.style.transform = `translateY(${target}px)`;
+            currentTransY = target;
+            updateContentPadding(target);
+            hasMoved = false; // 重置標記
+            return;
+        }
+        
+        // 如果有移動，執行正常的拖曳結束邏輯
         panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 更流暢的過渡
         p = getPos();
         
@@ -6406,17 +6463,11 @@ function setupMobilePanel() {
         panel.style.transform = `translateY(${target}px)`;
         currentTransY = target;
         updateContentPadding(target);
+        hasMoved = false; // 重置標記
     }, {passive: false});
 
-    // 優化點擊邏輯：更智能的位置切換（僅在沒有拖曳時觸發）
-    handle.addEventListener('click', (e) => {
-        // 如果發生了拖曳移動，不觸發點擊事件
-        if (hasMoved || isDragging) {
-            e.stopPropagation();
-            e.preventDefault();
-            return;
-        }
-        
+    // 統一點擊處理函數：智能位置切換
+    const handleClick = (e) => {
         e.stopPropagation(); // 阻止事件冒泡
         e.preventDefault(); // 阻止默認行為
         
@@ -6447,6 +6498,101 @@ function setupMobilePanel() {
         panel.style.transform = `translateY(${target}px)`;
         currentTransY = target;
         updateContentPadding(target);
+    };
+
+    // 點擊事件（用於桌面/F12開發者工具）
+    handle.addEventListener('click', (e) => {
+        // 如果發生了拖曳移動，不觸發點擊事件
+        if (hasMoved || isDragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+        }
+        handleClick(e);
+    });
+    
+    // 添加鼠標拖曳支持（用於F12開發者工具的觸摸模擬）
+    let mouseStartY = 0, mouseStartTransY = p.P35, isMouseDragging = false;
+    
+    handle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        isMouseDragging = true;
+        hasMoved = false;
+        mouseStartY = e.clientY;
+        const style = window.getComputedStyle(panel);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        mouseStartTransY = matrix.m42;
+        panel.style.transition = 'none';
+        handle.classList.add('active');
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const deltaY = e.clientY - mouseStartY;
+        if (Math.abs(deltaY) > 10) {
+            hasMoved = true;
+        }
+        
+        let newY = mouseStartTransY + deltaY;
+        p = getPos();
+        
+        if (newY < 0) {
+            newY = newY * 0.3;
+        } else if (newY > p.PMIN) {
+            const over = newY - p.PMIN;
+            newY = p.PMIN + over * 0.3;
+        }
+        
+        updatePanelPosition(newY);
+    });
+    
+    window.addEventListener('mouseup', (e) => {
+        if (!isMouseDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const wasDragging = isMouseDragging;
+        const didMove = hasMoved;
+        isMouseDragging = false;
+        handle.classList.remove('active');
+        
+        if (rafId) cancelAnimationFrame(rafId);
+        
+        // 如果沒有移動（只是點擊），觸發位置切換
+        if (wasDragging && !didMove) {
+            handleClick(e);
+            hasMoved = false;
+            return;
+        }
+        
+        // 如果有移動，執行正常的拖曳結束邏輯
+        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        p = getPos();
+        
+        const dists = [
+            {v: p.P98, d: Math.abs(currentTransY - p.P98)},
+            {v: p.P70, d: Math.abs(currentTransY - p.P70)},
+            {v: p.P35, d: Math.abs(currentTransY - p.P35)},
+            {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
+        ];
+        
+        dists.sort((a, b) => a.d - b.d);
+        const closest = dists[0];
+        const secondClosest = dists[1];
+        
+        let target = closest.v;
+        if (closest.d < 50 && secondClosest.d < 100) {
+            target = Math.min(closest.v, secondClosest.v);
+        }
+        
+        panel.style.transform = `translateY(${target}px)`;
+        currentTransY = target;
+        updateContentPadding(target);
+        hasMoved = false;
     });
 
     // 處理視窗大小變化
