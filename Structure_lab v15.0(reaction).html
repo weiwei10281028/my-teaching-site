@@ -5740,6 +5740,22 @@ if (type === 0) {
         const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
+        
+        // 生成選項：正確答案 + 3個不同族的元素（確保只有一個正確答案）
+        const diffGroupElements = window.quizState.pool.filter(el => {
+            return el.iupac !== target.iupac; // 只選擇不同族的元素作為錯誤選項
+        });
+        let forcedOpts = [quizData.answer];
+        const shuffledDiff = [...diffGroupElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            forcedOpts.push(el.s);
+        });
+        // 如果選項不足4個，從不同族的元素中隨機補充
+        while (forcedOpts.length < 4 && diffGroupElements.length > 0) {
+            const randomEl = diffGroupElements[Math.floor(Math.random() * diffGroupElements.length)];
+            if (!forcedOpts.includes(randomEl.s)) forcedOpts.push(randomEl.s);
+        }
+        quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
     } else {
         // 同一週期
         quizData.type        = "邏輯判斷：同一週期"; 
@@ -5752,6 +5768,22 @@ if (type === 0) {
         const partners       = ELECTRON_DATA.filter(el => el.p === target.p && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
+        
+        // 生成選項：正確答案 + 3個不同週期的元素（確保只有一個正確答案）
+        const diffPeriodElements = window.quizState.pool.filter(el => {
+            return el.p !== target.p; // 只選擇不同週期的元素作為錯誤選項
+        });
+        let forcedOpts = [quizData.answer];
+        const shuffledDiff = [...diffPeriodElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            forcedOpts.push(el.s);
+        });
+        // 如果選項不足4個，從不同週期的元素中隨機補充
+        while (forcedOpts.length < 4 && diffPeriodElements.length > 0) {
+            const randomEl = diffPeriodElements[Math.floor(Math.random() * diffPeriodElements.length)];
+            if (!forcedOpts.includes(randomEl.s)) forcedOpts.push(randomEl.s);
+        }
+        quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
     }
 } else if (type === 11) {
     quizData.type        = "位置定位：區塊 (Block)";
@@ -5776,6 +5808,22 @@ if (type === 0) {
     const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
     quizData.displayMode = "symbol";
+    
+    // 生成選項：正確答案 + 3個不同 iupac 的元素（確保只有一個正確答案）
+    const diffIupacElements = window.quizState.pool.filter(el => {
+        return el.iupac !== target.iupac; // 只選擇不同 iupac 的元素作為錯誤選項
+    });
+    let forcedOpts = [quizData.answer];
+    const shuffledDiff = [...diffIupacElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+    shuffledDiff.forEach(el => {
+        forcedOpts.push(el.s);
+    });
+    // 如果選項不足4個，從不同 iupac 的元素中隨機補充
+    while (forcedOpts.length < 4 && diffIupacElements.length > 0) {
+        const randomEl = diffIupacElements[Math.floor(Math.random() * diffIupacElements.length)];
+        if (!forcedOpts.includes(randomEl.s)) forcedOpts.push(randomEl.s);
+    }
+    quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
 }
         
         // 生成問題的唯一標識（用於重複檢查）
