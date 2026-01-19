@@ -1970,6 +1970,28 @@ let isReactionFinished = false;
 let isPlasmaMode = false;
 let isDampingMode = false; // 阻尼模式開關
 
+// 震動輔助函數（支援多平台）
+function triggerVibration(duration) {
+    if (!duration || duration <= 0) return false;
+    
+    try {
+        // 標準 Web Vibration API
+        if (navigator && typeof navigator.vibrate === 'function') {
+            return navigator.vibrate(duration);
+        }
+        // iOS 可能需要使用不同的方法，但網頁環境下通常不支援
+        return false;
+    } catch(e) {
+        console.log('震動觸發失敗:', e);
+        return false;
+    }
+}
+
+// 檢查震動是否可用
+function isVibrationSupported() {
+    return navigator && typeof navigator.vibrate === 'function';
+}
+
 // --- [新增] 用來儲存反應歷史紀錄 ---
 let moleculeHistory = [];
 
@@ -4015,23 +4037,23 @@ function animate() {
     if (window.isPaused) return;
 
     if (!isDragging && !isReactionRunning && !isLongPressActive) {
-        // 阻尼模式：使用更強的阻尼係數（0.88-0.92），根據速度動態調整
+        // 阻尼模式：使用更強的阻尼係數，讓減速更明顯
         if (isDampingMode) {
             let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
             // 速度越快，阻尼越強（速度依賴性阻尼）
-            // 基礎阻尼係數 0.90，高速時降至 0.88，低速時升至 0.92
-            const baseDamping = 0.90;
-            const speedFactor = Math.min(1, speed * 50); // 速度因子，最大為1
-            const dampingCoeff = baseDamping - (speedFactor * 0.02); // 0.88-0.92 範圍
+            // 基礎阻尼係數 0.85，高速時降至 0.80，低速時升至 0.90（更明顯的阻尼感）
+            const baseDamping = 0.85;
+            const speedFactor = Math.min(1, speed * 100); // 速度因子，最大為1
+            const dampingCoeff = baseDamping - (speedFactor * 0.05); // 0.80-0.90 範圍（更強阻尼）
             rotVelocity.x *= dampingCoeff;
             rotVelocity.y *= dampingCoeff;
             rotVelocity.z *= dampingCoeff;
             
             // 當速度接近停止時，觸發一次輕微震動（模擬停止感）
-            if (speed > 0.0001 && speed < 0.002 && navigator.vibrate) {
+            if (speed > 0.0001 && speed < 0.004) {
                 // 只在速度很慢時觸發一次，避免重複震動
-                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 100) {
-                    navigator.vibrate(15); // 15ms 輕微震動
+                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 200) {
+                    triggerVibration(25); // 25ms 輕微震動
                     window.lastDampingVibration = time;
                 }
             }
@@ -4111,9 +4133,24 @@ function setupInteractions() {
     if (toggleDamping) {
         toggleDamping.addEventListener('change', (e) => {
             isDampingMode = e.target.checked;
-            // 開啟時觸發一次確認震動
-            if (isDampingMode && navigator.vibrate) {
-                navigator.vibrate(40); // 40ms 確認震動
+            // 開啟時觸發一次確認震動（必須在用戶交互事件中才能觸發）
+            if (isDampingMode) {
+                // 使用較強的震動讓用戶明顯感受到
+                // 先嘗試陣列格式（更明顯的震動模式：60ms 震動，40ms 停頓，60ms 震動）
+                if (isVibrationSupported()) {
+                    try {
+                        const result = navigator.vibrate([60, 40, 60]);
+                        if (!result) {
+                            // 如果返回false，嘗試單次震動
+                            triggerVibration(60);
+                        }
+                    } catch(e) {
+                        // 如果陣列格式不支援，使用單次震動
+                        triggerVibration(60);
+                    }
+                } else {
+                    console.log('此設備不支援震動功能');
+                }
             }
         });
     }
@@ -4332,6 +4369,11 @@ function setupInteractions() {
         startX = x; startY = y; lastMouse = { x, y }; 
         rotVelocity = { x: 0, y: 0, z: 0 }; 
         clearTimeout(longPressTimer);
+        
+        // 阻尼模式：滑動開始時觸發輕微震動（讓用戶感受到開始）
+        if (isDampingMode) {
+            triggerVibration(20); // 20ms 輕微震動
+        }
 
         if (isFaceBuildMode) {
             // 手機版優化：成面模式需停留 0.2 秒才觸發，防止旋轉誤觸導致選取失敗
@@ -4359,12 +4401,12 @@ function setupInteractions() {
             if (isDampingMode) {
                 const moveSpeed = Math.sqrt(dx*dx + dy*dy);
                 const now = performance.now();
-                // 當移動速度較快時，觸發短脈衝震動（10-20ms），但限制頻率（每50ms最多一次）
-                if (moveSpeed > 8 && navigator.vibrate) {
-                    if (!window.lastMoveVibration || (now - window.lastMoveVibration) > 50) {
-                        // 使用短脈衝震動，強度根據速度調整
-                        const vibrationIntensity = Math.min(20, Math.max(10, moveSpeed * 1.5));
-                        navigator.vibrate(vibrationIntensity);
+                // 降低觸發門檻，讓震動更容易觸發（移動速度 > 3px 即可）
+                if (moveSpeed > 3) {
+                    if (!window.lastMoveVibration || (now - window.lastMoveVibration) > 100) {
+                        // 使用短脈衝震動，強度根據速度調整（15-30ms）
+                        const vibrationIntensity = Math.min(30, Math.max(15, moveSpeed * 2.5));
+                        triggerVibration(vibrationIntensity);
                         window.lastMoveVibration = now;
                     }
                 }
@@ -4392,13 +4434,17 @@ function setupInteractions() {
         }
         
         // 阻尼模式：滑動結束時觸發確認震動
-        if (isDampingMode && moveDist > MOVE_TOLERANCE && navigator.vibrate) {
+        if (isDampingMode && moveDist > MOVE_TOLERANCE) {
             // 根據最終速度計算震動強度
             const finalSpeed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
-            if (finalSpeed > 0.001) {
-                // 使用中等強度的確認震動（30-50ms）
-                const vibrationDuration = Math.min(50, 30 + finalSpeed * 10000);
-                navigator.vibrate(vibrationDuration);
+            // 降低觸發門檻，讓震動更容易觸發
+            if (finalSpeed > 0.0001) {
+                // 使用中等強度的確認震動（50-70ms），讓用戶明顯感受到
+                const vibrationDuration = Math.min(70, Math.max(50, 50 + finalSpeed * 10000));
+                triggerVibration(vibrationDuration);
+            } else {
+                // 即使速度很低，只要有移動就觸發一次輕微震動
+                triggerVibration(30);
             }
         }
         
