@@ -87,6 +87,7 @@
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
+        user-select: none;
         will-change: transform;
         transform: translateZ(0);
     } 
@@ -862,10 +863,32 @@
     .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #fbbf24; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.8; }
     .quiz-question-text { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
     .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 15px 10px; border-radius: 6px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-family: 'Rajdhani', sans-serif; }
+    .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 15px 10px; border-radius: 6px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; will-change: transform, background-color, border-color, box-shadow; }
     .option-btn:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
-    .option-btn.correct { background: rgba(34, 211, 238, 0.2) !important; border-color: var(--hud-cyan) !important; color: var(--hud-cyan) !important; }
-    .option-btn.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #ef4444 !important; }
+    .option-btn.selected { background: rgba(250, 204, 21, 0.2) !important; border-color: #facc15 !important; color: #facc15 !important; box-shadow: 0 0 10px rgba(250, 204, 21, 0.3) !important; }
+    .option-btn.correct { background: rgba(34, 211, 238, 0.2) !important; border-color: var(--hud-cyan) !important; color: var(--hud-cyan) !important; animation: correctPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .option-btn.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #ef4444 !important; animation: wrongShake 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .option-btn:disabled { opacity: 0.6; cursor: not-allowed; transition: opacity 0.3s ease; }
+    @keyframes correctPulse {
+        0% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 242, 255, 0.3); }
+        50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
+        100% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 242, 255, 0.3); }
+    }
+    @keyframes wrongShake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+        20%, 40%, 60%, 80% { transform: translateX(3px); }
+    }
+    .confirm-btn { background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.3)); border: 1px solid #8b5cf6; padding: 15px 30px; border-radius: 6px; color: #c4b5fd; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; margin-top: 20px; width: 100%; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); will-change: transform, background, box-shadow; }
+    .confirm-btn:hover { background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.4)); box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); transform: translateY(-1px); }
+    .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .confirm-btn.confirmed { background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 1px solid #fbbf24; color: #000; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: buttonTransform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .confirm-btn.confirmed:hover { background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 0 25px rgba(251, 191, 36, 0.6); }
+    @keyframes buttonTransform {
+        0% { transform: scale(0.95); opacity: 0.8; }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); opacity: 1; }
+    }
     .config-list { flex: 1; overflow-y: auto; padding: 15px; }
     
     .element-card { 
@@ -1233,7 +1256,7 @@
 .fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; text-shadow: 0 0 5px #facc15; }
 
 /* 2. 神諭 */
-.fortune-oracle { flex-shrink:0; font-family:'Rajdhani','sans-serif'; font-style:italic; color:var(--hud-cyan); font-size:1rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(0,242,255,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); }
+.fortune-oracle { flex-shrink:0; font-family:'Rajdhani','sans-serif'; font-style:italic; color:var(--hud-cyan); font-size:1rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(0,242,255,0.4); display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); }
 
 /* 3. 運勢文字區 */
 .fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.5); border-radius:4px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:var(--hud-cyan) rgba(0,0,0,0.1); }
@@ -1583,6 +1606,11 @@
                 <div class="switch-container">
                     <input type="checkbox" id="toggle-plasma">
                     <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
+                </div>
+                <!-- 阻尼模式 -->
+                <div class="switch-container">
+                    <input type="checkbox" id="toggle-damping">
+                    <label for="toggle-damping" class="clickable-label" style="color:#c4b5fd; font-weight:bold;">🌊 阻尼模式</label>
                 </div>
             </details>
 
@@ -1940,6 +1968,7 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 let isReactionRunning = false; 
 let isReactionFinished = false; 
 let isPlasmaMode = false;
+let isDampingMode = false; // 阻尼模式開關
 
 // --- [新增] 用來儲存反應歷史紀錄 ---
 let moleculeHistory = [];
@@ -3986,9 +4015,29 @@ function animate() {
     if (window.isPaused) return;
 
     if (!isDragging && !isReactionRunning && !isLongPressActive) {
-        
-        
-        rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
+        // 阻尼模式：使用更強的阻尼係數（0.88-0.92），根據速度動態調整
+        if (isDampingMode) {
+            let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
+            // 速度越快，阻尼越強（速度依賴性阻尼）
+            // 基礎阻尼係數 0.90，高速時降至 0.88，低速時升至 0.92
+            const baseDamping = 0.90;
+            const speedFactor = Math.min(1, speed * 50); // 速度因子，最大為1
+            const dampingCoeff = baseDamping - (speedFactor * 0.02); // 0.88-0.92 範圍
+            rotVelocity.x *= dampingCoeff;
+            rotVelocity.y *= dampingCoeff;
+            rotVelocity.z *= dampingCoeff;
+            
+            // 當速度接近停止時，觸發一次輕微震動（模擬停止感）
+            if (speed > 0.0001 && speed < 0.002 && navigator.vibrate) {
+                // 只在速度很慢時觸發一次，避免重複震動
+                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 100) {
+                    navigator.vibrate(15); // 15ms 輕微震動
+                    window.lastDampingVibration = time;
+                }
+            }
+        } else {
+            rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
+        }
         let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
         const MIN_SPEED = 0.004; 
         const autoRotateEl = document.getElementById('toggle-auto-rotate');
@@ -4054,6 +4103,18 @@ function setupInteractions() {
         togglePlasma.addEventListener('change', (e) => {
             isPlasmaMode = e.target.checked;
             renderScene();
+        });
+    }
+    
+    // 阻尼模式開關
+    const toggleDamping = document.getElementById('toggle-damping');
+    if (toggleDamping) {
+        toggleDamping.addEventListener('change', (e) => {
+            isDampingMode = e.target.checked;
+            // 開啟時觸發一次確認震動
+            if (isDampingMode && navigator.vibrate) {
+                navigator.vibrate(40); // 40ms 確認震動
+            }
         });
     }
 
@@ -4294,6 +4355,20 @@ function setupInteractions() {
         if (!isDragging) return;
         const dx = x - lastMouse.x; const dy = y - lastMouse.y;
         if (currentMode === 1 || (currentMode === 2 && !altKeyIsDown)) {
+            // 阻尼模式：在滑動過程中添加輕微震動反饋（限制頻率，避免過於頻繁）
+            if (isDampingMode) {
+                const moveSpeed = Math.sqrt(dx*dx + dy*dy);
+                const now = performance.now();
+                // 當移動速度較快時，觸發短脈衝震動（10-20ms），但限制頻率（每50ms最多一次）
+                if (moveSpeed > 8 && navigator.vibrate) {
+                    if (!window.lastMoveVibration || (now - window.lastMoveVibration) > 50) {
+                        // 使用短脈衝震動，強度根據速度調整
+                        const vibrationIntensity = Math.min(20, Math.max(10, moveSpeed * 1.5));
+                        navigator.vibrate(vibrationIntensity);
+                        window.lastMoveVibration = now;
+                    }
+                }
+            }
             rotVelocity.y = dx * sensitivity; rotVelocity.x = -dy * sensitivity; 
             applyRotation(rotVelocity.y, rotVelocity.x, 0);
         } else {
@@ -4315,6 +4390,18 @@ function setupInteractions() {
         if (!isLongPressActive && moveDist < MOVE_TOLERANCE) {
             checkAtomClick(x, y);
         }
+        
+        // 阻尼模式：滑動結束時觸發確認震動
+        if (isDampingMode && moveDist > MOVE_TOLERANCE && navigator.vibrate) {
+            // 根據最終速度計算震動強度
+            const finalSpeed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
+            if (finalSpeed > 0.001) {
+                // 使用中等強度的確認震動（30-50ms）
+                const vibrationDuration = Math.min(50, 30 + finalSpeed * 10000);
+                navigator.vibrate(vibrationDuration);
+            }
+        }
+        
         isDragging = false; 
         isLongPressActive = false; 
     };
@@ -5015,8 +5102,8 @@ window.startQuiz = function(level) {
 
     // 產生平衡且限制重複簡單題型的牌組
 window.quizState.generateTypeDeck = function(diff, total) {
-    // 定義電子組態相關題型（不在基礎級出現）
-    const electronConfigTypes = [3, 7, 8, 9, 11, 15];
+    // 定義限制題型：每一輪只能出現一次的題型（Type 5: 狀態, Type 14: 電負度）
+    const restrictedTypes = [5, 14];
     
     // 根據難度分配題型池
     const typePools = {
@@ -5031,40 +5118,43 @@ window.quizState.generateTypeDeck = function(diff, total) {
     
     const types = typePools[diff] || typePools[1];
     
-    // 驗證：確保基礎級不包含電子組態題型
-    if (diff === 1) {
-        electronConfigTypes.forEach(eType => {
-            if (types.includes(eType)) {
-                console.warn(`警告：基礎級不應包含電子組態題型 ${eType}，已自動移除`);
-                const index = types.indexOf(eType);
-                if (index > -1) types.splice(index, 1);
-            }
-        });
-    }
+    // 分離限制題型和其他題型
+    const restrictedInPool = types.filter(t => restrictedTypes.includes(t));
+    const normalTypes = types.filter(t => !restrictedTypes.includes(t));
     
     let deck = [];
     
-    // 優化分配：盡量讓每種題型都有出現到
-    const typeCounts = {};
-    types.forEach(t => typeCounts[t] = 0);
-    
-    // 計算每種題型應該出現的次數（盡量平均分配）
-    const typesPerQuestion = Math.floor(total / types.length);
-    const remainder = total % types.length;
-    
-    // 先為每種題型分配基本次數
-    types.forEach(t => {
-        for (let i = 0; i < typesPerQuestion; i++) {
-            deck.push(t);
-            typeCounts[t]++;
-        }
+    // 限制題型：每種最多只出現一次
+    restrictedInPool.forEach(t => {
+        deck.push(t);
     });
     
-    // 剩餘的題數隨機分配給不同題型
-    const shuffledTypes = [...types].sort(() => 0.5 - Math.random());
-    for (let i = 0; i < remainder; i++) {
-        deck.push(shuffledTypes[i]);
-        typeCounts[shuffledTypes[i]]++;
+    // 計算剩餘題數（總題數減去已分配的限制題型）
+    const remainingTotal = total - restrictedInPool.length;
+    
+    if (remainingTotal > 0 && normalTypes.length > 0) {
+        // 優化分配：盡量讓每種正常題型都有出現到
+        const typeCounts = {};
+        normalTypes.forEach(t => typeCounts[t] = 0);
+        
+        // 計算每種題型應該出現的次數（盡量平均分配）
+        const typesPerQuestion = Math.floor(remainingTotal / normalTypes.length);
+        const remainder = remainingTotal % normalTypes.length;
+        
+        // 先為每種題型分配基本次數
+        normalTypes.forEach(t => {
+            for (let i = 0; i < typesPerQuestion; i++) {
+                deck.push(t);
+                typeCounts[t]++;
+            }
+        });
+        
+        // 剩餘的題數隨機分配給不同題型
+        const shuffledTypes = [...normalTypes].sort(() => 0.5 - Math.random());
+        for (let i = 0; i < remainder; i++) {
+            deck.push(shuffledTypes[i]);
+            typeCounts[shuffledTypes[i]]++;
+        }
     }
     
     // 洗牌：打亂順序
@@ -5198,13 +5288,8 @@ function generateQuestionKey(type, quizData, target) {
             return `type4-${coreQuestion}`;
             
         case 5: // 特性校準：元素 ↔ 常溫狀態
-            // 區分方向：元素→狀態、狀態→元素
-            if (coreQuestion.includes('物理狀態為何')) {
-                return `type5-元素→狀態`;
-            } else if (coreQuestion.includes('為「') && coreQuestion.includes('狀態')) {
-                return `type5-狀態→元素`;
-            }
-            return `type5-${coreQuestion}`;
+            // 每一輪只能出現一次（不區分方向或元素）
+            return `type5-常溫狀態`;
             
         case 6: // 計算與逆推（融合了12、13、16、17、18）
             // 根據子類型區分
@@ -5221,6 +5306,18 @@ function generateQuestionKey(type, quizData, target) {
             }
             return `type6-${quizData.type}`;
             
+        case 9: // 量子結構：軌域總數統計
+            // 區分兩種問法：軌域總數統計、價電子能階統計
+            if (quizData.type.includes('軌域總數統計')) {
+                // 提取軌域類型（s/p/d）
+                const orbMatch = quizData.type.match(/([spd])/i);
+                const orbType = orbMatch ? orbMatch[1].toLowerCase() : '';
+                return `type9-軌域總數統計-${orbType}`;
+            } else if (quizData.type.includes('價電子能階統計')) {
+                return `type9-價電子能階統計`;
+            }
+            return `type9-${quizData.type}`;
+            
         case 10: // 邏輯判斷：同族元素或同一週期
             // 區分：同族、同一週期
             if (quizData.type.includes('同族')) {
@@ -5229,6 +5326,10 @@ function generateQuestionKey(type, quizData, target) {
                 return `type10-同一週期`;
             }
             return `type10-${coreQuestion}`;
+            
+        case 14: // 性質趨勢：電負度比較
+            // 每一輪只能出現一次（不區分元素）
+            return `type14-電負度`;
             
         default:
             // 其他題型：使用題型+問題核心內容
@@ -5239,15 +5340,11 @@ function generateQuestionKey(type, quizData, target) {
             const numberMatch = coreQuestion.match(/\d+/);
             const number = numberMatch ? numberMatch[0] : '';
             
-            // 對於單向題型，使用題型作為唯一標識（同一題型只問一次）
-            // 對於需要區分元素的題型，加上元素符號
-            if ([3, 7, 8, 9, 11, 14, 15].includes(type)) {
-                // 這些題型需要區分元素，因為不同元素答案不同
-                return `type${type}-${elementSymbol}-${coreQuestion.substring(0, 50)}`;
-            } else {
-                // 其他題型：同一題型只問一次
-                return `type${type}-${coreQuestion.substring(0, 50)}`;
-            }
+            // 對於所有題型，使用題型作為唯一標識（同一題型只問一次）
+            // 根據用戶要求：若同一個TYPE內有不同問法，可以算不同題型
+            // 但對於單向題型（如 Type 3, 7, 8, 9, 11, 15），即使問法略有不同，也視為同一題型
+            // 因為它們都是同一個方向（元素→答案），只是問法不同
+            return `type${type}-${coreQuestion.substring(0, 50)}`;
     }
 }
 
@@ -5729,6 +5826,22 @@ if (type === 0) {
         const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
+        
+        // 生成選項：正確答案 + 3個不同族的元素（確保只有一個正確答案，且不包含問題中的元素）
+        const diffGroupElements = window.quizState.pool.filter(el => {
+            return el.iupac !== target.iupac && el.z !== target.z; // 只選擇不同族且不是問題中元素的元素作為錯誤選項
+        });
+        let forcedOpts = [quizData.answer];
+        const shuffledDiff = [...diffGroupElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            forcedOpts.push(el.s);
+        });
+        // 如果選項不足4個，從不同族的元素中隨機補充
+        while (forcedOpts.length < 4 && diffGroupElements.length > 0) {
+            const randomEl = diffGroupElements[Math.floor(Math.random() * diffGroupElements.length)];
+            if (!forcedOpts.includes(randomEl.s) && randomEl.z !== target.z) forcedOpts.push(randomEl.s);
+        }
+        quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
     } else {
         // 同一週期
         quizData.type        = "邏輯判斷：同一週期"; 
@@ -5741,6 +5854,22 @@ if (type === 0) {
         const partners       = ELECTRON_DATA.filter(el => el.p === target.p && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
+        
+        // 生成選項：正確答案 + 3個不同週期的元素（確保只有一個正確答案，且不包含問題中的元素）
+        const diffPeriodElements = window.quizState.pool.filter(el => {
+            return el.p !== target.p && el.z !== target.z; // 只選擇不同週期且不是問題中元素的元素作為錯誤選項
+        });
+        let forcedOpts = [quizData.answer];
+        const shuffledDiff = [...diffPeriodElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        shuffledDiff.forEach(el => {
+            forcedOpts.push(el.s);
+        });
+        // 如果選項不足4個，從不同週期的元素中隨機補充
+        while (forcedOpts.length < 4 && diffPeriodElements.length > 0) {
+            const randomEl = diffPeriodElements[Math.floor(Math.random() * diffPeriodElements.length)];
+            if (!forcedOpts.includes(randomEl.s) && randomEl.z !== target.z) forcedOpts.push(randomEl.s);
+        }
+        quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
     }
 } else if (type === 11) {
     quizData.type        = "位置定位：區塊 (Block)";
@@ -5765,6 +5894,22 @@ if (type === 0) {
     const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
     quizData.displayMode = "symbol";
+    
+    // 生成選項：正確答案 + 3個不同 iupac 的元素（確保只有一個正確答案，且不包含問題中的元素）
+    const diffIupacElements = window.quizState.pool.filter(el => {
+        return el.iupac !== target.iupac && el.z !== target.z; // 只選擇不同 iupac 且不是問題中元素的元素作為錯誤選項
+    });
+    let forcedOpts = [quizData.answer];
+    const shuffledDiff = [...diffIupacElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+    shuffledDiff.forEach(el => {
+        forcedOpts.push(el.s);
+    });
+    // 如果選項不足4個，從不同 iupac 的元素中隨機補充
+    while (forcedOpts.length < 4 && diffIupacElements.length > 0) {
+        const randomEl = diffIupacElements[Math.floor(Math.random() * diffIupacElements.length)];
+        if (!forcedOpts.includes(randomEl.s) && randomEl.z !== target.z) forcedOpts.push(randomEl.s);
+    }
+    quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
 }
         
         // 生成問題的唯一標識（用於重複檢查）
@@ -5800,6 +5945,32 @@ if (type === 0) {
     questionEl.style.fontSize = "1.7rem";
 
     // 5. 智慧選項生成 (建立 opts 陣列)
+    // 從問題中提取元素符號，確保選項中不包含問題中提到的元素
+    const questionText = quizData.question;
+    const questionElementSymbols = [];
+    // 提取問題中的元素符號（例如 [ Mg ] 或 ${s}）
+    const symbolMatches = questionText.match(/\[?\s*([A-Z][a-z]?)\s*\]?/g);
+    if (symbolMatches) {
+        symbolMatches.forEach(match => {
+            const symbol = match.replace(/[\[\]\s]/g, '');
+            if (symbol && symbol.length <= 2) {
+                questionElementSymbols.push(symbol);
+                // 同時檢查中文名和英文名
+                const element = ELECTRON_DATA.find(el => el.s === symbol);
+                if (element) {
+                    questionElementSymbols.push(element.cn);
+                    questionElementSymbols.push(element.n);
+                }
+            }
+        });
+    }
+    // 也檢查問題中是否包含目標元素的符號、中文名、英文名
+    if (target) {
+        questionElementSymbols.push(target.s);
+        questionElementSymbols.push(target.cn);
+        questionElementSymbols.push(target.n);
+    }
+    
     let opts = [quizData.answer]; 
     if (quizData.forcedOpts) {
     opts = quizData.forcedOpts;
@@ -5857,8 +6028,20 @@ if (type === 0) {
             default: val = cand.s; break;
 }
         
-        // 確保選項不重複，且不是空的
-        if (val && !opts.includes(val)) opts.push(val);
+        // 確保選項不重複，不是空的，且不包含問題中提到的元素
+        if (val && !opts.includes(val) && !questionElementSymbols.includes(val)) {
+            // 對於符號類型的選項，也要檢查對應的元素是否在問題中
+            if (quizData.displayMode === "symbol" && questionElementSymbols.includes(cand.s)) {
+                continue; // 跳過這個選項
+            }
+            if (quizData.displayMode === "chinese" && questionElementSymbols.includes(cand.cn)) {
+                continue; // 跳過這個選項
+            }
+            if (quizData.displayMode === "english" && questionElementSymbols.includes(cand.n)) {
+                continue; // 跳過這個選項
+            }
+            opts.push(val);
+        }
     }
     }
 
@@ -5866,30 +6049,91 @@ if (type === 0) {
     opts.sort(() => 0.5 - Math.random());
     const container = document.getElementById('quiz-options');
     container.innerHTML = "";
+    let selectedOption = null; // 儲存選中的選項
+    
     opts.forEach(o => {
         const b = document.createElement('button'); 
         b.className = 'option-btn'; 
         b.innerHTML = o; // 支援上標標籤渲染
+        b.dataset.value = o; // 儲存選項值
         b.onclick = () => {
-            container.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-            const isCorrect = (o === quizData.answer);
-            if (isCorrect) { 
-                b.classList.add('correct'); 
-                window.quizState.correctCount++; 
-            } else { 
-                b.classList.add('wrong'); 
-                container.querySelectorAll('.option-btn').forEach(btn => { 
-                    // 修正答案顯示比對邏輯，使用 innerHTML
-                    if(btn.innerHTML === quizData.answer) btn.classList.add('correct'); 
-                }); 
+            // 如果已經確認過（有 nextBtn），不再允許選擇
+            if (container.querySelector('.start-cal-btn')) return;
+            
+            // 如果選項已被禁用，不允許選擇
+            if (b.disabled) return;
+            
+            // 移除所有選項的選中狀態
+            container.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // 設置當前選項為選中狀態（黃光）
+            b.classList.add('selected');
+            selectedOption = o;
+            
+            // 顯示確認按鈕（如果還沒有）
+            let confirmBtn = container.querySelector('.confirm-btn');
+            if (!confirmBtn) {
+                confirmBtn = document.createElement('button');
+                confirmBtn.className = 'confirm-btn';
+                confirmBtn.textContent = '校準';
+                let isCalibrated = false; // 標記是否已校準
+                
+                confirmBtn.onclick = () => {
+                    if (!isCalibrated) {
+                        // 第一次點擊：校準
+                        // 使用 requestAnimationFrame 確保動畫流暢
+                        requestAnimationFrame(() => {
+                            // 禁用所有選項
+                            container.querySelectorAll('.option-btn').forEach(btn => {
+                                btn.disabled = true;
+                            });
+                            
+                            // 判斷答案是否正確
+                            const isCorrect = (selectedOption === quizData.answer);
+                            
+                            // 找到選中的按鈕並更新狀態
+                            const selectedBtn = container.querySelector('.option-btn.selected');
+                            if (selectedBtn) {
+                                // 先移除選中狀態，使用短暫延遲讓動畫更流暢
+                                selectedBtn.classList.remove('selected');
+                                
+                                // 使用 requestAnimationFrame 確保狀態更新在下一幀
+                                requestAnimationFrame(() => {
+                                    if (isCorrect) { 
+                                        selectedBtn.classList.add('correct'); 
+                                        window.quizState.correctCount++; 
+                                    } else { 
+                                        selectedBtn.classList.add('wrong'); 
+                                        // 顯示正確答案
+                                        container.querySelectorAll('.option-btn').forEach(btn => { 
+                                            // 修正答案顯示比對邏輯，使用 innerHTML
+                                            if(btn.innerHTML === quizData.answer) {
+                                                // 延遲顯示正確答案，讓錯誤動畫先完成
+                                                setTimeout(() => {
+                                                    btn.classList.add('correct');
+                                                }, 300);
+                                            }
+                                        }); 
+                                    }
+                                });
+                            }
+                            
+                            // 轉換按鈕為確認按鈕，使用動畫
+                            setTimeout(() => {
+                                isCalibrated = true;
+                                confirmBtn.classList.add('confirmed');
+                                confirmBtn.textContent = isCorrect ? "數據正確，點擊繼續 NEXT >" : "校準失敗，繼續程序 NEXT >";
+                            }, 200);
+                        });
+                    } else {
+                        // 第二次點擊：繼續下一題
+                        window.renderNextQuestion();
+                    }
+                };
+                container.appendChild(confirmBtn);
             }
-            const nextBtn = document.createElement('button'); 
-            nextBtn.className = 'start-cal-btn'; 
-            nextBtn.style.marginTop = '20px'; 
-            nextBtn.style.width = '100%';
-            nextBtn.textContent = isCorrect ? "數據正確，點擊繼續 NEXT >" : "校準失敗，繼續程序 NEXT >"; 
-            nextBtn.onclick = window.renderNextQuestion; 
-            container.appendChild(nextBtn); 
         };
         container.appendChild(b);
     });
@@ -6368,6 +6612,9 @@ function setupMobilePanel() {
             hasMoved = true;
         }
         
+        // 更新位置信息（窗口大小可能改變）
+        p = getPos();
+        
         let newY = startTransY + deltaY;
         
         // 優化邊界處理：使用彈性效果
@@ -6564,7 +6811,28 @@ function setupMobilePanel() {
         
         // 如果沒有移動（只是點擊），觸發位置切換
         if (wasDragging && !didMove) {
-            handleClick(e);
+            p = getPos();
+            const style = window.getComputedStyle(panel);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            const curY = matrix.m42;
+            
+            let target;
+            const threshold = 30;
+            
+            if (curY >= p.PMIN - threshold) {
+                target = p.P35;
+            } else if (curY >= p.P35 - threshold) {
+                target = p.P70;
+            } else if (curY >= p.P70 - threshold) {
+                target = p.P98;
+            } else {
+                target = p.P35;
+            }
+            
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            panel.style.transform = `translateY(${target}px)`;
+            currentTransY = target;
+            updateContentPadding(target);
             hasMoved = false;
             return;
         }
@@ -7193,11 +7461,27 @@ function revealFortune() {
             pickIndex = record.index; 
         } else { 
             // 若日期不同 (過了早上八點)，重新隨機
-            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+            // 使用 crypto.getRandomValues 確保完全隨機，避免循環模式
+            if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                const array = new Uint32Array(1);
+                crypto.getRandomValues(array);
+                pickIndex = array[0] % ELEMENT_FORTUNES.length;
+            } else {
+                // 降級方案：使用 Math.random() + 時間戳增加隨機性
+                pickIndex = Math.floor((Math.random() + Date.now() % 1000 / 1000) * ELEMENT_FORTUNES.length) % ELEMENT_FORTUNES.length;
+            }
             localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); 
         }
     } else { 
-        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+        // 使用 crypto.getRandomValues 確保完全隨機，避免循環模式
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            const array = new Uint32Array(1);
+            crypto.getRandomValues(array);
+            pickIndex = array[0] % ELEMENT_FORTUNES.length;
+        } else {
+            // 降級方案：使用 Math.random() + 時間戳增加隨機性
+            pickIndex = Math.floor((Math.random() + Date.now() % 1000 / 1000) * ELEMENT_FORTUNES.length) % ELEMENT_FORTUNES.length;
+        }
     }
 
     // 2. 取得資料
