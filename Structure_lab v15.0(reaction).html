@@ -1964,6 +1964,7 @@ let isReactionRunning = false;
 let isReactionFinished = false; 
 let isPlasmaMode = false;
 
+
 // --- [新增] 用來儲存反應歷史紀錄 ---
 let moleculeHistory = [];
 
@@ -4009,8 +4010,6 @@ function animate() {
     if (window.isPaused) return;
 
     if (!isDragging && !isReactionRunning && !isLongPressActive) {
-        
-        
         rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
         let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
         const MIN_SPEED = 0.004; 
@@ -4079,6 +4078,7 @@ function setupInteractions() {
             renderScene();
         });
     }
+    
 
     window.togglePerformanceMode = function() {
         const isPerf = !window.isPerformanceMode;
@@ -4338,6 +4338,7 @@ function setupInteractions() {
         if (!isLongPressActive && moveDist < MOVE_TOLERANCE) {
             checkAtomClick(x, y);
         }
+        
         isDragging = false; 
         isLongPressActive = false; 
     };
