@@ -1970,16 +1970,79 @@ let isReactionFinished = false;
 let isPlasmaMode = false;
 let isDampingMode = false; // 阻尼模式開關
 
-// 震動輔助函數（支援多平台）
+// 檢測是否為 iOS 設備
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// 創建 iOS 觸覺反饋的隱藏 switch 元素（iOS 18+ workaround）
+let iosHapticSwitch = null;
+let iosHapticLabel = null;
+function createIOSHapticSwitch() {
+    if (iosHapticSwitch && iosHapticLabel) return { switch: iosHapticSwitch, label: iosHapticLabel };
+    
+    // 創建隱藏的 switch 元素和 label 用於觸發 iOS 觸覺反饋
+    iosHapticSwitch = document.createElement('input');
+    iosHapticSwitch.type = 'checkbox';
+    iosHapticSwitch.id = 'ios-haptic-switch';
+    iosHapticSwitch.style.position = 'fixed';
+    iosHapticSwitch.style.opacity = '0';
+    iosHapticSwitch.style.pointerEvents = 'none';
+    iosHapticSwitch.style.width = '1px';
+    iosHapticSwitch.style.height = '1px';
+    iosHapticSwitch.style.top = '-10px';
+    iosHapticSwitch.style.left = '-10px';
+    
+    iosHapticLabel = document.createElement('label');
+    iosHapticLabel.htmlFor = 'ios-haptic-switch';
+    iosHapticLabel.style.position = 'fixed';
+    iosHapticLabel.style.opacity = '0';
+    iosHapticLabel.style.pointerEvents = 'none';
+    iosHapticLabel.style.width = '1px';
+    iosHapticLabel.style.height = '1px';
+    iosHapticLabel.style.top = '-10px';
+    iosHapticLabel.style.left = '-10px';
+    
+    document.body.appendChild(iosHapticSwitch);
+    document.body.appendChild(iosHapticLabel);
+    
+    return { switch: iosHapticSwitch, label: iosHapticLabel };
+}
+
+// 震動輔助函數（支援多平台，包含 iOS workaround）
 function triggerVibration(duration) {
     if (!duration || duration <= 0) return false;
     
     try {
-        // 標準 Web Vibration API
+        // 標準 Web Vibration API（Android/Chrome）
         if (navigator && typeof navigator.vibrate === 'function') {
-            return navigator.vibrate(duration);
+            const result = navigator.vibrate(duration);
+            if (result !== false) {
+                return true;
+            }
         }
-        // iOS 可能需要使用不同的方法，但網頁環境下通常不支援
+        
+        // iOS workaround：使用 switch 元素觸發觸覺反饋（iOS 18+）
+        if (isIOSDevice()) {
+            const hapticEls = createIOSHapticSwitch();
+            if (hapticEls && hapticEls.switch && hapticEls.label) {
+                try {
+                    // 方法1：點擊 label 來觸發觸覺反饋（iOS 18+ 支援）
+                    hapticEls.label.click();
+                    // 方法2：切換 switch 狀態
+                    hapticEls.switch.checked = !hapticEls.switch.checked;
+                    // 立即切換回來，準備下次使用
+                    setTimeout(() => {
+                        hapticEls.switch.checked = !hapticEls.switch.checked;
+                    }, 50);
+                    return true;
+                } catch(e) {
+                    console.log('iOS 觸覺反饋觸發失敗:', e);
+                }
+            }
+        }
+        
         return false;
     } catch(e) {
         console.log('震動觸發失敗:', e);
@@ -1989,7 +2052,15 @@ function triggerVibration(duration) {
 
 // 檢查震動是否可用
 function isVibrationSupported() {
-    return navigator && typeof navigator.vibrate === 'function';
+    // Android/Chrome 標準 API
+    if (navigator && typeof navigator.vibrate === 'function') {
+        return true;
+    }
+    // iOS workaround
+    if (isIOSDevice()) {
+        return true;
+    }
+    return false;
 }
 
 // --- [新增] 用來儲存反應歷史紀錄 ---
@@ -4041,19 +4112,19 @@ function animate() {
         if (isDampingMode) {
             let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
             // 速度越快，阻尼越強（速度依賴性阻尼）
-            // 基礎阻尼係數 0.85，高速時降至 0.80，低速時升至 0.90（更明顯的阻尼感）
-            const baseDamping = 0.85;
-            const speedFactor = Math.min(1, speed * 100); // 速度因子，最大為1
-            const dampingCoeff = baseDamping - (speedFactor * 0.05); // 0.80-0.90 範圍（更強阻尼）
+            // 基礎阻尼係數 0.82，高速時降至 0.75，低速時升至 0.88（非常明顯的阻尼感）
+            const baseDamping = 0.82;
+            const speedFactor = Math.min(1, speed * 150); // 速度因子，最大為1
+            const dampingCoeff = baseDamping - (speedFactor * 0.07); // 0.75-0.88 範圍（非常強阻尼）
             rotVelocity.x *= dampingCoeff;
             rotVelocity.y *= dampingCoeff;
             rotVelocity.z *= dampingCoeff;
             
             // 當速度接近停止時，觸發一次輕微震動（模擬停止感）
-            if (speed > 0.0001 && speed < 0.004) {
+            if (speed > 0.0001 && speed < 0.005) {
                 // 只在速度很慢時觸發一次，避免重複震動
-                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 200) {
-                    triggerVibration(25); // 25ms 輕微震動
+                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 250) {
+                    triggerVibration(30); // 30ms 輕微震動
                     window.lastDampingVibration = time;
                 }
             }
@@ -4133,26 +4204,50 @@ function setupInteractions() {
     if (toggleDamping) {
         toggleDamping.addEventListener('change', (e) => {
             isDampingMode = e.target.checked;
-            // 開啟時觸發一次確認震動（必須在用戶交互事件中才能觸發）
+            console.log('阻尼模式:', isDampingMode ? '開啟' : '關閉');
+            console.log('設備類型:', isIOSDevice() ? 'iOS' : '其他');
+            console.log('震動支援:', isVibrationSupported());
+            console.log('navigator.vibrate:', typeof navigator?.vibrate);
+            
+            // 開啟時觸發確認震動（必須在用戶交互事件中才能觸發）
             if (isDampingMode) {
                 // 使用較強的震動讓用戶明顯感受到
-                // 先嘗試陣列格式（更明顯的震動模式：60ms 震動，40ms 停頓，60ms 震動）
                 if (isVibrationSupported()) {
+                    // 先嘗試陣列格式（更明顯的震動模式）
                     try {
-                        const result = navigator.vibrate([60, 40, 60]);
-                        if (!result) {
-                            // 如果返回false，嘗試單次震動
-                            triggerVibration(60);
+                        if (navigator && typeof navigator.vibrate === 'function') {
+                            const result = navigator.vibrate([100, 50, 100]);
+                            console.log('標準震動API結果:', result);
+                            if (result === false) {
+                                // 如果返回false，嘗試單次震動
+                                triggerVibration(100);
+                            }
+                        } else {
+                            // iOS workaround
+                            console.log('使用 iOS workaround');
+                            triggerVibration(100);
                         }
                     } catch(e) {
                         // 如果陣列格式不支援，使用單次震動
-                        triggerVibration(60);
+                        console.log('震動觸發錯誤:', e);
+                        triggerVibration(100);
                     }
                 } else {
                     console.log('此設備不支援震動功能');
                 }
+                
+                // 添加視覺反饋：在按鈕上顯示動畫
+                const label = toggleDamping.nextElementSibling;
+                if (label) {
+                    label.style.animation = 'none';
+                    setTimeout(() => {
+                        label.style.animation = 'pulse 0.6s ease';
+                    }, 10);
+                }
             }
         });
+    } else {
+        console.error('找不到阻尼模式開關元素');
     }
 
     window.togglePerformanceMode = function() {
