@@ -87,6 +87,7 @@
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
+        user-select: none;
         will-change: transform;
         transform: translateZ(0);
     } 
@@ -1233,7 +1234,7 @@
 .fortune-score { color:#facc15; font-size:1rem; margin-top:3px; letter-spacing:2px; text-shadow: 0 0 5px #facc15; }
 
 /* 2. 神諭 */
-.fortune-oracle { flex-shrink:0; font-family:'Rajdhani','sans-serif'; font-style:italic; color:var(--hud-cyan); font-size:1rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(0,242,255,0.4); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); }
+.fortune-oracle { flex-shrink:0; font-family:'Rajdhani','sans-serif'; font-style:italic; color:var(--hud-cyan); font-size:1rem; line-height:1.4; text-align:center; margin-bottom:12px; padding:0 8px; text-shadow:0 0 8px rgba(0,242,255,0.4); display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); }
 
 /* 3. 運勢文字區 */
 .fortune-guide-container { flex:1; min-height:0; overflow-y:auto; background:rgba(0,0,0,0.5); border-radius:4px; border:1px solid rgba(255,255,255,0.1); padding:12px; scrollbar-width:thin; scrollbar-color:var(--hud-cyan) rgba(0,0,0,0.1); }
@@ -5015,8 +5016,8 @@ window.startQuiz = function(level) {
 
     // 產生平衡且限制重複簡單題型的牌組
 window.quizState.generateTypeDeck = function(diff, total) {
-    // 定義電子組態相關題型（不在基礎級出現）
-    const electronConfigTypes = [3, 7, 8, 9, 11, 15];
+    // 定義限制題型：每一輪只能出現一次的題型（Type 5: 狀態, Type 14: 電負度）
+    const restrictedTypes = [5, 14];
     
     // 根據難度分配題型池
     const typePools = {
@@ -5031,40 +5032,43 @@ window.quizState.generateTypeDeck = function(diff, total) {
     
     const types = typePools[diff] || typePools[1];
     
-    // 驗證：確保基礎級不包含電子組態題型
-    if (diff === 1) {
-        electronConfigTypes.forEach(eType => {
-            if (types.includes(eType)) {
-                console.warn(`警告：基礎級不應包含電子組態題型 ${eType}，已自動移除`);
-                const index = types.indexOf(eType);
-                if (index > -1) types.splice(index, 1);
-            }
-        });
-    }
+    // 分離限制題型和其他題型
+    const restrictedInPool = types.filter(t => restrictedTypes.includes(t));
+    const normalTypes = types.filter(t => !restrictedTypes.includes(t));
     
     let deck = [];
     
-    // 優化分配：盡量讓每種題型都有出現到
-    const typeCounts = {};
-    types.forEach(t => typeCounts[t] = 0);
-    
-    // 計算每種題型應該出現的次數（盡量平均分配）
-    const typesPerQuestion = Math.floor(total / types.length);
-    const remainder = total % types.length;
-    
-    // 先為每種題型分配基本次數
-    types.forEach(t => {
-        for (let i = 0; i < typesPerQuestion; i++) {
-            deck.push(t);
-            typeCounts[t]++;
-        }
+    // 限制題型：每種最多只出現一次
+    restrictedInPool.forEach(t => {
+        deck.push(t);
     });
     
-    // 剩餘的題數隨機分配給不同題型
-    const shuffledTypes = [...types].sort(() => 0.5 - Math.random());
-    for (let i = 0; i < remainder; i++) {
-        deck.push(shuffledTypes[i]);
-        typeCounts[shuffledTypes[i]]++;
+    // 計算剩餘題數（總題數減去已分配的限制題型）
+    const remainingTotal = total - restrictedInPool.length;
+    
+    if (remainingTotal > 0 && normalTypes.length > 0) {
+        // 優化分配：盡量讓每種正常題型都有出現到
+        const typeCounts = {};
+        normalTypes.forEach(t => typeCounts[t] = 0);
+        
+        // 計算每種題型應該出現的次數（盡量平均分配）
+        const typesPerQuestion = Math.floor(remainingTotal / normalTypes.length);
+        const remainder = remainingTotal % normalTypes.length;
+        
+        // 先為每種題型分配基本次數
+        normalTypes.forEach(t => {
+            for (let i = 0; i < typesPerQuestion; i++) {
+                deck.push(t);
+                typeCounts[t]++;
+            }
+        });
+        
+        // 剩餘的題數隨機分配給不同題型
+        const shuffledTypes = [...normalTypes].sort(() => 0.5 - Math.random());
+        for (let i = 0; i < remainder; i++) {
+            deck.push(shuffledTypes[i]);
+            typeCounts[shuffledTypes[i]]++;
+        }
     }
     
     // 洗牌：打亂順序
@@ -5198,13 +5202,8 @@ function generateQuestionKey(type, quizData, target) {
             return `type4-${coreQuestion}`;
             
         case 5: // 特性校準：元素 ↔ 常溫狀態
-            // 區分方向：元素→狀態、狀態→元素
-            if (coreQuestion.includes('物理狀態為何')) {
-                return `type5-元素→狀態`;
-            } else if (coreQuestion.includes('為「') && coreQuestion.includes('狀態')) {
-                return `type5-狀態→元素`;
-            }
-            return `type5-${coreQuestion}`;
+            // 每一輪只能出現一次（不區分方向或元素）
+            return `type5-常溫狀態`;
             
         case 6: // 計算與逆推（融合了12、13、16、17、18）
             // 根據子類型區分
@@ -5221,6 +5220,18 @@ function generateQuestionKey(type, quizData, target) {
             }
             return `type6-${quizData.type}`;
             
+        case 9: // 量子結構：軌域總數統計
+            // 區分兩種問法：軌域總數統計、價電子能階統計
+            if (quizData.type.includes('軌域總數統計')) {
+                // 提取軌域類型（s/p/d）
+                const orbMatch = quizData.type.match(/([spd])/i);
+                const orbType = orbMatch ? orbMatch[1].toLowerCase() : '';
+                return `type9-軌域總數統計-${orbType}`;
+            } else if (quizData.type.includes('價電子能階統計')) {
+                return `type9-價電子能階統計`;
+            }
+            return `type9-${quizData.type}`;
+            
         case 10: // 邏輯判斷：同族元素或同一週期
             // 區分：同族、同一週期
             if (quizData.type.includes('同族')) {
@@ -5229,6 +5240,10 @@ function generateQuestionKey(type, quizData, target) {
                 return `type10-同一週期`;
             }
             return `type10-${coreQuestion}`;
+            
+        case 14: // 性質趨勢：電負度比較
+            // 每一輪只能出現一次（不區分元素）
+            return `type14-電負度`;
             
         default:
             // 其他題型：使用題型+問題核心內容
@@ -5239,15 +5254,11 @@ function generateQuestionKey(type, quizData, target) {
             const numberMatch = coreQuestion.match(/\d+/);
             const number = numberMatch ? numberMatch[0] : '';
             
-            // 對於單向題型，使用題型作為唯一標識（同一題型只問一次）
-            // 對於需要區分元素的題型，加上元素符號
-            if ([3, 7, 8, 9, 11, 14, 15].includes(type)) {
-                // 這些題型需要區分元素，因為不同元素答案不同
-                return `type${type}-${elementSymbol}-${coreQuestion.substring(0, 50)}`;
-            } else {
-                // 其他題型：同一題型只問一次
-                return `type${type}-${coreQuestion.substring(0, 50)}`;
-            }
+            // 對於所有題型，使用題型作為唯一標識（同一題型只問一次）
+            // 根據用戶要求：若同一個TYPE內有不同問法，可以算不同題型
+            // 但對於單向題型（如 Type 3, 7, 8, 9, 11, 15），即使問法略有不同，也視為同一題型
+            // 因為它們都是同一個方向（元素→答案），只是問法不同
+            return `type${type}-${coreQuestion.substring(0, 50)}`;
     }
 }
 
@@ -6368,6 +6379,9 @@ function setupMobilePanel() {
             hasMoved = true;
         }
         
+        // 更新位置信息（窗口大小可能改變）
+        p = getPos();
+        
         let newY = startTransY + deltaY;
         
         // 優化邊界處理：使用彈性效果
@@ -6564,7 +6578,28 @@ function setupMobilePanel() {
         
         // 如果沒有移動（只是點擊），觸發位置切換
         if (wasDragging && !didMove) {
-            handleClick(e);
+            p = getPos();
+            const style = window.getComputedStyle(panel);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            const curY = matrix.m42;
+            
+            let target;
+            const threshold = 30;
+            
+            if (curY >= p.PMIN - threshold) {
+                target = p.P35;
+            } else if (curY >= p.P35 - threshold) {
+                target = p.P70;
+            } else if (curY >= p.P70 - threshold) {
+                target = p.P98;
+            } else {
+                target = p.P35;
+            }
+            
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            panel.style.transform = `translateY(${target}px)`;
+            currentTransY = target;
+            updateContentPadding(target);
             hasMoved = false;
             return;
         }
@@ -7193,11 +7228,27 @@ function revealFortune() {
             pickIndex = record.index; 
         } else { 
             // 若日期不同 (過了早上八點)，重新隨機
-            pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+            // 使用 crypto.getRandomValues 確保完全隨機，避免循環模式
+            if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                const array = new Uint32Array(1);
+                crypto.getRandomValues(array);
+                pickIndex = array[0] % ELEMENT_FORTUNES.length;
+            } else {
+                // 降級方案：使用 Math.random() + 時間戳增加隨機性
+                pickIndex = Math.floor((Math.random() + Date.now() % 1000 / 1000) * ELEMENT_FORTUNES.length) % ELEMENT_FORTUNES.length;
+            }
             localStorage.setItem('daily_fortune_record', JSON.stringify({ date: todayKey, index: pickIndex })); 
         }
     } else { 
-        pickIndex = Math.floor(Math.random() * ELEMENT_FORTUNES.length); 
+        // 使用 crypto.getRandomValues 確保完全隨機，避免循環模式
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            const array = new Uint32Array(1);
+            crypto.getRandomValues(array);
+            pickIndex = array[0] % ELEMENT_FORTUNES.length;
+        } else {
+            // 降級方案：使用 Math.random() + 時間戳增加隨機性
+            pickIndex = Math.floor((Math.random() + Date.now() % 1000 / 1000) * ELEMENT_FORTUNES.length) % ELEMENT_FORTUNES.length;
+        }
     }
 
     // 2. 取得資料
