@@ -87,6 +87,11 @@
             position: relative;
             justify-content: center;  /* 垂直置中 */
         }
+        
+        /* 當方程式按鈕顯示時，調整 selection-area 的 overflow */
+        .selection-area:has(#equation-buttons[style*="flex"]) {
+            overflow: visible;
+        }
 
         .selection-header {
             display: none;  /* 隱藏空的 header，移除留白 */
@@ -251,6 +256,101 @@
             pointer-events: none;  /* 不影響點擊 */
         }
 
+        /* 方程式按鈕容器 - 橫向滑動 */
+        .equation-buttons-container {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            padding: 12px 20px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;  /* iOS smooth scrolling */
+            background: var(--mineral-bg-light);
+            border-top: 1px solid var(--mineral-border);
+            border-bottom: 1px solid var(--mineral-border);
+            width: 100%;
+            box-sizing: border-box;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 98;
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+        }
+
+        .equation-buttons-container::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari, Opera */
+        }
+
+        .equation-btn {
+            padding: 10px 22px;
+            background: var(--mineral-bg);
+            border: 1.5px solid var(--mineral-border);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--mineral-text);
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .equation-btn:hover {
+            background: var(--mineral-bg-light);
+            border-color: var(--mineral-accent-light);
+            color: var(--mineral-accent);
+        }
+
+        .equation-btn.active {
+            background: var(--mineral-accent);
+            color: var(--mineral-bg);
+            border-color: var(--mineral-accent);
+            box-shadow: 0 0 25px rgba(212, 177, 106, 0.4);
+            font-weight: 700;
+        }
+
+        /* 手機版方程式按鈕優化 */
+        @media (max-width: 768px) {
+            .selection-area {
+                padding: 6px 15px 6px 45px;  /* 減少右側 padding */
+            }
+            
+            .equation-buttons-container {
+                padding: 10px 15px;
+                gap: 10px;
+                left: 0;
+                right: 0;
+            }
+            
+            .equation-btn {
+                padding: 8px 18px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .selection-area {
+                padding: 6px 10px 6px 40px;  /* 進一步減少 padding */
+            }
+            
+            .equation-buttons-container {
+                padding: 8px 12px;
+                gap: 8px;
+                left: 0;
+                right: 0;
+            }
+            
+            .equation-btn {
+                padding: 7px 16px;
+                font-size: 0.7rem;
+            }
+        }
+
         /* --- 區2：主畫面 --- */
         .main-view {
             height: 63.33vh;  /* 增加高度，從 60vh 改為 63.33vh（多出選擇區減少的 3.33vh） */
@@ -364,34 +464,58 @@
             white-space: nowrap;
         }
         
-        .reaction-arrows {
+        .reaction-arrow-symbol {
             flex: 0 0 auto;
+            font-size: 1.5rem;
+            color: var(--mineral-text);
+            margin: 0 10px;
+            font-weight: 400;
+        }
+        
+        /* 箭頭容器 - 位於方程式下方 */
+        .reaction-arrows-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0;
+            margin: 0 auto;
+        }
+        
+        .reaction-arrows {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            width: 200px;  /* 固定寬度，確保有足夠空間讓箭頭延展 */
-            height: 20px;  /* 減少高度，讓箭頭更靠近 */
+            width: 300px;  /* 增加寬度以容納更長的箭頭（電腦版） */
+            height: 20px;  /* 固定高度 */
+            max-width: 100%;  /* 確保不會超出容器 */
+        }
+        
+        /* 手機版箭頭容器寬度調整 */
+        @media (max-width: 768px) {
+            .reaction-arrows {
+                width: 180px;  /* 手機版限制寬度，避免長過頭 */
+            }
         }
         
         .arrow-left,
         .arrow-right {
             position: absolute;
-            height: 3px;
-            background-color: #c0392b;
+            height: 4px;  /* 增加粗細，確保兩個箭頭一致 */
+            background-color: #c0392b;  /* 紅色箭頭 */
             transition: width 0.3s ease, opacity 0.3s ease;
             left: 50%;
             transform: translateX(-50%);
         }
         
         .arrow-left {
-            bottom: 2px;  /* 下方箭頭（向左），稍微上移 */
+            bottom: 2px;  /* 下方箭頭（向左） */
             transform-origin: center center;
         }
         
         .arrow-right {
-            top: 2px;  /* 上方箭頭（向右），稍微下移 */
+            top: 2px;  /* 上方箭頭（向右） */
             transform-origin: center center;
         }
         
@@ -403,9 +527,9 @@
             transform: translateY(-50%);
             width: 0;
             height: 0;
-            border-top: 6px solid transparent;
-            border-bottom: 6px solid transparent;
-            border-right: 8px solid #c0392b;
+            border-top: 7px solid transparent;  /* 與箭頭線條粗細匹配 */
+            border-bottom: 7px solid transparent;
+            border-right: 10px solid #c0392b;  /* 紅色箭頭 */
         }
         
         .arrow-right::after {
@@ -416,9 +540,9 @@
             transform: translateY(-50%);
             width: 0;
             height: 0;
-            border-top: 6px solid transparent;
-            border-bottom: 6px solid transparent;
-            border-left: 8px solid #c0392b;
+            border-top: 7px solid transparent;  /* 與箭頭線條粗細匹配 */
+            border-bottom: 7px solid transparent;
+            border-left: 10px solid #c0392b;  /* 紅色箭頭 */
         }
         
         /* 化學式下標數字樣式 - 符合教科書標準 */
@@ -1484,8 +1608,15 @@
             <div class="scenario-buttons-container">
                 <div class="scenario-buttons">
                     <button class="scenario-btn" data-scenario="equilibrium-basic">平衡常數計算機</button>
-                    <button class="scenario-btn active" data-scenario="le-chatelier">勒沙特列原理展示</button>
+                    <button class="scenario-btn" id="le-chatelier-main-btn" onclick="toggleEquationButtons()">勒沙特列原理展示</button>
                 </div>
+            </div>
+            <!-- 方程式按鈕容器 - 獨立顯示，橫向滑動 -->
+            <div id="equation-buttons" class="equation-buttons-container" style="display: none;">
+                <button class="equation-btn" data-scenario="le-chatelier" onclick="selectEquation('le-chatelier')">N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub></button>
+                <button class="equation-btn" data-scenario="le-chatelier-nh3" onclick="selectEquation('le-chatelier-nh3')">N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub></button>
+                <button class="equation-btn" data-scenario="le-chatelier-chromate" onclick="selectEquation('le-chatelier-chromate')">2CrO<sub>4</sub><sup>2⁻</sup> + 2H<sup>+</sup> ⇌ Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup> + H<sub>2</sub>O</button>
+                <button class="equation-btn" data-scenario="le-chatelier-ag2cro4" onclick="selectEquation('le-chatelier-ag2cro4')">Ag<sub>2</sub>CrO<sub>4</sub> ⇌ 2Ag<sup>+</sup> + CrO<sub>4</sub><sup>2⁻</sup></button>
             </div>
         </div>
 
@@ -1501,11 +1632,16 @@
                 <div class="scenario-content active" data-scenario="le-chatelier">
                     <div class="reaction-header">
                         <span class="reaction-reactant">N<sub>2</sub>O<sub>4</sub></span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">2NO<sub>2</sub> + 熱</span>
+                    </div>
+                    
+                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
+                    <div class="reaction-arrows-container">
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left" style="width: 80px;"></div>
                         </div>
-                        <span class="reaction-product">2NO<sub>2</sub> + 熱</span>
                     </div>
                     
                     <div class="formula-card">
@@ -1564,6 +1700,234 @@
 
                 </div>
 
+                <!-- N2 + 3H2 ⇌ 2NH3 場景 -->
+                <div class="scenario-content" data-scenario="le-chatelier-nh3">
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">N<sub>2</sub> + 3H<sub>2</sub></span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">2NH<sub>3</sub> + 熱</span>
+                    </div>
+                    
+                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
+                    <div class="reaction-arrows-container">
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right-nh3" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-nh3" style="width: 80px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            <span>K =</span>
+                            <div class="frac"><span class="frac-top">[NH<sub>3</sub>]<sup>2</sup></span><span class="frac-bot">[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup></span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-nh3">2<sup>2</sup></span><span class="frac-bot" id="k-formula-bot-nh3">1 × 1<sup>3</sup></span></div>
+                            <span>=</span>
+                            <span id="k-val-nh3" style="color:#2c3e50;">4.00</span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num-nh3">[NH<sub>3</sub>]<sup>2</sup></span><span class="frac-bot" id="q-den-nh3">[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup></span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-nh3">2.00<sup>2</sup></span><span class="frac-bot" id="q-formula-bot-nh3">1.00 × 1.00<sup>3</sup></span></div>
+                            <span>=</span>
+                            <span id="q-val-nh3">4.00</span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-nh3" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
+                    <div id="direction-display-nh3" class="direction-display" style="display: none;"></div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <div>濃度 C-t</div>
+                            <canvas id="cChart-nh3" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="cChart-legend-nh3">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #3498db;"></span>
+                                    <span class="legend-label">[N₂]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #9b59b6;"></span>
+                                    <span class="legend-label">[H₂]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #f39c12;"></span>
+                                    <span class="legend-label">[NH₃]</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div>速率 v-t</div>
+                            <canvas id="vChart-nh3" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="vChart-legend-nh3">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #2ecc71;"></span>
+                                    <span class="legend-label">Rf (正)</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #34495e;"></span>
+                                    <span class="legend-label">Rr (逆)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 2CrO4²⁻ + 2H⁺ ⇌ Cr2O7²⁻ + H2O 場景 -->
+                <div class="scenario-content" data-scenario="le-chatelier-chromate">
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">2CrO<sub>4</sub><sup>2⁻</sup> + 2H<sup>+</sup></span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup> + H<sub>2</sub>O</span>
+                    </div>
+                    
+                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
+                    <div class="reaction-arrows-container">
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right-chromate" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-chromate" style="width: 80px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            <span>K =</span>
+                            <div class="frac"><span class="frac-top">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-chromate">1</span><span class="frac-bot" id="k-formula-bot-chromate">1<sup>2</sup> × 1<sup>2</sup></span></div>
+                            <span>=</span>
+                            <span id="k-val-chromate" style="color:#2c3e50;">1.00</span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num-chromate">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot" id="q-den-chromate">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-chromate">1.00</span><span class="frac-bot" id="q-formula-bot-chromate">1.00<sup>2</sup> × 1.00<sup>2</sup></span></div>
+                            <span>=</span>
+                            <span id="q-val-chromate">1.00</span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-chromate" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementChromate()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
+                    <div id="direction-display-chromate" class="direction-display" style="display: none;"></div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <div>濃度 C-t</div>
+                            <canvas id="cChart-chromate" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="cChart-legend-chromate">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #3498db;"></span>
+                                    <span class="legend-label">[CrO₄²⁻]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #9b59b6;"></span>
+                                    <span class="legend-label">[H⁺]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #f39c12;"></span>
+                                    <span class="legend-label">[Cr₂O₇²⁻]</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div>速率 v-t</div>
+                            <canvas id="vChart-chromate" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="vChart-legend-chromate">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #2ecc71;"></span>
+                                    <span class="legend-label">Rf (正)</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #34495e;"></span>
+                                    <span class="legend-label">Rr (逆)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 場景 -->
+                <div class="scenario-content" data-scenario="le-chatelier-ag2cro4">
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">Ag<sub>2</sub>CrO<sub>4</sub></span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">2Ag<sup>+</sup> + CrO<sub>4</sub><sup>2⁻</sup></span>
+                    </div>
+                    
+                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
+                    <div class="reaction-arrows-container">
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right-ag2cro4" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-ag2cro4" style="width: 80px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            <span>K<sub>sp</sub> =</span>
+                            <div class="frac"><span class="frac-top">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span><span class="frac-bot">1</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-ag2cro4">2<sup>2</sup> × 1</span><span class="frac-bot" id="k-formula-bot-ag2cro4">1</span></div>
+                            <span>=</span>
+                            <span id="k-val-ag2cro4" style="color:#2c3e50;">4.00</span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num-ag2cro4">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span><span class="frac-bot" id="q-den-ag2cro4">1</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-ag2cro4">2.00<sup>2</sup> × 1.00</span><span class="frac-bot" id="q-formula-bot-ag2cro4">1</span></div>
+                            <span>=</span>
+                            <span id="q-val-ag2cro4">4.00</span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-ag2cro4" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementAg2CrO4()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
+                    <div id="direction-display-ag2cro4" class="direction-display" style="display: none;"></div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <div>濃度 C-t</div>
+                            <canvas id="cChart-ag2cro4" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="cChart-legend-ag2cro4">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #3498db;"></span>
+                                    <span class="legend-label">[Ag₂CrO₄]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #f39c12;"></span>
+                                    <span class="legend-label">[Ag⁺]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #9b59b6;"></span>
+                                    <span class="legend-label">[CrO₄²⁻]</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div>速率 v-t</div>
+                            <canvas id="vChart-ag2cro4" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="vChart-legend-ag2cro4">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #2ecc71;"></span>
+                                    <span class="legend-label">Rf (正)</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #34495e;"></span>
+                                    <span class="legend-label">Rr (逆)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </div>
 
@@ -1587,6 +1951,27 @@
                         <button class="control-btn" onclick="runDisturb('HEAT', this)">加熱 (K↓)</button>
                         <button class="control-btn" onclick="runDisturb('COOL', this)">降溫 (K↑)</button>
                         <button class="control-btn reset-btn" onclick="resetExperiment()">重置實驗</button>
+                    </div>
+                </div>
+
+                <!-- N2 + 3H2 ⇌ 2NH3 操作 -->
+                <div class="control-scenario" data-scenario="le-chatelier-nh3">
+                    <div class="controls" id="btnContainer-nh3">
+                        <button class="control-btn reset-btn" onclick="resetExperimentNH3()">重置實驗</button>
+                    </div>
+                </div>
+
+                <!-- 2CrO4²⁻ + 2H⁺ ⇌ Cr2O7²⁻ + H2O 操作 -->
+                <div class="control-scenario" data-scenario="le-chatelier-chromate">
+                    <div class="controls" id="btnContainer-chromate">
+                        <button class="control-btn reset-btn" onclick="resetExperimentChromate()">重置實驗</button>
+                    </div>
+                </div>
+
+                <!-- Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 操作 -->
+                <div class="control-scenario" data-scenario="le-chatelier-ag2cro4">
+                    <div class="controls" id="btnContainer-ag2cro4">
+                        <button class="control-btn reset-btn" onclick="resetExperimentAg2CrO4()">重置實驗</button>
                     </div>
                 </div>
 
@@ -2438,12 +2823,12 @@
             // 檢測是否為手機版
             const mobile = isMobile();
             
-            // 基礎箭頭長度（初始平衡時）- 不要太長，預留空間給速率增加
-            const baseLength = mobile ? 60 : 80;
-            // 最大箭頭長度 - 預留足夠空間
-            const maxLength = mobile ? 140 : 200;
-            // 最小箭頭長度 - 不要太小，保持可見性（至少是baseLength的60%）
-            const minLength = mobile ? 36 : 48;  // baseLength * 0.6
+            // 基礎箭頭長度（初始平衡時）- 等比例拉長，讓變化更明顯
+            const baseLength = mobile ? 80 : 120;  // 增加基礎長度
+            // 最大箭頭長度 - 等比例增加，但手機版不要長過頭
+            const maxLength = mobile ? 180 : 300;  // 增加最大長度，手機版限制在180px
+            // 最小箭頭長度 - 等比例增加
+            const minLength = mobile ? 40 : 60;  // 增加最小長度
             
             // 計算當前反應速率
             const currentVf = kf * concA;  // 正反應速率（向右）
@@ -2453,15 +2838,21 @@
             const vfRatio = currentVf / initialVf;  // 正反應速率比例
             const vrRatio = currentVr / initialVr;  // 逆反應速率比例
             
-            // 根據速率比例線性計算箭頭長度
+            // 根據速率比例線性計算箭頭長度（等比例拉長）
             function calculateLengthFromRatio(ratio) {
-                // 稍微增強縮放感：基礎長度 80px
-                // 1.0 -> 80px, 0.5 -> 50px, 0.25 -> 30px
-                // 這樣在速率降低時，差異會比純比例 (40 vs 20) 更容易觀察
+                // 等比例拉長：基礎長度增加，變化範圍擴大
+                // 1.0 -> baseLength, 0.5 -> 約 baseLength*0.6, 0.25 -> 約 baseLength*0.4
+                // 2.0 -> 約 maxLength*0.7, 3.0 -> maxLength
                 if (ratio < 1.0) {
+                    // 速率降低時，線性縮小
                     return minLength + (baseLength - minLength) * ((ratio - 0.2) / 0.8);
+                } else {
+                    // 速率增加時，線性放大，但使用更陡的斜率讓變化更明顯
+                    const excessRatio = ratio - 1.0;
+                    // 使用平方根函數讓變化更平滑，但範圍更大
+                    const scaleFactor = Math.min(1.0, excessRatio / 2.0);  // 2倍速率時達到最大
+                    return baseLength + (maxLength - baseLength) * scaleFactor;
                 }
-                return baseLength + (maxLength - baseLength) * ((ratio - 1.0) / 2.0);
             }
             
             // 計算兩個箭頭的長度
@@ -2818,10 +3209,145 @@
             }
         }
 
+        // 切換方程式按鈕顯示
+        function toggleEquationButtons() {
+            const equationButtons = document.getElementById('equation-buttons');
+            const mainBtn = document.getElementById('le-chatelier-main-btn');
+            const mainView = document.querySelector('.main-view');
+            const equilibriumBtn = document.querySelector('.scenario-btn[data-scenario="equilibrium-basic"]');
+            
+            // 移除平衡常數計算按鈕的 active 狀態（避免發光）
+            if (equilibriumBtn) {
+                equilibriumBtn.classList.remove('active');
+            }
+            
+            // 直接顯示方程式按鈕
+            equationButtons.style.display = 'flex';
+            mainBtn.classList.add('active');
+            
+            // 調整 main-view 的 margin-top，為方程式按鈕容器留出空間
+            if (mainView) {
+                const buttonHeight = equationButtons.offsetHeight || 60;  // 預設高度
+                mainView.style.marginTop = buttonHeight + 'px';
+            }
+            
+            // 如果還沒有選擇任何方程式，預設選擇第一個
+            const activeBtn = document.querySelector('.equation-btn.active');
+            if (!activeBtn) {
+                selectEquation('le-chatelier');
+            }
+        }
+
+        // 選擇方程式
+        function selectEquation(scenario) {
+            // 選擇方程式後隱藏按鈕
+            const equationButtons = document.getElementById('equation-buttons');
+            const mainView = document.querySelector('.main-view');
+            
+            // 更新方程式按鈕的 active 狀態
+            document.querySelectorAll('.equation-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const selectedBtn = document.querySelector(`.equation-btn[data-scenario="${scenario}"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+            }
+            
+            // 更新主按鈕狀態
+            const mainBtn = document.getElementById('le-chatelier-main-btn');
+            mainBtn.classList.add('active');
+            
+            // 隱藏方程式按鈕容器
+            if (equationButtons) {
+                equationButtons.style.display = 'none';
+            }
+            
+            // 恢復 main-view 的 margin-top
+            if (mainView) {
+                mainView.style.marginTop = '0';
+            }
+            
+            // 停止任何正在運行的動畫
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 切換主畫面內容
+            document.querySelectorAll('.scenario-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const mainContent = document.querySelector(`.scenario-content[data-scenario="${scenario}"]`);
+            if (mainContent) {
+                mainContent.classList.add('active');
+            }
+            
+            // 切換操作介面
+            document.querySelectorAll('.control-scenario').forEach(control => {
+                control.classList.remove('active');
+            });
+            const controlContent = document.querySelector(`.control-scenario[data-scenario="${scenario}"]`);
+            if (controlContent) {
+                controlContent.classList.add('active');
+            }
+            
+            // 如果是 le-chatelier 場景，初始化圖表
+            if (scenario === 'le-chatelier') {
+                setTimeout(() => {
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    concA = initialConcA;
+                    concB = initialConcB;
+                    kf = 1.2;
+                    kr = 0.3;
+                    K = 4.0;
+                    currentTime = 0;
+                    hasOperated = false;
+                    lastTime = 0;
+                    stepCounter = 0;
+                    equilibriumReached = false;
+                    equilibriumCounter = 0;
+                    equilibriumConcA = 0;
+                    equilibriumConcB = 0;
+                    equilibriumV = 0;
+                    waitingForStart = false;
+                    beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
+                    instantChangeIndex = -1;
+                    isPaused = false;
+                    currentDisturbMode = null;
+                    history = { t: [], a: [], b: [], vf: [], vr: [] };
+                    
+                    cCanvas = null;
+                    vCanvas = null;
+                    cCtx = null;
+                    vCtx = null;
+                    
+                    equilibriumReached = false;
+                    equilibriumV = 0;
+                    currentTime = 0;
+                    record();
+                    while (currentTime < 2.5) {
+                        record();
+                    }
+                    
+                    initCharts();
+                    updateDisplay();
+                }, 100);
+            }
+        }
+
         // 場景按鈕切換功能
         document.querySelectorAll('.scenario-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 try {
+                    // 如果是「勒沙特列原理展示」按鈕，不處理場景切換（由 toggleEquationButtons 處理）
+                    if (this.id === 'le-chatelier-main-btn') {
+                        return;
+                    }
+                    
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -2833,6 +3359,21 @@
                         b.style.transform = 'none';
                         b.style.willChange = 'auto';
                     });
+                    
+                    // 隱藏方程式按鈕（如果切換到其他場景）
+                    const equationButtons = document.getElementById('equation-buttons');
+                    const mainBtn = document.getElementById('le-chatelier-main-btn');
+                    const mainView = document.querySelector('.main-view');
+                    if (equationButtons && currentBtn.id !== 'le-chatelier-main-btn') {
+                        equationButtons.style.display = 'none';
+                        if (mainBtn) {
+                            mainBtn.classList.remove('active');
+                        }
+                        // 恢復 main-view 的 margin-top
+                        if (mainView) {
+                            mainView.style.marginTop = '0';
+                        }
+                    }
                     
                     // 添加當前按鈕的 active 狀態（確保不會有位置變化）
                     currentBtn.classList.add('active');
@@ -2868,8 +3409,10 @@
                         controlContent.classList.add('active');
                     }
                     
-                    // 如果是勒沙特列原理場景，初始化圖表
-                    if (scenario === 'le-chatelier') {
+                    // 如果是勒沙特列原理相關場景，初始化圖表
+                    if (scenario === 'le-chatelier' || scenario === 'le-chatelier-nh3' || scenario === 'le-chatelier-chromate' || scenario === 'le-chatelier-ag2cro4') {
+                        // 只有 le-chatelier 場景需要初始化圖表，其他場景暫時為空
+                        if (scenario === 'le-chatelier') {
                     setTimeout(() => {
                         // 停止任何正在運行的動畫
                         if (animationFrameId) {
@@ -2930,6 +3473,7 @@
                             b.classList.remove('active');  // 移除 active 狀態
                         });
                     }, 100);
+                        }
                     } else {
                         // 其他場景，重置 Canvas
                         cCanvas = null;
@@ -3055,6 +3599,32 @@
             updateUI();
         }
 
+        // 新場景的重置函數（暫時為空，下方按鈕先不用新增）
+        function resetExperimentNH3() {
+            // 暫時為空，待後續實現
+        }
+
+        function resetExperimentChromate() {
+            // 暫時為空，待後續實現
+        }
+
+        function resetExperimentAg2CrO4() {
+            // 暫時為空，待後續實現
+        }
+
+        // 新場景的平衡移動函數（暫時為空，待後續實現）
+        function startEquilibriumMovementNH3() {
+            // 暫時為空，待後續實現
+        }
+
+        function startEquilibriumMovementChromate() {
+            // 暫時為空，待後續實現
+        }
+
+        function startEquilibriumMovementAg2CrO4() {
+            // 暫時為空，待後續實現
+        }
+
         // 頁面載入時初始化
         window.addEventListener('load', function() {
             document.body.style.opacity = '0';
@@ -3135,6 +3705,12 @@
                     
                     // 確保初始狀態按鈕是可點擊的
                     document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+                }
+                
+                // 設置第一個方程式按鈕為激活狀態
+                const firstEquationBtn = document.querySelector('.equation-btn[data-scenario="le-chatelier"]');
+                if (firstEquationBtn) {
+                    firstEquationBtn.classList.add('active');
                 }
             }, 100);
         });
