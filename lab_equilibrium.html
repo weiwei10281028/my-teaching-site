@@ -1957,6 +1957,14 @@
                 <!-- N2 + 3H2 ⇌ 2NH3 操作 -->
                 <div class="control-scenario" data-scenario="le-chatelier-nh3">
                     <div class="controls" id="btnContainer-nh3">
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_N2', this)">增加 1M N₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_N2', this)">減少 1M N₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_H2', this)">增加 1M H₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_H2', this)">減少 1M H₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_NH3', this)">增加 1M NH₃</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_NH3', this)">減少 1M NH₃</button>
+                        <button class="control-btn" onclick="runDisturbNH3('V_HALF', this)">體積減半(壓↑)</button>
+                        <button class="control-btn" onclick="runDisturbNH3('V_DOUBLE', this)">體積加倍(壓↓)</button>
                         <button class="control-btn reset-btn" onclick="resetExperimentNH3()">重置實驗</button>
                     </div>
                 </div>
@@ -2022,6 +2030,39 @@
         let disturbArrowLeftLength = 0;  // 破壞瞬間的左箭頭長度
         let disturbVf = 0;  // 破壞瞬間的正反應速率
         let disturbVr = 0;  // 破壞瞬間的逆反應速率
+
+        // N2 + 3H2 ⇌ 2NH3 場景的變數
+        let K_nh3 = 4.0;
+        let concN2_nh3 = 1.0;
+        let concH2_nh3 = 1.0;
+        let concNH3_nh3 = 2.0;
+        let kf_nh3 = 1.2;
+        let kr_nh3 = 0.3;
+        let history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
+        let currentTime_nh3 = 0;
+        let animationFrameId_nh3 = null;
+        let hasOperated_nh3 = false;
+        let lastTime_nh3 = 0;
+        let equilibriumReached_nh3 = false;
+        let equilibriumCounter_nh3 = 0;
+        let equilibriumConcN2_nh3 = 0;
+        let equilibriumConcH2_nh3 = 0;
+        let equilibriumConcNH3_nh3 = 0;
+        let equilibriumV_nh3 = 0;
+        let waitingForStart_nh3 = false;
+        let beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
+        let instantChangeIndex_nh3 = -1;
+        let isPaused_nh3 = false;
+        let currentDisturbMode_nh3 = null;
+        let initialVf_nh3 = 1.2;
+        let initialVr_nh3 = 1.2;
+        let initialConcN2_nh3 = 1.0;
+        let initialConcH2_nh3 = 1.0;
+        let initialConcNH3_nh3 = 2.0;
+        let cCanvas_nh3 = null;
+        let vCanvas_nh3 = null;
+        let cCtx_nh3 = null;
+        let vCtx_nh3 = null;
 
         // 使用原生 Canvas API 繪製圖表 - 完全重寫
         let cCanvas = null;
@@ -3334,7 +3375,63 @@
                     }
                     
                     initCharts();
-                    updateDisplay();
+                    updateUI();
+                }, 100);
+            }
+            
+            // 如果是 le-chatelier-nh3 場景，初始化圖表
+            if (scenario === 'le-chatelier-nh3') {
+                setTimeout(() => {
+                    if (animationFrameId_nh3) {
+                        cancelAnimationFrame(animationFrameId_nh3);
+                        animationFrameId_nh3 = null;
+                    }
+                    
+                    concN2_nh3 = initialConcN2_nh3;
+                    concH2_nh3 = initialConcH2_nh3;
+                    concNH3_nh3 = initialConcNH3_nh3;
+                    kf_nh3 = 1.2;
+                    kr_nh3 = 0.3;
+                    K_nh3 = 4.0;
+                    currentTime_nh3 = 0;
+                    hasOperated_nh3 = false;
+                    lastTime_nh3 = 0;
+                    stepCounter = 0;
+                    equilibriumReached_nh3 = false;
+                    equilibriumCounter_nh3 = 0;
+                    equilibriumConcN2_nh3 = 0;
+                    equilibriumConcH2_nh3 = 0;
+                    equilibriumConcNH3_nh3 = 0;
+                    equilibriumV_nh3 = 0;
+                    waitingForStart_nh3 = false;
+                    beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
+                    instantChangeIndex_nh3 = -1;
+                    isPaused_nh3 = false;
+                    currentDisturbMode_nh3 = null;
+                    history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
+                    
+                    cCanvas_nh3 = null;
+                    vCanvas_nh3 = null;
+                    cCtx_nh3 = null;
+                    vCtx_nh3 = null;
+                    
+                    equilibriumReached_nh3 = false;
+                    equilibriumV_nh3 = 0;
+                    currentTime_nh3 = 0;
+                    recordNH3();
+                    while (currentTime_nh3 < 2.5) {
+                        recordNH3();
+                    }
+                    
+                    initChartsNH3();
+                    const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                    updateReactionArrowsNH3(Q_nh3, K_nh3);
+                    updateUINH3();
+                    
+                    document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
+                        b.disabled = false;
+                        b.classList.remove('active');
+                    });
                 }, 100);
             }
         }
@@ -3411,7 +3508,7 @@
                     
                     // 如果是勒沙特列原理相關場景，初始化圖表
                     if (scenario === 'le-chatelier' || scenario === 'le-chatelier-nh3' || scenario === 'le-chatelier-chromate' || scenario === 'le-chatelier-ag2cro4') {
-                        // 只有 le-chatelier 場景需要初始化圖表，其他場景暫時為空
+                        // le-chatelier 場景初始化
                         if (scenario === 'le-chatelier') {
                     setTimeout(() => {
                         // 停止任何正在運行的動畫
@@ -3469,6 +3566,68 @@
                         
                         // 確保初始狀態按鈕是可點擊的
                         document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('active');  // 移除 active 狀態
+                        });
+                    }, 100);
+                        }
+                        // le-chatelier-nh3 場景初始化
+                        else if (scenario === 'le-chatelier-nh3') {
+                    setTimeout(() => {
+                        // 停止任何正在運行的動畫
+                        if (animationFrameId_nh3) {
+                            cancelAnimationFrame(animationFrameId_nh3);
+                            animationFrameId_nh3 = null;
+                        }
+                        
+                        // 重置變數
+                        concN2_nh3 = initialConcN2_nh3;
+                        concH2_nh3 = initialConcH2_nh3;
+                        concNH3_nh3 = initialConcNH3_nh3;
+                        kf_nh3 = 1.2;
+                        kr_nh3 = 0.3;
+                        K_nh3 = 4.0;
+                        currentTime_nh3 = 0;
+                        hasOperated_nh3 = false;
+                        lastTime_nh3 = 0;
+                        stepCounter = 0;
+                        equilibriumReached_nh3 = false;
+                        equilibriumCounter_nh3 = 0;
+                        equilibriumConcN2_nh3 = 0;
+                        equilibriumConcH2_nh3 = 0;
+                        equilibriumConcNH3_nh3 = 0;
+                        equilibriumV_nh3 = 0;
+                        waitingForStart_nh3 = false;
+                        beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
+                        instantChangeIndex_nh3 = -1;
+                        isPaused_nh3 = false;
+                        currentDisturbMode_nh3 = null;
+                        history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
+                        
+                        // 重置圖表
+                        cCanvas_nh3 = null;
+                        vCanvas_nh3 = null;
+                        cCtx_nh3 = null;
+                        vCtx_nh3 = null;
+                        
+                        // 初始化一段穩定平衡
+                        equilibriumReached_nh3 = false;
+                        equilibriumV_nh3 = 0;
+                        currentTime_nh3 = 0;
+                        recordNH3();
+                        while (currentTime_nh3 < 2.5) {
+                            recordNH3();
+                        }
+                        
+                        // 初始化圖表
+                        initChartsNH3();
+                        // 初始化箭頭
+                        const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                        updateReactionArrowsNH3(Q_nh3, K_nh3);
+                        updateUINH3();
+                        
+                        // 確保初始狀態按鈕是可點擊的
+                        document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
                             b.disabled = false;
                             b.classList.remove('active');  // 移除 active 狀態
                         });
@@ -3599,9 +3758,910 @@
             updateUI();
         }
 
-        // 新場景的重置函數（暫時為空，下方按鈕先不用新增）
+        // N2 + 3H2 ⇌ 2NH3 場景的記錄函數
+        function recordNH3() {
+            let vf, vr;
+            
+            if (equilibriumReached_nh3 && equilibriumV_nh3 > 0) {
+                vf = equilibriumV_nh3;
+                vr = equilibriumV_nh3;
+            } else {
+                vf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+                vr = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            }
+            
+            history_nh3.t.push(currentTime_nh3.toFixed(1));
+            history_nh3.n2.push(parseFloat(concN2_nh3.toFixed(3)));
+            history_nh3.h2.push(parseFloat(concH2_nh3.toFixed(3)));
+            history_nh3.nh3.push(parseFloat(concNH3_nh3.toFixed(3)));
+            history_nh3.vf.push(parseFloat(vf.toFixed(3)));
+            history_nh3.vr.push(parseFloat(vr.toFixed(3)));
+            currentTime_nh3 += 0.2;
+            
+            if (currentTime_nh3 > 30.3) {
+                currentTime_nh3 = 30.3;
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的動畫函數
+        function animateNH3(timestamp) {
+            if (!lastTime_nh3) lastTime_nh3 = timestamp;
+            
+            if (isPaused_nh3) {
+                if (animationFrameId_nh3) {
+                    animationFrameId_nh3 = requestAnimationFrame(animateNH3);
+                }
+                return;
+            }
+            
+            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            const diff_nh3 = Math.abs(Q_nh3 - K_nh3);
+            const ratio_nh3 = diff_nh3 / K_nh3;
+            
+            const timeFromStart_nh3 = currentTime_nh3 - 2.5;
+            let stepInterval_nh3 = 80;
+            
+            if (ratio_nh3 < 0.1 && ratio_nh3 > 0.001) {
+                stepInterval_nh3 = 80 - (0.1 - ratio_nh3) / 0.1 * 50;
+                stepInterval_nh3 = Math.max(30, Math.min(80, stepInterval_nh3));
+            }
+            
+            if (timeFromStart_nh3 > 15.0) {
+                stepInterval_nh3 = stepInterval_nh3 * 0.7;
+            }
+            
+            if (timestamp - lastTime_nh3 >= stepInterval_nh3) {
+                stepNH3();
+                lastTime_nh3 = timestamp;
+            }
+            
+            if (animationFrameId_nh3 && !isPaused_nh3) {
+                animationFrameId_nh3 = requestAnimationFrame(animateNH3);
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的步進函數
+        function stepNH3() {
+            if (equilibriumReached_nh3) {
+                equilibriumCounter_nh3++;
+                if (equilibriumCounter_nh3 <= 10) {
+                    concN2_nh3 = equilibriumConcN2_nh3;
+                    concH2_nh3 = equilibriumConcH2_nh3;
+                    concNH3_nh3 = equilibriumConcNH3_nh3;
+                    recordNH3();
+                    updateUINH3();
+                } else {
+                    if (animationFrameId_nh3) {
+                        cancelAnimationFrame(animationFrameId_nh3);
+                        animationFrameId_nh3 = null;
+                    }
+                    const statusEl = document.getElementById('status-nh3');
+                    statusEl.textContent = "新平衡：Q＝K";
+                    statusEl.style.color = "#27ae60";
+                    statusEl.style.borderColor = "#27ae60";
+                    statusEl.style.cursor = "default";
+                    statusEl.title = "";
+                    const directionDisplay = document.getElementById('direction-display-nh3');
+                    if (directionDisplay) {
+                        directionDisplay.style.display = 'none';
+                    }
+                    stepCounter = 0;
+                    equilibriumReached_nh3 = false;
+                    equilibriumCounter_nh3 = 0;
+                    isPaused_nh3 = false;
+                }
+                return;
+            }
+            
+            if (currentTime_nh3 >= 30.3) {
+                if (animationFrameId_nh3) {
+                    cancelAnimationFrame(animationFrameId_nh3);
+                    animationFrameId_nh3 = null;
+                }
+                const statusEl = document.getElementById('status-nh3');
+                statusEl.textContent = "新平衡：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+                statusEl.style.cursor = "default";
+                statusEl.title = "";
+                return;
+            }
+            
+            let vf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            let vr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            
+            let speedFactor_nh3 = 1.0;
+            if (currentTime_nh3 > 5.0) {
+                const timeFromStart_nh3 = currentTime_nh3 - 5.0;
+                if (timeFromStart_nh3 < 15.0) {
+                    speedFactor_nh3 = 1.0;
+                } else {
+                    speedFactor_nh3 = 1.0 + (timeFromStart_nh3 - 15.0) / 5.0 * 2.0;
+                }
+            }
+            
+            let diff_nh3 = (vf_nh3 - vr_nh3) * 0.012 * speedFactor_nh3;
+            concN2_nh3 -= diff_nh3;
+            concH2_nh3 -= 3 * diff_nh3;
+            concNH3_nh3 += 2 * diff_nh3;
+            
+            if (concN2_nh3 < 0.01) concN2_nh3 = 0.01;
+            if (concH2_nh3 < 0.01) concH2_nh3 = 0.01;
+            if (concNH3_nh3 < 0.01) concNH3_nh3 = 0.01;
+            
+            recordNH3();
+            checkAndAdjustYAxisNH3();
+            
+            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            updateReactionArrowsNH3(Q_nh3, K_nh3);
+            updateUINH3();
+            
+            vf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            vr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            
+            const timeFromStart_nh3 = currentTime_nh3 - 5.0;
+            const balanceThreshold_nh3 = (timeFromStart_nh3 >= 15.0) ? 0.002 : 0.001;
+            if (Math.abs(vf_nh3 - vr_nh3) < balanceThreshold_nh3) {
+                equilibriumReached_nh3 = true;
+                equilibriumCounter_nh3 = 0;
+                equilibriumConcN2_nh3 = concN2_nh3;
+                equilibriumConcH2_nh3 = concH2_nh3;
+                equilibriumConcNH3_nh3 = concNH3_nh3;
+                equilibriumV_nh3 = (vf_nh3 + vr_nh3) / 2;
+                equilibriumV_nh3 = kf_nh3 * equilibriumConcN2_nh3 * Math.pow(equilibriumConcH2_nh3, 3);
+                
+                recordNH3();
+                const statusEl = document.getElementById('status-nh3');
+                statusEl.textContent = "新平衡：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+                const directionDisplay = document.getElementById('direction-display-nh3');
+                if (directionDisplay) {
+                    directionDisplay.style.display = 'none';
+                }
+                updateUINH3();
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的擾動函數
+        function runDisturbNH3(mode, buttonElement) {
+            if (hasOperated_nh3 && equilibriumReached_nh3) return;
+            if (animationFrameId_nh3 && !isPaused_nh3) return;
+            if (waitingForStart_nh3) return;
+            
+            hasOperated_nh3 = true;
+            
+            document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
+                b.classList.remove('active');
+                b.disabled = true;
+            });
+            
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
+            
+            beforeDisturb_nh3.n2 = concN2_nh3;
+            beforeDisturb_nh3.h2 = concH2_nh3;
+            beforeDisturb_nh3.nh3 = concNH3_nh3;
+            beforeDisturb_nh3.vf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            beforeDisturb_nh3.vr = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            beforeDisturb_nh3.t = currentTime_nh3;
+            
+            equilibriumReached_nh3 = false;
+            equilibriumCounter_nh3 = 0;
+            currentDisturbMode_nh3 = mode;
+            
+            switch(mode) {
+                case 'ADD_N2': 
+                    concN2_nh3 += 1.0; 
+                    checkAndAdjustYAxisNH3();
+                    break;
+                case 'SUB_N2': 
+                    concN2_nh3 = Math.max(0.1, concN2_nh3 - 1.0); 
+                    break;
+                case 'ADD_H2': 
+                    concH2_nh3 += 1.0; 
+                    checkAndAdjustYAxisNH3();
+                    break;
+                case 'SUB_H2': 
+                    concH2_nh3 = Math.max(0.1, concH2_nh3 - 1.0); 
+                    break;
+                case 'ADD_NH3': 
+                    concNH3_nh3 += 1.0; 
+                    checkAndAdjustYAxisNH3();
+                    break;
+                case 'SUB_NH3': 
+                    concNH3_nh3 = Math.max(0.1, concNH3_nh3 - 1.0); 
+                    break;
+                case 'V_HALF': 
+                    concN2_nh3 *= 2; 
+                    concH2_nh3 *= 2; 
+                    concNH3_nh3 *= 2; 
+                    checkAndAdjustYAxisNH3();
+                    break;
+                case 'V_DOUBLE': 
+                    concN2_nh3 /= 2; 
+                    concH2_nh3 /= 2; 
+                    concNH3_nh3 /= 2; 
+                    break;
+            }
+            
+            if (currentTime_nh3 < 2.5) {
+                currentTime_nh3 = 2.5;
+            }
+            instantChangeIndex_nh3 = history_nh3.t.length;
+            
+            const hasChangeN2 = Math.abs(concN2_nh3 - beforeDisturb_nh3.n2) > 0.001;
+            const hasChangeH2 = Math.abs(concH2_nh3 - beforeDisturb_nh3.h2) > 0.001;
+            const hasChangeNH3 = Math.abs(concNH3_nh3 - beforeDisturb_nh3.nh3) > 0.001;
+            const hasChangeVf = Math.abs(kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3) - beforeDisturb_nh3.vf) > 0.001;
+            const hasChangeVr = Math.abs(kr_nh3 * Math.pow(concNH3_nh3, 2) - beforeDisturb_nh3.vr) > 0.001;
+            
+            if (hasChangeN2 || hasChangeH2 || hasChangeNH3 || hasChangeVf || hasChangeVr) {
+                recordNH3();
+            } else {
+                instantChangeIndex_nh3 = -1;
+            }
+            
+            waitingForStart_nh3 = true;
+            
+            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            updateStatusOnlyNH3(Q_nh3, K_nh3);
+            updateReactionArrowsNH3(Q_nh3, K_nh3);
+            
+            const statusEl = document.getElementById('status-nh3');
+            statusEl.style.cursor = "pointer";
+            statusEl.title = "點擊開始平衡移動";
+            
+            drawChartsNH3();
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的開始/暫停函數
+        function startEquilibriumMovementNH3() {
+            const statusEl = document.getElementById('status-nh3');
+            
+            if (statusEl.textContent.includes('新平衡') && !statusEl.textContent.includes('平衡破壞')) {
+                return;
+            }
+            
+            if (equilibriumReached_nh3 && equilibriumCounter_nh3 > 10) {
+                return;
+            }
+            
+            if (waitingForStart_nh3) {
+                waitingForStart_nh3 = false;
+                isPaused_nh3 = false;
+                
+                if (currentTime_nh3 < 2.5) {
+                    currentTime_nh3 = 2.5;
+                }
+                
+                lastTime_nh3 = 0;
+                stepCounter = 0;
+                equilibriumReached_nh3 = false;
+                equilibriumCounter_nh3 = 0;
+                equilibriumConcN2_nh3 = 0;
+                equilibriumConcH2_nh3 = 0;
+                equilibriumConcNH3_nh3 = 0;
+                equilibriumV_nh3 = 0;
+                
+                const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                updateReactionArrowsNH3(Q_nh3, K_nh3);
+                
+                statusEl.style.cursor = "pointer";
+                statusEl.title = "點擊暫停";
+                statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                
+                stepNH3();
+                animationFrameId_nh3 = requestAnimationFrame(animateNH3);
+                return;
+            }
+            
+            if (hasOperated_nh3 && !waitingForStart_nh3) {
+                if (isPaused_nh3) {
+                    isPaused_nh3 = false;
+                    statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                    statusEl.title = "點擊暫停";
+                    const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                    updateReactionArrowsNH3(Q_nh3, K_nh3);
+                    lastTime_nh3 = 0;
+                    animationFrameId_nh3 = requestAnimationFrame(animateNH3);
+                } else {
+                    isPaused_nh3 = true;
+                    if (!statusEl.textContent.includes("(暫停中)")) {
+                        statusEl.textContent = statusEl.textContent + " (暫停中)";
+                    }
+                    statusEl.title = "點擊繼續";
+                    if (animationFrameId_nh3) {
+                        cancelAnimationFrame(animationFrameId_nh3);
+                        animationFrameId_nh3 = null;
+                    }
+                }
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的重置函數
         function resetExperimentNH3() {
-            // 暫時為空，待後續實現
+            if (animationFrameId_nh3) {
+                cancelAnimationFrame(animationFrameId_nh3);
+                animationFrameId_nh3 = null;
+            }
+            
+            concN2_nh3 = initialConcN2_nh3;
+            concH2_nh3 = initialConcH2_nh3;
+            concNH3_nh3 = initialConcNH3_nh3;
+            kf_nh3 = 1.2;
+            kr_nh3 = 0.3;
+            K_nh3 = 4.0;
+            currentTime_nh3 = 0;
+            hasOperated_nh3 = false;
+            lastTime_nh3 = 0;
+            stepCounter = 0;
+            equilibriumReached_nh3 = false;
+            equilibriumCounter_nh3 = 0;
+            equilibriumConcN2_nh3 = 0;
+            equilibriumConcH2_nh3 = 0;
+            equilibriumConcNH3_nh3 = 0;
+            equilibriumV_nh3 = 0;
+            waitingForStart_nh3 = false;
+            beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
+            instantChangeIndex_nh3 = -1;
+            isPaused_nh3 = false;
+            currentDisturbMode_nh3 = null;
+            history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
+            
+            initialVf_nh3 = 1.2;
+            initialVr_nh3 = 1.2;
+            
+            document.getElementById('k-val-nh3').innerText = K_nh3.toFixed(2);
+            
+            updateReactionArrowsNH3(Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3)), K_nh3);
+            
+            const statusEl = document.getElementById('status-nh3');
+            statusEl.style.cursor = "default";
+            statusEl.title = "";
+            
+            document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
+                b.disabled = false;
+                b.classList.remove('active');
+            });
+            document.getElementById('status-nh3').textContent = "原平衡";
+            document.getElementById('status-nh3').style.color = "#27ae60";
+            document.getElementById('status-nh3').style.borderColor = "#27ae60";
+            document.getElementById('direction-display-nh3').style.display = 'none';
+            
+            cCanvas_nh3 = null;
+            vCanvas_nh3 = null;
+            cCtx_nh3 = null;
+            vCtx_nh3 = null;
+            
+            equilibriumReached_nh3 = false;
+            equilibriumV_nh3 = 0;
+            currentTime_nh3 = 0;
+            recordNH3();
+            while (currentTime_nh3 < 2.5) {
+                recordNH3();
+            }
+            
+            initChartsNH3();
+            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            updateReactionArrowsNH3(Q_nh3, K_nh3);
+            updateUINH3();
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的圖表初始化
+        function initChartsNH3() {
+            cCanvas_nh3 = document.getElementById('cChart-nh3');
+            vCanvas_nh3 = document.getElementById('vChart-nh3');
+            
+            if (cCanvas_nh3) {
+                cCtx_nh3 = cCanvas_nh3.getContext('2d');
+                const rect = cCanvas_nh3.getBoundingClientRect();
+                const containerWidth = rect.width;
+                const containerHeight = rect.height;
+                const dpr = window.devicePixelRatio || 1;
+                cCanvas_nh3.width = containerWidth * dpr;
+                cCanvas_nh3.height = containerHeight * dpr;
+                cCanvas_nh3.style.width = containerWidth + 'px';
+                cCanvas_nh3.style.height = containerHeight + 'px';
+                cCtx_nh3.scale(dpr, dpr);
+            }
+            
+            if (vCanvas_nh3) {
+                vCtx_nh3 = vCanvas_nh3.getContext('2d');
+                const rect = vCanvas_nh3.getBoundingClientRect();
+                const containerWidth = rect.width;
+                const containerHeight = rect.height;
+                const dpr = window.devicePixelRatio || 1;
+                vCanvas_nh3.width = containerWidth * dpr;
+                vCanvas_nh3.height = containerHeight * dpr;
+                vCanvas_nh3.style.width = containerWidth + 'px';
+                vCanvas_nh3.style.height = containerHeight + 'px';
+                vCtx_nh3.scale(dpr, dpr);
+            }
+            
+            drawChartsNH3();
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的圖表繪製
+        function drawChartsNH3() {
+            if (cCtx_nh3 && cCanvas_nh3) {
+                drawChartNH3(cCtx_nh3, cCanvas_nh3, 'concentration');
+            }
+            if (vCtx_nh3 && vCanvas_nh3) {
+                drawChartNH3(vCtx_nh3, vCanvas_nh3, 'velocity');
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的單個圖表繪製
+        function drawChartNH3(ctx, canvas, type) {
+            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            const mobile = isMobile();
+            const dpr = window.devicePixelRatio || 1;
+            const width = canvas.width / dpr;
+            const height = canvas.height / dpr;
+            
+            const viewportWidth = window.innerWidth;
+            let leftPadding, rightPadding;
+            
+            if (viewportWidth <= 380) {
+                leftPadding = 40;
+                rightPadding = 40;
+            } else if (viewportWidth <= 400) {
+                leftPadding = 42;
+                rightPadding = 42;
+            } else if (viewportWidth <= 480) {
+                leftPadding = 45;
+                rightPadding = 45;
+            } else {
+                leftPadding = 45;
+                rightPadding = 45;
+            }
+            
+            const padding = mobile ? {
+                top: 25,
+                right: rightPadding,
+                bottom: 30,
+                left: leftPadding
+            } : config.padding;
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            drawGridNH3(ctx, padding, plotWidth, plotHeight, config.yMax, type);
+            
+            if (history_nh3.t.length > 0) {
+                let calculatedMaxTime = Math.max(...history_nh3.t.map(t => parseFloat(t))) || 10;
+                let maxTime;
+                if (!hasOperated_nh3 || waitingForStart_nh3) {
+                    maxTime = Math.max(5, calculatedMaxTime);
+                } else {
+                    maxTime = Math.min(30.3, Math.max(5, calculatedMaxTime));
+                }
+                const lineWidth = mobile ? 1.7 : 2.2;
+                
+                if (type === 'concentration') {
+                    drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history_nh3.t, history_nh3.n2, '#3498db', lineWidth, false, false, null, null, 'n2');
+                    drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history_nh3.t, history_nh3.h2, '#9b59b6', lineWidth, false, false, null, null, 'h2');
+                    drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history_nh3.t, history_nh3.nh3, '#f39c12', lineWidth, false, false, null, null, 'nh3');
+                } else {
+                    drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history_nh3.t, history_nh3.vf, config.colors.rf, lineWidth, true, 
+                            config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vf');
+                    drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history_nh3.t, history_nh3.vr, config.colors.rr, lineWidth, true,
+                            config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vr');
+                }
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的網格繪製
+        function drawGridNH3(ctx, padding, plotWidth, plotHeight, yMax, type) {
+            const mobile = isMobile();
+            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 0.5;
+            const ySteps = mobile ? 5 : 6;
+            
+            if (type === 'velocity' && config.yCompress) {
+                const compressPoint = config.yCompressPoint;
+                const compressRatio = config.yCompressRatio;
+                
+                let step;
+                if (yMax <= 3.0) {
+                    step = 0.5;
+                } else if (yMax <= 6.0) {
+                    step = 1.0;
+                } else {
+                    step = 1.5;
+                }
+                
+                const tickValues = [];
+                for (let v = 0; v <= yMax + step; v += step) {
+                    if (v <= yMax) {
+                        tickValues.push(v);
+                    }
+                }
+                if (tickValues.length === 0 || tickValues[tickValues.length - 1] < yMax) {
+                    tickValues.push(yMax);
+                }
+                
+                tickValues.forEach(value => {
+                    const yPos = mapVelocityY(value, yMax, plotHeight, compressPoint, compressRatio);
+                    const y = padding.top + plotHeight - yPos;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + plotWidth, y);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const labelX = mobile ? padding.left - 12 : padding.left - 8;
+                    const labelText = value >= 10 ? value.toFixed(1) : value.toFixed(1);
+                    ctx.fillText(labelText, labelX, y);
+                });
+            } else {
+                for (let i = 0; i <= ySteps; i++) {
+                    const y = padding.top + (plotHeight / ySteps) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + plotWidth, y);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const value = (yMax / ySteps) * (ySteps - i);
+                    const labelX = mobile ? padding.left - 12 : padding.left - 8;
+                    ctx.fillText(value.toFixed(1), labelX, y);
+                }
+            }
+            
+            if (history_nh3.t.length > 0) {
+                const maxTime = Math.max(...history_nh3.t.map(t => parseFloat(t))) || 10;
+                const xSteps = mobile ? 5 : 6;
+                for (let i = 0; i <= xSteps; i++) {
+                    const x = padding.left + (plotWidth / xSteps) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + plotHeight);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    const time = (maxTime / xSteps) * i;
+                    let timeText;
+                    if (i === 0) {
+                        timeText = "0秒";
+                    } else {
+                        timeText = time.toFixed(1);
+                    }
+                    
+                    const textWidth = ctx.measureText(timeText).width;
+                    const canvasWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
+                    let labelX = x;
+                    let textAlign = 'center';
+                    
+                    if (i === 0 && x - textWidth / 2 < padding.left) {
+                        labelX = padding.left;
+                        textAlign = 'left';
+                    } else if (i === xSteps) {
+                        const rightBoundary = canvasWidth - padding.right;
+                        if (x + textWidth / 2 > rightBoundary) {
+                            labelX = rightBoundary;
+                            textAlign = 'right';
+                        }
+                    }
+                    
+                    ctx.textAlign = textAlign;
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(timeText, labelX, padding.top + plotHeight + (mobile ? 8 : 6));
+                }
+            }
+            
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, padding.top + plotHeight);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top + plotHeight);
+            ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
+            ctx.stroke();
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的線條繪製（支援瞬間變化）
+        function drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth, isVelocity, useCompress, compressPoint, compressRatio, valueType) {
+            if (times.length === 0 || values.length === 0) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            if (instantChangeIndex_nh3 >= 0 && instantChangeIndex_nh3 < times.length) {
+                ctx.beginPath();
+                let lastX = 0, lastY = 0;
+                for (let i = 0; i < instantChangeIndex_nh3; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    lastX = x;
+                    lastY = y;
+                }
+                
+                const changeX = padding.left + (parseFloat(times[instantChangeIndex_nh3]) / maxTime) * plotWidth;
+                let yBefore, yAfter;
+                
+                let beforeValue;
+                if (valueType === 'n2') beforeValue = beforeDisturb_nh3.n2;
+                else if (valueType === 'h2') beforeValue = beforeDisturb_nh3.h2;
+                else if (valueType === 'nh3') beforeValue = beforeDisturb_nh3.nh3;
+                else if (valueType === 'vf') beforeValue = beforeDisturb_nh3.vf;
+                else if (valueType === 'vr') beforeValue = beforeDisturb_nh3.vr;
+                
+                let afterValue = parseFloat(values[instantChangeIndex_nh3]);
+                
+                if (isVelocity && useCompress) {
+                    const yPosBefore = mapVelocityY(beforeValue, yMax, plotHeight, compressPoint, compressRatio);
+                    yBefore = padding.top + plotHeight - yPosBefore;
+                    const yPosAfter = mapVelocityY(afterValue, yMax, plotHeight, compressPoint, compressRatio);
+                    yAfter = padding.top + plotHeight - yPosAfter;
+                } else {
+                    yBefore = padding.top + plotHeight - (beforeValue / yMax) * plotHeight;
+                    yAfter = padding.top + plotHeight - (afterValue / yMax) * plotHeight;
+                }
+                
+                if (instantChangeIndex_nh3 > 0) {
+                    ctx.lineTo(changeX, yBefore);
+                } else {
+                    ctx.moveTo(changeX, yBefore);
+                }
+                ctx.stroke();
+                
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(changeX, yBefore);
+                ctx.lineTo(changeX, yAfter);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(changeX, yAfter);
+                for (let i = instantChangeIndex_nh3 + 1; i < times.length; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            } else {
+                let endIndex = times.length;
+                if (!hasOperated_nh3 || waitingForStart_nh3) {
+                    for (let i = times.length - 1; i >= 0; i--) {
+                        if (parseFloat(times[i]) <= 2.5) {
+                            endIndex = i + 1;
+                            break;
+                        }
+                    }
+                }
+                
+                ctx.beginPath();
+                for (let i = 0; i < endIndex; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的 UI 更新
+        function updateUINH3() {
+            const now = performance.now();
+            if (now - lastUIUpdate < 16) return;
+            lastUIUpdate = now;
+            
+            const kFormulaTop = document.getElementById('k-formula-top-nh3');
+            const kFormulaBot = document.getElementById('k-formula-bot-nh3');
+            if (kFormulaTop && kFormulaBot) {
+                kFormulaTop.innerHTML = `${initialConcNH3_nh3.toFixed(0)}<sup>2</sup>`;
+                kFormulaBot.innerHTML = `${initialConcN2_nh3.toFixed(0)} × ${initialConcH2_nh3.toFixed(0)}<sup>3</sup>`;
+            }
+            
+            if (waitingForStart_nh3) {
+                let Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                updateStatusOnlyNH3(Q_nh3, K_nh3);
+                updateReactionArrowsNH3(Q_nh3, K_nh3);
+                drawChartsNH3();
+                return;
+            }
+            
+            let Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
+            document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
+            const qFormulaTop = document.getElementById('q-formula-top-nh3');
+            const qFormulaBot = document.getElementById('q-formula-bot-nh3');
+            if (qFormulaTop && qFormulaBot) {
+                qFormulaTop.innerHTML = `${concNH3_nh3.toFixed(2)}<sup>2</sup>`;
+                qFormulaBot.innerHTML = `${concN2_nh3.toFixed(2)} × ${concH2_nh3.toFixed(2)}<sup>3</sup>`;
+            }
+            document.getElementById('q-val-nh3').innerText = Q_nh3.toFixed(2);
+            
+            updateReactionArrowsNH3(Q_nh3, K_nh3);
+            drawChartsNH3();
+            
+            const statusEl = document.getElementById('status-nh3');
+            if (equilibriumReached_nh3) {
+                statusEl.textContent = "新平衡：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+                statusEl.style.cursor = "default";
+            } else {
+                const directionText = getDirectionTextNH3(Q_nh3, K_nh3);
+                
+                if (Math.abs(Q_nh3 - K_nh3) > 0.01) {
+                    if (isPaused_nh3) {
+                        statusEl.textContent = "平衡移動中" + directionText + " (暫停中)";
+                        statusEl.title = "點擊繼續";
+                    } else {
+                        statusEl.textContent = "平衡移動中" + directionText;
+                        statusEl.title = "點擊暫停";
+                    }
+                    statusEl.style.color = "#e67e22";
+                    statusEl.style.borderColor = "#e67e22";
+                    statusEl.style.cursor = "pointer";
+                } else {
+                    if (!hasOperated_nh3) {
+                        statusEl.textContent = "原平衡：Q＝K";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
+                    } else {
+                        statusEl.textContent = "新平衡：Q＝K";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
+                    }
+                }
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的方向文字
+        function getDirectionTextNH3(Q, K) {
+            const diff = Q - K;
+            if (Math.abs(diff) < 0.01) {
+                return '：Q＝K';
+            }
+            
+            if (diff > 0) {
+                return '：Q＞K';
+            } else {
+                return '：Q＜K';
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的反應箭頭更新
+        function updateReactionArrowsNH3(Q, K) {
+            const arrowLeft = document.getElementById('arrow-left-nh3');
+            const arrowRight = document.getElementById('arrow-right-nh3');
+            if (!arrowLeft || !arrowRight) return;
+            
+            const mobile = isMobile();
+            const baseLength = mobile ? 80 : 120;
+            const maxLength = mobile ? 180 : 300;
+            const minLength = mobile ? 40 : 60;
+            
+            const currentVf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            const currentVr = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            
+            const vfRatio = currentVf / initialVf_nh3;
+            const vrRatio = currentVr / initialVr_nh3;
+            
+            function calculateLengthFromRatio(ratio) {
+                if (ratio < 1.0) {
+                    return minLength + (baseLength - minLength) * ((ratio - 0.2) / 0.8);
+                } else {
+                    const excessRatio = ratio - 1.0;
+                    const scaleFactor = Math.min(1.0, excessRatio / 2.0);
+                    return baseLength + (maxLength - baseLength) * scaleFactor;
+                }
+            }
+            
+            let rightLength = calculateLengthFromRatio(vfRatio);
+            let leftLength = calculateLengthFromRatio(vrRatio);
+            
+            rightLength = Math.max(minLength, Math.min(maxLength, rightLength));
+            leftLength = Math.max(minLength, Math.min(maxLength, leftLength));
+            
+            arrowRight.style.width = rightLength + 'px';
+            arrowLeft.style.width = leftLength + 'px';
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的狀態更新（僅狀態）
+        function updateStatusOnlyNH3(Q, K) {
+            document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
+            document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
+            const qFormulaTop = document.getElementById('q-formula-top-nh3');
+            const qFormulaBot = document.getElementById('q-formula-bot-nh3');
+            if (qFormulaTop && qFormulaBot) {
+                qFormulaTop.innerHTML = `${concNH3_nh3.toFixed(2)}<sup>2</sup>`;
+                qFormulaBot.innerHTML = `${concN2_nh3.toFixed(2)} × ${concH2_nh3.toFixed(2)}<sup>3</sup>`;
+            }
+            document.getElementById('q-val-nh3').innerText = Q.toFixed(2);
+            
+            const statusEl = document.getElementById('status-nh3');
+            const directionText = getDirectionTextNH3(Q, K);
+            
+            if (Math.abs(Q - K) < 0.01) {
+                statusEl.textContent = "平衡破壞：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+            } else if (Q > K) {
+                statusEl.textContent = "平衡破壞：Q＞K，向左移動";
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            } else {
+                statusEl.textContent = "平衡破壞：Q＜K，向右移動";
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            }
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的 Y 軸調整
+        function checkAndAdjustYAxisNH3() {
+            const maxConc = Math.max(concN2_nh3, concH2_nh3, concNH3_nh3);
+            if (maxConc * 1.2 > chartConfig.concentration.yMax) {
+                chartConfig.concentration.yMax = Math.max(chartConfig.concentration.baseYMax, maxConc * 1.2);
+            }
+            
+            const maxVf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            const maxVr = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            const maxV = Math.max(maxVf, maxVr);
+            if (maxV * 1.2 > chartConfig.velocity.yMax) {
+                chartConfig.velocity.yMax = Math.max(chartConfig.velocity.baseYMax, maxV * 1.2);
+            }
         }
 
         function resetExperimentChromate() {
@@ -3609,11 +4669,6 @@
         }
 
         function resetExperimentAg2CrO4() {
-            // 暫時為空，待後續實現
-        }
-
-        // 新場景的平衡移動函數（暫時為空，待後續實現）
-        function startEquilibriumMovementNH3() {
             // 暫時為空，待後續實現
         }
 
@@ -3707,6 +4762,24 @@
                     document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
                 }
                 
+                // 初始化 NH3 場景的 K 和 Q 顯示
+                const kFormulaTopNH3 = document.getElementById('k-formula-top-nh3');
+                const kFormulaBotNH3 = document.getElementById('k-formula-bot-nh3');
+                if (kFormulaTopNH3 && kFormulaBotNH3) {
+                    kFormulaTopNH3.innerHTML = `${initialConcNH3_nh3.toFixed(0)}<sup>2</sup>`;
+                    kFormulaBotNH3.innerHTML = `${initialConcN2_nh3.toFixed(0)} × ${initialConcH2_nh3.toFixed(0)}<sup>3</sup>`;
+                }
+                
+                const qFormulaTopNH3 = document.getElementById('q-formula-top-nh3');
+                const qFormulaBotNH3 = document.getElementById('q-formula-bot-nh3');
+                if (qFormulaTopNH3 && qFormulaBotNH3) {
+                    qFormulaTopNH3.innerHTML = `${initialConcNH3_nh3.toFixed(2)}<sup>2</sup>`;
+                    qFormulaBotNH3.innerHTML = `${initialConcN2_nh3.toFixed(2)} × ${initialConcH2_nh3.toFixed(2)}<sup>3</sup>`;
+                }
+                
+                document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
+                document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
+                
                 // 設置第一個方程式按鈕為激活狀態
                 const firstEquationBtn = document.querySelector('.equation-btn[data-scenario="le-chatelier"]');
                 if (firstEquationBtn) {
@@ -3728,6 +4801,13 @@
                     cCtx = null;
                     vCtx = null;
                     initCharts();
+                } else if (activeScenario && activeScenario.getAttribute('data-scenario') === 'le-chatelier-nh3') {
+                    // 重新初始化 NH3 場景的 Canvas 以適應新寬度
+                    cCanvas_nh3 = null;
+                    vCanvas_nh3 = null;
+                    cCtx_nh3 = null;
+                    vCtx_nh3 = null;
+                    initChartsNH3();
                 }
             }, 250);  // 防抖處理，避免頻繁重繪
         });
