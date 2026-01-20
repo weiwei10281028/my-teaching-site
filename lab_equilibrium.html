@@ -601,10 +601,10 @@
             background: var(--mineral-bg-light);
             padding: 12px 25px;  /* 減少上下 padding，從 20px 改為 12px */
             border-radius: 12px;
+            border: 1.5px solid var(--mineral-border);
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
             align-items: center;
             justify-content: center;
-            border: 1.5px solid var(--mineral-border);
         }
 
         /* K和Q置中顯示 */
@@ -633,19 +633,43 @@
             
             /* 手機版分數樣式調整 */
             .formula-card .frac {
-                margin: 0 4px;  /* 減少間距 */
+                margin: 0 6px;
+                min-width: 120px;  /* 手機版也確保橫線夠長 */
+                align-items: stretch;
             }
             
             .formula-card .frac-top,
             .formula-card .frac-bot {
-                padding: 0 3px;
+                padding: 0 10px;  /* 手機版也增加左右間距，確保分數線夠長 */
                 font-size: 0.9em;  /* 稍微縮小 */
             }
+            
+            /* 手機版：讓最後的等號和結果值換行到下一行並置中 */
+            .formula-card .math .k-equals-result,
+            .formula-card .math .q-equals-result {
+                flex-basis: 100%;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 3px;
+                gap: 4px;
+            }
+            
+            .formula-card .math .k-equals-result > span,
+            .formula-card .math .q-equals-result > span {
+                display: inline-flex;
+                align-items: center;
+            }
 
-            .formula-card #status {
+            #status, #status-nh3, #status-chromate, #status-ag2cro4 {
                 width: 100%;
                 text-align: center;
-                margin-top: 0;  /* 移除 margin-top */
+                margin-top: 0;
+                border: 1.5px solid var(--mineral-border);
+                border-radius: 12px;
+                box-shadow: 0 2px 8px var(--mineral-shadow-light);
+                padding: 8px 15px;
             }
         }
 
@@ -712,20 +736,29 @@
             display: inline-flex;
             align-items: center;
         }
+        
+        /* 桌面版：等號和結果正常顯示在同一行 */
+        .formula-card .math .k-equals-result,
+        .formula-card .math .q-equals-result {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
 
         .frac {
             display: inline-flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;  /* 強制子元素填滿寬度，確保橫線延伸 */
             justify-content: center;
-            margin: 0 8px;  /* 增加左右間距，使排列更整齊 */
+            margin: 0 12px;
             vertical-align: middle;
             line-height: 1.2;
+            min-width: 160px;  /* 顯著增加最小寬度，讓橫線變長 */
         }
 
         .frac-top {
-            border-bottom: 1.5px solid var(--mineral-text);  /* 分數線 */
-            padding: 0 4px 2px 4px;  /* 調整 padding，確保分數線與內容有適當間距 */
+            border-bottom: 2.5px solid currentColor;  /* 使用 currentColor 讓顏色跟隨文字顏色(如Q的橘色) */
+            padding: 0 15px 2px 15px;  /* 再增加左右 padding，讓分數線更長 */
             text-align: center;
             line-height: 1.4;
             min-height: 1.2em;
@@ -735,7 +768,7 @@
         }
 
         .frac-bot {
-            padding: 2px 4px 0 4px;  /* 調整 padding，確保與分數線有適當間距 */
+            padding: 2px 15px 0 15px;  /* 增加左右 padding，與分子對齊 */
             text-align: center;
             line-height: 1.4;
             min-height: 1.2em;
@@ -744,17 +777,24 @@
             justify-content: center;
         }
 
-        #status {
-            font-weight: 900;
+        #status, #status-nh3, #status-chromate, #status-ag2cro4 {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 600;
             color: #27ae60;
-            border: 2px solid #27ae60;
-            padding: 5px 15px;
-            border-radius: 8px;
-            background: var(--mineral-bg-light);
-            font-size: 0.95rem;
-            width: 100%;
             text-align: center;
-            margin-top: 0;  /* 移除 margin-top，由父元素控制間距 */
+            padding: 8px 24px;
+            background: var(--mineral-bg-light);
+            border-radius: 12px;
+            border: 1.5px solid var(--mineral-border);
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            width: 100%;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            cursor: pointer;
         }
 
         /* 反應方向顯示（在K、Q下方） */
@@ -1296,6 +1336,7 @@
                 width: 100%;
                 box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
                 overflow: hidden;  /* 防止內容溢出 */
+                border: 1.5px solid var(--mineral-border);  /* 確保手機版也有外框 */
             }
             
             /* 超窄螢幕（375px 及以下）進一步優化 */
@@ -1485,6 +1526,7 @@
                 flex-direction: column;
                 gap: 12px;
                 padding: 12px 15px;
+                border: 1.5px solid var(--mineral-border);  /* 確保手機版也有外框 */
             }
 
             .formula-card .math {
@@ -1493,12 +1535,15 @@
                 justify-content: center;
             }
 
-            .formula-card #status {
+            #status, #status-nh3, #status-chromate, #status-ag2cro4 {
                 width: 100%;
                 text-align: center;
                 margin-top: 8px;
                 font-size: 0.85rem;
-                padding: 5px 12px;
+                padding: 8px 15px;
+                border: 1.5px solid var(--mineral-border);
+                border-radius: 12px;
+                box-shadow: 0 2px 8px var(--mineral-shadow-light);
             }
 
             .reaction-header {
@@ -1506,6 +1551,7 @@
                 padding: 10px 12px;  /* 減少左右padding，避免超出 */
                 letter-spacing: 0.3px;
                 gap: 8px;  /* 手機版減少間距，讓NO2與N2O4靠近一點 */
+                border: 1.5px solid var(--mineral-border);  /* 確保手機版也有外框 */
             }
             
             .reaction-arrows {
@@ -1530,6 +1576,7 @@
             .chart-card {
                 padding: 5px 10px;  /* 保持左右對稱 padding */
                 min-height: 200px;
+                border: 1.5px solid var(--mineral-border);  /* 確保小螢幕手機版也有外框 */
             }
 
             .chart-card canvas {
@@ -1650,20 +1697,18 @@
                             <div class="frac"><span class="frac-top">[NO<sub>2</sub>]<sup>2</sup></span><span class="frac-bot">[N<sub>2</sub>O<sub>4</sub>]</span></div>
                             <span>=</span>
                             <div class="frac"><span class="frac-top" id="k-formula-top">2<sup>2</sup></span><span class="frac-bot" id="k-formula-bot">1</span></div>
-                            <span>=</span>
-                            <span id="k-val" style="color:#2c3e50;">4.00</span>
+                            <span class="k-equals-result"><span>=</span><span id="k-val" style="color:#2c3e50;">4.00</span></span>
                         </div>
                         <div class="math" style="color: #e67e22;">
                             <span>Q =</span>
                             <div class="frac"><span class="frac-top" id="q-num">[NO<sub>2</sub>]<sup>2</sup></span><span class="frac-bot" id="q-den">[N<sub>2</sub>O<sub>4</sub>]</span></div>
                             <span>=</span>
                             <div class="frac"><span class="frac-top" id="q-formula-top">2.00<sup>2</sup></span><span class="frac-bot" id="q-formula-bot">1.00</span></div>
-                            <span>=</span>
-                            <span id="q-val">4.00</span>
+                            <span class="q-equals-result"><span>=</span><span id="q-val">4.00</span></span>
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
+                        <div id="status" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     <div id="direction-display" class="direction-display" style="display: none;"></div>
 
@@ -1711,8 +1756,8 @@
                     <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
                     <div class="reaction-arrows-container">
                         <div class="reaction-arrows">
-                            <div class="arrow-right" id="arrow-right-nh3" style="width: 80px;"></div>
-                            <div class="arrow-left" id="arrow-left-nh3" style="width: 80px;"></div>
+                            <div class="arrow-right" id="arrow-right-nh3" style="width: 100px;"></div>
+                            <div class="arrow-left" id="arrow-left-nh3" style="width: 100px;"></div>
                         </div>
                     </div>
                     
@@ -1721,21 +1766,19 @@
                             <span>K =</span>
                             <div class="frac"><span class="frac-top">[NH<sub>3</sub>]<sup>2</sup></span><span class="frac-bot">[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup></span></div>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="k-formula-top-nh3">2<sup>2</sup></span><span class="frac-bot" id="k-formula-bot-nh3">1 × 1<sup>3</sup></span></div>
-                            <span>=</span>
-                            <span id="k-val-nh3" style="color:#2c3e50;">4.00</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-nh3">4<sup>2</sup></span><span class="frac-bot" id="k-formula-bot-nh3">2 × 8<sup>3</sup></span></div>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-nh3" style="color:#2c3e50;">0.015625</span></span>
                         </div>
                         <div class="math" style="color: #e67e22;">
                             <span>Q =</span>
                             <div class="frac"><span class="frac-top" id="q-num-nh3">[NH<sub>3</sub>]<sup>2</sup></span><span class="frac-bot" id="q-den-nh3">[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup></span></div>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="q-formula-top-nh3">2.00<sup>2</sup></span><span class="frac-bot" id="q-formula-bot-nh3">1.00 × 1.00<sup>3</sup></span></div>
-                            <span>=</span>
-                            <span id="q-val-nh3">4.00</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-nh3">4.00<sup>2</sup></span><span class="frac-bot" id="q-formula-bot-nh3">2.00 × 8.00<sup>3</sup></span></div>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-nh3">0.015625</span></span>
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status-nh3" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
+                        <div id="status-nh3" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     <div id="direction-display-nh3" class="direction-display" style="display: none;"></div>
 
@@ -1798,20 +1841,18 @@
                             <div class="frac"><span class="frac-top">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
                             <span>=</span>
                             <div class="frac"><span class="frac-top" id="k-formula-top-chromate">1</span><span class="frac-bot" id="k-formula-bot-chromate">1<sup>2</sup> × 1<sup>2</sup></span></div>
-                            <span>=</span>
-                            <span id="k-val-chromate" style="color:#2c3e50;">1.00</span>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-chromate" style="color:#2c3e50;">1.00</span></span>
                         </div>
                         <div class="math" style="color: #e67e22;">
                             <span>Q =</span>
                             <div class="frac"><span class="frac-top" id="q-num-chromate">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot" id="q-den-chromate">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
                             <span>=</span>
                             <div class="frac"><span class="frac-top" id="q-formula-top-chromate">1.00</span><span class="frac-bot" id="q-formula-bot-chromate">1.00<sup>2</sup> × 1.00<sup>2</sup></span></div>
-                            <span>=</span>
-                            <span id="q-val-chromate">1.00</span>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-chromate">1.00</span></span>
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status-chromate" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementChromate()" title="點擊開始平衡移動">新平衡</div>
+                        <div id="status-chromate" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementChromate()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     <div id="direction-display-chromate" class="direction-display" style="display: none;"></div>
 
@@ -1871,23 +1912,21 @@
                     <div class="formula-card">
                         <div class="math">
                             <span>K<sub>sp</sub> =</span>
-                            <div class="frac"><span class="frac-top">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span><span class="frac-bot">1</span></div>
+                            <span style="margin: 0 10px;">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="k-formula-top-ag2cro4">2<sup>2</sup> × 1</span><span class="frac-bot" id="k-formula-bot-ag2cro4">1</span></div>
-                            <span>=</span>
-                            <span id="k-val-ag2cro4" style="color:#2c3e50;">4.00</span>
+                            <span id="k-formula-top-ag2cro4" style="margin: 0 10px;">2<sup>2</sup> × 1</span>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-ag2cro4" style="color:#2c3e50;">4.00</span></span>
                         </div>
                         <div class="math" style="color: #e67e22;">
                             <span>Q =</span>
-                            <div class="frac"><span class="frac-top" id="q-num-ag2cro4">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span><span class="frac-bot" id="q-den-ag2cro4">1</span></div>
+                            <span id="q-num-ag2cro4" style="margin: 0 10px;">[Ag<sup>+</sup>]<sup>2</sup>[CrO<sub>4</sub><sup>2⁻</sup>]</span>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="q-formula-top-ag2cro4">2.00<sup>2</sup> × 1.00</span><span class="frac-bot" id="q-formula-bot-ag2cro4">1</span></div>
-                            <span>=</span>
-                            <span id="q-val-ag2cro4">4.00</span>
+                            <span id="q-formula-top-ag2cro4" style="margin: 0 10px;">2.00<sup>2</sup> × 1.00</span>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-ag2cro4">4.00</span></span>
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status-ag2cro4" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovementAg2CrO4()" title="點擊開始平衡移動">新平衡</div>
+                        <div id="status-ag2cro4" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementAg2CrO4()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     <div id="direction-display-ag2cro4" class="direction-display" style="display: none;"></div>
 
@@ -1957,14 +1996,18 @@
                 <!-- N2 + 3H2 ⇌ 2NH3 操作 -->
                 <div class="control-scenario" data-scenario="le-chatelier-nh3">
                     <div class="controls" id="btnContainer-nh3">
-                        <button class="control-btn" onclick="runDisturbNH3('ADD_N2', this)">增加 1M N₂</button>
-                        <button class="control-btn" onclick="runDisturbNH3('SUB_N2', this)">減少 1M N₂</button>
-                        <button class="control-btn" onclick="runDisturbNH3('ADD_H2', this)">增加 1M H₂</button>
-                        <button class="control-btn" onclick="runDisturbNH3('SUB_H2', this)">減少 1M H₂</button>
-                        <button class="control-btn" onclick="runDisturbNH3('ADD_NH3', this)">增加 1M NH₃</button>
-                        <button class="control-btn" onclick="runDisturbNH3('SUB_NH3', this)">減少 1M NH₃</button>
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_N2', this)">增加 1 atm N₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_N2', this)">減少 1 atm N₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_H2', this)">增加 1.5 atm H₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_H2', this)">減少 1.5 atm H₂</button>
+                        <button class="control-btn" onclick="runDisturbNH3('ADD_NH3', this)">增加 1 atm NH₃</button>
+                        <button class="control-btn" onclick="runDisturbNH3('SUB_NH3', this)">減少 1 atm NH₃</button>
                         <button class="control-btn" onclick="runDisturbNH3('V_HALF', this)">體積減半(壓↑)</button>
                         <button class="control-btn" onclick="runDisturbNH3('V_DOUBLE', this)">體積加倍(壓↓)</button>
+                        <button class="control-btn" onclick="runDisturbNH3('HEAT', this)">溫度上升(K↓)</button>
+                        <button class="control-btn" onclick="runDisturbNH3('COOL', this)">溫度下降(K↑)</button>
+                        <button class="control-btn" onclick="runDisturbNH3('HE_P', this)">定溫定壓下加入 He</button>
+                        <button class="control-btn" onclick="runDisturbNH3('HE_V', this)">定溫定容下加入 He</button>
                         <button class="control-btn reset-btn" onclick="resetExperimentNH3()">重置實驗</button>
                     </div>
                 </div>
@@ -2032,12 +2075,12 @@
         let disturbVr = 0;  // 破壞瞬間的逆反應速率
 
         // N2 + 3H2 ⇌ 2NH3 場景的變數
-        let K_nh3 = 4.0;
-        let concN2_nh3 = 1.0;
-        let concH2_nh3 = 1.0;
-        let concNH3_nh3 = 2.0;
-        let kf_nh3 = 1.2;
-        let kr_nh3 = 0.3;
+        let K_nh3 = 0.015625;
+        let concN2_nh3 = 2.0;
+        let concH2_nh3 = 8.0;
+        let concNH3_nh3 = 4.0;
+        let kf_nh3 = 0.015625;
+        let kr_nh3 = 1.0;
         let history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
         let currentTime_nh3 = 0;
         let animationFrameId_nh3 = null;
@@ -2049,16 +2092,19 @@
         let equilibriumConcH2_nh3 = 0;
         let equilibriumConcNH3_nh3 = 0;
         let equilibriumV_nh3 = 0;
+        let disturbN2_nh3 = 0;  // 破壞瞬間的 N2 濃度
+        let disturbH2_nh3 = 0;  // 破壞瞬間的 H2 濃度
+        let disturbNH3_nh3 = 0;  // 破壞瞬間的 NH3 濃度
         let waitingForStart_nh3 = false;
         let beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
         let instantChangeIndex_nh3 = -1;
         let isPaused_nh3 = false;
         let currentDisturbMode_nh3 = null;
-        let initialVf_nh3 = 1.2;
-        let initialVr_nh3 = 1.2;
-        let initialConcN2_nh3 = 1.0;
-        let initialConcH2_nh3 = 1.0;
-        let initialConcNH3_nh3 = 2.0;
+            let initialVf_nh3 = 0.015625 * 2.0 * Math.pow(8.0, 3);  // kf * N2 * H2^3 = 0.015625 * 2 * 512 = 16
+            let initialVr_nh3 = 1.0 * Math.pow(4.0, 2);  // kr * NH3^2 = 1.0 * 16 = 16
+        let initialConcN2_nh3 = 2.0;
+        let initialConcH2_nh3 = 8.0;
+        let initialConcNH3_nh3 = 4.0;
         let cCanvas_nh3 = null;
         let vCanvas_nh3 = null;
         let cCtx_nh3 = null;
@@ -2093,6 +2139,23 @@
                     rf: '#2ecc71', // 正反應：綠色
                     rr: '#000000'  // 逆反應：黑色
                 }
+            }
+        };
+
+        // NH3 專用圖表設定（不影響 N2O4）
+        const chartConfigNH3 = {
+            concentration: {
+                yMax: 3.5,
+                baseYMax: 3.5,
+                padding: { top: 30, right: 25, bottom: 35, left: 60 }
+            },
+            velocity: {
+                yMax: 2.5,
+                baseYMax: 2.5,
+                padding: { top: 30, right: 25, bottom: 35, left: 60 },
+                yCompress: true,
+                yCompressPoint: 1.0,
+                yCompressRatio: 0.25
             }
         };
         
@@ -2221,6 +2284,12 @@
             drawGrid(ctx, padding, plotWidth, plotHeight, config.yMax, type);
             
             // 繪製數據（線條粗度減小30%）
+            if (history.t.length === 0) {
+                record();
+                while (currentTime < 2.5) {
+                    record();
+                }
+            }
             if (history.t.length > 0) {
                 // 計算最大時間
                 let calculatedMaxTime = Math.max(...history.t.map(t => parseFloat(t))) || 10;
@@ -3390,9 +3459,9 @@
                     concN2_nh3 = initialConcN2_nh3;
                     concH2_nh3 = initialConcH2_nh3;
                     concNH3_nh3 = initialConcNH3_nh3;
-                    kf_nh3 = 1.2;
-                    kr_nh3 = 0.3;
-                    K_nh3 = 4.0;
+                    kf_nh3 = 0.015625;
+                    kr_nh3 = 1.0;
+                    K_nh3 = 0.015625;
                     currentTime_nh3 = 0;
                     hasOperated_nh3 = false;
                     lastTime_nh3 = 0;
@@ -3419,6 +3488,13 @@
                     equilibriumV_nh3 = 0;
                     currentTime_nh3 = 0;
                     recordNH3();
+                    // 計算初始平衡時的速率
+                    initialVf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+                    initialVr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+                    maxSeenN2_nh3 = concN2_nh3;
+                    maxSeenH2_nh3 = concH2_nh3;
+                    maxSeenNH3_nh3 = concNH3_nh3;
+                    
                     while (currentTime_nh3 < 2.5) {
                         recordNH3();
                     }
@@ -3584,9 +3660,9 @@
                         concN2_nh3 = initialConcN2_nh3;
                         concH2_nh3 = initialConcH2_nh3;
                         concNH3_nh3 = initialConcNH3_nh3;
-                        kf_nh3 = 1.2;
-                        kr_nh3 = 0.3;
-                        K_nh3 = 4.0;
+                        kf_nh3 = 0.015625;
+                        kr_nh3 = 1.0;
+                        K_nh3 = 0.015625;
                         currentTime_nh3 = 0;
                         hasOperated_nh3 = false;
                         lastTime_nh3 = 0;
@@ -3615,6 +3691,13 @@
                         equilibriumV_nh3 = 0;
                         currentTime_nh3 = 0;
                         recordNH3();
+                        // 計算初始平衡時的速率
+                        initialVf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+                        initialVr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+                        maxSeenN2_nh3 = concN2_nh3;
+                        maxSeenH2_nh3 = concH2_nh3;
+                        maxSeenNH3_nh3 = concNH3_nh3;
+                        
                         while (currentTime_nh3 < 2.5) {
                             recordNH3();
                         }
@@ -3762,6 +3845,7 @@
         function recordNH3() {
             let vf, vr;
             
+            // 如果已達到平衡，使用平衡時的固定速率值，確保兩條線重合
             if (equilibriumReached_nh3 && equilibriumV_nh3 > 0) {
                 vf = equilibriumV_nh3;
                 vr = equilibriumV_nh3;
@@ -3778,6 +3862,7 @@
             history_nh3.vr.push(parseFloat(vr.toFixed(3)));
             currentTime_nh3 += 0.2;
             
+            // 限制最大時間到30.3秒左右
             if (currentTime_nh3 > 30.3) {
                 currentTime_nh3 = 30.3;
             }
@@ -3787,6 +3872,7 @@
         function animateNH3(timestamp) {
             if (!lastTime_nh3) lastTime_nh3 = timestamp;
             
+            // 如果暫停，不執行步進
             if (isPaused_nh3) {
                 if (animationFrameId_nh3) {
                     animationFrameId_nh3 = requestAnimationFrame(animateNH3);
@@ -3794,22 +3880,29 @@
                 return;
             }
             
+            // 計算當前Q和K的差異，用於調整動畫速度
             const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
             const diff_nh3 = Math.abs(Q_nh3 - K_nh3);
             const ratio_nh3 = diff_nh3 / K_nh3;
             
-            const timeFromStart_nh3 = currentTime_nh3 - 2.5;
-            let stepInterval_nh3 = 80;
+            // 根據時間調整動畫速度，確保約20秒達成平衡
+            const timeFromStart_nh3 = currentTime_nh3 - 2.5;  // 從2.5秒開始計算
+            let stepInterval_nh3 = 80;  // 默認80ms
             
+            // 如果接近平衡（差異小於10%），加快動畫速度
             if (ratio_nh3 < 0.1 && ratio_nh3 > 0.001) {
-                stepInterval_nh3 = 80 - (0.1 - ratio_nh3) / 0.1 * 50;
+                // 接近平衡時，根據接近程度動態調整速度
+                // 越接近平衡，速度越快（間隔越小）
+                stepInterval_nh3 = 80 - (0.1 - ratio_nh3) / 0.1 * 50;  // 從80ms減少到30ms
                 stepInterval_nh3 = Math.max(30, Math.min(80, stepInterval_nh3));
             }
             
+            // 如果時間超過15秒，進一步加快速度，確保20秒左右達成平衡
             if (timeFromStart_nh3 > 15.0) {
-                stepInterval_nh3 = stepInterval_nh3 * 0.7;
+                stepInterval_nh3 = stepInterval_nh3 * 0.7;  // 加快30%
             }
             
+            // 執行步進
             if (timestamp - lastTime_nh3 >= stepInterval_nh3) {
                 stepNH3();
                 lastTime_nh3 = timestamp;
@@ -3820,7 +3913,110 @@
             }
         }
 
-        // N2 + 3H2 ⇌ 2NH3 場景的步進函數
+        // 計算新平衡狀態（使用二分法求解）
+        function calculateNewEquilibriumNH3(n2_init, h2_init, nh3_init, K) {
+            // 求解：K = (nh3 + 2x)^2 / ((n2 - x) * (h2 - 3x)^3)
+            // x > 0: 向右移動，生成NH3，消耗N2和H2
+            // x < 0: 向左移動，消耗NH3，生成N2和H2
+            
+            // 計算初始Q值，判斷移動方向
+            const initialQ = n2_init > 0 && h2_init > 0 ? Math.pow(nh3_init, 2) / (n2_init * Math.pow(h2_init, 3)) : 0;
+            
+            // 如果初始Q已經等於K，直接返回初始值
+            if (Math.abs(initialQ - K) < K * 0.001 && initialQ > 0) {
+                return {
+                    n2: n2_init,
+                    h2: h2_init,
+                    nh3: nh3_init
+                };
+            }
+            
+            // 設定x的範圍
+            // x_min: 最多可以消耗所有NH3（向左移動），但不能讓N2或H2變成負數
+            const x_min = Math.max(-nh3_init / 2, n2_init - 1000, (h2_init - 1000) / 3);
+            // x_max: 最多可以消耗所有N2或H2（向右移動），取較小值，且不能讓NH3變成負數
+            const x_max = Math.min(n2_init * 0.99, h2_init / 3 * 0.99, 1000);
+            
+            let low = x_min;
+            let high = x_max;
+            let converged = false;
+            
+            // 使用二分法求解
+            for (let i = 0; i < 200; i++) {
+                const x = (low + high) / 2;
+                const nh3 = nh3_init + 2 * x;
+                const n2 = n2_init - x;
+                const h2 = h2_init - 3 * x;
+                
+                // 確保濃度為正且合理
+                if (n2 <= 0.01 || h2 <= 0.01 || nh3 <= 0.01) {
+                    // 如果x為正（向右移動）但導致濃度為負，說明x太大，應該減小
+                    if (x > 0) {
+                        high = x;
+                    } else {
+                        // 如果x為負（向左移動）但導致濃度為負，說明x太小，應該增大
+                        low = x;
+                    }
+                    continue;
+                }
+                
+                // 計算 f = [NH3]² - K * [N2] * [H2]³
+                // f = 0 時達到平衡
+                const f = Math.pow(nh3, 2) - K * n2 * Math.pow(h2, 3);
+                
+                if (Math.abs(f) < 1e-10) {
+                    converged = true;
+                    break;
+                }
+                
+                // 如果 f > 0，表示 [NH3]² > K * [N2] * [H2]³，即 Q > K
+                // 需要減少NH3（向左移動），所以 x 應該更負（更小）
+                // 如果 f < 0，表示 Q < K，需要增加NH3（向右移動），所以 x 應該更正（更大）
+                if (f > 0) {
+                    // Q > K，需要減少NH3，x應該更負，所以縮小上限
+                    high = x;
+                } else {
+                    // Q < K，需要增加NH3，x應該更正，所以提高下限
+                    low = x;
+                }
+            }
+            
+            const x = (low + high) / 2;
+            let final_n2 = n2_init - x;
+            let final_h2 = h2_init - 3 * x;
+            let final_nh3 = nh3_init + 2 * x;
+            
+            // 驗證結果：計算最終Q值，確保接近K
+            const finalQ = final_n2 > 0 && final_h2 > 0 ? Math.pow(final_nh3, 2) / (final_n2 * Math.pow(final_h2, 3)) : 0;
+            
+            // 如果計算出的Q值與K差異太大，重新計算或使用更保守的值
+            if (!converged || (finalQ > 0 && Math.abs(finalQ - K) > K * 0.2)) {
+                // 如果計算失敗，嘗試使用更簡單的方法：根據Q和K的關係直接調整
+                if (initialQ < K && initialQ > 0) {
+                    // Q < K，需要增加NH3，減少N2和H2
+                    // 簡單調整：讓NH3增加一些，N2和H2減少一些
+                    const ratio = Math.sqrt(K / initialQ);
+                    final_nh3 = nh3_init * ratio;
+                    final_n2 = n2_init * 0.9;
+                    final_h2 = h2_init * 0.9;
+                } else if (initialQ > K) {
+                    // Q > K，需要減少NH3，增加N2和H2
+                    const ratio = Math.sqrt(K / initialQ);
+                    final_nh3 = nh3_init * ratio;
+                    final_n2 = n2_init * 1.1;
+                    final_h2 = h2_init * 1.1;
+                }
+            }
+            
+            // 確保濃度不會為負或過小
+            return {
+                n2: Math.max(0.1, final_n2),
+                h2: Math.max(0.1, final_h2),
+                nh3: Math.max(0.1, final_nh3)
+            };
+        }
+
+        // N2 + 3H2 ⇌ 2NH3 場景的步進函數（使用平滑過渡）
         function stepNH3() {
             if (equilibriumReached_nh3) {
                 equilibriumCounter_nh3++;
@@ -3841,11 +4037,6 @@
                     statusEl.style.borderColor = "#27ae60";
                     statusEl.style.cursor = "default";
                     statusEl.title = "";
-                    const directionDisplay = document.getElementById('direction-display-nh3');
-                    if (directionDisplay) {
-                        directionDisplay.style.display = 'none';
-                    }
-                    stepCounter = 0;
                     equilibriumReached_nh3 = false;
                     equilibriumCounter_nh3 = 0;
                     isPaused_nh3 = false;
@@ -3867,58 +4058,57 @@
                 return;
             }
             
-            let vf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
-            let vr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            // 平滑過渡到新平衡
+            const timeFromStart = Math.max(0, currentTime_nh3 - 2.5);
+            const tau = 17.5 / 3;
+            const progress = Math.min(1, timeFromStart > 0 ? 1 - Math.exp(-timeFromStart / tau) : 0);
             
-            let speedFactor_nh3 = 1.0;
-            if (currentTime_nh3 > 5.0) {
-                const timeFromStart_nh3 = currentTime_nh3 - 5.0;
-                if (timeFromStart_nh3 < 15.0) {
-                    speedFactor_nh3 = 1.0;
-                } else {
-                    speedFactor_nh3 = 1.0 + (timeFromStart_nh3 - 15.0) / 5.0 * 2.0;
-                }
+            // 確保破壞瞬間的濃度和平衡濃度都是有效的
+            if (disturbN2_nh3 > 0 && disturbH2_nh3 > 0 && disturbNH3_nh3 >= 0 && 
+                equilibriumConcN2_nh3 > 0 && equilibriumConcH2_nh3 > 0 && equilibriumConcNH3_nh3 > 0) {
+                // 線性插值從破壞瞬間到新平衡
+                concN2_nh3 = disturbN2_nh3 + (equilibriumConcN2_nh3 - disturbN2_nh3) * progress;
+                concH2_nh3 = disturbH2_nh3 + (equilibriumConcH2_nh3 - disturbH2_nh3) * progress;
+                concNH3_nh3 = disturbNH3_nh3 + (equilibriumConcNH3_nh3 - disturbNH3_nh3) * progress;
+                
+                // 確保濃度不會過小（最小值設為0.1）
+                concN2_nh3 = Math.max(0.1, concN2_nh3);
+                concH2_nh3 = Math.max(0.1, concH2_nh3);
+                concNH3_nh3 = Math.max(0.1, concNH3_nh3);
+            } else {
+                // 如果值無效，至少確保不會變成0
+                concN2_nh3 = Math.max(0.1, concN2_nh3);
+                concH2_nh3 = Math.max(0.1, concH2_nh3);
+                concNH3_nh3 = Math.max(0.1, concNH3_nh3);
             }
-            
-            let diff_nh3 = (vf_nh3 - vr_nh3) * 0.012 * speedFactor_nh3;
-            concN2_nh3 -= diff_nh3;
-            concH2_nh3 -= 3 * diff_nh3;
-            concNH3_nh3 += 2 * diff_nh3;
-            
-            if (concN2_nh3 < 0.01) concN2_nh3 = 0.01;
-            if (concH2_nh3 < 0.01) concH2_nh3 = 0.01;
-            if (concNH3_nh3 < 0.01) concNH3_nh3 = 0.01;
             
             recordNH3();
             checkAndAdjustYAxisNH3();
             
-            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
-            updateReactionArrowsNH3(Q_nh3, K_nh3);
+            const denom = concN2_nh3 * Math.pow(concH2_nh3, 3);
+            const Q_nh3 = denom > 0 ? Math.pow(concNH3_nh3, 2) / denom : 0;
+            updateReactionArrowsNH3(isFinite(Q_nh3) ? Q_nh3 : 0, K_nh3);
             updateUINH3();
             
-            vf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
-            vr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
-            
-            const timeFromStart_nh3 = currentTime_nh3 - 5.0;
-            const balanceThreshold_nh3 = (timeFromStart_nh3 >= 15.0) ? 0.002 : 0.001;
-            if (Math.abs(vf_nh3 - vr_nh3) < balanceThreshold_nh3) {
+            // 檢查是否達到平衡（類似 N2O4 的邏輯）
+            // 只有在 Q 和 K 非常接近且進度足夠高時才認為達到平衡
+            const QValue = isFinite(Q_nh3) ? Q_nh3 : 0;
+            // 使用相對誤差來判斷平衡，更準確
+            const relativeError = Math.abs(QValue - K_nh3) / Math.max(K_nh3, 0.0001);
+            const balanceThreshold = 0.005; // 平衡閾值（相對誤差 0.5%）
+            // 需要同時滿足：進度足夠高（接近目標）且 Q 和 K 非常接近
+            if (relativeError < balanceThreshold && progress >= 0.99) {
+                // 達到平衡，記錄平衡時的數值
                 equilibriumReached_nh3 = true;
                 equilibriumCounter_nh3 = 0;
-                equilibriumConcN2_nh3 = concN2_nh3;
-                equilibriumConcH2_nh3 = concH2_nh3;
-                equilibriumConcNH3_nh3 = concNH3_nh3;
-                equilibriumV_nh3 = (vf_nh3 + vr_nh3) / 2;
-                equilibriumV_nh3 = kf_nh3 * equilibriumConcN2_nh3 * Math.pow(equilibriumConcH2_nh3, 3);
-                
-                recordNH3();
+                concN2_nh3 = equilibriumConcN2_nh3;
+                concH2_nh3 = equilibriumConcH2_nh3;
+                concNH3_nh3 = equilibriumConcNH3_nh3;
+                // 立即更新狀態
                 const statusEl = document.getElementById('status-nh3');
                 statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
-                const directionDisplay = document.getElementById('direction-display-nh3');
-                if (directionDisplay) {
-                    directionDisplay.style.display = 'none';
-                }
                 updateUINH3();
             }
         }
@@ -3940,35 +4130,37 @@
                 buttonElement.classList.add('active');
             }
             
+            // 記錄擾動前的值（用於繪製虛線）
             beforeDisturb_nh3.n2 = concN2_nh3;
             beforeDisturb_nh3.h2 = concH2_nh3;
             beforeDisturb_nh3.nh3 = concNH3_nh3;
             beforeDisturb_nh3.vf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
             beforeDisturb_nh3.vr = kr_nh3 * Math.pow(concNH3_nh3, 2);
             beforeDisturb_nh3.t = currentTime_nh3;
-            
+
+            // 進入擾動，立即重置平衡狀態
             equilibriumReached_nh3 = false;
             equilibriumCounter_nh3 = 0;
+
+            // 記錄當前操作模式（用於箭頭長度計算）
             currentDisturbMode_nh3 = mode;
             
+            // 先改變濃度（破壞瞬間）
             switch(mode) {
                 case 'ADD_N2': 
                     concN2_nh3 += 1.0; 
-                    checkAndAdjustYAxisNH3();
                     break;
                 case 'SUB_N2': 
                     concN2_nh3 = Math.max(0.1, concN2_nh3 - 1.0); 
                     break;
                 case 'ADD_H2': 
-                    concH2_nh3 += 1.0; 
-                    checkAndAdjustYAxisNH3();
+                    concH2_nh3 += 1.5; 
                     break;
                 case 'SUB_H2': 
-                    concH2_nh3 = Math.max(0.1, concH2_nh3 - 1.0); 
+                    concH2_nh3 = Math.max(0.1, concH2_nh3 - 1.5); 
                     break;
                 case 'ADD_NH3': 
                     concNH3_nh3 += 1.0; 
-                    checkAndAdjustYAxisNH3();
                     break;
                 case 'SUB_NH3': 
                     concNH3_nh3 = Math.max(0.1, concNH3_nh3 - 1.0); 
@@ -3977,20 +4169,62 @@
                     concN2_nh3 *= 2; 
                     concH2_nh3 *= 2; 
                     concNH3_nh3 *= 2; 
-                    checkAndAdjustYAxisNH3();
                     break;
                 case 'V_DOUBLE': 
                     concN2_nh3 /= 2; 
                     concH2_nh3 /= 2; 
                     concNH3_nh3 /= 2; 
                     break;
+                case 'HEAT':
+                    // 放熱反應，升溫時所有反應速率都增加，但逆反應增加更多，導致 K 變小
+                    // K = kf / kr，當 K 變小，讓 kf 增加，kr 增加更多
+                    kf_nh3 *= 2.0;   // kf 明顯增加（升溫使正反應速率明顯增加）
+                    kr_nh3 *= 2.5;   // kr 增加更多（升溫使逆反應速率增加更多）
+                    K_nh3 = kf_nh3 / kr_nh3; // 重新計算 K，約為原來的 0.8
+                    // 注意：不更新 initialVf_nh3 和 initialVr_nh3，保持原基準值
+                    // 這樣箭頭長度才能正確反映速率常數改變的影響（兩個箭頭都明顯變長）
+                    break;
+                case 'COOL':
+                    // 降溫時所有反應速率都減少，但逆反應減少更多，導致 K 變大
+                    // K = kf / kr，當 K 變大，讓 kf 減少，kr 減少更多
+                    kf_nh3 *= 0.5;   // kf 明顯減少（降溫使正反應速率明顯減少）
+                    kr_nh3 *= 0.4;   // kr 減少更多（降溫使逆反應速率減少更多）
+                    K_nh3 = kf_nh3 / kr_nh3; // 重新計算 K，約為原來的 1.25
+                    // 注意：不更新 initialVf_nh3 和 initialVr_nh3，保持原基準值
+                    // 這樣箭頭長度才能正確反映速率常數改變的影響（兩個箭頭都明顯變短）
+                    break;
+                case 'HE_P':
+                    // 定溫定壓加 He，視為體積增加，分壓下降
+                    concN2_nh3 *= 0.7;
+                    concH2_nh3 *= 0.7;
+                    concNH3_nh3 *= 0.7;
+                    break;
+                case 'HE_V':
+                    // 定溫定容加 He，分壓不變，無影響平衡
+                    break;
             }
             
+            // 記錄破壞瞬間的濃度值
+            disturbN2_nh3 = concN2_nh3;
+            disturbH2_nh3 = concH2_nh3;
+            disturbNH3_nh3 = concNH3_nh3;
+            
+            // 計算新平衡狀態
+            const newEquilibrium = calculateNewEquilibriumNH3(disturbN2_nh3, disturbH2_nh3, disturbNH3_nh3, K_nh3);
+            equilibriumConcN2_nh3 = newEquilibrium.n2;
+            equilibriumConcH2_nh3 = newEquilibrium.h2;
+            equilibriumConcNH3_nh3 = newEquilibrium.nh3;
+            
+            checkAndAdjustYAxisNH3();
+            
+            // 記錄擾動後的瞬間垂直跳躍點（在紅線位置，約2.5秒記錄新值）
+            // 確保 currentTime_nh3 在紅線位置（2.5秒），如果已經超過則使用當前值
             if (currentTime_nh3 < 2.5) {
-                currentTime_nh3 = 2.5;
+                currentTime_nh3 = 2.5;  // 設置為紅線位置
             }
-            instantChangeIndex_nh3 = history_nh3.t.length;
+            instantChangeIndex_nh3 = history_nh3.t.length;  // 記錄瞬間變化的索引
             
+            // 檢查是否有實際變化，如果沒有變化就不記錄瞬間變化
             const hasChangeN2 = Math.abs(concN2_nh3 - beforeDisturb_nh3.n2) > 0.001;
             const hasChangeH2 = Math.abs(concH2_nh3 - beforeDisturb_nh3.h2) > 0.001;
             const hasChangeNH3 = Math.abs(concNH3_nh3 - beforeDisturb_nh3.nh3) > 0.001;
@@ -3998,15 +4232,20 @@
             const hasChangeVr = Math.abs(kr_nh3 * Math.pow(concNH3_nh3, 2) - beforeDisturb_nh3.vr) > 0.001;
             
             if (hasChangeN2 || hasChangeH2 || hasChangeNH3 || hasChangeVf || hasChangeVr) {
-                recordNH3();
+                recordNH3();  // 只有有變化時才記錄，記錄在紅線位置
             } else {
-                instantChangeIndex_nh3 = -1;
+                instantChangeIndex_nh3 = -1;  // 沒有變化，不顯示虛線
             }
             
             waitingForStart_nh3 = true;
             
-            const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            // 計算Q值（使用破壞瞬間的濃度）
+            const denominator = concN2_nh3 * Math.pow(concH2_nh3, 3);
+            let Q_nh3 = denominator > 0 ? Math.pow(concNH3_nh3, 2) / denominator : 0;
+            if (!isFinite(Q_nh3) || isNaN(Q_nh3)) Q_nh3 = 0;
+            
             updateStatusOnlyNH3(Q_nh3, K_nh3);
+            // 重要：使用破壞瞬間的濃度值更新箭頭，確保箭頭長度正確反映速率差異
             updateReactionArrowsNH3(Q_nh3, K_nh3);
             
             const statusEl = document.getElementById('status-nh3');
@@ -4040,10 +4279,22 @@
                 stepCounter = 0;
                 equilibriumReached_nh3 = false;
                 equilibriumCounter_nh3 = 0;
-                equilibriumConcN2_nh3 = 0;
-                equilibriumConcH2_nh3 = 0;
-                equilibriumConcNH3_nh3 = 0;
+                // 不要重置 equilibriumConc，它們應該已經在 runDisturbNH3 中計算好了
+                // equilibriumConcN2_nh3 = 0;
+                // equilibriumConcH2_nh3 = 0;
+                // equilibriumConcNH3_nh3 = 0;
                 equilibriumV_nh3 = 0;
+                // 重要：不要重置破壞瞬間的濃度值！這些值必須保留，用於動畫計算
+                // disturbN2_nh3 = 0;
+                // disturbH2_nh3 = 0;
+                // disturbNH3_nh3 = 0;
+                
+                // 確保當前濃度值等於破壞瞬間的濃度值（動畫起始點）
+                if (disturbN2_nh3 > 0 && disturbH2_nh3 > 0) {
+                    concN2_nh3 = disturbN2_nh3;
+                    concH2_nh3 = disturbH2_nh3;
+                    concNH3_nh3 = disturbNH3_nh3;
+                }
                 
                 const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
                 updateReactionArrowsNH3(Q_nh3, K_nh3);
@@ -4090,9 +4341,9 @@
             concN2_nh3 = initialConcN2_nh3;
             concH2_nh3 = initialConcH2_nh3;
             concNH3_nh3 = initialConcNH3_nh3;
-            kf_nh3 = 1.2;
-            kr_nh3 = 0.3;
-            K_nh3 = 4.0;
+            kf_nh3 = 0.015625;
+            kr_nh3 = 1.0;
+            K_nh3 = 0.015625;
             currentTime_nh3 = 0;
             hasOperated_nh3 = false;
             lastTime_nh3 = 0;
@@ -4103,6 +4354,9 @@
             equilibriumConcH2_nh3 = 0;
             equilibriumConcNH3_nh3 = 0;
             equilibriumV_nh3 = 0;
+            disturbN2_nh3 = 0;
+            disturbH2_nh3 = 0;
+            disturbNH3_nh3 = 0;
             waitingForStart_nh3 = false;
             beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
             instantChangeIndex_nh3 = -1;
@@ -4110,10 +4364,18 @@
             currentDisturbMode_nh3 = null;
             history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
             
-            initialVf_nh3 = 1.2;
-            initialVr_nh3 = 1.2;
+            initialVf_nh3 = 0.015625 * 2.0 * Math.pow(8.0, 3);  // 重新計算初始速率
+            initialVr_nh3 = 1.0 * Math.pow(4.0, 2);
+            maxSeenN2_nh3 = initialConcN2_nh3;
+            maxSeenH2_nh3 = initialConcH2_nh3;
+            maxSeenNH3_nh3 = initialConcNH3_nh3;
             
-            document.getElementById('k-val-nh3').innerText = K_nh3.toFixed(2);
+            // 重置 Y 軸到初始值（NH3 專用）
+            chartConfigNH3.concentration.yMax = 3.5;
+            chartConfigNH3.velocity.yMax = 2.5;
+            chartConfigNH3.velocity.yCompressPoint = 1.0;
+            
+            document.getElementById('k-val-nh3').innerText = K_nh3.toFixed(6);
             
             updateReactionArrowsNH3(Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3)), K_nh3);
             
@@ -4138,6 +4400,11 @@
             equilibriumReached_nh3 = false;
             equilibriumV_nh3 = 0;
             currentTime_nh3 = 0;
+            
+            // 計算初始平衡時的速率
+            initialVf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+            initialVr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            
             recordNH3();
             while (currentTime_nh3 < 2.5) {
                 recordNH3();
@@ -4195,7 +4462,7 @@
 
         // N2 + 3H2 ⇌ 2NH3 場景的單個圖表繪製
         function drawChartNH3(ctx, canvas, type) {
-            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            const config = type === 'concentration' ? chartConfigNH3.concentration : chartConfigNH3.velocity;
             const mobile = isMobile();
             const dpr = window.devicePixelRatio || 1;
             const width = canvas.width / dpr;
@@ -4231,6 +4498,13 @@
             
             drawGridNH3(ctx, padding, plotWidth, plotHeight, config.yMax, type);
             
+            if (history_nh3.t.length === 0) {
+                recordNH3();
+                while (currentTime_nh3 < 2.5) {
+                    recordNH3();
+                }
+            }
+            
             if (history_nh3.t.length > 0) {
                 let calculatedMaxTime = Math.max(...history_nh3.t.map(t => parseFloat(t))) || 10;
                 let maxTime;
@@ -4242,6 +4516,7 @@
                 const lineWidth = mobile ? 1.7 : 2.2;
                 
                 if (type === 'concentration') {
+                    // 使用統一的 Y 軸，與 N2O4 場景一致
                     drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
                             history_nh3.t, history_nh3.n2, '#3498db', lineWidth, false, false, null, null, 'n2');
                     drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
@@ -4250,10 +4525,10 @@
                             history_nh3.t, history_nh3.nh3, '#f39c12', lineWidth, false, false, null, null, 'nh3');
                 } else {
                     drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                            history_nh3.t, history_nh3.vf, config.colors.rf, lineWidth, true, 
+                            history_nh3.t, history_nh3.vf, '#2ecc71', lineWidth, true, 
                             config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vf');
                     drawLineWithInstantChangeNH3(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                            history_nh3.t, history_nh3.vr, config.colors.rr, lineWidth, true,
+                            history_nh3.t, history_nh3.vr, '#000000', lineWidth, true,
                             config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vr');
                 }
             }
@@ -4262,7 +4537,7 @@
         // N2 + 3H2 ⇌ 2NH3 場景的網格繪製
         function drawGridNH3(ctx, padding, plotWidth, plotHeight, yMax, type) {
             const mobile = isMobile();
-            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            const config = type === 'concentration' ? chartConfigNH3.concentration : chartConfigNH3.velocity;
             
             ctx.strokeStyle = '#e0e0e0';
             ctx.lineWidth = 0.5;
@@ -4272,26 +4547,23 @@
                 const compressPoint = config.yCompressPoint;
                 const compressRatio = config.yCompressRatio;
                 
-                let step;
-                if (yMax <= 3.0) {
-                    step = 0.5;
-                } else if (yMax <= 6.0) {
-                    step = 1.0;
-                } else {
-                    step = 1.5;
-                }
-                
+                // 簡化：只繪製主要刻度（最多6個）
+                const maxTicks = 6;
+                const step = Math.max(0.5, yMax / maxTicks);
                 const tickValues = [];
-                for (let v = 0; v <= yMax + step; v += step) {
-                    if (v <= yMax) {
-                        tickValues.push(v);
-                    }
+                for (let v = 0; v <= yMax; v += step) {
+                    tickValues.push(v);
+                    if (tickValues.length >= maxTicks) break;
                 }
-                if (tickValues.length === 0 || tickValues[tickValues.length - 1] < yMax) {
+                if (tickValues[tickValues.length - 1] < yMax * 0.9) {
                     tickValues.push(yMax);
                 }
                 
-                tickValues.forEach(value => {
+                // 清除Y軸左側區域
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, padding.top, padding.left, plotHeight);
+                
+                tickValues.forEach((value, idx) => {
                     const yPos = mapVelocityY(value, yMax, plotHeight, compressPoint, compressRatio);
                     const y = padding.top + plotHeight - yPos;
                     
@@ -4300,13 +4572,14 @@
                     ctx.lineTo(padding.left + plotWidth, y);
                     ctx.stroke();
                     
-                    ctx.fillStyle = '#333';
-                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    const labelX = mobile ? padding.left - 12 : padding.left - 8;
-                    const labelText = value >= 10 ? value.toFixed(1) : value.toFixed(1);
-                    ctx.fillText(labelText, labelX, y);
+                    // 只繪製標籤（間隔繪製避免重疊）
+                    if (idx % 2 === 0 || idx === tickValues.length - 1) {
+                        ctx.fillStyle = '#333';
+                        ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(value.toFixed(1), mobile ? padding.left - 12 : padding.left - 8, y);
+                    }
                 });
             } else {
                 for (let i = 0; i <= ySteps; i++) {
@@ -4389,7 +4662,9 @@
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             
+            // 如果有瞬間變化，先繪製變化前的實線（連接到變化點）
             if (instantChangeIndex_nh3 >= 0 && instantChangeIndex_nh3 < times.length) {
+                // 繪製變化前的實線，連接到變化點
                 ctx.beginPath();
                 let lastX = 0, lastY = 0;
                 for (let i = 0; i < instantChangeIndex_nh3; i++) {
@@ -4411,9 +4686,11 @@
                     lastY = y;
                 }
                 
+                // 計算變化點的位置和值
                 const changeX = padding.left + (parseFloat(times[instantChangeIndex_nh3]) / maxTime) * plotWidth;
                 let yBefore, yAfter;
                 
+                // 計算變化前的Y座標（使用變化前的值）
                 let beforeValue;
                 if (valueType === 'n2') beforeValue = beforeDisturb_nh3.n2;
                 else if (valueType === 'h2') beforeValue = beforeDisturb_nh3.h2;
@@ -4421,6 +4698,7 @@
                 else if (valueType === 'vf') beforeValue = beforeDisturb_nh3.vf;
                 else if (valueType === 'vr') beforeValue = beforeDisturb_nh3.vr;
                 
+                // 計算變化後的Y座標（使用 instantChangeIndex_nh3 位置的值）
                 let afterValue = parseFloat(values[instantChangeIndex_nh3]);
                 
                 if (isVelocity && useCompress) {
@@ -4433,13 +4711,16 @@
                     yAfter = padding.top + plotHeight - (afterValue / yMax) * plotHeight;
                 }
                 
+                // 如果變化前的實線有數據點，連接到變化點
                 if (instantChangeIndex_nh3 > 0) {
-                    ctx.lineTo(changeX, yBefore);
+                    ctx.lineTo(changeX, yBefore);  // 連接到變化點
                 } else {
+                    // 如果沒有之前的數據點，從變化點開始
                     ctx.moveTo(changeX, yBefore);
                 }
                 ctx.stroke();
                 
+                // 繪製垂直虛線（確保是垂直的，從變化前連接到變化後）
                 ctx.setLineDash([5, 5]);
                 ctx.lineWidth = lineWidth;
                 ctx.strokeStyle = color;
@@ -4449,10 +4730,11 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
                 
+                // 繪製變化後的實線（從虛線結束位置開始，無縫連接）
                 ctx.strokeStyle = color;
                 ctx.lineWidth = lineWidth;
                 ctx.beginPath();
-                ctx.moveTo(changeX, yAfter);
+                ctx.moveTo(changeX, yAfter);  // 從虛線結束位置開始
                 for (let i = instantChangeIndex_nh3 + 1; i < times.length; i++) {
                     const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
                     let y;
@@ -4466,11 +4748,14 @@
                 }
                 ctx.stroke();
             } else {
+                // 沒有瞬間變化，正常繪製
+                // 如果還沒有開始動畫（所有數據點都在初始平衡），只繪製到中間位置（2.5秒）
                 let endIndex = times.length;
                 if (!hasOperated_nh3 || waitingForStart_nh3) {
+                    // 找到時間 <= 2.5 的最後一個點
                     for (let i = times.length - 1; i >= 0; i--) {
                         if (parseFloat(times[i]) <= 2.5) {
-                            endIndex = i + 1;
+                            endIndex = i + 1;  // 包含這個點
                             break;
                         }
                     }
@@ -4503,67 +4788,76 @@
             if (now - lastUIUpdate < 16) return;
             lastUIUpdate = now;
             
+            // 更新K值顯示
             const kFormulaTop = document.getElementById('k-formula-top-nh3');
             const kFormulaBot = document.getElementById('k-formula-bot-nh3');
             if (kFormulaTop && kFormulaBot) {
                 kFormulaTop.innerHTML = `${initialConcNH3_nh3.toFixed(0)}<sup>2</sup>`;
                 kFormulaBot.innerHTML = `${initialConcN2_nh3.toFixed(0)} × ${initialConcH2_nh3.toFixed(0)}<sup>3</sup>`;
             }
+            document.getElementById('k-val-nh3').innerText = K_nh3.toFixed(6);
             
-            if (waitingForStart_nh3) {
-                let Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
-                updateStatusOnlyNH3(Q_nh3, K_nh3);
-                updateReactionArrowsNH3(Q_nh3, K_nh3);
-                drawChartsNH3();
-                return;
-            }
+            // 計算Q值（使用當前濃度值，因為動畫進行中）
+            const denom = concN2_nh3 * Math.pow(concH2_nh3, 3);
+            let Q_nh3 = denom > 0 ? Math.pow(concNH3_nh3, 2) / denom : 0;
+            if (!isFinite(Q_nh3)) Q_nh3 = 0;
             
-            let Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+            // 更新Q值顯示
+            // 如果正在等待開始，使用破壞瞬間的濃度值；否則使用當前濃度值
+            let displayN2 = waitingForStart_nh3 && disturbN2_nh3 > 0 ? disturbN2_nh3 : concN2_nh3;
+            let displayH2 = waitingForStart_nh3 && disturbH2_nh3 > 0 ? disturbH2_nh3 : concH2_nh3;
+            let displayNH3 = waitingForStart_nh3 && disturbNH3_nh3 > 0 ? disturbNH3_nh3 : concNH3_nh3;
+            
             document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
             document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
             const qFormulaTop = document.getElementById('q-formula-top-nh3');
             const qFormulaBot = document.getElementById('q-formula-bot-nh3');
             if (qFormulaTop && qFormulaBot) {
-                qFormulaTop.innerHTML = `${concNH3_nh3.toFixed(2)}<sup>2</sup>`;
-                qFormulaBot.innerHTML = `${concN2_nh3.toFixed(2)} × ${concH2_nh3.toFixed(2)}<sup>3</sup>`;
+                qFormulaTop.innerHTML = `${displayNH3.toFixed(2)}<sup>2</sup>`;
+                qFormulaBot.innerHTML = `${displayN2.toFixed(2)} × ${displayH2.toFixed(2)}<sup>3</sup>`;
             }
-            document.getElementById('q-val-nh3').innerText = Q_nh3.toFixed(2);
+            // 如果正在等待開始，使用基於破壞瞬間濃度的 Q 值；否則使用當前計算的 Q 值
+            if (waitingForStart_nh3 && disturbN2_nh3 > 0 && disturbH2_nh3 > 0 && disturbNH3_nh3 > 0) {
+                const disturbDenom = disturbN2_nh3 * Math.pow(disturbH2_nh3, 3);
+                const disturbQ = disturbDenom > 0 ? Math.pow(disturbNH3_nh3, 2) / disturbDenom : Q_nh3;
+                document.getElementById('q-val-nh3').innerText = (isFinite(disturbQ) ? disturbQ : Q_nh3).toFixed(6);
+            } else {
+                document.getElementById('q-val-nh3').innerText = Q_nh3.toFixed(6);
+            }
             
+            // 更新箭頭和狀態
             updateReactionArrowsNH3(Q_nh3, K_nh3);
             drawChartsNH3();
             
+            // 更新狀態文字
             const statusEl = document.getElementById('status-nh3');
-            if (equilibriumReached_nh3) {
+            if (waitingForStart_nh3) {
+                const dirText = getDirectionTextNH3(Q_nh3, K_nh3);
+                statusEl.textContent = "平衡破壞" + dirText;
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            } else if (equilibriumReached_nh3) {
                 statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
                 statusEl.style.cursor = "default";
             } else {
-                const directionText = getDirectionTextNH3(Q_nh3, K_nh3);
-                
-                if (Math.abs(Q_nh3 - K_nh3) > 0.01) {
-                    if (isPaused_nh3) {
-                        statusEl.textContent = "平衡移動中" + directionText + " (暫停中)";
-                        statusEl.title = "點擊繼續";
-                    } else {
-                        statusEl.textContent = "平衡移動中" + directionText;
-                        statusEl.title = "點擊暫停";
-                    }
+                const dirText = getDirectionTextNH3(Q_nh3, K_nh3);
+                // 使用相對誤差來判斷是否接近平衡，與 stepNH3 中的邏輯一致
+                const relativeError = Math.abs(Q_nh3 - K_nh3) / Math.max(K_nh3, 0.0001);
+                if (relativeError > 0.005) {
+                    // Q 和 K 差異明顯，顯示「平衡移動中」
+                    statusEl.textContent = "平衡移動中" + dirText + (isPaused_nh3 ? " (暫停中)" : "");
                     statusEl.style.color = "#e67e22";
                     statusEl.style.borderColor = "#e67e22";
-                    statusEl.style.cursor = "pointer";
+                    statusEl.style.cursor = isPaused_nh3 ? "pointer" : "pointer";
+                    statusEl.title = isPaused_nh3 ? "點擊繼續" : "點擊暫停";
                 } else {
-                    if (!hasOperated_nh3) {
-                        statusEl.textContent = "原平衡：Q＝K";
-                        statusEl.style.color = "#27ae60";
-                        statusEl.style.borderColor = "#27ae60";
-                        statusEl.style.cursor = "default";
-                    } else {
-                        statusEl.textContent = "新平衡：Q＝K";
-                        statusEl.style.color = "#27ae60";
-                        statusEl.style.borderColor = "#27ae60";
-                        statusEl.style.cursor = "default";
-                    }
+                    // Q 和 K 非常接近，但還沒有設置 equilibriumReached_nh3，可能是初始狀態
+                    statusEl.textContent = (!hasOperated_nh3 ? "原平衡" : "新平衡") + "：Q＝K";
+                    statusEl.style.color = "#27ae60";
+                    statusEl.style.borderColor = "#27ae60";
+                    statusEl.style.cursor = "default";
                 }
             }
         }
@@ -4589,31 +4883,58 @@
             if (!arrowLeft || !arrowRight) return;
             
             const mobile = isMobile();
-            const baseLength = mobile ? 80 : 120;
-            const maxLength = mobile ? 180 : 300;
-            const minLength = mobile ? 40 : 60;
+            const baseLength = mobile ? 100 : 150;
+            const maxLength = mobile ? 200 : 350;
+            const minLength = mobile ? 50 : 70;
             
-            const currentVf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
-            const currentVr = kr_nh3 * Math.pow(concNH3_nh3, 2);
+            // 使用破壞瞬間的濃度值來計算速率（如果正在等待開始）
+            // 這樣可以確保箭頭長度正確反映破壞瞬間的速率差異
+            let calcN2 = waitingForStart_nh3 && disturbN2_nh3 > 0 ? disturbN2_nh3 : concN2_nh3;
+            let calcH2 = waitingForStart_nh3 && disturbH2_nh3 > 0 ? disturbH2_nh3 : concH2_nh3;
+            let calcNH3 = waitingForStart_nh3 && disturbNH3_nh3 > 0 ? disturbNH3_nh3 : concNH3_nh3;
             
-            const vfRatio = currentVf / initialVf_nh3;
-            const vrRatio = currentVr / initialVr_nh3;
+            // 計算當前反應速率
+            const currentVf = kf_nh3 * calcN2 * Math.pow(calcH2, 3);
+            const currentVr = kr_nh3 * Math.pow(calcNH3, 2);
             
-            function calculateLengthFromRatio(ratio) {
+            // 計算速率比例
+            let vfRatio = currentVf / initialVf_nh3;
+            let vrRatio = currentVr / initialVr_nh3;
+            
+            // 調試信息
+            console.log('=== 箭頭更新調試 ===');
+            console.log('濃度:', { N2: concN2_nh3, H2: concH2_nh3, NH3: concNH3_nh3 });
+            console.log('當前速率:', { vf: currentVf, vr: currentVr });
+            console.log('初始速率:', { initialVf: initialVf_nh3, initialVr: initialVr_nh3 });
+            console.log('速率比例:', { vfRatio, vrRatio });
+            
+            // 計算箭頭長度 - 使用更線性的映射，讓速率變化時箭頭長度變化更明顯
+            function calcLength(ratio) {
+                if (!isFinite(ratio) || ratio <= 0) ratio = 1.0;
                 if (ratio < 1.0) {
-                    return minLength + (baseLength - minLength) * ((ratio - 0.2) / 0.8);
+                    // 速率降低時，使用更線性的映射，讓變化更明顯
+                    // 將 [0.1, 1.0] 映射到 [minLength, baseLength]
+                    // 使用線性映射，讓比例變化直接反映在箭頭長度上
+                    const minRatio = 0.1; // 最小比例
+                    const clampedRatio = Math.max(ratio, minRatio);
+                    const normalizedRatio = (clampedRatio - minRatio) / (1.0 - minRatio);
+                    return minLength + (baseLength - minLength) * normalizedRatio;
                 } else {
-                    const excessRatio = ratio - 1.0;
-                    const scaleFactor = Math.min(1.0, excessRatio / 2.0);
-                    return baseLength + (maxLength - baseLength) * scaleFactor;
+                    // 速率增加時，使用更線性的映射，讓變化更明顯
+                    // 將 [1.0, 3.0] 映射到 [baseLength, maxLength]
+                    // 使用線性映射，讓比例變化直接反映在箭頭長度上
+                    const maxRatio = 3.0; // 最大比例（超過此值時達到最大長度）
+                    const clampedRatio = Math.min(ratio, maxRatio);
+                    const normalizedRatio = (clampedRatio - 1.0) / (maxRatio - 1.0);
+                    return baseLength + (maxLength - baseLength) * normalizedRatio;
                 }
             }
             
-            let rightLength = calculateLengthFromRatio(vfRatio);
-            let leftLength = calculateLengthFromRatio(vrRatio);
+            let rightLength = Math.max(minLength, Math.min(maxLength, calcLength(vfRatio)));
+            let leftLength = Math.max(minLength, Math.min(maxLength, calcLength(vrRatio)));
             
-            rightLength = Math.max(minLength, Math.min(maxLength, rightLength));
-            leftLength = Math.max(minLength, Math.min(maxLength, leftLength));
+            console.log('箭頭長度:', { right: rightLength, left: leftLength });
+            console.log('==================');
             
             arrowRight.style.width = rightLength + 'px';
             arrowLeft.style.width = leftLength + 'px';
@@ -4621,29 +4942,36 @@
 
         // N2 + 3H2 ⇌ 2NH3 場景的狀態更新（僅狀態）
         function updateStatusOnlyNH3(Q, K) {
+            // 使用傳入的 Q 參數，確保顯示正確的 Q 值
+            let safeQ = Q;
+            if (!isFinite(safeQ) || isNaN(safeQ) || safeQ < 0) safeQ = 0;
+            
+            // 使用破壞瞬間的濃度值來顯示公式（確保顯示正確，不受動畫影響）
+            // 如果正在等待開始，使用破壞瞬間的濃度值；否則使用當前濃度值
+            let displayN2 = waitingForStart_nh3 && disturbN2_nh3 > 0 ? disturbN2_nh3 : concN2_nh3;
+            let displayH2 = waitingForStart_nh3 && disturbH2_nh3 > 0 ? disturbH2_nh3 : concH2_nh3;
+            let displayNH3 = waitingForStart_nh3 && disturbNH3_nh3 > 0 ? disturbNH3_nh3 : concNH3_nh3;
+            
             document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
             document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
             const qFormulaTop = document.getElementById('q-formula-top-nh3');
             const qFormulaBot = document.getElementById('q-formula-bot-nh3');
             if (qFormulaTop && qFormulaBot) {
-                qFormulaTop.innerHTML = `${concNH3_nh3.toFixed(2)}<sup>2</sup>`;
-                qFormulaBot.innerHTML = `${concN2_nh3.toFixed(2)} × ${concH2_nh3.toFixed(2)}<sup>3</sup>`;
+                qFormulaTop.innerHTML = `${displayNH3.toFixed(2)}<sup>2</sup>`;
+                qFormulaBot.innerHTML = `${displayN2.toFixed(2)} × ${displayH2.toFixed(2)}<sup>3</sup>`;
             }
-            document.getElementById('q-val-nh3').innerText = Q.toFixed(2);
+            // 使用傳入的 Q 參數值，確保顯示正確
+            document.getElementById('q-val-nh3').innerText = safeQ.toFixed(6);
+            document.getElementById('k-val-nh3').innerText = K.toFixed(6);
             
             const statusEl = document.getElementById('status-nh3');
-            const directionText = getDirectionTextNH3(Q, K);
-            
-            if (Math.abs(Q - K) < 0.01) {
+            const dirText = getDirectionTextNH3(safeQ, K);
+            if (Math.abs(safeQ - K) < K * 0.001) {
                 statusEl.textContent = "平衡破壞：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
-            } else if (Q > K) {
-                statusEl.textContent = "平衡破壞：Q＞K，向左移動";
-                statusEl.style.color = "#c0392b";
-                statusEl.style.borderColor = "#c0392b";
             } else {
-                statusEl.textContent = "平衡破壞：Q＜K，向右移動";
+                statusEl.textContent = "平衡破壞" + dirText + (safeQ > K ? "，向左移動" : "，向右移動");
                 statusEl.style.color = "#c0392b";
                 statusEl.style.borderColor = "#c0392b";
             }
@@ -4651,16 +4979,17 @@
 
         // N2 + 3H2 ⇌ 2NH3 場景的 Y 軸調整
         function checkAndAdjustYAxisNH3() {
-            const maxConc = Math.max(concN2_nh3, concH2_nh3, concNH3_nh3);
-            if (maxConc * 1.2 > chartConfig.concentration.yMax) {
-                chartConfig.concentration.yMax = Math.max(chartConfig.concentration.baseYMax, maxConc * 1.2);
+            const maxConc = Math.max(concN2_nh3, concH2_nh3, concNH3_nh3, ...(history_nh3.n2 || []), ...(history_nh3.h2 || []), ...(history_nh3.nh3 || []));
+            if (maxConc * 1.2 > chartConfigNH3.concentration.yMax) {
+                chartConfigNH3.concentration.yMax = Math.max(chartConfigNH3.concentration.baseYMax, maxConc * 1.2);
             }
             
-            const maxVf = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
-            const maxVr = kr_nh3 * Math.pow(concNH3_nh3, 2);
-            const maxV = Math.max(maxVf, maxVr);
-            if (maxV * 1.2 > chartConfig.velocity.yMax) {
-                chartConfig.velocity.yMax = Math.max(chartConfig.velocity.baseYMax, maxV * 1.2);
+            const maxV = Math.max(
+                kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3),
+                kr_nh3 * Math.pow(concNH3_nh3, 2)
+            );
+            if (maxV * 1.2 > chartConfigNH3.velocity.yMax) {
+                chartConfigNH3.velocity.yMax = Math.max(chartConfigNH3.velocity.baseYMax, maxV * 1.2);
             }
         }
 
