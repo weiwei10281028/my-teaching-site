@@ -4,6 +4,7 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>化學平衡教學系統 | Chemical Equilibrium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="./化學平衡教學系統 _ Chemical Equilibrium_files/css2" rel="stylesheet">
     <style>
         /* --- 基礎重置與變數 --- */
@@ -57,17 +58,18 @@
 
         /* --- 區1：選擇區 --- */
         .selection-area {
-            height: 10vh;
-            min-height: 70px;
+            height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
+            min-height: 55px;  /* 增加最小高度，確保按鈕完整顯示 */
             background: var(--mineral-bg-light);
             border-bottom: 1px solid var(--mineral-border);
-            padding: 12px 50px 12px 40px;
+            padding: 6px 50px 6px 40px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
             box-shadow: 0 2px 20px var(--mineral-shadow-light);
             z-index: 100;
             display: flex;
             flex-direction: column;
             overflow: visible;  /* 改為 visible，確保按鈕完整顯示 */
             position: relative;
+            justify-content: center;  /* 垂直置中 */
         }
 
         .selection-header {
@@ -95,8 +97,10 @@
                 2px 2px 6px var(--mineral-shadow-light),
                 -1px -1px 4px rgba(255, 255, 255, 0.8);
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 50%;  /* 改為垂直置中 */
+            right: 15px;  /* 減少右側距離，確保不被切掉 */
+            transform: translateY(-50%);  /* 垂直置中 */
+            z-index: 101;  /* 確保在按鈕上方 */
         }
 
         .close-btn:hover {
@@ -111,41 +115,24 @@
 
         .scenario-buttons-container {
             flex: 1;
-            overflow-x: auto;
-            overflow-y: visible;  /* 改為 visible，確保按鈕底部不被裁切 */
-            padding-bottom: 8px;  /* 增加底部 padding，確保按鈕底部線條可見 */
-            scrollbar-width: thin;
-            scrollbar-color: var(--mineral-accent-light) transparent;
-        }
-
-        .scenario-buttons-container::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .scenario-buttons-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .scenario-buttons-container::-webkit-scrollbar-thumb {
-            background: var(--mineral-accent-light);
-            border-radius: 3px;
-        }
-
-        .scenario-buttons-container::-webkit-scrollbar-thumb:hover {
-            background: var(--mineral-accent);
+            overflow: hidden;  /* 移除滾動，正常顯示 */
+            padding: 0;  /* 移除所有 padding，讓按鈕有更多空間 */
+            display: flex;
+            justify-content: center;  /* 置中對齊 */
+            align-items: center;
         }
 
         .scenario-buttons {
             display: flex;
             gap: 15px;
             align-items: center;
-            width: max-content;
-            padding-right: 10px;
-            padding-bottom: 2px;  /* 增加底部 padding，確保按鈕底部線條可見 */
+            justify-content: center;  /* 置中對齊 */
+            width: auto;  /* 改為 auto，讓按鈕自然排列 */
+            padding: 0;  /* 移除所有 padding */
         }
 
         .scenario-btn {
-            padding: 12px 28px;
+            padding: 10px 24px;  /* 稍微減少 padding，確保按鈕完整顯示 */
             background: var(--mineral-bg);
             border: 1.5px solid var(--mineral-border);
             border-radius: 12px;
@@ -154,7 +141,7 @@
             color: var(--mineral-text);
             cursor: pointer;
             position: relative;
-            overflow: hidden;
+            overflow: visible;  /* 改為 visible，確保內容不被裁切 */
             box-shadow: 
                 4px 4px 12px var(--mineral-shadow-light),
                 -2px -2px 8px rgba(255, 255, 255, 0.8);
@@ -213,7 +200,7 @@
 
         /* --- 區2：主畫面 --- */
         .main-view {
-            height: 60vh;
+            height: 63.33vh;  /* 增加高度，從 60vh 改為 63.33vh（多出選擇區減少的 3.33vh） */
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -222,25 +209,27 @@
             position: relative;
             overflow-y: auto;
             overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: var(--mineral-accent-light) transparent;
+            scrollbar-width: none;  /* 隱藏滾動條 */
+            -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
         }
-
+        
+        /* 隱藏 WebKit 瀏覽器的滾動條 */
         .main-view::-webkit-scrollbar {
-            width: 8px;
+            display: none;  /* 隱藏滾動條 */
         }
-
-        .main-view::-webkit-scrollbar-track {
-            background: transparent;
+        
+        /* 手機版主顯示區域高度調整 */
+        @media (max-width: 768px) {
+            .main-view {
+                height: calc(100vh - 7vh - 25vh);  /* 動態計算高度，選擇區改為 7vh */
+            }
         }
-
-        .main-view::-webkit-scrollbar-thumb {
-            background: var(--mineral-accent-light);
-            border-radius: 4px;
-        }
-
-        .main-view::-webkit-scrollbar-thumb:hover {
-            background: var(--mineral-accent);
+        
+        @media (max-width: 480px) {
+            .main-view {
+                height: calc(100vh - 7vh - 24vh);  /* 超窄螢幕調整，選擇區改為 7vh */
+                padding: 10px 12px;  /* 減少上下 padding */
+            }
         }
 
         .main-view::before {
@@ -265,8 +254,8 @@
             justify-content: flex-start;
             position: relative;
             z-index: 1;
-            gap: 15px;
-            padding-bottom: 20px;
+            gap: 8px;  /* 減少間距，從 15px 改為 8px */
+            padding-bottom: 15px;  /* 減少底部 padding */
             box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
         }
 
@@ -290,27 +279,76 @@
             gap: 15px;
         }
 
-        /* 化學反應式標題 - 使用 style.html 的化學方程式風格 */
+        /* 化學反應式標題 - 參考 style.html 的化學方程式風格 */
         .reaction-header {
-            font-family: 'Space Mono', monospace;
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-family: 'Space Mono', monospace;  /* 使用等寬字體，與 style.html 一致 */
+            font-size: 1.3rem;  /* 與 style.html 一致 */
+            font-weight: 600;  /* 與 style.html 一致 */
             color: var(--mineral-text);
             text-align: center;
-            padding: 10px 20px;
+            padding: 8px 24px;  /* 減少上下 padding，從 12px 改為 8px */
             background: var(--mineral-bg-light);
             border-radius: 12px;
             border: 1.5px solid var(--mineral-border);
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            line-height: 1.5;  /* 減少行高，從 1.6 改為 1.5 */
+        }
+        
+        /* 化學式下標數字樣式 - 符合教科書標準 */
+        .reaction-header sub {
+            font-size: 0.75em;  /* 稍微放大，與上標一致 */
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;  /* 適度下移 */
+            font-weight: 600;  /* 與主文字一致 */
+            line-height: 0;
+        }
+        
+        /* 全局下標樣式 - 符合教科書標準 */
+        sub {
+            font-size: 0.75em;  /* 稍微放大，與上標一致 */
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;  /* 繼承父元素字重 */
+            line-height: 0;
+        }
+        
+        /* 化學式上標數字樣式 - 與下標大小一致 */
+        .reaction-header sup,
+        sup {
+            font-size: 0.75em;  /* 與下標大小一致 */
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;  /* 上移 */
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* Unicode 上標字符樣式（²、³等） */
+        .reaction-header,
+        .math,
+        .legend-label,
+        .info,
+        .control-btn {
+            position: relative;
+        }
+        
+        /* 為 Unicode 上標字符（²）添加樣式 */
+        .math .frac-top,
+        .math,
+        .info,
+        .legend-label {
+            font-feature-settings: "sups" 1;  /* 優化上標字符顯示 */
         }
 
         /* 公式卡片 - K和Q上下排列 */
         .formula-card {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;  /* 減少間距，從 15px 改為 10px */
             background: var(--mineral-bg-light);
-            padding: 20px 25px;
+            padding: 12px 25px;  /* 減少上下 padding，從 20px 改為 12px */
             border-radius: 12px;
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
             align-items: center;
@@ -338,12 +376,25 @@
                 font-size: 0.95rem;
                 width: 100%;
                 justify-content: center;
+                flex-wrap: wrap;  /* 允許換行，適應小螢幕 */
+                gap: 3px;  /* 減少間距 */
+            }
+            
+            /* 手機版分數樣式調整 */
+            .formula-card .frac {
+                margin: 0 4px;  /* 減少間距 */
+            }
+            
+            .formula-card .frac-top,
+            .formula-card .frac-bot {
+                padding: 0 3px;
+                font-size: 0.9em;  /* 稍微縮小 */
             }
 
             .formula-card #status {
                 width: 100%;
                 text-align: center;
-                margin-top: 10px;
+                margin-top: 0;  /* 移除 margin-top */
             }
         }
 
@@ -351,24 +402,95 @@
             display: flex;
             align-items: center;
             font-size: 1.1rem;
-            font-weight: 800;
-            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-family: 'Space Mono', monospace;
+            line-height: 1.6;  /* 增加行高，使排列更整齊 */
+            gap: 4px;  /* 元素之間的間距 */
+        }
+        
+        /* 數學公式中的化學式下標 */
+        .math sub {
+            font-size: 0.75em;  /* 與上標大小一致 */
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 數學公式中的化學式上標 */
+        .math sup {
+            font-size: 0.75em;  /* 與下標大小一致 */
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 分數中的上標和下標樣式 */
+        .frac-top sub,
+        .frac-bot sub {
+            font-size: 0.75em;
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        .frac-top sup,
+        .frac-bot sup {
+            font-size: 0.75em;
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 分數中的 Unicode 上標字符（²）樣式 */
+        .frac-top,
+        .frac-bot {
+            font-family: 'Space Mono', monospace;
+        }
+        
+        /* 等號對齊 */
+        .math > span:not(.frac),
+        .math > div:not(.frac) {
+            display: inline-flex;
+            align-items: center;
         }
 
         .frac {
             display: inline-flex;
             flex-direction: column;
             align-items: center;
-            margin: 0 5px;
+            justify-content: center;
+            margin: 0 8px;  /* 增加左右間距，使排列更整齊 */
+            vertical-align: middle;
+            line-height: 1.2;
         }
 
         .frac-top {
-            border-bottom: 2px solid var(--mineral-text);
-            padding: 0 3px;
+            border-bottom: 1.5px solid var(--mineral-text);  /* 分數線 */
+            padding: 0 4px 2px 4px;  /* 調整 padding，確保分數線與內容有適當間距 */
+            text-align: center;
+            line-height: 1.4;
+            min-height: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .frac-bot {
-            padding: 0 3px;
+            padding: 2px 4px 0 4px;  /* 調整 padding，確保與分數線有適當間距 */
+            text-align: center;
+            line-height: 1.4;
+            min-height: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #status {
@@ -381,7 +503,7 @@
             font-size: 0.95rem;
             width: 100%;
             text-align: center;
-            margin-top: 10px;
+            margin-top: 0;  /* 移除 margin-top，由父元素控制間距 */
         }
 
         /* 反應方向顯示（在K、Q下方） */
@@ -512,6 +634,31 @@
             font-family: 'Inter', sans-serif;
             white-space: nowrap;
         }
+        
+        /* 圖例中的化學式下標 */
+        .legend-label sub {
+            font-size: 0.75em;  /* 稍微放大，與上標一致 */
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 圖例中的化學式上標 */
+        .legend-label sup {
+            font-size: 0.75em;  /* 與下標大小一致 */
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 圖例中的化學式使用等寬字體 */
+        .legend-label {
+            font-family: 'Space Mono', monospace;
+        }
 
         canvas {
             background-color: var(--mineral-bg-light);
@@ -539,6 +686,31 @@
             color: var(--mineral-text);
             font-weight: 600;
         }
+        
+        /* 資訊面板中的化學式下標 */
+        .info sub {
+            font-size: 0.7em;
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 資訊面板中的化學式使用等寬字體 */
+        .info {
+            font-family: 'Inter', sans-serif;  /* 一般文字保持原字體 */
+        }
+        
+        /* 資訊面板中顯示化學式的部分 - 使用 Space Mono */
+        .info {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* 資訊面板中的化學式部分使用等寬字體 */
+        .info strong {
+            font-family: 'Inter', sans-serif;  /* 標題保持原字體 */
+        }
 
         .info[style*="border-left-color: var(--no2-color)"] {
             border-left-color: var(--no2-color);
@@ -555,8 +727,8 @@
 
         /* --- 區3：操作介面 --- */
         .control-panel {
-            min-height: 30vh;  /* 改為 min-height，允許內容擴展 */
-            max-height: 35vh;  /* 設置最大高度，防止過度擴展 */
+            height: 30vh;  /* 電腦版保持 30vh */
+            min-height: 200px;  /* 設置最小高度 */
             background: var(--mineral-bg-light);
             border-top: 1px solid var(--mineral-border);
             padding: 25px 40px;
@@ -564,36 +736,36 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: var(--mineral-accent-light) transparent;
+            overflow-y: auto;  /* 允許垂直滾動 */
+            overflow-x: hidden;  /* 禁止水平滾動 */
+            scrollbar-width: none;  /* 隱藏滾動條 */
+            -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+            -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
         }
 
+        /* 隱藏 WebKit 瀏覽器的滾動條 */
         .control-panel::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .control-panel::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .control-panel::-webkit-scrollbar-thumb {
-            background: var(--mineral-accent-light);
-            border-radius: 4px;
-        }
-
-        .control-panel::-webkit-scrollbar-thumb:hover {
-            background: var(--mineral-accent);
+            display: none;  /* 隱藏滾動條 */
         }
 
         .control-content {
             width: 100%;
             flex: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start;  /* 改為 flex-start，確保內容可以滾動 */
             justify-content: center;
             min-height: 100%;
+            padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+            overflow-y: auto;  /* 允許內容滾動 */
+            overflow-x: hidden;
+            scrollbar-width: none;  /* 隱藏滾動條 */
+            -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+            -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
+        }
+        
+        /* 隱藏 WebKit 瀏覽器的滾動條 */
+        .control-content::-webkit-scrollbar {
+            display: none;  /* 隱藏滾動條 */
         }
 
         .control-scenario {
@@ -630,6 +802,31 @@
             box-shadow: 
                 3px 3px 8px var(--mineral-shadow-light),
                 -1px -1px 4px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* 按鈕中的化學式下標 */
+        .control-btn sub {
+            font-size: 0.75em;  /* 稍微放大，與上標一致 */
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 按鈕中的化學式上標 */
+        .control-btn sup {
+            font-size: 0.75em;  /* 與下標大小一致 */
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;
+            font-weight: inherit;
+            line-height: 0;
+        }
+        
+        /* 按鈕中的化學式 - Unicode 下標字符在 Space Mono 下會更優雅 */
+        .control-btn {
+            font-family: 'Inter', sans-serif;  /* 一般文字保持原字體 */
         }
 
         .control-btn::before {
@@ -700,9 +897,10 @@
 
         @media (max-width: 768px) {
             .selection-area {
-                height: auto;  /* 改為 auto，允許根據內容調整高度 */
-                min-height: 70px;  /* 增加最小高度，確保按鈕有足夠空間 */
-                padding: 12px 45px 12px 20px;  /* 增加上下 padding */
+                height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
+                min-height: 55px;  /* 增加最小高度，確保按鈕完整顯示 */
+                max-height: 7vh;  /* 限制最大高度 */
+                padding: 6px 45px 6px 20px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
             }
 
             .close-btn {
@@ -714,12 +912,15 @@
             }
 
             .scenario-buttons-container {
-                padding-bottom: 10px;  /* 增加底部 padding，確保按鈕底部線條可見 */
+                padding: 0;  /* 移除所有 padding */
+                justify-content: center;  /* 置中對齊 */
             }
 
             .scenario-buttons {
                 gap: 10px;
-                padding-bottom: 4px;  /* 增加底部 padding */
+                padding: 0;  /* 移除所有 padding */
+                justify-content: center;  /* 置中對齊 */
+                width: auto;  /* 改為 auto */
             }
 
             .scenario-btn {
@@ -732,8 +933,17 @@
             .main-view {
                 flex: 1;  /* 使用 flex: 1 自動調整高度 */
                 min-height: 0;  /* 允許縮小 */
-                padding: 15px;  /* 左右對稱 padding，確保右邊邊框顯示 */
+                height: calc(100vh - 7vh - 25vh);  /* 計算高度：總高度減去選擇區(7vh)和操作區 */
+                padding: 12px 12px;  /* 減少上下 padding，從 15px 改為 12px */
                 overflow-x: hidden;  /* 確保不會出現水平滾動 */
+                overflow-y: auto;  /* 允許垂直滾動 */
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+            }
+            
+            /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
+            .main-view::-webkit-scrollbar {
+                display: none;  /* 隱藏滾動條 */
             }
             
             /* 超窄螢幕保持對稱 padding */
@@ -744,14 +954,42 @@
             }
 
             .control-panel {
-                min-height: auto;  /* 改為 auto，允許根據內容調整 */
-                max-height: 40vh;  /* 手機版增加最大高度 */
-                padding: 20px;
-                padding-bottom: 25px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+                height: 25vh;  /* 減小高度，從 30vh 改為 25vh */
+                min-height: 200px;  /* 設置最小高度，確保內容可見 */
+                max-height: 25vh;  /* 限制最大高度 */
+                padding: 15px 12px;  /* 減少 padding，特別是左右 padding 確保按鈕不被切割 */
+                padding-bottom: 15px;  /* 減少底部 padding */
+                overflow-y: auto;  /* 確保可以滾動 */
+                overflow-x: hidden;
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
+            }
+            
+            /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
+            .control-panel::-webkit-scrollbar {
+                display: none;  /* 隱藏滾動條 */
             }
             
             .control-content {
-                padding-bottom: 15px;  /* 增加底部 padding */
+                padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+                overflow-y: auto;  /* 允許內容滾動 */
+                overflow-x: hidden;
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
+            }
+            
+            /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
+            .control-content::-webkit-scrollbar {
+                display: none;  /* 隱藏滾動條 */
+            }
+            
+            /* 確保按鈕容器有足夠的左右間距 */
+            .controls {
+                padding: 0 4px;  /* 添加左右 padding，確保按鈕不被切割 */
+                width: 100%;
+                box-sizing: border-box;
             }
 
             /* 手機版：圖表上下排列，調整大小以便同時顯示 */
@@ -833,18 +1071,28 @@
             /* 手機版：操作按鈕橫向併排排列 */
             .controls {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+                gap: 8px;  /* 減少間距，節省空間 */
+                width: 100%;
+                box-sizing: border-box;
             }
 
             .control-btn {
-                padding: 10px 12px;
-                font-size: 0.85rem;
+                padding: 8px 10px;  /* 減少 padding，讓按鈕更緊湊 */
+                font-size: 0.8rem;  /* 稍微縮小字體 */
+                min-height: 40px;  /* 設置最小高度，確保按鈕可點擊 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                word-break: break-word;  /* 允許文字換行 */
+                line-height: 1.3;
             }
 
             .control-btn.reset-btn {
                 grid-column: span 2;
-                margin-top: 8px;
-                margin-bottom: 5px;  /* 增加底部 margin，確保按鈕完整顯示 */
+                margin-top: 6px;
+                margin-bottom: 0;  /* 減少底部 margin */
+                padding: 10px 12px;  /* 重置按鈕保持較大 padding */
             }
 
             /* 手機版：濃度資訊放在圖片下方，單列顯示 */
@@ -863,31 +1111,63 @@
 
         @media (max-width: 480px) {
             .selection-area {
-                min-height: 75px;  /* 超窄螢幕增加最小高度 */
-                padding: 12px 40px 12px 15px;  /* 調整 padding */
+                height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
+                min-height: 50px;  /* 增加最小高度，確保按鈕完整顯示 */
+                max-height: 7vh;
+                padding: 5px 40px 5px 15px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
             }
             
             .scenario-buttons-container {
-                padding-bottom: 12px;  /* 增加底部 padding */
+                padding: 0;  /* 移除所有 padding */
+                justify-content: center;  /* 置中對齊 */
             }
             
             .scenario-buttons {
-                padding-bottom: 5px;  /* 增加底部 padding */
+                padding: 0;  /* 移除所有 padding */
+                justify-content: center;  /* 置中對齊 */
+                width: auto;  /* 改為 auto */
             }
             
             .scenario-btn {
-                min-width: 100px;
-                padding: 8px 16px;
+                min-width: 90px;  /* 稍微減少最小寬度 */
+                padding: 7px 14px;  /* 稍微減少 padding，確保按鈕完整顯示 */
                 font-size: 0.8rem;
                 line-height: 1.4;  /* 確保文字垂直對齊 */
             }
             
             .control-panel {
-                padding-bottom: 30px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+                height: 24vh;  /* 超窄螢幕進一步減小高度 */
+                min-height: 180px;
+                max-height: 24vh;
+                padding: 12px 10px;
+                padding-bottom: 12px;
+                overflow-y: auto;  /* 確保可以滾動 */
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
             }
             
             .control-content {
-                padding-bottom: 20px;  /* 增加底部 padding */
+                padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+                overflow-y: auto;  /* 允許內容滾動 */
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
+            }
+            
+            .controls {
+                gap: 6px;  /* 進一步減少間距 */
+                padding: 0 3px;  /* 確保按鈕不被切割 */
+            }
+            
+            .control-btn {
+                padding: 7px 8px;
+                font-size: 0.75rem;  /* 進一步縮小字體 */
+                min-height: 36px;
+            }
+            
+            .control-btn.reset-btn {
+                padding: 9px 10px;
+                margin-top: 5px;
+                margin-bottom: 5px;  /* 增加底部 margin，確保可見 */
             }
 
             .formula-card {
@@ -911,13 +1191,9 @@
             }
 
             .reaction-header {
-                font-size: 1.1rem;
-                padding: 8px 15px;
-            }
-
-            .reaction-header {
-                font-size: 1.1rem;
-                padding: 8px 15px;
+                font-size: 1.2rem;
+                padding: 10px 18px;
+                letter-spacing: 0.3px;
             }
 
             /* 小螢幕手機：圖表上下排列，更緊湊 */
@@ -1004,7 +1280,7 @@
         <div class="selection-area">
             <div class="selection-header"></div>
             <button class="close-btn" onclick="closeWindow()" title="關閉">×</button>
-            <div class="scenario-buttons-container" style="cursor: grab;">
+            <div class="scenario-buttons-container">
                 <div class="scenario-buttons">
                     <button class="scenario-btn" data-scenario="equilibrium-basic">平衡常數計算機</button>
                     <button class="scenario-btn active" data-scenario="le-chatelier">勒沙特列原理展示</button>
@@ -1026,17 +1302,23 @@
                     
                     <div class="formula-card">
                         <div class="math">
-                            K = <div class="frac"><span class="frac-top">[NO₂]²</span><span class="frac-bot">[N₂O₄]</span></div>
-                            = <div class="frac"><span class="frac-top" id="k-formula-top">2²</span><span class="frac-bot" id="k-formula-bot">1</span></div>
-                            = <span id="k-val" style="color:#2c3e50; margin-left:5px;">4.00</span>
+                            <span>K =</span>
+                            <div class="frac"><span class="frac-top">[NO<sub>2</sub>]<sup>2</sup></span><span class="frac-bot">[N<sub>2</sub>O<sub>4</sub>]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top">2<sup>2</sup></span><span class="frac-bot" id="k-formula-bot">1</span></div>
+                            <span>=</span>
+                            <span id="k-val" style="color:#2c3e50;">4.00</span>
                         </div>
                         <div class="math" style="color: #e67e22;">
-                            Q = <div class="frac"><span class="frac-top" id="q-num">[NO₂]²</span><span class="frac-bot" id="q-den">[N₂O₄]</span></div>
-                            = <div class="frac"><span class="frac-top" id="q-formula-top">2.32²</span><span class="frac-bot" id="q-formula-bot">1.34</span></div>
-                            = <span id="q-val" style="margin-left:5px;">4.00</span>
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num">[NO<sub>2</sub>]<sup>2</sup></span><span class="frac-bot" id="q-den">[N<sub>2</sub>O<sub>4</sub>]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top">2.00<sup>2</sup></span><span class="frac-bot" id="q-formula-bot">1.00</span></div>
+                            <span>=</span>
+                            <span id="q-val">4.00</span>
                         </div>
                     </div>
-                    <div style="width: 100%; text-align: center; margin-top: 10px;">
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
                         <div id="status" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96);">新平衡</div>
                     </div>
                     <div id="direction-display" class="direction-display" style="display: none;"></div>
@@ -1770,18 +2052,18 @@
             const kFormulaTop = document.getElementById('k-formula-top');
             const kFormulaBot = document.getElementById('k-formula-bot');
             if (kFormulaTop && kFormulaBot) {
-                kFormulaTop.textContent = `${initialConcB.toFixed(0)}²`;
+                kFormulaTop.innerHTML = `${initialConcB.toFixed(0)}<sup>2</sup>`;
                 kFormulaBot.textContent = initialConcA.toFixed(0);
             }
             
             // 更新Q的計算顯示 - 使用直式分式，濃度顯示到小數點下第2位
             let Q = Math.pow(concB, 2) / concA;
-            document.getElementById('q-num').innerText = `[NO₂]²`;
-            document.getElementById('q-den').innerText = `[N₂O₄]`;
+            document.getElementById('q-num').innerHTML = `[NO<sub>2</sub>]<sup>2</sup>`;
+            document.getElementById('q-den').innerHTML = `[N<sub>2</sub>O<sub>4</sub>]`;
             const qFormulaTop = document.getElementById('q-formula-top');
             const qFormulaBot = document.getElementById('q-formula-bot');
             if (qFormulaTop && qFormulaBot) {
-                qFormulaTop.textContent = `${concB.toFixed(2)}²`;
+                qFormulaTop.innerHTML = `${concB.toFixed(2)}<sup>2</sup>`;
                 qFormulaBot.textContent = concA.toFixed(2);
             }
             document.getElementById('q-val').innerText = Q.toFixed(2);
@@ -1991,38 +2273,7 @@
             }
         }
 
-        // 為按鈕容器添加平滑滾動支持（觸控設備）
-        const buttonsContainer = document.querySelector('.scenario-buttons-container');
-        let isDown = false;
-        let startX;
-        let scrollLeft;
-
-        buttonsContainer.addEventListener('mousedown', (e) => {
-            isDown = true;
-            buttonsContainer.style.cursor = 'grabbing';
-            startX = e.pageX - buttonsContainer.offsetLeft;
-            scrollLeft = buttonsContainer.scrollLeft;
-        });
-
-        buttonsContainer.addEventListener('mouseleave', () => {
-            isDown = false;
-            buttonsContainer.style.cursor = 'grab';
-        });
-
-        buttonsContainer.addEventListener('mouseup', () => {
-            isDown = false;
-            buttonsContainer.style.cursor = 'grab';
-        });
-
-        buttonsContainer.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - buttonsContainer.offsetLeft;
-            const walk = (x - startX) * 2;
-            buttonsContainer.scrollLeft = scrollLeft - walk;
-        });
-
-        buttonsContainer.style.cursor = 'grab';
+        // 按鈕容器不再需要滾動功能，已改為置中顯示
 
         // 重置實驗功能 - 維持在當前教學場景
         function resetExperiment() {
@@ -2088,7 +2339,7 @@
                 const kFormulaTop = document.getElementById('k-formula-top');
                 const kFormulaBot = document.getElementById('k-formula-bot');
                 if (kFormulaTop && kFormulaBot) {
-                    kFormulaTop.textContent = `${initialConcB.toFixed(0)}²`;
+                    kFormulaTop.innerHTML = `${initialConcB.toFixed(0)}<sup>2</sup>`;
                     kFormulaBot.textContent = initialConcA.toFixed(0);
                 }
                 
@@ -2096,13 +2347,13 @@
                 const qFormulaTop = document.getElementById('q-formula-top');
                 const qFormulaBot = document.getElementById('q-formula-bot');
                 if (qFormulaTop && qFormulaBot) {
-                    qFormulaTop.textContent = `${initialConcB.toFixed(2)}²`;
+                    qFormulaTop.innerHTML = `${initialConcB.toFixed(2)}<sup>2</sup>`;
                     qFormulaBot.textContent = initialConcA.toFixed(2);
                 }
                 
                 // 初始化Q的符號顯示
-                document.getElementById('q-num').innerText = `[NO₂]²`;
-                document.getElementById('q-den').innerText = `[N₂O₄]`;
+                document.getElementById('q-num').innerHTML = `[NO<sub>2</sub>]<sup>2</sup>`;
+                document.getElementById('q-den').innerHTML = `[N<sub>2</sub>O<sub>4</sub>]`;
                 
                 // 初始化勒沙特列原理場景的圖表（如果場景已切換）
                 const activeScenario = document.querySelector('.scenario-content.active');
