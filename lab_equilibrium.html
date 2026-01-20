@@ -62,7 +62,7 @@
             min-height: 55px;  /* 增加最小高度，確保按鈕完整顯示 */
             background: var(--mineral-bg-light);
             border-bottom: 1px solid var(--mineral-border);
-            padding: 6px 50px 6px 40px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
+            padding: 6px 55px 6px 45px;  /* 增加左右 padding，確保按鈕完整顯示且對齊 */
             box-shadow: 0 2px 20px var(--mineral-shadow-light);
             z-index: 100;
             display: flex;
@@ -73,10 +73,17 @@
         }
 
         .selection-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+            display: none;  /* 隱藏空的 header，移除留白 */
+        }
+        
+        /* 手機版完全移除 selection-header */
+        @media (max-width: 768px) {
+            .selection-header {
+                display: none;  /* 手機版完全隱藏 */
+                margin: 0;
+                padding: 0;
+                height: 0;
+            }
         }
 
         .close-btn {
@@ -97,8 +104,8 @@
                 2px 2px 6px var(--mineral-shadow-light),
                 -1px -1px 4px rgba(255, 255, 255, 0.8);
             position: absolute;
-            top: 50%;  /* 改為垂直置中 */
-            right: 15px;  /* 減少右側距離，確保不被切掉 */
+            top: 50%;  /* 電腦版垂直置中 */
+            right: 20px;  /* 電腦版右側距離，確保不被切掉且對齊 */
             transform: translateY(-50%);  /* 垂直置中 */
             z-index: 101;  /* 確保在按鈕上方 */
         }
@@ -107,10 +114,17 @@
             background: var(--mineral-accent);
             color: var(--mineral-bg);
             border-color: var(--mineral-accent);
-            transform: rotate(90deg);
+            transform: translateY(-50%) rotate(90deg);  /* 電腦版保持垂直置中並旋轉 */
             box-shadow: 
                 3px 3px 8px var(--mineral-shadow),
                 0 0 0 2px var(--mineral-accent-light);
+        }
+        
+        /* 手機版 hover 效果 */
+        @media (max-width: 768px) {
+            .close-btn:hover {
+                transform: rotate(90deg);  /* 手機版只旋轉，不下移 */
+            }
         }
 
         .scenario-buttons-container {
@@ -120,6 +134,7 @@
             display: flex;
             justify-content: center;  /* 置中對齊 */
             align-items: center;
+            width: 100%;  /* 確保容器寬度 */
         }
 
         .scenario-buttons {
@@ -129,10 +144,12 @@
             justify-content: center;  /* 置中對齊 */
             width: auto;  /* 改為 auto，讓按鈕自然排列 */
             padding: 0;  /* 移除所有 padding */
+            margin: 0 auto;  /* 確保置中 */
+            max-width: 100%;  /* 確保不會超出容器 */
         }
 
         .scenario-btn {
-            padding: 10px 24px;  /* 稍微減少 padding，確保按鈕完整顯示 */
+            padding: 10px 28px;  /* 恢復正常 padding，確保按鈕完整顯示 */
             background: var(--mineral-bg);
             border: 1.5px solid var(--mineral-border);
             border-radius: 12px;
@@ -147,10 +164,16 @@
                 -2px -2px 8px rgba(255, 255, 255, 0.8);
             font-family: 'Inter', sans-serif;
             letter-spacing: 0.5px;
-            min-width: 130px;
+            min-width: 150px;  /* 增加最小寬度，確保按鈕相等且完整顯示 */
+            max-width: 200px;  /* 設置最大寬度，避免過寬 */
             text-align: center;
             white-space: nowrap;
             flex-shrink: 0;
+            flex-grow: 0;  /* 不允許擴展，保持固定大小 */
+            display: flex;
+            align-items: center;
+            justify-content: center;  /* 確保文字置中 */
+            box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
         }
 
         .scenario-btn::before {
@@ -897,30 +920,34 @@
 
         @media (max-width: 768px) {
             .selection-area {
-                height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
-                min-height: 55px;  /* 增加最小高度，確保按鈕完整顯示 */
-                max-height: 7vh;  /* 限制最大高度 */
-                padding: 6px 45px 6px 20px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
+                height: auto;  /* 改為 auto，根據內容自動調整 */
+                min-height: 50px;  /* 減少最小高度 */
+                max-height: none;  /* 移除最大高度限制 */
+                padding: 4px 45px 4px 20px;  /* 減少上下 padding，從 6px 改為 4px，移除上方留白 */
             }
 
             .close-btn {
-                top: 10px;
+                top: 14px;  /* 手機版稍微下移，從 10px 改為 14px */
                 right: 10px;
                 width: 28px;
                 height: 28px;
                 font-size: 16px;
+                transform: none;  /* 手機版不使用 transform */
             }
 
             .scenario-buttons-container {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
+                align-items: center;  /* 垂直置中 */
+                min-height: 42px;  /* 設置最小高度，確保按鈕完整顯示 */
             }
 
             .scenario-buttons {
-                gap: 10px;
+                gap: 8px;  /* 稍微減少間距 */
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 width: auto;  /* 改為 auto */
+                flex-wrap: nowrap;  /* 防止換行 */
             }
 
             .scenario-btn {
@@ -1111,28 +1138,34 @@
 
         @media (max-width: 480px) {
             .selection-area {
-                height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
-                min-height: 50px;  /* 增加最小高度，確保按鈕完整顯示 */
-                max-height: 7vh;
-                padding: 5px 40px 5px 15px;  /* 右側增加 padding，確保關閉按鈕完整顯示 */
+                height: auto;  /* 改為 auto，根據內容自動調整 */
+                min-height: 48px;  /* 減少最小高度 */
+                max-height: none;  /* 移除最大高度限制 */
+                padding: 3px 40px 3px 15px;  /* 進一步減少上下 padding，從 5px 改為 3px，移除上方留白 */
             }
             
             .scenario-buttons-container {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
+                align-items: center;  /* 垂直置中 */
+                min-height: 40px;  /* 設置最小高度，確保按鈕完整顯示 */
             }
             
             .scenario-buttons {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 width: auto;  /* 改為 auto */
+                gap: 6px;  /* 減少間距，確保按鈕完整顯示 */
+                flex-wrap: nowrap;  /* 防止換行 */
             }
             
             .scenario-btn {
-                min-width: 90px;  /* 稍微減少最小寬度 */
-                padding: 7px 14px;  /* 稍微減少 padding，確保按鈕完整顯示 */
+                min-width: 85px;  /* 稍微減少最小寬度，確保兩個按鈕都能完整顯示 */
+                max-width: 130px;  /* 設置最大寬度，避免過寬 */
+                padding: 7px 12px;  /* 稍微減少 padding，確保按鈕完整顯示 */
                 font-size: 0.8rem;
                 line-height: 1.4;  /* 確保文字垂直對齊 */
+                flex-shrink: 1;  /* 允許稍微縮小，但優先保持內容完整 */
             }
             
             .control-panel {
