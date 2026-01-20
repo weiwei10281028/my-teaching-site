@@ -15,6 +15,22 @@
             transition: all 0.4s cubic-bezier(0.2, 0, 0.1, 1);
             -webkit-tap-highlight-color: transparent;
         }
+        
+        /* 按鈕不繼承全局 transition，避免不必要的動畫 */
+        .scenario-btn,
+        .scenario-btn * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        
+        /* 確保按鈕在所有狀態下都不會移動 */
+        .scenario-btn,
+        .scenario-btn:hover,
+        .scenario-btn:active,
+        .scenario-btn.active,
+        .scenario-btn.active:hover {
+            transform: none !important;
+            will-change: auto;  /* 優化性能，避免不必要的重繪 */
+        }
 
         :root {
             --mineral-bg: #F8F6F1;
@@ -123,7 +139,13 @@
         /* 手機版 hover 效果 */
         @media (max-width: 768px) {
             .close-btn:hover {
-                transform: rotate(90deg);  /* 手機版只旋轉，不下移 */
+                transform: translateY(-50%) rotate(90deg);  /* 手機版保持垂直置中並旋轉 */
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .close-btn:hover {
+                transform: translateY(-50%) rotate(90deg);  /* 超窄螢幕保持垂直置中並旋轉 */
             }
         }
 
@@ -174,29 +196,23 @@
             align-items: center;
             justify-content: center;  /* 確保文字置中 */
             box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease !important;  /* 只針對顏色和陰影，不包含 transform，使用 !important 覆蓋全局 */
+            transform: none !important;  /* 確保不會有任何 transform 動畫 */
         }
 
+        /* 完全移除光效動畫 */
         .scenario-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 177, 106, 0.1), transparent);
-            transition: left 0.5s;
+            display: none !important;  /* 完全移除光效 */
         }
 
         .scenario-btn:hover {
-            transform: translateY(-2px);
+            /* 移除 transform，避免按鈕移動 */
+            transform: none !important;  /* 確保不會移動 */
             box-shadow: 
-                6px 6px 16px var(--mineral-shadow),
-                -2px -2px 10px rgba(255, 255, 255, 0.9);
+                4px 4px 12px var(--mineral-shadow-light),
+                -2px -2px 8px rgba(255, 255, 255, 0.8);
             border-color: var(--mineral-accent-light);
-        }
-
-        .scenario-btn:hover::before {
-            left: 100%;
+            background: var(--mineral-bg-light);  /* 輕微背景色變化 */
         }
 
         .scenario-btn.active {
@@ -207,6 +223,19 @@
                 inset 3px 3px 8px var(--mineral-shadow-light),
                 0 0 0 1px var(--mineral-accent-light);
             font-weight: 700;
+            transform: none !important;  /* 確保 active 狀態不會導致位置變化 */
+        }
+        
+        .scenario-btn.active:hover {
+            /* active 狀態的 hover 效果 */
+            background: var(--mineral-bg);
+            border-color: var(--mineral-accent);
+            transform: none !important;  /* 確保不會移動 */
+        }
+        
+        .scenario-btn:active {
+            /* 點擊時的狀態，確保不會移動 */
+            transform: none !important;
         }
 
         .scenario-btn.active::after {
@@ -214,11 +243,12 @@
             position: absolute;
             bottom: 0;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%);  /* 只使用 translateX，不影響垂直位置 */
             width: 60%;
             height: 2px;
             background: var(--mineral-accent);
             border-radius: 2px;
+            pointer-events: none;  /* 不影響點擊 */
         }
 
         /* --- 區2：主畫面 --- */
@@ -396,7 +426,7 @@
             }
 
             .formula-card .math {
-                font-size: 0.95rem;
+                font-size: 1.1rem;  /* 增加字體大小，從 0.95rem 改為 1.1rem */
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;  /* 允許換行，適應小螢幕 */
@@ -424,7 +454,7 @@
         .math {
             display: flex;
             align-items: center;
-            font-size: 1.1rem;
+            font-size: 1.3rem;  /* 增加字體大小，從 1.1rem 改為 1.3rem */
             font-weight: 600;
             font-family: 'Space Mono', monospace;
             line-height: 1.6;  /* 增加行高，使排列更整齊 */
@@ -920,47 +950,52 @@
 
         @media (max-width: 768px) {
             .selection-area {
-                height: auto;  /* 改為 auto，根據內容自動調整 */
-                min-height: 50px;  /* 減少最小高度 */
-                max-height: none;  /* 移除最大高度限制 */
-                padding: 4px 45px 4px 20px;  /* 減少上下 padding，從 6px 改為 4px，移除上方留白 */
+                height: 9vh;  /* 增加高度，給按鈕更多空間 */
+                min-height: 65px;  /* 增加最小高度，確保按鈕完整顯示 */
+                max-height: 9vh;  /* 限制最大高度 */
+                padding: 8px 45px 8px 20px;  /* 增加上下 padding，讓按鈕往下移 */
+                justify-content: center;  /* 垂直置中，讓按鈕往下移 */
             }
 
             .close-btn {
-                top: 14px;  /* 手機版稍微下移，從 10px 改為 14px */
+                top: 50%;  /* 垂直置中 */
                 right: 10px;
                 width: 28px;
                 height: 28px;
                 font-size: 16px;
-                transform: none;  /* 手機版不使用 transform */
+                transform: translateY(-50%);  /* 垂直置中 */
             }
 
             .scenario-buttons-container {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 align-items: center;  /* 垂直置中 */
-                min-height: 42px;  /* 設置最小高度，確保按鈕完整顯示 */
+                min-height: 50px;  /* 增加最小高度，確保按鈕完整顯示 */
+                margin-top: 0;  /* 移除上方 margin */
             }
 
             .scenario-buttons {
-                gap: 8px;  /* 稍微減少間距 */
+                gap: 10px;  /* 稍微增加間距，讓按鈕更美觀 */
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 width: auto;  /* 改為 auto */
                 flex-wrap: nowrap;  /* 防止換行 */
+                margin: 0;  /* 移除所有 margin */
             }
 
             .scenario-btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-                min-width: 110px;
+                padding: 10px 20px;  /* 增加 padding，讓按鈕更大更美觀 */
+                font-size: 0.9rem;  /* 稍微增加字體大小 */
+                min-width: 110px;  /* 增加最小寬度，確保按鈕完整顯示 */
+                max-width: 150px;  /* 設置最大寬度，避免過寬 */
                 line-height: 1.4;  /* 確保文字垂直對齊 */
+                flex-shrink: 0;  /* 不允許縮小，確保按鈕完整顯示 */
             }
 
             .main-view {
                 flex: 1;  /* 使用 flex: 1 自動調整高度 */
                 min-height: 0;  /* 允許縮小 */
-                height: calc(100vh - 7vh - 25vh);  /* 計算高度：總高度減去選擇區(7vh)和操作區 */
+                height: calc(100vh - 9vh - 25vh);  /* 計算高度：總高度減去選擇區(9vh)和操作區，減少顯示區高度 */
                 padding: 12px 12px;  /* 減少上下 padding，從 15px 改為 12px */
                 overflow-x: hidden;  /* 確保不會出現水平滾動 */
                 overflow-y: auto;  /* 允許垂直滾動 */
@@ -1125,7 +1160,7 @@
             /* 手機版：濃度資訊放在圖片下方，單列顯示 */
             .data-panel {
                 grid-template-columns: 1fr;
-                gap: 8px;
+                gap: 12px;  /* 增加間距，從 8px 改為 12px */
                 margin-top: 8px;
             }
 
@@ -1138,34 +1173,46 @@
 
         @media (max-width: 480px) {
             .selection-area {
-                height: auto;  /* 改為 auto，根據內容自動調整 */
-                min-height: 48px;  /* 減少最小高度 */
-                max-height: none;  /* 移除最大高度限制 */
-                padding: 3px 40px 3px 15px;  /* 進一步減少上下 padding，從 5px 改為 3px，移除上方留白 */
+                height: 9vh;  /* 增加高度，給按鈕更多空間 */
+                min-height: 60px;  /* 增加最小高度，確保按鈕完整顯示 */
+                max-height: 9vh;  /* 限制最大高度 */
+                padding: 7px 40px 7px 15px;  /* 增加上下 padding，讓按鈕往下移 */
+                justify-content: center;  /* 垂直置中，讓按鈕往下移 */
             }
             
             .scenario-buttons-container {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 align-items: center;  /* 垂直置中 */
-                min-height: 40px;  /* 設置最小高度，確保按鈕完整顯示 */
+                min-height: 48px;  /* 增加最小高度，確保按鈕完整顯示 */
+                margin-top: 0;  /* 移除上方 margin */
             }
             
             .scenario-buttons {
                 padding: 0;  /* 移除所有 padding */
                 justify-content: center;  /* 置中對齊 */
                 width: auto;  /* 改為 auto */
-                gap: 6px;  /* 減少間距，確保按鈕完整顯示 */
+                gap: 8px;  /* 稍微增加間距，讓按鈕更美觀 */
                 flex-wrap: nowrap;  /* 防止換行 */
+                margin: 0;  /* 移除所有 margin */
             }
             
             .scenario-btn {
-                min-width: 85px;  /* 稍微減少最小寬度，確保兩個按鈕都能完整顯示 */
-                max-width: 130px;  /* 設置最大寬度，避免過寬 */
-                padding: 7px 12px;  /* 稍微減少 padding，確保按鈕完整顯示 */
-                font-size: 0.8rem;
+                min-width: 100px;  /* 增加最小寬度，確保按鈕完整顯示 */
+                max-width: 140px;  /* 設置最大寬度，避免過寬 */
+                padding: 9px 16px;  /* 增加 padding，讓按鈕更大更美觀 */
+                font-size: 0.85rem;  /* 稍微增加字體大小 */
                 line-height: 1.4;  /* 確保文字垂直對齊 */
-                flex-shrink: 1;  /* 允許稍微縮小，但優先保持內容完整 */
+                flex-shrink: 0;  /* 不允許縮小，確保按鈕完整顯示 */
+            }
+            
+            .close-btn {
+                top: 50%;  /* 垂直置中 */
+                transform: translateY(-50%);  /* 垂直置中 */
+            }
+            
+            .main-view {
+                height: calc(100vh - 9vh - 24vh);  /* 計算高度：總高度減去選擇區(9vh)和操作區，減少顯示區高度 */
             }
             
             .control-panel {
@@ -1210,7 +1257,7 @@
             }
 
             .formula-card .math {
-                font-size: 0.9rem;
+                font-size: 1.05rem;  /* 增加字體大小，從 0.9rem 改為 1.05rem */
                 width: 100%;
                 justify-content: center;
             }
@@ -1983,7 +2030,7 @@
                         animationFrameId = null;
                     }
                     const statusEl = document.getElementById('status');
-                    statusEl.textContent = "新平衡";
+                    statusEl.textContent = "新平衡：Q＝K";
                     statusEl.style.color = "#27ae60";
                     statusEl.style.borderColor = "#27ae60";
                     // 隱藏方向顯示（如果存在）
@@ -2042,9 +2089,9 @@
                 
                 // 記錄平衡點
                 record();
-                // 立即更新狀態為"新平衡"
+                // 立即更新狀態為"新平衡：Q＝K"
                 const statusEl = document.getElementById('status');
-                statusEl.textContent = "新平衡";
+                statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
                 // 隱藏方向顯示（如果存在）
@@ -2056,19 +2103,20 @@
             }
         }
 
-        // 更新平衡移動方向指示（返回方向文字，用於顯示在狀態旁邊）
-        function getDirectionText(vf, vr) {
-            const diff = vf - vr;
-            if (Math.abs(diff) < 0.005) {
-                return '';
+        // 更新平衡移動方向指示（返回 Q 和 K 的比較）
+        function getDirectionText(Q, K) {
+            const diff = Q - K;
+            if (Math.abs(diff) < 0.01) {
+                // Q 等於 K，達到平衡
+                return '：Q＝K';
             }
             
             if (diff > 0) {
-                // 正反應速率大於逆反應，平衡向右移動（生成物增加）
-                return '：向右移動';
+                // Q 大於 K，平衡向左移動（反應物增加）
+                return '：Q＞K';
             } else {
-                // 逆反應速率大於正反應，平衡向左移動（反應物增加）
-                return '：向左移動';
+                // Q 小於 K，平衡向右移動（生成物增加）
+                return '：Q＜K';
             }
         }
 
@@ -2108,33 +2156,31 @@
             
             // 更新狀態
             const statusEl = document.getElementById('status');
-            // 如果已經達到平衡（equilibriumReached），顯示"新平衡"
+            // 如果已經達到平衡（equilibriumReached），顯示"新平衡 Q＝K"
             if (equilibriumReached) {
-                statusEl.textContent = "新平衡";
+                statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
             } else {
-                // 計算當前速率以判斷方向
-                let vf = kf * concA;
-                let vr = kr * Math.pow(concB, 2);
-                const directionText = getDirectionText(vf, vr);
+                // 計算 Q 和 K 的比較
+                const directionText = getDirectionText(Q, K);
                 
                 // 如果 Q 和 K 差異大，表示正在移動
-                if (Math.abs(Q - K) > 0.05 || directionText !== '') {
+                if (Math.abs(Q - K) > 0.01) {
                     statusEl.textContent = "平衡移動中" + directionText;
                     statusEl.style.color = "#e67e22";
                     statusEl.style.borderColor = "#e67e22";
                 } else {
                     // 只有在初始狀態且沒有操作過時才顯示"原平衡"
                     if (!hasOperated) {
-                        statusEl.textContent = "原平衡";
+                        statusEl.textContent = "原平衡：Q＝K";
                         statusEl.style.color = "#27ae60";
                         statusEl.style.borderColor = "#27ae60";
                     } else {
-                        // 如果操作過但接近平衡，仍顯示"平衡移動中"
-                        statusEl.textContent = "平衡移動中" + directionText;
-                        statusEl.style.color = "#e67e22";
-                        statusEl.style.borderColor = "#e67e22";
+                        // 如果操作過但接近平衡，顯示"新平衡 Q＝K"
+                        statusEl.textContent = "新平衡：Q＝K";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
                     }
                 }
             }
@@ -2192,16 +2238,23 @@
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // 移除所有按鈕的 active 狀態
+                    // 移除所有按鈕的 active 狀態（確保不會有位置變化）
+                    const currentBtn = this;  // 保存當前按鈕引用
                     document.querySelectorAll('.scenario-btn').forEach(b => {
                         b.classList.remove('active');
+                        // 強制設置 transform 為 none，避免任何移動
+                        b.style.transform = 'none';
+                        b.style.willChange = 'auto';
                     });
                     
-                    // 添加當前按鈕的 active 狀態
-                    this.classList.add('active');
+                    // 添加當前按鈕的 active 狀態（確保不會有位置變化）
+                    currentBtn.classList.add('active');
+                    // 強制設置 transform 為 none，避免任何移動
+                    currentBtn.style.transform = 'none';
+                    currentBtn.style.willChange = 'auto';
                     
                     // 獲取選中的場景
-                    const scenario = this.getAttribute('data-scenario');
+                    const scenario = currentBtn.getAttribute('data-scenario');
                     if (!scenario) return;
                     
                     // 停止任何正在運行的動畫（切換場景時）
@@ -2283,8 +2336,8 @@
                         vCtx = null;
                     }
                     
-                    // 自動滾動到選中的按鈕
-                    this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    // 移除自動滾動，避免按鈕移動
+                    // this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } catch (error) {
                     console.error('場景切換錯誤:', error);
                 }
