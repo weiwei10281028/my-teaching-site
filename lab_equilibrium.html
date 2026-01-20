@@ -50,6 +50,7 @@
         .main-container {
             display: flex;
             flex-direction: column;
+            min-height: 100vh;  /* 改為 min-height，允許內容擴展 */
             height: 100vh;
             overflow: hidden;
         }
@@ -65,7 +66,7 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;  /* 改為 visible，確保按鈕完整顯示 */
             position: relative;
         }
 
@@ -111,8 +112,8 @@
         .scenario-buttons-container {
             flex: 1;
             overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 5px;
+            overflow-y: visible;  /* 改為 visible，確保按鈕底部不被裁切 */
+            padding-bottom: 8px;  /* 增加底部 padding，確保按鈕底部線條可見 */
             scrollbar-width: thin;
             scrollbar-color: var(--mineral-accent-light) transparent;
         }
@@ -140,6 +141,7 @@
             align-items: center;
             width: max-content;
             padding-right: 10px;
+            padding-bottom: 2px;  /* 增加底部 padding，確保按鈕底部線條可見 */
         }
 
         .scenario-btn {
@@ -553,7 +555,8 @@
 
         /* --- 區3：操作介面 --- */
         .control-panel {
-            height: 30vh;
+            min-height: 30vh;  /* 改為 min-height，允許內容擴展 */
+            max-height: 35vh;  /* 設置最大高度，防止過度擴展 */
             background: var(--mineral-bg-light);
             border-top: 1px solid var(--mineral-border);
             padding: 25px 40px;
@@ -697,9 +700,9 @@
 
         @media (max-width: 768px) {
             .selection-area {
-                height: 9vh;
-                min-height: 60px;
-                padding: 10px 45px 10px 20px;
+                height: auto;  /* 改為 auto，允許根據內容調整高度 */
+                min-height: 70px;  /* 增加最小高度，確保按鈕有足夠空間 */
+                padding: 12px 45px 12px 20px;  /* 增加上下 padding */
             }
 
             .close-btn {
@@ -710,18 +713,25 @@
                 font-size: 16px;
             }
 
+            .scenario-buttons-container {
+                padding-bottom: 10px;  /* 增加底部 padding，確保按鈕底部線條可見 */
+            }
+
             .scenario-buttons {
                 gap: 10px;
+                padding-bottom: 4px;  /* 增加底部 padding */
             }
 
             .scenario-btn {
                 padding: 10px 20px;
                 font-size: 0.85rem;
                 min-width: 110px;
+                line-height: 1.4;  /* 確保文字垂直對齊 */
             }
 
             .main-view {
-                height: 61vh;
+                flex: 1;  /* 使用 flex: 1 自動調整高度 */
+                min-height: 0;  /* 允許縮小 */
                 padding: 15px;  /* 左右對稱 padding，確保右邊邊框顯示 */
                 overflow-x: hidden;  /* 確保不會出現水平滾動 */
             }
@@ -734,7 +744,14 @@
             }
 
             .control-panel {
+                min-height: auto;  /* 改為 auto，允許根據內容調整 */
+                max-height: 40vh;  /* 手機版增加最大高度 */
                 padding: 20px;
+                padding-bottom: 25px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+            }
+            
+            .control-content {
+                padding-bottom: 15px;  /* 增加底部 padding */
             }
 
             /* 手機版：圖表上下排列，調整大小以便同時顯示 */
@@ -744,22 +761,25 @@
             }
 
             .chart-card {
-                padding: 10px 8px;  /* 減少 padding，特別是在窄螢幕上節省空間 */
+                padding: 10px 12px;  /* 左右對稱 padding，確保圖表完整顯示 */
                 min-height: 240px;
                 width: 100%;
                 box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
+                overflow: hidden;  /* 防止內容溢出 */
             }
             
             /* 超窄螢幕（375px 及以下）進一步優化 */
             @media (max-width: 380px) {
                 .chart-card {
-                    padding: 8px 6px;  /* 進一步減少 padding */
+                    padding: 8px 10px;  /* 保持左右對稱 */
                 }
             }
 
             .chart-card canvas {
                 height: 220px !important;
                 min-height: 220px;
+                width: 100% !important;  /* 確保 Canvas 寬度填滿容器 */
+                max-width: 100% !important;  /* 防止超出容器 */
             }
 
             .chart-card > div:first-child {
@@ -823,7 +843,8 @@
 
             .control-btn.reset-btn {
                 grid-column: span 2;
-                margin-top: 5px;
+                margin-top: 8px;
+                margin-bottom: 5px;  /* 增加底部 margin，確保按鈕完整顯示 */
             }
 
             /* 手機版：濃度資訊放在圖片下方，單列顯示 */
@@ -841,10 +862,32 @@
         }
 
         @media (max-width: 480px) {
+            .selection-area {
+                min-height: 75px;  /* 超窄螢幕增加最小高度 */
+                padding: 12px 40px 12px 15px;  /* 調整 padding */
+            }
+            
+            .scenario-buttons-container {
+                padding-bottom: 12px;  /* 增加底部 padding */
+            }
+            
+            .scenario-buttons {
+                padding-bottom: 5px;  /* 增加底部 padding */
+            }
+            
             .scenario-btn {
                 min-width: 100px;
                 padding: 8px 16px;
                 font-size: 0.8rem;
+                line-height: 1.4;  /* 確保文字垂直對齊 */
+            }
+            
+            .control-panel {
+                padding-bottom: 30px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+            }
+            
+            .control-content {
+                padding-bottom: 20px;  /* 增加底部 padding */
             }
 
             .formula-card {
@@ -884,13 +927,15 @@
             }
 
             .chart-card {
-                padding: 5px;
+                padding: 5px 10px;  /* 保持左右對稱 padding */
                 min-height: 200px;
             }
 
             .chart-card canvas {
                 height: 190px !important;
                 min-height: 190px;
+                width: 100% !important;  /* 確保 Canvas 寬度填滿容器 */
+                max-width: 100% !important;  /* 防止超出容器 */
             }
 
             .chart-card > div:first-child {
@@ -1168,21 +1213,29 @@
             if (cCanvas) {
                 cCtx = cCanvas.getContext('2d');
                 const rect = cCanvas.getBoundingClientRect();
-                // 確保 canvas 寬度不超出容器
-                const maxWidth = rect.width;
-                cCanvas.width = Math.min(maxWidth, rect.width) * (window.devicePixelRatio || 1);
-                cCanvas.height = rect.height * (window.devicePixelRatio || 1);
-                cCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+                // 使用容器的實際寬度，確保不超出
+                const containerWidth = rect.width;
+                const containerHeight = rect.height;
+                const dpr = window.devicePixelRatio || 1;
+                cCanvas.width = containerWidth * dpr;
+                cCanvas.height = containerHeight * dpr;
+                cCanvas.style.width = containerWidth + 'px';
+                cCanvas.style.height = containerHeight + 'px';
+                cCtx.scale(dpr, dpr);
             }
             
             if (vCanvas) {
                 vCtx = vCanvas.getContext('2d');
                 const rect = vCanvas.getBoundingClientRect();
-                // 確保 canvas 寬度不超出容器
-                const maxWidth = rect.width;
-                vCanvas.width = Math.min(maxWidth, rect.width) * (window.devicePixelRatio || 1);
-                vCanvas.height = rect.height * (window.devicePixelRatio || 1);
-                vCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+                // 使用容器的實際寬度，確保不超出
+                const containerWidth = rect.width;
+                const containerHeight = rect.height;
+                const dpr = window.devicePixelRatio || 1;
+                vCanvas.width = containerWidth * dpr;
+                vCanvas.height = containerHeight * dpr;
+                vCanvas.style.width = containerWidth + 'px';
+                vCanvas.style.height = containerHeight + 'px';
+                vCtx.scale(dpr, dpr);
             }
             
             drawCharts();
@@ -1207,28 +1260,39 @@
         function drawChart(ctx, canvas, type) {
             const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
             const mobile = isMobile();
-            // 使用實際的容器寬度，確保不會超出
-            const rect = canvas.getBoundingClientRect();
-            const width = Math.min(rect.width, canvas.width / (window.devicePixelRatio || 1));
-            const height = canvas.height / (window.devicePixelRatio || 1);
-            // 手機版調整 padding（確保右邊邊框顯示）
-            const viewportWidth = window.innerWidth;
-            let rightPadding = 35;  /* 預設右側 padding */
+            // 使用 Canvas 的實際顯示寬度（已考慮 devicePixelRatio）
+            const dpr = window.devicePixelRatio || 1;
+            const width = canvas.width / dpr;
+            const height = canvas.height / dpr;
             
-            // 根據螢幕寬度動態調整
+            // 手機版調整 padding，確保左右對稱且圖表完整顯示
+            const viewportWidth = window.innerWidth;
+            let leftPadding, rightPadding;
+            
+            // 根據螢幕寬度動態調整，保持左右對稱
             if (viewportWidth <= 380) {
                 // 超窄螢幕（375px 等）
-                rightPadding = 32;
+                leftPadding = 40;
+                rightPadding = 40;
             } else if (viewportWidth <= 400) {
                 // 較窄螢幕（402px 等）
-                rightPadding = 33;
+                leftPadding = 42;
+                rightPadding = 42;
+            } else if (viewportWidth <= 480) {
+                // 小螢幕手機
+                leftPadding = 45;
+                rightPadding = 45;
+            } else {
+                // 一般手機
+                leftPadding = 45;
+                rightPadding = 45;
             }
             
             const padding = mobile ? {
                 top: 25,
-                right: rightPadding,  /* 動態調整右側 padding，確保邊框可見 */
+                right: rightPadding,  /* 左右對稱 padding */
                 bottom: 30,
-                left: 45  /* 保持左右對稱 */
+                left: leftPadding  /* 左右對稱 padding */
             } : config.padding;
             const plotWidth = width - padding.left - padding.right;
             const plotHeight = height - padding.top - padding.bottom;
@@ -1349,10 +1413,8 @@
                     }
                     // 如果是最後一個標籤，確保不超出右邊界（考慮 canvas 實際寬度）
                     else if (i === xSteps) {
-                        // 根據螢幕寬度動態調整邊距，確保右邊邊框可見
-                        const viewportWidth = window.innerWidth;
-                        const margin = viewportWidth <= 380 ? 18 : (viewportWidth <= 400 ? 20 : 22);
-                        const rightBoundary = canvasWidth - (mobile ? margin : 10);
+                        // 使用右側 padding 作為邊界，確保標籤不超出
+                        const rightBoundary = canvasWidth - padding.right;
                         if (x + textWidth / 2 > rightBoundary) {
                             labelX = rightBoundary;
                             textAlign = 'right';
