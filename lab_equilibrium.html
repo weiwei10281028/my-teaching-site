@@ -329,7 +329,13 @@
         .scenario-content.active {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 15px;  /* 統一間距，確保所有區塊間距一致 */
+        }
+        
+        /* 確保data-panel與上下區塊的間距一致 */
+        .data-panel {
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
         /* 化學反應式標題 - 參考 style.html 的化學方程式風格 */
@@ -345,6 +351,74 @@
             border: 1.5px solid var(--mineral-border);
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
             line-height: 1.5;  /* 減少行高，從 1.6 改為 1.5 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;  /* 減少間距，讓反應物和生成物靠近一點 */
+            position: relative;
+        }
+        
+        .reaction-reactant,
+        .reaction-product {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+        
+        .reaction-arrows {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 200px;  /* 固定寬度，確保有足夠空間讓箭頭延展 */
+            height: 20px;  /* 減少高度，讓箭頭更靠近 */
+        }
+        
+        .arrow-left,
+        .arrow-right {
+            position: absolute;
+            height: 3px;
+            background-color: #c0392b;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .arrow-left {
+            bottom: 2px;  /* 下方箭頭（向左），稍微上移 */
+            transform-origin: center center;
+        }
+        
+        .arrow-right {
+            top: 2px;  /* 上方箭頭（向右），稍微下移 */
+            transform-origin: center center;
+        }
+        
+        .arrow-left::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-right: 8px solid #c0392b;
+        }
+        
+        .arrow-right::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 8px solid #c0392b;
         }
         
         /* 化學式下標數字樣式 - 符合教科書標準 */
@@ -919,6 +993,38 @@
             border-color: var(--mineral-border);
             background: var(--mineral-bg);
         }
+        
+        /* 按鈕 active 狀態（點擊後發光） */
+        .control-btn.active {
+            background: linear-gradient(135deg, var(--mineral-accent-light), var(--mineral-accent));
+            border-color: var(--mineral-accent);
+            color: var(--mineral-bg);
+            box-shadow: 
+                0 0 20px rgba(212, 177, 106, 0.6),
+                0 0 40px rgba(212, 177, 106, 0.3),
+                3px 3px 8px var(--mineral-shadow-light);
+            font-weight: 700;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 
+                    0 0 20px rgba(212, 177, 106, 0.6),
+                    0 0 40px rgba(212, 177, 106, 0.3),
+                    3px 3px 8px var(--mineral-shadow-light);
+            }
+            to {
+                box-shadow: 
+                    0 0 30px rgba(212, 177, 106, 0.8),
+                    0 0 60px rgba(212, 177, 106, 0.5),
+                    3px 3px 8px var(--mineral-shadow-light);
+            }
+        }
+        
+        .control-btn.active:disabled {
+            opacity: 1;  /* active 狀態的按鈕即使 disabled 也保持不透明 */
+        }
 
         .control-btn.reset-btn {
             grid-column: span 4;
@@ -1160,8 +1266,9 @@
             /* 手機版：濃度資訊放在圖片下方，單列顯示 */
             .data-panel {
                 grid-template-columns: 1fr;
-                gap: 12px;  /* 增加間距，從 8px 改為 12px */
-                margin-top: 8px;
+                gap: 15px;  /* 與scenario-content的gap保持一致 */
+                margin-top: 0;  /* 移除額外margin，使用統一的gap */
+                margin-bottom: 0;
             }
 
             .info {
@@ -1272,8 +1379,22 @@
 
             .reaction-header {
                 font-size: 1.2rem;
-                padding: 10px 18px;
+                padding: 10px 12px;  /* 減少左右padding，避免超出 */
                 letter-spacing: 0.3px;
+                gap: 8px;  /* 手機版減少間距，讓NO2與N2O4靠近一點 */
+            }
+            
+            .reaction-arrows {
+                width: 150px;  /* 手機版減少箭頭容器寬度 */
+                height: 18px;  /* 手機版減少高度 */
+            }
+            
+            .arrow-left {
+                bottom: 1px;  /* 手機版箭頭更靠近 */
+            }
+            
+            .arrow-right {
+                top: 1px;  /* 手機版箭頭更靠近 */
             }
 
             /* 小螢幕手機：圖表上下排列，更緊湊 */
@@ -1378,7 +1499,14 @@
 
                 <!-- 勒沙特列原理展示場景 -->
                 <div class="scenario-content active" data-scenario="le-chatelier">
-                    <div class="reaction-header">N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub> + 熱</div>
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">N<sub>2</sub>O<sub>4</sub></span>
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left" style="width: 80px;"></div>
+                        </div>
+                        <span class="reaction-product">2NO<sub>2</sub> + 熱</span>
+                    </div>
                     
                     <div class="formula-card">
                         <div class="math">
@@ -1399,13 +1527,13 @@
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96);">新平衡</div>
+                        <div id="status" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96); cursor: pointer;" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     <div id="direction-display" class="direction-display" style="display: none;"></div>
 
                     <div class="chart-grid">
                         <div class="chart-card">
-                            <div>濃度 C-t (顯著變化)</div>
+                            <div>濃度 C-t</div>
                             <canvas id="cChart" width="760" height="380"></canvas>
                             <div class="chart-legend" id="cChart-legend">
                                 <span class="legend-item">
@@ -1419,11 +1547,11 @@
                             </div>
                         </div>
                         <div class="chart-card">
-                            <div>速率 v-t (顯著變化)</div>
+                            <div>速率 v-t</div>
                             <canvas id="vChart" width="760" height="380"></canvas>
                             <div class="chart-legend" id="vChart-legend">
                                 <span class="legend-item">
-                                    <span class="legend-line dashed" style="color: #2ecc71;"></span>
+                                    <span class="legend-line" style="background-color: #2ecc71;"></span>
                                     <span class="legend-label">Rf (正)</span>
                                 </span>
                                 <span class="legend-item">
@@ -1434,16 +1562,6 @@
                         </div>
                     </div>
 
-                    <div class="data-panel">
-                        <div class="info">
-                            <strong>原平衡濃度 (t=0):</strong><br>
-                            [N₂O₄] = 1.00 M, [NO₂] = 2.00 M
-                        </div>
-                        <div class="info" style="border-left-color: var(--no2-color);">
-                            <strong>目前數值:</strong><br>
-                            [N₂O₄]: <span id="cur-a">1.34</span> M, [NO₂]: <span id="cur-b">2.32</span> M
-                        </div>
-                    </div>
                 </div>
 
             </div>
@@ -1460,14 +1578,14 @@
                 <!-- 勒沙特列原理展示操作 -->
                 <div class="control-scenario active" data-scenario="le-chatelier">
                     <div class="controls" id="btnContainer">
-                        <button class="control-btn" onclick="runDisturb('ADD_A')">增加 1M N₂O₄</button>
-                        <button class="control-btn" onclick="runDisturb('ADD_B')">增加 1M NO₂</button>
-                        <button class="control-btn" onclick="runDisturb('SUB_A')">減少 1M N₂O₄</button>
-                        <button class="control-btn" onclick="runDisturb('SUB_B')">減少 1M NO₂</button>
-                        <button class="control-btn" onclick="runDisturb('V_HALF')">體積減半(壓↑)</button>
-                        <button class="control-btn" onclick="runDisturb('V_DOUBLE')">體積加倍(壓↓)</button>
-                        <button class="control-btn" onclick="runDisturb('HEAT')">加熱 (K↓)</button>
-                        <button class="control-btn" onclick="runDisturb('COOL')">降溫 (K↑)</button>
+                        <button class="control-btn" onclick="runDisturb('ADD_A', this)">增加 1M N₂O₄</button>
+                        <button class="control-btn" onclick="runDisturb('ADD_B', this)">增加 1M NO₂</button>
+                        <button class="control-btn" onclick="runDisturb('SUB_A', this)">減少 1M N₂O₄</button>
+                        <button class="control-btn" onclick="runDisturb('SUB_B', this)">減少 1M NO₂</button>
+                        <button class="control-btn" onclick="runDisturb('V_HALF', this)">體積減半(壓↑)</button>
+                        <button class="control-btn" onclick="runDisturb('V_DOUBLE', this)">體積加倍(壓↓)</button>
+                        <button class="control-btn" onclick="runDisturb('HEAT', this)">加熱 (K↓)</button>
+                        <button class="control-btn" onclick="runDisturb('COOL', this)">降溫 (K↑)</button>
                         <button class="control-btn reset-btn" onclick="resetExperiment()">重置實驗</button>
                     </div>
                 </div>
@@ -1510,6 +1628,15 @@
         let equilibriumConcA = 0;
         let equilibriumConcB = 0;
         let equilibriumV = 0;
+        let waitingForStart = false;  // 是否等待開始平衡移動
+        let beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };  // 擾動前的值
+        let instantChangeIndex = -1;  // 瞬間變化的索引位置
+        let isPaused = false;  // 是否暫停動畫
+        let currentDisturbMode = null;  // 當前操作模式，用於箭頭長度計算
+        let disturbArrowRightLength = 0;  // 破壞瞬間的右箭頭長度
+        let disturbArrowLeftLength = 0;  // 破壞瞬間的左箭頭長度
+        let disturbVf = 0;  // 破壞瞬間的正反應速率
+        let disturbVr = 0;  // 破壞瞬間的逆反應速率
 
         // 使用原生 Canvas API 繪製圖表 - 完全重寫
         let cCanvas = null;
@@ -1521,6 +1648,7 @@
         const chartConfig = {
             concentration: {
                 yMax: 3.5,
+                baseYMax: 3.5,  // 基礎最大值，用於重置
                 padding: { top: 30, right: 25, bottom: 35, left: 60 },  // 增加右側間距，避免內容被裁切
                 colors: {
                     n2o4: '#3498db',
@@ -1529,14 +1657,15 @@
             },
             velocity: {
                 yMax: 2.5,
+                baseYMax: 2.5,  // 基礎最大值，用於重置
                 padding: { top: 30, right: 25, bottom: 35, left: 60 },  // 增加右側間距，避免內容被裁切
                 // 速率圖使用非線性 Y 軸：0-1 佔用較小空間，1-2.5 佔用較大空間
                 yCompress: true,
                 yCompressPoint: 1.0,  // 壓縮點
                 yCompressRatio: 0.25,  // 0-1 佔用的比例（25%）
                 colors: {
-                    rf: '#2ecc71',
-                    rr: '#34495e'
+                    rf: '#2ecc71', // 正反應：綠色
+                    rr: '#000000'  // 逆反應：黑色
                 }
             }
         };
@@ -1665,22 +1794,34 @@
             // 繪製網格（改善視覺效果）
             drawGrid(ctx, padding, plotWidth, plotHeight, config.yMax, type);
             
-            // 繪製數據（增加線條粗細，讓數據線更突出）
+            // 繪製數據（線條粗度減小30%）
             if (history.t.length > 0) {
-                const maxTime = Math.max(...history.t.map(t => parseFloat(t))) || 10;
-                const lineWidth = mobile ? 3.5 : 4.5;
+                // 計算最大時間
+                let calculatedMaxTime = Math.max(...history.t.map(t => parseFloat(t))) || 10;
+                // 如果還沒有操作或正在等待開始，確保 maxTime 至少為 5，這樣初始橫線（到2.5秒）會顯示在中間
+                // 如果已經開始動畫，使用實際的最大時間，但限制最大為 30.3 秒
+                let maxTime;
+                if (!hasOperated || waitingForStart) {
+                    maxTime = Math.max(5, calculatedMaxTime);  // 初始狀態至少5秒，讓2.5秒顯示在中間
+                } else {
+                    // 已經開始動畫，限制最大時間為30.3秒
+                    maxTime = Math.min(30.3, Math.max(5, calculatedMaxTime));
+                }
+                const lineWidth = mobile ? 1.7 : 2.2;  // 再減小30%：2.45*0.7≈1.7, 3.15*0.7≈2.2
                 
                 if (type === 'concentration') {
-                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                            history.t, history.a, config.colors.n2o4, lineWidth, false);
-                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                            history.t, history.b, config.colors.no2, lineWidth, false);
+                    drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.a, config.colors.n2o4, lineWidth, false, false, null, null, 'a');
+                    drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.b, config.colors.no2, lineWidth, false, false, null, null, 'b');
                 } else {
-                    // 速率圖使用非線性 Y 軸
-                    drawDashedLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                                  history.t, history.vf, config.colors.rf, lineWidth, true);
-                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
-                            history.t, history.vr, config.colors.rr, lineWidth, true);
+                    // 速率圖使用非線性 Y 軸，正逆反應速率都使用實線
+                    drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.vf, config.colors.rf, lineWidth, true, 
+                            config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vf');
+                    drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.vr, config.colors.rr, lineWidth, true,
+                            config.yCompress, config.yCompressPoint, config.yCompressRatio, 'vr');
                 }
             }
             
@@ -1705,8 +1846,27 @@
                 const compressPoint = config.yCompressPoint;
                 const compressRatio = config.yCompressRatio;
                 
-                // 定義刻度值（0, 0.5, 1.0, 1.5, 2.0, 2.5）
-                const tickValues = [0, 0.5, 1.0, 1.5, 2.0, 2.5].filter(v => v <= yMax);
+                // 動態生成刻度值，減少數量避免擠在一起
+                // 根據yMax動態調整步長，確保刻度數量適中
+                let step;
+                if (yMax <= 3.0) {
+                    step = 0.5;  // 小範圍使用0.5步長
+                } else if (yMax <= 6.0) {
+                    step = 1.0;  // 中等範圍使用1.0步長
+                } else {
+                    step = 1.5;  // 大範圍使用1.5步長
+                }
+                
+                const tickValues = [];
+                for (let v = 0; v <= yMax + step; v += step) {
+                    if (v <= yMax) {
+                        tickValues.push(v);
+                    }
+                }
+                // 確保最大值被包含
+                if (tickValues.length === 0 || tickValues[tickValues.length - 1] < yMax) {
+                    tickValues.push(yMax);
+                }
                 
                 tickValues.forEach(value => {
                     const yPos = mapVelocityY(value, yMax, plotHeight, compressPoint, compressRatio);
@@ -1723,7 +1883,9 @@
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
                     const labelX = mobile ? padding.left - 12 : padding.left - 8;
-                    ctx.fillText(value.toFixed(1), labelX, y);
+                    // 格式化標籤，如果值很大則顯示更多小數位
+                    const labelText = value >= 10 ? value.toFixed(1) : value.toFixed(1);
+                    ctx.fillText(labelText, labelX, y);
                 });
             } else {
                 // 濃度圖使用等距刻度
@@ -1760,7 +1922,12 @@
                     ctx.fillStyle = '#333';
                     ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
                     const time = (maxTime / xSteps) * i;
-                    const timeText = time.toFixed(1);
+                    let timeText;
+                    if (i === 0) {
+                        timeText = "0秒";  // 第一個標籤顯示"0秒"
+                    } else {
+                        timeText = time.toFixed(1);
+                    }
                     
                     // 測量文字寬度，確保不會超出右邊界
                     const textWidth = ctx.measureText(timeText).width;
@@ -1802,56 +1969,6 @@
             ctx.moveTo(padding.left, padding.top + plotHeight);
             ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
             ctx.stroke();
-        }
-        
-        // 繪製實線
-        function drawLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
-            if (times.length === 0 || values.length === 0) return;
-            
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.beginPath();
-            
-            for (let i = 0; i < times.length; i++) {
-                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
-                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            
-            ctx.stroke();
-        }
-        
-        // 繪製虛線
-        function drawDashedLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
-            if (times.length === 0 || values.length === 0) return;
-            
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            
-            for (let i = 0; i < times.length; i++) {
-                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
-                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            
-            ctx.stroke();
-            ctx.setLineDash([]);
         }
         
         // 繪製圖例（垂直排列）
@@ -1919,28 +2036,137 @@
         }
         
         
-        // 繪製實線
-        function drawLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
+        // 繪製實線（支援瞬間變化的虛線）
+        function drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth, isVelocity, useCompress, compressPoint, compressRatio, valueType) {
             if (times.length === 0 || values.length === 0) return;
             
             ctx.strokeStyle = color;
             ctx.lineWidth = lineWidth;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.beginPath();
             
-            for (let i = 0; i < times.length; i++) {
-                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
-                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+            // 如果有瞬間變化，先繪製變化前的實線（連接到變化點）
+            if (instantChangeIndex >= 0 && instantChangeIndex < times.length) {
+                // 繪製變化前的實線，連接到變化點
+                ctx.beginPath();
+                let lastX = 0, lastY = 0;
+                for (let i = 0; i < instantChangeIndex; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    lastX = x;
+                    lastY = y;
+                }
                 
-                if (i === 0) {
-                    ctx.moveTo(x, y);
+                // 計算變化點的位置和值
+                const changeX = padding.left + (parseFloat(times[instantChangeIndex]) / maxTime) * plotWidth;
+                let yBefore, yAfter;
+                
+                // 計算變化前的Y座標（使用變化前的值）
+                let beforeValue;
+                if (valueType === 'a') beforeValue = beforeDisturb.a;
+                else if (valueType === 'b') beforeValue = beforeDisturb.b;
+                else if (valueType === 'vf') beforeValue = beforeDisturb.vf;
+                else if (valueType === 'vr') beforeValue = beforeDisturb.vr;
+                
+                // 計算變化後的Y座標（使用 instantChangeIndex 位置的值）
+                let afterValue = parseFloat(values[instantChangeIndex]);
+                
+                if (isVelocity && useCompress) {
+                    const yPosBefore = mapVelocityY(beforeValue, yMax, plotHeight, compressPoint, compressRatio);
+                    yBefore = padding.top + plotHeight - yPosBefore;
+                    const yPosAfter = mapVelocityY(afterValue, yMax, plotHeight, compressPoint, compressRatio);
+                    yAfter = padding.top + plotHeight - yPosAfter;
                 } else {
+                    yBefore = padding.top + plotHeight - (beforeValue / yMax) * plotHeight;
+                    yAfter = padding.top + plotHeight - (afterValue / yMax) * plotHeight;
+                }
+                
+                // 如果變化前的實線有數據點，連接到變化點
+                if (instantChangeIndex > 0) {
+                    ctx.lineTo(changeX, yBefore);  // 連接到變化點
+                } else {
+                    // 如果沒有之前的數據點，從變化點開始
+                    ctx.moveTo(changeX, yBefore);
+                }
+                ctx.stroke();
+                
+                // 繪製垂直虛線（確保是垂直的，從變化前連接到變化後）
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(changeX, yBefore);
+                ctx.lineTo(changeX, yAfter);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 繪製變化後的實線（從虛線結束位置開始，無縫連接）
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(changeX, yAfter);  // 從虛線結束位置開始
+                for (let i = instantChangeIndex + 1; i < times.length; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
                     ctx.lineTo(x, y);
                 }
+                ctx.stroke();
+            } else {
+                // 沒有瞬間變化，正常繪製
+                // 如果還沒有開始動畫（所有數據點都在初始平衡），只繪製到中間位置（2.5秒）
+                let endIndex = times.length;
+                if (!hasOperated || waitingForStart) {
+                    // 找到時間 <= 2.5 的最後一個點
+                    for (let i = times.length - 1; i >= 0; i--) {
+                        if (parseFloat(times[i]) <= 2.5) {
+                            endIndex = i + 1;  // 包含這個點
+                            break;
+                        }
+                    }
+                }
+                
+                ctx.beginPath();
+                for (let i = 0; i < endIndex; i++) {
+                    const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                    let y;
+                    if (isVelocity && useCompress) {
+                        const yPos = mapVelocityY(parseFloat(values[i]), yMax, plotHeight, compressPoint, compressRatio);
+                        y = padding.top + plotHeight - yPos;
+                    } else {
+                        y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                    }
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
             }
-            
-            ctx.stroke();
+        }
+        
+        // 繪製實線（保留原函數以向後兼容）
+        function drawLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth, isVelocity, useCompress, compressPoint, compressRatio) {
+            drawLineWithInstantChange(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth, isVelocity, useCompress, compressPoint, compressRatio, '');
         }
         
         // 繪製虛線
@@ -1972,6 +2198,10 @@
         // 記錄初始平衡濃度（用於顯示K的計算）
         let initialConcA = 1.0;
         let initialConcB = 2.0;
+        // 記錄初始平衡時的反應速率（用於箭頭長度計算）
+        // 初始平衡時：vf = kf * concA = 1.2 * 1.0 = 1.2, vr = kr * concB^2 = 0.3 * 4.0 = 1.2
+        let initialVf = 1.2;  // 初始正反應速率
+        let initialVr = 1.2;  // 初始逆反應速率
 
         function record() {
             let vf, vr;
@@ -1992,6 +2222,11 @@
             history.vr.push(parseFloat(vr.toFixed(3)));
             // 每次記錄後增加時間，確保時間軸連續
             currentTime += 0.2;
+            
+            // 限制最大時間到30.3秒左右
+            if (currentTime > 30.3) {
+                currentTime = 30.3;
+            }
         }
 
         // 使用 requestAnimationFrame 實現絲滑流暢動畫
@@ -2000,13 +2235,43 @@
         function animate(timestamp) {
             if (!lastTime) lastTime = timestamp;
             
-            // 加快動畫速度：每80ms執行一次步進
-            if (timestamp - lastTime >= 80) {
+            // 如果暫停，不執行步進
+            if (isPaused) {
+                if (animationFrameId) {
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+                return;
+            }
+            
+                // 計算當前Q和K的差異，用於調整動畫速度
+                const Q = Math.pow(concB, 2) / concA;
+                const diff = Math.abs(Q - K);
+                const ratio = diff / K;
+                
+                // 根據時間調整動畫速度，確保約20秒達成平衡
+                const timeFromStart = currentTime - 2.5;  // 從2.5秒開始計算
+                let stepInterval = 80;  // 默認80ms
+                
+                // 如果接近平衡（差異小於10%），加快動畫速度
+                if (ratio < 0.1 && ratio > 0.001) {
+                    // 接近平衡時，根據接近程度動態調整速度
+                    // 越接近平衡，速度越快（間隔越小）
+                    stepInterval = 80 - (0.1 - ratio) / 0.1 * 50;  // 從80ms減少到30ms
+                    stepInterval = Math.max(30, Math.min(80, stepInterval));
+                }
+                
+                // 如果時間超過15秒，進一步加快速度，確保20秒左右達成平衡
+                if (timeFromStart > 15.0) {
+                    stepInterval = stepInterval * 0.7;  // 加快30%
+                }
+            
+            // 執行步進
+            if (timestamp - lastTime >= stepInterval) {
                 step();
                 lastTime = timestamp;
             }
             
-            if (animationFrameId) {
+            if (animationFrameId && !isPaused) {
                 animationFrameId = requestAnimationFrame(animate);
             }
         }
@@ -2033,6 +2298,8 @@
                     statusEl.textContent = "新平衡：Q＝K";
                     statusEl.style.color = "#27ae60";
                     statusEl.style.borderColor = "#27ae60";
+                    statusEl.style.cursor = "default";  // 達到新平衡後不能再點擊
+                    statusEl.title = "";  // 移除提示
                     // 隱藏方向顯示（如果存在）
                     const directionDisplay = document.getElementById('direction-display');
                     if (directionDisplay) {
@@ -2044,7 +2311,24 @@
                     stepCounter = 0;
                     equilibriumReached = false;
                     equilibriumCounter = 0;
+                    isPaused = false;  // 重置暫停狀態
                 }
+                return;
+            }
+            
+            // 檢查是否超過30.3秒，如果超過則停止
+            if (currentTime >= 30.3) {
+                // 停止動畫
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = "新平衡：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+                statusEl.style.cursor = "default";
+                statusEl.title = "";
                 return;
             }
             
@@ -2052,8 +2336,21 @@
             let vf = kf * concA;
             let vr = kr * Math.pow(concB, 2);
             
-            // 調整係數，加快變化速度
-            let diff = (vf - vr) * 0.012; 
+            // 調整係數，加快變化速度，讓約20秒達成平衡
+            // 根據當前時間動態調整速度：越接近20秒，速度越快
+            let speedFactor = 1.0;
+            if (currentTime > 5.0) {
+                // 從5秒開始，逐漸加快速度
+                const timeFromStart = currentTime - 5.0;
+                if (timeFromStart < 15.0) {
+                    // 前15秒正常速度
+                    speedFactor = 1.0;
+                } else {
+                    // 15秒後加快速度，確保20秒左右達成平衡
+                    speedFactor = 1.0 + (timeFromStart - 15.0) / 5.0 * 2.0;  // 15-20秒之間逐漸加快
+                }
+            }
+            let diff = (vf - vr) * 0.012 * speedFactor; 
             concA -= diff;
             concB += 2 * diff;
             
@@ -2064,7 +2361,16 @@
             // 每次步進都記錄數據點，確保線條連續
             record();
             
-            // 更新UI
+            // 檢查並調整Y軸範圍（在動畫過程中也可能需要調整）
+            checkAndAdjustYAxis();
+            
+            // 立即更新箭頭長度（不等待UI節流）
+            // 動畫過程中，每個時刻都根據當前速率計算箭頭長度
+            const Q = Math.pow(concB, 2) / concA;
+            // 確保動畫過程中，兩個箭頭都根據當前速率立即更新
+            updateReactionArrows(Q, K);
+            
+            // 更新UI（updateUI中也會調用updateReactionArrows，但因為已經更新過，節流不會影響）
             updateUI();
 
             // 重新計算更新後的速率，用於檢查平衡和顯示方向
@@ -2074,7 +2380,10 @@
             // 移動方向會在 updateUI 中更新
 
             // 檢查是否達到平衡（使用更嚴格的條件）
-            if (Math.abs(vf - vr) < 0.001) {
+            // 如果接近20秒，放寬平衡條件，讓它更容易達成平衡
+            const timeFromStart = currentTime - 5.0;
+            const balanceThreshold = (timeFromStart >= 15.0) ? 0.002 : 0.001;  // 15秒後放寬條件
+            if (Math.abs(vf - vr) < balanceThreshold) {
                 // 達到平衡，記錄平衡時的數值
                 equilibriumReached = true;
                 equilibriumCounter = 0;
@@ -2119,6 +2428,58 @@
                 return '：Q＜K';
             }
         }
+        
+        // 更新反應箭頭長度（完全根據速率變化）
+        function updateReactionArrows(Q, K) {
+            const arrowLeft = document.getElementById('arrow-left');
+            const arrowRight = document.getElementById('arrow-right');
+            if (!arrowLeft || !arrowRight) return;
+            
+            // 檢測是否為手機版
+            const mobile = isMobile();
+            
+            // 基礎箭頭長度（初始平衡時）- 不要太長，預留空間給速率增加
+            const baseLength = mobile ? 60 : 80;
+            // 最大箭頭長度 - 預留足夠空間
+            const maxLength = mobile ? 140 : 200;
+            // 最小箭頭長度 - 不要太小，保持可見性（至少是baseLength的60%）
+            const minLength = mobile ? 36 : 48;  // baseLength * 0.6
+            
+            // 計算當前反應速率
+            const currentVf = kf * concA;  // 正反應速率（向右）
+            const currentVr = kr * Math.pow(concB, 2);  // 逆反應速率（向左）
+            
+            // 計算速率比例（相對於初始平衡）
+            const vfRatio = currentVf / initialVf;  // 正反應速率比例
+            const vrRatio = currentVr / initialVr;  // 逆反應速率比例
+            
+            // 根據速率比例線性計算箭頭長度
+            function calculateLengthFromRatio(ratio) {
+                // 稍微增強縮放感：基礎長度 80px
+                // 1.0 -> 80px, 0.5 -> 50px, 0.25 -> 30px
+                // 這樣在速率降低時，差異會比純比例 (40 vs 20) 更容易觀察
+                if (ratio < 1.0) {
+                    return minLength + (baseLength - minLength) * ((ratio - 0.2) / 0.8);
+                }
+                return baseLength + (maxLength - baseLength) * ((ratio - 1.0) / 2.0);
+            }
+            
+            // 計算兩個箭頭的長度
+            let rightLength = calculateLengthFromRatio(vfRatio);
+            let leftLength = calculateLengthFromRatio(vrRatio);
+            
+            // 僅限制最大與最小邊界，不進行平衡狀態或方向補強
+            rightLength = Math.max(minLength, Math.min(maxLength, rightLength));
+            leftLength = Math.max(minLength, Math.min(maxLength, leftLength));
+            
+            // 確保長度在合理範圍內
+            rightLength = Math.max(minLength, Math.min(maxLength, rightLength));
+            leftLength = Math.max(minLength, Math.min(maxLength, leftLength));
+            
+            // 設置箭頭長度
+            arrowRight.style.width = rightLength + 'px';  // 右箭頭（正反應，向上）
+            arrowLeft.style.width = leftLength + 'px';    // 左箭頭（逆反應，向下）
+        }
 
         // 使用節流優化UI更新性能
         let lastUIUpdate = 0;
@@ -2137,6 +2498,15 @@
                 kFormulaBot.textContent = initialConcA.toFixed(0);
             }
             
+            // 如果正在等待開始，不更新數據，只更新狀態
+            if (waitingForStart) {
+                let Q = Math.pow(concB, 2) / concA;
+                updateStatusOnly(Q, K);
+                updateReactionArrows(Q, K);
+                drawCharts();
+                return;
+            }
+            
             // 更新Q的計算顯示 - 使用直式分式，濃度顯示到小數點下第2位
             let Q = Math.pow(concB, 2) / concA;
             document.getElementById('q-num').innerHTML = `[NO<sub>2</sub>]<sup>2</sup>`;
@@ -2148,8 +2518,9 @@
                 qFormulaBot.textContent = concA.toFixed(2);
             }
             document.getElementById('q-val').innerText = Q.toFixed(2);
-            document.getElementById('cur-a').innerText = concA.toFixed(2);
-            document.getElementById('cur-b').innerText = concB.toFixed(2);
+            
+            // 更新動態箭頭
+            updateReactionArrows(Q, K);
             
             // 更新圖表 - 使用原生 Canvas 繪製，確保流暢
             drawCharts();
@@ -2161,52 +2532,114 @@
                 statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
+                statusEl.style.cursor = "default";
             } else {
                 // 計算 Q 和 K 的比較
                 const directionText = getDirectionText(Q, K);
                 
                 // 如果 Q 和 K 差異大，表示正在移動
                 if (Math.abs(Q - K) > 0.01) {
-                    statusEl.textContent = "平衡移動中" + directionText;
+                    if (isPaused) {
+                        statusEl.textContent = "平衡移動中" + directionText + " (暫停中)";
+                        statusEl.title = "點擊繼續";
+                    } else {
+                        statusEl.textContent = "平衡移動中" + directionText;
+                        statusEl.title = "點擊暫停";
+                    }
                     statusEl.style.color = "#e67e22";
                     statusEl.style.borderColor = "#e67e22";
+                    statusEl.style.cursor = "pointer";  // 可以點擊暫停
                 } else {
                     // 只有在初始狀態且沒有操作過時才顯示"原平衡"
                     if (!hasOperated) {
                         statusEl.textContent = "原平衡：Q＝K";
                         statusEl.style.color = "#27ae60";
                         statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
                     } else {
                         // 如果操作過但接近平衡，顯示"新平衡 Q＝K"
                         statusEl.textContent = "新平衡：Q＝K";
                         statusEl.style.color = "#27ae60";
                         statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
                     }
                 }
             }
         }
 
-        function runDisturb(mode) {
+        // 檢查並調整Y軸範圍，確保數據不會超出邊界
+        function checkAndAdjustYAxis() {
+            // 檢查濃度圖
+            const maxConc = Math.max(concA, concB);
+            if (maxConc * 1.2 > chartConfig.concentration.yMax) {
+                chartConfig.concentration.yMax = Math.max(chartConfig.concentration.baseYMax, maxConc * 1.2);
+            }
+            
+            // 檢查速率圖
+            const maxVf = kf * concA;
+            const maxVr = kr * Math.pow(concB, 2);
+            const maxV = Math.max(maxVf, maxVr);
+            if (maxV * 1.2 > chartConfig.velocity.yMax) {
+                chartConfig.velocity.yMax = Math.max(chartConfig.velocity.baseYMax, maxV * 1.2);
+            }
+        }
+        
+        function runDisturb(mode, buttonElement) {
             // 如果已經操作過且達到平衡，不能再操作，必須先重置
             if (hasOperated && equilibriumReached) return;
             // 如果正在動畫中，也不能操作
-            if (animationFrameId) return;
+            if (animationFrameId && !isPaused) return;
+            // 如果正在等待開始，也不能操作
+            if (waitingForStart) return;
             
             hasOperated = true;
-            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = true);
             
-            const statusEl = document.getElementById('status');
-            statusEl.textContent = "外加因素";
-            statusEl.style.color = "#c0392b";
-            statusEl.style.borderColor = "#c0392b";
+            // 移除所有按鈕的 active 狀態
+            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
+                b.classList.remove('active');
+                b.disabled = true;
+            });
+            
+            // 為點擊的按鈕添加 active 狀態（發光效果）
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
+            
+            // 記錄擾動前的值（用於繪製虛線）
+            beforeDisturb.a = concA;
+            beforeDisturb.b = concB;
+            beforeDisturb.vf = kf * concA;
+            beforeDisturb.vr = kr * Math.pow(concB, 2);
+            beforeDisturb.t = currentTime;
 
+            // 進入擾動，立即重置平衡狀態
+            equilibriumReached = false;
+            equilibriumCounter = 0;
+
+            // 記錄當前操作模式（用於箭頭長度計算）
+            currentDisturbMode = mode;
+            
             switch(mode) {
-                case 'ADD_A': concA += 1.0; break;
-                case 'ADD_B': concB += 1.0; break;
+                case 'ADD_A': 
+                    concA += 1.0; 
+                    checkAndAdjustYAxis();
+                    break;
+                case 'ADD_B': 
+                    concB += 1.0; 
+                    checkAndAdjustYAxis();
+                    break;
                 case 'SUB_A': concA = Math.max(0.1, concA - 1.0); break;
                 case 'SUB_B': concB = Math.max(0.1, concB - 1.0); break;
-                case 'V_HALF': concA *= 2; concB *= 2; break;
-                case 'V_DOUBLE': concA /= 2; concB /= 2; break;
+                case 'V_HALF': 
+                    concA *= 2; 
+                    concB *= 2; 
+                    checkAndAdjustYAxis();
+                    break;
+                case 'V_DOUBLE': 
+                    concA /= 2; 
+                    concB /= 2; 
+                    checkAndAdjustYAxis();
+                    break;
                 case 'HEAT': 
                     kf *= 1.3; kr *= 2.1; K = kf / kr; 
                     document.getElementById('k-val').innerText = K.toFixed(2);
@@ -2217,18 +2650,172 @@
                     break;
             }
             
-            // 記錄擾動後的瞬間垂直跳躍點（在相同時間點記錄新值）
-            record();
-            // 重置動畫相關變數
-            lastTime = 0;
-            stepCounter = 0;
-            equilibriumReached = false;
-            equilibriumCounter = 0;
-            equilibriumConcA = 0;
-            equilibriumConcB = 0;
-            equilibriumV = 0;
-            // 啟動動畫
-            animationFrameId = requestAnimationFrame(animate);
+            // 記錄擾動後的瞬間垂直跳躍點（在紅線位置，約2.5秒記錄新值）
+            // 確保 currentTime 在紅線位置（2.5秒），如果已經超過則使用當前值
+            if (currentTime < 2.5) {
+                currentTime = 2.5;  // 設置為紅線位置
+            }
+            instantChangeIndex = history.t.length;  // 記錄瞬間變化的索引
+            
+            // 檢查是否有實際變化，如果沒有變化就不記錄瞬間變化
+            const hasChangeA = Math.abs(concA - beforeDisturb.a) > 0.001;
+            const hasChangeB = Math.abs(concB - beforeDisturb.b) > 0.001;
+            const hasChangeVf = Math.abs(kf * concA - beforeDisturb.vf) > 0.001;
+            const hasChangeVr = Math.abs(kr * Math.pow(concB, 2) - beforeDisturb.vr) > 0.001;
+            
+            if (hasChangeA || hasChangeB || hasChangeVf || hasChangeVr) {
+                record();  // 只有有變化時才記錄，記錄在紅線位置
+            } else {
+                instantChangeIndex = -1;  // 沒有變化，不顯示虛線
+            }
+            
+            // 進入平衡破壞狀態，等待用戶點擊開始
+            waitingForStart = true;
+            
+            // 更新狀態顯示（不更新數據）
+            const Q = Math.pow(concB, 2) / concA;
+            updateStatusOnly(Q, K);
+            
+            // 計算破壞瞬間的速率
+            disturbVf = kf * concA;
+            disturbVr = kr * Math.pow(concB, 2);
+            
+            // 更新箭頭長度（會根據操作模式正確設置）
+            updateReactionArrows(Q, K);
+            
+            // 保存破壞瞬間的箭頭長度（用於後續動畫）
+            const arrowRight = document.getElementById('arrow-right');
+            const arrowLeft = document.getElementById('arrow-left');
+            const mobile = isMobile();
+            const baseLength = mobile ? 70 : 100;
+            if (arrowRight && arrowLeft) {
+                disturbArrowRightLength = parseFloat(arrowRight.style.width) || baseLength;
+                disturbArrowLeftLength = parseFloat(arrowLeft.style.width) || baseLength;
+            }
+            
+            // 更新狀態按鈕樣式，讓它可點擊
+            const statusEl = document.getElementById('status');
+            statusEl.style.cursor = "pointer";
+            statusEl.title = "點擊開始平衡移動";
+            
+            // 重新繪製圖表（顯示瞬間變化的虛線）
+            drawCharts();
+        }
+        
+        // 開始/暫停平衡移動
+        function startEquilibriumMovement() {
+            const statusEl = document.getElementById('status');
+            
+            // 如果狀態顯示「新平衡」，不能再點擊
+            if (statusEl.textContent.includes('新平衡') && !statusEl.textContent.includes('平衡破壞')) {
+                return;
+            }
+            
+            // 如果達到新平衡，不能再點擊
+            if (equilibriumReached && equilibriumCounter > 10) {
+                return;
+            }
+            
+            // 如果正在等待開始，則開始動畫
+            if (waitingForStart) {
+                waitingForStart = false;
+                isPaused = false;
+                
+                // 確保 currentTime 在紅線位置（2.5秒），從這裡繼續
+                if (currentTime < 2.5) {
+                    currentTime = 2.5;
+                }
+                
+                // 重置動畫相關變數（但不重置 currentTime）
+                lastTime = 0;
+                stepCounter = 0;
+                equilibriumReached = false;
+                equilibriumCounter = 0;
+                equilibriumConcA = 0;
+                equilibriumConcB = 0;
+                equilibriumV = 0;
+                
+                // 保留瞬間變化索引，讓虛線一直顯示
+                // instantChangeIndex 保持不變，這樣虛線會一直顯示
+                
+                // 立即更新箭頭長度，確保動畫開始時箭頭就正確顯示
+                // 動畫開始時，立即根據當前速率更新箭頭長度
+                const Q = Math.pow(concB, 2) / concA;
+                updateReactionArrows(Q, K);
+                
+                // 更新狀態按鈕樣式和文字
+                statusEl.style.cursor = "pointer";
+                statusEl.title = "點擊暫停";
+                // 確保沒有"(暫停中)"標記
+                statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                
+                // 啟動動畫前，先執行一次step，確保箭頭立即更新
+                step();
+                
+                // 啟動動畫
+                animationFrameId = requestAnimationFrame(animate);
+                return;
+            }
+            
+            // 如果正在動畫中或已暫停，則暫停/繼續
+            // 使用 hasOperated 來判斷是否已經開始過動畫（包括暫停狀態）
+            if (hasOperated && !waitingForStart) {
+                if (isPaused) {
+                    // 繼續動畫
+                    isPaused = false;
+                    statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                    statusEl.title = "點擊暫停";
+                    // 立即更新箭頭長度
+                    const Q = Math.pow(concB, 2) / concA;
+                    updateReactionArrows(Q, K);
+                    // 重新啟動動畫
+                    lastTime = 0;  // 重置時間，確保動畫流暢
+                    animationFrameId = requestAnimationFrame(animate);
+                } else {
+                    // 暫停動畫
+                    isPaused = true;
+                    if (!statusEl.textContent.includes("(暫停中)")) {
+                        statusEl.textContent = statusEl.textContent + " (暫停中)";
+                    }
+                    statusEl.title = "點擊繼續";
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                }
+            }
+        }
+        
+        // 只更新狀態顯示和Q/K計算，不更新數據
+        function updateStatusOnly(Q, K) {
+            // 更新Q的計算顯示
+            document.getElementById('q-num').innerHTML = `[NO<sub>2</sub>]<sup>2</sup>`;
+            document.getElementById('q-den').innerHTML = `[N<sub>2</sub>O<sub>4</sub>]`;
+            const qFormulaTop = document.getElementById('q-formula-top');
+            const qFormulaBot = document.getElementById('q-formula-bot');
+            if (qFormulaTop && qFormulaBot) {
+                qFormulaTop.innerHTML = `${concB.toFixed(2)}<sup>2</sup>`;
+                qFormulaBot.textContent = concA.toFixed(2);
+            }
+            document.getElementById('q-val').innerText = Q.toFixed(2);
+            
+            // 更新狀態顯示
+            const statusEl = document.getElementById('status');
+            const directionText = getDirectionText(Q, K);
+            
+            if (Math.abs(Q - K) < 0.01) {
+                statusEl.textContent = "平衡破壞：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+            } else if (Q > K) {
+                statusEl.textContent = "平衡破壞：Q＞K，向左移動";
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            } else {
+                statusEl.textContent = "平衡破壞：Q＜K，向右移動";
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            }
         }
 
         // 場景按鈕切換功能
@@ -2305,6 +2892,11 @@
                         equilibriumConcA = 0;
                         equilibriumConcB = 0;
                         equilibriumV = 0;
+                        waitingForStart = false;
+                        beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
+                        instantChangeIndex = -1;
+                        isPaused = false;
+                        currentDisturbMode = null;  // 重置操作模式
                         history = { t: [], a: [], b: [], vf: [], vr: [] };
                         
                         // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
@@ -2313,20 +2905,30 @@
                         cCtx = null;
                         vCtx = null;
                         
-                        // 初始化一段穩定平衡（記錄初始數據點）
+                        // 初始化一段穩定平衡（記錄初始數據點到紅線位置，約2.5秒）
                         // 重置equilibriumReached，確保record()函數正常工作
                         equilibriumReached = false;
                         equilibriumV = 0;
-                        for(let i=0; i<10; i++) {
+                        currentTime = 0;
+                        // 先記錄0秒的點
+                        record();
+                        // 記錄到約2.5秒（每個點間隔0.2秒）
+                        while (currentTime < 2.5) {
                             record();
                         }
                         
                         // 初始化圖表
                         initCharts();
+                        // 初始化箭頭
+                        const Q = Math.pow(concB, 2) / concA;
+                        updateReactionArrows(Q, K);
                         updateUI();
                         
                         // 確保初始狀態按鈕是可點擊的
-                        document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+                        document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('active');  // 移除 active 狀態
+                        });
                     }, 100);
                     } else {
                         // 其他場景，重置 Canvas
@@ -2384,10 +2986,41 @@
             equilibriumConcA = 0;
             equilibriumConcB = 0;
             equilibriumV = 0;
+            waitingForStart = false;
+            beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
+            instantChangeIndex = -1;
+            isPaused = false;  // 重置暫停狀態
+            currentDisturbMode = null;  // 重置操作模式
+            disturbArrowRightLength = 0;  // 重置破壞瞬間箭頭長度
+            disturbArrowLeftLength = 0;  // 重置破壞瞬間箭頭長度
+            disturbVf = 0;  // 重置破壞瞬間速率
+            disturbVr = 0;  // 重置破壞瞬間速率
             history = { t: [], a: [], b: [], vf: [], vr: [] };
             
+            // 重置初始速率為初始平衡時的值
+            initialVf = 1.2;  // kf * initialConcA = 1.2 * 1.0 = 1.2
+            initialVr = 1.2;  // kr * initialConcB^2 = 0.3 * 4.0 = 1.2
+            
+            // 重置 Y 軸最大值
+            chartConfig.concentration.yMax = chartConfig.concentration.baseYMax;
+            chartConfig.velocity.yMax = chartConfig.velocity.baseYMax;
+            
+            // 重置K值顯示
+            document.getElementById('k-val').innerText = K.toFixed(2);
+            
+            // 重置箭頭為平衡狀態（會自動記錄初始速率）
+            updateReactionArrows(Math.pow(concB, 2) / concA, K);
+            
+            // 重置狀態按鈕樣式
+            const statusEl = document.getElementById('status');
+            statusEl.style.cursor = "default";
+            statusEl.title = "";
+            
             // 重置UI
-            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
+                b.disabled = false;
+                b.classList.remove('active');  // 移除 active 狀態
+            });
             document.getElementById('status').textContent = "原平衡";
             document.getElementById('status').style.color = "#27ae60";
             document.getElementById('status').style.borderColor = "#27ae60";
@@ -2399,16 +3032,24 @@
             cCtx = null;
             vCtx = null;
             
-            // 初始化一段穩定平衡（記錄初始數據點）
+            // 初始化一段穩定平衡（記錄初始數據點到紅線位置，約2.5秒）
             // 重置equilibriumReached，確保record()函數正常工作
             equilibriumReached = false;
             equilibriumV = 0;
-            for(let i=0; i<10; i++) {
+            currentTime = 0;
+            // 先記錄0秒的點
+            record();
+            // 記錄到約2.5秒（每個點間隔0.2秒）
+            while (currentTime < 2.5) {
                 record();
             }
             
             // 重新初始化圖表
             initCharts();
+            
+            // 初始化箭頭
+            const Q = Math.pow(concB, 2) / concA;
+            updateReactionArrows(Q, K);
             
             // 更新UI顯示
             updateUI();
@@ -2465,7 +3106,15 @@
                     equilibriumConcA = 0;
                     equilibriumConcB = 0;
                     equilibriumV = 0;
-                    history = { t: [], a: [], b: [], vf: [], vr: [] };
+            waitingForStart = false;
+            beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
+            instantChangeIndex = -1;
+            isPaused = false;
+            history = { t: [], a: [], b: [], vf: [], vr: [] };
+            
+            // 重置初始速率為初始平衡時的值
+            initialVf = 1.2;  // kf * initialConcA = 1.2 * 1.0 = 1.2
+            initialVr = 1.2;  // kr * initialConcB^2 = 0.3 * 4.0 = 1.2
                     
                     // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
                     cCanvas = null;
@@ -2479,6 +3128,9 @@
                     }
                     
                     initCharts();
+                    // 初始化箭頭
+                    const Q = Math.pow(concB, 2) / concA;
+                    updateReactionArrows(Q, K);
                     updateUI();
                     
                     // 確保初始狀態按鈕是可點擊的
