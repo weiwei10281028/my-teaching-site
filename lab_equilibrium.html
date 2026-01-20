@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<!-- saved from url=(0119)file:///D:/%E5%8C%96%E5%AD%B8/%E6%95%99%E5%AD%B8%E7%B6%B2%E9%A0%81/ChemistryLab/%E6%B8%AC%E8%A9%A6/lab_equilibrium.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>化學平衡教學系統 | Chemical Equilibrium</title>
+    <link href="./化學平衡教學系統 _ Chemical Equilibrium_files/css2" rel="stylesheet">
+    <style>
+        /* --- 基礎重置與變數 --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0;
+            transition: all 0.4s cubic-bezier(0.2, 0, 0.1, 1);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --mineral-bg: #F8F6F1;
+            --mineral-bg-light: #FDFCF9;
+            --mineral-text: #333333;
+            --mineral-text-light: #666666;
+            --mineral-accent: #D4B16A;
+            --mineral-accent-light: #E8D4A8;
+            --mineral-border: #E5E5E0;
+            --mineral-shadow: rgba(0, 0, 0, 0.06);
+            --mineral-shadow-light: rgba(0, 0, 0, 0.03);
+            /* 圖表顏色保持原樣 */
+            --n2o4-color: #3498db;
+            --no2-color: #f39c12;
+            --rf-color: #2ecc71;
+            --rr-color: #34495e;
+            --grid: #dcdcdc;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--mineral-bg);
+            color: var(--mineral-text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- 主容器佈局 --- */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- 區1：選擇區 --- */
+        .selection-area {
+            height: 10vh;
+            min-height: 70px;
+            background: var(--mineral-bg-light);
+            border-bottom: 1px solid var(--mineral-border);
+            padding: 12px 50px 12px 40px;
+            box-shadow: 0 2px 20px var(--mineral-shadow-light);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .selection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border: 1.5px solid var(--mineral-border);
+            border-radius: 8px;
+            background: var(--mineral-bg);
+            color: var(--mineral-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 300;
+            transition: all 0.3s ease;
+            box-shadow: 
+                2px 2px 6px var(--mineral-shadow-light),
+                -1px -1px 4px rgba(255, 255, 255, 0.8);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .close-btn:hover {
+            background: var(--mineral-accent);
+            color: var(--mineral-bg);
+            border-color: var(--mineral-accent);
+            transform: rotate(90deg);
+            box-shadow: 
+                3px 3px 8px var(--mineral-shadow),
+                0 0 0 2px var(--mineral-accent-light);
+        }
+
+        .scenario-buttons-container {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--mineral-accent-light) transparent;
+        }
+
+        .scenario-buttons-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .scenario-buttons-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scenario-buttons-container::-webkit-scrollbar-thumb {
+            background: var(--mineral-accent-light);
+            border-radius: 3px;
+        }
+
+        .scenario-buttons-container::-webkit-scrollbar-thumb:hover {
+            background: var(--mineral-accent);
+        }
+
+        .scenario-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: max-content;
+            padding-right: 10px;
+        }
+
+        .scenario-btn {
+            padding: 12px 28px;
+            background: var(--mineral-bg);
+            border: 1.5px solid var(--mineral-border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--mineral-text);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                4px 4px 12px var(--mineral-shadow-light),
+                -2px -2px 8px rgba(255, 255, 255, 0.8);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px;
+            min-width: 130px;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .scenario-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 177, 106, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .scenario-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                6px 6px 16px var(--mineral-shadow),
+                -2px -2px 10px rgba(255, 255, 255, 0.9);
+            border-color: var(--mineral-accent-light);
+        }
+
+        .scenario-btn:hover::before {
+            left: 100%;
+        }
+
+        .scenario-btn.active {
+            background: var(--mineral-bg);
+            color: var(--mineral-accent);
+            border-color: var(--mineral-accent);
+            box-shadow: 
+                inset 3px 3px 8px var(--mineral-shadow-light),
+                0 0 0 1px var(--mineral-accent-light);
+            font-weight: 700;
+        }
+
+        .scenario-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: var(--mineral-accent);
+            border-radius: 2px;
+        }
+
+        /* --- 區2：主畫面 --- */
+        .main-view {
+            height: 60vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px 40px;
+            background: var(--mineral-bg);
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--mineral-accent-light) transparent;
+        }
+
+        .main-view::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-view::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .main-view::-webkit-scrollbar-thumb {
+            background: var(--mineral-accent-light);
+            border-radius: 4px;
+        }
+
+        .main-view::-webkit-scrollbar-thumb:hover {
+            background: var(--mineral-accent);
+        }
+
+        .main-view::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(212, 177, 106, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(212, 177, 106, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .main-content {
+            width: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            z-index: 1;
+            gap: 15px;
+            padding-bottom: 20px;
+            box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
+        }
+
+        /* 場景內容隱藏/顯示 */
+        .scenario-content {
+            display: none;
+            width: 100%;
+            max-width: 100%;  /* 手機版確保不超出容器 */
+            box-sizing: border-box;  /* 確保寬度計算正確 */
+        }
+        
+        @media (min-width: 769px) {
+            .scenario-content {
+                max-width: 1200px;  /* 電腦版才使用最大寬度限制 */
+            }
+        }
+
+        .scenario-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 化學反應式標題 - 使用 style.html 的化學方程式風格 */
+        .reaction-header {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--mineral-text);
+            text-align: center;
+            padding: 10px 20px;
+            background: var(--mineral-bg-light);
+            border-radius: 12px;
+            border: 1.5px solid var(--mineral-border);
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+        }
+
+        /* 公式卡片 - K和Q上下排列 */
+        .formula-card {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: var(--mineral-bg-light);
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid var(--mineral-border);
+        }
+
+        /* K和Q置中顯示 */
+        .formula-card .math {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+            /* 手機版：K 和 Q 保持上下排列 */
+            @media (max-width: 768px) {
+            .formula-card {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+
+            .formula-card .math {
+                font-size: 0.95rem;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .formula-card #status {
+                width: 100%;
+                text-align: center;
+                margin-top: 10px;
+            }
+        }
+
+        .math {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+        }
+
+        .frac-top {
+            border-bottom: 2px solid var(--mineral-text);
+            padding: 0 3px;
+        }
+
+        .frac-bot {
+            padding: 0 3px;
+        }
+
+        #status {
+            font-weight: 900;
+            color: #27ae60;
+            border: 2px solid #27ae60;
+            padding: 5px 15px;
+            border-radius: 8px;
+            background: var(--mineral-bg-light);
+            font-size: 0.95rem;
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* 反應方向顯示（在K、Q下方） */
+        .direction-display {
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px;
+            border-radius: 6px;
+            background: var(--mineral-bg);
+        }
+
+        .direction-display.direction-left {
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+
+        .direction-display.direction-right {
+            color: #e67e22;
+            border: 1px solid #e67e22;
+        }
+
+
+        /* 圖表網格 */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            overflow: visible;  /* 確保內容不會被裁切 */
+            box-sizing: border-box;  /* 確保寬度計算正確 */
+        }
+
+        .chart-card {
+            background: var(--mineral-bg-light);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1.5px solid var(--mineral-border);
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;  /* 確保圖例不會被裁切 */
+        }
+
+        .chart-card canvas {
+            max-height: 280px;
+            height: 280px;
+            min-height: 280px;
+        }
+
+        .chart-card > div:first-child {
+            flex-shrink: 0;
+        }
+
+        .chart-card > canvas {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .chart-card > div:first-child {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            color: var(--mineral-text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* 圖例樣式 - 放在圖表容器右上角 */
+        .chart-legend {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 10;
+            background: rgba(248, 246, 241, 0.95);
+            padding: 6px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: calc(100% - 30px);  /* 確保不會超出容器 */
+            flex-wrap: nowrap;  /* 手機版不換行，保持水平排列 */
+            box-sizing: border-box;  /* 確保寬度計算正確 */
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .legend-line.dashed {
+            background: none !important;
+            position: relative;
+        }
+
+        .legend-line.dashed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            transform: translateY(-50%);
+            background: repeating-linear-gradient(
+                to right,
+                currentColor 0,
+                currentColor 3px,
+                transparent 3px,
+                transparent 6px
+            );
+        }
+
+        .legend-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--mineral-text);
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        canvas {
+            background-color: var(--mineral-bg-light);
+        }
+
+        /* 數據面板 */
+        .data-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .info {
+            background: var(--mineral-bg-light);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 6px solid var(--n2o4-color);
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .info strong {
+            color: var(--mineral-text);
+            font-weight: 600;
+        }
+
+        .info[style*="border-left-color: var(--no2-color)"] {
+            border-left-color: var(--no2-color);
+        }
+
+        .placeholder-text {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1.2rem;
+            color: var(--mineral-text-light);
+            opacity: 0.4;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        /* --- 區3：操作介面 --- */
+        .control-panel {
+            height: 30vh;
+            background: var(--mineral-bg-light);
+            border-top: 1px solid var(--mineral-border);
+            padding: 25px 40px;
+            box-shadow: 0 -2px 20px var(--mineral-shadow-light);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--mineral-accent-light) transparent;
+        }
+
+        .control-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: var(--mineral-accent-light);
+            border-radius: 4px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--mineral-accent);
+        }
+
+        .control-content {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100%;
+        }
+
+        .control-scenario {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .control-scenario.active {
+            display: block;
+        }
+
+        /* 優雅的按鈕風格 */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        .control-btn {
+            border: 1.5px solid var(--mineral-border);
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--mineral-bg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0, 0.1, 1);
+            font-size: 0.9rem;
+            color: var(--mineral-text);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                3px 3px 8px var(--mineral-shadow-light),
+                -1px -1px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 177, 106, 0.15), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: var(--mineral-bg-light);
+            border-color: var(--mineral-accent);
+            transform: translateY(-2px);
+            box-shadow: 
+                4px 4px 12px var(--mineral-shadow),
+                -1px -1px 6px rgba(255, 255, 255, 0.9);
+        }
+
+        .control-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .control-btn:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 
+                inset 2px 2px 6px var(--mineral-shadow-light),
+                0 0 0 1px var(--mineral-accent-light);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: var(--mineral-border);
+            background: var(--mineral-bg);
+        }
+
+        .control-btn.reset-btn {
+            grid-column: span 4;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            border-color: #ee5a6f;
+            font-weight: 700;
+        }
+
+        .control-btn.reset-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff5252, #e53935);
+            border-color: #e53935;
+            box-shadow: 
+                4px 4px 12px rgba(238, 90, 111, 0.3),
+                0 0 0 2px rgba(238, 90, 111, 0.1);
+        }
+
+        /* --- 響應式設計 --- */
+        @media (max-width: 1024px) {
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .control-btn.reset-btn {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .selection-area {
+                height: 9vh;
+                min-height: 60px;
+                padding: 10px 45px 10px 20px;
+            }
+
+            .close-btn {
+                top: 10px;
+                right: 10px;
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+            }
+
+            .scenario-buttons {
+                gap: 10px;
+            }
+
+            .scenario-btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                min-width: 110px;
+            }
+
+            .main-view {
+                height: 61vh;
+                padding: 15px;  /* 左右對稱 padding，確保右邊邊框顯示 */
+                overflow-x: hidden;  /* 確保不會出現水平滾動 */
+            }
+            
+            /* 超窄螢幕保持對稱 padding */
+            @media (max-width: 380px) {
+                .main-view {
+                    padding: 12px 10px;  /* 保持左右對稱，確保右邊邊框可見 */
+                }
+            }
+
+            .control-panel {
+                padding: 20px;
+            }
+
+            /* 手機版：圖表上下排列，調整大小以便同時顯示 */
+            .chart-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .chart-card {
+                padding: 10px 8px;  /* 減少 padding，特別是在窄螢幕上節省空間 */
+                min-height: 240px;
+                width: 100%;
+                box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
+            }
+            
+            /* 超窄螢幕（375px 及以下）進一步優化 */
+            @media (max-width: 380px) {
+                .chart-card {
+                    padding: 8px 6px;  /* 進一步減少 padding */
+                }
+            }
+
+            .chart-card canvas {
+                height: 220px !important;
+                min-height: 220px;
+            }
+
+            .chart-card > div:first-child {
+                font-size: 0.8rem;
+                margin-bottom: 6px;
+            }
+
+            /* 手機版圖例樣式 - 回到右側正常顯示 */
+            .chart-legend {
+                top: 8px;
+                right: 10px;  /* 右側定位，正常顯示 */
+                left: auto;  /* 取消左側定位 */
+                gap: 5px;  /* 減少間距，節省空間 */
+                padding: 3px 5px;  /* 減少 padding */
+                max-width: calc(100% - 20px);  /* 確保不會超出容器 */
+                font-size: 0.65rem;  /* 縮小字體以適應窄螢幕 */
+            }
+            
+            /* 超窄螢幕（375px 及以下）進一步優化圖例 */
+            @media (max-width: 380px) {
+                .chart-legend {
+                    top: 6px;
+                    right: 8px;  /* 右側定位 */
+                    left: auto;
+                    gap: 4px;
+                    padding: 3px 4px;
+                    font-size: 0.62rem;  /* 進一步縮小字體 */
+                }
+            }
+
+            .legend-line {
+                width: 16px;  /* 縮短線條長度，節省空間 */
+                height: 2.5px;
+            }
+            
+            @media (max-width: 380px) {
+                .legend-line {
+                    width: 14px;  /* 超窄螢幕進一步縮短 */
+                }
+            }
+
+            .legend-line.dashed::after {
+                height: 2.5px;
+            }
+
+            .legend-label {
+                font-size: 0.65rem;  /* 稍微縮小，確保完整顯示 */
+                white-space: nowrap;  /* 防止文字換行 */
+            }
+
+            /* 手機版：操作按鈕橫向併排排列 */
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .control-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .control-btn.reset-btn {
+                grid-column: span 2;
+                margin-top: 5px;
+            }
+
+            /* 手機版：濃度資訊放在圖片下方，單列顯示 */
+            .data-panel {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                margin-top: 8px;
+            }
+
+            .info {
+                padding: 10px;
+                font-size: 0.8rem;
+                line-height: 1.6;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .scenario-btn {
+                min-width: 100px;
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+
+            .formula-card {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px 15px;
+            }
+
+            .formula-card .math {
+                font-size: 0.9rem;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .formula-card #status {
+                width: 100%;
+                text-align: center;
+                margin-top: 8px;
+                font-size: 0.85rem;
+                padding: 5px 12px;
+            }
+
+            .reaction-header {
+                font-size: 1.1rem;
+                padding: 8px 15px;
+            }
+
+            .reaction-header {
+                font-size: 1.1rem;
+                padding: 8px 15px;
+            }
+
+            /* 小螢幕手機：圖表上下排列，更緊湊 */
+            .chart-grid {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .chart-card {
+                padding: 5px;
+                min-height: 200px;
+            }
+
+            .chart-card canvas {
+                height: 190px !important;
+                min-height: 190px;
+            }
+
+            .chart-card > div:first-child {
+                font-size: 0.75rem;
+                margin-bottom: 5px;
+            }
+
+            /* 小螢幕手機版圖例樣式 - 右側正常顯示 */
+            .chart-legend {
+                top: 8px;
+                right: 8px;  /* 右側定位，正常顯示 */
+                left: auto;
+                gap: 4px;
+                padding: 3px 4px;
+                max-width: calc(100% - 16px);  /* 確保不會超出容器 */
+                font-size: 0.62rem;  /* 進一步縮小字體 */
+            }
+
+            .legend-line {
+                width: 14px;  /* 進一步縮短，節省空間 */
+                height: 2px;
+            }
+
+            .legend-line.dashed::after {
+                height: 2px;
+            }
+
+            .legend-label {
+                font-size: 0.7rem;
+            }
+
+            /* 小螢幕手機：操作按鈕可以考慮 2 列或保持 2 列 */
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .control-btn {
+                padding: 9px 10px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* --- 動畫效果 --- */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .selection-area,
+        .main-view,
+        .control-panel {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body style="opacity: 1; transition: opacity 0.5s ease-in;">
+    <div class="main-container">
+        <!-- 區1：選擇區 -->
+        <div class="selection-area">
+            <div class="selection-header"></div>
+            <button class="close-btn" onclick="closeWindow()" title="關閉">×</button>
+            <div class="scenario-buttons-container" style="cursor: grab;">
+                <div class="scenario-buttons">
+                    <button class="scenario-btn" data-scenario="equilibrium-basic">平衡常數計算機</button>
+                    <button class="scenario-btn active" data-scenario="le-chatelier">勒沙特列原理展示</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 區2：主畫面 -->
+        <div class="main-view">
+            <div class="main-content">
+                <!-- 基礎平衡場景 -->
+                <div class="scenario-content" data-scenario="equilibrium-basic">
+                    <div class="placeholder-text">基礎平衡場景內容</div>
+                </div>
+
+                <!-- 勒沙特列原理展示場景 -->
+                <div class="scenario-content active" data-scenario="le-chatelier">
+                    <div class="reaction-header">N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub> + 熱</div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            K = <div class="frac"><span class="frac-top">[NO₂]²</span><span class="frac-bot">[N₂O₄]</span></div>
+                            = <div class="frac"><span class="frac-top" id="k-formula-top">2²</span><span class="frac-bot" id="k-formula-bot">1</span></div>
+                            = <span id="k-val" style="color:#2c3e50; margin-left:5px;">4.00</span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            Q = <div class="frac"><span class="frac-top" id="q-num">[NO₂]²</span><span class="frac-bot" id="q-den">[N₂O₄]</span></div>
+                            = <div class="frac"><span class="frac-top" id="q-formula-top">2.32²</span><span class="frac-bot" id="q-formula-bot">1.34</span></div>
+                            = <span id="q-val" style="margin-left:5px;">4.00</span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 10px;">
+                        <div id="status" style="display: inline-block; color: rgb(39, 174, 96); border-color: rgb(39, 174, 96);">新平衡</div>
+                    </div>
+                    <div id="direction-display" class="direction-display" style="display: none;"></div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <div>濃度 C-t (顯著變化)</div>
+                            <canvas id="cChart" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="cChart-legend">
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #3498db;"></span>
+                                    <span class="legend-label">[N₂O₄]</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #f39c12;"></span>
+                                    <span class="legend-label">[NO₂]</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div>速率 v-t (顯著變化)</div>
+                            <canvas id="vChart" width="760" height="380"></canvas>
+                            <div class="chart-legend" id="vChart-legend">
+                                <span class="legend-item">
+                                    <span class="legend-line dashed" style="color: #2ecc71;"></span>
+                                    <span class="legend-label">Rf (正)</span>
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-line" style="background-color: #34495e;"></span>
+                                    <span class="legend-label">Rr (逆)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-panel">
+                        <div class="info">
+                            <strong>原平衡濃度 (t=0):</strong><br>
+                            [N₂O₄] = 1.00 M, [NO₂] = 2.00 M
+                        </div>
+                        <div class="info" style="border-left-color: var(--no2-color);">
+                            <strong>目前數值:</strong><br>
+                            [N₂O₄]: <span id="cur-a">1.34</span> M, [NO₂]: <span id="cur-b">2.32</span> M
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 區3：操作介面 -->
+        <div class="control-panel">
+            <div class="control-content">
+                <!-- 基礎平衡操作 -->
+                <div class="control-scenario" data-scenario="equilibrium-basic">
+                    <div class="placeholder-text">基礎平衡操作介面</div>
+                </div>
+
+                <!-- 勒沙特列原理展示操作 -->
+                <div class="control-scenario active" data-scenario="le-chatelier">
+                    <div class="controls" id="btnContainer">
+                        <button class="control-btn" onclick="runDisturb('ADD_A')">增加 1M N₂O₄</button>
+                        <button class="control-btn" onclick="runDisturb('ADD_B')">增加 1M NO₂</button>
+                        <button class="control-btn" onclick="runDisturb('SUB_A')">減少 1M N₂O₄</button>
+                        <button class="control-btn" onclick="runDisturb('SUB_B')">減少 1M NO₂</button>
+                        <button class="control-btn" onclick="runDisturb('V_HALF')">體積減半(壓↑)</button>
+                        <button class="control-btn" onclick="runDisturb('V_DOUBLE')">體積加倍(壓↓)</button>
+                        <button class="control-btn" onclick="runDisturb('HEAT')">加熱 (K↓)</button>
+                        <button class="control-btn" onclick="runDisturb('COOL')">降溫 (K↑)</button>
+                        <button class="control-btn reset-btn" onclick="resetExperiment()">重置實驗</button>
+                    </div>
+                </div>
+
+                <!-- 其他場景操作 -->
+                <div class="control-scenario" data-scenario="concentration">
+                    <div class="placeholder-text">濃度影響操作介面</div>
+                </div>
+
+                <div class="control-scenario" data-scenario="temperature">
+                    <div class="placeholder-text">溫度影響操作介面</div>
+                </div>
+
+                <div class="control-scenario" data-scenario="pressure">
+                    <div class="placeholder-text">壓力影響操作介面</div>
+                </div>
+
+                <div class="control-scenario" data-scenario="catalyst">
+                    <div class="placeholder-text">催化劑作用操作介面</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始參數
+        let K = 4.0;
+        let concA = 1.0; 
+        let concB = 2.0; 
+        let kf = 1.2;
+        let kr = 0.3; 
+        
+        let history = { t: [], a: [], b: [], vf: [], vr: [] };
+        let currentTime = 0;
+        let animationFrameId = null;
+        let hasOperated = false;
+        let lastTime = 0;
+        let equilibriumReached = false;
+        let equilibriumCounter = 0;
+        let equilibriumConcA = 0;
+        let equilibriumConcB = 0;
+        let equilibriumV = 0;
+
+        // 使用原生 Canvas API 繪製圖表 - 完全重寫
+        let cCanvas = null;
+        let vCanvas = null;
+        let cCtx = null;
+        let vCtx = null;
+        
+        // 圖表配置
+        const chartConfig = {
+            concentration: {
+                yMax: 3.5,
+                padding: { top: 30, right: 25, bottom: 35, left: 60 },  // 增加右側間距，避免內容被裁切
+                colors: {
+                    n2o4: '#3498db',
+                    no2: '#f39c12'
+                }
+            },
+            velocity: {
+                yMax: 2.5,
+                padding: { top: 30, right: 25, bottom: 35, left: 60 },  // 增加右側間距，避免內容被裁切
+                // 速率圖使用非線性 Y 軸：0-1 佔用較小空間，1-2.5 佔用較大空間
+                yCompress: true,
+                yCompressPoint: 1.0,  // 壓縮點
+                yCompressRatio: 0.25,  // 0-1 佔用的比例（25%）
+                colors: {
+                    rf: '#2ecc71',
+                    rr: '#34495e'
+                }
+            }
+        };
+        
+        // 速率圖 Y 軸非線性映射函數（將實際值映射到繪圖座標）
+        function mapVelocityY(value, yMax, plotHeight, compressPoint, compressRatio) {
+            if (value <= compressPoint) {
+                // 0 到 compressPoint 使用壓縮的空間
+                return (value / compressPoint) * plotHeight * compressRatio;
+            } else {
+                // compressPoint 到 yMax 使用剩餘的空間
+                const compressedHeight = plotHeight * compressRatio;
+                const remainingHeight = plotHeight * (1 - compressRatio);
+                const remainingRange = yMax - compressPoint;
+                return compressedHeight + ((value - compressPoint) / remainingRange) * remainingHeight;
+            }
+        }
+        
+        // 速率圖 Y 軸反向映射函數（將繪圖座標映射回實際值，用於繪製刻度）
+        function unmapVelocityY(yPos, yMax, plotHeight, compressPoint, compressRatio) {
+            const compressedHeight = plotHeight * compressRatio;
+            if (yPos <= compressedHeight) {
+                return (yPos / compressedHeight) * compressPoint;
+            } else {
+                const remainingHeight = plotHeight * (1 - compressRatio);
+                const remainingRange = yMax - compressPoint;
+                return compressPoint + ((yPos - compressedHeight) / remainingHeight) * remainingRange;
+            }
+        }
+        
+        // 初始化 Canvas
+        function initCharts() {
+            cCanvas = document.getElementById('cChart');
+            vCanvas = document.getElementById('vChart');
+            
+            if (cCanvas) {
+                cCtx = cCanvas.getContext('2d');
+                const rect = cCanvas.getBoundingClientRect();
+                // 確保 canvas 寬度不超出容器
+                const maxWidth = rect.width;
+                cCanvas.width = Math.min(maxWidth, rect.width) * (window.devicePixelRatio || 1);
+                cCanvas.height = rect.height * (window.devicePixelRatio || 1);
+                cCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            }
+            
+            if (vCanvas) {
+                vCtx = vCanvas.getContext('2d');
+                const rect = vCanvas.getBoundingClientRect();
+                // 確保 canvas 寬度不超出容器
+                const maxWidth = rect.width;
+                vCanvas.width = Math.min(maxWidth, rect.width) * (window.devicePixelRatio || 1);
+                vCanvas.height = rect.height * (window.devicePixelRatio || 1);
+                vCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+            }
+            
+            drawCharts();
+        }
+        
+        // 檢測是否為手機版
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // 繪製圖表
+        function drawCharts() {
+            if (cCtx && cCanvas) {
+                drawChart(cCtx, cCanvas, 'concentration');
+            }
+            if (vCtx && vCanvas) {
+                drawChart(vCtx, vCanvas, 'velocity');
+            }
+        }
+        
+        // 繪製單個圖表
+        function drawChart(ctx, canvas, type) {
+            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            const mobile = isMobile();
+            // 使用實際的容器寬度，確保不會超出
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.min(rect.width, canvas.width / (window.devicePixelRatio || 1));
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            // 手機版調整 padding（確保右邊邊框顯示）
+            const viewportWidth = window.innerWidth;
+            let rightPadding = 35;  /* 預設右側 padding */
+            
+            // 根據螢幕寬度動態調整
+            if (viewportWidth <= 380) {
+                // 超窄螢幕（375px 等）
+                rightPadding = 32;
+            } else if (viewportWidth <= 400) {
+                // 較窄螢幕（402px 等）
+                rightPadding = 33;
+            }
+            
+            const padding = mobile ? {
+                top: 25,
+                right: rightPadding,  /* 動態調整右側 padding，確保邊框可見 */
+                bottom: 30,
+                left: 45  /* 保持左右對稱 */
+            } : config.padding;
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            
+            // 清空畫布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 繪製網格（改善視覺效果）
+            drawGrid(ctx, padding, plotWidth, plotHeight, config.yMax, type);
+            
+            // 繪製數據（增加線條粗細，讓數據線更突出）
+            if (history.t.length > 0) {
+                const maxTime = Math.max(...history.t.map(t => parseFloat(t))) || 10;
+                const lineWidth = mobile ? 3.5 : 4.5;
+                
+                if (type === 'concentration') {
+                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.a, config.colors.n2o4, lineWidth, false);
+                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.b, config.colors.no2, lineWidth, false);
+                } else {
+                    // 速率圖使用非線性 Y 軸
+                    drawDashedLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                                  history.t, history.vf, config.colors.rf, lineWidth, true);
+                    drawLine(ctx, padding, plotWidth, plotHeight, maxTime, config.yMax, 
+                            history.t, history.vr, config.colors.rr, lineWidth, true);
+                }
+            }
+            
+            // 圖例將在 canvas 外繪製（使用 HTML/CSS）
+        }
+        
+        // 繪製網格（改善視覺效果，避免與數據線擠在一起）
+        function drawGrid(ctx, padding, plotWidth, plotHeight, yMax, type) {
+            const mobile = isMobile();
+            const config = type === 'concentration' ? chartConfig.concentration : chartConfig.velocity;
+            
+            // 只繪製主要刻度線，使用更淡的顏色，避免與數據線混淆
+            // 移除細密的背景網格，只保留主要刻度線
+            
+            // 繪製 Y 軸主要刻度線
+            ctx.strokeStyle = '#e0e0e0';  // 更淡的顏色
+            ctx.lineWidth = 0.5;  // 更細的線條
+            const ySteps = mobile ? 5 : 6;  // 增加刻度數，讓變化更明顯
+            
+            if (type === 'velocity' && config.yCompress) {
+                // 速率圖使用非線性刻度
+                const compressPoint = config.yCompressPoint;
+                const compressRatio = config.yCompressRatio;
+                
+                // 定義刻度值（0, 0.5, 1.0, 1.5, 2.0, 2.5）
+                const tickValues = [0, 0.5, 1.0, 1.5, 2.0, 2.5].filter(v => v <= yMax);
+                
+                tickValues.forEach(value => {
+                    const yPos = mapVelocityY(value, yMax, plotHeight, compressPoint, compressRatio);
+                    const y = padding.top + plotHeight - yPos;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + plotWidth, y);
+                    ctx.stroke();
+                    
+                    // Y 軸標籤
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const labelX = mobile ? padding.left - 12 : padding.left - 8;
+                    ctx.fillText(value.toFixed(1), labelX, y);
+                });
+            } else {
+                // 濃度圖使用等距刻度
+                for (let i = 0; i <= ySteps; i++) {
+                    const y = padding.top + (plotHeight / ySteps) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + plotWidth, y);
+                    ctx.stroke();
+                    
+                    // Y 軸標籤 - 等距分佈，讓變化更明顯
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const value = (yMax / ySteps) * (ySteps - i);
+                    const labelX = mobile ? padding.left - 12 : padding.left - 8;
+                    ctx.fillText(value.toFixed(1), labelX, y);
+                }
+            }
+            
+            // 繪製 X 軸主要刻度線
+            if (history.t.length > 0) {
+                const maxTime = Math.max(...history.t.map(t => parseFloat(t))) || 10;
+                const xSteps = mobile ? 5 : 6;
+                for (let i = 0; i <= xSteps; i++) {
+                    const x = padding.left + (plotWidth / xSteps) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + plotHeight);
+                    ctx.stroke();
+                    
+                    // X 軸標籤 - 確保最後一個標籤不會被裁切
+                    ctx.fillStyle = '#333';
+                    ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                    const time = (maxTime / xSteps) * i;
+                    const timeText = time.toFixed(1);
+                    
+                    // 測量文字寬度，確保不會超出右邊界
+                    const textWidth = ctx.measureText(timeText).width;
+                    const canvasWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
+                    let labelX = x;
+                    let textAlign = 'center';
+                    
+                    // 如果是第一個標籤，確保不超出左邊界
+                    if (i === 0 && x - textWidth / 2 < padding.left) {
+                        labelX = padding.left;
+                        textAlign = 'left';
+                    }
+                    // 如果是最後一個標籤，確保不超出右邊界（考慮 canvas 實際寬度）
+                    else if (i === xSteps) {
+                        // 根據螢幕寬度動態調整邊距，確保右邊邊框可見
+                        const viewportWidth = window.innerWidth;
+                        const margin = viewportWidth <= 380 ? 18 : (viewportWidth <= 400 ? 20 : 22);
+                        const rightBoundary = canvasWidth - (mobile ? margin : 10);
+                        if (x + textWidth / 2 > rightBoundary) {
+                            labelX = rightBoundary;
+                            textAlign = 'right';
+                        }
+                    }
+                    
+                    ctx.textAlign = textAlign;
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(timeText, labelX, padding.top + plotHeight + (mobile ? 8 : 6));
+                }
+            }
+            
+            // 繪製座標軸邊框
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1.5;
+            // 左邊框（Y軸）
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, padding.top + plotHeight);
+            ctx.stroke();
+            // 底邊框（X軸）
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top + plotHeight);
+            ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
+            ctx.stroke();
+        }
+        
+        // 繪製實線
+        function drawLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
+            if (times.length === 0 || values.length === 0) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            for (let i = 0; i < times.length; i++) {
+                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+        
+        // 繪製虛線
+        function drawDashedLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
+            if (times.length === 0 || values.length === 0) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            
+            for (let i = 0; i < times.length; i++) {
+                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // 繪製圖例（垂直排列）
+        function drawLegend(ctx, x, y, items, canvasWidth, isHorizontal) {
+            const mobile = isMobile();
+            const itemHeight = mobile ? 24 : 20;
+            
+            items.forEach((item, index) => {
+                const itemY = y + index * itemHeight;
+                
+                // 繪製線條
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = mobile ? 4 : 5;
+                if (item.dashed) {
+                    ctx.setLineDash([5, 5]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.beginPath();
+                ctx.moveTo(x, itemY);
+                ctx.lineTo(x + (mobile ? 25 : 30), itemY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 繪製標籤
+                ctx.fillStyle = '#333';
+                ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.label, x + (mobile ? 30 : 35), itemY);
+            });
+        }
+        
+        // 繪製水平圖例（用於速率圖上方，保留以備用）
+        function drawHorizontalLegend(ctx, padding, width, items) {
+            const mobile = isMobile();
+            const startX = padding.left;
+            const legendY = padding.top - 25;  // 放在圖表上方
+            const itemSpacing = mobile ? 80 : 100;  // 項目之間的間距
+            
+            items.forEach((item, index) => {
+                const itemX = startX + index * itemSpacing;
+                
+                // 繪製線條
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = mobile ? 4 : 5;
+                if (item.dashed) {
+                    ctx.setLineDash([5, 5]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.beginPath();
+                ctx.moveTo(itemX, legendY);
+                ctx.lineTo(itemX + (mobile ? 25 : 30), legendY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 繪製標籤
+                ctx.fillStyle = '#333';
+                ctx.font = mobile ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.label, itemX + (mobile ? 30 : 35), legendY);
+            });
+        }
+        
+        
+        // 繪製實線
+        function drawLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
+            if (times.length === 0 || values.length === 0) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            for (let i = 0; i < times.length; i++) {
+                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+        
+        // 繪製虛線
+        function drawDashedLine(ctx, padding, plotWidth, plotHeight, maxTime, yMax, times, values, color, lineWidth) {
+            if (times.length === 0 || values.length === 0) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            
+            for (let i = 0; i < times.length; i++) {
+                const x = padding.left + (parseFloat(times[i]) / maxTime) * plotWidth;
+                const y = padding.top + plotHeight - (parseFloat(values[i]) / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // 記錄初始平衡濃度（用於顯示K的計算）
+        let initialConcA = 1.0;
+        let initialConcB = 2.0;
+
+        function record() {
+            let vf, vr;
+            
+            // 如果已達到平衡，使用平衡時的固定速率值，確保兩條線重合
+            if (equilibriumReached && equilibriumV > 0) {
+                vf = equilibriumV;
+                vr = equilibriumV;
+            } else {
+                vf = kf * concA;
+                vr = kr * Math.pow(concB, 2);
+            }
+            
+            history.t.push(currentTime.toFixed(1));
+            history.a.push(parseFloat(concA.toFixed(3)));
+            history.b.push(parseFloat(concB.toFixed(3)));
+            history.vf.push(parseFloat(vf.toFixed(3)));
+            history.vr.push(parseFloat(vr.toFixed(3)));
+            // 每次記錄後增加時間，確保時間軸連續
+            currentTime += 0.2;
+        }
+
+        // 使用 requestAnimationFrame 實現絲滑流暢動畫
+        let stepCounter = 0;
+        
+        function animate(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            
+            // 加快動畫速度：每80ms執行一次步進
+            if (timestamp - lastTime >= 80) {
+                step();
+                lastTime = timestamp;
+            }
+            
+            if (animationFrameId) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        // 平衡移動步進 - 優化版本，確保顯示完整平衡狀態
+        function step() {
+            // 如果已達到平衡，繼續記錄平衡狀態的水平線
+            if (equilibriumReached) {
+                equilibriumCounter++;
+                // 繼續記錄10個數據點（約2秒）顯示平衡狀態
+                if (equilibriumCounter <= 10) {
+                    // 使用平衡時的固定值，確保線條完全水平且速率線重合
+                    concA = equilibriumConcA;
+                    concB = equilibriumConcB;
+                    record();
+                    updateUI();
+                } else {
+                    // 平衡狀態記錄完成，停止動畫
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    const statusEl = document.getElementById('status');
+                    statusEl.textContent = "新平衡";
+                    statusEl.style.color = "#27ae60";
+                    statusEl.style.borderColor = "#27ae60";
+                    // 隱藏方向顯示（如果存在）
+                    const directionDisplay = document.getElementById('direction-display');
+                    if (directionDisplay) {
+                        directionDisplay.style.display = 'none';
+                    }
+                    // 達到平衡後，保持按鈕禁用狀態，只能按重置
+                    // hasOperated 保持為 true，不重置為 false
+                    // 不啟用其他按鈕，確保每次只能一種操作
+                    stepCounter = 0;
+                    equilibriumReached = false;
+                    equilibriumCounter = 0;
+                }
+                return;
+            }
+            
+            // 計算當前反應速率
+            let vf = kf * concA;
+            let vr = kr * Math.pow(concB, 2);
+            
+            // 調整係數，加快變化速度
+            let diff = (vf - vr) * 0.012; 
+            concA -= diff;
+            concB += 2 * diff;
+            
+            // 確保濃度不為負
+            if (concA < 0.01) concA = 0.01;
+            if (concB < 0.01) concB = 0.01;
+            
+            // 每次步進都記錄數據點，確保線條連續
+            record();
+            
+            // 更新UI
+            updateUI();
+
+            // 重新計算更新後的速率，用於檢查平衡和顯示方向
+            vf = kf * concA;
+            vr = kr * Math.pow(concB, 2);
+            
+            // 移動方向會在 updateUI 中更新
+
+            // 檢查是否達到平衡（使用更嚴格的條件）
+            if (Math.abs(vf - vr) < 0.001) {
+                // 達到平衡，記錄平衡時的數值
+                equilibriumReached = true;
+                equilibriumCounter = 0;
+                equilibriumConcA = concA;
+                equilibriumConcB = concB;
+                // 計算平衡時的速率（兩者應該相等）
+                equilibriumV = (vf + vr) / 2;
+                
+                // 強制設置速率相等，確保兩條線重合
+                // 根據平衡時的濃度計算正確的平衡速率
+                equilibriumV = kf * equilibriumConcA; // 或 kr * equilibriumConcB^2，理論上應該相等
+                
+                // 記錄平衡點
+                record();
+                // 立即更新狀態為"新平衡"
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = "新平衡";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+                // 隱藏方向顯示（如果存在）
+                const directionDisplay = document.getElementById('direction-display');
+                if (directionDisplay) {
+                    directionDisplay.style.display = 'none';
+                }
+                updateUI();
+            }
+        }
+
+        // 更新平衡移動方向指示（返回方向文字，用於顯示在狀態旁邊）
+        function getDirectionText(vf, vr) {
+            const diff = vf - vr;
+            if (Math.abs(diff) < 0.005) {
+                return '';
+            }
+            
+            if (diff > 0) {
+                // 正反應速率大於逆反應，平衡向右移動（生成物增加）
+                return '：向右移動';
+            } else {
+                // 逆反應速率大於正反應，平衡向左移動（反應物增加）
+                return '：向左移動';
+            }
+        }
+
+        // 使用節流優化UI更新性能
+        let lastUIUpdate = 0;
+        let lastChartUpdate = 0;
+        function updateUI() {
+            const now = performance.now();
+            // 限制更新頻率為每16ms一次（約60fps），確保流暢
+            if (now - lastUIUpdate < 16) return;
+            lastUIUpdate = now;
+            
+            // 更新K的計算顯示（顯示初始平衡濃度）- 使用直式分式
+            const kFormulaTop = document.getElementById('k-formula-top');
+            const kFormulaBot = document.getElementById('k-formula-bot');
+            if (kFormulaTop && kFormulaBot) {
+                kFormulaTop.textContent = `${initialConcB.toFixed(0)}²`;
+                kFormulaBot.textContent = initialConcA.toFixed(0);
+            }
+            
+            // 更新Q的計算顯示 - 使用直式分式，濃度顯示到小數點下第2位
+            let Q = Math.pow(concB, 2) / concA;
+            document.getElementById('q-num').innerText = `[NO₂]²`;
+            document.getElementById('q-den').innerText = `[N₂O₄]`;
+            const qFormulaTop = document.getElementById('q-formula-top');
+            const qFormulaBot = document.getElementById('q-formula-bot');
+            if (qFormulaTop && qFormulaBot) {
+                qFormulaTop.textContent = `${concB.toFixed(2)}²`;
+                qFormulaBot.textContent = concA.toFixed(2);
+            }
+            document.getElementById('q-val').innerText = Q.toFixed(2);
+            document.getElementById('cur-a').innerText = concA.toFixed(2);
+            document.getElementById('cur-b').innerText = concB.toFixed(2);
+            
+            // 更新圖表 - 使用原生 Canvas 繪製，確保流暢
+            drawCharts();
+            
+            // 更新狀態
+            const statusEl = document.getElementById('status');
+            // 如果已經達到平衡（equilibriumReached），顯示"新平衡"
+            if (equilibriumReached) {
+                statusEl.textContent = "新平衡";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+            } else {
+                // 計算當前速率以判斷方向
+                let vf = kf * concA;
+                let vr = kr * Math.pow(concB, 2);
+                const directionText = getDirectionText(vf, vr);
+                
+                // 如果 Q 和 K 差異大，表示正在移動
+                if (Math.abs(Q - K) > 0.05 || directionText !== '') {
+                    statusEl.textContent = "平衡移動中" + directionText;
+                    statusEl.style.color = "#e67e22";
+                    statusEl.style.borderColor = "#e67e22";
+                } else {
+                    // 只有在初始狀態且沒有操作過時才顯示"原平衡"
+                    if (!hasOperated) {
+                        statusEl.textContent = "原平衡";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
+                    } else {
+                        // 如果操作過但接近平衡，仍顯示"平衡移動中"
+                        statusEl.textContent = "平衡移動中" + directionText;
+                        statusEl.style.color = "#e67e22";
+                        statusEl.style.borderColor = "#e67e22";
+                    }
+                }
+            }
+        }
+
+        function runDisturb(mode) {
+            // 如果已經操作過且達到平衡，不能再操作，必須先重置
+            if (hasOperated && equilibriumReached) return;
+            // 如果正在動畫中，也不能操作
+            if (animationFrameId) return;
+            
+            hasOperated = true;
+            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = true);
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = "外加因素";
+            statusEl.style.color = "#c0392b";
+            statusEl.style.borderColor = "#c0392b";
+
+            switch(mode) {
+                case 'ADD_A': concA += 1.0; break;
+                case 'ADD_B': concB += 1.0; break;
+                case 'SUB_A': concA = Math.max(0.1, concA - 1.0); break;
+                case 'SUB_B': concB = Math.max(0.1, concB - 1.0); break;
+                case 'V_HALF': concA *= 2; concB *= 2; break;
+                case 'V_DOUBLE': concA /= 2; concB /= 2; break;
+                case 'HEAT': 
+                    kf *= 1.3; kr *= 2.1; K = kf / kr; 
+                    document.getElementById('k-val').innerText = K.toFixed(2);
+                    break;
+                case 'COOL': 
+                    kf *= 0.8; kr *= 0.4; K = kf / kr; 
+                    document.getElementById('k-val').innerText = K.toFixed(2);
+                    break;
+            }
+            
+            // 記錄擾動後的瞬間垂直跳躍點（在相同時間點記錄新值）
+            record();
+            // 重置動畫相關變數
+            lastTime = 0;
+            stepCounter = 0;
+            equilibriumReached = false;
+            equilibriumCounter = 0;
+            equilibriumConcA = 0;
+            equilibriumConcB = 0;
+            equilibriumV = 0;
+            // 啟動動畫
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // 場景按鈕切換功能
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                try {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 移除所有按鈕的 active 狀態
+                    document.querySelectorAll('.scenario-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // 添加當前按鈕的 active 狀態
+                    this.classList.add('active');
+                    
+                    // 獲取選中的場景
+                    const scenario = this.getAttribute('data-scenario');
+                    if (!scenario) return;
+                    
+                    // 停止任何正在運行的動畫（切換場景時）
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // 切換主畫面內容
+                    document.querySelectorAll('.scenario-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    const mainContent = document.querySelector(`.scenario-content[data-scenario="${scenario}"]`);
+                    if (mainContent) {
+                        mainContent.classList.add('active');
+                    }
+                    
+                    // 切換操作介面
+                    document.querySelectorAll('.control-scenario').forEach(control => {
+                        control.classList.remove('active');
+                    });
+                    const controlContent = document.querySelector(`.control-scenario[data-scenario="${scenario}"]`);
+                    if (controlContent) {
+                        controlContent.classList.add('active');
+                    }
+                    
+                    // 如果是勒沙特列原理場景，初始化圖表
+                    if (scenario === 'le-chatelier') {
+                    setTimeout(() => {
+                        // 停止任何正在運行的動畫
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                            animationFrameId = null;
+                        }
+                        
+                        // 重置變數
+                        concA = initialConcA;
+                        concB = initialConcB;
+                        kf = 1.2;
+                        kr = 0.3;
+                        K = 4.0;
+                        currentTime = 0;
+                        hasOperated = false;
+                        lastTime = 0;
+                        stepCounter = 0;
+                        equilibriumReached = false;
+                        equilibriumCounter = 0;
+                        equilibriumConcA = 0;
+                        equilibriumConcB = 0;
+                        equilibriumV = 0;
+                        history = { t: [], a: [], b: [], vf: [], vr: [] };
+                        
+                        // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
+                        cCanvas = null;
+                        vCanvas = null;
+                        cCtx = null;
+                        vCtx = null;
+                        
+                        // 初始化一段穩定平衡（記錄初始數據點）
+                        // 重置equilibriumReached，確保record()函數正常工作
+                        equilibriumReached = false;
+                        equilibriumV = 0;
+                        for(let i=0; i<10; i++) {
+                            record();
+                        }
+                        
+                        // 初始化圖表
+                        initCharts();
+                        updateUI();
+                        
+                        // 確保初始狀態按鈕是可點擊的
+                        document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+                    }, 100);
+                    } else {
+                        // 其他場景，重置 Canvas
+                        cCanvas = null;
+                        vCanvas = null;
+                        cCtx = null;
+                        vCtx = null;
+                    }
+                    
+                    // 自動滾動到選中的按鈕
+                    this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } catch (error) {
+                    console.error('場景切換錯誤:', error);
+                }
+            });
+        });
+
+        // 關閉按鈕功能
+        function closeWindow() {
+            if (confirm('確定要關閉此視窗嗎？')) {
+                if (window.opener) {
+                    window.close();
+                } else {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.close();
+                    }
+                }
+            }
+        }
+
+        // 為按鈕容器添加平滑滾動支持（觸控設備）
+        const buttonsContainer = document.querySelector('.scenario-buttons-container');
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        buttonsContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            buttonsContainer.style.cursor = 'grabbing';
+            startX = e.pageX - buttonsContainer.offsetLeft;
+            scrollLeft = buttonsContainer.scrollLeft;
+        });
+
+        buttonsContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            buttonsContainer.style.cursor = 'grab';
+        });
+
+        buttonsContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            buttonsContainer.style.cursor = 'grab';
+        });
+
+        buttonsContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - buttonsContainer.offsetLeft;
+            const walk = (x - startX) * 2;
+            buttonsContainer.scrollLeft = scrollLeft - walk;
+        });
+
+        buttonsContainer.style.cursor = 'grab';
+
+        // 重置實驗功能 - 維持在當前教學場景
+        function resetExperiment() {
+            // 停止動畫
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 重置變數
+            concA = initialConcA;
+            concB = initialConcB;
+            kf = 1.2;
+            kr = 0.3;
+            K = 4.0;
+            currentTime = 0;
+            hasOperated = false;
+            lastTime = 0;
+            stepCounter = 0;
+            equilibriumReached = false;
+            equilibriumCounter = 0;
+            equilibriumConcA = 0;
+            equilibriumConcB = 0;
+            equilibriumV = 0;
+            history = { t: [], a: [], b: [], vf: [], vr: [] };
+            
+            // 重置UI
+            document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+            document.getElementById('status').textContent = "原平衡";
+            document.getElementById('status').style.color = "#27ae60";
+            document.getElementById('status').style.borderColor = "#27ae60";
+            document.getElementById('direction-display').style.display = 'none';
+            
+            // 重新初始化圖表（Canvas 不需要 destroy，直接重新初始化）
+            cCanvas = null;
+            vCanvas = null;
+            cCtx = null;
+            vCtx = null;
+            
+            // 初始化一段穩定平衡（記錄初始數據點）
+            // 重置equilibriumReached，確保record()函數正常工作
+            equilibriumReached = false;
+            equilibriumV = 0;
+            for(let i=0; i<10; i++) {
+                record();
+            }
+            
+            // 重新初始化圖表
+            initCharts();
+            
+            // 更新UI顯示
+            updateUI();
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease-in';
+                document.body.style.opacity = '1';
+                
+                // 初始化K的計算顯示 - 使用直式分式
+                const kFormulaTop = document.getElementById('k-formula-top');
+                const kFormulaBot = document.getElementById('k-formula-bot');
+                if (kFormulaTop && kFormulaBot) {
+                    kFormulaTop.textContent = `${initialConcB.toFixed(0)}²`;
+                    kFormulaBot.textContent = initialConcA.toFixed(0);
+                }
+                
+                // 初始化Q的計算顯示 - 使用直式分式，濃度顯示到小數點下第2位
+                const qFormulaTop = document.getElementById('q-formula-top');
+                const qFormulaBot = document.getElementById('q-formula-bot');
+                if (qFormulaTop && qFormulaBot) {
+                    qFormulaTop.textContent = `${initialConcB.toFixed(2)}²`;
+                    qFormulaBot.textContent = initialConcA.toFixed(2);
+                }
+                
+                // 初始化Q的符號顯示
+                document.getElementById('q-num').innerText = `[NO₂]²`;
+                document.getElementById('q-den').innerText = `[N₂O₄]`;
+                
+                // 初始化勒沙特列原理場景的圖表（如果場景已切換）
+                const activeScenario = document.querySelector('.scenario-content.active');
+                if (activeScenario && activeScenario.getAttribute('data-scenario') === 'le-chatelier') {
+                    // 停止任何正在運行的動畫
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // 重置變數
+                    concA = initialConcA;
+                    concB = initialConcB;
+                    kf = 1.2;
+                    kr = 0.3;
+                    K = 4.0;
+                    currentTime = 0;
+                    hasOperated = false;
+                    lastTime = 0;
+                    stepCounter = 0;
+                    equilibriumReached = false;
+                    equilibriumCounter = 0;
+                    equilibriumConcA = 0;
+                    equilibriumConcB = 0;
+                    equilibriumV = 0;
+                    history = { t: [], a: [], b: [], vf: [], vr: [] };
+                    
+                    // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
+                    cCanvas = null;
+                    vCanvas = null;
+                    cCtx = null;
+                    vCtx = null;
+                    
+                    // 初始化一段穩定平衡（記錄初始數據點）
+                    for(let i=0; i<10; i++) {
+                        record();
+                    }
+                    
+                    initCharts();
+                    updateUI();
+                    
+                    // 確保初始狀態按鈕是可點擊的
+                    document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => b.disabled = false);
+                }
+            }, 100);
+        });
+        
+        // 視窗大小改變時重新初始化圖表，確保自適應
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                const activeScenario = document.querySelector('.scenario-content.active');
+                if (activeScenario && activeScenario.getAttribute('data-scenario') === 'le-chatelier') {
+                    // 重新初始化 Canvas 以適應新寬度
+                    cCanvas = null;
+                    vCanvas = null;
+                    cCtx = null;
+                    vCtx = null;
+                    initCharts();
+                }
+            }, 250);  // 防抖處理，避免頻繁重繪
+        });
+    </script>
+
+</body></html>
