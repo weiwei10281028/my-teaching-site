@@ -4278,14 +4278,21 @@
 
         // 關閉按鈕功能
         function closeWindow() {
-            if (confirm('確定要關閉此視窗嗎？')) {
-                if (window.opener) {
-                    window.close();
-                } else {
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
+            // 檢查是否在 iframe 中（被 test.html 載入）
+            if (window.self !== window.top) {
+                // 在 iframe 中，發送訊息給父視窗
+                window.parent.postMessage('closeEquilibriumLab', '*');
+            } else {
+                // 獨立開啟的視窗，使用原本的關閉邏輯
+                if (confirm('確定要關閉此視窗嗎？')) {
+                    if (window.opener) {
                         window.close();
+                    } else {
+                        if (window.history.length > 1) {
+                            window.history.back();
+                        } else {
+                            window.close();
+                        }
                     }
                 }
             }
