@@ -1850,7 +1850,7 @@
             </div>
             <!-- 方程式按鈕容器 - 獨立顯示，橫向滑動 -->
             <div id="equation-buttons" class="equation-buttons-container" style="display: none;">
-                <button class="equation-btn" data-scenario="le-chatelier-fescn" onclick="selectEquation('le-chatelier-fescn')">FeSCN<sup>2+</sup> ⇌ Fe<sup>3+</sup> + SCN<sup>-</sup></button>
+                <button class="equation-btn active" data-scenario="le-chatelier-fescn" onclick="selectEquation('le-chatelier-fescn')">FeSCN<sup>2+</sup> ⇌ Fe<sup>3+</sup> + SCN<sup>-</sup></button>
                 <button class="equation-btn" data-scenario="le-chatelier-acetic" onclick="selectEquation('le-chatelier-acetic')">CH<sub>3</sub>COOH ⇌ CH<sub>3</sub>COO<sup>-</sup> + H<sup>+</sup></button>
                 <button class="equation-btn" data-scenario="le-chatelier" onclick="selectEquation('le-chatelier')">N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub></button>
                 <button class="equation-btn" data-scenario="le-chatelier-nh3" onclick="selectEquation('le-chatelier-nh3')">N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub></button>
@@ -2274,6 +2274,10 @@
                 <!-- Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 操作 -->
                 <div class="control-scenario" data-scenario="le-chatelier-ag2cro4">
                     <div class="controls" id="btnContainer-ag2cro4">
+                        <button class="control-btn" onclick="runDisturbAg2CrO4('ADD_AGNO3', this)">加入 AgNO<sub>3(s)</sub></button>
+                        <button class="control-btn" onclick="runDisturbAg2CrO4('ADD_NH3', this)">加入 NH<sub>3(g)</sub></button>
+                        <button class="control-btn" onclick="runDisturbAg2CrO4('ADD_HNO3', this)">加入 HNO<sub>3</sub></button>
+                        <button class="control-btn" onclick="runDisturbAg2CrO4('DILUTE', this)">加水</button>
                         <button class="control-btn reset-btn" onclick="resetExperimentAg2CrO4()">重置實驗</button>
                     </div>
                 </div>
@@ -2310,6 +2314,18 @@
                     return `${coefficient.toFixed(2)}×10<sup>${exponent}</sup>`;
                 }
                 return value.toFixed(decimals);
+            }
+            
+            // 對於極小的數值（小於 10^-10），直接使用科學記號
+            if (value < 1e-10) {
+                const exponent = Math.floor(Math.log10(value));
+                const coefficient = value / Math.pow(10, exponent);
+                // 保留適當的有效數字
+                if (coefficient >= 1 && coefficient < 10) {
+                    return `${coefficient.toFixed(1)}×10<sup>${exponent}</sup>`;
+                } else {
+                    return `${coefficient.toFixed(2)}×10<sup>${exponent}</sup>`;
+                }
             }
             
             // 使用toExponential來處理，然後格式化
@@ -2504,6 +2520,41 @@
         let initialConcAcetic = 0.1;
         let initialConcAcetate = 0.00134;
         let initialConcH_acetic = 0.00134;
+
+        // Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 場景的變數（參考 FeSCN2+ 的實現）
+        let Ksp_ag2cro4 = 4e-12;  // Ksp = (2×10^-4)² × (1×10^-4) = 4×10^-12
+        let concAg_ag2cro4 = 2e-4;  // [Ag+] = 2×10^-4
+        let concCrO4_ag2cro4 = 1e-4;  // [CrO4²-] = 1×10^-4
+        // 對於沉澱溶解平衡，正反應是溶解（固體→離子），逆反應是沉澱（離子→固體）
+        // vf = kf (固體濃度視為常數)
+        // vr = kr × [Ag+]² × [CrO4²-]
+        // 平衡時：kf = kr × [Ag+]² × [CrO4²-] = kr × Ksp
+        // 所以 kf/kr = Ksp
+        let kf_ag2cro4 = 4e-12;  // 正反應速率常數（溶解）
+        let kr_ag2cro4 = 1.0;  // 逆反應速率常數（沉澱）
+        let history_ag2cro4 = { t: [], ag: [], cro4: [], vf: [], vr: [] };
+        let currentTime_ag2cro4 = 0;
+        let animationFrameId_ag2cro4 = null;
+        let hasOperated_ag2cro4 = false;
+        let lastTime_ag2cro4 = 0;
+        let equilibriumReached_ag2cro4 = false;
+        let equilibriumCounter_ag2cro4 = 0;
+        let equilibriumConcAg_ag2cro4 = 0;
+        let equilibriumConcCrO4_ag2cro4 = 0;
+        let equilibriumV_ag2cro4 = 0;
+        let disturbAg_ag2cro4 = 0;
+        let disturbCrO4_ag2cro4 = 0;
+        let disturbVf_ag2cro4 = 0;
+        let disturbVr_ag2cro4 = 0;
+        let waitingForStart_ag2cro4 = false;
+        let beforeDisturb_ag2cro4 = { ag: 0, cro4: 0, vf: 0, vr: 0, t: 0 };
+        let instantChangeIndex_ag2cro4 = -1;
+        let isPaused_ag2cro4 = false;
+        let currentDisturbMode_ag2cro4 = null;
+        let initialVf_ag2cro4 = 4e-12;  // kf = 4×10^-12
+        let initialVr_ag2cro4 = 1.0 * Math.pow(2e-4, 2) * 1e-4;  // kr * [Ag+]² * [CrO4²-] = 4×10^-12
+        let initialConcAg_ag2cro4 = 2e-4;
+        let initialConcCrO4_ag2cro4 = 1e-4;
 
         // 使用原生 Canvas API 繪製圖表 - 完全重寫
         let cCanvas = null;
@@ -3696,20 +3747,51 @@
                 equilibriumBtn.classList.remove('active');
             }
             
-            // 直接顯示方程式按鈕
-            equationButtons.style.display = 'flex';
-            mainBtn.classList.add('active');
+            // 檢查按鈕當前是否顯示
+            const isVisible = equationButtons.style.display === 'flex';
             
-            // 調整 main-view 的 margin-top，為方程式按鈕容器留出空間
-            if (mainView) {
-                const buttonHeight = equationButtons.offsetHeight || 60;  // 預設高度
-                mainView.style.marginTop = buttonHeight + 'px';
-            }
-            
-            // 如果還沒有選擇任何方程式，預設選擇第一個
-            const activeBtn = document.querySelector('.equation-btn.active');
-            if (!activeBtn) {
-                selectEquation('le-chatelier');
+            if (!isVisible) {
+                // 顯示方程式按鈕
+                equationButtons.style.display = 'flex';
+                mainBtn.classList.add('active');
+                
+                // 調整 main-view 的 margin-top，為方程式按鈕容器留出空間
+                if (mainView) {
+                    const buttonHeight = equationButtons.offsetHeight || 60;  // 預設高度
+                    mainView.style.marginTop = buttonHeight + 'px';
+                }
+                
+                // 如果還沒有選擇任何方程式，預設設置 FeSCN2+ 反應為激活狀態（但不調用 selectEquation，避免隱藏按鈕）
+                const activeBtn = document.querySelector('.equation-btn.active');
+                if (!activeBtn) {
+                    const fescnBtn = document.querySelector('.equation-btn[data-scenario="le-chatelier-fescn"]');
+                    if (fescnBtn) {
+                        fescnBtn.classList.add('active');
+                    }
+                    // 確保 FeSCN2+ 反應內容是顯示的
+                    document.querySelectorAll('.scenario-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    const fescnContent = document.querySelector('.scenario-content[data-scenario="le-chatelier-fescn"]');
+                    if (fescnContent) {
+                        fescnContent.classList.add('active');
+                    }
+                    // 確保 FeSCN2+ 操作介面是顯示的
+                    document.querySelectorAll('.control-scenario').forEach(control => {
+                        control.classList.remove('active');
+                    });
+                    const fescnControl = document.querySelector('.control-scenario[data-scenario="le-chatelier-fescn"]');
+                    if (fescnControl) {
+                        fescnControl.classList.add('active');
+                    }
+                }
+            } else {
+                // 如果已經顯示，點擊時隱藏按鈕
+                equationButtons.style.display = 'none';
+                mainBtn.classList.remove('active');
+                if (mainView) {
+                    mainView.style.marginTop = '0';
+                }
             }
         }
 
@@ -3880,6 +3962,28 @@
             if (scenario === 'le-chatelier-fescn') {
                 setTimeout(() => {
                     resetExperimentFeSCN();
+                }, 100);
+            }
+            
+            // 如果是 le-chatelier-ag2cro4 場景，初始化
+            if (scenario === 'le-chatelier-ag2cro4') {
+                setTimeout(() => {
+                    resetExperimentAg2CrO4();
+                    // 初始化記錄初始平衡狀態
+                    currentTime_ag2cro4 = 0;
+                    for(let i = 0; i < 10; i++) {
+                        recordAg2CrO4();
+                    }
+                    while (currentTime_ag2cro4 < 2.5) {
+                        recordAg2CrO4();
+                    }
+                    const Q = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+                    updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
+                    updateUIAg2CrO4();
+                    document.querySelectorAll('#btnContainer-ag2cro4 .control-btn:not(.reset-btn)').forEach(b => {
+                        b.disabled = false;
+                        b.classList.remove('active');
+                    });
                 }, 100);
             }
         }
@@ -6857,44 +6961,481 @@
             }
         }
         
-        function resetExperimentAg2CrO4() {
-            const statusEl = document.getElementById('status-ag2cro4');
-            if (statusEl) {
-                statusEl.textContent = "原平衡：Q＝K";
-                statusEl.style.color = "#27ae60";
-                statusEl.style.borderColor = "#27ae60";
-                statusEl.style.cursor = "default";
-                statusEl.title = "";
+        // Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 的完整實現（參考 FeSCN2+）
+        function recordAg2CrO4() {
+            let vf, vr;
+            if (equilibriumReached_ag2cro4 && equilibriumV_ag2cro4 > 0) {
+                vf = equilibriumV_ag2cro4;
+                vr = equilibriumV_ag2cro4;
+            } else {
+                vf = kf_ag2cro4;  // 正反應：固體溶解，速率常數
+                vr = kr_ag2cro4 * Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;  // 逆反應：沉澱
             }
+            history_ag2cro4.t.push(currentTime_ag2cro4.toFixed(1));
+            history_ag2cro4.ag.push(parseFloat(concAg_ag2cro4.toFixed(6)));
+            history_ag2cro4.cro4.push(parseFloat(concCrO4_ag2cro4.toFixed(6)));
+            history_ag2cro4.vf.push(parseFloat(vf.toFixed(6)));
+            history_ag2cro4.vr.push(parseFloat(vr.toFixed(6)));
+            currentTime_ag2cro4 += 0.2;
+            if (currentTime_ag2cro4 > 30.3) currentTime_ag2cro4 = 30.3;
+        }
+
+        function animateAg2CrO4(timestamp) {
+            if (!lastTime_ag2cro4) lastTime_ag2cro4 = timestamp;
+            if (isPaused_ag2cro4) {
+                if (animationFrameId_ag2cro4) {
+                    animationFrameId_ag2cro4 = requestAnimationFrame(animateAg2CrO4);
+                }
+                return;
+            }
+            const Q = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+            const diff = Math.abs(Q - Ksp_ag2cro4);
+            const ratio = diff / Ksp_ag2cro4;
+            const timeFromStart = currentTime_ag2cro4 - 2.5;
+            // 使用較大的步進間隔，讓變化更平滑，時間更長
+            let stepInterval = 100;  // 從 80 增加到 100
+            if (ratio < 0.1 && ratio > 0.001) {
+                stepInterval = 100 - (0.1 - ratio) / 0.1 * 60;  // 調整範圍
+                stepInterval = Math.max(40, Math.min(100, stepInterval));  // 最小間隔也增加
+            }
+            // 接近平衡時不要過快加速
+            if (timeFromStart > 15.0 && ratio > 0.01) {
+                stepInterval = stepInterval * 0.8;  // 從 0.7 改為 0.8，減慢加速
+            }
+            if (timestamp - lastTime_ag2cro4 >= stepInterval) {
+                stepAg2CrO4();
+                lastTime_ag2cro4 = timestamp;
+            }
+            if (animationFrameId_ag2cro4 && !isPaused_ag2cro4) {
+                animationFrameId_ag2cro4 = requestAnimationFrame(animateAg2CrO4);
+            }
+        }
+
+        function stepAg2CrO4() {
+            if (equilibriumReached_ag2cro4) {
+                equilibriumCounter_ag2cro4++;
+                if (equilibriumCounter_ag2cro4 <= 10) {
+                    concAg_ag2cro4 = equilibriumConcAg_ag2cro4;
+                    concCrO4_ag2cro4 = equilibriumConcCrO4_ag2cro4;
+                    recordAg2CrO4();
+                    updateUIAg2CrO4();
+                } else {
+                    if (animationFrameId_ag2cro4) {
+                        cancelAnimationFrame(animationFrameId_ag2cro4);
+                        animationFrameId_ag2cro4 = null;
+                    }
+                    const statusEl = document.getElementById('status-ag2cro4');
+                    statusEl.textContent = "新平衡：Q＝K";
+                    statusEl.style.color = "#27ae60";
+                    statusEl.style.borderColor = "#27ae60";
+                    statusEl.style.cursor = "default";
+                    statusEl.title = "";
+                    const directionDisplay = document.getElementById('direction-display-ag2cro4');
+                    if (directionDisplay) directionDisplay.style.display = 'none';
+                    equilibriumReached_ag2cro4 = false;
+                    equilibriumCounter_ag2cro4 = 0;
+                    isPaused_ag2cro4 = false;
+                }
+                return;
+            }
+
+            // 核心變更：計算 6 秒內的進度 (0 到 1)
+            const duration = 6.0; 
+            const elapsed = currentTime_ag2cro4 - 2.5; 
+            const progress = Math.min(1.0, elapsed / duration);
+
+            // 等速(線性)轉換濃度數字
+            concAg_ag2cro4 = disturbAg_ag2cro4 + (equilibriumConcAg_ag2cro4 - disturbAg_ag2cro4) * progress;
+            concCrO4_ag2cro4 = disturbCrO4_ag2cro4 + (equilibriumConcCrO4_ag2cro4 - disturbCrO4_ag2cro4) * progress;
+
+            recordAg2CrO4();
+            const currentQ = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+            updateReactionArrowsAg2CrO4(currentQ, Ksp_ag2cro4);
+            updateUIAg2CrO4();
+
+            if (progress >= 1.0) {
+                equilibriumReached_ag2cro4 = true;
+                equilibriumCounter_ag2cro4 = 0;
+                concAg_ag2cro4 = equilibriumConcAg_ag2cro4;
+                concCrO4_ag2cro4 = equilibriumConcCrO4_ag2cro4;
+                equilibriumV_ag2cro4 = kf_ag2cro4; 
+            }
+        }
+
+        function runDisturbAg2CrO4(mode, btn) {
+            // 如果已經操作過且達到新平衡，不能再操作
+            if (hasOperated_ag2cro4 && equilibriumReached_ag2cro4 && equilibriumCounter_ag2cro4 > 10) return;
+            // 如果動畫正在運行且沒有暫停，不能操作
+            if (animationFrameId_ag2cro4 && !isPaused_ag2cro4) return;
+            if (waitingForStart_ag2cro4) return;
+            
+            hasOperated_ag2cro4 = true;
+            document.querySelectorAll('#btnContainer-ag2cro4 .control-btn:not(.reset-btn)').forEach(b => {
+                b.classList.remove('active');
+                b.disabled = true;
+            });
+            if (btn) btn.classList.add('active');
+            
+            // 記錄破壞前狀態
+            beforeDisturb_ag2cro4 = {
+                ag: concAg_ag2cro4,
+                cro4: concCrO4_ag2cro4,
+                t: currentTime_ag2cro4
+            };
+            
+            equilibriumReached_ag2cro4 = false;
+            currentDisturbMode_ag2cro4 = mode;
+            
+            // 應用瞬間破壞
+            let factorName = '';
+            switch(mode) {
+                case 'ADD_AGNO3': concAg_ag2cro4 *= 2; factorName = '加入 AgNO₃(s)'; break;
+                case 'ADD_NH3': concAg_ag2cro4 *= 0.5; factorName = '加入 NH₃(g)'; break;
+                case 'ADD_HNO3': concCrO4_ag2cro4 *= 0.5; factorName = '加入 HNO₃'; break;
+                case 'DILUTE': concAg_ag2cro4 *= 0.5; concCrO4_ag2cro4 *= 0.5; factorName = '加水'; break;
+            }
+
+            // --- 新邏輯：精確求解新平衡目標 ---
+            disturbAg_ag2cro4 = concAg_ag2cro4;
+            disturbCrO4_ag2cro4 = concCrO4_ag2cro4;
+            
+            // 求解 (A+2x)^2 * (C+x) = Ksp
+            let low = -1, high = 1; 
+            if ((Math.pow(disturbAg_ag2cro4, 2) * disturbCrO4_ag2cro4) > Ksp_ag2cro4) {
+                low = -disturbCrO4_ag2cro4 * 0.99; high = 0; // 向左移
+            } else {
+                low = 0; high = 1.0; // 向右移
+            }
+
+            for(let i=0; i<100; i++) {
+                let x = (low + high) / 2;
+                let testQ = Math.pow(disturbAg_ag2cro4 + 2*x, 2) * (disturbCrO4_ag2cro4 + x);
+                if (testQ > Ksp_ag2cro4) high = x; else low = x;
+            }
+            let finalX = (low + high) / 2;
+            equilibriumConcAg_ag2cro4 = disturbAg_ag2cro4 + 2 * finalX;
+            equilibriumConcCrO4_ag2cro4 = disturbCrO4_ag2cro4 + finalX;
+
+            // 記錄破壞瞬間的速率（用於箭頭起始長度計算）
+            disturbVf_ag2cro4 = kf_ag2cro4;
+            disturbVr_ag2cro4 = kr_ag2cro4 * Math.pow(disturbAg_ag2cro4, 2) * disturbCrO4_ag2cro4;
+            // --------------------------------
+
+            if (currentTime_ag2cro4 < 2.5) currentTime_ag2cro4 = 2.5;
+            instantChangeIndex_ag2cro4 = history_ag2cro4.t.length;
+            recordAg2CrO4();
+
+            waitingForStart_ag2cro4 = true;
+            const Q = Math.pow(disturbAg_ag2cro4, 2) * disturbCrO4_ag2cro4;
+            updateStatusOnlyAg2CrO4(Q, Ksp_ag2cro4);
+            updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
+            
+            const statusEl = document.getElementById('status-ag2cro4');
+            statusEl.style.cursor = "pointer";
+            statusEl.title = "點擊開始平衡移動";
+            updateEquilibriumTableAg2CrO4(mode, factorName, Q, Ksp_ag2cro4);
+        }
+
+        function startEquilibriumMovementAg2CrO4() {
+            const statusEl = document.getElementById('status-ag2cro4');
+            if (!statusEl) return;
+            if (statusEl.textContent.includes('新平衡') && !statusEl.textContent.includes('平衡破壞')) {
+                return;
+            }
+            if (equilibriumReached_ag2cro4 && equilibriumCounter_ag2cro4 > 10) {
+                return;
+            }
+            if (waitingForStart_ag2cro4) {
+                waitingForStart_ag2cro4 = false;
+                isPaused_ag2cro4 = false;
+                if (currentTime_ag2cro4 < 2.5) currentTime_ag2cro4 = 2.5;
+                lastTime_ag2cro4 = 0;
+                equilibriumReached_ag2cro4 = false;
+                equilibriumCounter_ag2cro4 = 0;
+                const Q = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+                updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
+                statusEl.style.cursor = "pointer";
+                statusEl.title = "點擊暫停";
+                statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                stepAg2CrO4();
+                animationFrameId_ag2cro4 = requestAnimationFrame(animateAg2CrO4);
+                return;
+            }
+            if (hasOperated_ag2cro4) {
+                if (isPaused_ag2cro4) {
+                    isPaused_ag2cro4 = false;
+                    statusEl.textContent = statusEl.textContent.replace(" (暫停中)", "");
+                    statusEl.title = "點擊暫停";
+                    lastTime_ag2cro4 = 0;
+                    animationFrameId_ag2cro4 = requestAnimationFrame(animateAg2CrO4);
+                } else {
+                    isPaused_ag2cro4 = true;
+                    statusEl.textContent = statusEl.textContent + " (暫停中)";
+                    statusEl.title = "點擊繼續";
+                    if (animationFrameId_ag2cro4) {
+                        cancelAnimationFrame(animationFrameId_ag2cro4);
+                        animationFrameId_ag2cro4 = null;
+                    }
+                }
+                updateUIAg2CrO4();
+            }
+        }
+
+        function resetExperimentAg2CrO4() {
+            if (animationFrameId_ag2cro4) {
+                cancelAnimationFrame(animationFrameId_ag2cro4);
+                animationFrameId_ag2cro4 = null;
+            }
+            concAg_ag2cro4 = initialConcAg_ag2cro4;
+            concCrO4_ag2cro4 = initialConcCrO4_ag2cro4;
+            kf_ag2cro4 = 4e-12;
+            kr_ag2cro4 = 1.0;
+            Ksp_ag2cro4 = 4e-12;
+            currentTime_ag2cro4 = 0;
+            hasOperated_ag2cro4 = false;
+            lastTime_ag2cro4 = 0;
+            equilibriumReached_ag2cro4 = false;
+            equilibriumCounter_ag2cro4 = 0;
+            equilibriumConcAg_ag2cro4 = 0;
+            equilibriumConcCrO4_ag2cro4 = 0;
+            equilibriumV_ag2cro4 = 0;
+            waitingForStart_ag2cro4 = false;
+            beforeDisturb_ag2cro4 = { ag: 0, cro4: 0, vf: 0, vr: 0, t: 0 };
+            instantChangeIndex_ag2cro4 = -1;
+            isPaused_ag2cro4 = false;
+            currentDisturbMode_ag2cro4 = null;
+            history_ag2cro4 = { t: [], ag: [], cro4: [], vf: [], vr: [] };
+            initialVf_ag2cro4 = 4e-12;
+            initialVr_ag2cro4 = 1.0 * Math.pow(2e-4, 2) * 1e-4;
+            document.querySelectorAll('#btnContainer-ag2cro4 .control-btn').forEach(b => {
+                b.disabled = false;
+                b.classList.remove('active');
+            });
+            const statusEl = document.getElementById('status-ag2cro4');
+            statusEl.textContent = "原平衡：Q＝K";
+            statusEl.style.color = "#27ae60";
+            statusEl.style.borderColor = "#27ae60";
+            statusEl.style.cursor = "default";
+            statusEl.title = "";
             const tbody = document.getElementById('equilibrium-table-body-ag2cro4');
             if (tbody) {
                 tbody.innerHTML = '<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>';
             }
+            // 初始化記錄初始平衡狀態
+            currentTime_ag2cro4 = 0;
+            for(let i = 0; i < 10; i++) {
+                recordAg2CrO4();
+            }
+            while (currentTime_ag2cro4 < 2.5) {
+                recordAg2CrO4();
+            }
+            const Q = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+            updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
+            updateUIAg2CrO4();
         }
-        
-        function startEquilibriumMovementAg2CrO4() {
-            const statusEl = document.getElementById('status-ag2cro4');
-            if (!statusEl) return;
+
+        function updateUIAg2CrO4() {
+            const now = performance.now();
+            if (now - lastUIUpdate < 8) return;
+            lastUIUpdate = now;
             
-            // 如果狀態顯示「新平衡」，不能再點擊
-            if (statusEl.textContent.includes('新平衡') && !statusEl.textContent.includes('平衡破壞')) {
+            const kFormulaTop = document.getElementById('k-formula-top-ag2cro4');
+            if (kFormulaTop) {
+                kFormulaTop.innerHTML = `(2×10<sup>-4</sup>)<sup>2</sup> × 1×10<sup>-4</sup>`;
+            }
+            document.getElementById('k-val-ag2cro4').innerHTML = formatConcentration(Ksp_ag2cro4);
+            
+            if (waitingForStart_ag2cro4) {
+                const Q = Math.pow(disturbAg_ag2cro4, 2) * disturbCrO4_ag2cro4;
+                updateStatusOnlyAg2CrO4(Q, Ksp_ag2cro4);
+                updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
                 return;
             }
             
-            // 如果正在等待開始或正在移動，切換狀態
-            if (statusEl.textContent.includes('平衡破壞')) {
-                // 開始平衡移動
-                statusEl.textContent = "平衡移動中：Q≠K";
-                statusEl.style.color = "#e67e22";
-                statusEl.style.borderColor = "#e67e22";
-            } else if (statusEl.textContent.includes('平衡移動中')) {
-                // 達到新平衡
+            const Q = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+            const qFormulaTop = document.getElementById('q-formula-top-ag2cro4');
+            if (qFormulaTop) {
+                qFormulaTop.innerHTML = `(${formatConcentration(concAg_ag2cro4)})<sup>2</sup> × ${formatConcentration(concCrO4_ag2cro4)}`;
+            }
+            document.getElementById('q-val-ag2cro4').innerHTML = formatConcentration(Q);
+            
+            updateReactionArrowsAg2CrO4(Q, Ksp_ag2cro4);
+            
+            const statusEl = document.getElementById('status-ag2cro4');
+            if (equilibriumReached_ag2cro4) {
                 statusEl.textContent = "新平衡：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
                 statusEl.style.cursor = "default";
-                statusEl.title = "";
+            } else {
+                const dirText = getDirectionTextAg2CrO4(Q, Ksp_ag2cro4);
+                const relativeDiff = Math.abs(Q - Ksp_ag2cro4) / Ksp_ag2cro4;
+                if (relativeDiff > 0.01) {
+                    if (isPaused_ag2cro4) {
+                        statusEl.textContent = "平衡移動中" + dirText + " (暫停中)";
+                        statusEl.title = "點擊繼續";
+                    } else {
+                        statusEl.textContent = "平衡移動中" + dirText;
+                        statusEl.title = "點擊暫停";
+                    }
+                    statusEl.style.color = "#e67e22";
+                    statusEl.style.borderColor = "#e67e22";
+                    statusEl.style.cursor = "pointer";
+                } else {
+                    if (!hasOperated_ag2cro4) {
+                        statusEl.textContent = "原平衡：Q＝K";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
+                    } else {
+                        statusEl.textContent = "新平衡：Q＝K";
+                        statusEl.style.color = "#27ae60";
+                        statusEl.style.borderColor = "#27ae60";
+                        statusEl.style.cursor = "default";
+                    }
+                }
             }
+        }
+
+        function updateStatusOnlyAg2CrO4(Q, K) {
+            const qFormulaTop = document.getElementById('q-formula-top-ag2cro4');
+            if (qFormulaTop) {
+                qFormulaTop.innerHTML = `(${formatConcentration(disturbAg_ag2cro4)})<sup>2</sup> × ${formatConcentration(disturbCrO4_ag2cro4)}`;
+            }
+            document.getElementById('q-val-ag2cro4').innerHTML = formatConcentration(Q);
+            
+            const statusEl = document.getElementById('status-ag2cro4');
+            const dirText = getDirectionTextAg2CrO4(Q, K);
+            const relativeDiff = Math.abs(Q - K) / K;
+            
+            if (relativeDiff < 0.01) {
+                statusEl.textContent = "平衡破壞：Q＝K";
+                statusEl.style.color = "#27ae60";
+                statusEl.style.borderColor = "#27ae60";
+            } else {
+                statusEl.textContent = "平衡破壞" + dirText;
+                statusEl.style.color = "#c0392b";
+                statusEl.style.borderColor = "#c0392b";
+            }
+        }
+
+        function getDirectionTextAg2CrO4(Q, K) {
+            const ratio = Q / K;
+            if (Math.abs(ratio - 1) < 0.01) return '：Q＝K';
+            if (Q > K) return '：Q＞K，反應向左';
+            return '：Q＜K，反應向右';
+        }
+
+        function updateReactionArrowsAg2CrO4(Q, K) {
+            const arrowLeft = document.getElementById('arrow-left-ag2cro4');
+            const arrowRight = document.getElementById('arrow-right-ag2cro4');
+            if (!arrowLeft || !arrowRight) return;
+            
+            const mobile = isMobile();
+            const baseLength = mobile ? 80 : 120;
+            const maxLength = mobile ? 220 : 360;
+            const minLength = mobile ? 30 : 50;
+
+            // 初始狀態（未操作過）或已達到平衡時，兩個箭頭等長
+            if (!hasOperated_ag2cro4 || equilibriumReached_ag2cro4) {
+                arrowRight.style.width = baseLength + 'px';
+                arrowLeft.style.width = baseLength + 'px';
+                return;
+            }
+
+            // 計算初始比例與長度
+            function getLenFromRate(rate, initRate) {
+                let ratio = rate / initRate;
+                if (ratio < 1.0) return minLength + (baseLength - minLength) * ((ratio - 0.1) / 0.9);
+                return baseLength + (maxLength - baseLength) * Math.min(1.0, (ratio - 1.0) / 2.0);
+            }
+
+            // 破壞瞬間的長度
+            const startLenR = getLenFromRate(disturbVf_ag2cro4, initialVf_ag2cro4);
+            const startLenL = getLenFromRate(disturbVr_ag2cro4, initialVr_ag2cro4);
+
+            // 根據 6 秒進度線性轉換長度到 baseLength
+            const elapsed = Math.max(0, currentTime_ag2cro4 - 2.5);
+            const progress = Math.min(1.0, elapsed / 6.0);
+
+            let currentLenR = startLenR + (baseLength - startLenR) * progress;
+            let currentLenL = startLenL + (baseLength - startLenL) * progress;
+
+            arrowRight.style.width = Math.max(minLength, Math.min(maxLength, currentLenR)) + 'px';
+            arrowLeft.style.width = Math.max(minLength, Math.min(maxLength, currentLenL)) + 'px';
+            
+        }
+
+        function updateEquilibriumTableAg2CrO4(mode, factorName, Q, K) {
+            const tbody = document.getElementById('equilibrium-table-body-ag2cro4');
+            if (!tbody) return;
+            
+            let direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+            
+            function getArrow(type, isSmall) {
+                if (type === 'UP') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-up"></span>`;
+                if (type === 'DOWN') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-down"></span>`;
+                return '—';
+            }
+            function formatArrow(inst, sub) {
+                if (inst === 'NONE' && sub === 'NONE') return '— —';
+                return `${getArrow(inst, false)} ${getArrow(sub, true)}`;
+            }
+
+            let rF = '—', rR = '—';
+            let cAg = '—', nAg = '—';
+            let cCrO4 = '—', nCrO4 = '—';
+            
+            const arrowUpHtml = '<span class="rate-arrow arrow-up"></span>';
+            const arrowDownHtml = '<span class="rate-arrow arrow-down"></span>';
+            const arrowDash = '—';
+            
+            // 計算擾動前後的速率變化
+            const originalVf = beforeDisturb_ag2cro4.vf;
+            const originalVr = beforeDisturb_ag2cro4.vr;
+            const newVf = kf_ag2cro4;  // 正反應速率不變（固體濃度視為常數）
+            const newVr = kr_ag2cro4 * Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;  // 擾動後的逆反應速率
+            
+            if (mode === 'ADD_AGNO3') {
+                // 加入 AgNO3(s)，[Ag+] 變為 2 倍，Q 變為 4 倍，Q > Ksp，反應向左（沉澱）
+                cAg = formatArrow('UP', 'DOWN'); nAg = formatArrow('UP', 'DOWN');
+                cCrO4 = formatArrow('NONE', 'UP'); nCrO4 = formatArrow('NONE', 'UP');
+                // 速率：正反應不變，逆反應增加（因為 [Ag+]² 增加）
+                rF = arrowDash;  // 正反應速率不變
+                rR = arrowUpHtml;  // 逆反應速率增加
+            } else if (mode === 'ADD_NH3') {
+                // 加入 NH3(g)，[Ag+] 變為一半，Q 變為 1/4，Q < Ksp，反應向右（溶解）
+                cAg = formatArrow('DOWN', 'UP'); nAg = formatArrow('DOWN', 'UP');
+                cCrO4 = formatArrow('NONE', 'UP'); nCrO4 = formatArrow('NONE', 'UP');
+                // 速率：正反應不變，逆反應減少（因為 [Ag+]² 減少）
+                rF = arrowDash;  // 正反應速率不變
+                rR = arrowDownHtml;  // 逆反應速率減少
+            } else if (mode === 'ADD_HNO3') {
+                // 加入 HNO3，[CrO4²⁻] 變為一半，Q 變為 1/2，Q < Ksp，反應向右（溶解）
+                cAg = formatArrow('NONE', 'UP'); nAg = formatArrow('NONE', 'UP');
+                cCrO4 = formatArrow('DOWN', 'UP'); nCrO4 = formatArrow('DOWN', 'UP');
+                // 速率：正反應不變，逆反應減少（因為 [CrO4²⁻] 減少）
+                rF = arrowDash;  // 正反應速率不變
+                rR = arrowDownHtml;  // 逆反應速率減少
+            } else if (mode === 'DILUTE') {
+                // 加水，濃度減半，Q 變為 1/4，Q < Ksp，反應向右（溶解），新平衡會回到原來濃度
+                cAg = formatArrow('DOWN', 'UP'); nAg = formatArrow('NONE', 'UP');
+                cCrO4 = formatArrow('DOWN', 'UP'); nCrO4 = formatArrow('NONE', 'UP');
+                // 速率：正反應不變，逆反應減少（因為濃度都減半）
+                rF = arrowDash;  // 正反應速率不變
+                rR = arrowDownHtml;  // 逆反應速率減少
+            }
+
+            const row = tbody.querySelector('tr') || tbody.insertRow();
+            row.innerHTML = `
+                <td>${factorName}</td>
+                <td>${rF}</td>
+                <td>${rR}</td>
+                <td>${direction}</td>
+                <td>${cAg}</td><td>${nAg}</td>
+                <td>${cCrO4}</td><td>${nCrO4}</td>
+                <td>不變</td>
+            `;
         }
 
         // 頁面載入時初始化
@@ -6995,6 +7536,18 @@
                     statusAg2CrO4.style.color = "#27ae60";
                     statusAg2CrO4.style.borderColor = "#27ae60";
                 }
+                
+                // 初始化 Ag2CrO4 的初始記錄
+                currentTime_ag2cro4 = 0;
+                for(let i = 0; i < 10; i++) {
+                    recordAg2CrO4();
+                }
+                while (currentTime_ag2cro4 < 2.5) {
+                    recordAg2CrO4();
+                }
+                const Q_ag2cro4 = Math.pow(concAg_ag2cro4, 2) * concCrO4_ag2cro4;
+                updateReactionArrowsAg2CrO4(Q_ag2cro4, Ksp_ag2cro4);
+                updateUIAg2CrO4();
 
                 // 初始化 NH3 場景的 K 和 Q 顯示
                 const kFormulaTopNH3 = document.getElementById('k-formula-top-nh3');
@@ -7014,23 +7567,14 @@
                 document.getElementById('q-num-nh3').innerHTML = `[NH<sub>3</sub>]<sup>2</sup>`;
                 document.getElementById('q-den-nh3').innerHTML = `[N<sub>2</sub>][H<sub>2</sub>]<sup>3</sup>`;
                 
-                // 顯示方程式按鈕（因為勒沙特列原理是預設開啟的）
+                // 確保方程式按鈕初始狀態為隱藏（只有在點擊「勒沙特列原理展示」按鈕後才顯示）
                 const equationButtons = document.getElementById('equation-buttons');
                 if (equationButtons) {
-                    equationButtons.style.display = 'flex';
-                }
-
-                // 設置 FeSCN 方程式按鈕為激活狀態
-                const firstEquationBtn = document.querySelector('.equation-btn[data-scenario="le-chatelier-fescn"]');
-                if (firstEquationBtn) {
-                    firstEquationBtn.classList.add('active');
+                    equationButtons.style.display = 'none';
                 }
                 
-                // 設置勒沙特列原理主按鈕為激活狀態
-                const mainLeBtn = document.getElementById('le-chatelier-main-btn');
-                if (mainLeBtn) {
-                    mainLeBtn.classList.add('active');
-                }
+                // 確保預設顯示 FeSCN2+ 反應（HTML 中已經設置為 active）
+                // 不需要設置按鈕為激活狀態，因為按鈕初始是隱藏的
             }, 100);
         });
         
