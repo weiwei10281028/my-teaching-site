@@ -1974,6 +1974,47 @@
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
                         <div id="status-nh3" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
                     </div>
+                    
+                    <!-- 可橫向滑動的表格區域 (NH3 反應) -->
+                    <div class="table-card">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>改變因素</th>
+                                        <th>r<sub>正</sub></th>
+                                        <th>r<sub>逆</sub></th>
+                                        <th>方向</th>
+                                        <th>P<sub>t</sub></th>
+                                        <th>P<sub>N<sub>2</sub></sub></th>
+                                        <th>n<sub>N<sub>2</sub></sub></th>
+                                        <th>P<sub>H<sub>2</sub></sub></th>
+                                        <th>n<sub>H<sub>2</sub></sub></th>
+                                        <th>P<sub>NH<sub>3</sub></sub></th>
+                                        <th>n<sub>NH<sub>3</sub></sub></th>
+                                        <th>K<sub>p</sub></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equilibrium-table-body-nh3">
+                                    <tr>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div id="direction-display-nh3" class="direction-display" style="display: none;"></div>
 
                 </div>
@@ -3063,6 +3104,203 @@
             `;
         }
         
+        // 更新平衡表格內容 (NH3 反應)
+        function updateEquilibriumTableNH3(mode, Q, K) {
+            const tbody = document.getElementById('equilibrium-table-body-nh3');
+            if (!tbody) return;
+            
+            const originalVf = beforeDisturb_nh3.vf;
+            const originalVr = beforeDisturb_nh3.vr;
+            const originalN2 = beforeDisturb_nh3.n2;
+            const originalH2 = beforeDisturb_nh3.h2;
+            const originalNH3 = beforeDisturb_nh3.nh3;
+            const originalPt = originalN2 + originalH2 + originalNH3;
+            
+            let newN2, newH2, newNH3, newVf, newVr, newPt;
+            let direction = '';
+            let factorName = '';
+            let pN2Change = '', nN2Change = '';
+            let pH2Change = '', nH2Change = '';
+            let pNH3Change = '', nNH3Change = '';
+            let ptChange = '';
+            let kChange = '不變';
+            let rForwardArrow = '';
+            let rReverseArrow = '';
+            
+            function formatArrowChange(instantChange, subsequentChange) {
+                function getArrow(type, isSmall) {
+                    if (type === 'UP') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-up"></span>`;
+                    if (type === 'DOWN') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-down"></span>`;
+                    return '—';
+                }
+                const instant = getArrow(instantChange, false);
+                const subsequent = getArrow(subsequentChange, true);
+                if (instantChange === 'NONE' && subsequentChange === 'NONE') return '— —';
+                return `${instant} ${subsequent}`;
+            }
+
+            // 預測新平衡（簡化邏輯）
+            const isRight = Q < K;
+            const isLeft = Q > K;
+            direction = isRight ? '往右' : (isLeft ? '往左' : '不移動');
+
+            // 根據模式設定內容
+            switch(mode) {
+                case 'ADD_N2':
+                    factorName = '增加 1 atm N₂';
+                    pN2Change = formatArrowChange('UP', 'DOWN');
+                    nN2Change = formatArrowChange('UP', 'DOWN');
+                    pH2Change = formatArrowChange('NONE', 'DOWN');
+                    nH2Change = formatArrowChange('NONE', 'DOWN');
+                    pNH3Change = formatArrowChange('NONE', 'UP');
+                    nNH3Change = formatArrowChange('NONE', 'UP');
+                    ptChange = formatArrowChange('UP', 'DOWN');
+                    break;
+                case 'SUB_N2':
+                    factorName = '減少 1 atm N₂';
+                    pN2Change = formatArrowChange('DOWN', 'UP');
+                    nN2Change = formatArrowChange('DOWN', 'UP');
+                    pH2Change = formatArrowChange('NONE', 'UP');
+                    nH2Change = formatArrowChange('NONE', 'UP');
+                    pNH3Change = formatArrowChange('NONE', 'DOWN');
+                    nNH3Change = formatArrowChange('NONE', 'DOWN');
+                    ptChange = formatArrowChange('DOWN', 'UP');
+                    break;
+                case 'ADD_H2':
+                    factorName = '增加 1.5 atm H₂';
+                    pN2Change = formatArrowChange('NONE', 'DOWN');
+                    nN2Change = formatArrowChange('NONE', 'DOWN');
+                    pH2Change = formatArrowChange('UP', 'DOWN');
+                    nH2Change = formatArrowChange('UP', 'DOWN');
+                    pNH3Change = formatArrowChange('NONE', 'UP');
+                    nNH3Change = formatArrowChange('NONE', 'UP');
+                    ptChange = formatArrowChange('UP', 'DOWN');
+                    break;
+                case 'SUB_H2':
+                    factorName = '減少 1.5 atm H₂';
+                    pN2Change = formatArrowChange('NONE', 'UP');
+                    nN2Change = formatArrowChange('NONE', 'UP');
+                    pH2Change = formatArrowChange('DOWN', 'UP');
+                    nH2Change = formatArrowChange('DOWN', 'UP');
+                    pNH3Change = formatArrowChange('NONE', 'DOWN');
+                    nNH3Change = formatArrowChange('NONE', 'DOWN');
+                    ptChange = formatArrowChange('DOWN', 'UP');
+                    break;
+                case 'ADD_NH3':
+                    factorName = '增加 1 atm NH₃';
+                    pN2Change = formatArrowChange('NONE', 'UP');
+                    nN2Change = formatArrowChange('NONE', 'UP');
+                    pH2Change = formatArrowChange('NONE', 'UP');
+                    nH2Change = formatArrowChange('NONE', 'UP');
+                    pNH3Change = formatArrowChange('UP', 'DOWN');
+                    nNH3Change = formatArrowChange('UP', 'DOWN');
+                    ptChange = formatArrowChange('UP', 'DOWN');
+                    break;
+                case 'SUB_NH3':
+                    factorName = '減少 1 atm NH₃';
+                    pN2Change = formatArrowChange('NONE', 'DOWN');
+                    nN2Change = formatArrowChange('NONE', 'DOWN');
+                    pH2Change = formatArrowChange('NONE', 'DOWN');
+                    nH2Change = formatArrowChange('NONE', 'DOWN');
+                    pNH3Change = formatArrowChange('DOWN', 'UP');
+                    nNH3Change = formatArrowChange('DOWN', 'UP');
+                    ptChange = formatArrowChange('DOWN', 'UP');
+                    break;
+                case 'V_HALF':
+                    factorName = '體積減半(壓↑)';
+                    pN2Change = formatArrowChange('UP', 'DOWN');
+                    pH2Change = formatArrowChange('UP', 'DOWN');
+                    pNH3Change = formatArrowChange('UP', 'UP');
+                    nN2Change = formatArrowChange('NONE', 'DOWN');
+                    nH2Change = formatArrowChange('NONE', 'DOWN');
+                    nNH3Change = formatArrowChange('NONE', 'UP');
+                    ptChange = formatArrowChange('UP', 'DOWN');
+                    break;
+                case 'V_DOUBLE':
+                    factorName = '體積加倍(壓↓)';
+                    pN2Change = formatArrowChange('DOWN', 'UP');
+                    pH2Change = formatArrowChange('DOWN', 'UP');
+                    pNH3Change = formatArrowChange('DOWN', 'DOWN');
+                    nN2Change = formatArrowChange('NONE', 'UP');
+                    nH2Change = formatArrowChange('NONE', 'UP');
+                    nNH3Change = formatArrowChange('NONE', 'DOWN');
+                    ptChange = formatArrowChange('DOWN', 'UP');
+                    break;
+                case 'HEAT':
+                    factorName = '溫度上升(K↓)';
+                    kChange = '變小';
+                    pN2Change = formatArrowChange('NONE', 'UP');
+                    pH2Change = formatArrowChange('NONE', 'UP');
+                    pNH3Change = formatArrowChange('NONE', 'DOWN');
+                    nN2Change = formatArrowChange('NONE', 'UP');
+                    nH2Change = formatArrowChange('NONE', 'UP');
+                    nNH3Change = formatArrowChange('NONE', 'DOWN');
+                    ptChange = formatArrowChange('NONE', 'UP');
+                    break;
+                case 'COOL':
+                    factorName = '溫度下降(K↑)';
+                    kChange = '變大';
+                    pN2Change = formatArrowChange('NONE', 'DOWN');
+                    pH2Change = formatArrowChange('NONE', 'DOWN');
+                    pNH3Change = formatArrowChange('NONE', 'UP');
+                    nN2Change = formatArrowChange('NONE', 'DOWN');
+                    nH2Change = formatArrowChange('NONE', 'DOWN');
+                    nNH3Change = formatArrowChange('NONE', 'UP');
+                    ptChange = formatArrowChange('NONE', 'DOWN');
+                    break;
+                case 'HE_P':
+                    factorName = '定溫定壓加 He';
+                    pN2Change = formatArrowChange('DOWN', 'UP');
+                    pH2Change = formatArrowChange('DOWN', 'UP');
+                    pNH3Change = formatArrowChange('DOWN', 'DOWN');
+                    nN2Change = formatArrowChange('NONE', 'UP');
+                    nH2Change = formatArrowChange('NONE', 'UP');
+                    nNH3Change = formatArrowChange('NONE', 'DOWN');
+                    ptChange = formatArrowChange('NONE', 'NONE'); // 總壓不變
+                    break;
+                case 'HE_V':
+                    factorName = '定溫定容加 He';
+                    pN2Change = formatArrowChange('NONE', 'NONE');
+                    pH2Change = formatArrowChange('NONE', 'NONE');
+                    pNH3Change = formatArrowChange('NONE', 'NONE');
+                    nN2Change = formatArrowChange('NONE', 'NONE');
+                    nH2Change = formatArrowChange('NONE', 'NONE');
+                    nNH3Change = formatArrowChange('NONE', 'NONE');
+                    ptChange = formatArrowChange('UP', 'NONE');
+                    direction = '不移動';
+                    break;
+            }
+
+            // 速率箭頭
+            const arrowUpHtml = '<span class="rate-arrow arrow-up"></span>';
+            const arrowDownHtml = '<span class="rate-arrow arrow-down"></span>';
+            const arrowDash = '—';
+            
+            // 計算新平衡速率
+            const newEquilibrium = calculateNewEquilibriumNH3(disturbN2_nh3, disturbH2_nh3, disturbNH3_nh3, K_nh3);
+            const nf = kf_nh3 * newEquilibrium.n2 * Math.pow(newEquilibrium.h2, 3);
+            const nr = kr_nh3 * Math.pow(newEquilibrium.nh3, 2);
+            
+            rForwardArrow = nf > originalVf ? arrowUpHtml : (nf < originalVf ? arrowDownHtml : arrowDash);
+            rReverseArrow = nr > originalVr ? arrowUpHtml : (nr < originalVr ? arrowDownHtml : arrowDash);
+
+            const row = tbody.querySelector('tr') || tbody.insertRow();
+            row.innerHTML = `
+                <td>${factorName}</td>
+                <td>${rForwardArrow}</td>
+                <td>${rReverseArrow}</td>
+                <td>${direction}</td>
+                <td>${ptChange}</td>
+                <td>${pN2Change}</td>
+                <td>${nN2Change}</td>
+                <td>${pH2Change}</td>
+                <td>${nH2Change}</td>
+                <td>${pNH3Change}</td>
+                <td>${nNH3Change}</td>
+                <td>${kChange}</td>
+            `;
+        }
+
         // 開始/暫停平衡移動
         function startEquilibriumMovement() {
             const statusEl = document.getElementById('status');
@@ -4130,6 +4368,9 @@
             statusEl.style.cursor = "pointer";
             statusEl.title = "點擊開始平衡移動";
             
+            // 更新表格內容
+            updateEquilibriumTableNH3(mode, Q_nh3, K_nh3);
+            
             // drawChartsNH3();
         }
 
@@ -4268,6 +4509,12 @@
             document.getElementById('status-nh3').textContent = "原平衡";
             document.getElementById('status-nh3').style.color = "#27ae60";
             document.getElementById('status-nh3').style.borderColor = "#27ae60";
+            
+            // 清空表格內容
+            const tbody = document.getElementById('equilibrium-table-body-nh3');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
+            }
             document.getElementById('direction-display-nh3').style.display = 'none';
             
             cCanvas_nh3 = null;
