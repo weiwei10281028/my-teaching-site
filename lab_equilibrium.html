@@ -261,7 +261,7 @@
             display: flex;
             flex-direction: row;
             gap: 12px;
-            padding: 12px 20px;
+            padding: 12px 30px;
             overflow-x: auto;
             overflow-y: hidden;
             scrollbar-width: none;  /* Firefox */
@@ -422,7 +422,12 @@
         
         @media (min-width: 769px) {
             .scenario-content {
-                max-width: 1200px;  /* 電腦版才使用最大寬度限制 */
+                max-width: 100%;  /* 電腦版填滿整個寬度 */
+            }
+            
+            /* 電腦版操作按鈕往下移動，避免被卡掉 */
+            .controls {
+                margin-top: 20px;
             }
         }
 
@@ -605,6 +610,191 @@
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
             align-items: center;
             justify-content: center;
+        }
+
+        /* 表格卡片樣式 - 與 formula-card 相同樣式 */
+        .table-card {
+            width: 100%;
+            margin-top: 15px;
+            background: var(--mineral-bg-light);
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: 1.5px solid var(--mineral-border);
+            box-shadow: 0 2px 8px var(--mineral-shadow-light);
+            box-sizing: border-box; /* 確保寬度計算包含 padding */
+        }
+
+        /* 表格橫向滑動容器 */
+        .table-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
+            /* 隱藏滾動條但保持滑動功能 */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .table-scroll-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* 表格樣式 */
+        .data-table {
+            width: 100%; /* 電腦版填滿寬度 */
+            min-width: 600px; /* 手機版確保表格有最小寬度，觸發橫向滾動 */
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: 0.01em;
+        }
+
+        .data-table thead {
+            background-color: rgba(230, 126, 34, 0.1);
+        }
+
+        .data-table th {
+            padding: 12px 15px;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 2px solid var(--mineral-border);
+            border-right: 1px solid var(--mineral-border);
+            font-weight: 700;
+            color: #000000;
+            white-space: nowrap;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: 0.02em;
+        }
+
+        .data-table th:last-child {
+            border-right: none;
+        }
+
+        .data-table td {
+            padding: 15px; /* 增加上下 padding 並保持對稱，確保置中 */
+            text-align: center;
+            vertical-align: middle; /* 確保內容垂直置中 */
+            border-bottom: 1px solid var(--mineral-border);
+            border-right: 1px solid var(--mineral-border);
+            color: #000000; /* 文字顏色加深至純黑 */
+            font-weight: 600; /* 文字加粗 */
+            white-space: nowrap; /* 防止文字換行，保持橫式排列 */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: 0.01em;
+        }
+        
+        /* 優化下標樣式 */
+        .data-table sub {
+            font-size: 0.75em;
+            vertical-align: baseline;
+            position: relative;
+            bottom: -0.2em;
+            font-weight: inherit;
+        }
+
+        .data-table td:last-child {
+            border-right: none;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: rgba(230, 126, 34, 0.05);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 箭頭樣式：3號針尖型（細長）- 使用 clip-path 創建連體箭頭 */
+        .data-table td .arrow-large,
+        .data-table td .rate-arrow {
+            display: inline-block;
+            vertical-align: middle;
+            clip-path: polygon(50% 0%, 10% 40%, 35% 40%, 35% 100%, 65% 100%, 65% 40%, 90% 40%);
+            width: 0.75em;
+            height: 2.4em;
+            margin: 0 0.2em;
+        }
+
+        .data-table td .arrow-small {
+            display: inline-block;
+            vertical-align: middle;
+            clip-path: polygon(50% 0%, 10% 40%, 35% 40%, 35% 100%, 65% 100%, 65% 40%, 90% 40%);
+            width: 0.46em;
+            height: 1.32em;
+            margin: 0 0.12em;
+            opacity: 0.55; /* 讓小箭頭顏色更淡 */
+        }
+
+        /* 向上箭頭 */
+        .arrow-up {
+            transform: rotate(0deg);
+            background-color: #27ae60; /* 綠色 */
+        }
+
+        /* 向下箭頭 - 旋轉180度 */
+        .arrow-down {
+            transform: rotate(180deg);
+            background-color: #c0392b; /* 紅色 */
+        }
+
+        .data-table td .arrow-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            justify-content: center;
+        }
+
+        /* 手機版表格樣式調整 */
+        @media (max-width: 768px) {
+            .table-card {
+                padding: 15px 18px;
+                margin-top: 12px;
+            }
+
+            .table-scroll-container {
+                /* 手機版確保可以橫向滑動 */
+                -webkit-overflow-scrolling: touch;
+                /* 隱藏滾動條但保持滑動功能 */
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .table-scroll-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .data-table {
+                min-width: 780px; /* 寬度增加 1.2 倍 (原 650px) */
+                font-size: 0.9rem;
+                width: auto; /* 自適應寬度 */
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 12px 25px; /* 增加左右間距，讓格子更寬 */
+                font-size: 0.9rem;
+                white-space: nowrap; /* 確保文字橫式排列，不換行 */
+            }
+        }
+
+        /* 更小的手機螢幕 */
+        @media (max-width: 480px) {
+            .table-card {
+                padding: 12px 15px;
+            }
+
+            .data-table {
+                min-width: 720px; /* 寬度增加 1.2 倍 (原 600px) */
+                font-size: 0.85rem;
+                width: auto; /* 自適應寬度 */
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 20px; /* 增加左右間距 */
+                font-size: 0.85rem;
+                white-space: nowrap; /* 確保文字橫式排列，不換行 */
+            }
         }
 
         /* K和Q置中顯示 */
@@ -859,7 +1049,7 @@
 
         .chart-card > div:first-child {
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 1.2rem;
             margin-bottom: 10px;
             color: var(--mineral-text);
             font-family: 'Inter', sans-serif;
@@ -1710,6 +1900,41 @@
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
                         <div id="status" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
                     </div>
+                    
+                    <!-- 可橫向滑動的表格區域 -->
+                    <div class="table-card">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>改變因素</th>
+                                        <th>r<sub>正</sub></th>
+                                        <th>r<sub>逆</sub></th>
+                                        <th>方向</th>
+                                        <th>[N<sub>2</sub>O<sub>4</sub>]</th>
+                                        <th>n<sub>N<sub>2</sub>O<sub>4</sub></sub></th>
+                                        <th>[NO<sub>2</sub>]</th>
+                                        <th>n<sub>NO<sub>2</sub></sub></th>
+                                        <th>K<sub>平</sub></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equilibrium-table-body">
+                                    <tr>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div id="direction-display" class="direction-display" style="display: none;"></div>
 
                 </div>
@@ -2307,10 +2532,10 @@
             
             if (diff > 0) {
                 // Q 大於 K，平衡向左移動（反應物增加）
-                return '：Q＞K';
+                return '：Q＞K，反應向左';
             } else {
                 // Q 小於 K，平衡向右移動（生成物增加）
-                return '：Q＜K';
+                return '：Q＜K，反應向右';
             }
         }
         
@@ -2591,6 +2816,251 @@
             
             // 重新繪製圖表（顯示瞬間變化的虛線）
             // drawCharts();
+            
+            // 更新表格內容
+            updateEquilibriumTable(mode, Q, K);
+        }
+        
+        // 更新平衡表格內容
+        function updateEquilibriumTable(mode, Q, K) {
+            const tbody = document.getElementById('equilibrium-table-body');
+            if (!tbody) return;
+            
+            // 記錄原平衡的速率（擾動前）
+            const originalVf = beforeDisturb.vf;
+            const originalVr = beforeDisturb.vr;
+            const originalConcA = beforeDisturb.a;
+            const originalConcB = beforeDisturb.b;
+            const originalK = K; // 記錄原始 K 值（在溫度變化前）
+            
+            // 計算新平衡後的濃度和速率
+            // 新平衡時：K = [NO₂]² / [N₂O₄]
+            // 需要預測新平衡時的濃度來計算速率
+            let newConcA, newConcB, newVf, newVr;
+            let direction = '';
+            let factorName = '';
+            let concAChange = '';  // [N₂O₄] 變化（HTML格式）
+            let nAChange = '';     // nN₂O₄ 變化
+            let concBChange = '';  // [NO₂] 變化
+            let nBChange = '';     // nNO₂ 變化
+            let kChange = '';      // K平 變化
+            let rForwardArrow = '';  // r正 箭頭
+            let rReverseArrow = '';  // r逆 箭頭
+            
+            // 輔助函數：生成大小不同的箭頭（使用 CSS 自定義箭頭）
+            function formatArrowChange(instantChange, subsequentChange) {
+                function getArrow(type, isSmall) {
+                    if (type === 'UP') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-up"></span>`;
+                    if (type === 'DOWN') return `<span class="${isSmall ? 'arrow-small' : 'arrow-large'} arrow-down"></span>`;
+                    return '—';
+                }
+
+                const instant = getArrow(instantChange, false);
+                const subsequent = getArrow(subsequentChange, true);
+                
+                if (instantChange === 'NONE' && subsequentChange === 'NONE') return '— —';
+                return `${instant} ${subsequent}`;
+            }
+            
+            // 計算新平衡濃度（預測）
+            // 對於 N₂O₄ ⇌ 2NO₂，新平衡時 K = [NO₂_new]² / [N₂O₄_new]
+            // 根據操作類型和方向預測新平衡濃度
+            if (Q > K) {
+                // 反應向左：生成更多 N₂O₄，消耗 NO₂
+                if (mode === 'ADD_B') {
+                    // 增加 NO₂：新平衡時 NO₂ 比原平衡高但比破壞瞬間低，N₂O₄ 比原平衡高
+                    newConcB = originalConcB + 0.3;
+                    newConcA = Math.pow(newConcB, 2) / K;
+                } else if (mode === 'ADD_A') {
+                    // 增加 N₂O₄：新平衡時兩者都會增加
+                    newConcA = originalConcA + 0.5;
+                    newConcB = Math.sqrt(K * newConcA);
+                } else if (mode === 'SUB_A') {
+                    // 減少 N₂O₄：新平衡時 N₂O₄ 比原平衡低，NO₂ 比原平衡低
+                    // 反應向左，但新平衡時兩者都比原平衡低
+                    newConcA = originalConcA - 0.3;
+                    newConcB = Math.sqrt(K * newConcA);
+                } else {
+                    newConcA = concA;
+                    newConcB = concB;
+                }
+            } else if (Q < K) {
+                // 反應向右：消耗 N₂O₄，生成更多 NO₂
+                if (mode === 'SUB_A') {
+                    // 減少 N₂O₄：新平衡時 N₂O₄ 比原平衡低，NO₂ 比原平衡低
+                    newConcA = originalConcA - 0.3;
+                    newConcB = Math.sqrt(K * newConcA);
+                } else {
+                    newConcA = concA;
+                    newConcB = concB;
+                }
+            } else {
+                newConcA = concA;
+                newConcB = concB;
+            }
+            
+            // 計算新平衡速率（與原平衡比較）
+            newVf = kf * newConcA;
+            newVr = kr * Math.pow(newConcB, 2);
+            
+            // 箭頭 HTML（使用 CSS 自定義箭頭，與大箭頭相同樣式）
+            const arrowUpHtml = '<span class="rate-arrow arrow-up"></span>';
+            const arrowDownHtml = '<span class="rate-arrow arrow-down"></span>';
+            const arrowDash = '—';
+            
+            // 根據操作模式設定表格內容
+            switch(mode) {
+                case 'ADD_A':  // 增加 1M N₂O₄
+                    factorName = '增加 1M N₂O₄';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    // 平衡破壞瞬間：N₂O₄ 增加（大↑），NO₂ 不變（—）
+                    // 後續反應：根據方向決定
+                    if (direction === '往左') {
+                        // 反應往左：N₂O₄ 繼續增加（小↑），NO₂ 減少（小↓）
+                        concAChange = formatArrowChange('UP', 'UP');
+                        nAChange = formatArrowChange('UP', 'UP');
+                        concBChange = formatArrowChange('NONE', 'DOWN');
+                        nBChange = formatArrowChange('NONE', 'DOWN');
+                    } else {
+                        // 反應往右：N₂O₄ 減少（小↓），NO₂ 增加（小↑）
+                        concAChange = formatArrowChange('UP', 'DOWN');
+                        nAChange = formatArrowChange('UP', 'DOWN');
+                        concBChange = formatArrowChange('NONE', 'UP');
+                        nBChange = formatArrowChange('NONE', 'UP');
+                    }
+                    kChange = '不變';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'ADD_B':  // 增加 1M NO₂
+                    factorName = '增加 1M NO₂';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    // 破壞瞬間：NO₂ 增加（大↑），N₂O₄ 不變（—）
+                    // 反應向左：N₂O₄ 增加（小↑），NO₂ 減少（小↓）
+                    concAChange = formatArrowChange('NONE', 'UP');
+                    nAChange = formatArrowChange('NONE', 'UP');
+                    concBChange = formatArrowChange('UP', 'DOWN');
+                    nBChange = formatArrowChange('UP', 'DOWN');
+                    kChange = '不變';
+                    // 對於增加 NO₂，新平衡時兩速率都會增加
+                    rForwardArrow = arrowUpHtml;
+                    rReverseArrow = arrowUpHtml;
+                    break;
+                    
+                case 'SUB_A':  // 減少 1M N₂O₄
+                    factorName = '減少 1M N₂O₄';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    // 平衡破壞瞬間：N₂O₄ 減少（大↓），NO₂ 不變（—）
+                    // 後續反應：根據方向決定
+                    if (direction === '往左') {
+                        // 反應往左：N₂O₄ 增加（小↑），NO₂ 減少（小↓）
+                        concAChange = formatArrowChange('DOWN', 'UP');
+                        nAChange = formatArrowChange('DOWN', 'UP');
+                        concBChange = formatArrowChange('NONE', 'DOWN');
+                        nBChange = formatArrowChange('NONE', 'DOWN');
+                    } else {
+                        // 反應往右：N₂O₄ 繼續減少（小↓），NO₂ 增加（小↑）
+                        concAChange = formatArrowChange('DOWN', 'DOWN');
+                        nAChange = formatArrowChange('DOWN', 'DOWN');
+                        concBChange = formatArrowChange('NONE', 'UP');
+                        nBChange = formatArrowChange('NONE', 'UP');
+                    }
+                    kChange = '不變';
+                    // 新平衡速率與原平衡比較
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'SUB_B':  // 減少 1M NO₂
+                    factorName = '減少 1M NO₂';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    // 平衡破壞瞬間：NO₂ 減少（大↓），N₂O₄ 不變（—）
+                    // 後續反應：根據方向決定
+                    if (direction === '往右') {
+                        // 反應往右：N₂O₄ 減少（小↓），NO₂ 增加（小↑）
+                        concAChange = formatArrowChange('NONE', 'DOWN');
+                        nAChange = formatArrowChange('NONE', 'DOWN');
+                        concBChange = formatArrowChange('DOWN', 'UP');
+                        nBChange = formatArrowChange('DOWN', 'UP');
+                    } else {
+                        // 反應往左：N₂O₄ 增加（小↑），NO₂ 繼續減少（小↓）
+                        concAChange = formatArrowChange('NONE', 'UP');
+                        nAChange = formatArrowChange('NONE', 'UP');
+                        concBChange = formatArrowChange('DOWN', 'DOWN');
+                        nBChange = formatArrowChange('DOWN', 'DOWN');
+                    }
+                    kChange = '不變';
+                    // 新平衡速率與原平衡比較
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'V_HALF':  // 體積減半（壓力增加）
+                    factorName = '體積減半(壓↑)';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    concAChange = formatArrowChange('UP', direction === '往左' ? 'UP' : 'DOWN');
+                    nAChange = formatArrowChange('NONE', direction === '往左' ? 'UP' : 'DOWN');
+                    concBChange = formatArrowChange('UP', direction === '往左' ? 'DOWN' : 'UP');
+                    nBChange = formatArrowChange('NONE', direction === '往左' ? 'DOWN' : 'UP');
+                    kChange = '不變';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'V_DOUBLE':  // 體積加倍（壓力減少）
+                    factorName = '體積加倍(壓↓)';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    concAChange = formatArrowChange('DOWN', direction === '往左' ? 'UP' : 'DOWN');
+                    nAChange = formatArrowChange('NONE', direction === '往左' ? 'UP' : 'DOWN');
+                    concBChange = formatArrowChange('DOWN', direction === '往左' ? 'DOWN' : 'UP');
+                    nBChange = formatArrowChange('NONE', direction === '往左' ? 'DOWN' : 'UP');
+                    kChange = '不變';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'HEAT':  // 加熱（K 變小）
+                    factorName = '加熱 (K↓)';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    concAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    nAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    concBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    nBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    kChange = '變小';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'COOL':  // 降溫（K 變大）
+                    factorName = '降溫 (K↑)';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    concAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    nAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    concBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    nBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    kChange = '變大';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                default:
+                    return;
+            }
+            
+            // 更新表格內容
+            const row = tbody.querySelector('tr') || tbody.insertRow();
+            row.innerHTML = `
+                <td>${factorName}</td>
+                <td>${rForwardArrow}</td>
+                <td>${rReverseArrow}</td>
+                <td>${direction}</td>
+                <td>${concAChange}</td>
+                <td>${nAChange}</td>
+                <td>${concBChange}</td>
+                <td>${nBChange}</td>
+                <td>${kChange}</td>
+            `;
         }
         
         // 開始/暫停平衡移動
@@ -3226,6 +3696,24 @@
             // 初始化箭頭
             const Q = Math.pow(concB, 2) / concA;
             updateReactionArrows(Q, K);
+            
+            // 清空表格，回到初始狀態
+            const tbody = document.getElementById('equilibrium-table-body');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            }
             
             // 更新UI顯示
             updateUI();
@@ -4260,9 +4748,9 @@
             }
             
             if (diff > 0) {
-                return '：Q＞K';
+                return '：Q＞K，反應向左';
             } else {
-                return '：Q＜K';
+                return '：Q＜K，反應向右';
             }
         }
 
@@ -4361,7 +4849,7 @@
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
             } else {
-                statusEl.textContent = "平衡破壞" + dirText + (safeQ > K ? "，向左移動" : "，向右移動");
+                statusEl.textContent = "平衡破壞" + dirText;
                 statusEl.style.color = "#c0392b";
                 statusEl.style.borderColor = "#c0392b";
             }
