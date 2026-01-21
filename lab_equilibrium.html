@@ -1850,9 +1850,11 @@
             </div>
             <!-- 方程式按鈕容器 - 獨立顯示，橫向滑動 -->
             <div id="equation-buttons" class="equation-buttons-container" style="display: none;">
+                <button class="equation-btn" data-scenario="le-chatelier-fescn" onclick="selectEquation('le-chatelier-fescn')">FeSCN<sup>2+</sup> ⇌ Fe<sup>3+</sup> + SCN<sup>-</sup></button>
+                <button class="equation-btn" data-scenario="le-chatelier-acetic" onclick="selectEquation('le-chatelier-acetic')">CH<sub>3</sub>COOH ⇌ CH<sub>3</sub>COO<sup>-</sup> + H<sup>+</sup></button>
                 <button class="equation-btn" data-scenario="le-chatelier" onclick="selectEquation('le-chatelier')">N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub></button>
                 <button class="equation-btn" data-scenario="le-chatelier-nh3" onclick="selectEquation('le-chatelier-nh3')">N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub></button>
-                <button class="equation-btn" data-scenario="le-chatelier-chromate" onclick="selectEquation('le-chatelier-chromate')">2CrO<sub>4</sub><sup>2⁻</sup> + 2H<sup>+</sup> ⇌ Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup> + H<sub>2</sub>O</button>
+                <button class="equation-btn" data-scenario="le-chatelier-hi" onclick="selectEquation('le-chatelier-hi')">2HI ⇌ H<sub>2</sub> + I<sub>2</sub></button>
                 <button class="equation-btn" data-scenario="le-chatelier-ag2cro4" onclick="selectEquation('le-chatelier-ag2cro4')">Ag<sub>2</sub>CrO<sub>4</sub> ⇌ 2Ag<sup>+</sup> + CrO<sub>4</sub><sup>2⁻</sup></button>
             </div>
         </div>
@@ -1865,15 +1867,126 @@
                     <div class="placeholder-text">基礎平衡場景內容</div>
                 </div>
 
-                <!-- 勒沙特列原理展示場景 -->
-                <div class="scenario-content active" data-scenario="le-chatelier">
+                <!-- FeSCN2+ ⇌ Fe3+ + SCN- 場景 (1) -->
+                <div class="scenario-content" data-scenario="le-chatelier-fescn">
                     <div class="reaction-header">
-                        <span class="reaction-reactant">N<sub>2</sub>O<sub>4</sub></span>
+                        <span class="reaction-reactant">FeSCN<sup>2+</sup></span>
                         <span class="reaction-arrow-symbol">⇌</span>
-                        <span class="reaction-product">2NO<sub>2</sub> + 熱</span>
+                        <span class="reaction-product">Fe<sup>3+</sup> + SCN<sup>-</sup></span>
                     </div>
                     
-                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
+                    <div class="reaction-arrows-container">
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right-fescn" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-fescn" style="width: 80px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            <span>K =</span>
+                            <div class="frac"><span class="frac-top">[Fe<sup>3+</sup>][SCN<sup>-</sup>]</span><span class="frac-bot">[FeSCN<sup>2+</sup>]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-fescn">0.10 × 0.10</span><span class="frac-bot" id="k-formula-bot-fescn">0.05</span></div>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-fescn" style="color:#2c3e50;">0.20</span></span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num-fescn">[Fe<sup>3+</sup>][SCN<sup>-</sup>]</span><span class="frac-bot" id="q-den-fescn">[FeSCN<sup>2+</sup>]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-fescn">0.10 × 0.10</span><span class="frac-bot" id="q-formula-bot-fescn">0.05</span></div>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-fescn">0.20</span></span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-fescn" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementFeSCN()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>改變因素</th><th>r<sub>正</sub></th><th>r<sub>逆</sub></th><th>方向</th>
+                                        <th>[FeSCN<sup>2+</sup>]</th><th>n<sub>FeSCN<sup>2+</sup></sub></th>
+                                        <th>[Fe<sup>3+</sup>]</th><th>n<sub>Fe<sup>3+</sup></sub></th>
+                                        <th>[SCN<sup>-</sup>]</th><th>n<sub>SCN<sup>-</sup></sub></th>
+                                        <th>K<sub>平</sub></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equilibrium-table-body-fescn">
+                                    <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="direction-display-fescn" class="direction-display" style="display: none;"></div>
+                </div>
+
+                <!-- CH3COOH ⇌ CH3COO- + H+ 場景 (2) -->
+                <div class="scenario-content" data-scenario="le-chatelier-acetic">
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">CH<sub>3</sub>COOH</span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">CH<sub>3</sub>COO<sup>-</sup> + H<sup>+</sup></span>
+                    </div>
+                    
+                    <div class="reaction-arrows-container">
+                        <div class="reaction-arrows">
+                            <div class="arrow-right" id="arrow-right-acetic" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-acetic" style="width: 80px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-card">
+                        <div class="math">
+                            <span>K<sub>a</sub> =</span>
+                            <div class="frac"><span class="frac-top">[CH<sub>3</sub>COO<sup>-</sup>][H<sup>+</sup>]</span><span class="frac-bot">[CH<sub>3</sub>COOH]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-acetic">0.01 × 0.01</span><span class="frac-bot" id="k-formula-bot-acetic">5.00</span></div>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-acetic" style="color:#2c3e50;">0.00002</span></span>
+                        </div>
+                        <div class="math" style="color: #e67e22;">
+                            <span>Q =</span>
+                            <div class="frac"><span class="frac-top" id="q-num-acetic">[CH<sub>3</sub>COO<sup>-</sup>][H<sup>+</sup>]</span><span class="frac-bot" id="q-den-acetic">[CH<sub>3</sub>COOH]</span></div>
+                            <span>=</span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-acetic">0.01 × 0.01</span><span class="frac-bot" id="q-formula-bot-acetic">5.00</span></div>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-acetic">0.00002</span></span>
+                        </div>
+                    </div>
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-acetic" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementAcetic()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>改變因素</th><th>r<sub>正</sub></th><th>r<sub>逆</sub></th><th>方向</th>
+                                        <th>[CH<sub>3</sub>COOH]</th><th>n<sub>CH<sub>3</sub>COOH</sub></th>
+                                        <th>[CH<sub>3</sub>COO<sup>-</sup>]</th><th>n<sub>CH<sub>3</sub>COO<sup>-</sup></sub></th>
+                                        <th>[H<sup>+</sup>]</th><th>n<sub>H<sup>+</sup></sub></th>
+                                        <th>K<sub>a</sub></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equilibrium-table-body-acetic">
+                                    <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="direction-display-acetic" class="direction-display" style="display: none;"></div>
+                </div>
+
+                <!-- 勒沙特列原理展示場景 (N2O4) (3) -->
+                <div class="scenario-content active" data-scenario="le-chatelier">
+                    <div class="reaction-header">
+                        <span class="reaction-reactant">N<sub>2</sub>O<sub>4</sub> + 熱</span>
+                        <span class="reaction-arrow-symbol">⇌</span>
+                        <span class="reaction-product">2NO<sub>2</sub></span>
+                    </div>
+                    
                     <div class="reaction-arrows-container">
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right" style="width: 80px;"></div>
@@ -1901,45 +2014,27 @@
                         <div id="status" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     
-                    <!-- 可橫向滑動的表格區域 -->
                     <div class="table-card">
                         <div class="table-scroll-container">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>改變因素</th>
-                                        <th>r<sub>正</sub></th>
-                                        <th>r<sub>逆</sub></th>
-                                        <th>方向</th>
-                                        <th>[N<sub>2</sub>O<sub>4</sub>]</th>
-                                        <th>n<sub>N<sub>2</sub>O<sub>4</sub></sub></th>
-                                        <th>[NO<sub>2</sub>]</th>
-                                        <th>n<sub>NO<sub>2</sub></sub></th>
+                                        <th>改變因素</th><th>r<sub>正</sub></th><th>r<sub>逆</sub></th><th>方向</th>
+                                        <th>[N<sub>2</sub>O<sub>4</sub>]</th><th>n<sub>N<sub>2</sub>O<sub>4</sub></sub></th>
+                                        <th>[NO<sub>2</sub>]</th><th>n<sub>NO<sub>2</sub></sub></th>
                                         <th>K<sub>平</sub></th>
                                     </tr>
                                 </thead>
                                 <tbody id="equilibrium-table-body">
-                                    <tr>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                    </tr>
+                                    <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    
                     <div id="direction-display" class="direction-display" style="display: none;"></div>
-
                 </div>
 
-                <!-- N2 + 3H2 ⇌ 2NH3 場景 -->
+                <!-- N2 + 3H2 ⇌ 2NH3 場景 (4) -->
                 <div class="scenario-content" data-scenario="le-chatelier-nh3">
                     <div class="reaction-header">
                         <span class="reaction-reactant">N<sub>2</sub> + 3H<sub>2</sub></span>
@@ -1947,7 +2042,6 @@
                         <span class="reaction-product">2NH<sub>3</sub> + 熱</span>
                     </div>
                     
-                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
                     <div class="reaction-arrows-container">
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-nh3" style="width: 100px;"></div>
@@ -1975,90 +2069,84 @@
                         <div id="status-nh3" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
                     </div>
                     
-                    <!-- 可橫向滑動的表格區域 (NH3 反應) -->
                     <div class="table-card">
                         <div class="table-scroll-container">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>改變因素</th>
-                                        <th>r<sub>正</sub></th>
-                                        <th>r<sub>逆</sub></th>
-                                        <th>方向</th>
-                                        <th>P<sub>t</sub></th>
-                                        <th>P<sub>N<sub>2</sub></sub></th>
-                                        <th>n<sub>N<sub>2</sub></sub></th>
-                                        <th>P<sub>H<sub>2</sub></sub></th>
-                                        <th>n<sub>H<sub>2</sub></sub></th>
-                                        <th>P<sub>NH<sub>3</sub></sub></th>
-                                        <th>n<sub>NH<sub>3</sub></sub></th>
+                                        <th>改變因素</th><th>r<sub>正</sub></th><th>r<sub>逆</sub></th><th>方向</th>
+                                        <th>P<sub>t</sub></th><th>P<sub>N<sub>2</sub></sub></th><th>n<sub>N<sub>2</sub></sub></th>
+                                        <th>P<sub>H<sub>2</sub></sub></th><th>n<sub>H<sub>2</sub></sub></th>
+                                        <th>P<sub>NH<sub>3</sub></sub></th><th>n<sub>NH<sub>3</sub></sub></th>
                                         <th>K<sub>p</sub></th>
                                     </tr>
                                 </thead>
                                 <tbody id="equilibrium-table-body-nh3">
-                                    <tr>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                    </tr>
+                                    <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    
                     <div id="direction-display-nh3" class="direction-display" style="display: none;"></div>
-
                 </div>
 
-                <!-- 2CrO4²⁻ + 2H⁺ ⇌ Cr2O7²⁻ + H2O 場景 -->
-                <div class="scenario-content" data-scenario="le-chatelier-chromate">
+                <!-- 2HI ⇌ H2 + I2 場景 (5 - 新增) -->
+                <div class="scenario-content" data-scenario="le-chatelier-hi">
                     <div class="reaction-header">
-                        <span class="reaction-reactant">2CrO<sub>4</sub><sup>2⁻</sup> + 2H<sup>+</sup></span>
+                        <span class="reaction-reactant">2HI</span>
                         <span class="reaction-arrow-symbol">⇌</span>
-                        <span class="reaction-product">Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup> + H<sub>2</sub>O</span>
+                        <span class="reaction-product">H<sub>2</sub> + I<sub>2</sub></span>
                     </div>
                     
-                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
                     <div class="reaction-arrows-container">
                         <div class="reaction-arrows">
-                            <div class="arrow-right" id="arrow-right-chromate" style="width: 80px;"></div>
-                            <div class="arrow-left" id="arrow-left-chromate" style="width: 80px;"></div>
+                            <div class="arrow-right" id="arrow-right-hi" style="width: 80px;"></div>
+                            <div class="arrow-left" id="arrow-left-hi" style="width: 80px;"></div>
                         </div>
                     </div>
                     
                     <div class="formula-card">
                         <div class="math">
                             <span>K =</span>
-                            <div class="frac"><span class="frac-top">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
+                            <div class="frac"><span class="frac-top">[H<sub>2</sub>][I<sub>2</sub>]</span><span class="frac-bot">[HI]<sup>2</sup></span></div>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="k-formula-top-chromate">1</span><span class="frac-bot" id="k-formula-bot-chromate">1<sup>2</sup> × 1<sup>2</sup></span></div>
-                            <span class="k-equals-result"><span>=</span><span id="k-val-chromate" style="color:#2c3e50;">1.00</span></span>
+                            <div class="frac"><span class="frac-top" id="k-formula-top-hi">1 × 1</span><span class="frac-bot" id="k-formula-bot-hi">2<sup>2</sup></span></div>
+                            <span class="k-equals-result"><span>=</span><span id="k-val-hi" style="color:#2c3e50;">0.25</span></span>
                         </div>
                         <div class="math" style="color: #e67e22;">
                             <span>Q =</span>
-                            <div class="frac"><span class="frac-top" id="q-num-chromate">[Cr<sub>2</sub>O<sub>7</sub><sup>2⁻</sup>]</span><span class="frac-bot" id="q-den-chromate">[CrO<sub>4</sub><sup>2⁻</sup>]<sup>2</sup>[H<sup>+</sup>]<sup>2</sup></span></div>
+                            <div class="frac"><span class="frac-top" id="q-num-hi">[H<sub>2</sub>][I<sub>2</sub>]</span><span class="frac-bot" id="q-den-hi">[HI]<sup>2</sup></span></div>
                             <span>=</span>
-                            <div class="frac"><span class="frac-top" id="q-formula-top-chromate">1.00</span><span class="frac-bot" id="q-formula-bot-chromate">1.00<sup>2</sup> × 1.00<sup>2</sup></span></div>
-                            <span class="q-equals-result"><span>=</span><span id="q-val-chromate">1.00</span></span>
+                            <div class="frac"><span class="frac-top" id="q-formula-top-hi">1.00 × 1.00</span><span class="frac-bot" id="q-formula-bot-hi">2.00<sup>2</sup></span></div>
+                            <span class="q-equals-result"><span>=</span><span id="q-val-hi">0.25</span></span>
                         </div>
                     </div>
                     <div style="width: 100%; text-align: center; margin-top: 4px;">
-                        <div id="status-chromate" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementChromate()" title="點擊開始平衡移動">新平衡</div>
+                        <div id="status-hi" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementHI()" title="點擊開始平衡移動">新平衡</div>
                     </div>
-                    <div id="direction-display-chromate" class="direction-display" style="display: none;"></div>
-
+                    
+                    <div class="table-card">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>改變因素</th><th>r<sub>正</sub></th><th>r<sub>逆</sub></th><th>方向</th>
+                                        <th>P<sub>t</sub></th><th>[HI]</th><th>n<sub>HI</sub></th>
+                                        <th>[H<sub>2</sub>]</th><th>n<sub>H<sub>2</sub></sub></th>
+                                        <th>[I<sub>2</sub>]</th><th>n<sub>I<sub>2</sub></sub></th>
+                                        <th>K<sub>平</sub></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equilibrium-table-body-hi">
+                                    <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="direction-display-hi" class="direction-display" style="display: none;"></div>
                 </div>
 
-                <!-- Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 場景 -->
+                <!-- Ag2CrO4 ⇌ 2Ag⁺ + CrO4²⁻ 場景 (6) -->
                 <div class="scenario-content" data-scenario="le-chatelier-ag2cro4">
                     <div class="reaction-header">
                         <span class="reaction-reactant">Ag<sub>2</sub>CrO<sub>4</sub></span>
@@ -2108,8 +2196,8 @@
                     <div class="placeholder-text">基礎平衡操作介面</div>
                 </div>
 
-                <!-- 勒沙特列原理展示操作 -->
-                <div class="control-scenario active" data-scenario="le-chatelier">
+                <!-- 勒沙特列原理展示操作 (N2O4) -->
+                <div class="control-scenario" data-scenario="le-chatelier">
                     <div class="controls" id="btnContainer">
                         <button class="control-btn" onclick="runDisturb('ADD_A', this)">增加 1M N₂O₄</button>
                         <button class="control-btn" onclick="runDisturb('ADD_B', this)">增加 1M NO₂</button>
@@ -2117,8 +2205,8 @@
                         <button class="control-btn" onclick="runDisturb('SUB_B', this)">減少 1M NO₂</button>
                         <button class="control-btn" onclick="runDisturb('V_HALF', this)">體積減半(壓↑)</button>
                         <button class="control-btn" onclick="runDisturb('V_DOUBLE', this)">體積加倍(壓↓)</button>
-                        <button class="control-btn" onclick="runDisturb('HEAT', this)">加熱 (K↓)</button>
-                        <button class="control-btn" onclick="runDisturb('COOL', this)">降溫 (K↑)</button>
+                        <button class="control-btn" onclick="runDisturb('HEAT', this)">加熱 (K↑)</button>
+                        <button class="control-btn" onclick="runDisturb('COOL', this)">降溫 (K↓)</button>
                         <button class="control-btn reset-btn" onclick="resetExperiment()">重置實驗</button>
                     </div>
                 </div>
@@ -2142,10 +2230,26 @@
                     </div>
                 </div>
 
-                <!-- 2CrO4²⁻ + 2H⁺ ⇌ Cr2O7²⁻ + H2O 操作 -->
-                <div class="control-scenario" data-scenario="le-chatelier-chromate">
-                    <div class="controls" id="btnContainer-chromate">
-                        <button class="control-btn reset-btn" onclick="resetExperimentChromate()">重置實驗</button>
+                <!-- FeSCN2+ ⇌ Fe3+ + SCN- 操作 (1) -->
+                <div class="control-scenario active" data-scenario="le-chatelier-fescn">
+                    <div class="controls" id="btnContainer-fescn">
+                        <button class="control-btn" onclick="runDisturbFeSCN('ADD_FESCN', this)">增加 0.1M FeSCN<sup>2+</sup></button>
+                        <button class="control-btn" onclick="runDisturbFeSCN('ADD_FE', this)">增加 0.1M Fe<sup>3+</sup></button>
+                        <button class="control-btn" onclick="runDisturbFeSCN('ADD_SCN', this)">增加 0.1M SCN<sup>-</sup></button>
+                        <button class="control-btn" onclick="runDisturbFeSCN('SUB_FE', this)">減少 0.1M Fe<sup>3+</sup></button>
+                        <button class="control-btn" onclick="runDisturbFeSCN('SUB_SCN', this)">減少 0.1M SCN<sup>-</sup></button>
+                        <button class="control-btn reset-btn" onclick="resetExperimentFeSCN()">重置實驗</button>
+                    </div>
+                </div>
+
+                <!-- CH3COOH ⇌ CH3COO- + H+ 操作 -->
+                <div class="control-scenario" data-scenario="le-chatelier-acetic">
+                    <div class="controls" id="btnContainer-acetic">
+                        <button class="control-btn" onclick="runDisturbAcetic('ADD_ACETIC', this)">增加 0.1M CH<sub>3</sub>COOH</button>
+                        <button class="control-btn" onclick="runDisturbAcetic('ADD_ACETATE', this)">增加 0.1M CH<sub>3</sub>COO<sup>-</sup></button>
+                        <button class="control-btn" onclick="runDisturbAcetic('ADD_H', this)">增加 0.1M H<sup>+</sup></button>
+                        <button class="control-btn" onclick="runDisturbAcetic('SUB_H', this)">減少 0.1M H<sup>+</sup></button>
+                        <button class="control-btn reset-btn" onclick="resetExperimentAcetic()">重置實驗</button>
                     </div>
                 </div>
 
@@ -2798,11 +2902,13 @@
                     checkAndAdjustYAxis();
                     break;
                 case 'HEAT': 
-                    kf *= 1.3; kr *= 2.1; K = kf / kr; 
+                    // 吸熱反應，升溫使 kf 增加幅度大於 kr，導致 K 變大
+                    kf *= 2.5; kr *= 1.8; K = kf / kr; 
                     document.getElementById('k-val').innerText = K.toFixed(2);
                     break;
                 case 'COOL': 
-                    kf *= 0.8; kr *= 0.4; K = kf / kr; 
+                    // 降溫使 kf 減少幅度大於 kr，導致 K 變小
+                    kf *= 0.4; kr *= 0.6; K = kf / kr; 
                     document.getElementById('k-val').innerText = K.toFixed(2);
                     break;
             }
@@ -3061,26 +3167,26 @@
                     rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
                     break;
                     
-                case 'HEAT':  // 加熱（K 變小）
-                    factorName = '加熱 (K↓)';
+                case 'HEAT':  // 加熱（K 變大）
+                    factorName = '加熱 (K↑)';
+                    direction = Q < K ? '往右' : (Q > K ? '往左' : '不移動');
+                    concAChange = direction === '往右' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    nAChange = direction === '往右' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
+                    concBChange = direction === '往右' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    nBChange = direction === '往右' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
+                    kChange = '變大';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+                    
+                case 'COOL':  // 降溫（K 變小）
+                    factorName = '降溫 (K↓)';
                     direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
                     concAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
                     nAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
                     concBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
                     nBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
                     kChange = '變小';
-                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
-                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
-                    break;
-                    
-                case 'COOL':  // 降溫（K 變大）
-                    factorName = '降溫 (K↑)';
-                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
-                    concAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
-                    nAChange = direction === '往左' ? formatArrowChange('NONE', 'UP') : formatArrowChange('NONE', 'DOWN');
-                    concBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
-                    nBChange = direction === '往左' ? formatArrowChange('NONE', 'DOWN') : formatArrowChange('NONE', 'UP');
-                    kChange = '變大';
                     rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
                     rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
                     break;
@@ -5118,20 +5224,82 @@
             }
         }
 
-        function resetExperimentChromate() {
-            // 暫時為空，待後續實現
+        function resetExperimentFeSCN() {
+            // 重置 FeSCN 反應邏輯
+            const statusEl = document.getElementById('status-fescn');
+            if (statusEl) {
+                statusEl.textContent = "原平衡";
+                statusEl.style.color = "#27ae60";
+            }
+            const tbody = document.getElementById('equilibrium-table-body-fescn');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
+            }
+        }
+
+        function resetExperimentAcetic() {
+            // 重置醋酸反應邏輯
+            const statusEl = document.getElementById('status-acetic');
+            if (statusEl) {
+                statusEl.textContent = "原平衡";
+                statusEl.style.color = "#27ae60";
+            }
+            const tbody = document.getElementById('equilibrium-table-body-acetic');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
+            }
+        }
+
+        function runDisturbFeSCN(mode, btn) {
+            // FeSCN 反應擾動邏輯 (簡化版)
+            const statusEl = document.getElementById('status-fescn');
+            statusEl.textContent = "平衡破壞";
+            statusEl.style.color = "#e67e22";
+        }
+
+        function runDisturbAcetic(mode, btn) {
+            // 醋酸反應擾動邏輯 (簡化版)
+            const statusEl = document.getElementById('status-acetic');
+            statusEl.textContent = "平衡破壞";
+            statusEl.style.color = "#e67e22";
         }
 
         function resetExperimentAg2CrO4() {
-            // 暫時為空，待後續實現
+            const statusEl = document.getElementById('status-ag2cro4');
+            if (statusEl) {
+                statusEl.textContent = "原平衡";
+                statusEl.style.color = "#27ae60";
+            }
         }
 
-        function startEquilibriumMovementChromate() {
-            // 暫時為空，待後續實現
+        function startEquilibriumMovementFeSCN() {
+            // 待續
         }
 
-        function startEquilibriumMovementAg2CrO4() {
-            // 暫時為空，待後續實現
+        function startEquilibriumMovementAcetic() {
+            // 待續
+        }
+
+        function resetExperimentHI() {
+            const statusEl = document.getElementById('status-hi');
+            if (statusEl) {
+                statusEl.textContent = "原平衡";
+                statusEl.style.color = "#27ae60";
+            }
+            const tbody = document.getElementById('equilibrium-table-body-hi');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
+            }
+        }
+
+        function runDisturbHI(mode, btn) {
+            const statusEl = document.getElementById('status-hi');
+            statusEl.textContent = "平衡破壞";
+            statusEl.style.color = "#e67e22";
+        }
+
+        function startEquilibriumMovementHI() {
+            // 待續
         }
 
         // 頁面載入時初始化
