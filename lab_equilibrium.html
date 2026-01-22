@@ -63,6 +63,89 @@
             line-height: 1.6;
         }
 
+        /* K計算機 iframe 覆蓋層樣式 */
+        .k-calculator-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .k-calculator-container {
+            position: relative;
+            width: 95%;
+            height: 95%;
+            max-width: 1400px;
+            max-height: 900px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .k-calculator-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e5e7eb;
+            color: #374151;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .k-calculator-close-btn:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            transform: scale(1.1);
+        }
+
+        .k-calculator-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .k-calculator-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 手機版 iframe 樣式 */
+        @media (max-width: 768px) {
+            .k-calculator-container {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+                border-radius: 0;
+            }
+
+            .k-calculator-close-btn {
+                top: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                font-size: 20px;
+            }
+        }
+
         /* --- 主容器佈局 --- */
         .main-container {
             display: flex;
@@ -1844,7 +1927,7 @@
             <button class="close-btn" onclick="closeWindow()" title="關閉">×</button>
             <div class="scenario-buttons-container">
                 <div class="scenario-buttons">
-                    <button class="scenario-btn" data-scenario="equilibrium-basic">平衡常數計算機</button>
+                    <button class="scenario-btn" data-scenario="equilibrium-basic" onclick="openKCalculator(event)">平衡常數計算機</button>
                     <button class="scenario-btn" id="le-chatelier-main-btn" onclick="toggleEquationButtons()">勒沙特列原理展示</button>
                 </div>
             </div>
@@ -4062,6 +4145,11 @@
                 try {
                     // 如果是「勒沙特列原理展示」按鈕，不處理場景切換（由 toggleEquationButtons 處理）
                     if (this.id === 'le-chatelier-main-btn') {
+                        return;
+                    }
+                    
+                    // 如果是「平衡常數計算機」按鈕，打開 iframe（由 openKCalculator 處理）
+                    if (this.getAttribute('data-scenario') === 'equilibrium-basic') {
                         return;
                     }
                     
@@ -8322,6 +8410,50 @@
                 }
             }, 250);  // 防抖處理，避免頻繁重繪
         });
+
+        // K計算機 iframe 相關函數
+        function openKCalculator(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const overlay = document.getElementById('k-calculator-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                // 設置按鈕為 active 狀態
+                const btn = document.querySelector('.scenario-btn[data-scenario="equilibrium-basic"]');
+                if (btn) {
+                    btn.classList.add('active');
+                }
+            }
+            return false;
+        }
+
+        function closeKCalculator() {
+            const overlay = document.getElementById('k-calculator-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                // 移除按鈕的 active 狀態
+                const btn = document.querySelector('.scenario-btn[data-scenario="equilibrium-basic"]');
+                if (btn) {
+                    btn.classList.remove('active');
+                }
+            }
+        }
+
+        // 監聽來自 iframe 的關閉訊息
+        window.addEventListener('message', function(event) {
+            if (event.data === 'closeKCalculator') {
+                closeKCalculator();
+            }
+        });
     </script>
 
-</body></html>
+        <!-- K計算機 iframe 覆蓋層 -->
+        <div id="k-calculator-overlay" class="k-calculator-overlay" style="display: none;">
+            <div class="k-calculator-container">
+                <button class="k-calculator-close-btn" onclick="closeKCalculator()" title="關閉">×</button>
+                <iframe id="k-calculator-iframe" src="K計算.html" frameborder="0"></iframe>
+            </div>
+        </div>
+    </body></html>
