@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>化學平衡教學系統 | Chemical Equilibrium</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link href="./化學平衡教學系統 _ Chemical Equilibrium_files/css2" rel="stylesheet">
     <style>
         /* --- 基礎重置與變數 --- */
@@ -13,12 +12,8 @@
             box-sizing: border-box; 
             margin: 0; 
             padding: 0;
+            transition: all 0.4s cubic-bezier(0.2, 0, 0.1, 1);
             -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* 為非交互元素添加 transition */
-        body, .main-container, .main-view, .scenario-content, .control-panel {
-            transition: opacity 0.4s cubic-bezier(0.2, 0, 0.1, 1);
         }
         
         /* 按鈕不繼承全局 transition，避免不必要的動畫 */
@@ -188,12 +183,9 @@
             font-size: 0.9rem;
             font-weight: 600;
             color: var(--mineral-text);
-            cursor: pointer !important;
+            cursor: pointer;
             position: relative;
-            z-index: 101;  /* 確保按鈕在 selection-area 上方 */
             overflow: visible;  /* 改為 visible，確保內容不被裁切 */
-            pointer-events: auto !important;  /* 確保可以點擊 */
-            user-select: none;  /* 防止文字選擇 */
             box-shadow: 
                 4px 4px 12px var(--mineral-shadow-light),
                 -2px -2px 8px rgba(255, 255, 255, 0.8);
@@ -443,23 +435,6 @@
             display: flex;
             flex-direction: column;
             gap: 15px;  /* 統一間距，確保所有區塊間距一致 */
-        }
-        
-        /* K計算場景特殊處理 */
-        .scenario-content[data-scenario="equilibrium-basic"].active {
-            display: block !important;
-            overflow-y: auto;
-            visibility: visible;
-            opacity: 1;
-            height: 100%;
-            width: 100%;
-        }
-        
-        /* 確保 K計算 內容容器能使用全部高度 */
-        .scenario-content[data-scenario="equilibrium-basic"] .max-w-7xl {
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
         }
         
         /* 確保data-panel與上下區塊的間距一致 */
@@ -1298,8 +1273,7 @@
             border-radius: 10px;
             background: var(--mineral-bg);
             font-weight: 600;
-            cursor: pointer !important;
-            pointer-events: auto !important;
+            cursor: pointer;
             transition: all 0.3s cubic-bezier(0.2, 0, 0.1, 1);
             font-size: 0.9rem;
             color: var(--mineral-text);
@@ -1309,7 +1283,6 @@
             box-shadow: 
                 3px 3px 8px var(--mineral-shadow-light),
                 -1px -1px 4px rgba(255, 255, 255, 0.8);
-            user-select: none;
         }
         
         /* 按鈕中的化學式下標 */
@@ -1346,7 +1319,6 @@
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(212, 177, 106, 0.15), transparent);
             transition: left 0.4s ease;
-            pointer-events: none;  /* 確保偽元素不阻止點擊 */
         }
 
         .control-btn:hover:not(:disabled) {
@@ -1862,175 +1834,9 @@
         .control-panel {
             animation: fadeIn 0.6s ease-out;
         }
-
-        /* K計算 CSS 樣式 */
-        .white-bar {
-            background: white;
-            border-radius: 30px;
-            padding: 15px 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-
-        .coeff-input {
-            width: 38px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: 800;
-            color: #2563eb;
-            border-bottom: 3px solid #3b82f6;
-            background: transparent;
-            outline: none;
-        }
-
-        /* 化學式上標和下標樣式 */
-        sub, sup {
-            font-weight: 800;
-            font-size: 0.75em;
-            line-height: 0;
-            position: relative;
-            vertical-align: baseline;
-        }
-        sub {
-            bottom: -0.25em;
-        }
-        sup {
-            top: -0.5em;
-            font-weight: 800;
-        }
-
-        /* 高質感膠囊切換器 */
-        .k-type-toggle {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            display: flex;
-            padding: 3px;
-            gap: 2px;
-        }
-        .k-option {
-            padding: 4px 12px;
-            border-radius: 9px;
-            font-size: 11px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .k-option.active {
-            background: white;
-            color: #2563eb;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .k-option:not(.active):hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .k-block-premium {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            border-radius: 24px;
-            padding: 16px;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 320px;
-            min-width: 320px;
-            max-width: 320px;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
-            transition: transform 0.2s;
-            overflow: hidden;
-        }
-        
-        /* 隱藏捲軸與抓取功能 */
-        .hide-scroll { 
-            -ms-overflow-style: none; scrollbar-width: none; 
-            cursor: grab; user-select: none;
-        }
-        .hide-scroll:active { cursor: grabbing; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-
-        /* 凸起玻璃層效果 - 緊湊版 */
-        .glass-converter {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 16px;
-            padding: 6px 10px;
-            min-height: 52px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.3), 4px 4px 10px rgba(0, 0, 0, 0.1);
-            color: white;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .glass-converter:active { transform: scale(0.95); }
-
-        /* 物質輸入區塊 - 窄化 190px */
-        .substance-card {
-            background: white; border-radius: 20px; padding: 15px;
-            width: 190px; flex-shrink: 0;
-            border-left: 6px solid #cbd5e1;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            position: relative;
-        }
-        .react-card { border-left-color: #ef4444; }
-        .prod-card { border-left-color: #10b981; }
-
-        .eq-bubble {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #eff6ff;
-            color: #2563eb;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 16px;
-            font-family: 'JetBrains Mono', monospace;
-            max-width: 120px;
-            text-align: right;
-            word-break: break-all;
-            line-height: 1.2;
-        }
-        .eq-bubble .multiply {
-            margin: 0 2px;
-        }
-
-        .ice-input-field {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 8px 14px;
-            margin-bottom: 8px;
-            border: 1px solid #f1f5f9;
-        }
-        .ice-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-        .ice-val-input { width: 100%; background: transparent; border: none; font-size: 18px; font-weight: 700; color: #334155; outline: none; }
-
-        /* 底部結果橫幅優化 */
-        .bottom-solver {
-            background: #0f172a;
-            border-radius: 28px;
-            padding: 25px 40px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 180px;
-            gap: 40px;
-            margin-top: 40px;
-        }
-
-        #formula-preview { font-size: 1.4rem !important; }
     </style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 </head>
-<body style="opacity: 1;">
+<body style="opacity: 1; transition: opacity 0.5s ease-in;">
     <div class="main-container">
         <!-- 區1：選擇區 -->
         <div class="selection-area">
@@ -2057,95 +1863,8 @@
         <div class="main-view">
             <div class="main-content">
                 <!-- 基礎平衡場景 -->
-                <div class="scenario-content" data-scenario="equilibrium-basic" style="padding: 0; overflow-y: auto;">
-                    <div class="max-w-7xl mx-auto" style="padding: 2rem; width: 100%;">
-                        
-        <!-- 方程式工具欄 -->
-        <div class="white-bar">
-            <!-- 左側：功能按鈕與方程式 -->
-            <div class="flex-1 flex items-center gap-6 min-w-0">
-                <button onclick="resetData()" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 w-11 h-11 rounded-full transition-all flex items-center justify-center shrink-0 border border-slate-100" title="Reset All">
-                    <i class="bi bi-trash3-fill text-lg"></i>
-                </button>
-
-                <div class="flex items-center gap-2 overflow-x-auto py-2">
-                    <div id="reactants-eq" class="flex items-center gap-2"></div>
-                    <div class="flex flex-col gap-1 ml-1 shrink-0">
-                        <button onclick="addSpecies('reactants')" class="w-6 h-6 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"><i class="bi bi-plus"></i></button>
-                        <button onclick="removeSpecies('reactants')" class="w-6 h-6 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><i class="bi bi-dash"></i></button>
-                    </div>
-                    
-                    <div class="text-4xl text-slate-200 px-6 italic shrink-0">⇌</div>
-
-                    <div id="products-eq" class="flex items-center gap-2"></div>
-                    <div class="flex flex-col gap-1 ml-1 shrink-0">
-                        <button onclick="addSpecies('products')" class="w-6 h-6 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"><i class="bi bi-plus"></i></button>
-                        <button onclick="removeSpecies('products')" class="w-6 h-6 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><i class="bi bi-dash"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右側：K 設置區塊 -->
-            <div class="k-block-premium shrink-0 ml-8">
-                <!-- 紅框區域：K 值輸入 -->
-                    <div class="bg-white/10 rounded-2xl px-4 py-3 border border-white/5 flex items-center gap-3 overflow-hidden">
-                        <span class="text-2xl font-black italic text-white whitespace-nowrap shrink-0">K =</span>
-                        <input type="text" id="k-value" value="2e14" placeholder="Target K" oninput="updateSolverBtn(); renderFormula(); updateConvertValue();" 
-                               class="flex-1 min-w-0 bg-transparent border-none text-2xl font-black text-right outline-none placeholder:text-white/20 text-white leading-none" style="max-width: 100%;">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- 白色區域：玻璃層轉換按鈕 -->
-                        <div id="glass-conv-box" class="glass-converter flex flex-col items-center justify-center" onclick="runQuickConvert()">
-                            <span id="glass-label" class="opacity-70 text-[11px] font-bold leading-tight">Convert to K<sub>p</sub></span>
-                            <div id="glass-val" class="text-lg font-black leading-tight mt-0.5">---</div>
-                        </div>
-
-                        <!-- 藍色區域：溫度輸入 -->
-                        <div class="bg-white/10 rounded-2xl flex flex-col items-center justify-center border border-white/5">
-                            <span class="text-xs font-bold opacity-60 leading-tight">Temperature</span>
-                        <div class="flex items-center gap-1 mt-0.5">
-                            <input type="text" id="temp-input" value="298" oninput="state.temp=this.value; renderFormula(); updateConvertValue();" class="w-12 bg-transparent border-none text-xl font-black outline-none text-center text-white leading-none">
-                            <span class="text-xs font-black opacity-60">K</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 數據卡片區：改為橫向不換行捲動 -->
-        <div id="all-substances-grid" class="flex flex-nowrap gap-4 mb-10 overflow-x-auto hide-scroll px-1"></div>
-
-        <!-- 底部求解區 -->
-        <div class="bottom-solver">
-            <!-- 左側：定律式 -->
-            <div class="flex-shrink-0 border-r border-slate-700 pr-10 min-w-[250px]">
-                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 opacity-70">Law of Mass Action</p>
-                <div id="formula-preview"></div>
-            </div>
-
-            <!-- 中間：求解結果與濃度方塊 -->
-            <div class="flex flex-1 items-center justify-between gap-12 overflow-hidden">
-                <div id="result-pane" class="hidden flex items-center gap-12">
-                    <div class="whitespace-nowrap flex-shrink-0">
-                        <p id="result-label" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resulting Equilibrium</p>
-                        <div id="result-math-box" class="text-3xl font-black text-white leading-none tracking-tight py-1">
-                            <span id="result-sym">x</span> = <span id="result-val" class="text-blue-400 mono"></span>
-                        </div>
-                    </div>
-                    <!-- 濃度方塊容器 -->
-                    <div id="final-concs" class="flex flex-wrap gap-4 items-center"></div>
-                </div>
-            </div>
-
-            <!-- 右側：按鈕 -->
-            <div class="flex-shrink-0">
-                <button id="solve-btn" onclick="solve()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl shadow-blue-900/40">
-                    RUN SOLVER
-                </button>
-            </div>
-        </div>
-                    </div>
+                <div class="scenario-content" data-scenario="equilibrium-basic">
+                    <div class="placeholder-text">基礎平衡場景內容</div>
                 </div>
 
                 <!-- FeSCN2+ ⇌ Fe3+ + SCN- 場景 (1) -->
@@ -2491,7 +2210,8 @@
         <div class="control-panel">
             <div class="control-content">
                 <!-- 基礎平衡操作 -->
-                <div class="control-scenario" data-scenario="equilibrium-basic" style="display: none;">
+                <div class="control-scenario" data-scenario="equilibrium-basic">
+                    <div class="placeholder-text">基礎平衡操作介面</div>
                 </div>
 
                 <!-- 勒沙特列原理展示操作 (N2O4) -->
@@ -4337,25 +4057,16 @@
         }
 
         // 場景按鈕切換功能
-        function setupScenarioButtonEvents() {
-            const buttons = document.querySelectorAll('.scenario-btn');
-            if (buttons.length === 0) {
-                // 如果按鈕還沒載入，稍後再試
-                setTimeout(setupScenarioButtonEvents, 100);
-                return;
-            }
-            
-            buttons.forEach(btn => {
-                // 確保按鈕可以點擊
-                btn.style.pointerEvents = 'auto';
-                btn.style.cursor = 'pointer';
-                
-                // 只為「平衡常數計算機」按鈕添加事件監聽器（「勒沙特列原理展示」已有 onclick）
-                if (btn.id !== 'le-chatelier-main-btn') {
-                    // 移除可能存在的舊監聽器
-                    const newHandler = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                try {
+                    // 如果是「勒沙特列原理展示」按鈕，不處理場景切換（由 toggleEquationButtons 處理）
+                    if (this.id === 'le-chatelier-main-btn') {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
                     
                     // 移除所有按鈕的 active 狀態（確保不會有位置變化）
                     const currentBtn = this;  // 保存當前按鈕引用
@@ -4404,37 +4115,9 @@
                     const mainContent = document.querySelector(`.scenario-content[data-scenario="${scenario}"]`);
                     if (mainContent) {
                         mainContent.classList.add('active');
-                        // 如果是 equilibrium-basic 場景，初始化 K計算
-                        if (scenario === 'equilibrium-basic') {
-                            // 確保場景已顯示後再初始化
-                            requestAnimationFrame(() => {
-                                setTimeout(() => {
-                                    if (typeof initKCalculator === 'function') {
-                                        initKCalculator();
-                                    } else if (typeof render === 'function') {
-                                        render();
-                                    }
-                                }, 300);
-                            });
-                        }
                     }
                     
                     // 切換操作介面
-                    const controlPanel = document.querySelector('.control-panel');
-                    const mainView = document.querySelector('.main-view');
-                    
-                    if (scenario === 'equilibrium-basic') {
-                        // 隱藏操作區，讓 K計算 完整顯示
-                        if (controlPanel) controlPanel.style.display = 'none';
-                        // 調整 main-view 高度
-                        if (mainView) mainView.style.height = 'calc(100vh - 7vh)';
-                    } else {
-                        // 顯示操作區
-                        if (controlPanel) controlPanel.style.display = 'flex';
-                        // 恢復 main-view 的原始高度
-                        if (mainView) mainView.style.height = '';
-                    }
-                    
                     document.querySelectorAll('.control-scenario').forEach(control => {
                         control.classList.remove('active');
                     });
@@ -4585,23 +4268,13 @@
                         vCtx = null;
                     }
                     
+                    // 移除自動滾動，避免按鈕移動
+                    // this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } catch (error) {
                     console.error('場景切換錯誤:', error);
                 }
-                    };
-                    btn.addEventListener('click', newHandler, true);  // 使用 capture phase
-                }
             });
-        }
-        
-        // 確保 DOM 載入後再綁定事件
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(setupScenarioButtonEvents, 50);
-            });
-        } else {
-            setTimeout(setupScenarioButtonEvents, 50);
-        }
+        });
 
         // 關閉按鈕功能
         function closeWindow() {
@@ -8649,578 +8322,6 @@
                 }
             }, 250);  // 防抖處理，避免頻繁重繪
         });
-    </script>
-
-    <!-- K計算 JavaScript -->
-    <script>
-        const R_NAMES = "ABCDE".split("");
-        const P_NAMES = "XYZWV".split("");
-
-        let state = {
-            reactants: [{ id: 1, coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "A" }],
-            products: [{ id: 2, coeff: "2", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "X" }],
-            temp: 298, kType: 'Kc'
-        };
-
-        // 格式化化學式：將輸入轉換為帶下標和上標的 HTML
-        function formatChemicalFormula(input) {
-            if (!input || input.trim() === "") return "";
-            let text = input.trim();
-            
-            // 檢查是否有空格（表示上標部分）
-            const spaceIndex = text.indexOf(' ');
-            let mainPart = text;
-            let superscriptPart = "";
-            
-            if (spaceIndex > 0) {
-                mainPart = text.substring(0, spaceIndex);
-                superscriptPart = text.substring(spaceIndex + 1).trim();
-            }
-            
-            // 處理主體部分：數字變下標
-            let formatted = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
-            
-            // 處理上標部分：使用 HTML sup 標籤，確保粗細和對齊一致
-            if (superscriptPart) {
-                // 將上標部分用 <sup> 標籤包裹，保持與主體相同的字體粗細
-                formatted += '<sup>' + superscriptPart + '</sup>';
-            }
-            
-            return formatted;
-        }
-
-        function resetData() {
-            state.reactants = [{ id: Date.now(), coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "A" }];
-            state.products = [{ id: Date.now()+1, coeff: "2", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "X" }];
-            document.getElementById('k-value').value = "";
-            document.getElementById('glass-val').innerText = "---";
-            document.getElementById('glass-label').innerHTML = `Convert to K<sub>p</sub>`;
-            render();
-        }
-
-        function togglePhase(type, id, event) {
-            if (event) {
-                event.stopPropagation();
-                // 雙擊切換固體狀態
-                if (event.detail === 2) {
-                    const item = state[type].find(s => s.id === id);
-                    item.isSolid = !item.isSolid;
-                    render();
-                }
-            }
-        }
-
-        function editFormula(type, id, event) {
-            event.stopPropagation();
-            const item = state[type].find(s => s.id === id);
-            const displayEl = document.getElementById(`formula-display-${id}`);
-            if (!displayEl) return;
-            
-            const currentFormula = item.formula || ((type === 'reactants' ? R_NAMES : P_NAMES)[state[type].indexOf(item)] || "A");
-            
-            // 創建輸入框
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentFormula;
-            input.className = 'coeff-input';
-            input.style.width = '120px';
-            input.style.fontSize = '24px';
-            input.style.textAlign = 'center';
-            
-            const finishEdit = () => {
-                const newFormula = input.value.trim() || currentFormula;
-                item.formula = newFormula;
-                render();
-            };
-            
-            input.addEventListener('blur', finishEdit);
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    finishEdit();
-                } else if (e.key === 'Escape') {
-                    render();
-                }
-            });
-            
-            displayEl.replaceWith(input);
-            input.focus();
-            input.select();
-        }
-
-        function updateFormula(type, id, newFormula) {
-            const item = state[type].find(s => s.id === id);
-            item.formula = newFormula || ((type === 'reactants' ? R_NAMES : P_NAMES)[state[type].indexOf(item)] || "A");
-            render();
-        }
-        function setKType(type) {
-            state.kType = type;
-            renderFormula();
-            updateKTypeUI();
-        }
-        // 計算並更新轉換值
-        function updateConvertValue() {
-            const K_val = parseVal(document.getElementById('k-value').value);
-            const glassValEl = document.getElementById('glass-val');
-            const glassLabelEl = document.getElementById('glass-label');
-            
-            if (K_val === 0) {
-                glassValEl.innerHTML = "---";
-                return;
-            }
-
-            const dn = state.products.filter(s => !s.isSolid).reduce((sum, s) => sum + (parseVal(s.coeff)||1), 0) 
-                     - state.reactants.filter(s => !s.isSolid).reduce((sum, s) => sum + (parseVal(s.coeff)||1), 0);
-            const T = parseVal(document.getElementById('temp-input').value) || 298;
-            const RT = 0.08206 * T;
-
-            // 根據當前標籤計算對應的轉換值
-            if (glassLabelEl.innerHTML.includes("K<sub>p</sub>")) {
-                // 標籤是 "Convert to Kp"，計算並顯示 KP 值
-                // 假設輸入的 K 是 Kc，轉換為 Kp: Kp = Kc * (RT)^dn
-                const Kp = K_val * Math.pow(RT, dn);
-                glassValEl.innerHTML = formatChemNum(Kp);
-            } else {
-                // 標籤是 "Convert to Kc"，計算並顯示 KC 值
-                // 假設輸入的 K 是 Kp，轉換為 Kc: Kc = Kp / (RT)^dn
-                const Kc = K_val / Math.pow(RT, dn);
-                glassValEl.innerHTML = formatChemNum(Kc);
-            }
-        }
-
-        function runQuickConvert() {
-            const K_val = parseVal(document.getElementById('k-value').value);
-            if (K_val === 0) return;
-
-            const glassLabelEl = document.getElementById('glass-label');
-
-            // 切換標籤
-            if (glassLabelEl.innerHTML.includes("K<sub>p</sub>")) {
-                glassLabelEl.innerHTML = `Convert to K<sub>c</sub>`;
-            } else {
-                glassLabelEl.innerHTML = `Convert to K<sub>p</sub>`;
-            }
-            
-            // 更新轉換值
-            updateConvertValue();
-        }
-
-        function updateKTypeUI() {
-            // 由於 Kp/Kc 按鈕移除，此處改為空函數或移除引用
-        }
-
-        function parseVal(str) {
-            if (!str || str.trim() === "") return 0;
-            try {
-                const sanitized = str.replace(/[^\d\+\-\*\/\.\(\)eE]/g, '');
-                const result = new Function(`return Number(${sanitized})`)();
-                return isNaN(result) ? 0 : result;
-            } catch (e) {
-                return 0;
-            }
-        }
-
-        function safeNum(n) { return parseFloat(Number(n).toPrecision(12)); }
-
-        function formatChemNum(num) {
-            if (num === 0 || isNaN(num)) return "0";
-            let n = Number(num);
-            // 判斷是否需要用科學記號
-            if (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e4) {
-                let parts = n.toExponential(3).split('e');
-                let base = parseFloat(parts[0]).toFixed(3);
-                let exp = parseInt(parts[1]);
-                return `${base} × 10<sup>${exp}</sup>`;
-            }
-            return n.toFixed(3);
-        }
-
-        function parseExpression(str) {
-            let a = 0, b = 0;
-            // 1. 預處理：移除空白，保護科學記號
-            let s = String(str).replace(/\s+/g, "").replace(/e-/gi, "e_").replace(/e\+/gi, "e^");
-            
-            // 2. 正則表達式掃描每一項：[符號][運算式][x或無]
-            // 此正則會抓取如 "+0.9*0.4/0.1x", "-5", "+x", "0.2/0.1" 等
-            // 修正：確保運算順序從左到右（乘除同級）
-            const termRegex = /([+-]?(?:[0-9.*/\.eE_^]+x?|x))/g;
-            const terms = s.match(termRegex);
-            
-            if (terms) {
-                terms.forEach(t => {
-                    // 還原科學記號
-                    let term = t.replace(/e_/gi, "e-").replace(/e\^/gi, "e+");
-                    
-                    if (term.includes('x')) {
-                        let coeffPart = term.replace('x', '');
-                        if (coeffPart === "" || coeffPart === "+") a += 1;
-                        else if (coeffPart === "-") a -= 1;
-                        else a += parseVal(coeffPart);
-                    } else {
-                        b += parseVal(term);
-                    }
-                });
-            }
-            return { a: safeNum(a), b: safeNum(b) };
-        }
-
-        function formatNumberForDisplay(num) {
-            if (num === 0) return "0";
-            const absNum = Math.abs(num);
-            // 大數或小數使用科學記號
-            if (absNum >= 1e3 || (absNum < 0.001 && absNum > 0)) {
-                const parts = num.toExponential().split('e');
-                let base = parseFloat(parts[0]);
-                const exp = parseInt(parts[1]);
-                // 移除不必要的零：整數直接顯示，小數移除尾隨零
-                const baseStr = base % 1 === 0 ? base.toString() : base.toFixed(10).replace(/\.?0+$/, '');
-                // 使用 HTML sup 標籤，與上方 K 的次方顯示方式一致，× 符號使用較小的間距
-                return `${baseStr}<span class="multiply">×</span>10<sup>${exp}</sup>`;
-            }
-            // 一般數字，移除不必要的零
-            const numStr = num.toString();
-            if (numStr.includes('.')) {
-                return numStr.replace(/\.?0+$/, '');
-            }
-            return numStr;
-        }
-
-        function getDisplayExpr(s) {
-            const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
-            const A = safeNum(i.a + c1.a + c2.a + c3.a), B = safeNum(i.b + c1.b + c2.b + c3.b);
-            let res = [];
-            
-            if (B !== 0) {
-                if (A === 0) {
-                    // 純常數，使用格式化函數
-                    res.push(formatNumberForDisplay(B));
-                } else {
-                    res.push(formatNumberForDisplay(B));
-                }
-            }
-            if (A !== 0) res.push((A === 1 ? "" : A === -1 ? "-" : A) + "x");
-            return res.length === 0 ? "0" : res.join(A < 0 && B !== 0 ? "" : "+").replace(/\+\-/g, "-");
-        }
-
-        function updateSolverBtn() {
-            const val = document.getElementById('k-value').value.trim();
-            const k = parseVal(val);
-            // 當輸入框為空，或者是數字 0 時，切換為計算 K 模式
-            document.getElementById('solve-btn').innerText = (val === "" || k === 0) ? "CALCULATE K" : "RUN SOLVER";
-        }
-
-        function addSpecies(type) {
-            if (state[type].length >= 4) return;
-            const defaultName = (type === 'reactants' ? R_NAMES : P_NAMES)[state[type].length] || "A";
-            state[type].push({ id: Date.now() + Math.random(), coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: defaultName });
-            render();
-        }
-
-        function removeSpecies(type) {
-            if (state[type].length === 0) return;
-            state[type].pop();
-            render();
-        }
-
-        function update(type, id, field, val) {
-            const item = state[type].find(s => s.id === id);
-            item[field] = val;
-            renderFormula();
-            updateConvertValue();
-            const bubble = document.getElementById(`eq-bubble-${id}`);
-            if (bubble) bubble.innerHTML = getDisplayExpr(item);
-        }
-
-        function htmlToLatex(htmlStr) {
-            // 將 HTML 格式轉換為 LaTeX 格式
-            return htmlStr
-                .replace(/<span class="multiply">×<\/span>/g, ' \\times ')
-                .replace(/<sub>(.*?)<\/sub>/g, '_{$1}')
-                .replace(/<sup>(.*?)<\/sup>/g, '^{$1}')
-                .replace(/×/g, ' \\times ');
-        }
-
-        function formulaToLatex(formula) {
-            // 將化學式轉換為 LaTeX 格式（用於公式顯示）
-            if (!formula) return "";
-            const formatted = formatChemicalFormula(formula);
-            return htmlToLatex(formatted);
-        }
-
-        function renderFormula() {
-            const rawK = document.getElementById('k-value').value;
-            const build = (list) => {
-                const active = list.filter(s => !s.isSolid);
-                if (active.length === 0) return "1";
-                return active.map((s, activeIdx) => {
-                    const expr = getDisplayExpr(s);
-                    // 將 HTML 格式轉換為 LaTeX 格式
-                    const latexExpr = htmlToLatex(expr);
-                    const coeff = parseVal(s.coeff) || 1;
-                    const idx = list.indexOf(s);
-                    const defaultName = (list === state.reactants ? R_NAMES : P_NAMES)[idx] || "A";
-                    const formula = s.formula || defaultName;
-                    const formulaLatex = formulaToLatex(formula);
-                    const clean = latexExpr.includes('+') || latexExpr.includes('-') ? `(${latexExpr})` : latexExpr;
-                    // 使用化學式名稱，如果 expr 是純數字則只顯示化學式，否則顯示化學式(表達式)
-                    // 修正：僅在完全沒輸入數據(expr為"0")時才顯示化學式，否則顯示數值表達式
-                    const displayName = (expr === "0") ? formulaLatex : clean;
-                    return coeff === 1 ? displayName : `${displayName}^{${coeff}}`;
-                }).join(' \\times ');
-            };
-            const kStr = rawK ? (rawK.includes('e') ? rawK.split('e')[0] + ' \\times 10^{'+rawK.split('e')[1].replace('+','')+'}' : rawK) : "K";
-            katex.render(`${kStr} = \\frac{ ${build(state.products)} }{ ${build(state.reactants)} }`, document.getElementById('formula-preview'));
-        }
-
-        function render() {
-            const rEq = document.getElementById('reactants-eq'), pEq = document.getElementById('products-eq');
-            const grid = document.getElementById('all-substances-grid');
-            if (!rEq || !pEq || !grid) return; // 確保元素存在
-            rEq.innerHTML = pEq.innerHTML = grid.innerHTML = '';
-
-            ['reactants', 'products'].forEach(type => {
-                const eqDiv = type === 'reactants' ? rEq : pEq;
-                state[type].forEach((s, idx) => {
-                    const defaultName = (type === 'reactants' ? R_NAMES : P_NAMES)[idx];
-                    const displayFormula = s.formula || defaultName;
-                    const formattedFormula = formatChemicalFormula(displayFormula);
-                    eqDiv.innerHTML += `
-                        <div class="flex items-center gap-2 group">
-                            <input type="text" value="${s.coeff}" oninput="event.stopPropagation(); update('${type}', ${s.id}, 'coeff', this.value)" onclick="event.stopPropagation()" class="coeff-input">
-                            <div class="relative">
-                                <span id="formula-display-${s.id}" class="text-3xl font-black transition-all ${s.isSolid ? 'text-slate-300 line-through' : 'text-slate-800'} cursor-pointer" 
-                                      onclick="event.stopPropagation(); editFormula('${type}', ${s.id}, event)" 
-                                      ondblclick="togglePhase('${type}', ${s.id}, event)"
-                                      title="單擊編輯化學式，雙擊切換固體/液體">${formattedFormula || defaultName}</span>
-                                ${s.isSolid ? '<span class="text-[10px] font-bold text-slate-400 self-end mb-1">(s)</span>' : ''}
-                            </div>
-                        </div>` + (idx < state[type].length - 1 ? '<span class="text-slate-300 font-bold text-2xl">+</span>' : '');
-
-                    grid.innerHTML += `
-                        <div class="substance-card ${type === 'reactants' ? 'react-card' : 'prod-card'} ${s.isSolid ? 'opacity-50 grayscale-[0.5] bg-slate-50' : ''}">
-                            <div class="font-black text-slate-700 text-2xl mb-4"><span class="${s.isSolid ? 'text-slate-400' : ''}">${formattedFormula || defaultName}</span> ${s.isSolid ? '<small class="text-xs font-normal text-slate-400 ml-1">Pure Phase</small>' : ''}</div>
-                            <div id="eq-bubble-${s.id}" class="eq-bubble">${getDisplayExpr(s)}</div>
-                            <div class="flex flex-col">
-                                ${createField(type, s.id, 'init', 'Initial (I)', s.init)}
-                                ${createField(type, s.id, 'c1', 'Change (C1)', s.c1)}
-                                ${createField(type, s.id, 'c2', 'Change (C2)', s.c2)}
-                                ${createField(type, s.id, 'c3', 'Change (C3)', s.c3)}
-                            </div>
-                        </div>`;
-                });
-            });
-            renderFormula();
-            updateSolverBtn();
-            updateKTypeUI();
-            updateConvertValue();
-        }
-
-        function setKType(type) {
-            state.kType = type;
-            render();
-        }
-
-        function updateKTypeUI() {
-            const kc = document.getElementById('opt-Kc');
-            const kp = document.getElementById('opt-Kp');
-            if (kc && kp) {
-                kc.classList.toggle('active', state.kType === 'Kc');
-                kp.classList.toggle('active', state.kType === 'Kp');
-            }
-        }
-
-        function createField(type, id, field, label, val) {
-            return `<div class="ice-input-field"><div class="ice-label">${label}</div><input class="ice-val-input" type="text" value="${val}" oninput="update('${type}', ${id}, '${field}', this.value)"></div>`;
-        }
-
-        function solve() {
-            const K_raw = document.getElementById('k-value').value.trim();
-            const K_input = parseVal(K_raw);
-            const calculateK = (K_raw === "" || K_input === 0);
-
-            const getV = (s, x) => {
-                const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
-                return (i.a + c1.a + c2.a + c3.a) * x + (i.b + c1.b + c2.b + c3.b);
-            };
-
-            let finalX = 0;
-            let resultVal = 0;
-            let resultLabel = "x";
-            
-            if (calculateK) {
-                // 模式 A：計算平衡常數 K (此時 x = 0)
-                let p = 1, r = 1;
-                state.products.forEach(s => p *= s.isSolid ? 1 : Math.pow(getV(s, 0), parseVal(s.coeff) || 1));
-                state.reactants.forEach(s => r *= s.isSolid ? 1 : Math.pow(getV(s, 0), parseVal(s.coeff) || 1));
-                resultVal = p / r;
-                resultLabel = "K";
-                finalX = 0; 
-            } else {
-                // 模式 B：已知 K 求解平衡組成 x
-                const f = (x) => {
-                    let p = 1, r = 1;
-                    state.products.forEach(s => p *= s.isSolid ? 1 : Math.pow(getV(s, x), parseVal(s.coeff) || 1));
-                    state.reactants.forEach(s => r *= s.isSolid ? 1 : Math.pow(getV(s, x), parseVal(s.coeff) || 1));
-                    return r === 0 ? 1e30 : (p / r) - K_input;
-                };
-
-                let minX = -1e6, maxX = 1e6;
-                [...state.reactants, ...state.products].forEach(s => {
-                    const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
-                    const A = i.a + c1.a + c2.a + c3.a, B = i.b + c1.b + c2.b + c3.b;
-                    if (A !== 0) { let z = -B/A; if(A > 0) minX = Math.max(minX, z); else maxX = Math.min(maxX, z); }
-                });
-
-                let low = minX + 1e-14, high = maxX - 1e-14, mid = low;
-                for (let j = 0; j < 5000; j++) {
-                    let s = low + (high - low) * (j / 5000), e = low + (high - low) * ((j + 1) / 5000);
-                    if (f(s) * f(e) <= 0) {
-                        let a = s, b = e;
-                        for (let i = 0; i < 100; i++) { mid = (a + b) / 2; if (f(a) * f(mid) <= 0) b = mid; else a = mid; }
-                        finalX = mid; break;
-                    }
-                }
-                resultVal = finalX;
-                resultLabel = "x";
-            }
-
-            const toMath = (num) => {
-                let n = Number(num.toPrecision(6));
-                if (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e4) {
-                    let [base, exp] = n.toExponential().split('e');
-                    return `${Number(base)} \\times 10^{${parseInt(exp)}}`;
-                }
-                return n.toString();
-            };
-
-            katex.render(`${resultLabel} = ${toMath(resultVal)}`, document.getElementById('result-math-box'));
-            document.getElementById('result-pane').classList.remove('hidden');
-
-            
-
-            // 更新下方各物質濃度方塊
-            const concs = document.getElementById('final-concs'); concs.innerHTML = '';
-            [...state.reactants, ...state.products].forEach((s, idx) => {
-                const final = Math.max(0, safeNum(getV(s, finalX)));
-                const defaultName = idx < state.reactants.length ? R_NAMES[idx] : P_NAMES[idx - state.reactants.length];
-                const displayFormula = s.formula || defaultName;
-                const name = formatChemicalFormula(displayFormula) || defaultName;
-                const cardId = `conc-math-${idx}`;
-                const fmt = (num) => {
-                    let n = Number(num.toPrecision(5));
-                    if (n !== 0 && (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e5)) {
-                        let [b, e] = n.toExponential().split('e');
-                        return `${Number(b)} \\times 10^{${parseInt(e)}}`;
-                    }
-                    return n.toString();
-                };
-                concs.innerHTML += `<div class="bg-slate-800/80 px-5 py-3 rounded-[16px] text-center min-w-[100px] border border-slate-700 shadow-xl"><div class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">[${name}]</div><div id="${cardId}" class="text-blue-300 text-lg font-bold leading-none py-1"></div></div>`;
-                setTimeout(() => katex.render(fmt(final), document.getElementById(cardId)), 0);
-            });
-        }
-
-        // 初始化 K計算（僅在 equilibrium-basic 場景顯示時）
-        function initKCalculator() {
-            const kCalcContent = document.querySelector('.scenario-content[data-scenario="equilibrium-basic"]');
-            if (!kCalcContent) {
-                console.warn('K計算場景元素未找到');
-                return;
-            }
-            
-            if (!kCalcContent.classList.contains('active')) {
-                console.warn('K計算場景未激活');
-                return;
-            }
-            
-            // 確保元素存在後再調用 render
-            const rEq = document.getElementById('reactants-eq');
-            const pEq = document.getElementById('products-eq');
-            const grid = document.getElementById('all-substances-grid');
-            
-            if (!rEq || !pEq || !grid) {
-                console.warn('K計算所需元素未找到', { rEq: !!rEq, pEq: !!pEq, grid: !!grid });
-                // 延遲重試
-                setTimeout(initKCalculator, 100);
-                return;
-            }
-            
-            if (typeof render === 'function') {
-                try {
-                    render();
-                } catch(e) {
-                    console.error('K計算初始化錯誤:', e);
-                }
-            } else {
-                console.warn('render 函數未定義');
-            }
-            
-            // 物質格滑鼠拖拽功能（只綁定一次）
-            const slider = document.getElementById('all-substances-grid');
-            if (slider && !slider.dataset.dragInitialized) {
-                slider.dataset.dragInitialized = 'true';
-                let isDown = false, startX, scrollLeft;
-                slider.addEventListener('mousedown', (e) => {
-                    isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft;
-                });
-                slider.addEventListener('mouseleave', () => isDown = false);
-                slider.addEventListener('mouseup', () => isDown = false);
-                slider.addEventListener('mousemove', (e) => {
-                    if (!isDown) return;
-                    e.preventDefault();
-                    const x = e.pageX - slider.offsetLeft;
-                    const walk = (x - startX) * 2;
-                    slider.scrollLeft = scrollLeft - walk;
-                });
-            }
-        }
-
-        // 監聽場景切換，當切換到 equilibrium-basic 時初始化
-        (function() {
-            function setupKCalculator() {
-                // 監聽場景切換
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                            const kCalcContent = document.querySelector('.scenario-content[data-scenario="equilibrium-basic"]');
-                            if (kCalcContent && kCalcContent.classList.contains('active')) {
-                                setTimeout(initKCalculator, 150);
-                            }
-                        }
-                    });
-                });
-
-                const kCalcContent = document.querySelector('.scenario-content[data-scenario="equilibrium-basic"]');
-                if (kCalcContent) {
-                    observer.observe(kCalcContent, { attributes: true });
-                    // 如果初始就是 active，立即初始化
-                    if (kCalcContent.classList.contains('active')) {
-                        setTimeout(initKCalculator, 150);
-                    }
-                }
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setupKCalculator);
-            } else {
-                setupKCalculator();
-            }
-            
-            // 監聽窗口大小改變，確保 K計算 場景時高度正確
-            window.addEventListener('resize', function() {
-                const kCalcContent = document.querySelector('.scenario-content[data-scenario="equilibrium-basic"]');
-                if (kCalcContent && kCalcContent.classList.contains('active')) {
-                    const controlPanel = document.querySelector('.control-panel');
-                    const mainView = document.querySelector('.main-view');
-                    
-                    if (controlPanel) {
-                        controlPanel.style.display = 'none';
-                    }
-                    if (mainView) {
-                        mainView.style.height = 'calc(100vh - 7vh)';
-                    }
-                }
-            });
-        })();
     </script>
 
 </body></html>
