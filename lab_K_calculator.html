@@ -644,7 +644,7 @@
                 <div class="k-block-premium" style="width: 100%; min-width: 100%; max-width: 100%;">
                     <div class="bg-white/10 rounded-2xl px-4 py-2 border border-white/5 flex items-center gap-3 overflow-hidden">
                         <span class="text-2xl font-black italic text-white whitespace-nowrap shrink-0">K =</span>
-                        <input type="text" id="k-value-mobile" value="2e14" placeholder="Target K" oninput="updateSolverBtn(); renderFormula(); updateConvertValue(); syncKValue();" 
+                        <input type="text" id="k-value-mobile" value="2e14" placeholder="Target K" oninput="debounceKValueUpdate();" 
                                class="flex-1 min-w-0 bg-transparent border-none text-2xl font-black text-right outline-none placeholder:text-white/20 text-white leading-none" style="max-width: 100%;">
                     </div>
                     <div class="grid gap-3" style="grid-template-columns: 7fr 3fr;">
@@ -703,7 +703,7 @@
                 <!-- 紅框區域：K 值輸入 -->
                     <div class="bg-white/10 rounded-2xl px-4 py-3 border border-white/5 flex items-center gap-3 overflow-hidden">
                         <span class="text-2xl font-black italic text-white whitespace-nowrap shrink-0">K =</span>
-                        <input type="text" id="k-value" value="2e14" placeholder="Target K" oninput="updateSolverBtn(); renderFormula(); updateConvertValue(); syncKValue();" 
+                        <input type="text" id="k-value" value="2e14" placeholder="Target K" oninput="debounceKValueUpdate();" 
                                class="flex-1 min-w-0 bg-transparent border-none text-2xl font-black text-right outline-none placeholder:text-white/20 text-white leading-none" style="max-width: 100%;">
                     </div>
 
@@ -796,6 +796,25 @@
             products: [{ id: 2, coeff: "2", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "X" }],
             temp: 298, kType: 'Kc'
         };
+
+        // 防抖函數，用於延遲執行耗時操作
+        let kValueUpdateTimer = null;
+        function debounceKValueUpdate() {
+            // 立即同步 K 值（輕量操作）
+            syncKValue();
+            
+            // 清除之前的計時器
+            if (kValueUpdateTimer) {
+                clearTimeout(kValueUpdateTimer);
+            }
+            
+            // 延遲執行耗時操作（KaTeX 渲染等）
+            kValueUpdateTimer = setTimeout(() => {
+                updateSolverBtn();
+                renderFormula();
+                updateConvertValue();
+            }, 50); // 50ms 延遲，確保輸入不被阻塞
+        }
 
         // 格式化化學式：將輸入轉換為帶下標和上標的 HTML
         function formatChemicalFormula(input) {
