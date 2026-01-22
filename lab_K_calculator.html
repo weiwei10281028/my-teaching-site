@@ -1375,11 +1375,12 @@
                     }
                 }
             }
-            const formulaStr = `${kStr} = \\frac{ ${build(state.products)} }{ ${build(state.reactants)} }`;
+            // 使用 \displaystyle 讓分數部分與左邊 K 值大小一致
+            const formulaStr = `${kStr} = \\displaystyle\\frac{ ${build(state.products)} }{ ${build(state.reactants)} }`;
             const formulaPreviewDesktop = document.getElementById('formula-preview');
             const formulaPreviewMobile = document.getElementById('formula-preview-mobile');
-            if (formulaPreviewDesktop) katex.render(formulaStr, formulaPreviewDesktop);
-            if (formulaPreviewMobile) katex.render(formulaStr, formulaPreviewMobile);
+            if (formulaPreviewDesktop) katex.render(formulaStr, formulaPreviewDesktop, { displayMode: false });
+            if (formulaPreviewMobile) katex.render(formulaStr, formulaPreviewMobile, { displayMode: false });
         }
 
         function render() {
