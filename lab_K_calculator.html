@@ -918,8 +918,97 @@
             }
         }
 
-        function editFormula(type, id, event) {
+        // 長按檢測變數
+        let longPressTimer = null;
+        let isLongPress = false;
+        let touchStartTime = 0;
+        let currentTouchTarget = null;
+
+        function cancelLongPress() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            isLongPress = false;
+            currentTouchTarget = null;
+        }
+
+        function handleFormulaInteraction(type, id, event) {
             event.stopPropagation();
+            const item = state[type].find(s => s.id === id);
+            if (!item) return;
+            
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // 手機版：區分點擊和長按
+                if (event.type === 'touchstart') {
+                    // 取消之前的長按計時器（如果有的話）
+                    cancelLongPress();
+                    
+                    isLongPress = false;
+                    touchStartTime = Date.now();
+                    currentTouchTarget = event.target;
+                    
+                    // 設置長按計時器（500ms）
+                    longPressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        // 切換固體狀態
+                        item.isSolid = !item.isSolid;
+                        render();
+                        // 觸覺反饋（如果支援）
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                        cancelLongPress();
+                    }, 500);
+                } else if (event.type === 'touchend' || event.type === 'touchcancel') {
+                    const touchDuration = Date.now() - touchStartTime;
+                    
+                    // 清除長按計時器
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                    
+                    // 如果是長按，不執行點擊操作
+                    if (isLongPress || touchDuration >= 500) {
+                        isLongPress = false;
+                        currentTouchTarget = null;
+                        return;
+                    }
+                    
+                    // 短按：打開輸入框
+                    if (event.type === 'touchend') {
+                        editFormula(type, id, event);
+                    }
+                    
+                    currentTouchTarget = null;
+                }
+            } else {
+                // 電腦版：維持原本方式（點擊編輯，雙擊切換固體）
+                if (event.type === 'click') {
+                    if (event.detail === 2) {
+                        // 雙擊切換固體
+                        item.isSolid = !item.isSolid;
+                        render();
+                    } else {
+                        // 單擊編輯
+                        editFormula(type, id, event);
+                    }
+                }
+            }
+        }
+
+        // 監聽全局觸摸事件，如果觸摸其他地方則取消長按
+        document.addEventListener('touchstart', (e) => {
+            if (currentTouchTarget && !currentTouchTarget.contains(e.target)) {
+                cancelLongPress();
+            }
+        }, true);
+
+        function editFormula(type, id, event) {
+            if (event) event.stopPropagation();
             const item = state[type].find(s => s.id === id);
             const displayEl = document.getElementById(`formula-display-${id}`);
             if (!displayEl) return;
@@ -949,11 +1038,17 @@
                 // 添加到 body
                 document.body.appendChild(input);
                 
-                // 延遲一下再 focus，確保樣式已應用
+                // 立即 focus，確保鍵盤彈出
+                input.focus();
+                input.select();
+                
+                // 如果 focus 失敗，再試一次
                 setTimeout(() => {
-                    input.focus();
-                    input.select();
-                }, 10);
+                    if (document.activeElement !== input) {
+                        input.focus();
+                        input.select();
+                    }
+                }, 50);
                 
                 const finishEdit = () => {
                     const newFormula = input.value.trim() || currentFormula;
@@ -966,7 +1061,7 @@
                 };
                 
                 input.addEventListener('blur', () => {
-                    setTimeout(finishEdit, 300);
+                    setTimeout(finishEdit, 100);
                 });
                 
                 input.addEventListener('keydown', (e) => {
@@ -1309,9 +1404,11 @@
                             <input type="text" value="${s.coeff}" oninput="event.stopPropagation(); update('${type}', ${s.id}, 'coeff', this.value)" onclick="event.stopPropagation()" class="coeff-input">
                             <div class="relative">
                                 <span id="formula-display-${s.id}" class="text-3xl font-black transition-all ${s.isSolid ? 'text-slate-300 line-through' : 'text-slate-800'} cursor-pointer" 
-                                      onclick="event.stopPropagation(); editFormula('${type}', ${s.id}, event)" 
-                                      ondblclick="togglePhase('${type}', ${s.id}, event)"
-                                      title="單擊編輯化學式，雙擊切換固體/液體">${formattedFormula || defaultName}</span>
+                                      ontouchstart="handleFormulaInteraction('${type}', ${s.id}, event)"
+                                      ontouchend="handleFormulaInteraction('${type}', ${s.id}, event)"
+                                      ontouchcancel="handleFormulaInteraction('${type}', ${s.id}, event)"
+                                      onclick="handleFormulaInteraction('${type}', ${s.id}, event)"
+                                      title="點擊編輯化學式，長按切換固體/液體">${formattedFormula || defaultName}</span>
                                 ${s.isSolid ? '<span class="text-[10px] font-bold text-slate-400 self-end mb-1">(s)</span>' : ''}
                             </div>
                         </div>` + (idx < state[type].length - 1 ? '<span class="text-slate-300 font-bold text-2xl">+</span>' : '');
