@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equilibrium Solver Pro 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fa; color: #1e293b; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+
+        .white-bar {
+            background: white;
+            border-radius: 30px;
+            padding: 15px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .coeff-input {
+            width: 38px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #2563eb;
+            border-bottom: 3px solid #3b82f6;
+            background: transparent;
+            outline: none;
+        }
+
+        /* 化學式上標和下標樣式 */
+        sub, sup {
+            font-weight: 800;
+            font-size: 0.75em;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline;
+        }
+        sub {
+            bottom: -0.25em;
+        }
+        sup {
+            top: -0.5em;
+            font-weight: 800;
+        }
+
+        /* 高質感膠囊切換器 */
+        .k-type-toggle {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            padding: 3px;
+            gap: 2px;
+        }
+        .k-option {
+            padding: 4px 12px;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .k-option.active {
+            background: white;
+            color: #2563eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .k-option:not(.active):hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .k-block-premium {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-radius: 24px;
+            padding: 16px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+            transition: transform 0.2s;
+            overflow: hidden;
+        }
+        
+        /* 隱藏捲軸與抓取功能 */
+        .hide-scroll { 
+            -ms-overflow-style: none; scrollbar-width: none; 
+            cursor: grab; user-select: none;
+        }
+        .hide-scroll:active { cursor: grabbing; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+
+        /* 凸起玻璃層效果 - 緊湊版 */
+        .glass-converter {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 6px 10px;
+            min-height: 52px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.3), 4px 4px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .glass-converter:active { transform: scale(0.95); }
+
+
+
+        /* 物質輸入區塊 - 窄化 190px */
+        .substance-card {
+            background: white; border-radius: 20px; padding: 15px;
+            width: 190px; flex-shrink: 0;
+            border-left: 6px solid #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            position: relative;
+        }
+        .react-card { border-left-color: #ef4444; }
+        .prod-card { border-left-color: #10b981; }
+
+        .eq-bubble {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            max-width: 120px;
+            text-align: right;
+            word-break: break-all;
+            line-height: 1.2;
+        }
+        .eq-bubble .multiply {
+            margin: 0 2px;
+        }
+
+        .ice-input-field {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 8px;
+            border: 1px solid #f1f5f9;
+        }
+        .ice-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        .ice-val-input { width: 100%; background: transparent; border: none; font-size: 18px; font-weight: 700; color: #334155; outline: none; }
+
+        /* 底部結果橫幅優化 */
+        .bottom-solver {
+            background: #0f172a;
+            border-radius: 28px;
+            padding: 25px 40px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 180px;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        #formula-preview { font-size: 1.4rem !important; }
+
+        /* 手機版專用樣式 */
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                max-width: 100vw;
+                width: 100%;
+                position: relative;
+            }
+            
+            body {
+                padding: 12px;
+                box-sizing: border-box;
+            }
+            
+            .max-w-7xl {
+                max-width: 100%;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            /* 方程式工具欄 - 手機版單獨顯示 */
+            .equation-bar-mobile {
+                background: white;
+                border-radius: 20px;
+                padding: 12px 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .equation-bar-mobile .flex {
+                min-width: max-content;
+            }
+
+            /* K 區塊 - 手機版調整 */
+            .k-block-premium-mobile {
+                width: 100%;
+                min-width: 100%;
+                max-width: 100%;
+                margin-bottom: 16px;
+                box-sizing: border-box;
+            }
+
+            .k-block-premium-mobile .k-block-premium {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* 物質輸入區塊 - 手機版調整 */
+            #all-substances-grid {
+                margin-bottom: 16px;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            /* 底部求解區 - 手機版橫向滑動 */
+            .bottom-solver {
+                display: none;
+            }
+
+            .bottom-solver-mobile {
+                background: #0f172a;
+                border-radius: 28px;
+                color: white;
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                gap: 20px;
+                padding: 20px;
+                min-height: auto;
+                margin-top: 20px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .bottom-solver-mobile > * {
+                flex-shrink: 0;
+                min-width: 280px;
+            }
+
+            .bottom-solver-mobile .border-r {
+                border-right: none;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+                padding-right: 0;
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+                min-width: 280px;
+            }
+
+            .bottom-solver-mobile #result-pane-mobile {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                min-width: 280px;
+            }
+
+            .bottom-solver-mobile #final-concs-mobile {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 12px;
+                width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .bottom-solver-mobile button {
+                min-width: 200px;
+                padding: 15px 30px;
+            }
+
+            /* 隱藏桌面版的 white-bar 在手機版 */
+            .white-bar-desktop {
+                display: none !important;
+            }
+
+            /* 確保所有卡片不會超出視窗 */
+            .substance-card {
+                max-width: calc(100vw - 48px);
+            }
+        }
+
+        /* 桌面版樣式 */
+        @media (min-width: 769px) {
+            .equation-bar-mobile,
+            .k-block-premium-mobile,
+            .bottom-solver-mobile {
+                display: none !important;
+            }
+            
+            .white-bar-desktop {
+                display: flex !important;
+            }
+
+            .bottom-solver:not(.bottom-solver-mobile) {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- 手機版：方程式工具欄（單獨顯示在最上面） -->
+        <div class="equation-bar-mobile">
+            <button onclick="resetData()" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 w-10 h-10 rounded-full transition-all flex items-center justify-center shrink-0 border border-slate-100" title="Reset All">
+                <i class="bi bi-trash3-fill text-base"></i>
+            </button>
+            <div class="flex items-center gap-2 py-2">
+                <div id="reactants-eq-mobile" class="flex items-center gap-2"></div>
+                <div class="flex flex-col gap-1 ml-1 shrink-0">
+                    <button onclick="addSpecies('reactants')" class="w-5 h-5 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-xs"><i class="bi bi-plus"></i></button>
+                    <button onclick="removeSpecies('reactants')" class="w-5 h-5 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors text-xs"><i class="bi bi-dash"></i></button>
+                </div>
+                <div class="text-3xl text-slate-200 px-4 italic shrink-0">⇌</div>
+                <div id="products-eq-mobile" class="flex items-center gap-2"></div>
+                <div class="flex flex-col gap-1 ml-1 shrink-0">
+                    <button onclick="addSpecies('products')" class="w-5 h-5 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors text-xs"><i class="bi bi-plus"></i></button>
+                    <button onclick="removeSpecies('products')" class="w-5 h-5 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors text-xs"><i class="bi bi-dash"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手機版：K 設置區塊（放在方程式下面） -->
+        <div class="k-block-premium-mobile">
+            <div class="k-block-premium" style="width: 100%; min-width: 100%; max-width: 100%;">
+                <div class="bg-white/10 rounded-2xl px-4 py-3 border border-white/5 flex items-center gap-3 overflow-hidden">
+                    <span class="text-2xl font-black italic text-white whitespace-nowrap shrink-0">K =</span>
+                    <input type="text" id="k-value-mobile" value="2e14" placeholder="Target K" oninput="updateSolverBtn(); renderFormula(); updateConvertValue(); syncKValue();" 
+                           class="flex-1 min-w-0 bg-transparent border-none text-2xl font-black text-right outline-none placeholder:text-white/20 text-white leading-none" style="max-width: 100%;">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div id="glass-conv-box-mobile" class="glass-converter flex flex-col items-center justify-center" onclick="runQuickConvert()">
+                        <span id="glass-label-mobile" class="opacity-70 text-[11px] font-bold leading-tight">Convert to K<sub>p</sub></span>
+                        <div id="glass-val-mobile" class="text-lg font-black leading-tight mt-0.5">---</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl flex flex-col items-center justify-center border border-white/5">
+                        <span class="text-xs font-bold opacity-60 leading-tight">Temperature</span>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <input type="text" id="temp-input-mobile" value="298" oninput="state.temp=this.value; renderFormula(); updateConvertValue(); syncTempValue();" class="w-12 bg-transparent border-none text-xl font-black outline-none text-center text-white leading-none">
+                            <span class="text-xs font-black opacity-60">K</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 桌面版：方程式工具欄（保持原樣） -->
+        <div class="white-bar white-bar-desktop">
+            <!-- 左側：功能按鈕與方程式 -->
+            <div class="flex-1 flex items-center gap-6 min-w-0">
+                <button onclick="resetData()" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 w-11 h-11 rounded-full transition-all flex items-center justify-center shrink-0 border border-slate-100" title="Reset All">
+                    <i class="bi bi-trash3-fill text-lg"></i>
+                </button>
+
+                <div class="flex items-center gap-2 overflow-x-auto py-2">
+                    <div id="reactants-eq" class="flex items-center gap-2"></div>
+                    <div class="flex flex-col gap-1 ml-1 shrink-0">
+                        <button onclick="addSpecies('reactants')" class="w-6 h-6 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"><i class="bi bi-plus"></i></button>
+                        <button onclick="removeSpecies('reactants')" class="w-6 h-6 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><i class="bi bi-dash"></i></button>
+                    </div>
+                    
+                    <div class="text-4xl text-slate-200 px-6 italic shrink-0">⇌</div>
+
+                    <div id="products-eq" class="flex items-center gap-2"></div>
+                    <div class="flex flex-col gap-1 ml-1 shrink-0">
+                        <button onclick="addSpecies('products')" class="w-6 h-6 flex items-center justify-center bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"><i class="bi bi-plus"></i></button>
+                        <button onclick="removeSpecies('products')" class="w-6 h-6 flex items-center justify-center bg-red-500/10 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><i class="bi bi-dash"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：K 設置區塊 -->
+            <div class="k-block-premium shrink-0 ml-8">
+                <!-- 紅框區域：K 值輸入 -->
+                    <div class="bg-white/10 rounded-2xl px-4 py-3 border border-white/5 flex items-center gap-3 overflow-hidden">
+                        <span class="text-2xl font-black italic text-white whitespace-nowrap shrink-0">K =</span>
+                        <input type="text" id="k-value" value="2e14" placeholder="Target K" oninput="updateSolverBtn(); renderFormula(); updateConvertValue(); syncKValue();" 
+                               class="flex-1 min-w-0 bg-transparent border-none text-2xl font-black text-right outline-none placeholder:text-white/20 text-white leading-none" style="max-width: 100%;">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- 白色區域：玻璃層轉換按鈕 -->
+                        <div id="glass-conv-box" class="glass-converter flex flex-col items-center justify-center" onclick="runQuickConvert()">
+                            <span id="glass-label" class="opacity-70 text-[11px] font-bold leading-tight">Convert to K<sub>p</sub></span>
+                            <div id="glass-val" class="text-lg font-black leading-tight mt-0.5">---</div>
+                        </div>
+
+                        <!-- 藍色區域：溫度輸入 -->
+                        <div class="bg-white/10 rounded-2xl flex flex-col items-center justify-center border border-white/5">
+                            <span class="text-xs font-bold opacity-60 leading-tight">Temperature</span>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <input type="text" id="temp-input" value="298" oninput="state.temp=this.value; renderFormula(); updateConvertValue(); syncTempValue();" class="w-12 bg-transparent border-none text-xl font-black outline-none text-center text-white leading-none">
+                            <span class="text-xs font-black opacity-60">K</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 數據卡片區：改為橫向不換行捲動 -->
+        <div id="all-substances-grid" class="flex flex-nowrap gap-4 mb-10 overflow-x-auto hide-scroll px-1"></div>
+
+        <!-- 底部求解區 - 桌面版 -->
+        <div class="bottom-solver">
+            <!-- 左側：定律式 -->
+            <div class="flex-shrink-0 border-r border-slate-700 pr-10 min-w-[250px]">
+                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 opacity-70">Law of Mass Action</p>
+                <div id="formula-preview"></div>
+            </div>
+
+            <!-- 中間：求解結果與濃度方塊 -->
+            <div class="flex flex-1 items-center justify-between gap-12 overflow-hidden">
+                <div id="result-pane" class="hidden flex items-center gap-12">
+                    <div class="whitespace-nowrap flex-shrink-0">
+                        <p id="result-label" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resulting Equilibrium</p>
+                        <div id="result-math-box" class="text-3xl font-black text-white leading-none tracking-tight py-1">
+                            <span id="result-sym">x</span> = <span id="result-val" class="text-blue-400 mono"></span>
+                        </div>
+                    </div>
+                    <!-- 濃度方塊容器 -->
+                    <div id="final-concs" class="flex flex-wrap gap-4 items-center"></div>
+                </div>
+            </div>
+
+            <!-- 右側：按鈕 -->
+            <div class="flex-shrink-0">
+                <button id="solve-btn" onclick="solve()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl shadow-blue-900/40">
+                    RUN SOLVER
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部求解區 - 手機版（可橫向滑動） -->
+        <div class="bottom-solver-mobile hide-scroll">
+            <!-- 左側：定律式 -->
+            <div class="flex-shrink-0 border-r border-slate-700 pr-10 min-w-[280px]">
+                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 opacity-70">Law of Mass Action</p>
+                <div id="formula-preview-mobile"></div>
+            </div>
+
+            <!-- 中間：求解結果與濃度方塊 -->
+            <div class="flex flex-1 items-center justify-between gap-12 overflow-hidden min-w-[280px]">
+                <div id="result-pane-mobile" class="hidden flex flex-col items-start gap-4">
+                    <div class="whitespace-nowrap flex-shrink-0">
+                        <p id="result-label-mobile" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resulting Equilibrium</p>
+                        <div id="result-math-box-mobile" class="text-2xl font-black text-white leading-none tracking-tight py-1">
+                            <span id="result-sym-mobile">x</span> = <span id="result-val-mobile" class="text-blue-400 mono"></span>
+                        </div>
+                    </div>
+                    <!-- 濃度方塊容器 -->
+                    <div id="final-concs-mobile" class="flex flex-nowrap gap-4 items-center overflow-x-auto hide-scroll"></div>
+                </div>
+            </div>
+
+            <!-- 右側：按鈕 -->
+            <div class="flex-shrink-0 min-w-[200px]">
+                <button id="solve-btn-mobile" onclick="solve()" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black text-base transition-all active:scale-95 shadow-xl shadow-blue-900/40 w-full">
+                    RUN SOLVER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const R_NAMES = "ABCDE".split("");
+        const P_NAMES = "XYZWV".split("");
+
+        let state = {
+            reactants: [{ id: 1, coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "A" }],
+            products: [{ id: 2, coeff: "2", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "X" }],
+            temp: 298, kType: 'Kc'
+        };
+
+        // 格式化化學式：將輸入轉換為帶下標和上標的 HTML
+        function formatChemicalFormula(input) {
+            if (!input || input.trim() === "") return "";
+            let text = input.trim();
+            
+            // 檢查是否有空格（表示上標部分）
+            const spaceIndex = text.indexOf(' ');
+            let mainPart = text;
+            let superscriptPart = "";
+            
+            if (spaceIndex > 0) {
+                mainPart = text.substring(0, spaceIndex);
+                superscriptPart = text.substring(spaceIndex + 1).trim();
+            }
+            
+            // 處理主體部分：數字變下標
+            let formatted = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+            
+            // 處理上標部分：使用 HTML sup 標籤，確保粗細和對齊一致
+            if (superscriptPart) {
+                // 將上標部分用 <sup> 標籤包裹，保持與主體相同的字體粗細
+                formatted += '<sup>' + superscriptPart + '</sup>';
+            }
+            
+            return formatted;
+        }
+
+        // 同步 K 值輸入
+        function syncKValue() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            if (kValueDesktop && kValueMobile) {
+                const activeInput = document.activeElement;
+                if (activeInput === kValueDesktop) {
+                    kValueMobile.value = kValueDesktop.value;
+                } else if (activeInput === kValueMobile) {
+                    kValueDesktop.value = kValueMobile.value;
+                }
+            }
+        }
+
+        // 同步溫度輸入
+        function syncTempValue() {
+            const tempDesktop = document.getElementById('temp-input');
+            const tempMobile = document.getElementById('temp-input-mobile');
+            if (tempDesktop && tempMobile) {
+                const activeInput = document.activeElement;
+                if (activeInput === tempDesktop) {
+                    tempMobile.value = tempDesktop.value;
+                } else if (activeInput === tempMobile) {
+                    tempDesktop.value = tempMobile.value;
+                }
+            }
+        }
+
+        function resetData() {
+            state.reactants = [{ id: Date.now(), coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "A" }];
+            state.products = [{ id: Date.now()+1, coeff: "2", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: "X" }];
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            if (kValueDesktop) kValueDesktop.value = "";
+            if (kValueMobile) kValueMobile.value = "";
+            const glassValDesktop = document.getElementById('glass-val');
+            const glassValMobile = document.getElementById('glass-val-mobile');
+            const glassLabelDesktop = document.getElementById('glass-label');
+            const glassLabelMobile = document.getElementById('glass-label-mobile');
+            if (glassValDesktop) glassValDesktop.innerText = "---";
+            if (glassValMobile) glassValMobile.innerText = "---";
+            if (glassLabelDesktop) glassLabelDesktop.innerHTML = `Convert to K<sub>p</sub>`;
+            if (glassLabelMobile) glassLabelMobile.innerHTML = `Convert to K<sub>p</sub>`;
+            render();
+        }
+
+        function togglePhase(type, id, event) {
+            if (event) {
+                event.stopPropagation();
+                // 雙擊切換固體狀態
+                if (event.detail === 2) {
+                    const item = state[type].find(s => s.id === id);
+                    item.isSolid = !item.isSolid;
+                    render();
+                }
+            }
+        }
+
+        function editFormula(type, id, event) {
+            event.stopPropagation();
+            const item = state[type].find(s => s.id === id);
+            const displayEl = document.getElementById(`formula-display-${id}`);
+            if (!displayEl) return;
+            
+            const currentFormula = item.formula || ((type === 'reactants' ? R_NAMES : P_NAMES)[state[type].indexOf(item)] || "A");
+            
+            // 創建輸入框
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentFormula;
+            input.className = 'coeff-input';
+            input.style.width = '120px';
+            input.style.fontSize = '24px';
+            input.style.textAlign = 'center';
+            
+            const finishEdit = () => {
+                const newFormula = input.value.trim() || currentFormula;
+                item.formula = newFormula;
+                render();
+            };
+            
+            input.addEventListener('blur', finishEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finishEdit();
+                } else if (e.key === 'Escape') {
+                    render();
+                }
+            });
+            
+            displayEl.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        function updateFormula(type, id, newFormula) {
+            const item = state[type].find(s => s.id === id);
+            item.formula = newFormula || ((type === 'reactants' ? R_NAMES : P_NAMES)[state[type].indexOf(item)] || "A");
+            render();
+        }
+        function setKType(type) {
+            state.kType = type;
+            renderFormula();
+            updateKTypeUI();
+        }
+        // 計算並更新轉換值
+        function updateConvertValue() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            const kValue = kValueDesktop ? kValueDesktop.value : (kValueMobile ? kValueMobile.value : "");
+            const K_val = parseVal(kValue);
+            
+            const glassValDesktop = document.getElementById('glass-val');
+            const glassValMobile = document.getElementById('glass-val-mobile');
+            const glassLabelDesktop = document.getElementById('glass-label');
+            const glassLabelMobile = document.getElementById('glass-label-mobile');
+            
+            if (K_val === 0) {
+                if (glassValDesktop) glassValDesktop.innerHTML = "---";
+                if (glassValMobile) glassValMobile.innerHTML = "---";
+                return;
+            }
+
+            const dn = state.products.filter(s => !s.isSolid).reduce((sum, s) => sum + (parseVal(s.coeff)||1), 0) 
+                     - state.reactants.filter(s => !s.isSolid).reduce((sum, s) => sum + (parseVal(s.coeff)||1), 0);
+            const tempDesktop = document.getElementById('temp-input');
+            const tempMobile = document.getElementById('temp-input-mobile');
+            const tempValue = tempDesktop ? tempDesktop.value : (tempMobile ? tempMobile.value : "298");
+            const T = parseVal(tempValue) || 298;
+            const RT = 0.08206 * T;
+
+            // 根據當前標籤計算對應的轉換值
+            const labelText = glassLabelDesktop ? glassLabelDesktop.innerHTML : (glassLabelMobile ? glassLabelMobile.innerHTML : "");
+            const convertedValue = labelText.includes("K<sub>p</sub>") 
+                ? K_val * Math.pow(RT, dn)
+                : K_val / Math.pow(RT, dn);
+            
+            const formattedValue = formatChemNum(convertedValue);
+            if (glassValDesktop) glassValDesktop.innerHTML = formattedValue;
+            if (glassValMobile) glassValMobile.innerHTML = formattedValue;
+        }
+
+        function runQuickConvert() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            const kValue = kValueDesktop ? kValueDesktop.value : (kValueMobile ? kValueMobile.value : "");
+            const K_val = parseVal(kValue);
+            if (K_val === 0) return;
+
+            const glassLabelDesktop = document.getElementById('glass-label');
+            const glassLabelMobile = document.getElementById('glass-label-mobile');
+            
+            // 切換標籤（同步桌面版和手機版）
+            const currentLabel = glassLabelDesktop ? glassLabelDesktop.innerHTML : (glassLabelMobile ? glassLabelMobile.innerHTML : "");
+            const newLabel = currentLabel.includes("K<sub>p</sub>") 
+                ? `Convert to K<sub>c</sub>`
+                : `Convert to K<sub>p</sub>`;
+            
+            if (glassLabelDesktop) glassLabelDesktop.innerHTML = newLabel;
+            if (glassLabelMobile) glassLabelMobile.innerHTML = newLabel;
+            
+            // 更新轉換值
+            updateConvertValue();
+        }
+
+        function updateKTypeUI() {
+            // 由於 Kp/Kc 按鈕移除，此處改為空函數或移除引用
+        }
+
+        function parseVal(str) {
+            if (!str || str.trim() === "") return 0;
+            try {
+                const sanitized = str.replace(/[^\d\+\-\*\/\.\(\)eE]/g, '');
+                const result = new Function(`return Number(${sanitized})`)();
+                return isNaN(result) ? 0 : result;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function safeNum(n) { return parseFloat(Number(n).toPrecision(12)); }
+
+        function formatChemNum(num) {
+            if (num === 0 || isNaN(num)) return "0";
+            let n = Number(num);
+            // 判斷是否需要用科學記號
+            if (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e4) {
+                let parts = n.toExponential(3).split('e');
+                let base = parseFloat(parts[0]).toFixed(3);
+                let exp = parseInt(parts[1]);
+                return `${base} × 10<sup>${exp}</sup>`;
+            }
+            return n.toFixed(3);
+        }
+
+        function parseExpression(str) {
+            let a = 0, b = 0;
+            // 1. 預處理：移除空白，保護科學記號
+            let s = String(str).replace(/\s+/g, "").replace(/e-/gi, "e_").replace(/e\+/gi, "e^");
+            
+            // 2. 正則表達式掃描每一項：[符號][運算式][x或無]
+            // 此正則會抓取如 "+0.9*0.4/0.1x", "-5", "+x", "0.2/0.1" 等
+            // 修正：確保運算順序從左到右（乘除同級）
+            const termRegex = /([+-]?(?:[0-9.*/\.eE_^]+x?|x))/g;
+            const terms = s.match(termRegex);
+            
+            if (terms) {
+                terms.forEach(t => {
+                    // 還原科學記號
+                    let term = t.replace(/e_/gi, "e-").replace(/e\^/gi, "e+");
+                    
+                    if (term.includes('x')) {
+                        let coeffPart = term.replace('x', '');
+                        if (coeffPart === "" || coeffPart === "+") a += 1;
+                        else if (coeffPart === "-") a -= 1;
+                        else a += parseVal(coeffPart);
+                    } else {
+                        b += parseVal(term);
+                    }
+                });
+            }
+            return { a: safeNum(a), b: safeNum(b) };
+        }
+
+        function formatNumberForDisplay(num) {
+            if (num === 0) return "0";
+            const absNum = Math.abs(num);
+            // 大數或小數使用科學記號
+            if (absNum >= 1e3 || (absNum < 0.001 && absNum > 0)) {
+                const parts = num.toExponential().split('e');
+                let base = parseFloat(parts[0]);
+                const exp = parseInt(parts[1]);
+                // 移除不必要的零：整數直接顯示，小數移除尾隨零
+                const baseStr = base % 1 === 0 ? base.toString() : base.toFixed(10).replace(/\.?0+$/, '');
+                // 使用 HTML sup 標籤，與上方 K 的次方顯示方式一致，× 符號使用較小的間距
+                return `${baseStr}<span class="multiply">×</span>10<sup>${exp}</sup>`;
+            }
+            // 一般數字，移除不必要的零
+            const numStr = num.toString();
+            if (numStr.includes('.')) {
+                return numStr.replace(/\.?0+$/, '');
+            }
+            return numStr;
+        }
+
+        function getDisplayExpr(s) {
+            const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
+            const A = safeNum(i.a + c1.a + c2.a + c3.a), B = safeNum(i.b + c1.b + c2.b + c3.b);
+            let res = [];
+            
+            if (B !== 0) {
+                if (A === 0) {
+                    // 純常數，使用格式化函數
+                    res.push(formatNumberForDisplay(B));
+                } else {
+                    res.push(formatNumberForDisplay(B));
+                }
+            }
+            if (A !== 0) res.push((A === 1 ? "" : A === -1 ? "-" : A) + "x");
+            return res.length === 0 ? "0" : res.join(A < 0 && B !== 0 ? "" : "+").replace(/\+\-/g, "-");
+        }
+
+        function updateSolverBtn() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            const val = kValueDesktop ? kValueDesktop.value.trim() : (kValueMobile ? kValueMobile.value.trim() : "");
+            const k = parseVal(val);
+            const btnText = (val === "" || k === 0) ? "CALCULATE K" : "RUN SOLVER";
+            const solveBtnDesktop = document.getElementById('solve-btn');
+            const solveBtnMobile = document.getElementById('solve-btn-mobile');
+            if (solveBtnDesktop) solveBtnDesktop.innerText = btnText;
+            if (solveBtnMobile) solveBtnMobile.innerText = btnText;
+        }
+
+        function addSpecies(type) {
+            if (state[type].length >= 4) return;
+            const defaultName = (type === 'reactants' ? R_NAMES : P_NAMES)[state[type].length] || "A";
+            state[type].push({ id: Date.now() + Math.random(), coeff: "1", init: "", c1: "", c2: "", c3: "", isSolid: false, formula: defaultName });
+            render();
+        }
+
+        function removeSpecies(type) {
+            if (state[type].length === 0) return;
+            state[type].pop();
+            render();
+        }
+
+        function update(type, id, field, val) {
+            const item = state[type].find(s => s.id === id);
+            item[field] = val;
+            renderFormula();
+            updateConvertValue();
+            const bubble = document.getElementById(`eq-bubble-${id}`);
+            if (bubble) bubble.innerHTML = getDisplayExpr(item);
+        }
+
+        function htmlToLatex(htmlStr) {
+            // 將 HTML 格式轉換為 LaTeX 格式
+            return htmlStr
+                .replace(/<span class="multiply">×<\/span>/g, ' \\times ')
+                .replace(/<sub>(.*?)<\/sub>/g, '_{$1}')
+                .replace(/<sup>(.*?)<\/sup>/g, '^{$1}')
+                .replace(/×/g, ' \\times ');
+        }
+
+        function formulaToLatex(formula) {
+            // 將化學式轉換為 LaTeX 格式（用於公式顯示）
+            if (!formula) return "";
+            const formatted = formatChemicalFormula(formula);
+            return htmlToLatex(formatted);
+        }
+
+        function renderFormula() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            const rawK = kValueDesktop ? kValueDesktop.value : (kValueMobile ? kValueMobile.value : "");
+            const build = (list) => {
+                const active = list.filter(s => !s.isSolid);
+                if (active.length === 0) return "1";
+                return active.map((s, activeIdx) => {
+                    const expr = getDisplayExpr(s);
+                    // 將 HTML 格式轉換為 LaTeX 格式
+                    const latexExpr = htmlToLatex(expr);
+                    const coeff = parseVal(s.coeff) || 1;
+                    const idx = list.indexOf(s);
+                    const defaultName = (list === state.reactants ? R_NAMES : P_NAMES)[idx] || "A";
+                    const formula = s.formula || defaultName;
+                    const formulaLatex = formulaToLatex(formula);
+                    const clean = latexExpr.includes('+') || latexExpr.includes('-') ? `(${latexExpr})` : latexExpr;
+                    // 使用化學式名稱，如果 expr 是純數字則只顯示化學式，否則顯示化學式(表達式)
+                    // 修正：僅在完全沒輸入數據(expr為"0")時才顯示化學式，否則顯示數值表達式
+                    const displayName = (expr === "0") ? formulaLatex : clean;
+                    return coeff === 1 ? displayName : `${displayName}^{${coeff}}`;
+                }).join(' \\times ');
+            };
+            const kStr = rawK ? (rawK.includes('e') ? rawK.split('e')[0] + ' \\times 10^{'+rawK.split('e')[1].replace('+','')+'}' : rawK) : "K";
+            const formulaStr = `${kStr} = \\frac{ ${build(state.products)} }{ ${build(state.reactants)} }`;
+            const formulaPreviewDesktop = document.getElementById('formula-preview');
+            const formulaPreviewMobile = document.getElementById('formula-preview-mobile');
+            if (formulaPreviewDesktop) katex.render(formulaStr, formulaPreviewDesktop);
+            if (formulaPreviewMobile) katex.render(formulaStr, formulaPreviewMobile);
+        }
+
+        function render() {
+            const rEq = document.getElementById('reactants-eq'), pEq = document.getElementById('products-eq');
+            const rEqMobile = document.getElementById('reactants-eq-mobile'), pEqMobile = document.getElementById('products-eq-mobile');
+            const grid = document.getElementById('all-substances-grid');
+            if (rEq) rEq.innerHTML = '';
+            if (pEq) pEq.innerHTML = '';
+            if (rEqMobile) rEqMobile.innerHTML = '';
+            if (pEqMobile) pEqMobile.innerHTML = '';
+            if (grid) grid.innerHTML = '';
+
+            ['reactants', 'products'].forEach(type => {
+                const eqDiv = type === 'reactants' ? rEq : pEq;
+                const eqDivMobile = type === 'reactants' ? rEqMobile : pEqMobile;
+                state[type].forEach((s, idx) => {
+                    const defaultName = (type === 'reactants' ? R_NAMES : P_NAMES)[idx];
+                    const displayFormula = s.formula || defaultName;
+                    const formattedFormula = formatChemicalFormula(displayFormula);
+                    const eqHtml = `
+                        <div class="flex items-center gap-2 group">
+                            <input type="text" value="${s.coeff}" oninput="event.stopPropagation(); update('${type}', ${s.id}, 'coeff', this.value)" onclick="event.stopPropagation()" class="coeff-input">
+                            <div class="relative">
+                                <span id="formula-display-${s.id}" class="text-3xl font-black transition-all ${s.isSolid ? 'text-slate-300 line-through' : 'text-slate-800'} cursor-pointer" 
+                                      onclick="event.stopPropagation(); editFormula('${type}', ${s.id}, event)" 
+                                      ondblclick="togglePhase('${type}', ${s.id}, event)"
+                                      title="單擊編輯化學式，雙擊切換固體/液體">${formattedFormula || defaultName}</span>
+                                ${s.isSolid ? '<span class="text-[10px] font-bold text-slate-400 self-end mb-1">(s)</span>' : ''}
+                            </div>
+                        </div>` + (idx < state[type].length - 1 ? '<span class="text-slate-300 font-bold text-2xl">+</span>' : '');
+                    
+                    if (eqDiv) eqDiv.innerHTML += eqHtml;
+                    if (eqDivMobile) eqDivMobile.innerHTML += eqHtml;
+
+                    if (grid) {
+                        grid.innerHTML += `
+                            <div class="substance-card ${type === 'reactants' ? 'react-card' : 'prod-card'} ${s.isSolid ? 'opacity-50 grayscale-[0.5] bg-slate-50' : ''}">
+                                <div class="font-black text-slate-700 text-2xl mb-4"><span class="${s.isSolid ? 'text-slate-400' : ''}">${formattedFormula || defaultName}</span> ${s.isSolid ? '<small class="text-xs font-normal text-slate-400 ml-1">Pure Phase</small>' : ''}</div>
+                                <div id="eq-bubble-${s.id}" class="eq-bubble">${getDisplayExpr(s)}</div>
+                                <div class="flex flex-col">
+                                    ${createField(type, s.id, 'init', 'Initial (I)', s.init)}
+                                    ${createField(type, s.id, 'c1', 'Change (C1)', s.c1)}
+                                    ${createField(type, s.id, 'c2', 'Change (C2)', s.c2)}
+                                    ${createField(type, s.id, 'c3', 'Change (C3)', s.c3)}
+                                </div>
+                            </div>`;
+                    }
+                });
+            });
+            renderFormula();
+            updateSolverBtn();
+            updateKTypeUI();
+            updateConvertValue();
+        }
+
+        function setKType(type) {
+            state.kType = type;
+            render();
+        }
+
+        function updateKTypeUI() {
+            const kc = document.getElementById('opt-Kc');
+            const kp = document.getElementById('opt-Kp');
+            if (kc && kp) {
+                kc.classList.toggle('active', state.kType === 'Kc');
+                kp.classList.toggle('active', state.kType === 'Kp');
+            }
+        }
+
+        function createField(type, id, field, label, val) {
+            return `<div class="ice-input-field"><div class="ice-label">${label}</div><input class="ice-val-input" type="text" value="${val}" oninput="update('${type}', ${id}, '${field}', this.value)"></div>`;
+        }
+
+        function solve() {
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            const K_raw = kValueDesktop ? kValueDesktop.value.trim() : (kValueMobile ? kValueMobile.value.trim() : "");
+            const K_input = parseVal(K_raw);
+            const calculateK = (K_raw === "" || K_input === 0);
+
+            const getV = (s, x) => {
+                const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
+                return (i.a + c1.a + c2.a + c3.a) * x + (i.b + c1.b + c2.b + c3.b);
+            };
+
+            let finalX = 0;
+            let resultVal = 0;
+            let resultLabel = "x";
+            
+            if (calculateK) {
+                // 模式 A：計算平衡常數 K (此時 x = 0)
+                let p = 1, r = 1;
+                state.products.forEach(s => p *= s.isSolid ? 1 : Math.pow(getV(s, 0), parseVal(s.coeff) || 1));
+                state.reactants.forEach(s => r *= s.isSolid ? 1 : Math.pow(getV(s, 0), parseVal(s.coeff) || 1));
+                resultVal = p / r;
+                resultLabel = "K";
+                finalX = 0; 
+            } else {
+                // 模式 B：已知 K 求解平衡組成 x
+                const f = (x) => {
+                    let p = 1, r = 1;
+                    state.products.forEach(s => p *= s.isSolid ? 1 : Math.pow(getV(s, x), parseVal(s.coeff) || 1));
+                    state.reactants.forEach(s => r *= s.isSolid ? 1 : Math.pow(getV(s, x), parseVal(s.coeff) || 1));
+                    return r === 0 ? 1e30 : (p / r) - K_input;
+                };
+
+                let minX = -1e6, maxX = 1e6;
+                [...state.reactants, ...state.products].forEach(s => {
+                    const i = parseExpression(s.init), c1 = parseExpression(s.c1), c2 = parseExpression(s.c2), c3 = parseExpression(s.c3);
+                    const A = i.a + c1.a + c2.a + c3.a, B = i.b + c1.b + c2.b + c3.b;
+                    if (A !== 0) { let z = -B/A; if(A > 0) minX = Math.max(minX, z); else maxX = Math.min(maxX, z); }
+                });
+
+                let low = minX + 1e-14, high = maxX - 1e-14, mid = low;
+                for (let j = 0; j < 5000; j++) {
+                    let s = low + (high - low) * (j / 5000), e = low + (high - low) * ((j + 1) / 5000);
+                    if (f(s) * f(e) <= 0) {
+                        let a = s, b = e;
+                        for (let i = 0; i < 100; i++) { mid = (a + b) / 2; if (f(a) * f(mid) <= 0) b = mid; else a = mid; }
+                        finalX = mid; break;
+                    }
+                }
+                resultVal = finalX;
+                resultLabel = "x";
+            }
+
+            const toMath = (num) => {
+                let n = Number(num.toPrecision(6));
+                if (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e4) {
+                    let [base, exp] = n.toExponential().split('e');
+                    return `${Number(base)} \\times 10^{${parseInt(exp)}}`;
+                }
+                return n.toString();
+            };
+
+            const resultMathBoxDesktop = document.getElementById('result-math-box');
+            const resultMathBoxMobile = document.getElementById('result-math-box-mobile');
+            const resultPaneDesktop = document.getElementById('result-pane');
+            const resultPaneMobile = document.getElementById('result-pane-mobile');
+            const resultStr = `${resultLabel} = ${toMath(resultVal)}`;
+            
+            if (resultMathBoxDesktop) katex.render(resultStr, resultMathBoxDesktop);
+            if (resultMathBoxMobile) katex.render(resultStr, resultMathBoxMobile);
+            if (resultPaneDesktop) resultPaneDesktop.classList.remove('hidden');
+            if (resultPaneMobile) resultPaneMobile.classList.remove('hidden');
+
+            // 更新下方各物質濃度方塊（桌面版和手機版）
+            const concsDesktop = document.getElementById('final-concs');
+            const concsMobile = document.getElementById('final-concs-mobile');
+            if (concsDesktop) concsDesktop.innerHTML = '';
+            if (concsMobile) concsMobile.innerHTML = '';
+            
+            [...state.reactants, ...state.products].forEach((s, idx) => {
+                const final = Math.max(0, safeNum(getV(s, finalX)));
+                const defaultName = idx < state.reactants.length ? R_NAMES[idx] : P_NAMES[idx - state.reactants.length];
+                const displayFormula = s.formula || defaultName;
+                const name = formatChemicalFormula(displayFormula) || defaultName;
+                const cardIdDesktop = `conc-math-${idx}`;
+                const cardIdMobile = `conc-math-mobile-${idx}`;
+                const fmt = (num) => {
+                    let n = Number(num.toPrecision(5));
+                    if (n !== 0 && (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e5)) {
+                        let [b, e] = n.toExponential().split('e');
+                        return `${Number(b)} \\times 10^{${parseInt(e)}}`;
+                    }
+                    return n.toString();
+                };
+                const concCardHtml = `<div class="bg-slate-800/80 px-5 py-3 rounded-[16px] text-center min-w-[100px] border border-slate-700 shadow-xl flex-shrink-0"><div class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">[${name}]</div><div id="${cardIdDesktop}" class="text-blue-300 text-lg font-bold leading-none py-1"></div></div>`;
+                const concCardHtmlMobile = `<div class="bg-slate-800/80 px-5 py-3 rounded-[16px] text-center min-w-[100px] border border-slate-700 shadow-xl flex-shrink-0"><div class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">[${name}]</div><div id="${cardIdMobile}" class="text-blue-300 text-lg font-bold leading-none py-1"></div></div>`;
+                
+                if (concsDesktop) concsDesktop.innerHTML += concCardHtml;
+                if (concsMobile) concsMobile.innerHTML += concCardHtmlMobile;
+                
+                setTimeout(() => {
+                    const cardDesktop = document.getElementById(cardIdDesktop);
+                    const cardMobile = document.getElementById(cardIdMobile);
+                    if (cardDesktop) katex.render(fmt(final), cardDesktop);
+                    if (cardMobile) katex.render(fmt(final), cardMobile);
+                }, 0);
+            });
+        }
+
+        window.onload = function() {
+            render();
+            // 同步初始值
+            const kValueDesktop = document.getElementById('k-value');
+            const kValueMobile = document.getElementById('k-value-mobile');
+            if (kValueDesktop && kValueMobile) {
+                kValueMobile.value = kValueDesktop.value;
+            }
+            const tempDesktop = document.getElementById('temp-input');
+            const tempMobile = document.getElementById('temp-input-mobile');
+            if (tempDesktop && tempMobile) {
+                tempMobile.value = tempDesktop.value;
+            }
+        };
+        
+        // 物質格滑鼠拖拽功能
+        const slider = document.getElementById('all-substances-grid');
+        if (slider) {
+            let isDown = false, startX, scrollLeft;
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => isDown = false);
+            slider.addEventListener('mouseup', () => isDown = false);
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2;
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // 底部求解區滑鼠拖拽功能（手機版）
+        const bottomSolverMobile = document.querySelector('.bottom-solver-mobile');
+        if (bottomSolverMobile) {
+            let isDownBottom = false, startXBottom, scrollLeftBottom;
+            bottomSolverMobile.addEventListener('mousedown', (e) => {
+                isDownBottom = true; 
+                startXBottom = e.pageX - bottomSolverMobile.offsetLeft; 
+                scrollLeftBottom = bottomSolverMobile.scrollLeft;
+            });
+            bottomSolverMobile.addEventListener('mouseleave', () => isDownBottom = false);
+            bottomSolverMobile.addEventListener('mouseup', () => isDownBottom = false);
+            bottomSolverMobile.addEventListener('mousemove', (e) => {
+                if (!isDownBottom) return;
+                e.preventDefault();
+                const x = e.pageX - bottomSolverMobile.offsetLeft;
+                const walk = (x - startXBottom) * 2;
+                bottomSolverMobile.scrollLeft = scrollLeftBottom - walk;
+            });
+        }
+    </script>
+</body>
+</html>
