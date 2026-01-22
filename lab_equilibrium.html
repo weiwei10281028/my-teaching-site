@@ -3,8 +3,6 @@
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="screen-orientation" content="landscape">
-    <meta name="mobile-web-app-capable" content="yes">
     <title>化學平衡教學系統 | Chemical Equilibrium</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
@@ -69,210 +67,6 @@
             overflow: hidden;
             line-height: 1.6;
         }
-        
-        /* 手機橫向模式提示 */
-        .orientation-prompt {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 10000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .orientation-prompt.show {
-            display: flex;
-        }
-        
-        .orientation-prompt-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            animation: rotate 2s ease-in-out infinite;
-        }
-        
-        @keyframes rotate {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-        }
-        
-        /* 手機橫向模式優化 - 讓所有區塊一次顯示 */
-        @media (max-width: 1024px) and (orientation: landscape) {
-            /* 選擇區縮小 */
-            .selection-area {
-                height: 6vh;
-                min-height: 45px;
-                padding: 4px 30px 4px 25px;
-            }
-            
-            /* 主顯示區域調整，預留空間給操作區 */
-            .main-view {
-                height: calc(100vh - 6vh - 15vh);  /* 選擇區 6vh + 操作區 15vh */
-                padding: 0 10px !important;       /* 徹底消除頂部內距 */
-                margin-top: -12px !important;      /* 使用負邊距將整個內容區域強制上移，貼合上方按鈕列 */
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-            
-            /* 操作區縮小但確保可見 */
-            .control-panel {
-            height: 10vh;
-            min-height: auto;
-            max-height: 45vh;
-            padding: 0 10px;
-            background: none;
-            box-shadow: none;
-            border: none;
-            display: flex;
-            position: relative;
-            visibility: visible;
-            opacity: 1;
-            }
-            
-            /* 確保操作區不會被隱藏 - 手機橫向時強制顯示 */
-            .control-panel[style*="display: none"] {
-                display: flex !important;
-            }
-            
-            /* 手機橫向時，control-panel 必須顯示 */
-            @media (max-width: 1024px) and (orientation: landscape) {
-                .control-panel {
-                    display: flex !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                }
-            }
-            
-            /* 場景內容區塊縮小 */
-            .scenario-content {
-                padding: 10px;
-            }
-            
-            /* 物質卡片縮小 */
-            .substance-card {
-                width: 220px;  /* 手機橫向時縮小 */
-                padding: 12px;
-            }
-            
-            /* 顯著放大手機橫向模式下的操作按鈕 */
-            .control-btn {
-                font-size: 1.25rem;
-                margin: 2px;
-                padding: 10px 5px;
-                font-weight: 800;
-                border-radius: 12px;
-            }
-
-            /* 讓按鈕與箭頭橫向排列：按鈕居左、箭頭居右、不分行、不擠壓 */
-            .reaction-arrows-container {
-                flex-direction: row;
-                justify-content: center;
-                align-items: center;
-                gap: 60px;
-                width: 100%;
-                margin: 10px auto;
-                height: 50px;
-                padding: 0;
-            }
-
-            #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
-                width: auto;
-                min-width: 170px;
-                white-space: nowrap;
-                display: inline-flex;
-                flex-shrink: 0;
-                padding: 10px 20px;
-                font-size: 1rem;
-            }
-
-            .reaction-arrows {
-                width: 200px;
-                flex-shrink: 0;
-            }
-            
-            /* 圖表容器縮小 */
-            .chart-container {
-                height: 200px !important;
-            }
-            
-            /* 確保操作區內容可見 */
-            .control-content {
-                padding-bottom: 0;
-            }
-            /* 讓按鈕與箭頭左右分開並垂直置中 */
-            .reaction-arrows-container {
-                flex-direction: row !important;
-                justify-content: space-between !important; /* 將兩者推向左右兩側 */
-                align-items: center !important;
-                width: 85% !important;     /* 限制寬度，避免物件太貼近螢幕邊緣 */
-                max-width: 550px !important;
-                margin: 8px auto !important; /* 透過 auto 水平置中，並調整上下邊距使視覺平衡 */
-                height: 45px !important;    /* 固定高度有助於垂直置中 */
-                padding: 0 !important;
-            }
-            #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
-                width: auto;
-                white-space: nowrap;
-                display: inline-flex;
-                margin: 0 !important;
-                flex-shrink: 0 !important; /* 防止按鈕被擠壓 */
-            }
-            .reaction-arrows {
-                width: 180px !important; /* 預留足夠寬度給動態伸長的箭頭 */
-                flex-shrink: 0 !important;
-                margin: 0 !important;
-            }
-        }
-        
-        /* 手機直向模式提示 */
-        @media (max-width: 768px) and (orientation: portrait) {
-            .orientation-prompt {
-                display: flex;
-            }
-        }
-        
-        /* 手機橫向模式 - 小螢幕設備額外優化 */
-        @media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
-            .selection-area {
-                height: 5vh;
-                min-height: 40px;
-                padding: 3px 25px 3px 20px;
-            }
-            
-            .main-view {
-                height: calc(100vh - 5vh - 15vh);
-                padding: 2px 10px;
-            }
-            
-            .control-panel {
-                height: 15vh !important;
-                min-height: 60px !important;
-                padding: 0 10px;
-            }
-            
-            .bottom-solver {
-                height: 120px !important;
-                padding: 12px 20px;
-            }
-            
-            .substance-card {
-                width: 200px;
-                padding: 10px;
-            }
-            
-            .scenario-btn {
-                font-size: 0.75rem;
-                padding: 6px 12px;
-            }
-        }
 
         /* --- 主容器佈局 --- */
         .main-container {
@@ -282,7 +76,7 @@
             height: 100vh;
             overflow: hidden;
         }
-        
+
         /* --- 區1：選擇區 --- */
         .selection-area {
             height: 7vh;  /* 稍微增加高度，給按鈕更多空間 */
@@ -579,27 +373,6 @@
             scrollbar-width: none;  /* 隱藏滾動條 */
             -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
         }
-
-        /* 核心修正：消除手機版頂部紅框留白與整體間距 */
-        @media (max-width: 768px) {
-            .main-view {
-                height: calc(100vh - 7vh - 25vh);
-                padding-top: 0 !important;    /* 徹底刪除紅框處 20px 的內距 */
-                padding-bottom: 5px !important;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-                margin-top: 0 !important;
-            }
-            .main-content {
-                gap: 0px !important;         /* 讓方程式、按鈕、計算區塊完全貼合 */
-                padding-top: 0 !important;
-            }
-            .reaction-header {
-                margin-top: 0 !important;    /* 方程式標題緊貼頂部 */
-                margin-bottom: 0 !important;
-                transform: scale(0.9);       /* 稍微縮小以節省更多空間 */
-            }
-        }
         
         /* 隱藏 WebKit 瀏覽器的滾動條 */
         .main-view::-webkit-scrollbar {
@@ -636,26 +409,15 @@
         .main-content {
             width: 100%;
             min-height: 100%;
-           display: flex;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             position: relative;
             z-index: 1;
-            gap: 8px;  /* 電腦版間距 */
-            padding-bottom: 15px;
-            box-sizing: border-box;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                gap: 2px !important; /* 手機版區塊間距極小化 */
-                padding-top: 0 !important;
-            }
-            .reaction-header {
-                margin-top: 0 !important;
-                margin-bottom: 2px !important;
-            }
+            gap: 8px;  /* 減少間距，從 15px 改為 8px */
+            padding-bottom: 15px;  /* 減少底部 padding */
+            box-sizing: border-box;  /* 確保 padding 包含在寬度內 */
         }
 
         /* 場景內容隱藏/顯示 */
@@ -680,16 +442,7 @@
         .scenario-content.active {
             display: flex;
             flex-direction: column;
-            gap: 6px;  /* 從 15px 縮小，減少區塊間留白 */
-
-        }
-        
-        /* 手機版：大幅縮小間距 */
-        @media (max-width: 768px) {
-            .scenario-content.active {
-                gap: 2px;
-                padding: 1px 4px;
-            }
+            gap: 15px;  /* 統一間距，確保所有區塊間距一致 */
         }
         
         /* K計算場景特殊處理 */
@@ -718,8 +471,11 @@
         /* 化學反應式標題 - 參考 style.html 的化學方程式風格 */
         .reaction-header {
             font-family: 'Space Mono', monospace;  /* 使用等寬字體，與 style.html 一致 */
-            font-size: 1.2rem;
-            padding: 4px 15px;  /* 減少上下內距 */
+            font-size: 1.3rem;  /* 與 style.html 一致 */
+            font-weight: 600;  /* 與 style.html 一致 */
+            color: var(--mineral-text);
+            text-align: center;
+            padding: 8px 24px;  /* 減少上下 padding，從 12px 改為 8px */
             background: var(--mineral-bg-light);
             border-radius: 12px;
             border: 1.5px solid var(--mineral-border);
@@ -730,18 +486,6 @@
             justify-content: center;
             gap: 15px;  /* 減少間距，讓反應物和生成物靠近一點 */
             position: relative;
-        }
-        
-        /* 手機版：化學式欄位高度縮小，留白大幅減少 */
-        @media (max-width: 768px) {
-            .reaction-header {
-                padding: 1px 6px !important;
-                line-height: 1.0 !important;
-                gap: 4px !important;
-                margin-bottom: 2px !important;
-                margin-top: 2px !important;
-                font-size: 1.1rem;
-            }
         }
         
         .reaction-reactant,
@@ -758,51 +502,13 @@
             font-weight: 400;
         }
         
-        /* 箭頭容器 - 電腦垂直，手機強制並排 */
+        /* 箭頭容器 - 位於方程式下方 */
         .reaction-arrows-container {
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 0;
-            gap: 10px;
+            padding: 8px 0;
             margin: 0 auto;
-        }
-
-        @media (max-width: 768px) {
-            .reaction-arrows-container {
-                flex-direction: row !important;   /* 核心：橫向排列 */
-                justify-content: center !important;
-                align-items: center !important;
-                gap: 10px !important;             /* 按鈕與箭頭的橫向距離 */
-                width: 100% !important;
-                height: 40px !important;          /* 壓縮高度 */
-                margin-top: -5px !important;      /* 往上拉近與方程式的距離 */
-                margin-bottom: 0px !important;
-            }
-            
-            /* 修改所有場景的狀態按鈕 */
-            #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
-                width: auto !important;           /* 讓按鈕寬度隨文字長度自適應 */
-                white-space: nowrap !important;   /* 確保文字不會分行顯示 */
-                min-width: 160px !important;      /* 設定最小寬度，避免文字跳動時按鈕縮太短 */
-                padding: 10px 25px !important;    /* 增加內距，讓按鈕看起來更長更顯眼 */
-                flex-shrink: 0 !important;
-                font-size: 0.85rem !important;
-                margin: 0 !important;
-            }
-
-            .reaction-arrows {
-                width: 120px !important;          /* 縮小箭頭區寬度以塞進同一行 */
-                height: 20px !important;
-                flex-shrink: 0 !important;
-            }
-
-            .formula-card {
-                margin-top: 0px !important;       /* 讓 Q/K 區塊直接貼在箭頭下方 */
-                padding: 4px 10px !important;
-                transform: scale(0.95);
-            }
         }
         
         .reaction-arrows {
@@ -930,23 +636,7 @@
             align-items: center;
             justify-content: center;
         }
-        
-        /* 手機版：減少公式卡片的留白 */
-        @media (max-width: 768px) {
-            .formula-card {
-                padding: 2px 6px;
-                gap: 1px;
-                margin-bottom: 0;
-                margin-top: 0;
-            }
-            
-            .scenario-content[data-scenario^="le-chatelier"] .formula-card {
-                padding: 2px 6px;
-                gap: 1px;
-                margin-bottom: 0;
-            }
-        }
-        
+
         /* 表格卡片樣式 - 與 formula-card 相同樣式 */
         .table-card {
             width: 100%;
@@ -1082,16 +772,8 @@
         /* 手機版表格樣式調整 */
         @media (max-width: 768px) {
             .table-card {
-                padding: 2px 6px;
-                margin-top: 0;
-                margin-bottom: 0;
-            }
-            
-            /* 勒沙特列場景的表格卡片進一步減少留白 */
-            .scenario-content[data-scenario^="le-chatelier"] .table-card {
-                padding: 2px 6px;
-                margin-top: 0;
-                margin-bottom: 0;
+                padding: 15px 18px;
+                margin-top: 12px;
             }
 
             .table-scroll-container {
@@ -1196,12 +878,12 @@
             }
 
             #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
-                width: 160px; /* 縮窄寬度以利併排 */
-                margin: 0;    /* 移除外距確保水平對齊 */
-                display: inline-flex; 
-                justify-content: center;
-                align-items: center;
-                font-size: 1.1rem;
+                width: 100%;
+                text-align: center;
+                margin-top: 0;
+                border: 1.5px solid var(--mineral-border);
+                border-radius: 12px;
+                box-shadow: 0 2px 8px var(--mineral-shadow-light);
                 padding: 8px 15px;
             }
         }
@@ -1310,7 +992,6 @@
             justify-content: center;
         }
 
-
         #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
             font-family: 'Space Mono', monospace;
             font-size: 1.05rem;
@@ -1322,8 +1003,8 @@
             border-radius: 12px;
             border: 1.5px solid var(--mineral-border);
             box-shadow: 0 2px 8px var(--mineral-shadow-light);
-            width: auto;
-            white-space: nowrap;
+            width: 100%;
+            margin-top: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1496,15 +1177,6 @@
             gap: 15px;
             width: 100%;
         }
-        
-        /* 手機版：大幅縮小數據面板間距 */
-        @media (max-width: 768px) {
-            .data-panel {
-                gap: 2px;
-                margin-top: 0;
-                margin-bottom: 0;
-            }
-        }
 
         .info {
             background: var(--mineral-bg-light);
@@ -1589,7 +1261,7 @@
             align-items: flex-start;  /* 改為 flex-start，確保內容可以滾動 */
             justify-content: center;
             min-height: 100%;
-            padding-bottom: 0;
+            padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
             overflow-y: auto;  /* 允許內容滾動 */
             overflow-x: hidden;
             scrollbar-width: none;  /* 隱藏滾動條 */
@@ -1605,7 +1277,7 @@
         .control-scenario {
             display: none;
             width: 100%;
-            max-width: none;
+            max-width: 1200px;
         }
 
         .control-scenario.active {
@@ -1638,20 +1310,6 @@
                 3px 3px 8px var(--mineral-shadow-light),
                 -1px -1px 4px rgba(255, 255, 255, 0.8);
             user-select: none;
-        }
-        
-        /* 手機版：按鈕光效不超出按鈕外 */
-        @media (max-width: 768px) {
-            .control-btn {
-                overflow: hidden;  /* 確保光效不超出 */
-            }
-            
-            .control-btn.active {
-                box-shadow: 
-                    inset 0 0 10px rgba(212, 177, 106, 0.8),
-                    2px 2px 4px var(--mineral-shadow-light);
-                animation: none;
-            }
         }
         
         /* 按鈕中的化學式下標 */
@@ -1770,41 +1428,21 @@
         /* --- 響應式設計 --- */
         @media (max-width: 1024px) {
             .controls {
-                grid-template-columns: repeat(4, 1fr);  /* 手機版改為4列，一排4個按鈕 */
-                gap: 4px;  /* 減少間距 */
-            }
-
-            .control-btn {
-                padding: 4px 6px !important;  /* 大幅縮短按鈕長度和高度 */
-                font-size: 0.7rem !important;  /* 縮小字體 */
-                line-height: 1.1 !important;
-                border-radius: 8px;
-                line-height: 1.2;  /* 減少行高 */
-                overflow: hidden;  /* 確保光效不超出按鈕外 */
-            }
-            
-            .control-btn.active {
-                box-shadow: 
-                    inset 0 0 10px rgba(212, 177, 106, 0.8),
-                    2px 2px 4px var(--mineral-shadow-light);
-                animation: none;  /* 手機版移除動畫 */
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .control-btn.reset-btn {
-                grid-column: span 4;  /* 重置按鈕佔滿整行 */
-                margin-top: 2px !important;
-                margin-bottom: 0 !important;
-                padding: 8px 12px;  /* 重置按鈕稍微寬一點 */
+                grid-column: span 2;
             }
         }
 
         @media (max-width: 768px) {
             .selection-area {
-                height: 6vh;  /* 進一步減少高度 */
-                min-height: 45px;
-                max-height: 6vh;
-                padding: 2px 45px 2px 20px;  /* 大幅減少上下 padding */
-                justify-content: center;
+                height: 9vh;  /* 增加高度，給按鈕更多空間 */
+                min-height: 65px;  /* 增加最小高度，確保按鈕完整顯示 */
+                max-height: 9vh;  /* 限制最大高度 */
+                padding: 8px 45px 8px 20px;  /* 增加上下 padding，讓按鈕往下移 */
+                justify-content: center;  /* 垂直置中，讓按鈕往下移 */
             }
 
             .close-btn {
@@ -1843,160 +1481,39 @@
             }
 
             .main-view {
-                flex: 1;
-                min-height: 0;
-                height: calc(100vh - 6vh - 15vh);
-                padding: 0 10px; /* 徹底移除上方 padding 消除紅框留白 */
-                margin-top: 0 !important;
-                overflow-x: hidden;
-                overflow-y: auto;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }
-            
-            .main-content {
-                gap: 2px !important; /* 縮小區塊間的垂直間距 */
-                padding-top: 0 !important;
-                padding-bottom: 5px !important;
-            }
-
-            .reaction-header {
-                padding: 2px 6px !important; /* 縮小方程式欄位高度 */
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-                line-height: 1.0;
-                font-size: 0.95rem;
-                gap: 4px;
-            }
-
-            .reaction-arrows-container {
-                flex-direction: row !important; /* 強制按鈕與箭頭並排 */
-                justify-content: center !important;
-                align-items: center !important;
-                gap: 60px;
-                width: 100%;
-                margin: 0 auto;
-                padding: 0;
-            }
-
-            #status, #status-fescn, #status-nh3, #status-chromate, #status-ag2cro4, #status-acetic, #status-hi {
-                width: auto;
-                white-space: nowrap;
-                font-size: 0.9rem;
-                padding: 6px 15px;
-                flex-shrink: 0;
-                margin: 0;
-            }
-
-            .reaction-arrows {
-                width: 120px !important; /* 縮小箭頭容器寬度 */
-                height: 18px !important;
-                flex-shrink: 0;
-            }
-
-            .formula-card {
-                margin-top: 0 !important; /* 讓 Q、K 區塊與上方貼近 */
-                padding: 4px 10px !important;
-                gap: 5px !important;
-            }
-            
-            /* 手機版：等比例縮小主顯示區域內容 */
-            .main-view .scenario-content {
-                transform: scale(0.85);
-                .main-view .scenario-content {
-                display: flex;
-                flex-flow: row wrap;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                margin: 0 auto;
+                flex: 1;  /* 使用 flex: 1 自動調整高度 */
+                min-height: 0;  /* 允許縮小 */
+                height: calc(100vh - 9vh - 25vh);  /* 計算高度：總高度減去選擇區(9vh)和操作區，減少顯示區高度 */
+                padding: 12px 12px;  /* 減少上下 padding，從 15px 改為 12px */
+                overflow-x: hidden;  /* 確保不會出現水平滾動 */
+                overflow-y: auto;  /* 允許垂直滾動 */
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
             }
             
             /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
             .main-view::-webkit-scrollbar {
-                display: none;
+                display: none;  /* 隱藏滾動條 */
             }
             
             /* 超窄螢幕保持對稱 padding */
             @media (max-width: 380px) {
                 .main-view {
-                    padding: 2px 10px;
+                    padding: 12px 10px;  /* 保持左右對稱，確保右邊邊框可見 */
                 }
             }
 
             .control-panel {
-                height: 15vh;
-                min-height: 60px;
-                max-height: 45vh;
-            background: transparent !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-                margin-top: 0;
-                margin-bottom: 0;
-                overflow-y: auto;
+                height: 25vh;  /* 減小高度，從 30vh 改為 25vh */
+                min-height: 200px;  /* 設置最小高度，確保內容可見 */
+                max-height: 25vh;  /* 限制最大高度 */
+                padding: 15px 12px;  /* 減少 padding，特別是左右 padding 確保按鈕不被切割 */
+                padding-bottom: 15px;  /* 減少底部 padding */
+                overflow-y: auto;  /* 確保可以滾動 */
                 overflow-x: hidden;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-                -webkit-overflow-scrolling: touch;
-                display: flex;
-                visibility: visible;
-                opacity: 1;
-            }
-            
-            /* 確保操作區不會被隱藏 - 手機直向時強制顯示 */
-            .control-panel[style*="display: none"] {
-                display: flex;
-            }
-            
-            .main-container {
-                justify-content: space-between;
-            }
-            
-            /* 化學式欄位高度縮小，留白大幅減少 */
-            .reaction-header {
-                padding: 1px 6px;
-                line-height: 1.0;
-                font-size: 0.95rem;
-                margin-bottom: 0;
-                margin-top: 0;
-                gap: 4px;
-            }
-            
-            /* 大幅減少勒沙特列場景的間距和留白 */
-            .scenario-content[data-scenario^="le-chatelier"].active {
-                gap: 1px;
-            }
-            display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px;
-
-                padding: 1px 4px;
-            }
-            
-            .scenario-content[data-scenario^="le-chatelier"] .formula-card,
-            .scenario-content[data-scenario^="le-chatelier"] .table-card {
-                padding: 2px 6px;
-                margin: 0;
-            }
-            
-            /* 減少箭頭與其他元素之間的留白 */
-            .scenario-content[data-scenario^="le-chatelier"] .reaction-arrows-container {
-                margin: 0;
-                width: auto; order: 2; margin: 0; flex-shrink: 0;
-
-                padding: 0;
-            }
-            
-            /* 減少公式卡片之間的留白 */
-            .scenario-content[data-scenario^="le-chatelier"] .formula-card {
-                margin-bottom: 0;
-                width: 100% !important; order: 4 !important; padding: 4px 10px !important;
-
-                margin-top: 0;
-            }
-            
-            .scenario-content[data-scenario^="le-chatelier"] .table-card {
-                margin-top: 0;
-                margin-bottom: 0;
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
             }
             
             /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
@@ -2005,35 +1522,24 @@
             }
             
             .control-content {
-                padding-bottom: 0;
-                margin-bottom: 0;
-                overflow-y: auto;
+                padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
+                overflow-y: auto;  /* 允許內容滾動 */
                 overflow-x: hidden;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;  /* 隱藏滾動條 */
+                -ms-overflow-style: none;  /* IE 和 Edge 隱藏滾動條 */
+                -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
             }
             
             /* 隱藏手機版 WebKit 瀏覽器的滾動條 */
             .control-content::-webkit-scrollbar {
-                display: none;
+                display: none;  /* 隱藏滾動條 */
             }
             
             /* 確保按鈕容器有足夠的左右間距 */
             .controls {
-                padding: 0 4px;
+                padding: 0 4px;  /* 添加左右 padding，確保按鈕不被切割 */
                 width: 100%;
                 box-sizing: border-box;
-                gap: 4px;
-            }
-            
-            /* 大幅減少按鈕高度和留白，但放大文字 */
-            .control-btn {
-                padding: 24px 8px !important; font-size: 1.25rem !important;
-                min-height: 80px !important; flex: 1;
-                font-size: 0.9rem;
-                line-height: 1.3;
-                min-height: auto;
             }
 
             /* 手機版：圖表上下排列，調整大小以便同時顯示 */
@@ -2116,14 +1622,13 @@
             /* 手機版：操作按鈕橫向併排排列 */
             .controls {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 4px !important;  /* 大幅減少間距 */
+                gap: 8px;  /* 減少間距，節省空間 */
                 width: 100%;
                 box-sizing: border-box;
             }
 
             .control-btn {
-                padding: 24px 10px; font-size: 1.35rem; min-height: 80px; font-weight: 800;
-
+                padding: 8px 10px;  /* 減少 padding，讓按鈕更緊湊 */
                 font-size: 0.8rem;  /* 稍微縮小字體 */
                 min-height: 40px;  /* 設置最小高度，確保按鈕可點擊 */
                 display: flex;
@@ -2136,24 +1641,23 @@
 
             .control-btn.reset-btn {
                 grid-column: span 2;
-                margin-top: 2px;
-                margin-bottom: 0;
-                padding: 10px 12px;
+                margin-top: 6px;
+                margin-bottom: 0;  /* 減少底部 margin */
+                padding: 10px 12px;  /* 重置按鈕保持較大 padding */
             }
 
             /* 手機版：濃度資訊放在圖片下方，單列顯示 */
             .data-panel {
                 grid-template-columns: 1fr;
-                gap: 2px;
-                margin-top: 0;
+                gap: 15px;  /* 與scenario-content的gap保持一致 */
+                margin-top: 0;  /* 移除額外margin，使用統一的gap */
                 margin-bottom: 0;
             }
 
             .info {
-                padding: 4px 6px;
+                padding: 10px;
                 font-size: 0.8rem;
-                line-height: 1.4;
-                margin: 0;
+                line-height: 1.6;
             }
         }
 
@@ -2201,36 +1705,19 @@
                 height: calc(100vh - 9vh - 24vh);  /* 計算高度：總高度減去選擇區(9vh)和操作區，減少顯示區高度 */
             }
             
-            /* 手機版：等比例縮小主顯示區域內容 */
-            .main-view .scenario-content {
-                transform: scale(0.80);
-                transform-origin: top center;
-                width: 125%;  /* 100% / 0.80 = 125%，補償縮小後的寬度 */
-                margin-left: -12.5%;  /* 負邊距來置中 */
-            }
-            
             .control-panel {
                 height: 24vh;  /* 超窄螢幕進一步減小高度 */
                 min-height: 180px;
                 max-height: 24vh;
-                padding: 0 10px;
-                margin-bottom: 0;
+                padding: 12px 10px;
+                padding-bottom: 12px;
                 overflow-y: auto;  /* 確保可以滾動 */
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
-                display: flex;
-                visibility: visible;
-                opacity: 1;
-            }
-            
-            /* 確保操作區不會被隱藏 - 超窄螢幕時強制顯示 */
-            .control-panel[style*="display: none"] {
-                display: flex;
             }
             
             .control-content {
-                padding-bottom: 0;
-                margin-bottom: 0;
+                padding-bottom: 15px;  /* 增加底部 padding，確保重置按鈕完整顯示 */
                 overflow-y: auto;  /* 允許內容滾動 */
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;  /* iOS 平滑滾動 */
@@ -2242,17 +1729,15 @@
             }
             
             .control-btn {
-                padding: 25px 10px;
-                font-size: 1.35rem;
-                min-height: 85px;
-                font-size: 0.9rem;
+                padding: 7px 8px;
+                font-size: 0.75rem;  /* 進一步縮小字體 */
                 min-height: 36px;
             }
             
             .control-btn.reset-btn {
-                padding: 10px 12px;
-                margin-top: 2px;
-                margin-bottom: 0;
+                padding: 9px 10px;
+                margin-top: 5px;
+                margin-bottom: 5px;  /* 增加底部 margin，確保可見 */
             }
 
             .formula-card {
@@ -2486,7 +1971,7 @@
         /* 物質輸入區塊 - 窄化 190px */
         .substance-card {
             background: white; border-radius: 20px; padding: 15px;
-            width: 285px; flex-shrink: 0;  /* 寬度為1.5倍 (190px * 1.5 = 285px) */
+            width: 190px; flex-shrink: 0;
             border-left: 6px solid #cbd5e1;
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             position: relative;
@@ -2533,61 +2018,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 180px;  /* 固定高度，不會因內容變化而改變 */
+            min-height: 180px;
             gap: 40px;
             margin-top: 40px;
-            box-sizing: border-box;  /* 確保 padding 包含在高度內 */
-            overflow: hidden;  /* 防止內容溢出 */
-        }
-        
-        /* 計算結果容器樣式 */
-        .final-concs-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            height: 180px !important;  /* 固定高度，不會因內容增加而變大 */
-            overflow-y: auto;   /* 支援垂直滾動 */
-            overflow-x: hidden;
-            padding-top: 12px;  /* 第一個物質區塊上方留白 */
-            padding-bottom: 12px;  /* 最後區塊下方留白，與上方一樣大 */
-            min-width: 200px;
-            flex-shrink: 0;  /* 防止容器被壓縮 */
-            box-sizing: border-box;  /* 確保 padding 包含在高度內 */
-            cursor: grab;  /* 滑鼠指標顯示為可拖動 */
-            user-select: none;  /* 防止文字選擇 */
-        }
-        
-        .final-concs-container:active {
-            cursor: grabbing;  /* 拖動時顯示抓取狀態 */
-        }
-        
-        /* 確保 result-pane 垂直居中且不會因為 final-concs 變大而擴展 */
-        #result-pane {
-            align-items: center;  /* 垂直居中 */
-            justify-content: center;  /* 水平居中 */
-        }
-        
-        /* 隱藏滾動條但保留滾動功能 */
-        .final-concs-container::-webkit-scrollbar {
-            width: 0px;  /* 隱藏滾動條 */
-            background: transparent;
-        }
-        
-        /* Firefox 隱藏滾動條 */
-        .final-concs-container {
-            scrollbar-width: none;
-        }
-        
-        /* 計算結果卡片樣式 */
-        .final-conc-card {
-            flex-shrink: 0;  /* 防止卡片被壓縮 */
-        }
-        
-        /* 化學式樣式 - 白色且字體較大 */
-        .final-conc-formula {
-            color: white !important;
-            font-size: 14px !important;
-            font-weight: 800;
         }
 
         #formula-preview { font-size: 1.4rem !important; }
@@ -2598,15 +2031,6 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 </head>
 <body style="opacity: 1;">
-    <!-- 手機直向模式提示 -->
-    <div id="orientation-prompt" class="orientation-prompt">
-        <div class="orientation-prompt-icon">📱</div>
-        <div>
-            <h2 style="margin-bottom: 10px; font-size: 24px;">請將手機橫向顯示</h2>
-            <p style="opacity: 0.8;">為獲得最佳體驗，請將裝置旋轉至橫向模式</p>
-        </div>
-    </div>
-    
     <div class="main-container">
         <!-- 區1：選擇區 -->
         <div class="selection-area">
@@ -2695,13 +2119,13 @@
         <!-- 底部求解區 -->
         <div class="bottom-solver">
             <!-- 左側：定律式 -->
-            <div class="flex-shrink-0 border-r border-slate-700 pr-10 min-w-[250px] flex flex-col justify-center">
+            <div class="flex-shrink-0 border-r border-slate-700 pr-10 min-w-[250px]">
                 <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 opacity-70">Law of Mass Action</p>
                 <div id="formula-preview"></div>
             </div>
 
             <!-- 中間：求解結果與濃度方塊 -->
-            <div class="flex flex-1 items-center justify-center gap-12 overflow-hidden">
+            <div class="flex flex-1 items-center justify-between gap-12 overflow-hidden">
                 <div id="result-pane" class="hidden flex items-center gap-12">
                     <div class="whitespace-nowrap flex-shrink-0">
                         <p id="result-label" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resulting Equilibrium</p>
@@ -2710,7 +2134,7 @@
                         </div>
                     </div>
                     <!-- 濃度方塊容器 -->
-                    <div id="final-concs" class="final-concs-container"></div>
+                    <div id="final-concs" class="flex flex-wrap gap-4 items-center"></div>
                 </div>
             </div>
 
@@ -2733,7 +2157,6 @@
                     </div>
                     
                     <div class="reaction-arrows-container">
-                        <div id="status-fescn" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementFeSCN()" title="點擊開始平衡移動">原平衡</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-fescn" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left-fescn" style="width: 80px;"></div>
@@ -2756,7 +2179,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val-fescn">0.007143</span></span>
                         </div>
                     </div>
-                    
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-fescn" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementFeSCN()" title="點擊開始平衡移動">原平衡</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -2788,7 +2213,6 @@
                     </div>
                     
                     <div class="reaction-arrows-container">
-                        <div id="status-acetic" onclick="startEquilibriumMovementAcetic()" title="點擊開始平衡移動">原平衡：Q＝K</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-acetic" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left-acetic" style="width: 80px;"></div>
@@ -2811,7 +2235,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val-acetic">1.80×10<sup>-5</sup></span></span>
                         </div>
                     </div>
-                  
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-acetic" onclick="startEquilibriumMovementAcetic()" title="點擊開始平衡移動">原平衡：Q＝K</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -2843,7 +2269,6 @@
                     </div>
                     
                     <div class="reaction-arrows-container">
-                        <div id="status" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left" style="width: 80px;"></div>
@@ -2866,7 +2291,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val">4.00</span></span>
                         </div>
                     </div>
-                    
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovement()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -2897,7 +2324,6 @@
                     </div>
                     
                     <div class="reaction-arrows-container">
-                        <div id="status-nh3" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-nh3" style="width: 100px;"></div>
                             <div class="arrow-left" id="arrow-left-nh3" style="width: 100px;"></div>
@@ -2920,7 +2346,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val-nh3">0.015625</span></span>
                         </div>
                     </div>
-                   
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-nh3" style="color: rgb(39, 174, 96);" onclick="startEquilibriumMovementNH3()" title="點擊開始平衡移動">新平衡</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -2952,7 +2380,6 @@
                     </div>
                     
                     <div class="reaction-arrows-container">
-                        <div id="status-hi" onclick="startEquilibriumMovementHI()" title="點擊開始平衡移動">原平衡：Q＝K</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-hi" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left-hi" style="width: 80px;"></div>
@@ -2975,7 +2402,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val-hi">0.25</span></span>
                         </div>
                     </div>
-                    
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-hi" onclick="startEquilibriumMovementHI()" title="點擊開始平衡移動">原平衡：Q＝K</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -3006,8 +2435,8 @@
                         <span class="reaction-product">2Ag<sup>+</sup> + CrO<sub>4</sub><sup>2⁻</sup></span>
                     </div>
                     
+                    <!-- 箭頭容器 - 位於方程式下方、Q/K欄位上方 -->
                     <div class="reaction-arrows-container">
-                        <div id="status-ag2cro4" onclick="startEquilibriumMovementAg2CrO4()" title="點擊開始平衡移動">原平衡：Q＝K</div>
                         <div class="reaction-arrows">
                             <div class="arrow-right" id="arrow-right-ag2cro4" style="width: 80px;"></div>
                             <div class="arrow-left" id="arrow-left-ag2cro4" style="width: 80px;"></div>
@@ -3030,7 +2459,9 @@
                             <span class="q-equals-result"><span>=</span><span id="q-val-ag2cro4">4×10<sup>-12</sup></span></span>
                         </div>
                     </div>
-                   
+                    <div style="width: 100%; text-align: center; margin-top: 4px;">
+                        <div id="status-ag2cro4" onclick="startEquilibriumMovementAg2CrO4()" title="點擊開始平衡移動">原平衡：Q＝K</div>
+                    </div>
                     
                     <div class="table-card">
                         <div class="table-scroll-container">
@@ -4651,27 +4082,20 @@
                 equationButtons.style.display = 'flex';
                 mainBtn.classList.add('active');
                 
-                // 手機橫向時不調整 margin-top，減少留白
+                // 調整 main-view 的 margin-top，為方程式按鈕容器留出空間
                 if (mainView) {
-                    const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
-                    if (!isMobileLandscape) {
-                        const buttonHeight = equationButtons.offsetHeight || 60;
-                        mainView.style.marginTop = buttonHeight + 'px';
-                    } else {
-                        mainView.style.marginTop = '0';  // 手機橫向時移除 margin-top
-                    }
+                    const buttonHeight = equationButtons.offsetHeight || 60;  // 預設高度
+                    mainView.style.marginTop = buttonHeight + 'px';
                 }
                 
-                // 立即顯示 FeSCN2+ 反應畫面（不隱藏按鈕）
+                // 如果還沒有選擇任何方程式，預設設置 FeSCN2+ 反應為激活狀態（但不調用 selectEquation，避免隱藏按鈕）
                 const activeBtn = document.querySelector('.equation-btn.active');
                 if (!activeBtn) {
-                    // 設置 FeSCN2+ 按鈕為激活狀態
                     const fescnBtn = document.querySelector('.equation-btn[data-scenario="le-chatelier-fescn"]');
                     if (fescnBtn) {
                         fescnBtn.classList.add('active');
                     }
-                    
-                    // 切換主畫面內容到 FeSCN2+
+                    // 確保 FeSCN2+ 反應內容是顯示的
                     document.querySelectorAll('.scenario-content').forEach(content => {
                         content.classList.remove('active');
                     });
@@ -4679,66 +4103,13 @@
                     if (fescnContent) {
                         fescnContent.classList.add('active');
                     }
-                    
-                    // 切換操作介面到 FeSCN2+ - 確保 control-panel 顯示（手機橫向時強制顯示）
-                    const controlPanel = document.querySelector('.control-panel');
-                    const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
-                    if (controlPanel) {
-                        if (isMobileLandscape) {
-                            controlPanel.style.display = 'flex !important';
-                        } else {
-                            controlPanel.style.display = 'flex';
-                        }
-                    }
-                    
-                    // 恢復 main-view 的原始高度
-                    if (mainView) {
-                        if (isMobileLandscape) {
-                            mainView.style.height = 'calc(100vh - 7vh - 15vh)';
-                            mainView.style.marginTop = '0';
-                        } else {
-                            mainView.style.height = '';
-                        }
-                    }
-                    
+                    // 確保 FeSCN2+ 操作介面是顯示的
                     document.querySelectorAll('.control-scenario').forEach(control => {
                         control.classList.remove('active');
                     });
                     const fescnControl = document.querySelector('.control-scenario[data-scenario="le-chatelier-fescn"]');
                     if (fescnControl) {
                         fescnControl.classList.add('active');
-                    }
-                } else {
-                    // 如果已經有激活的按鈕，確保對應的內容顯示
-                    const activeScenario = activeBtn.getAttribute('data-scenario');
-                    if (activeScenario) {
-                        // 切換主畫面內容
-                        document.querySelectorAll('.scenario-content').forEach(content => {
-                            content.classList.remove('active');
-                        });
-                        const mainContent = document.querySelector(`.scenario-content[data-scenario="${activeScenario}"]`);
-                        if (mainContent) {
-                            mainContent.classList.add('active');
-                        }
-                        
-                        // 切換操作介面 - 確保 control-panel 顯示
-                        const controlPanel = document.querySelector('.control-panel');
-                        if (controlPanel) {
-                            controlPanel.style.display = 'flex';  // 確保操作區顯示
-                        }
-                        
-                        // 恢復 main-view 的原始高度
-                        if (mainView) {
-                            mainView.style.height = '';
-                        }
-                        
-                        document.querySelectorAll('.control-scenario').forEach(control => {
-                            control.classList.remove('active');
-                        });
-                        const controlContent = document.querySelector(`.control-scenario[data-scenario="${activeScenario}"]`);
-                        if (controlContent) {
-                            controlContent.classList.add('active');
-                        }
                     }
                 }
             } else {
@@ -4775,14 +4146,9 @@
                 equationButtons.style.display = 'none';
             }
             
-            // 恢復 main-view 的 margin-top（手機橫向時強制為 0）
+            // 恢復 main-view 的 margin-top
             if (mainView) {
-                const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
-                if (isMobileLandscape) {
-                    mainView.style.marginTop = '0 !important';
-                } else {
-                    mainView.style.marginTop = '0';
-                }
+                mainView.style.marginTop = '0';
             }
             
             // 停止任何正在運行的動畫
@@ -4800,26 +4166,7 @@
                 mainContent.classList.add('active');
             }
             
-            // 切換操作介面 - 確保 control-panel 顯示（手機橫向時強制顯示）
-            const controlPanel = document.querySelector('.control-panel');
-            const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
-            if (controlPanel) {
-                if (isMobileLandscape) {
-                    controlPanel.style.display = 'flex !important';  // 手機橫向時強制顯示
-                } else {
-                    controlPanel.style.display = 'flex';  // 確保操作區顯示
-                }
-            }
-            
-            // 恢復 main-view 的原始高度（如果之前被調整過）
-            if (mainView) {
-                if (isMobileLandscape) {
-                    mainView.style.height = 'calc(100vh - 7vh - 15vh)';  // 手機橫向時使用固定高度
-                } else {
-                    mainView.style.height = '';
-                }
-            }
-            
+            // 切換操作介面
             document.querySelectorAll('.control-scenario').forEach(control => {
                 control.classList.remove('active');
             });
@@ -5007,248 +4354,240 @@
                 if (btn.id !== 'le-chatelier-main-btn') {
                     // 移除可能存在的舊監聽器
                     const newHandler = function(e) {
-                        try {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // 移除所有按鈕的 active 狀態（確保不會有位置變化）
-                            const currentBtn = this;  // 保存當前按鈕引用
-                            document.querySelectorAll('.scenario-btn').forEach(b => {
-                                b.classList.remove('active');
-                                // 強制設置 transform 為 none，避免任何移動
-                                b.style.transform = 'none';
-                                b.style.willChange = 'auto';
+                        e.preventDefault();
+                        e.stopPropagation();
+                    
+                    // 移除所有按鈕的 active 狀態（確保不會有位置變化）
+                    const currentBtn = this;  // 保存當前按鈕引用
+                    document.querySelectorAll('.scenario-btn').forEach(b => {
+                        b.classList.remove('active');
+                        // 強制設置 transform 為 none，避免任何移動
+                        b.style.transform = 'none';
+                        b.style.willChange = 'auto';
+                    });
+                    
+                    // 隱藏方程式按鈕（如果切換到其他場景）
+                    const equationButtons = document.getElementById('equation-buttons');
+                    const mainBtn = document.getElementById('le-chatelier-main-btn');
+                    const mainView = document.querySelector('.main-view');
+                    if (equationButtons && currentBtn.id !== 'le-chatelier-main-btn') {
+                        equationButtons.style.display = 'none';
+                        if (mainBtn) {
+                            mainBtn.classList.remove('active');
+                        }
+                        // 恢復 main-view 的 margin-top
+                        if (mainView) {
+                            mainView.style.marginTop = '0';
+                        }
+                    }
+                    
+                    // 添加當前按鈕的 active 狀態（確保不會有位置變化）
+                    currentBtn.classList.add('active');
+                    // 強制設置 transform 為 none，避免任何移動
+                    currentBtn.style.transform = 'none';
+                    currentBtn.style.willChange = 'auto';
+                    
+                    // 獲取選中的場景
+                    const scenario = currentBtn.getAttribute('data-scenario');
+                    if (!scenario) return;
+                    
+                    // 停止任何正在運行的動畫（切換場景時）
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // 切換主畫面內容
+                    document.querySelectorAll('.scenario-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    const mainContent = document.querySelector(`.scenario-content[data-scenario="${scenario}"]`);
+                    if (mainContent) {
+                        mainContent.classList.add('active');
+                        // 如果是 equilibrium-basic 場景，初始化 K計算
+                        if (scenario === 'equilibrium-basic') {
+                            // 確保場景已顯示後再初始化
+                            requestAnimationFrame(() => {
+                                setTimeout(() => {
+                                    if (typeof initKCalculator === 'function') {
+                                        initKCalculator();
+                                    } else if (typeof render === 'function') {
+                                        render();
+                                    }
+                                }, 300);
                             });
-                            
-                            // 隱藏方程式按鈕（如果切換到其他場景）
-                            const equationButtons = document.getElementById('equation-buttons');
-                            const mainBtn = document.getElementById('le-chatelier-main-btn');
-                            const mainView = document.querySelector('.main-view');
-                            if (equationButtons && currentBtn.id !== 'le-chatelier-main-btn') {
-                                equationButtons.style.display = 'none';
-                                if (mainBtn) {
-                                    mainBtn.classList.remove('active');
-                                }
-                                // 恢復 main-view 的 margin-top
-                                if (mainView) {
-                                    mainView.style.marginTop = '0';
-                                }
-                            }
-                            
-                            // 添加當前按鈕的 active 狀態（確保不會有位置變化）
-                            currentBtn.classList.add('active');
-                            // 強制設置 transform 為 none，避免任何移動
-                            currentBtn.style.transform = 'none';
-                            currentBtn.style.willChange = 'auto';
-                            
-                            // 獲取選中的場景
-                            const scenario = currentBtn.getAttribute('data-scenario');
-                            if (!scenario) return;
-                            
-                            // 停止任何正在運行的動畫（切換場景時）
-                            if (animationFrameId) {
-                                cancelAnimationFrame(animationFrameId);
-                                animationFrameId = null;
-                            }
-                            
-                            // 切換主畫面內容
-                            document.querySelectorAll('.scenario-content').forEach(content => {
-                                content.classList.remove('active');
-                            });
-                            const mainContent = document.querySelector(`.scenario-content[data-scenario="${scenario}"]`);
-                            if (mainContent) {
-                                mainContent.classList.add('active');
-                                // 如果是 equilibrium-basic 場景，初始化 K計算
-                                if (scenario === 'equilibrium-basic') {
-                                    // 確保場景已顯示後再初始化
-                                    requestAnimationFrame(() => {
-                                        setTimeout(() => {
-                                            if (typeof initKCalculator === 'function') {
-                                                initKCalculator();
-                                            } else if (typeof render === 'function') {
-                                                render();
-                                            }
-                                        }, 300);
-                                    });
-                                }
-                            }
-                            
+                        }
+                    }
+                    
                     // 切換操作介面
                     const controlPanel = document.querySelector('.control-panel');
-                    const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
+                    const mainView = document.querySelector('.main-view');
                     
                     if (scenario === 'equilibrium-basic') {
-                        // 隱藏操作區，讓 K計算 完整顯示（手機橫向時不隱藏）
-                        if (controlPanel && !isMobileLandscape) {
-                            controlPanel.style.display = 'none';
-                        } else if (controlPanel && isMobileLandscape) {
-                            controlPanel.style.display = 'flex';  // 手機橫向時保持顯示
-                        }
-                        // 調整 main-view 高度（手機橫向時使用固定高度）
-                        if (mainView && !isMobileLandscape) {
-                            mainView.style.height = 'calc(100vh - 7vh)';
-                        }
+                        // 隱藏操作區，讓 K計算 完整顯示
+                        if (controlPanel) controlPanel.style.display = 'none';
+                        // 調整 main-view 高度
+                        if (mainView) mainView.style.height = 'calc(100vh - 7vh)';
                     } else {
                         // 顯示操作區
                         if (controlPanel) controlPanel.style.display = 'flex';
-                        // 恢復 main-view 的原始高度（手機橫向時使用固定高度）
-                        if (mainView && !isMobileLandscape) {
-                            mainView.style.height = '';
-                        }
+                        // 恢復 main-view 的原始高度
+                        if (mainView) mainView.style.height = '';
                     }
-                            
-                            document.querySelectorAll('.control-scenario').forEach(control => {
-                                control.classList.remove('active');
-                            });
-                            const controlContent = document.querySelector(`.control-scenario[data-scenario="${scenario}"]`);
-                            if (controlContent) {
-                                controlContent.classList.add('active');
-                            }
-                            
-                            // 如果是勒沙特列原理相關場景，初始化圖表
-                            if (scenario === 'le-chatelier' || scenario === 'le-chatelier-nh3' || scenario === 'le-chatelier-chromate' || scenario === 'le-chatelier-ag2cro4') {
-                                // le-chatelier 場景初始化
-                                if (scenario === 'le-chatelier') {
-                                    setTimeout(() => {
-                                        // 停止任何正在運行的動畫
-                                        if (animationFrameId) {
-                                            cancelAnimationFrame(animationFrameId);
-                                            animationFrameId = null;
-                                        }
-                                        
-                                        // 重置變數
-                                        concA = initialConcA;
-                                        concB = initialConcB;
-                                        kf = 1.2;
-                                        kr = 0.3;
-                                        K = 4.0;
-                                        currentTime = 0;
-                                        hasOperated = false;
-                                        lastTime = 0;
-                                        stepCounter = 0;
-                                        equilibriumReached = false;
-                                        equilibriumCounter = 0;
-                                        equilibriumConcA = 0;
-                                        equilibriumConcB = 0;
-                                        equilibriumV = 0;
-                                        waitingForStart = false;
-                                        beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
-                                        instantChangeIndex = -1;
-                                        isPaused = false;
-                                        currentDisturbMode = null;  // 重置操作模式
-                                        history = { t: [], a: [], b: [], vf: [], vr: [] };
-                                        
-                                        // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
-                                        cCanvas = null;
-                                        vCanvas = null;
-                                        cCtx = null;
-                                        vCtx = null;
-                                        
-                                        // 初始化一段穩定平衡（記錄初始數據點到紅線位置，約2.5秒）
-                                        // 重置equilibriumReached，確保record()函數正常工作
-                                        equilibriumReached = false;
-                                        equilibriumV = 0;
-                                        currentTime = 0;
-                                        // 先記錄0秒的點
-                                        record();
-                                        // 記錄到約2.5秒（每個點間隔0.2秒）
-                                        while (currentTime < 2.5) {
-                                            record();
-                                        }
-                                        
-                                        // 初始化圖表
-                                        // initCharts();
-                                        // 初始化箭頭
-                                        const Q = Math.pow(concB, 2) / concA;
-                                        updateReactionArrows(Q, K);
-                                        updateUI();
-                                        
-                                        // 確保初始狀態按鈕是可點擊的
-                                        document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
-                                            b.disabled = false;
-                                            b.classList.remove('active');  // 移除 active 狀態
-                                        });
-                                    }, 100);
-                                }
-                                // le-chatelier-nh3 場景初始化
-                                else if (scenario === 'le-chatelier-nh3') {
-                                    setTimeout(() => {
-                                        // 停止任何正在運行的動畫
-                                        if (animationFrameId_nh3) {
-                                            cancelAnimationFrame(animationFrameId_nh3);
-                                            animationFrameId_nh3 = null;
-                                        }
-                                        
-                                        // 重置變數
-                                        concN2_nh3 = initialConcN2_nh3;
-                                        concH2_nh3 = initialConcH2_nh3;
-                                        concNH3_nh3 = initialConcNH3_nh3;
-                                        kf_nh3 = 0.015625;
-                                        kr_nh3 = 1.0;
-                                        K_nh3 = 0.015625;
-                                        currentTime_nh3 = 0;
-                                        hasOperated_nh3 = false;
-                                        lastTime_nh3 = 0;
-                                        stepCounter = 0;
-                                        equilibriumReached_nh3 = false;
-                                        equilibriumCounter_nh3 = 0;
-                                        equilibriumConcN2_nh3 = 0;
-                                        equilibriumConcH2_nh3 = 0;
-                                        equilibriumConcNH3_nh3 = 0;
-                                        equilibriumV_nh3 = 0;
-                                        waitingForStart_nh3 = false;
-                                        beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
-                                        instantChangeIndex_nh3 = -1;
-                                        isPaused_nh3 = false;
-                                        currentDisturbMode_nh3 = null;
-                                        history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
-                                        
-                                        // 重置圖表
-                                        cCanvas_nh3 = null;
-                                        vCanvas_nh3 = null;
-                                        cCtx_nh3 = null;
-                                        vCtx_nh3 = null;
-                                        
-                                        // 初始化一段穩定平衡
-                                        equilibriumReached_nh3 = false;
-                                        equilibriumV_nh3 = 0;
-                                        currentTime_nh3 = 0;
-                                        recordNH3();
-                                        // 計算初始平衡時的速率
-                                        initialVf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
-                                        initialVr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
-                                        maxSeenN2_nh3 = concN2_nh3;
-                                        maxSeenH2_nh3 = concH2_nh3;
-                                        maxSeenNH3_nh3 = concNH3_nh3;
-                                        
-                                        while (currentTime_nh3 < 2.5) {
-                                            recordNH3();
-                                        }
-                                        
-                                        // 初始化圖表
-                                        // initChartsNH3();
-                                        // 初始化箭頭
-                                        const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
-                                        updateReactionArrowsNH3(Q_nh3, K_nh3);
-                                        updateUINH3();
-                                        
-                                        // 確保初始狀態按鈕是可點擊的
-                                        document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
-                                            b.disabled = false;
-                                            b.classList.remove('active');  // 移除 active 狀態
-                                        });
-                                    }, 100);
-                                }
-                            } else {
-                                // 其他場景，重置 Canvas
-                                cCanvas = null;
-                                vCanvas = null;
-                                cCtx = null;
-                                vCtx = null;
-                            }
-                        } catch (error) {
-                            console.error('場景切換錯誤:', error);
+                    
+                    document.querySelectorAll('.control-scenario').forEach(control => {
+                        control.classList.remove('active');
+                    });
+                    const controlContent = document.querySelector(`.control-scenario[data-scenario="${scenario}"]`);
+                    if (controlContent) {
+                        controlContent.classList.add('active');
+                    }
+                    
+                    // 如果是勒沙特列原理相關場景，初始化圖表
+                    if (scenario === 'le-chatelier' || scenario === 'le-chatelier-nh3' || scenario === 'le-chatelier-chromate' || scenario === 'le-chatelier-ag2cro4') {
+                        // le-chatelier 場景初始化
+                        if (scenario === 'le-chatelier') {
+                    setTimeout(() => {
+                        // 停止任何正在運行的動畫
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                            animationFrameId = null;
                         }
+                        
+                        // 重置變數
+                        concA = initialConcA;
+                        concB = initialConcB;
+                        kf = 1.2;
+                        kr = 0.3;
+                        K = 4.0;
+                        currentTime = 0;
+                        hasOperated = false;
+                        lastTime = 0;
+                        stepCounter = 0;
+                        equilibriumReached = false;
+                        equilibriumCounter = 0;
+                        equilibriumConcA = 0;
+                        equilibriumConcB = 0;
+                        equilibriumV = 0;
+                        waitingForStart = false;
+                        beforeDisturb = { a: 0, b: 0, vf: 0, vr: 0, t: 0 };
+                        instantChangeIndex = -1;
+                        isPaused = false;
+                        currentDisturbMode = null;  // 重置操作模式
+                        history = { t: [], a: [], b: [], vf: [], vr: [] };
+                        
+                        // 重置圖表（Canvas 不需要 destroy，直接重新初始化）
+                        cCanvas = null;
+                        vCanvas = null;
+                        cCtx = null;
+                        vCtx = null;
+                        
+                        // 初始化一段穩定平衡（記錄初始數據點到紅線位置，約2.5秒）
+                        // 重置equilibriumReached，確保record()函數正常工作
+                        equilibriumReached = false;
+                        equilibriumV = 0;
+                        currentTime = 0;
+                        // 先記錄0秒的點
+                        record();
+                        // 記錄到約2.5秒（每個點間隔0.2秒）
+                        while (currentTime < 2.5) {
+                            record();
+                        }
+                        
+                        // 初始化圖表
+                        // initCharts();
+                        // 初始化箭頭
+                        const Q = Math.pow(concB, 2) / concA;
+                        updateReactionArrows(Q, K);
+                        updateUI();
+                        
+                        // 確保初始狀態按鈕是可點擊的
+                        document.querySelectorAll('.control-btn:not(.reset-btn)').forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('active');  // 移除 active 狀態
+                        });
+                    }, 100);
+                        }
+                        // le-chatelier-nh3 場景初始化
+                        else if (scenario === 'le-chatelier-nh3') {
+                    setTimeout(() => {
+                        // 停止任何正在運行的動畫
+                        if (animationFrameId_nh3) {
+                            cancelAnimationFrame(animationFrameId_nh3);
+                            animationFrameId_nh3 = null;
+                        }
+                        
+                        // 重置變數
+                        concN2_nh3 = initialConcN2_nh3;
+                        concH2_nh3 = initialConcH2_nh3;
+                        concNH3_nh3 = initialConcNH3_nh3;
+                        kf_nh3 = 0.015625;
+                        kr_nh3 = 1.0;
+                        K_nh3 = 0.015625;
+                        currentTime_nh3 = 0;
+                        hasOperated_nh3 = false;
+                        lastTime_nh3 = 0;
+                        stepCounter = 0;
+                        equilibriumReached_nh3 = false;
+                        equilibriumCounter_nh3 = 0;
+                        equilibriumConcN2_nh3 = 0;
+                        equilibriumConcH2_nh3 = 0;
+                        equilibriumConcNH3_nh3 = 0;
+                        equilibriumV_nh3 = 0;
+                        waitingForStart_nh3 = false;
+                        beforeDisturb_nh3 = { n2: 0, h2: 0, nh3: 0, vf: 0, vr: 0, t: 0 };
+                        instantChangeIndex_nh3 = -1;
+                        isPaused_nh3 = false;
+                        currentDisturbMode_nh3 = null;
+                        history_nh3 = { t: [], n2: [], h2: [], nh3: [], vf: [], vr: [] };
+                        
+                        // 重置圖表
+                        cCanvas_nh3 = null;
+                        vCanvas_nh3 = null;
+                        cCtx_nh3 = null;
+                        vCtx_nh3 = null;
+                        
+                        // 初始化一段穩定平衡
+                        equilibriumReached_nh3 = false;
+                        equilibriumV_nh3 = 0;
+                        currentTime_nh3 = 0;
+                        recordNH3();
+                        // 計算初始平衡時的速率
+                        initialVf_nh3 = kf_nh3 * concN2_nh3 * Math.pow(concH2_nh3, 3);
+                        initialVr_nh3 = kr_nh3 * Math.pow(concNH3_nh3, 2);
+                        maxSeenN2_nh3 = concN2_nh3;
+                        maxSeenH2_nh3 = concH2_nh3;
+                        maxSeenNH3_nh3 = concNH3_nh3;
+                        
+                        while (currentTime_nh3 < 2.5) {
+                            recordNH3();
+                        }
+                        
+                        // 初始化圖表
+                        // initChartsNH3();
+                        // 初始化箭頭
+                        const Q_nh3 = Math.pow(concNH3_nh3, 2) / (concN2_nh3 * Math.pow(concH2_nh3, 3));
+                        updateReactionArrowsNH3(Q_nh3, K_nh3);
+                        updateUINH3();
+                        
+                        // 確保初始狀態按鈕是可點擊的
+                        document.querySelectorAll('#btnContainer-nh3 .control-btn:not(.reset-btn)').forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('active');  // 移除 active 狀態
+                        });
+                    }, 100);
+                        }
+                    } else {
+                        // 其他場景，重置 Canvas
+                        cCanvas = null;
+                        vCanvas = null;
+                        cCtx = null;
+                        vCtx = null;
+                    }
+                    
+                } catch (error) {
+                    console.error('場景切換錯誤:', error);
+                }
                     };
                     btn.addEventListener('click', newHandler, true);  // 使用 capture phase
                 }
@@ -9135,43 +8474,8 @@
             `;
         }
 
-        // 方向檢測和處理
-        function checkOrientation() {
-            const prompt = document.getElementById('orientation-prompt');
-            if (!prompt) return;
-            
-            const isPortrait = window.innerHeight > window.innerWidth;
-            const isMobile = window.innerWidth <= 768;
-            
-            if (isMobile && isPortrait) {
-                prompt.classList.add('show');
-                document.body.style.overflow = 'hidden';  // 防止背景滾動
-            } else {
-                prompt.classList.remove('show');
-                document.body.style.overflow = '';
-            }
-        }
-        
-        // 立即檢查方向（如果 DOM 已載入）
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkOrientation);
-        } else {
-            checkOrientation();
-        }
-        
-        // 監聽方向變化
-        window.addEventListener('orientationchange', function() {
-            setTimeout(checkOrientation, 100);
-        });
-        
-        window.addEventListener('resize', function() {
-            checkOrientation();
-        });
-        
         // 頁面載入時初始化
         window.addEventListener('load', function() {
-            // 檢查方向
-            checkOrientation();
             document.body.style.opacity = '0';
             setTimeout(() => {
                 document.body.style.transition = 'opacity 0.5s ease-in';
@@ -9810,65 +9114,9 @@
                     }
                     return n.toString();
                 };
-                concs.innerHTML += `<div class="final-conc-card bg-slate-800/80 px-5 py-1.5 rounded-[16px] text-center min-w-[180px] border border-slate-700 shadow-xl"><div class="final-conc-formula text-white text-sm font-black uppercase mb-1 tracking-widest">[${name}]</div><div id="${cardId}" class="text-blue-300 text-base font-bold leading-none py-0.5"></div></div>`;
+                concs.innerHTML += `<div class="bg-slate-800/80 px-5 py-3 rounded-[16px] text-center min-w-[100px] border border-slate-700 shadow-xl"><div class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">[${name}]</div><div id="${cardId}" class="text-blue-300 text-lg font-bold leading-none py-1"></div></div>`;
                 setTimeout(() => katex.render(fmt(final), document.getElementById(cardId)), 0);
             });
-            
-            // 添加滑鼠拖動滾動功能
-            setupDragScroll(concs);
-        }
-        
-        // 滑鼠拖動滾動功能
-        function setupDragScroll(container) {
-            if (!container) return;
-            
-            let isDown = false;
-            let startY;
-            let scrollTop;
-            let animationFrameId = null;
-            
-            container.addEventListener('mousedown', (e) => {
-                isDown = true;
-                container.style.cursor = 'grabbing';
-                startY = e.pageY - container.offsetTop;
-                scrollTop = container.scrollTop;
-                e.preventDefault();
-            });
-            
-            container.addEventListener('mouseleave', () => {
-                isDown = false;
-                container.style.cursor = 'grab';
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-            });
-            
-            container.addEventListener('mouseup', () => {
-                isDown = false;
-                container.style.cursor = 'grab';
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-            });
-            
-            const smoothScroll = (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const y = e.pageY - container.offsetTop;
-                const walk = (y - startY) * 1.5;  // 降低係數讓滑動更順暢
-                
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                }
-                
-                animationFrameId = requestAnimationFrame(() => {
-                    container.scrollTop = scrollTop - walk;
-                });
-            };
-            
-            container.addEventListener('mousemove', smoothScroll);
         }
 
         // 初始化 K計算（僅在 equilibrium-basic 場景顯示時）
@@ -9911,52 +9159,18 @@
             if (slider && !slider.dataset.dragInitialized) {
                 slider.dataset.dragInitialized = 'true';
                 let isDown = false, startX, scrollLeft;
-                let animationFrameId = null;
-                
-                slider.style.cursor = 'grab';
-                
                 slider.addEventListener('mousedown', (e) => {
-                    isDown = true;
-                    slider.style.cursor = 'grabbing';
-                    startX = e.pageX - slider.offsetLeft;
-                    scrollLeft = slider.scrollLeft;
-                    e.preventDefault();
+                    isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft;
                 });
-                
-                slider.addEventListener('mouseleave', () => {
-                    isDown = false;
-                    slider.style.cursor = 'grab';
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                });
-                
-                slider.addEventListener('mouseup', () => {
-                    isDown = false;
-                    slider.style.cursor = 'grab';
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                        animationFrameId = null;
-                    }
-                });
-                
-                const smoothScroll = (e) => {
+                slider.addEventListener('mouseleave', () => isDown = false);
+                slider.addEventListener('mouseup', () => isDown = false);
+                slider.addEventListener('mousemove', (e) => {
                     if (!isDown) return;
                     e.preventDefault();
                     const x = e.pageX - slider.offsetLeft;
-                    const walk = (x - startX) * 1.5;  // 降低係數讓滑動更順暢
-                    
-                    if (animationFrameId) {
-                        cancelAnimationFrame(animationFrameId);
-                    }
-                    
-                    animationFrameId = requestAnimationFrame(() => {
-                        slider.scrollLeft = scrollLeft - walk;
-                    });
-                };
-                
-                slider.addEventListener('mousemove', smoothScroll);
+                    const walk = (x - startX) * 2;
+                    slider.scrollLeft = scrollLeft - walk;
+                });
             }
         }
 
@@ -9994,21 +9208,14 @@
             // 監聽窗口大小改變，確保 K計算 場景時高度正確
             window.addEventListener('resize', function() {
                 const kCalcContent = document.querySelector('.scenario-content[data-scenario="equilibrium-basic"]');
-                const isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight < window.innerWidth;
-                
-                // 手機橫向時，無論什麼場景，control-panel 都必須顯示
-                const controlPanel = document.querySelector('.control-panel');
-                if (controlPanel && isMobileLandscape) {
-                    controlPanel.style.display = 'flex !important';
-                } else if (kCalcContent && kCalcContent.classList.contains('active')) {
+                if (kCalcContent && kCalcContent.classList.contains('active')) {
+                    const controlPanel = document.querySelector('.control-panel');
                     const mainView = document.querySelector('.main-view');
                     
-                    // 非手機橫向時，K計算場景隱藏 control-panel
-                    if (controlPanel && !isMobileLandscape) {
+                    if (controlPanel) {
                         controlPanel.style.display = 'none';
                     }
-                    
-                    if (mainView && !isMobileLandscape) {
+                    if (mainView) {
                         mainView.style.height = 'calc(100vh - 7vh)';
                     }
                 }
