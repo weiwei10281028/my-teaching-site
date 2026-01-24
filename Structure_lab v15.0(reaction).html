@@ -2893,15 +2893,14 @@ function loadMolecule(key, variantKey = null) {
         if (cIdx !== -1) {
             if (isOctetMode) {
                 if (type === 'double') {
-                    const resonanceMols = ["三氧化硫", "二氧化硫", "硫代硫酸"];
-                    const isResonance = resonanceMols.some(n => currentKey.includes(n));
+                    // 修正判定邏輯：同時檢查 ID 與全名，確保 SO2, SO3 命中以保留一條雙鍵
+                    const isResonance = /SO[23]|二氧化硫|三氧化硫|硫代硫酸/.test(currentKey + (data.fullKey || ""));
 
                     if (isResonance && keptDoubleBonds === 0) {
                         keptDoubleBonds++;
                     } else {
                         bond[2] = 'coordinate';
                         bond[0] = cIdx;
-                    
                         bond[1] = tIdx;
                     }
                 }
