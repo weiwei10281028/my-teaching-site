@@ -1113,13 +1113,12 @@
 }
 
 /* --- 每日運勢 UI (Mystical Theme -> Liquid HUD Theme) --- */
-.fortune-entry-btn {
+.fortune-entry-btn, .calibration-entry-btn {
     position: fixed;
     z-index: 60; 
     
     /* 電腦版位置設定 */
     right: 25px;
-    top: 190px; 
     width: 170px; 
     
     padding: 8px 0; 
@@ -1136,37 +1135,53 @@
     overflow: hidden;
     pointer-events: auto; 
     
-    /* [S33] 液態水銀/多彩漸層背景 */
-    background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #8b5cf6 100%);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: #fff; 
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); 
     text-shadow: 0 0 5px rgba(255,255,255,0.5);
     font-family: 'Rajdhani', sans-serif;
 }
 
+.fortune-entry-btn {
+    top: 155px;
+    /* [S33] 液態水銀/多彩漸層背景 */
+    background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #8b5cf6 100%);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+}
+
+.calibration-entry-btn {
+    top: 210px;
+    background: linear-gradient(135deg, #0f172a 0%, #0ea5e9 45%, #22c55e 100%);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
+}
+
 /* 手機版特別優化：位置更緊湊 */
 @media (max-width: 768px) {
-    .fortune-entry-btn {
+    .fortune-entry-btn, .calibration-entry-btn {
         right: 15px;
-        top: 125px; 
         width: 160px; 
         
         padding: 6px 0; 
         font-size: 0.8rem;
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* 手機版稍暗，避免太搶眼 */
         border: 1px solid var(--hud-cyan);
         color: var(--hud-cyan);
     }
+    .fortune-entry-btn {
+        top: 85px;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* 手機版稍暗，避免太搶眼 */
+    }
+    .calibration-entry-btn {
+        top: 130px;
+        background: linear-gradient(135deg, #052e3a 0%, #0f172a 100%);
+    }
 }
 
-.fortune-entry-btn:hover {
+.fortune-entry-btn:hover, .calibration-entry-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(0, 242, 255, 0.8);
     background: var(--hud-cyan);
     color: #000;
 }
-.fortune-entry-btn:active { transform: scale(0.95); }
+.fortune-entry-btn:active, .calibration-entry-btn:active { transform: scale(0.95); }
 
 /* Modal 背景：改用 opacity 做漸變動畫 */
 #fortune-modal {
@@ -1366,6 +1381,7 @@
                 <div class="suggestion-label">你可能還想看：</div>  
             </div>
             <div class="fortune-entry-btn" onclick="openFortuneModal()">🔮 每日元素運勢</div>
+            <div class="calibration-entry-btn" onclick="openCalibrationModal()">🧭 數據校準</div>
 
             <span class="input-note" id="viewport-subtitle"></span>
         </div>
@@ -1386,13 +1402,7 @@
     </div>
     <div id="config-modal">
         <div class="config-panel">
-
-            <div class="config-tabs">
-                <div id="tab-list" class="config-tab active" onclick="switchConfigView('list')">元素清單</div>
-                <div id="tab-quiz" class="config-tab" onclick="switchConfigView('quiz')">數據校準</div>
-            </div>
-            
-            <!-- 視圖 A: 元素清單 -->
+            <!-- 電子組態：元素清單 -->
             <div id="list-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
                 <div class="config-header">
                     <button class="config-close" onclick="closeConfigModal()">✕</button>
@@ -1400,128 +1410,131 @@
                 </div>
                 <div class="config-list" id="configListContainer"></div>
             </div>
+        </div> <!-- 結束 config-panel -->
+    </div> <!-- 結束 config-modal -->
 
-            <!-- 視圖 B: 數據校準 -->
-            <div id="quiz-view">
-                <div class="config-header">
-                    <button class="config-close" onclick="closeConfigModal()">✕</button>
-                    <div class="unified-bar">
-                        <div class="status-tag-hud">READY</div>
-                        <span id="quiz-status-text" class="status-text-hud">Select Level</span>
-                        <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">取消</div>
-                    </div>
+<!-- 新增：數據校準專用 Modal（從電子組態視窗拆出） -->
+<div id="calibration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 210; justify-content: center; align-items: center;">
+    <div class="config-panel" style="border: 1px solid rgba(34, 197, 94, 0.35); box-shadow: 0 0 30px rgba(34, 197, 94, 0.18);">
+        <div id="quiz-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            <div class="config-header">
+                <button class="config-close" onclick="closeCalibrationModal()">✕</button>
+                <div class="unified-bar">
+                    <div class="status-tag-hud">READY</div>
+                    <span id="quiz-status-text" class="status-text-hud">Select Level</span>
+                    <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">取消</div>
                 </div>
-                <div style="flex: 1; overflow-y: auto;">
-                    <div id="quiz-setup-area">
-                        <span class="setup-label">STEP 1: 校準精度 (難度)</span>
-                        <div class="setup-btns">
-                            <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
-                            <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
-                        </div>
-                        <span class="setup-label">STEP 2: 數據通量 (題數)</span>
-                        <div class="setup-btns">
-                            <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
-                            <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
-                            <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
-                        </div>
-                        <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
+            </div>
+            <div style="flex: 1; overflow-y: auto;">
+                <div id="quiz-setup-area">
+                    <span class="setup-label">STEP 1: 校準精度 (難度)</span>
+                    <div class="setup-btns">
+                        <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
+                        <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
                     </div>
-                    <div id="quiz-content-area">
-                        <div class="quiz-question-card">
-                            <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
-                            <div id="quiz-question" class="quiz-question-text">--</div>
+                    <span class="setup-label">STEP 2: 數據通量 (題數)</span>
+                    <div class="setup-btns">
+                        <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
+                        <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
+                        <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
+                    </div>
+                    <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
+                </div>
+                <div id="quiz-content-area">
+                    <div class="quiz-question-card">
+                        <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
+                        <div id="quiz-question" class="quiz-question-text">--</div>
+                    </div>
+                    <div id="quiz-options" class="quiz-options-grid"></div>
+                </div>
+                <div id="quiz-result-area">
+                    <div id="quiz-result-card" class="quiz-question-card"></div>
+                    <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
+                </div>
+                <div class="difficulty-grid" id="difficulty-grid">
+                    <!-- 數據校準任務指引 -->
+                    <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; margin-bottom: 5px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
+                        <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
+                            <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
-                        <div id="quiz-options" class="quiz-options-grid"></div>
-                    </div>
-                    <div id="quiz-result-area">
-                        <div id="quiz-result-card" class="quiz-question-card"></div>
-                        <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
-                    </div>
-                    <div class="difficulty-grid" id="difficulty-grid">
-                        <!-- 數據校準任務指引 (固定高度 & 取消標題固定) -->
-                        <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; margin-bottom: 5px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
-                            <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
-                                <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
-                            </div>
-                            <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
-                                <div style="margin-bottom: 12px;"><strong style="color:#38bdf8;">1. 選擇 RANK (範圍)：</strong>決定校準數據的原子序區間。</div>
-                                <div style="margin-bottom: 8px;"><strong style="color:#fbbf24;">2. 設定精度 (題型組合)：</strong>點擊 RANK 後選擇對應難度。</div>
+                        <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
+                            <div style="margin-bottom: 12px;"><strong style="color:#38bdf8;">1. 選擇 RANK (範圍)：</strong>決定校準數據的原子序區間。</div>
+                            <div style="margin-bottom: 8px;"><strong style="color:#fbbf24;">2. 設定精度 (題型組合)：</strong>點擊 RANK 後選擇對應難度。</div>
+                            
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                                <!-- 基礎級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
+                                        ．符號、中文名、英文全名互相辨識<br>
+                                        ．原子序與符號互相辨識<br>
+                                        ．座標定位（週期、族）<br>
+                                        ．元素分類判斷<br>
+                                        ．常溫常壓物理狀態<br>
+                                        ．計算與逆推（電子數、質子數、等電子序列）<br>
+                                        ．同族或同一週期元素辨識<br>
+                                        ．電負度比較
+                                    </div>
+                                </div>
                                 
-                                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                                    <!-- 基礎級 -->
-                                    <div style="margin-bottom: 15px;">
-                                        <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
-                                            ．符號、中文名、英文全名互相辨識<br>
-                                            ．原子序與符號互相辨識<br>
-                                            ．座標定位（週期、族）<br>
-                                            ．元素分類判斷<br>
-                                            ．常溫常壓物理狀態<br>
-                                            ．計算與逆推（電子數、質子數、等電子序列）<br>
-                                            ．同族或同一週期元素辨識<br>
-                                            ．電負度比較
-                                        </div>
+                                <!-- 進階級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
+                                        ．基礎級所有題型<br>
+                                        ．電子組態辨識元素<br>
+                                        ．價電子數計算<br>
+                                        ．未成對電子數計算<br>
+                                        ．軌域電子統計<br>
+                                        ．區塊判定<br>
+                                        ．化學性質相似判斷
                                     </div>
-                                    
-                                    <!-- 進階級 -->
-                                    <div style="margin-bottom: 15px;">
-                                        <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
-                                            ．基礎級所有題型<br>
-                                            ．電子組態辨識元素<br>
-                                            ．價電子數計算<br>
-                                            ．未成對電子數計算<br>
-                                            ．軌域電子統計<br>
-                                            ．區塊判定<br>
-                                            ．化學性質相似判斷
-                                        </div>
-                                    </div>
-                                    
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- RANK 選擇卡片 -->
-                        <div class="diff-card diff-a" onclick="startQuiz('A')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK A: 初級數據流</span>
-                                <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
-                                <span class="diff-tag">適合基礎同步</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
+                    <!-- RANK 選擇卡片 -->
+                    <div class="diff-card diff-a" onclick="startQuiz('A')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK A: 初級數據流</span>
+                            <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
+                            <span class="diff-tag">適合基礎同步</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
+                    </div>
 
-                        <div class="diff-card diff-b" onclick="startQuiz('B')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK B: 核心數據流</span>
-                                <span class="diff-range">1 ~ 36 + 所有主族元素 (1A~8A)</span>
-                                <span class="diff-tag">主族元素完整覆蓋</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
+                    <div class="diff-card diff-b" onclick="startQuiz('B')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK B: 核心數據流</span>
+                            <span class="diff-range">1 ~ 36 + 所有主族元素 (1A~8A)</span>
+                            <span class="diff-tag">主族元素完整覆蓋</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
+                    </div>
 
-                        <div class="diff-card diff-c" onclick="startQuiz('C')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK C: 專業數據流</span>
-                                <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
-                                <span class="diff-tag">涵蓋常用物質數據</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
+                    <div class="diff-card diff-c" onclick="startQuiz('C')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK C: 專業數據流</span>
+                            <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
+                            <span class="diff-tag">涵蓋常用物質數據</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
+                    </div>
 
-                        <div class="diff-card diff-d" onclick="startQuiz('D')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK D: 全域數據流</span>
-                                <span class="diff-range">1 ~ 118 (完整元素週期表)</span>
-                                <span class="diff-tag">終極數據同步考驗</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
+                    <div class="diff-card diff-d" onclick="startQuiz('D')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK D: 全域數據流</span>
+                            <span class="diff-range">1 ~ 118 (完整元素週期表)</span>
+                            <span class="diff-tag">終極數據同步考驗</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
                     </div>
                 </div>
             </div>
-        </div> <!-- 結束 config-panel -->
-    </div> <!-- 結束 config-modal -->
+        </div>
+    </div>
+</div>
 
 <!-- 新增：物質檢索專用 Modal -->
 <div id="substance-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 400; justify-content: center; align-items: center;">
@@ -1966,7 +1979,7 @@ document.addEventListener('click', (e) => {
 });
 
 window.currentVariantKey = null;
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768 || document.body.classList.contains('simulate-mobile');
 let isReactionRunning = false; 
 let isReactionFinished = false; 
 let isPlasmaMode = false;
@@ -2141,7 +2154,7 @@ let currentFaceColor = 'yellow'; // 預設顏色
 let rotVelocity = { x: 0.004, y: 0.004, z: 0 };
 let panOffset = { x: 0, y: 0 }; 
 let isLongPressActive = false;
-let scale = 1.6; 
+let scale = isMobile ? 1.35 : 1.6; 
 let isDragging = false; 
 let lastMouse = { x: 0, y: 0 };
 let currentMode = 2; 
@@ -2759,8 +2772,8 @@ function updateSuggestions() {
     const picks = [];
     let safety = 0;
     
-    // 隨機挑選 4 個不重複且不是當前的分子
-    while(picks.length < 4 && picks.length < allKeys.length && safety < 100) {
+    // 隨機挑選 2 個不重複且不是當前的分子
+    while(picks.length < 2 && picks.length < allKeys.length && safety < 100) {
         const r = allKeys[Math.floor(Math.random() * allKeys.length)];
         if(!picks.includes(r) && r !== currentKey) {
             picks.push(r);
@@ -4979,15 +4992,22 @@ function openConfigModal() {
 function closeConfigModal() { 
     const modal = document.getElementById('config-modal'); 
     if(modal) modal.style.display = 'none'; 
-    resetToDifficultySelection(); 
 }
 
-function switchConfigView(view) {
-    document.getElementById('tab-list').classList.toggle('active', view === 'list');
-    document.getElementById('tab-quiz').classList.toggle('active', view === 'quiz');
-    document.getElementById('list-view').style.display = (view === 'list' ? 'flex' : 'none');
-    document.getElementById('quiz-view').style.display = (view === 'quiz' ? 'flex' : 'none');
-    if (view === 'quiz') resetToDifficultySelection();
+function openCalibrationModal() {
+    const modal = document.getElementById('calibration-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        if (typeof pauseSystem === 'function') pauseSystem();
+        resetToDifficultySelection();
+    }
+}
+
+function closeCalibrationModal() {
+    const modal = document.getElementById('calibration-modal');
+    if (modal) modal.style.display = 'none';
+    if (typeof resumeSystem === 'function') resumeSystem();
+    resetToDifficultySelection();
 }
 
 window.resetToDifficultySelection = function() {
