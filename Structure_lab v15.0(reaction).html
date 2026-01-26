@@ -1431,6 +1431,7 @@
                     <div class="setup-btns">
                         <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
                         <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
+                        <button class="setup-btn" onclick="setQuizParam('diff', 3, this)">混成</button>
                     </div>
                     <span class="setup-label">STEP 2: 數據通量 (題數)</span>
                     <div class="setup-btns">
@@ -1488,6 +1489,14 @@
                                         ．軌域電子統計<br>
                                         ．區塊判定<br>
                                         ．化學性質相似判斷
+                                    </div>
+                                </div>
+                                
+                                <!-- 混成級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#f59e0b; font-weight: bold; display: block; margin-bottom: 6px;">[ 混成級 (Hybridization) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f59e0b;">
+                                        ．混成軌域判斷
                                     </div>
                                 </div>
                             </div>
@@ -5042,7 +5051,7 @@ window.startQuiz = function(level) {
     };
 
     // 取得難度名稱映射
-    const diffMap = { 1: "基礎級", 2: "進階級" };
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "混成級" };
 
     // 預先根據 Rank 設定範圍池
     const poolMap = {
@@ -5074,9 +5083,12 @@ window.quizState.generateTypeDeck = function(diff, total) {
         // 包含：符號識別、原子序、座標、分類、狀態、計算與逆推、同族/同週期、區塊、電負度
         1: [0, 1, 2, 4, 5, 6, 10, 14],             
         
-        // 進階級：包含所有題型
+        // 進階級：包含所有題型（不包含混成軌域）
         // 包含：基礎級題型 + 所有電子組態相關題型（3、7、8、9、11、15）
-        2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]      
+        2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15],
+        
+        // 混成級：只包含混成軌域判斷
+        3: [16]
     };
     
     const types = typePools[diff] || typePools[1];
@@ -5140,7 +5152,7 @@ window.quizState.generateTypeDeck = function(diff, total) {
 
 // 修正 setQuizParam 讓它也能即時更新 HUD
 window.setQuizParam = function(type, val, btn) {
-    const diffMap = { 1: "基礎級", 2: "進階級" };
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "混成級" };
     btn.parentElement.querySelectorAll('.setup-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (type === 'diff') {
@@ -5294,6 +5306,14 @@ function generateQuestionKey(type, quizData, target) {
             // 每一輪只能出現一次（不區分元素）
             return `type14-電負度`;
             
+        case 16: // 混成軌域判斷
+            // 使用分子名稱+原子符號作為唯一標識
+            const molMatch = coreQuestion.match(/([^中]+?)(?:中的|的)([A-Z][a-z]?)/);
+            if (molMatch) {
+                return `type16-${molMatch[1].trim()}-${molMatch[2]}`;
+            }
+            return `type16-${coreQuestion.substring(0, 50)}`;
+            
         default:
             // 其他題型：使用題型+問題核心內容
             // 對於單向題型，同一題型只允許問一次（無論什麼元素）
@@ -5325,7 +5345,7 @@ window.renderNextQuestion = function() {
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     
     // 更新 HUD：顯示 Rank、難度與進度
-    const diffNames = { 1: "基礎級", 2: "進階級" };
+    const diffNames = { 1: "基礎級", 2: "進階級", 3: "混成級" };
     const curDiff = diffNames[window.quizState.difficulty] || "未知";
     document.getElementById('quiz-status-text').textContent = 
         `RANK ${window.quizState.rank} | ${curDiff}校準 [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
@@ -5333,18 +5353,24 @@ window.renderNextQuestion = function() {
     // 依照預選牌組類型出題
     const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
     
-    // 元素均等分佈演算法
-    let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
-    if (avail.length === 0) {
-        window.quizState.askedZ = []; 
-        avail = [...window.quizState.pool];
-    }
-    let target = avail[Math.floor(Math.random() * avail.length)];
-    window.quizState.askedZ.push(target.z);
-    
     const quizData = { question: "", answer: "", type: "", displayMode: "symbol" }; 
-    let parsed = QUIZ_HELPER.parse(target.c);
-    let s = `[ ${target.s} ]`;
+    let target = null;
+    let parsed = null;
+    let s = "";
+    
+    // 混成軌域題型（type 16）不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16) {
+        // 元素均等分佈演算法
+        let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
+        if (avail.length === 0) {
+            window.quizState.askedZ = []; 
+            avail = [...window.quizState.pool];
+        }
+        target = avail[Math.floor(Math.random() * avail.length)];
+        window.quizState.askedZ.push(target.z);
+        parsed = QUIZ_HELPER.parse(target.c);
+        s = `[ ${target.s} ]`;
+    }
     
     // 重複問題檢查：生成問題後檢查是否已問過，如果重複則重新生成（最多嘗試20次）
     let questionKey = "";
@@ -5353,8 +5379,8 @@ window.renderNextQuestion = function() {
     
     while (!questionGenerated && attempts < 20) {
         attempts++;
-        // 如果已經嘗試過，重新選擇元素
-        if (attempts > 1) {
+        // 如果已經嘗試過，重新選擇元素（混成軌域題型跳過）
+        if (attempts > 1 && type !== 16) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -5786,7 +5812,8 @@ if (type === 0) {
             `下列何者與 ${s} 位於週期表的相同族？`
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+        const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
         
@@ -5814,7 +5841,8 @@ if (type === 0) {
             `下列何者與 ${s} 位於週期表的相同週期？`
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        const partners       = ELECTRON_DATA.filter(el => el.p === target.p && el.z !== target.z);
+        // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+        const partners       = window.quizState.pool.filter(el => el.p === target.p && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
         
@@ -5854,7 +5882,8 @@ if (type === 0) {
 } else if (type === 15) {
     quizData.type        = "邏輯判斷：化學性質相似"; 
     quizData.question    = `根據電子組態特徵，下列哪一個元素與 ${s} 的「化學性質」最相似？`;
-    const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+    // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+    const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
     quizData.displayMode = "symbol";
     
@@ -5873,6 +5902,126 @@ if (type === 0) {
         if (!forcedOpts.includes(randomEl.s) && randomEl.z !== target.z) forcedOpts.push(randomEl.s);
     }
     quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
+} else if (type === 16) {
+    // 混成軌域判斷題型
+    // 從MOLECULE_DB中篩選有混成軌域的分子
+    const validMolecules = [];
+    for (let mKey in MOLECULE_DB) {
+        const mol = MOLECULE_DB[mKey];
+        // 跳過金屬晶體和離子晶體（isIonic為true且isMetal為true的情況）
+        if (mol.isIonic && mol.isMetal) continue;
+        // 跳過沒有混成軌域資訊的（hybrid為"-"或空）
+        if (!mol.hybrid || mol.hybrid === "-" || mol.hybrid === "") continue;
+        
+        // 取得分子名稱（使用fullKey的第一個部分）
+        const nameParts = (mol.fullKey || mKey).split('|');
+        const mainName = nameParts[0].trim();
+        const chineseName = nameParts[1] ? nameParts[1].trim() : null;
+        
+        // 取得中心原子（有混成軌域的原子）
+        const centerAtom = mol.center;
+        if (!centerAtom || centerAtom === "雙原子" || centerAtom === "Metal") continue;
+        
+        // 檢查是否有variants，如果有，也要考慮variants
+        if (mol.variants) {
+            for (let vKey in mol.variants) {
+                const variant = mol.variants[vKey];
+                // 跳過離子晶體的variant
+                if (variant.isIonic && variant.isMetal) continue;
+                if (variant.hybrid && variant.hybrid !== "-" && variant.hybrid !== "") {
+                    const vNameParts = (variant.fullKey || vKey).split('|');
+                    const vMainName = vNameParts[0].trim();
+                    const vChineseName = vNameParts[1] ? vNameParts[1].trim() : null;
+                    const vCenter = variant.center || mol.center;
+                    // 只選擇有混成軌域的原子（中心原子）
+                    if (vCenter && vCenter !== "雙原子" && vCenter !== "Metal") {
+                        validMolecules.push({
+                            key: mKey,
+                            variant: vKey,
+                            name: vMainName,
+                            chineseName: vChineseName,
+                            center: vCenter,
+                            hybrid: variant.hybrid
+                        });
+                    }
+                }
+            }
+        } else {
+            validMolecules.push({
+                key: mKey,
+                variant: null,
+                name: mainName,
+                chineseName: chineseName,
+                center: centerAtom,
+                hybrid: mol.hybrid
+            });
+        }
+    }
+    
+    // 過濾複雜有機物：只保留簡單有機物或特定複雜有機物的特定原子
+    const filteredMolecules = validMolecules.filter(item => {
+        const name = item.name;
+        // 排除二茂鐵
+        if (name.includes("Fe(C5H5)2") || name.includes("二茂鐵") || name.includes("Ferrocene")) return false;
+        
+        // 簡單有機物：直接通過
+        const simpleOrgs = ["CH4", "C2H6", "C2H4", "C2H2", "C6H6"];
+        if (simpleOrgs.some(s => name.startsWith(s))) return true;
+        
+        // 複雜有機物：只允許特定情況
+        const complexOrgMatch = name.match(/^C(\d+)H(\d+)/);
+        if (complexOrgMatch) {
+            // 硝基苯的N、苯胺的N
+            if ((name.includes("NO2") || name.includes("硝基")) && item.center === "N") return true;
+            if ((name.includes("NH2") || name.includes("胺")) && item.center === "N") return true;
+            return false; // 其他複雜有機物不通過
+        }
+        
+        // 無機物：全部通過
+        return true;
+    });
+    
+    if (filteredMolecules.length === 0) {
+        // 如果沒有有效分子，生成一個預設問題
+        quizData.type = "混成軌域判斷";
+        quizData.question = "暫無可用題目";
+        quizData.answer = "sp³";
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = ["sp", "sp²", "sp³", "sp³d"];
+    } else {
+        // 隨機選擇一個分子
+        const selected = filteredMolecules[Math.floor(Math.random() * filteredMolecules.length)];
+        
+        // 確定使用的名稱（優先使用化學式，如果沒有則用中文名）
+        const rawName = selected.name || selected.chineseName;
+        
+        // 判斷是否為化學式（包含大寫字母開頭，可能包含數字和括號）
+        const isFormula = /^[A-Z][A-Za-z0-9()]*\s*([+-]|\d+[+-])?$/.test(rawName);
+        let displayName;
+        if (isFormula) {
+            // 如果是化學式，使用 formatFormula 格式化並套用物質檢索樣式
+            const formattedFormula = formatFormula(rawName);
+            displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formattedFormula}</span>`;
+        } else {
+            // 如果是中文名，直接使用
+            displayName = rawName;
+        }
+        
+        // 混成軌域選項：從sp、sp²、sp³、sp³d、sp³d²中選4個
+        const allHybrids = ["sp", "sp²", "sp³", "sp³d", "sp³d²"];
+        const correctHybrid = selected.hybrid;
+        
+        // 生成錯誤選項（從其他混成軌域中選3個）
+        const wrongHybrids = allHybrids.filter(h => h !== correctHybrid);
+        const shuffledWrong = [...wrongHybrids].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const allOptions = [correctHybrid, ...shuffledWrong].sort(() => 0.5 - Math.random());
+        
+        quizData.type = "混成軌域判斷";
+        quizData.question = `${displayName}中的${selected.center}原子採取何種混成軌域？`;
+        quizData.answer = correctHybrid;
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = allOptions;
+    }
 }
         
         // 生成問題的唯一標識（用於重複檢查）
@@ -5903,6 +6052,20 @@ if (type === 0) {
     '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">$2</sup>');
     // 如果是電荷符號 (如 2+ 或 -)，處理其上標內的大小
     htmlQ = htmlQ.replace(/(\d*[+-])(?=<\/sup>)/g, '<span style="font-size: 0.85em;">$1</span>');
+    // 處理混成軌域的上標（sp², sp³等）- 將Unicode上標字符轉換為HTML上標
+    htmlQ = htmlQ.replace(/(sp)([²³])/g, function(match, p1, p2) {
+        const num = p2 === '²' ? '2' : '3';
+        return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
+    });
+    // 處理 sp³d, sp³d² 的情況
+    htmlQ = htmlQ.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
+        let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
+        if (p4 === '²') {
+            result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
+        }
+        return result;
+    });
+    
     
     questionEl.innerHTML = htmlQ;
     questionEl.style.fontSize = "1.7rem";
@@ -5941,27 +6104,37 @@ if (type === 0) {
     let safety = 0;
     while (opts.length < 4 && safety < 100) {
         safety++;
-        let cand = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
+        // 混成軌域題型不需要從 pool 選擇元素
+        let cand = (type === 16) ? null : window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
         let val = "";
 
         // 根據 displayMode 決定抓取什麼類型的錯誤選項
         switch (quizData.displayMode) {
-    case "symbol": val = cand.s; break;
-    case "chinese": val = cand.cn; break;
-    case "english": val = cand.n; break;
+    case "hybrid":
+        // 混成軌域選項：從所有混成軌域中隨機選擇
+        const allHybrids = ["sp", "sp²", "sp³", "sp³d", "sp³d²"];
+        val = allHybrids[Math.floor(Math.random() * allHybrids.length)];
+        break;
+    case "symbol": val = cand ? cand.s : ""; break;
+    case "chinese": val = cand ? cand.cn : ""; break;
+    case "english": val = cand ? cand.n : ""; break;
     case "number":
         let offset = Math.floor(Math.random() * 11) - 5;
         val = Math.max(0, parseInt(quizData.answer) + offset).toString();
         break;
     case "ion":
-                let rC = Math.floor(Math.random() * 5) - 2;
-                if (rC === 0) {
-                    val = cand.s;
+                if (cand) {
+                    let rC = Math.floor(Math.random() * 5) - 2;
+                    if (rC === 0) {
+                        val = cand.s;
+                    } else {
+                        let rVal = Math.abs(rC);
+                        let rSign = rC > 0 ? "+" : "-";
+                        // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
+                        val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                    }
                 } else {
-                    let rVal = Math.abs(rC);
-                    let rSign = rC > 0 ? "+" : "-";
-                    // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
-                    val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                    val = "";
                 }
                 break;
             case "raw":
@@ -5980,12 +6153,16 @@ if (type === 0) {
                     val = allStates[Math.floor(Math.random() * allStates.length)];
                 } else if (type === 11) {
                     // Type 11: 區塊
-                    const i = cand.iupac; let b = "f";
-                    if (cand.s === "He") b = "s";
-                    else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
-                    val = `${b} 區`;
+                    if (cand) {
+                        const i = cand.iupac; let b = "f";
+                        if (cand.s === "He") b = "s";
+                        else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
+                        val = `${b} 區`;
+                    } else {
+                        val = "s 區"; // 預設值
+                    }
                 } else {
-                    val = cand.s;
+                    val = cand ? cand.s : "";
                 }
                 break;
             default: val = cand.s; break;
@@ -6017,8 +6194,28 @@ if (type === 0) {
     opts.forEach(o => {
         const b = document.createElement('button'); 
         b.className = 'option-btn'; 
-        b.innerHTML = o; // 支援上標標籤渲染
-        b.dataset.value = o; // 儲存選項值
+        // 處理混成軌域選項的上標顯示
+        let displayText = o;
+        if (quizData.displayMode === "hybrid") {
+            // 將 Unicode 上標字符（²、³）轉換為 HTML 上標格式，確保正確顯示
+            // 處理 sp², sp³ 的情況
+            displayText = o.replace(/(sp)([²³])/g, function(match, p1, p2) {
+                const num = p2 === '²' ? '2' : '3';
+                return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
+            });
+            // 處理 sp³d, sp³d² 的情況（如果還有未轉換的）
+            displayText = displayText.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
+                let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
+                if (p4 === '²') {
+                    result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
+                }
+                return result;
+            });
+            // 處理單獨的 d²（如果存在）
+            displayText = displayText.replace(/(d)(²)/g, 'd<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>');
+        }
+        b.innerHTML = displayText; // 支援上標標籤渲染
+        b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
             if (container.querySelector('.start-cal-btn')) return;
@@ -6071,8 +6268,8 @@ if (type === 0) {
                                         selectedBtn.classList.add('wrong'); 
                                         // 顯示正確答案
                                         container.querySelectorAll('.option-btn').forEach(btn => { 
-                                            // 修正答案顯示比對邏輯，使用 innerHTML
-                                            if(btn.innerHTML === quizData.answer) {
+                                            // 修正答案顯示比對邏輯，使用 dataset.value 來比對原始值
+                                            if(btn.dataset.value === quizData.answer) {
                                                 // 延遲顯示正確答案，讓錯誤動畫先完成
                                                 setTimeout(() => {
                                                     btn.classList.add('correct');
