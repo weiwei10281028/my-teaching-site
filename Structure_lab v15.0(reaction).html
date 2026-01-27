@@ -6016,8 +6016,77 @@ if (type === 0) {
         const shuffledWrong = [...wrongHybrids].sort(() => 0.5 - Math.random()).slice(0, 3);
         const allOptions = [correctHybrid, ...shuffledWrong].sort(() => 0.5 - Math.random());
         
+        // 檢查是否需要指明特定原子
+        let atomDescription = selected.center;
+        const molData = selected.variant ? MOLECULE_DB[selected.key].variants[selected.variant] : MOLECULE_DB[selected.key];
+        if (molData && molData.atomsRaw && molData.bondsRaw) {
+            // 找出所有相同類型的原子
+            const sameTypeIndices = [];
+            molData.atomsRaw.forEach((atom, idx) => {
+                if (atom.elem === selected.center) {
+                    sameTypeIndices.push(idx);
+                }
+            });
+            
+            if (sameTypeIndices.length > 1) {
+                // 計算每個相同類型原子的混成軌域
+                const atomHybrids = sameTypeIndices.map(idx => {
+                    const atom = molData.atomsRaw[idx];
+                    // 計算鍵結數（sigma鍵）
+                    let sigmaCount = 0;
+                    let lpCount = atom.lpCount || 0;
+                    molData.bondsRaw.forEach(bond => {
+                        if (bond[0] === idx || bond[1] === idx) {
+                            sigmaCount++; // 每個鍵都算一個sigma鍵
+                        }
+                    });
+                    const sum = sigmaCount + lpCount;
+                    let hybrid = (sum === 2) ? "sp" : (sum === 3) ? "sp²" : (sum === 4) ? "sp³" : (sum === 5) ? "sp³d" : (sum === 6) ? "sp³d²" : "";
+                    return { idx, hybrid };
+                });
+                
+                // 檢查是否有不同的混成軌域
+                const uniqueHybrids = [...new Set(atomHybrids.map(a => a.hybrid))];
+                if (uniqueHybrids.length > 1) {
+                    // 需要指明是哪一個原子，找出目標原子的索引（通常是center對應的原子）
+                    // 由於center屬性可能不直接對應索引，我們需要找到混成軌域匹配的原子
+                    const targetHybrid = atomHybrids.find(a => a.hybrid === correctHybrid);
+                    if (targetHybrid) {
+                        const targetIdx = targetHybrid.idx;
+                        // 找出與目標原子鍵結的其他原子，用於描述
+                        const bondedAtoms = [];
+                        molData.bondsRaw.forEach(bond => {
+                            if (bond[0] === targetIdx) {
+                                const otherAtom = molData.atomsRaw[bond[1]];
+                                if (otherAtom && otherAtom.elem !== selected.center) {
+                                    bondedAtoms.push(otherAtom.elem);
+                                }
+                            } else if (bond[1] === targetIdx) {
+                                const otherAtom = molData.atomsRaw[bond[0]];
+                                if (otherAtom && otherAtom.elem !== selected.center) {
+                                    bondedAtoms.push(otherAtom.elem);
+                                }
+                            }
+                        });
+                        
+                        // 根據鍵結的原子來描述（優先使用N、O等特殊原子）
+                        if (bondedAtoms.includes("N")) {
+                            atomDescription = `連接N原子的${selected.center}`;
+                        } else if (bondedAtoms.includes("O")) {
+                            atomDescription = `連接O原子的${selected.center}`;
+                        } else if (bondedAtoms.includes("Cl")) {
+                            atomDescription = `連接Cl原子的${selected.center}`;
+                        } else if (bondedAtoms.length > 0) {
+                            // 使用第一個鍵結的原子
+                            atomDescription = `連接${bondedAtoms[0]}原子的${selected.center}`;
+                        }
+                    }
+                }
+            }
+        }
+        
         quizData.type = "混成軌域判斷";
-        quizData.question = `${displayName}中的${selected.center}原子採取何種混成軌域？`;
+        quizData.question = `${displayName}中的${atomDescription}原子採取何種混成軌域？`;
         quizData.answer = correctHybrid;
         quizData.displayMode = "hybrid";
         quizData.forcedOpts = allOptions;
