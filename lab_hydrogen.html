@@ -1015,7 +1015,7 @@
         this.calculate();
     },
     toggleWUnit() {
-        const units = ['nm', 'Å', 'm'];
+        const units = ['nm', 'Å', 'm', 'cm'];
         this.state.wUnit = units[(units.indexOf(this.state.wUnit) + 1) % units.length];
         this.calculate();
     },
@@ -1087,6 +1087,12 @@
                 while (mCoeff >= 10) { mCoeff /= 10; mExp += 1; }
                 while (mCoeff < 1) { mCoeff *= 10; mExp -= 1; }
                 wDisplay = `${mCoeff.toFixed(3)} × 10<span class="calc-math-exp">${mExp}</span>`; wLabel = 'm';
+            }
+            else if (wUnit === 'cm') {
+                let cmCoeff = nmVal; let cmExp = -7;
+                while (cmCoeff >= 10) { cmCoeff /= 10; cmExp += 1; }
+                while (cmCoeff < 1) { cmCoeff *= 10; cmExp -= 1; }
+                wDisplay = `${cmCoeff.toFixed(3)} × 10<span class="calc-math-exp">${cmExp}</span>`; wLabel = 'cm';
             }
 
             const highText = nh === Infinity ? "∞" : `${nh}<span class="calc-math-exp">2</span>`;
