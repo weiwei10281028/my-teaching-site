@@ -1,1255 +1,6968 @@
-// ==========================================
-// data_molecules.js - 分子結構定義與輔助函式
-// ==========================================
-
-let MOLECULE_DB = {};
-let MOLECULE_INDEX = {};
-
-// 幾何輔助函式
-const di = (e, dist=60) => [{elem:e,x:-dist,y:0,z:0},{elem:e,x:dist,y:0,z:0}];
-const getLinear = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:r,y:0,z:0} ];
-const getTrigPlanar = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:r*0.866,y:-r*0.5,z:0}, {elem:o,x:-r*0.866,y:-r*0.5,z:0} ];
-const getTetra = (c, o, d=60) => { const r = d / 1.73205; return [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:-r,z:r}, {elem:o,x:-r,y:r,z:r}, {elem:o,x:-r,y:-r,z:-r}, {elem:o,x:r,y:r,z:-r} ]; };
-const getOcta = (c, o, r=65) => [{elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:0,z:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:0,y:-r,z:0}, {elem:o,x:0,y:0,z:r}, {elem:o,x:0,y:0,z:-r}];
-const benzBase=[{x:0,y:70,z:0},{x:60,y:35,z:0},{x:60,y:-35,z:0},{x:0,y:-70,z:0},{x:-60,y:-35,z:0},{x:-60,y:35,z:0}];
-function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{x:v.x+v.x/l*s,y:v.y+v.y/l*s,z:0};}
-
-// 1. 修改 addMol 定義，確保 variantType 被儲存
-const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, variants = null, desc = null, pg = null, variantType = "isomer") => {
-    if (typeof MOLECULE_INDEX === 'undefined') MOLECULE_INDEX = {};
-    if (typeof MOLECULE_DB === 'undefined') MOLECULE_DB = {};
-    const keys = keysStr.split('|');
-    const mainKey = keys[0].trim();
-    const mainKeyUpper = mainKey.toUpperCase();
-    keys.forEach(k => { MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; });
-
-    const baseData = { 
-        center, hybrid, 
-        shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, 
-        angle, mp, bp, atomsRaw: atoms, bondsRaw: bonds, desc, fullKey: keysStr,
-        isMetal: false, pg: pg,
-        variantType: variantType // 核心修改：存入標籤
-    };
-    
-    if (variants) {
-        baseData.variants = {};
-        for (let vKeyRaw in variants) {
-            const uniqueID = vKeyRaw; 
-            const vObj = variants[vKeyRaw];
-            baseData.variants[uniqueID] = { 
-                ...baseData, // 繼承 variantType
-                atomsRaw: vObj.atoms, bondsRaw: vObj.bonds,
-                pg: vObj.pg || baseData.pg || null,
-                mp: vObj.mp !== undefined ? vObj.mp : baseData.mp,
-                bp: vObj.bp !== undefined ? vObj.bp : baseData.bp,
-                desc: vObj.desc !== undefined ? vObj.desc : baseData.desc,
-                fullKey: vKeyRaw 
-            };
-        }
+let MOLECULE_DB = {},
+  MOLECULE_INDEX = {};
+const di = (_0x200f2f, _0x202bf4 = 0x3c) => [
+    { "\x65\x6c\x65\x6d": _0x200f2f, "\x78": -_0x202bf4, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x200f2f, "\x78": _0x202bf4, "\x79": 0x0, "\x7a": 0x0 },
+  ],
+  getLinear = (_0x374ccb, _0x27c16e, _0x79acf = 0x46) => [
+    { "\x65\x6c\x65\x6d": _0x374ccb, "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x27c16e, "\x78": -_0x79acf, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x27c16e, "\x78": _0x79acf, "\x79": 0x0, "\x7a": 0x0 },
+  ],
+  getTrigPlanar = (_0x2b89e4, _0x190d94, _0x3872f5 = 0x46) => [
+    { "\x65\x6c\x65\x6d": _0x2b89e4, "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x190d94, "\x78": 0x0, "\x79": _0x3872f5, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x190d94, "\x78": _0x3872f5 * 0.866, "\x79": -_0x3872f5 * 0.5, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x190d94, "\x78": -_0x3872f5 * 0.866, "\x79": -_0x3872f5 * 0.5, "\x7a": 0x0 },
+  ],
+  getTetra = (_0x271382, _0x2197c9, _0x408060 = 0x3c) => {
+    const _0x46663b = _0x408060 / 1.73205;
+    return [
+      { "\x65\x6c\x65\x6d": _0x271382, "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": _0x2197c9, "\x78": _0x46663b, "\x79": -_0x46663b, "\x7a": _0x46663b },
+      { "\x65\x6c\x65\x6d": _0x2197c9, "\x78": -_0x46663b, "\x79": _0x46663b, "\x7a": _0x46663b },
+      { "\x65\x6c\x65\x6d": _0x2197c9, "\x78": -_0x46663b, "\x79": -_0x46663b, "\x7a": -_0x46663b },
+      { "\x65\x6c\x65\x6d": _0x2197c9, "\x78": _0x46663b, "\x79": _0x46663b, "\x7a": -_0x46663b },
+    ];
+  },
+  getOcta = (_0x41804d, _0x2d5c2e, _0x2ee533 = 0x41) => [
+    { "\x65\x6c\x65\x6d": _0x41804d, "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": _0x2ee533, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": -_0x2ee533, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": 0x0, "\x79": _0x2ee533, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": 0x0, "\x79": -_0x2ee533, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": 0x0, "\x79": 0x0, "\x7a": _0x2ee533 },
+    { "\x65\x6c\x65\x6d": _0x2d5c2e, "\x78": 0x0, "\x79": 0x0, "\x7a": -_0x2ee533 },
+  ],
+  benzBase = [
+    { "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+    { "\x78": 0x3c, "\x79": 0x23, "\x7a": 0x0 },
+    { "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+    { "\x78": 0x0, "\x79": -0x46, "\x7a": 0x0 },
+    { "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+    { "\x78": -0x3c, "\x79": 0x23, "\x7a": 0x0 },
+  ];
+function getBenzH(_0xc9d085, _0x361a2b = 0x23) {
+  const _0x3d025e = benzBase[_0xc9d085],
+    _0x427070 = Math["\x73\x71\x72\x74"](_0x3d025e["\x78"] ** 0x2 + _0x3d025e["\x79"] ** 0x2);
+  return { "\x78": _0x3d025e["\x78"] + (_0x3d025e["\x78"] / _0x427070) * _0x361a2b, "\x79": _0x3d025e["\x79"] + (_0x3d025e["\x79"] / _0x427070) * _0x361a2b, "\x7a": 0x0 };
+}
+const addMol = (_0x37b1aa, _0x27fdf1, _0x3e26e6, _0x17fefb, _0x481318, _0x578897, _0x362c99, _0x2e4ca4, _0x3de660, _0x24581a = null, _0x142802 = null, _0x2c4729 = null, _0x18e72f = "\x69\x73\x6f\x6d\x65\x72") => {
+  if (typeof MOLECULE_INDEX === "\x75\x6e\x64\x65\x66\x69\x6e\x65\x64") MOLECULE_INDEX = {};
+  if (typeof MOLECULE_DB === "\x75\x6e\x64\x65\x66\x69\x6e\x65\x64") MOLECULE_DB = {};
+  const _0x557124 = _0x37b1aa["\x73\x70\x6c\x69\x74"]("\x7c"),
+    _0xda4cdd = _0x557124[0x0]["\x74\x72\x69\x6d"](),
+    _0x12fd23 = _0xda4cdd["\x74\x6f\x55\x70\x70\x65\x72\x43\x61\x73\x65"]();
+  _0x557124["\x66\x6f\x72\x45\x61\x63\x68"]((_0x3989d5) => {
+    MOLECULE_INDEX[_0x3989d5["\x74\x72\x69\x6d"]()["\x74\x6f\x55\x70\x70\x65\x72\x43\x61\x73\x65"]()] = { "\x6b\x65\x79": _0xda4cdd, "\x76\x61\x72\x69\x61\x6e\x74": null };
+  });
+  const _0x2f225e = {
+    "\x63\x65\x6e\x74\x65\x72": _0x27fdf1,
+    "\x68\x79\x62\x72\x69\x64": _0x3e26e6,
+    "\x73\x68\x61\x70\x65": Array["\x69\x73\x41\x72\x72\x61\x79"](_0x17fefb) ? _0x17fefb[0x0] + "\x20\x28" + _0x17fefb[0x1] + "\x29" : _0x17fefb,
+    "\x61\x6e\x67\x6c\x65": _0x481318,
+    "\x6d\x70": _0x578897,
+    "\x62\x70": _0x362c99,
+    "\x61\x74\x6f\x6d\x73\x52\x61\x77": _0x2e4ca4,
+    "\x62\x6f\x6e\x64\x73\x52\x61\x77": _0x3de660,
+    "\x64\x65\x73\x63": _0x142802,
+    "\x66\x75\x6c\x6c\x4b\x65\x79": _0x37b1aa,
+    "\x69\x73\x4d\x65\x74\x61\x6c": ![],
+    "\x70\x67": _0x2c4729,
+    "\x76\x61\x72\x69\x61\x6e\x74\x54\x79\x70\x65": _0x18e72f,
+  };
+  if (_0x24581a) {
+    _0x2f225e["\x76\x61\x72\x69\x61\x6e\x74\x73"] = {};
+    for (let _0x26a162 in _0x24581a) {
+      const _0x230227 = _0x26a162,
+        _0x41a8a2 = _0x24581a[_0x26a162];
+      _0x2f225e["\x76\x61\x72\x69\x61\x6e\x74\x73"][_0x230227] = {
+        ..._0x2f225e,
+        "\x61\x74\x6f\x6d\x73\x52\x61\x77": _0x41a8a2["\x61\x74\x6f\x6d\x73"],
+        "\x62\x6f\x6e\x64\x73\x52\x61\x77": _0x41a8a2["\x62\x6f\x6e\x64\x73"],
+        "\x70\x67": _0x41a8a2["\x70\x67"] || _0x2f225e["\x70\x67"] || null,
+        "\x6d\x70": _0x41a8a2["\x6d\x70"] !== undefined ? _0x41a8a2["\x6d\x70"] : _0x2f225e["\x6d\x70"],
+        "\x62\x70": _0x41a8a2["\x62\x70"] !== undefined ? _0x41a8a2["\x62\x70"] : _0x2f225e["\x62\x70"],
+        "\x64\x65\x73\x63": _0x41a8a2["\x64\x65\x73\x63"] !== undefined ? _0x41a8a2["\x64\x65\x73\x63"] : _0x2f225e["\x64\x65\x73\x63"],
+        "\x66\x75\x6c\x6c\x4b\x65\x79": _0x26a162,
+      };
     }
-    MOLECULE_DB[mainKey] = baseData;
+  }
+  MOLECULE_DB[_0xda4cdd] = _0x2f225e;
 };
-
-// 2. 修改 updateVariantUI，改為「只看標籤，不抓關鍵字」
-function updateVariantUI(key, activeVariant) {
-    const rootData = MOLECULE_DB[key];
-    variantSelector.innerHTML = ''; 
-    variantSelector.className = ''; 
-    
-    if (rootData.variants) {
-        variantSelector.style.display = 'block';
-        const hdr = document.createElement('div');
-        hdr.className = 'variant-header';
-
-        // 定義標籤對應的樣式與標題
-        const TYPE_CONFIG = {
-            "isomer":    { class: "",                title: "選擇同分異構物 (Isomer):" },
-            "resonance": { class: "resonance-theme", title: "選擇共振結構 (Resonance):" },
-            "structure": { class: "structure-theme", title: "選擇結構層次 (Structure):" },
-            "acid":      { class: "acid-theme",      title: "選擇解離狀態 (Dissociation):" },
-            "allotrope": { class: "allotrope-theme", title: "選擇同素異形體 (Allotrope):" },
-            "polymorph": { class: "polymorph-theme", title: "選擇同質異形體 (Polymorph):" }
-        };
-
-        // 根據 addMol 傳入的 variantType 讀取設定
-        const config = TYPE_CONFIG[rootData.variantType] || TYPE_CONFIG["isomer"];
-        
-        if (config.class) variantSelector.classList.add(config.class);
-        hdr.textContent = config.title; // 套用對應標題
-        variantSelector.appendChild(hdr);
-
-        for (let vKey in rootData.variants) {
-            const div = document.createElement('div');
-            div.className = 'variant-option';
-            const radio = document.createElement('input');
-            radio.type = 'radio'; radio.name = 'v';
-            if (vKey === activeVariant) radio.checked = true;
-            const span = document.createElement('span'); 
-            const variantData = rootData.variants[vKey];
-            const parts = (variantData.fullKey || vKey).split('|');
-            span.innerHTML = parts.length > 1 ? ` ${parts[1].trim()}` : ` ${formatFormula(parts[0].trim())}`;
-            div.appendChild(radio); div.appendChild(span);
-            div.addEventListener('click', () => loadMolecule(key, vKey));
-            variantSelector.appendChild(div);
-        }
-    } else {
-        variantSelector.style.display = 'none';
+function updateVariantUI(_0x4c54eb, _0x4a47e2) {
+  const _0x331506 = MOLECULE_DB[_0x4c54eb];
+  ((variantSelector["\x69\x6e\x6e\x65\x72\x48\x54\x4d\x4c"] = ""), (variantSelector["\x63\x6c\x61\x73\x73\x4e\x61\x6d\x65"] = ""));
+  if (_0x331506["\x76\x61\x72\x69\x61\x6e\x74\x73"]) {
+    variantSelector["\x73\x74\x79\x6c\x65"]["\x64\x69\x73\x70\x6c\x61\x79"] = "\x62\x6c\x6f\x63\x6b";
+    const _0x42b9f6 = document["\x63\x72\x65\x61\x74\x65\x45\x6c\x65\x6d\x65\x6e\x74"]("\x64\x69\x76");
+    _0x42b9f6["\x63\x6c\x61\x73\x73\x4e\x61\x6d\x65"] = "\x76\x61\x72\x69\x61\x6e\x74\x2d\x68\x65\x61\x64\x65\x72";
+    const _0x23e3ae = {
+        "\x69\x73\x6f\x6d\x65\x72": { "\x63\x6c\x61\x73\x73": "", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u540c\u5206\u7570\u69cb\u7269\x20\x28\x49\x73\x6f\x6d\x65\x72\x29\x3a" },
+        "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65": { "\x63\x6c\x61\x73\x73": "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65\x2d\x74\x68\x65\x6d\x65", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u5171\u632f\u7d50\u69cb\x20\x28\x52\x65\x73\x6f\x6e\x61\x6e\x63\x65\x29\x3a" },
+        "\x73\x74\x72\x75\x63\x74\x75\x72\x65": { "\x63\x6c\x61\x73\x73": "\x73\x74\x72\x75\x63\x74\x75\x72\x65\x2d\x74\x68\x65\x6d\x65", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u7d50\u69cb\u5c64\u6b21\x20\x28\x53\x74\x72\x75\x63\x74\x75\x72\x65\x29\x3a" },
+        "\x61\x63\x69\x64": { "\x63\x6c\x61\x73\x73": "\x61\x63\x69\x64\x2d\x74\x68\x65\x6d\x65", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u89e3\u96e2\u72c0\u614b\x20\x28\x44\x69\x73\x73\x6f\x63\x69\x61\x74\x69\x6f\x6e\x29\x3a" },
+        "\x61\x6c\x6c\x6f\x74\x72\x6f\x70\x65": { "\x63\x6c\x61\x73\x73": "\x61\x6c\x6c\x6f\x74\x72\x6f\x70\x65\x2d\x74\x68\x65\x6d\x65", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u540c\u7d20\u7570\u5f62\u9ad4\x20\x28\x41\x6c\x6c\x6f\x74\x72\x6f\x70\x65\x29\x3a" },
+        "\x70\x6f\x6c\x79\x6d\x6f\x72\x70\x68": { "\x63\x6c\x61\x73\x73": "\x70\x6f\x6c\x79\x6d\x6f\x72\x70\x68\x2d\x74\x68\x65\x6d\x65", "\x74\x69\x74\x6c\x65": "\u9078\u64c7\u540c\u8cea\u7570\u5f62\u9ad4\x20\x28\x50\x6f\x6c\x79\x6d\x6f\x72\x70\x68\x29\x3a" },
+      },
+      _0x97395f = _0x23e3ae[_0x331506["\x76\x61\x72\x69\x61\x6e\x74\x54\x79\x70\x65"]] || _0x23e3ae["\x69\x73\x6f\x6d\x65\x72"];
+    if (_0x97395f["\x63\x6c\x61\x73\x73"]) variantSelector["\x63\x6c\x61\x73\x73\x4c\x69\x73\x74"]["\x61\x64\x64"](_0x97395f["\x63\x6c\x61\x73\x73"]);
+    ((_0x42b9f6["\x74\x65\x78\x74\x43\x6f\x6e\x74\x65\x6e\x74"] = _0x97395f["\x74\x69\x74\x6c\x65"]), variantSelector["\x61\x70\x70\x65\x6e\x64\x43\x68\x69\x6c\x64"](_0x42b9f6));
+    for (let _0x846054 in _0x331506["\x76\x61\x72\x69\x61\x6e\x74\x73"]) {
+      const _0x4dfdd8 = document["\x63\x72\x65\x61\x74\x65\x45\x6c\x65\x6d\x65\x6e\x74"]("\x64\x69\x76");
+      _0x4dfdd8["\x63\x6c\x61\x73\x73\x4e\x61\x6d\x65"] = "\x76\x61\x72\x69\x61\x6e\x74\x2d\x6f\x70\x74\x69\x6f\x6e";
+      const _0x30641d = document["\x63\x72\x65\x61\x74\x65\x45\x6c\x65\x6d\x65\x6e\x74"]("\x69\x6e\x70\x75\x74");
+      ((_0x30641d["\x74\x79\x70\x65"] = "\x72\x61\x64\x69\x6f"), (_0x30641d["\x6e\x61\x6d\x65"] = "\x76"));
+      if (_0x846054 === _0x4a47e2) _0x30641d["\x63\x68\x65\x63\x6b\x65\x64"] = !![];
+      const _0x1dfcb8 = document["\x63\x72\x65\x61\x74\x65\x45\x6c\x65\x6d\x65\x6e\x74"]("\x73\x70\x61\x6e"),
+        _0x56681e = _0x331506["\x76\x61\x72\x69\x61\x6e\x74\x73"][_0x846054],
+        _0x8de1f7 = (_0x56681e["\x66\x75\x6c\x6c\x4b\x65\x79"] || _0x846054)["\x73\x70\x6c\x69\x74"]("\x7c");
+      ((_0x1dfcb8["\x69\x6e\x6e\x65\x72\x48\x54\x4d\x4c"] = _0x8de1f7["\x6c\x65\x6e\x67\x74\x68"] > 0x1 ? "\x20" + _0x8de1f7[0x1]["\x74\x72\x69\x6d"]() : "\x20" + formatFormula(_0x8de1f7[0x0]["\x74\x72\x69\x6d"]())),
+        _0x4dfdd8["\x61\x70\x70\x65\x6e\x64\x43\x68\x69\x6c\x64"](_0x30641d),
+        _0x4dfdd8["\x61\x70\x70\x65\x6e\x64\x43\x68\x69\x6c\x64"](_0x1dfcb8),
+        _0x4dfdd8["\x61\x64\x64\x45\x76\x65\x6e\x74\x4c\x69\x73\x74\x65\x6e\x65\x72"]("\x63\x6c\x69\x63\x6b", () => loadMolecule(_0x4c54eb, _0x846054)),
+        variantSelector["\x61\x70\x70\x65\x6e\x64\x43\x68\x69\x6c\x64"](_0x4dfdd8));
     }
+  } else variantSelector["\x73\x74\x79\x6c\x65"]["\x64\x69\x73\x70\x6c\x61\x79"] = "\x6e\x6f\x6e\x65";
 }
-
-function markReps(atoms, bonds, cnA, elemA, cnB, elemB) {
-    const counts = new Array(atoms.length).fill(0);
-    bonds.forEach(b => { counts[b[0]]++; counts[b[1]]++; });
-    atoms.forEach((a, i) => {
-        if (a.elem === elemA && counts[i] === cnA) a.isRepresentative = true;
-        else if (a.elem === elemB && counts[i] === cnB) a.isRepresentative = true;
-        else a.isRepresentative = false;
-    });
+function markReps(_0x451571, _0x2ee3c0, _0x3a8039, _0x3a3a03, _0x390951, _0x666986) {
+  const _0x3d9af3 = new Array(_0x451571["\x6c\x65\x6e\x67\x74\x68"])["\x66\x69\x6c\x6c"](0x0);
+  (_0x2ee3c0["\x66\x6f\x72\x45\x61\x63\x68"]((_0x24b059) => {
+    (_0x3d9af3[_0x24b059[0x0]]++, _0x3d9af3[_0x24b059[0x1]]++);
+  }),
+    _0x451571["\x66\x6f\x72\x45\x61\x63\x68"]((_0x42cf73, _0x3fdc4b) => {
+      if (_0x42cf73["\x65\x6c\x65\x6d"] === _0x3a3a03 && _0x3d9af3[_0x3fdc4b] === _0x3a8039) _0x42cf73["\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65"] = !![];
+      else {
+        if (_0x42cf73["\x65\x6c\x65\x6d"] === _0x666986 && _0x3d9af3[_0x3fdc4b] === _0x390951) _0x42cf73["\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65"] = !![];
+        else _0x42cf73["\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65"] = ![];
+      }
+    }));
 }
-
-//NaCl晶體
-(function(){
-    const sa=[{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0},{elem:"Cl",x:40,y:0,z:0,r:35,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], s=120;
-    for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
-        const isNa=(Math.abs(x+y+z)%2!==0);
-        ca.push({elem:isNa?"Na":"Cl",x:x*s,y:y*s,z:z*s,r:isNa?18:34,lpCount:0,gx:x,gy:y,gz:z,isRepresentative:(!x&&!y&&!z)});
+((function () {
+  const _0x2e61ed = [
+      { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x28, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x14, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x28, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+    ],
+    _0x5424b5 = [[0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]],
+    _0x2310e6 = [],
+    _0x501b56 = [],
+    _0x597c13 = 0x78;
+  for (let _0x49431f = -0x1; _0x49431f <= 0x1; _0x49431f++)
+    for (let _0x4b2d66 = -0x1; _0x4b2d66 <= 0x1; _0x4b2d66++)
+      for (let _0x42546b = -0x1; _0x42546b <= 0x1; _0x42546b++) {
+        const _0x59dccd = Math["\x61\x62\x73"](_0x49431f + _0x4b2d66 + _0x42546b) % 0x2 !== 0x0;
+        _0x2310e6["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x59dccd ? "\x4e\x61" : "\x43\x6c", "\x78": _0x49431f * _0x597c13, "\x79": _0x4b2d66 * _0x597c13, "\x7a": _0x42546b * _0x597c13, "\x72": _0x59dccd ? 0x12 : 0x22, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0, "\x67\x78": _0x49431f, "\x67\x79": _0x4b2d66, "\x67\x7a": _0x42546b, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !_0x49431f && !_0x4b2d66 && !_0x42546b });
+      }
+  for (let _0x266c16 = 0x0; _0x266c16 < _0x2310e6["\x6c\x65\x6e\x67\x74\x68"]; _0x266c16++)
+    for (let _0x4a674d = _0x266c16 + 0x1; _0x4a674d < _0x2310e6["\x6c\x65\x6e\x67\x74\x68"]; _0x4a674d++) {
+      const _0x402afe = Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x78"] - _0x2310e6[_0x4a674d]["\x78"]) + Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x79"] - _0x2310e6[_0x4a674d]["\x79"]) + Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x7a"] - _0x2310e6[_0x4a674d]["\x7a"]);
+      if (Math["\x61\x62\x73"](_0x402afe - _0x597c13) < 0x1) {
+        const _0xe23bf = (Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x67\x78"]) === 0x1 && _0x2310e6[_0x266c16]["\x67\x78"] === _0x2310e6[_0x4a674d]["\x67\x78"]) || (Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x67\x79"]) === 0x1 && _0x2310e6[_0x266c16]["\x67\x79"] === _0x2310e6[_0x4a674d]["\x67\x79"]) || (Math["\x61\x62\x73"](_0x2310e6[_0x266c16]["\x67\x7a"]) === 0x1 && _0x2310e6[_0x266c16]["\x67\x7a"] === _0x2310e6[_0x4a674d]["\x67\x7a"]);
+        _0x501b56["\x70\x75\x73\x68"]([_0x266c16, _0x4a674d, _0xe23bf ? "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b" : "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+      }
     }
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        const dist=Math.abs(ca[i].x-ca[j].x)+Math.abs(ca[i].y-ca[j].y)+Math.abs(ca[i].z-ca[j].z);
-        if(Math.abs(dist-s)<1){
-            const onFace=(Math.abs(ca[i].gx)===1&&ca[i].gx===ca[j].gx)||(Math.abs(ca[i].gy)===1&&ca[i].gy===ca[j].gy)||(Math.abs(ca[i].gz)===1&&ca[i].gz===ca[j].gz);
-            cb.push([i,j,onFace?"ionic_thick":"ionic_thin"]);
-        }
-    }
-    addMol("NaCl|氯化鈉|食鹽","Na","-","-","-","801","1465",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🧂 物質簡介</div><div class="info-body"><strong>氯化鈉 (NaCl)</strong><br>俗稱食鹽。純淨時為無色透明晶體。它是生活中最重要的調味品與防腐劑。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"a = 2(r<sub>+</sub> + r<sub>-</sub>)",desc:'<div class="info-section"><div class="info-title">🧊 晶體特性</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>氯化鈉具有高熔點 (801°C)。每個鈉離子周圍都被6個氯離子包圍，配位數為 6。<br><span style="color:#facc15">★ 點擊中心原子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🧂 氯化鈉</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["NaCl"]?.variants){MOLECULE_DB["NaCl"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["NaCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//CsCl晶體
-(function(){
-    const sa=[{elem:"Cs",x:-45,y:0,z:0,r:26,lpCount:0},{elem:"Cl",x:45,y:0,z:0,r:34,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], s=200;
-    ca.push({elem:"Cs",x:0,y:0,z:0,r:26,isRepresentative:true});
-    [-1,1].forEach(x=>[-1,1].forEach(y=>[-1,1].forEach(z=>{ca.push({elem:"Cl",x:x*s*0.5,y:y*s*0.5,z:z*s*0.5,r:34,isCorner:true}); cb.push([0,ca.length-1,"ionic_thin"]);})));
-    for(let i=1;i<ca.length;i++) for(let j=i+1;j<ca.length;j++) if(Math.abs((Math.abs(ca[i].x-ca[j].x)+Math.abs(ca[i].y-ca[j].y)+Math.abs(ca[i].z-ca[j].z))-s)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("CsCl|氯化銫|Cesium Chloride","Cs","-","-","-","645","1290",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">⚛️ 物質簡介</div><div class="info-body"><strong>氯化銫 (CsCl)</strong><br>由銫離子 (Cs⁺) 與氯離子 (Cl⁻) 組成。銫離子半徑較大，形成配位數 8 的結構。</div></div>'},
-        "Crystal|晶體堆積 (SC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"√3 a = 2(r⁺+r⁻)",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>簡單立方堆積 (SC)</strong><br>氯離子構成簡單立方，銫離子填入體心。配位數為 8。<br><span style="color:#facc15">★ 點擊中央 Cs 離子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🧊 氯化銫</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["CsCl"]?.variants){MOLECULE_DB["CsCl"].variants["Crystal|晶體堆積 (SC)"].isIonic=true;MOLECULE_DB["CsCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//ZnS晶體
-(function(){
-    const sa=[{elem:"Zn",x:-45,y:0,z:0,r:18,lpCount:0},{elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], scale=220, bondDist=scale*0.433; 
-    const baseS=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[0.5,1,0.5],[1,0.5,0.5],[0.5,0.5,1]];
-    const baseZn=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    let idx=0;
-    baseS.forEach((p,i)=>ca.push({elem:"S",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:28,isCorner:(i<8),idx:idx++}));
-    baseZn.forEach(p=>ca.push({elem:"Zn",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:12,isRepresentative:true}));
-    for(let i=14;i<ca.length;i++) for(let j=0;j<14;j++) if(Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-bondDist)<20) cb.push([i,j,"ionic_thin"]);
-    for(let i=0;i<14;i++) for(let j=i+1;j<14;j++) if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-scale)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("ZnS|閃鋅礦|硫化鋅|Zinc Blende","Zn","-","-","-","1185","昇華",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">💡 物質性質</div><div class="info-body"><strong>硫化鋅 (ZnS)</strong><br>白色或微黃色粉末。具有螢光特性，摻雜微量金屬後可用於製作夜光塗料、螢光屏以及陰極射線管。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"4(r<sub>+</sub> + r<sub>-</sub>) = √3 a",desc:'<div class="info-section"><div class="info-title">💎 閃鋅礦 (ZnS)</div><div class="info-body">硫離子(S²⁻)構成面心立方堆積，鋅離子(Zn²⁺)位於四面體空隙。<br><span style="color:#facc15">★ 點擊任一內部的 Zn 離子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">💡 硫化鋅</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["ZnS"]?.variants){MOLECULE_DB["ZnS"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["ZnS"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//CuCl晶體
-(function(){
-    const sa=[{elem:"Cu",x:-45,y:0,z:0,r:13,lpCount:0},{elem:"Cl",x:45,y:0,z:0,r:27,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], scale=220, bondDist=scale*0.433;
-    const baseCl=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[0.5,1,0.5],[1,0.5,0.5],[0.5,0.5,1]];
-    const baseCu=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    let clIdx=0;
-    baseCl.forEach((p,i)=>ca.push({elem:"Cl",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:27,isCorner:(i<8),idx:clIdx++}));
-    baseCu.forEach(p=>ca.push({elem:"Cu",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:13,isRepresentative:true}));
-    for(let i=14;i<ca.length;i++) for(let j=0;j<14;j++) if(Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-bondDist)<20) cb.push([i,j,"ionic_thin"]);
-    for(let i=0;i<14;i++) for(let j=i+1;j<14;j++) if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-scale)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("CuCl|氯化亞銅|Nantokite","Cu","-","-","-","430","1490",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🔸 物質簡介</div><div class="info-body"><strong>氯化亞銅 (CuCl)</strong><br>白色固體，難溶於水。結構與閃鋅礦(ZnS)相同。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"4(r<sub>+</sub> + r<sub>-</sub>) = √3 a",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>結構同閃鋅礦。氯離子堆積，亞銅離子填入四面體空隙。<br><span style="color:#facc15">★ 點擊任一內部 Cu⁺ 可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🔸 氯化亞銅</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["CuCl"]?.variants){MOLECULE_DB["CuCl"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["CuCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//TiO2晶體
-(function(){
-    const sa=[{elem:"Ti",x:0,y:0,z:0,r:11,lpCount:0},{elem:"O",x:50,y:0,z:0,r:21,lpCount:0},{elem:"O",x:-50,y:0,z:0,r:21,lpCount:0}], sb=[[0,1,"ionic_thin"],[0,2,"ionic_thin"]];
-    const ca=[], cb=[], scale=180, c_ratio=0.65, u=0.3;
-    const baseTi=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0.5]];
-    const baseO=[[u,u,0],[1-u,1-u,0],[u,u,1],[1-u,1-u,1],[0.5+u,0.5-u,0.5],[0.5-u,0.5+u,0.5]];
-    let tiIdx=0;
-    baseTi.forEach((p,i)=>ca.push({elem:"Ti",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale*c_ratio,r:11,isCorner:(i<8),idx:tiIdx++,isRepresentative:(i===8)}));
-    baseO.forEach(p=>ca.push({elem:"O",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale*c_ratio,r:21,isCorner:false}));
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        if(ca[i].elem===ca[j].elem) continue;
-        if(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)<scale*0.75) cb.push([i,j,"ionic_thin"]);
-    }
-    for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){
-        const dx=Math.abs(ca[i].x-ca[j].x), dy=Math.abs(ca[i].y-ca[j].y), dz=Math.abs(ca[i].z-ca[j].z);
-        if((Math.abs(dx-scale)<5&&dy<5&&dz<5)||(Math.abs(dy-scale)<5&&dx<5&&dz<5)||(Math.abs(dz-scale*c_ratio)<5&&dx<5&&dy<5)) cb.push([i,j,"ionic_thick"]);
-    }
-    addMol("TiO2|金紅石|二氧化鈦|Rutile","Ti","-","-","-","1843","2972",sa,sb,{
-        "Simple|基本單元":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">⬜ 物質簡介</div><div class="info-body"><strong>二氧化鈦 (TiO₂)</strong><br>白色粉末，廣泛用於白色顏料、防曬乳及光觸媒。</div></div>'},
-        "Crystal|晶體堆積 (Tetragonal)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"複雜幾何",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>四方晶系 (金紅石型)</strong><br>鈦離子位於體心與頂點，氧離子位於面上。Ti⁴⁺ 配位數為 6 (八面體)，O²⁻ 配位數為 3 (平面三角)。<br><span style="color:#facc15">★ 點擊體心 Ti⁴⁺ 可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">⬜ 金紅石</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["TiO2"]?.variants){MOLECULE_DB["TiO2"].variants["Crystal|晶體堆積 (Tetragonal)"].isIonic=true;MOLECULE_DB["TiO2"].variants["Simple|基本單元"].isIonic=true;}
-})();
-
-//Cu2O晶體
-(function(){
-    const scale=180, baseO=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0.5]], baseCu=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    const ca=[...baseO.map((p,i)=>({elem:"O",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:21,isCorner:i<8,isRepresentative:i===8})),...baseCu.map(p=>({elem:"Cu",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:13,isRepresentative:true}))];
-    const cb=[];
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        const d=Math.hypot(ca[i].x-ca[j].x,ca[i].y-ca[j].y,ca[i].z-ca[j].z);
-        if(ca[i].elem!==ca[j].elem&&Math.abs(d-scale*0.433)<20) cb.push([i,j,"ionic_thin"]);
-        if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(d-scale)<5) cb.push([i,j,"ionic_thick"]);
-    }
-    const sa=[{elem:"O",x:0,y:0,z:0,r:21},{elem:"Cu",x:50,y:0,z:0,r:13},{elem:"Cu",x:-50,y:0,z:0,r:13}], sb=[[0,1,"ionic_thin"],[0,2,"ionic_thin"]];
-    addMol("Cu2O|赤銅礦|氧化亞銅|Cuprite","Cu","-","-","-","1235","1800",sa,sb,{
-        "Simple|基本單元":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🔴 物質簡介</div><div class="info-body"><strong>氧化亞銅 (Cu₂O)</strong><br>紅色固體。Cu⁺ 為直線型配位 (CN=2)，O²⁻ 為四面體型配位 (CN=4)。</div></div>'},
-        "Crystal|晶體堆積 (Cubic)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"複雜幾何",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>赤銅礦結構</strong><br>氧離子(紅)構成體心立方，銅離子(橘)位於氧離子連線中點。<br>• 點擊<strong>紅色氧離子</strong> (體心) 可見配位數為 4。<br>• 點擊任一<strong>橘色銅離子</strong> 可見配位數為 2。</div></div>'}
-    },'<div class="info-section"><div class="info-title">🔴 赤銅礦</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["Cu2O"]?.variants){MOLECULE_DB["Cu2O"].variants["Crystal|晶體堆積 (Cubic)"].isIonic=true;MOLECULE_DB["Cu2O"].variants["Simple|基本單元"].isIonic=true;}
-})();
-
-
-
-
-
-
-
-
-
-
-
-// ==========================================
-// 金屬晶體生成模組 (CN=12 延伸增強版)
-// ==========================================
-
-function ensureElement(elem, defaultColor, defaultR) {
-    if (typeof ELEMENT_PROPS !== 'undefined' && !ELEMENT_PROPS[elem]) {
-        ELEMENT_PROPS[elem] = { ve: 1, c3d: defaultColor, r3d: defaultR, lp: 0, mass: 0, en: 0 };
-    }
+  (addMol(
+    "\x4e\x61\x43\x6c\x7c\u6c2f\u5316\u9209\x7c\u98df\u9e7d",
+    "\x4e\x61",
+    "\x2d",
+    "\x2d",
+    "\x2d",
+    "\x38\x30\x31",
+    "\x31\x34\x36\x35",
+    _0x2e61ed,
+    _0x5424b5,
+    {
+      "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29": {
+        "\x61\x74\x6f\x6d\x73": _0x2e61ed,
+        "\x62\x6f\x6e\x64\x73": _0x5424b5,
+        "\x68\x79\x62\x72\x69\x64": "\x2d",
+        "\x73\x68\x61\x70\x65": "\x2d",
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddc2\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u5316\u9209\x20\x28\x4e\x61\x43\x6c\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4fd7\u7a31\u98df\u9e7d\u3002\u7d14\u6de8\u6642\u70ba\u7121\u8272\u900f\u660e\u6676\u9ad4\u3002\u5b83\u662f\u751f\u6d3b\u4e2d\u6700\u91cd\u8981\u7684\u8abf\u5473\u54c1\u8207\u9632\u8150\u5291\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+      "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29": {
+        "\x61\x74\x6f\x6d\x73": _0x2310e6,
+        "\x62\x6f\x6e\x64\x73": _0x501b56,
+        "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+        "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\x61\x20\x3d\x20\x32\x28\x72\x3c\x73\x75\x62\x3e\x2b\x3c\x2f\x73\x75\x62\x3e\x20\x2b\x20\x72\x3c\x73\x75\x62\x3e\x2d\x3c\x2f\x73\x75\x62\x3e\x29",
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6676\u9ad4\u7279\u6027\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u9762\u5fc3\u7acb\u65b9\u5806\u7a4d\x20\x28\x46\x43\x43\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6c2f\u5316\u9209\u5177\u6709\u9ad8\u7194\u9ede\x20\x28\x38\x30\x31\u00b0\x43\x29\u3002\u6bcf\u500b\u9209\u96e2\u5b50\u5468\u570d\u90fd\u88ab\x36\u500b\u6c2f\u96e2\u5b50\u5305\u570d\uff0c\u914d\u4f4d\u6578\u70ba\x20\x36\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u4e2d\u5fc3\u539f\u5b50\u53ef\u67e5\u770b\u914d\u4f4d\u6578\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+    },
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddc2\x20\u6c2f\u5316\u9209\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    "\x2d",
+    "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+  ),
+    MOLECULE_DB["\x4e\x61\x43\x6c"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x4e\x61\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x4e\x61\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+})(),
+  (function () {
+    const _0x16f33b = [
+        { "\x65\x6c\x65\x6d": "\x43\x73", "\x78": -0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x1a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x22, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      ],
+      _0x3ec882 = [[0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]],
+      _0x11876a = [],
+      _0x55d441 = [],
+      _0xecb3f5 = 0xc8;
+    (_0x11876a["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x43\x73", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x1a, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] }),
+      [-0x1, 0x1]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x11f703) =>
+        [-0x1, 0x1]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x3231de) =>
+          [-0x1, 0x1]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x5f5af1) => {
+            (_0x11876a["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": _0x11f703 * _0xecb3f5 * 0.5, "\x79": _0x3231de * _0xecb3f5 * 0.5, "\x7a": _0x5f5af1 * _0xecb3f5 * 0.5, "\x72": 0x22, "\x69\x73\x43\x6f\x72\x6e\x65\x72": !![] }), _0x55d441["\x70\x75\x73\x68"]([0x0, _0x11876a["\x6c\x65\x6e\x67\x74\x68"] - 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]));
+          }),
+        ),
+      ));
+    for (let _0xa5cb5 = 0x1; _0xa5cb5 < _0x11876a["\x6c\x65\x6e\x67\x74\x68"]; _0xa5cb5++)
+      for (let _0x402496 = _0xa5cb5 + 0x1; _0x402496 < _0x11876a["\x6c\x65\x6e\x67\x74\x68"]; _0x402496++) if (Math["\x61\x62\x73"](Math["\x61\x62\x73"](_0x11876a[_0xa5cb5]["\x78"] - _0x11876a[_0x402496]["\x78"]) + Math["\x61\x62\x73"](_0x11876a[_0xa5cb5]["\x79"] - _0x11876a[_0x402496]["\x79"]) + Math["\x61\x62\x73"](_0x11876a[_0xa5cb5]["\x7a"] - _0x11876a[_0x402496]["\x7a"]) - _0xecb3f5) < 0x5) _0x55d441["\x70\x75\x73\x68"]([_0xa5cb5, _0x402496, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+    (addMol(
+      "\x43\x73\x43\x6c\x7c\u6c2f\u5316\u92ab\x7c\x43\x65\x73\x69\x75\x6d\x20\x43\x68\x6c\x6f\x72\x69\x64\x65",
+      "\x43\x73",
+      "\x2d",
+      "\x2d",
+      "\x2d",
+      "\x36\x34\x35",
+      "\x31\x32\x39\x30",
+      _0x16f33b,
+      _0x3ec882,
+      {
+        "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x16f33b,
+          "\x62\x6f\x6e\x64\x73": _0x3ec882,
+          "\x68\x79\x62\x72\x69\x64": "\x2d",
+          "\x73\x68\x61\x70\x65": "\x2d",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u269b\ufe0f\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u5316\u92ab\x20\x28\x43\x73\x43\x6c\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7531\u92ab\u96e2\u5b50\x20\x28\x43\x73\u207a\x29\x20\u8207\u6c2f\u96e2\u5b50\x20\x28\x43\x6c\u207b\x29\x20\u7d44\u6210\u3002\u92ab\u96e2\u5b50\u534a\u5f91\u8f03\u5927\uff0c\u5f62\u6210\u914d\u4f4d\u6578\x20\x38\x20\u7684\u7d50\u69cb\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+        "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x53\x43\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x11876a,
+          "\x62\x6f\x6e\x64\x73": _0x55d441,
+          "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+          "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\u221a\x33\x20\x61\x20\x3d\x20\x32\x28\x72\u207a\x2b\x72\u207b\x29",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6676\u9ad4\u7d50\u69cb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7c21\u55ae\u7acb\u65b9\u5806\u7a4d\x20\x28\x53\x43\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6c2f\u96e2\u5b50\u69cb\u6210\u7c21\u55ae\u7acb\u65b9\uff0c\u92ab\u96e2\u5b50\u586b\u5165\u9ad4\u5fc3\u3002\u914d\u4f4d\u6578\u70ba\x20\x38\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u4e2d\u592e\x20\x43\x73\x20\u96e2\u5b50\u53ef\u67e5\u770b\u914d\u4f4d\u6578\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+      },
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6c2f\u5316\u92ab\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      "\x2d",
+      "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+    ),
+      MOLECULE_DB["\x43\x73\x43\x6c"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x43\x73\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x53\x43\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x43\x73\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+  })(),
+  (function () {
+    const _0x3c46fb = [
+        { "\x65\x6c\x65\x6d": "\x5a\x6e", "\x78": -0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x1e, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      ],
+      _0x4b9b7e = [[0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]],
+      _0x4e5595 = [],
+      _0x2b0739 = [],
+      _0x1a0111 = 0xdc,
+      _0x3ba3f4 = _0x1a0111 * 0.433,
+      _0xf15a78 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0x0],
+        [0.5, 0x0, 0.5],
+        [0x0, 0.5, 0.5],
+        [0.5, 0x1, 0.5],
+        [0x1, 0.5, 0.5],
+        [0.5, 0.5, 0x1],
+      ],
+      _0xc3dc83 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ];
+    let _0x375c09 = 0x0;
+    (_0xf15a78["\x66\x6f\x72\x45\x61\x63\x68"]((_0x3d0b01, _0x35dcbc) => _0x4e5595["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x53", "\x78": (_0x3d0b01[0x0] - 0.5) * _0x1a0111, "\x79": (_0x3d0b01[0x1] - 0.5) * _0x1a0111, "\x7a": (_0x3d0b01[0x2] - 0.5) * _0x1a0111, "\x72": 0x1c, "\x69\x73\x43\x6f\x72\x6e\x65\x72": _0x35dcbc < 0x8, "\x69\x64\x78": _0x375c09++ })),
+      _0xc3dc83["\x66\x6f\x72\x45\x61\x63\x68"]((_0x41da0a) => _0x4e5595["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x5a\x6e", "\x78": (_0x41da0a[0x0] - 0.5) * _0x1a0111, "\x79": (_0x41da0a[0x1] - 0.5) * _0x1a0111, "\x7a": (_0x41da0a[0x2] - 0.5) * _0x1a0111, "\x72": 0xc, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] })));
+    for (let _0x447eb1 = 0xe; _0x447eb1 < _0x4e5595["\x6c\x65\x6e\x67\x74\x68"]; _0x447eb1++)
+      for (let _0x3fdffc = 0x0; _0x3fdffc < 0xe; _0x3fdffc++) if (Math["\x61\x62\x73"](Math["\x73\x71\x72\x74"]((_0x4e5595[_0x447eb1]["\x78"] - _0x4e5595[_0x3fdffc]["\x78"]) ** 0x2 + (_0x4e5595[_0x447eb1]["\x79"] - _0x4e5595[_0x3fdffc]["\x79"]) ** 0x2 + (_0x4e5595[_0x447eb1]["\x7a"] - _0x4e5595[_0x3fdffc]["\x7a"]) ** 0x2) - _0x3ba3f4) < 0x14) _0x2b0739["\x70\x75\x73\x68"]([_0x447eb1, _0x3fdffc, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+    for (let _0x4cdc13 = 0x0; _0x4cdc13 < 0xe; _0x4cdc13++)
+      for (let _0x10374b = _0x4cdc13 + 0x1; _0x10374b < 0xe; _0x10374b++)
+        if (_0x4e5595[_0x4cdc13]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && _0x4e5595[_0x10374b]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && Math["\x61\x62\x73"](Math["\x73\x71\x72\x74"]((_0x4e5595[_0x4cdc13]["\x78"] - _0x4e5595[_0x10374b]["\x78"]) ** 0x2 + (_0x4e5595[_0x4cdc13]["\x79"] - _0x4e5595[_0x10374b]["\x79"]) ** 0x2 + (_0x4e5595[_0x4cdc13]["\x7a"] - _0x4e5595[_0x10374b]["\x7a"]) ** 0x2) - _0x1a0111) < 0x5)
+          _0x2b0739["\x70\x75\x73\x68"]([_0x4cdc13, _0x10374b, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+    (addMol(
+      "\x5a\x6e\x53\x7c\u9583\u92c5\u7926\x7c\u786b\u5316\u92c5\x7c\x5a\x69\x6e\x63\x20\x42\x6c\x65\x6e\x64\x65",
+      "\x5a\x6e",
+      "\x2d",
+      "\x2d",
+      "\x2d",
+      "\x31\x31\x38\x35",
+      "\u6607\u83ef",
+      _0x3c46fb,
+      _0x4b9b7e,
+      {
+        "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x3c46fb,
+          "\x62\x6f\x6e\x64\x73": _0x4b9b7e,
+          "\x68\x79\x62\x72\x69\x64": "\x2d",
+          "\x73\x68\x61\x70\x65": "\x2d",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udca1\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u5316\u92c5\x20\x28\x5a\x6e\x53\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u767d\u8272\u6216\u5fae\u9ec3\u8272\u7c89\u672b\u3002\u5177\u6709\u87a2\u5149\u7279\u6027\uff0c\u647b\u96dc\u5fae\u91cf\u91d1\u5c6c\u5f8c\u53ef\u7528\u65bc\u88fd\u4f5c\u591c\u5149\u5857\u6599\u3001\u87a2\u5149\u5c4f\u4ee5\u53ca\u9670\u6975\u5c04\u7dda\u7ba1\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+        "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x4e5595,
+          "\x62\x6f\x6e\x64\x73": _0x2b0739,
+          "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+          "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\x34\x28\x72\x3c\x73\x75\x62\x3e\x2b\x3c\x2f\x73\x75\x62\x3e\x20\x2b\x20\x72\x3c\x73\x75\x62\x3e\x2d\x3c\x2f\x73\x75\x62\x3e\x29\x20\x3d\x20\u221a\x33\x20\x61",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udc8e\x20\u9583\u92c5\u7926\x20\x28\x5a\x6e\x53\x29\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u786b\u96e2\u5b50\x28\x53\u00b2\u207b\x29\u69cb\u6210\u9762\u5fc3\u7acb\u65b9\u5806\u7a4d\uff0c\u92c5\u96e2\u5b50\x28\x5a\x6e\u00b2\u207a\x29\u4f4d\u65bc\u56db\u9762\u9ad4\u7a7a\u9699\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u4efb\u4e00\u5167\u90e8\u7684\x20\x5a\x6e\x20\u96e2\u5b50\u53ef\u67e5\u770b\u914d\u4f4d\u6578\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+      },
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udca1\x20\u786b\u5316\u92c5\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      "\x2d",
+      "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+    ),
+      MOLECULE_DB["\x5a\x6e\x53"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x5a\x6e\x53"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x5a\x6e\x53"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+  })(),
+  (function () {
+    const _0x2cfc2f = [
+        { "\x65\x6c\x65\x6d": "\x43\x75", "\x78": -0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xd, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x2d, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x1b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      ],
+      _0xf63e38 = [[0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]],
+      _0x26b1d7 = [],
+      _0x24e39b = [],
+      _0x5b7c52 = 0xdc,
+      _0x1bcb36 = _0x5b7c52 * 0.433,
+      _0x3fe7a0 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0x0],
+        [0.5, 0x0, 0.5],
+        [0x0, 0.5, 0.5],
+        [0.5, 0x1, 0.5],
+        [0x1, 0.5, 0.5],
+        [0.5, 0.5, 0x1],
+      ],
+      _0x318836 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ];
+    let _0x3d1df7 = 0x0;
+    (_0x3fe7a0["\x66\x6f\x72\x45\x61\x63\x68"]((_0x582e48, _0x2c1387) => _0x26b1d7["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": (_0x582e48[0x0] - 0.5) * _0x5b7c52, "\x79": (_0x582e48[0x1] - 0.5) * _0x5b7c52, "\x7a": (_0x582e48[0x2] - 0.5) * _0x5b7c52, "\x72": 0x1b, "\x69\x73\x43\x6f\x72\x6e\x65\x72": _0x2c1387 < 0x8, "\x69\x64\x78": _0x3d1df7++ })),
+      _0x318836["\x66\x6f\x72\x45\x61\x63\x68"]((_0x15d652) => _0x26b1d7["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x43\x75", "\x78": (_0x15d652[0x0] - 0.5) * _0x5b7c52, "\x79": (_0x15d652[0x1] - 0.5) * _0x5b7c52, "\x7a": (_0x15d652[0x2] - 0.5) * _0x5b7c52, "\x72": 0xd, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] })));
+    for (let _0x2d2d73 = 0xe; _0x2d2d73 < _0x26b1d7["\x6c\x65\x6e\x67\x74\x68"]; _0x2d2d73++)
+      for (let _0x544a3d = 0x0; _0x544a3d < 0xe; _0x544a3d++) if (Math["\x61\x62\x73"](Math["\x73\x71\x72\x74"]((_0x26b1d7[_0x2d2d73]["\x78"] - _0x26b1d7[_0x544a3d]["\x78"]) ** 0x2 + (_0x26b1d7[_0x2d2d73]["\x79"] - _0x26b1d7[_0x544a3d]["\x79"]) ** 0x2 + (_0x26b1d7[_0x2d2d73]["\x7a"] - _0x26b1d7[_0x544a3d]["\x7a"]) ** 0x2) - _0x1bcb36) < 0x14) _0x24e39b["\x70\x75\x73\x68"]([_0x2d2d73, _0x544a3d, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+    for (let _0x295c8b = 0x0; _0x295c8b < 0xe; _0x295c8b++)
+      for (let _0x13cb31 = _0x295c8b + 0x1; _0x13cb31 < 0xe; _0x13cb31++)
+        if (_0x26b1d7[_0x295c8b]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && _0x26b1d7[_0x13cb31]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && Math["\x61\x62\x73"](Math["\x73\x71\x72\x74"]((_0x26b1d7[_0x295c8b]["\x78"] - _0x26b1d7[_0x13cb31]["\x78"]) ** 0x2 + (_0x26b1d7[_0x295c8b]["\x79"] - _0x26b1d7[_0x13cb31]["\x79"]) ** 0x2 + (_0x26b1d7[_0x295c8b]["\x7a"] - _0x26b1d7[_0x13cb31]["\x7a"]) ** 0x2) - _0x5b7c52) < 0x5)
+          _0x24e39b["\x70\x75\x73\x68"]([_0x295c8b, _0x13cb31, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+    (addMol(
+      "\x43\x75\x43\x6c\x7c\u6c2f\u5316\u4e9e\u9285\x7c\x4e\x61\x6e\x74\x6f\x6b\x69\x74\x65",
+      "\x43\x75",
+      "\x2d",
+      "\x2d",
+      "\x2d",
+      "\x34\x33\x30",
+      "\x31\x34\x39\x30",
+      _0x2cfc2f,
+      _0xf63e38,
+      {
+        "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x2cfc2f,
+          "\x62\x6f\x6e\x64\x73": _0xf63e38,
+          "\x68\x79\x62\x72\x69\x64": "\x2d",
+          "\x73\x68\x61\x70\x65": "\x2d",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udd38\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u5316\u4e9e\u9285\x20\x28\x43\x75\x43\x6c\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u767d\u8272\u56fa\u9ad4\uff0c\u96e3\u6eb6\u65bc\u6c34\u3002\u7d50\u69cb\u8207\u9583\u92c5\u7926\x28\x5a\x6e\x53\x29\u76f8\u540c\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+        "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x26b1d7,
+          "\x62\x6f\x6e\x64\x73": _0x24e39b,
+          "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+          "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\x34\x28\x72\x3c\x73\x75\x62\x3e\x2b\x3c\x2f\x73\x75\x62\x3e\x20\x2b\x20\x72\x3c\x73\x75\x62\x3e\x2d\x3c\x2f\x73\x75\x62\x3e\x29\x20\x3d\x20\u221a\x33\x20\x61",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6676\u9ad4\u7d50\u69cb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u9762\u5fc3\u7acb\u65b9\u5806\u7a4d\x20\x28\x46\x43\x43\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7d50\u69cb\u540c\u9583\u92c5\u7926\u3002\u6c2f\u96e2\u5b50\u5806\u7a4d\uff0c\u4e9e\u9285\u96e2\u5b50\u586b\u5165\u56db\u9762\u9ad4\u7a7a\u9699\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u4efb\u4e00\u5167\u90e8\x20\x43\x75\u207a\x20\u53ef\u67e5\u770b\u914d\u4f4d\u6578\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+      },
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udd38\x20\u6c2f\u5316\u4e9e\u9285\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      "\x2d",
+      "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+    ),
+      MOLECULE_DB["\x43\x75\x43\x6c"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x43\x75\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x46\x43\x43\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x43\x75\x43\x6c"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143\x20\x28\u96e2\u5b50\u5c0d\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+  })(),
+  (function () {
+    const _0x2f056f = [
+        { "\x65\x6c\x65\x6d": "\x54\x69", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xb, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x32, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x15, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x32, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x15, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      ],
+      _0x51812f = [
+        [0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+        [0x0, 0x2, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+      ],
+      _0x22bac5 = [],
+      _0x1102a4 = [],
+      _0x26b262 = 0xb4,
+      _0x46f8f9 = 0.65,
+      _0xf3c28e = 0.3,
+      _0x188c29 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0.5],
+      ],
+      _0x22f52e = [
+        [_0xf3c28e, _0xf3c28e, 0x0],
+        [0x1 - _0xf3c28e, 0x1 - _0xf3c28e, 0x0],
+        [_0xf3c28e, _0xf3c28e, 0x1],
+        [0x1 - _0xf3c28e, 0x1 - _0xf3c28e, 0x1],
+        [0.5 + _0xf3c28e, 0.5 - _0xf3c28e, 0.5],
+        [0.5 - _0xf3c28e, 0.5 + _0xf3c28e, 0.5],
+      ];
+    let _0x37615c = 0x0;
+    (_0x188c29["\x66\x6f\x72\x45\x61\x63\x68"]((_0x2de9a8, _0x44f521) => _0x22bac5["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x54\x69", "\x78": (_0x2de9a8[0x0] - 0.5) * _0x26b262, "\x79": (_0x2de9a8[0x1] - 0.5) * _0x26b262, "\x7a": (_0x2de9a8[0x2] - 0.5) * _0x26b262 * _0x46f8f9, "\x72": 0xb, "\x69\x73\x43\x6f\x72\x6e\x65\x72": _0x44f521 < 0x8, "\x69\x64\x78": _0x37615c++, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": _0x44f521 === 0x8 })),
+      _0x22f52e["\x66\x6f\x72\x45\x61\x63\x68"]((_0x11abdb) => _0x22bac5["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": "\x4f", "\x78": (_0x11abdb[0x0] - 0.5) * _0x26b262, "\x79": (_0x11abdb[0x1] - 0.5) * _0x26b262, "\x7a": (_0x11abdb[0x2] - 0.5) * _0x26b262 * _0x46f8f9, "\x72": 0x15, "\x69\x73\x43\x6f\x72\x6e\x65\x72": ![] })));
+    for (let _0x57245b = 0x0; _0x57245b < _0x22bac5["\x6c\x65\x6e\x67\x74\x68"]; _0x57245b++)
+      for (let _0x486261 = _0x57245b + 0x1; _0x486261 < _0x22bac5["\x6c\x65\x6e\x67\x74\x68"]; _0x486261++) {
+        if (_0x22bac5[_0x57245b]["\x65\x6c\x65\x6d"] === _0x22bac5[_0x486261]["\x65\x6c\x65\x6d"]) continue;
+        if (Math["\x73\x71\x72\x74"]((_0x22bac5[_0x57245b]["\x78"] - _0x22bac5[_0x486261]["\x78"]) ** 0x2 + (_0x22bac5[_0x57245b]["\x79"] - _0x22bac5[_0x486261]["\x79"]) ** 0x2 + (_0x22bac5[_0x57245b]["\x7a"] - _0x22bac5[_0x486261]["\x7a"]) ** 0x2) < _0x26b262 * 0.75) _0x1102a4["\x70\x75\x73\x68"]([_0x57245b, _0x486261, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+      }
+    for (let _0x5316f1 = 0x0; _0x5316f1 < 0x8; _0x5316f1++)
+      for (let _0x24a367 = _0x5316f1 + 0x1; _0x24a367 < 0x8; _0x24a367++) {
+        const _0xca732c = Math["\x61\x62\x73"](_0x22bac5[_0x5316f1]["\x78"] - _0x22bac5[_0x24a367]["\x78"]),
+          _0x20eebb = Math["\x61\x62\x73"](_0x22bac5[_0x5316f1]["\x79"] - _0x22bac5[_0x24a367]["\x79"]),
+          _0x5cc40c = Math["\x61\x62\x73"](_0x22bac5[_0x5316f1]["\x7a"] - _0x22bac5[_0x24a367]["\x7a"]);
+        if ((Math["\x61\x62\x73"](_0xca732c - _0x26b262) < 0x5 && _0x20eebb < 0x5 && _0x5cc40c < 0x5) || (Math["\x61\x62\x73"](_0x20eebb - _0x26b262) < 0x5 && _0xca732c < 0x5 && _0x5cc40c < 0x5) || (Math["\x61\x62\x73"](_0x5cc40c - _0x26b262 * _0x46f8f9) < 0x5 && _0xca732c < 0x5 && _0x20eebb < 0x5)) _0x1102a4["\x70\x75\x73\x68"]([_0x5316f1, _0x24a367, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+      }
+    (addMol(
+      "\x54\x69\x4f\x32\x7c\u91d1\u7d05\u77f3\x7c\u4e8c\u6c27\u5316\u9226\x7c\x52\x75\x74\x69\x6c\x65",
+      "\x54\x69",
+      "\x2d",
+      "\x2d",
+      "\x2d",
+      "\x31\x38\x34\x33",
+      "\x32\x39\x37\x32",
+      _0x2f056f,
+      _0x51812f,
+      {
+        "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143": {
+          "\x61\x74\x6f\x6d\x73": _0x2f056f,
+          "\x62\x6f\x6e\x64\x73": _0x51812f,
+          "\x68\x79\x62\x72\x69\x64": "\x2d",
+          "\x73\x68\x61\x70\x65": "\x2d",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2b1c\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e8c\u6c27\u5316\u9226\x20\x28\x54\x69\x4f\u2082\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u767d\u8272\u7c89\u672b\uff0c\u5ee3\u6cdb\u7528\u65bc\u767d\u8272\u984f\u6599\u3001\u9632\u66ec\u4e73\u53ca\u5149\u89f8\u5a92\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+        "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x54\x65\x74\x72\x61\x67\x6f\x6e\x61\x6c\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x22bac5,
+          "\x62\x6f\x6e\x64\x73": _0x1102a4,
+          "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+          "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\u8907\u96dc\u5e7e\u4f55",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6676\u9ad4\u7d50\u69cb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u56db\u65b9\u6676\u7cfb\x20\x28\u91d1\u7d05\u77f3\u578b\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u9226\u96e2\u5b50\u4f4d\u65bc\u9ad4\u5fc3\u8207\u9802\u9ede\uff0c\u6c27\u96e2\u5b50\u4f4d\u65bc\u9762\u4e0a\u3002\x54\x69\u2074\u207a\x20\u914d\u4f4d\u6578\u70ba\x20\x36\x20\x28\u516b\u9762\u9ad4\x29\uff0c\x4f\u00b2\u207b\x20\u914d\u4f4d\u6578\u70ba\x20\x33\x20\x28\u5e73\u9762\u4e09\u89d2\x29\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u9ad4\u5fc3\x20\x54\x69\u2074\u207a\x20\u53ef\u67e5\u770b\u914d\u4f4d\u6578\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+      },
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2b1c\x20\u91d1\u7d05\u77f3\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      "\x2d",
+      "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+    ),
+      MOLECULE_DB["\x54\x69\x4f\x32"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x54\x69\x4f\x32"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x54\x65\x74\x72\x61\x67\x6f\x6e\x61\x6c\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x54\x69\x4f\x32"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+  })(),
+  (function () {
+    const _0x2a5d3e = 0xb4,
+      _0xa25382 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0.5],
+      ],
+      _0x96b126 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ],
+      _0x2b7884 = [
+        ..._0xa25382["\x6d\x61\x70"]((_0x295ca4, _0x5f3c1c) => ({ "\x65\x6c\x65\x6d": "\x4f", "\x78": (_0x295ca4[0x0] - 0.5) * _0x2a5d3e, "\x79": (_0x295ca4[0x1] - 0.5) * _0x2a5d3e, "\x7a": (_0x295ca4[0x2] - 0.5) * _0x2a5d3e, "\x72": 0x15, "\x69\x73\x43\x6f\x72\x6e\x65\x72": _0x5f3c1c < 0x8, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": _0x5f3c1c === 0x8 })),
+        ..._0x96b126["\x6d\x61\x70"]((_0x3706bf) => ({ "\x65\x6c\x65\x6d": "\x43\x75", "\x78": (_0x3706bf[0x0] - 0.5) * _0x2a5d3e, "\x79": (_0x3706bf[0x1] - 0.5) * _0x2a5d3e, "\x7a": (_0x3706bf[0x2] - 0.5) * _0x2a5d3e, "\x72": 0xd, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] })),
+      ],
+      _0x29e208 = [];
+    for (let _0x4f524f = 0x0; _0x4f524f < _0x2b7884["\x6c\x65\x6e\x67\x74\x68"]; _0x4f524f++)
+      for (let _0x27e59f = _0x4f524f + 0x1; _0x27e59f < _0x2b7884["\x6c\x65\x6e\x67\x74\x68"]; _0x27e59f++) {
+        const _0x17720e = Math["\x68\x79\x70\x6f\x74"](_0x2b7884[_0x4f524f]["\x78"] - _0x2b7884[_0x27e59f]["\x78"], _0x2b7884[_0x4f524f]["\x79"] - _0x2b7884[_0x27e59f]["\x79"], _0x2b7884[_0x4f524f]["\x7a"] - _0x2b7884[_0x27e59f]["\x7a"]);
+        if (_0x2b7884[_0x4f524f]["\x65\x6c\x65\x6d"] !== _0x2b7884[_0x27e59f]["\x65\x6c\x65\x6d"] && Math["\x61\x62\x73"](_0x17720e - _0x2a5d3e * 0.433) < 0x14) _0x29e208["\x70\x75\x73\x68"]([_0x4f524f, _0x27e59f, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+        if (_0x2b7884[_0x4f524f]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && _0x2b7884[_0x27e59f]["\x69\x73\x43\x6f\x72\x6e\x65\x72"] && Math["\x61\x62\x73"](_0x17720e - _0x2a5d3e) < 0x5) _0x29e208["\x70\x75\x73\x68"]([_0x4f524f, _0x27e59f, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+      }
+    const _0x321e16 = [
+        { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x15 },
+        { "\x65\x6c\x65\x6d": "\x43\x75", "\x78": 0x32, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xd },
+        { "\x65\x6c\x65\x6d": "\x43\x75", "\x78": -0x32, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xd },
+      ],
+      _0x10acb1 = [
+        [0x0, 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+        [0x0, 0x2, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+      ];
+    (addMol(
+      "\x43\x75\x32\x4f\x7c\u8d64\u9285\u7926\x7c\u6c27\u5316\u4e9e\u9285\x7c\x43\x75\x70\x72\x69\x74\x65",
+      "\x43\x75",
+      "\x2d",
+      "\x2d",
+      "\x2d",
+      "\x31\x32\x33\x35",
+      "\x31\x38\x30\x30",
+      _0x321e16,
+      _0x10acb1,
+      {
+        "\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143": {
+          "\x61\x74\x6f\x6d\x73": _0x321e16,
+          "\x62\x6f\x6e\x64\x73": _0x10acb1,
+          "\x68\x79\x62\x72\x69\x64": "\x2d",
+          "\x73\x68\x61\x70\x65": "\x2d",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udd34\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c27\u5316\u4e9e\u9285\x20\x28\x43\x75\u2082\x4f\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7d05\u8272\u56fa\u9ad4\u3002\x43\x75\u207a\x20\u70ba\u76f4\u7dda\u578b\u914d\u4f4d\x20\x28\x43\x4e\x3d\x32\x29\uff0c\x4f\u00b2\u207b\x20\u70ba\u56db\u9762\u9ad4\u578b\u914d\u4f4d\x20\x28\x43\x4e\x3d\x34\x29\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+        "\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x43\x75\x62\x69\x63\x29": {
+          "\x61\x74\x6f\x6d\x73": _0x2b7884,
+          "\x62\x6f\x6e\x64\x73": _0x29e208,
+          "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+          "\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e": "\u8907\u96dc\u5e7e\u4f55",
+          "\x64\x65\x73\x63":
+            "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u6676\u9ad4\u7d50\u69cb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u8d64\u9285\u7926\u7d50\u69cb\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6c27\u96e2\u5b50\x28\u7d05\x29\u69cb\u6210\u9ad4\u5fc3\u7acb\u65b9\uff0c\u9285\u96e2\u5b50\x28\u6a58\x29\u4f4d\u65bc\u6c27\u96e2\u5b50\u9023\u7dda\u4e2d\u9ede\u3002\x3c\x62\x72\x3e\u2022\x20\u9ede\u64ca\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7d05\u8272\u6c27\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\x28\u9ad4\u5fc3\x29\x20\u53ef\u898b\u914d\u4f4d\u6578\u70ba\x20\x34\u3002\x3c\x62\x72\x3e\u2022\x20\u9ede\u64ca\u4efb\u4e00\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6a58\u8272\u9285\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u53ef\u898b\u914d\u4f4d\u6578\u70ba\x20\x32\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+        },
+      },
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udd34\x20\u8d64\u9285\u7926\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u8acb\u5207\u63db\u9078\u9805\u6aa2\u8996\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      "\x2d",
+      "\x73\x74\x72\x75\x63\x74\x75\x72\x65",
+    ),
+      MOLECULE_DB["\x43\x75\x32\x4f"]?.["\x76\x61\x72\x69\x61\x6e\x74\x73"] && ((MOLECULE_DB["\x43\x75\x32\x4f"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x43\x72\x79\x73\x74\x61\x6c\x7c\u6676\u9ad4\u5806\u7a4d\x20\x28\x43\x75\x62\x69\x63\x29"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB["\x43\x75\x32\x4f"]["\x76\x61\x72\x69\x61\x6e\x74\x73"]["\x53\x69\x6d\x70\x6c\x65\x7c\u57fa\u672c\u55ae\u5143"]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![])));
+  })());
+function ensureElement(_0x535149, _0x1d5870, _0x4bd354) {
+  typeof ELEMENT_PROPS !== "\x75\x6e\x64\x65\x66\x69\x6e\x65\x64" && !ELEMENT_PROPS[_0x535149] && (ELEMENT_PROPS[_0x535149] = { "\x76\x65": 0x1, "\x63\x33\x64": _0x1d5870, "\x72\x33\x64": _0x4bd354, "\x6c\x70": 0x0, "\x6d\x61\x73\x73": 0x0, "\x65\x6e": 0x0 });
 }
-
-// 1. 簡單立方 (SC) 
-function addMetal_SC(elem, name, mp, bp, scale=160) {
-    ensureElement(elem, "#ab5c00", 28);
-    const atoms = []; const bonds = [];
-    for (let x = 0; x <= 1; x++) {
-        for (let y = 0; y <= 1; y++) {
-            for (let z = 0; z <= 1; z++) {
-                atoms.push({ elem: elem, x: (x-0.5)*scale, y: (y-0.5)*scale, z: (z-0.5)*scale, r: 28, isRepresentative: true });
-            }
-        }
+function addMetal_SC(_0x297e19, _0x50c41e, _0x30cd4d, _0x2c679f, _0x37281e = 0xa0) {
+  ensureElement(_0x297e19, "\x23\x61\x62\x35\x63\x30\x30", 0x1c);
+  const _0x5aaadc = [],
+    _0x54b8f0 = [];
+  for (let _0xa35059 = 0x0; _0xa35059 <= 0x1; _0xa35059++) {
+    for (let _0x2a4330 = 0x0; _0x2a4330 <= 0x1; _0x2a4330++) {
+      for (let _0x30b2d4 = 0x0; _0x30b2d4 <= 0x1; _0x30b2d4++) {
+        _0x5aaadc["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x297e19, "\x78": (_0xa35059 - 0.5) * _0x37281e, "\x79": (_0x2a4330 - 0.5) * _0x37281e, "\x7a": (_0x30b2d4 - 0.5) * _0x37281e, "\x72": 0x1c, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] });
+      }
     }
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - scale) < 10) bonds.push([i, j, "ionic_thick"]);
-        }
+  }
+  for (let _0x555edf = 0x0; _0x555edf < _0x5aaadc["\x6c\x65\x6e\x67\x74\x68"]; _0x555edf++) {
+    for (let _0x1a5fed = _0x555edf + 0x1; _0x1a5fed < _0x5aaadc["\x6c\x65\x6e\x67\x74\x68"]; _0x1a5fed++) {
+      const _0x588ba7 = Math["\x73\x71\x72\x74"]((_0x5aaadc[_0x555edf]["\x78"] - _0x5aaadc[_0x1a5fed]["\x78"]) ** 0x2 + (_0x5aaadc[_0x555edf]["\x79"] - _0x5aaadc[_0x1a5fed]["\x79"]) ** 0x2 + (_0x5aaadc[_0x555edf]["\x7a"] - _0x5aaadc[_0x1a5fed]["\x7a"]) ** 0x2);
+      if (Math["\x61\x62\x73"](_0x588ba7 - _0x37281e) < 0xa) _0x54b8f0["\x70\x75\x73\x68"]([_0x555edf, _0x1a5fed, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
     }
-    addMol(`${elem}|${name}`, "Metal", "簡單立方堆積 (SC)", "52.4%", "6", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">📦 簡單立方 (SC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 52.4%。原子僅位於立方體頂點，沿著邊長互相接觸。</div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "a = 2r"; }
+  }
+  (addMol(
+    _0x297e19 + "\x7c" + _0x50c41e,
+    "\x4d\x65\x74\x61\x6c",
+    "\u7c21\u55ae\u7acb\u65b9\u5806\u7a4d\x20\x28\x53\x43\x29",
+    "\x35\x32\x2e\x34\x25",
+    "\x36",
+    _0x30cd4d,
+    _0x2c679f,
+    _0x5aaadc,
+    _0x54b8f0,
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udce6\x20\u7c21\u55ae\u7acb\u65b9\x20\x28\x53\x43\x29\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u91d1\u5c6c\u7bc4\u4f8b\uff1a\x3c\x73\x74\x72\x6f\x6e\x67\x3e" +
+      _0x297e19 +
+      "\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\u7a7a\u9593\u5229\u7528\u7387\x20\x35\x32\x2e\x34\x25\u3002\u539f\u5b50\u50c5\u4f4d\u65bc\u7acb\u65b9\u9ad4\u9802\u9ede\uff0c\u6cbf\u8457\u908a\u9577\u4e92\u76f8\u63a5\u89f8\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+  ),
+    MOLECULE_DB[_0x297e19] && ((MOLECULE_DB[_0x297e19]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB[_0x297e19]["\x69\x73\x4d\x65\x74\x61\x6c"] = !![]), (MOLECULE_DB[_0x297e19]["\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e"] = "\x61\x20\x3d\x20\x32\x72")));
 }
-
-// 2. 體心立方 (BCC)
-function addMetal_BCC(elem, name, mp, bp, scale=200) {
-    ensureElement(elem, "#9ca3af", 24); 
-    const atoms = []; const bonds = [];
-    const h = scale / 2;
-    atoms.push({ elem: elem, x: 0, y: 0, z: 0, r: 24, isRepresentative: true });
-    const pts = [[-h,-h,-h],[h,-h,-h],[h,h,-h],[-h,h,-h],[-h,-h,h],[h,-h,h],[h,h,h],[-h,h,h]];
-    pts.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 24 }));
-    for(let i=1; i<=8; i++) bonds.push([0, i, "ionic_thin"]);
-    const cubeEdges = [[1,2],[2,3],[3,4],[4,1],[5,6],[6,7],[7,8],[8,5],[1,5],[2,6],[3,7],[4,8]];
-    cubeEdges.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
-    addMol(`${elem}|${name}`, "Metal", "體心立方堆積 (BCC)", "68%", "8", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🧊 體心立方 (BCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 68%。原子位於角落與體中心，沿著體對角線互相接觸。</div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√3 a = 4r"; }
+function addMetal_BCC(_0x2317b6, _0x4b3b16, _0x57137b, _0x1c3239, _0x1fa21a = 0xc8) {
+  ensureElement(_0x2317b6, "\x23\x39\x63\x61\x33\x61\x66", 0x18);
+  const _0x569228 = [],
+    _0xc9c3f6 = [],
+    _0x462f98 = _0x1fa21a / 0x2;
+  _0x569228["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x2317b6, "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x18, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": !![] });
+  const _0x42d000 = [
+    [-_0x462f98, -_0x462f98, -_0x462f98],
+    [_0x462f98, -_0x462f98, -_0x462f98],
+    [_0x462f98, _0x462f98, -_0x462f98],
+    [-_0x462f98, _0x462f98, -_0x462f98],
+    [-_0x462f98, -_0x462f98, _0x462f98],
+    [_0x462f98, -_0x462f98, _0x462f98],
+    [_0x462f98, _0x462f98, _0x462f98],
+    [-_0x462f98, _0x462f98, _0x462f98],
+  ];
+  _0x42d000["\x66\x6f\x72\x45\x61\x63\x68"]((_0x1331bc) => _0x569228["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x2317b6, "\x78": _0x1331bc[0x0], "\x79": _0x1331bc[0x1], "\x7a": _0x1331bc[0x2], "\x72": 0x18 }));
+  for (let _0x20fa91 = 0x1; _0x20fa91 <= 0x8; _0x20fa91++) _0xc9c3f6["\x70\x75\x73\x68"]([0x0, _0x20fa91, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+  const _0x45d156 = [
+    [0x1, 0x2],
+    [0x2, 0x3],
+    [0x3, 0x4],
+    [0x4, 0x1],
+    [0x5, 0x6],
+    [0x6, 0x7],
+    [0x7, 0x8],
+    [0x8, 0x5],
+    [0x1, 0x5],
+    [0x2, 0x6],
+    [0x3, 0x7],
+    [0x4, 0x8],
+  ];
+  (_0x45d156["\x66\x6f\x72\x45\x61\x63\x68"]((_0x506a06) => _0xc9c3f6["\x70\x75\x73\x68"]([_0x506a06[0x0], _0x506a06[0x1], "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"])),
+    addMol(
+      _0x2317b6 + "\x7c" + _0x4b3b16,
+      "\x4d\x65\x74\x61\x6c",
+      "\u9ad4\u5fc3\u7acb\u65b9\u5806\u7a4d\x20\x28\x42\x43\x43\x29",
+      "\x36\x38\x25",
+      "\x38",
+      _0x57137b,
+      _0x1c3239,
+      _0x569228,
+      _0xc9c3f6,
+      null,
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddca\x20\u9ad4\u5fc3\u7acb\u65b9\x20\x28\x42\x43\x43\x29\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u91d1\u5c6c\u7bc4\u4f8b\uff1a\x3c\x73\x74\x72\x6f\x6e\x67\x3e" +
+        _0x2317b6 +
+        "\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\u7a7a\u9593\u5229\u7528\u7387\x20\x36\x38\x25\u3002\u539f\u5b50\u4f4d\u65bc\u89d2\u843d\u8207\u9ad4\u4e2d\u5fc3\uff0c\u6cbf\u8457\u9ad4\u5c0d\u89d2\u7dda\u4e92\u76f8\u63a5\u89f8\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    ),
+    MOLECULE_DB[_0x2317b6] && ((MOLECULE_DB[_0x2317b6]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB[_0x2317b6]["\x69\x73\x4d\x65\x74\x61\x6c"] = !![]), (MOLECULE_DB[_0x2317b6]["\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e"] = "\u221a\x33\x20\x61\x20\x3d\x20\x34\x72")));
 }
-
-// 3. 面心立方 (FCC) - 升級為 5-4-5-4 堆積 (展示 CN=12)
-function addMetal_FCC(elem, name, mp, bp, scale=200) {
-    ensureElement(elem, "#d1d5db", 22);
-    const atoms = []; const bonds = [];
-    const h = scale / 2;
-    
-    // 定義四層：L1(5) -> L2(4) -> L3(5) -> L4(4)
-    // 我們將座標中心設在 L3 的中心原子，方便旋轉觀察
-    const addLayer5 = (z, isMain) => {
-        const s = atoms.length;
-        // 中心
-        atoms.push({ elem: elem, x: 0, y: 0, z: z, r: 22, isRepresentative: isMain });
-        // 四個角
-        const corners = [[-h,-h,z],[h,-h,z],[h,h,z],[-h,h,z]];
-        corners.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
-        // 只有主要晶胞層 (L1到L3) 有框
-        if (isMain || z < scale) {
-            bonds.push([s+1, s+2, "ionic_thick"], [s+2, s+3, "ionic_thick"], [s+3, s+4, "ionic_thick"], [s+4, s+1, "ionic_thick"]);
-        }
+function addMetal_FCC(_0x4d0849, _0x1bccc9, _0x5beaff, _0x4d5b92, _0x232c98 = 0xc8) {
+  ensureElement(_0x4d0849, "\x23\x64\x31\x64\x35\x64\x62", 0x16);
+  const _0x2459cd = [],
+    _0x33e653 = [],
+    _0x436590 = _0x232c98 / 0x2,
+    _0x1e1bb9 = (_0x512bbf, _0x48ad63) => {
+      const _0x13dc25 = _0x2459cd["\x6c\x65\x6e\x67\x74\x68"];
+      _0x2459cd["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x4d0849, "\x78": 0x0, "\x79": 0x0, "\x7a": _0x512bbf, "\x72": 0x16, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": _0x48ad63 });
+      const _0x2e3845 = [
+        [-_0x436590, -_0x436590, _0x512bbf],
+        [_0x436590, -_0x436590, _0x512bbf],
+        [_0x436590, _0x436590, _0x512bbf],
+        [-_0x436590, _0x436590, _0x512bbf],
+      ];
+      (_0x2e3845["\x66\x6f\x72\x45\x61\x63\x68"]((_0x3ba078) => _0x2459cd["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x4d0849, "\x78": _0x3ba078[0x0], "\x79": _0x3ba078[0x1], "\x7a": _0x3ba078[0x2], "\x72": 0x16 })),
+        (_0x48ad63 || _0x512bbf < _0x232c98) && _0x33e653["\x70\x75\x73\x68"]([_0x13dc25 + 0x1, _0x13dc25 + 0x2, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"], [_0x13dc25 + 0x2, _0x13dc25 + 0x3, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"], [_0x13dc25 + 0x3, _0x13dc25 + 0x4, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"], [_0x13dc25 + 0x4, _0x13dc25 + 0x1, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]));
+    },
+    _0x23ef2b = (_0x223d84, _0x9c1684) => {
+      const _0x73e4d6 = _0x2459cd["\x6c\x65\x6e\x67\x74\x68"],
+        _0x33a1e0 = [
+          [0x0, -_0x436590, _0x223d84],
+          [_0x436590, 0x0, _0x223d84],
+          [0x0, _0x436590, _0x223d84],
+          [-_0x436590, 0x0, _0x223d84],
+        ];
+      _0x33a1e0["\x66\x6f\x72\x45\x61\x63\x68"]((_0xb0e9dc) => _0x2459cd["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x4d0849, "\x78": _0xb0e9dc[0x0], "\x79": _0xb0e9dc[0x1], "\x7a": _0xb0e9dc[0x2], "\x72": 0x16 }));
+      if (!_0x9c1684) {
+      }
     };
-
-    const addLayer4 = (z, isExtended) => {
-        const s = atoms.length;
-        // 四個面心
-        const faces = [[0,-h,z],[h,0,z],[0,h,z],[-h,0,z]];
-        faces.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
-        // 垂直柱子 (只連接 L1-L3 核心)
-        if (!isExtended) {
-            // 此處邏輯由後續接觸線處理
-        }
-    };
-
-    addLayer5(-scale, false); // L1 (底部)
-    addLayer4(-h, false);     // L2
-    addLayer5(0, true);       // L3 (核心層，設為座標 0)
-    addLayer4(h, true);       // L4 (延伸層)
-
-    // 建立所有原子間的接觸線 (距離為 0.707a)
-    const contactDist = scale * 0.707;
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - contactDist) < 10) {
-                // 判斷是否屬於延伸層 (L4) 的連線
-                const isExt = (atoms[i].z > 5 || atoms[j].z > 5);
-                bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thin"]); 
-            }
-        }
+  (_0x1e1bb9(-_0x232c98, ![]), _0x23ef2b(-_0x436590, ![]), _0x1e1bb9(0x0, !![]), _0x23ef2b(_0x436590, !![]));
+  const _0x274101 = _0x232c98 * 0.707;
+  for (let _0x438fd6 = 0x0; _0x438fd6 < _0x2459cd["\x6c\x65\x6e\x67\x74\x68"]; _0x438fd6++) {
+    for (let _0x44b87b = _0x438fd6 + 0x1; _0x44b87b < _0x2459cd["\x6c\x65\x6e\x67\x74\x68"]; _0x44b87b++) {
+      const _0x652bfd = Math["\x73\x71\x72\x74"]((_0x2459cd[_0x438fd6]["\x78"] - _0x2459cd[_0x44b87b]["\x78"]) ** 0x2 + (_0x2459cd[_0x438fd6]["\x79"] - _0x2459cd[_0x44b87b]["\x79"]) ** 0x2 + (_0x2459cd[_0x438fd6]["\x7a"] - _0x2459cd[_0x44b87b]["\x7a"]) ** 0x2);
+      if (Math["\x61\x62\x73"](_0x652bfd - _0x274101) < 0xa) {
+        const _0x35fdc6 = _0x2459cd[_0x438fd6]["\x7a"] > 0x5 || _0x2459cd[_0x44b87b]["\x7a"] > 0x5;
+        _0x33e653["\x70\x75\x73\x68"]([_0x438fd6, _0x44b87b, _0x35fdc6 ? "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e" : "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+      }
     }
-
-    // 建立核心晶胞的垂直粗框線 (L1 到 L3)
-    const coreCorners = [[1,10],[2,11],[3,12],[4,13]]; // L1 到 L3 的頂點對應
-    coreCorners.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
-
-    addMol(`${elem}|${name}`, "Metal", "面心立方堆積 (FCC)", "74%", "12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">✨ 面心立方 (FCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 74%。模型展示了 5-4-5-4 的四層堆積。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見其配位數為 12 (同層4, 下層4, 上層4)。</span></div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√2 a = 4r"; }
+  }
+  const _0x532e65 = [
+    [0x1, 0xa],
+    [0x2, 0xb],
+    [0x3, 0xc],
+    [0x4, 0xd],
+  ];
+  (_0x532e65["\x66\x6f\x72\x45\x61\x63\x68"]((_0x10f175) => _0x33e653["\x70\x75\x73\x68"]([_0x10f175[0x0], _0x10f175[0x1], "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"])),
+    addMol(
+      _0x4d0849 + "\x7c" + _0x1bccc9,
+      "\x4d\x65\x74\x61\x6c",
+      "\u9762\u5fc3\u7acb\u65b9\u5806\u7a4d\x20\x28\x46\x43\x43\x29",
+      "\x37\x34\x25",
+      "\x31\x32",
+      _0x5beaff,
+      _0x4d5b92,
+      _0x2459cd,
+      _0x33e653,
+      null,
+      "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2728\x20\u9762\u5fc3\u7acb\u65b9\x20\x28\x46\x43\x43\x29\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u91d1\u5c6c\u7bc4\u4f8b\uff1a\x3c\x73\x74\x72\x6f\x6e\x67\x3e" +
+        _0x4d0849 +
+        "\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\u7a7a\u9593\u5229\u7528\u7387\x20\x37\x34\x25\u3002\u6a21\u578b\u5c55\u793a\u4e86\x20\x35\x2d\x34\x2d\x35\x2d\x34\x20\u7684\u56db\u5c64\u5806\u7a4d\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u7b2c\u4e09\u5c64\u4e2d\u5fc3\u539f\u5b50\uff0c\u53ef\u898b\u5176\u914d\u4f4d\u6578\u70ba\x20\x31\x32\x20\x28\u540c\u5c64\x34\x2c\x20\u4e0b\u5c64\x34\x2c\x20\u4e0a\u5c64\x34\x29\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    ),
+    MOLECULE_DB[_0x4d0849] && ((MOLECULE_DB[_0x4d0849]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB[_0x4d0849]["\x69\x73\x4d\x65\x74\x61\x6c"] = !![]), (MOLECULE_DB[_0x4d0849]["\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e"] = "\u221a\x32\x20\x61\x20\x3d\x20\x34\x72")));
 }
-
-// 4. 六方最密堆積 (HCP) - 修正比例與配位數版
-function addMetal_HCP(elem, name, mp, bp, scale=140) {
-    ensureElement(elem, "#e5e7eb", 22);
-    const atoms = []; const bonds = [];
-    
-    // a = scale (原子間距，即底面六角形的邊長)
-    // h = 層與層之間的垂直距離 (理想比例為 sqrt(2/3) * a ≈ 0.8165a)
-    const h = scale * 0.8165; 
-    const r = 22;
-
-    // A 層生成器 (中心 + 6 顆環繞)
-    const getLayerA = (z) => [
-        {x:0, y:0, z:z}, // 中心
-        {x:scale, y:0, z:z}, {x:scale*0.5, y:scale*0.866, z:z}, {x:-scale*0.5, y:scale*0.866, z:z},
-        {x:-scale, y:0, z:z}, {x:-scale*0.5, y:-scale*0.866, z:z}, {x:scale*0.5, y:-scale*0.866, z:z}
-    ];
-
-    // B 層生成器 (填入 A 層空隙的 3 顆)
-    const getLayerB = (z) => [
-        {x:scale*0.5, y:scale*0.288, z:z}, 
-        {x:-scale*0.5, y:scale*0.288, z:z}, 
-        {x:0, y:-scale*0.577, z:z}
-    ];
-
-    // --- 建立四層堆積 A1-B1-A2-B2 ---
-    // 為了讓中心原子在座標原點，我們這樣對齊：
-    const l1 = getLayerA(-2 * h);   // Index 0-6 (A1 最底層)
-    const l2 = getLayerB(-h);       // Index 7-9 (B1)
-    const l3 = getLayerA(0);        // Index 10-16 (A2 核心主角層)
-    const l4 = getLayerB(h);        // Index 17-19 (B2 延伸層)
-
-    [...l1, ...l2, ...l3, ...l4].forEach((p, i) => {
-        atoms.push({
-            elem: elem, ...p, r: r, lpCount: 0,
-            // 將第三層的中心原子 (Index 10) 設為主角
-            isRepresentative: (i === 10) 
-        });
-    });
-
-    // --- 建立鍵結邏輯 ---
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            
-            // 距離約等於 scale (a) 的判定為鄰居
-            if (d > 10 && d < scale * 1.1) {
-                // 判斷是否為延伸層 (L4 / Index 17-19) 的連線
-                const isExt = (atoms[i].z > h/2 || atoms[j].z > h/2);
-                
-                // 1. 同層內部的連線 (六角外框與內部輻射)
-                if (Math.abs(atoms[i].z - atoms[j].z) < 1) {
-                    const isCenter = (Math.abs(atoms[i].x) < 1 && Math.abs(atoms[i].y) < 1) || 
-                                     (Math.abs(atoms[j].x) < 1 && Math.abs(atoms[j].y) < 1);
-                    
-                    if (isCenter) {
-                        bonds.push([i, j, "ionic_thin"]); // 內部輻射用細線
-                    } else {
-                        // 外部六角框：L1到L3用粗框，延伸層L4用細線
-                        bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thick"]);
-                    }
-                } 
-                // 2. 層與層之間的連線 (CN=12 的斜向接觸)
-                else {
-                    bonds.push([i, j, "ionic_thin"]);
-                }
-            }
-        }
+function addMetal_HCP(_0x259899, _0x164c3f, _0x5b5ed4, _0x3dacfe, _0x1e5da5 = 0x8c) {
+  ensureElement(_0x259899, "\x23\x65\x35\x65\x37\x65\x62", 0x16);
+  const _0x36b3ef = [],
+    _0x2eeb91 = [],
+    _0x18eb8a = _0x1e5da5 * 0.8165,
+    _0x373c51 = 0x16,
+    _0x4facde = (_0x168b3d) => [
+      { "\x78": 0x0, "\x79": 0x0, "\x7a": _0x168b3d },
+      { "\x78": _0x1e5da5, "\x79": 0x0, "\x7a": _0x168b3d },
+      { "\x78": _0x1e5da5 * 0.5, "\x79": _0x1e5da5 * 0.866, "\x7a": _0x168b3d },
+      { "\x78": -_0x1e5da5 * 0.5, "\x79": _0x1e5da5 * 0.866, "\x7a": _0x168b3d },
+      { "\x78": -_0x1e5da5, "\x79": 0x0, "\x7a": _0x168b3d },
+      { "\x78": -_0x1e5da5 * 0.5, "\x79": -_0x1e5da5 * 0.866, "\x7a": _0x168b3d },
+      { "\x78": _0x1e5da5 * 0.5, "\x79": -_0x1e5da5 * 0.866, "\x7a": _0x168b3d },
+    ],
+    _0x4cd63b = (_0x4342bf) => [
+      { "\x78": _0x1e5da5 * 0.5, "\x79": _0x1e5da5 * 0.288, "\x7a": _0x4342bf },
+      { "\x78": -_0x1e5da5 * 0.5, "\x79": _0x1e5da5 * 0.288, "\x7a": _0x4342bf },
+      { "\x78": 0x0, "\x79": -_0x1e5da5 * 0.577, "\x7a": _0x4342bf },
+    ],
+    _0x355956 = _0x4facde(-0x2 * _0x18eb8a),
+    _0x421c77 = _0x4cd63b(-_0x18eb8a),
+    _0x5edd6a = _0x4facde(0x0),
+    _0x1a6c73 = _0x4cd63b(_0x18eb8a);
+  [..._0x355956, ..._0x421c77, ..._0x5edd6a, ..._0x1a6c73]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x251e90, _0x41dd7f) => {
+    _0x36b3ef["\x70\x75\x73\x68"]({ "\x65\x6c\x65\x6d": _0x259899, ..._0x251e90, "\x72": _0x373c51, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0, "\x69\x73\x52\x65\x70\x72\x65\x73\x65\x6e\x74\x61\x74\x69\x76\x65": _0x41dd7f === 0xa });
+  });
+  for (let _0x5f5113 = 0x0; _0x5f5113 < _0x36b3ef["\x6c\x65\x6e\x67\x74\x68"]; _0x5f5113++) {
+    for (let _0x4c4006 = _0x5f5113 + 0x1; _0x4c4006 < _0x36b3ef["\x6c\x65\x6e\x67\x74\x68"]; _0x4c4006++) {
+      const _0x4c8bc6 = Math["\x73\x71\x72\x74"]((_0x36b3ef[_0x5f5113]["\x78"] - _0x36b3ef[_0x4c4006]["\x78"]) ** 0x2 + (_0x36b3ef[_0x5f5113]["\x79"] - _0x36b3ef[_0x4c4006]["\x79"]) ** 0x2 + (_0x36b3ef[_0x5f5113]["\x7a"] - _0x36b3ef[_0x4c4006]["\x7a"]) ** 0x2);
+      if (_0x4c8bc6 > 0xa && _0x4c8bc6 < _0x1e5da5 * 1.1) {
+        const _0x2af694 = _0x36b3ef[_0x5f5113]["\x7a"] > _0x18eb8a / 0x2 || _0x36b3ef[_0x4c4006]["\x7a"] > _0x18eb8a / 0x2;
+        if (Math["\x61\x62\x73"](_0x36b3ef[_0x5f5113]["\x7a"] - _0x36b3ef[_0x4c4006]["\x7a"]) < 0x1) {
+          const _0x5f7f76 = (Math["\x61\x62\x73"](_0x36b3ef[_0x5f5113]["\x78"]) < 0x1 && Math["\x61\x62\x73"](_0x36b3ef[_0x5f5113]["\x79"]) < 0x1) || (Math["\x61\x62\x73"](_0x36b3ef[_0x4c4006]["\x78"]) < 0x1 && Math["\x61\x62\x73"](_0x36b3ef[_0x4c4006]["\x79"]) < 0x1);
+          _0x5f7f76 ? _0x2eeb91["\x70\x75\x73\x68"]([_0x5f5113, _0x4c4006, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]) : _0x2eeb91["\x70\x75\x73\x68"]([_0x5f5113, _0x4c4006, _0x2af694 ? "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e" : "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+        } else _0x2eeb91["\x70\x75\x73\x68"]([_0x5f5113, _0x4c4006, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"]);
+      }
     }
-
-    // --- 核心六角柱的「垂直」稜線 (L1 頂點對應到 L3 頂點) ---
-    // 讓主要的晶胞框架看起來像一個完整的六角柱
-    for (let i = 1; i <= 6; i++) {
-        bonds.push([i, i + 10, "ionic_thick"]);
-    }
-
-    addMol(`${elem}|${name}`, "Metal", "六方最密堆積 (HCP)", "74%", "12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🛑 六方最密堆積 (HCP)</div><div class="info-body">金屬範例：<strong>${elem} (如鎂、鋅)</strong>。<br>利用率 74%。模型展示 A-B-A-B 四層堆積，延伸出一層三角形 B 層。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見配位數為 12 (同層6，下層3，上層3)。</span></div></div>`);
-    
-    if(MOLECULE_DB[elem]) { 
-        MOLECULE_DB[elem].isIonic = true; 
-        MOLECULE_DB[elem].isMetal = true; 
-        MOLECULE_DB[elem].edgeRelation = "c ≈ 1.633 a";
-    }
+  }
+  for (let _0x1a606b = 0x1; _0x1a606b <= 0x6; _0x1a606b++) {
+    _0x2eeb91["\x70\x75\x73\x68"]([_0x1a606b, _0x1a606b + 0xa, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x63\x6b"]);
+  }
+  (addMol(
+    _0x259899 + "\x7c" + _0x164c3f,
+    "\x4d\x65\x74\x61\x6c",
+    "\u516d\u65b9\u6700\u5bc6\u5806\u7a4d\x20\x28\x48\x43\x50\x29",
+    "\x37\x34\x25",
+    "\x31\x32",
+    _0x5b5ed4,
+    _0x3dacfe,
+    _0x36b3ef,
+    _0x2eeb91,
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\uded1\x20\u516d\u65b9\u6700\u5bc6\u5806\u7a4d\x20\x28\x48\x43\x50\x29\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\u91d1\u5c6c\u7bc4\u4f8b\uff1a\x3c\x73\x74\x72\x6f\x6e\x67\x3e" +
+      _0x259899 +
+      "\x20\x28\u5982\u9382\u3001\u92c5\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\u5229\u7528\u7387\x20\x37\x34\x25\u3002\u6a21\u578b\u5c55\u793a\x20\x41\x2d\x42\x2d\x41\x2d\x42\x20\u56db\u5c64\u5806\u7a4d\uff0c\u5ef6\u4f38\u51fa\u4e00\u5c64\u4e09\u89d2\u5f62\x20\x42\x20\u5c64\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x73\x74\x79\x6c\x65\x3d\x22\x63\x6f\x6c\x6f\x72\x3a\x23\x66\x61\x63\x63\x31\x35\x22\x3e\u2605\x20\u9ede\u64ca\u7b2c\u4e09\u5c64\u4e2d\u5fc3\u539f\u5b50\uff0c\u53ef\u898b\u914d\u4f4d\u6578\u70ba\x20\x31\x32\x20\x28\u540c\u5c64\x36\uff0c\u4e0b\u5c64\x33\uff0c\u4e0a\u5c64\x33\x29\u3002\x3c\x2f\x73\x70\x61\x6e\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+  ),
+    MOLECULE_DB[_0x259899] && ((MOLECULE_DB[_0x259899]["\x69\x73\x49\x6f\x6e\x69\x63"] = !![]), (MOLECULE_DB[_0x259899]["\x69\x73\x4d\x65\x74\x61\x6c"] = !![]), (MOLECULE_DB[_0x259899]["\x65\x64\x67\x65\x52\x65\x6c\x61\x74\x69\x6f\x6e"] = "\x63\x20\u2248\x20\x31\x2e\x36\x33\x33\x20\x61")));
 }
-
-// 執行金屬生成
-// 1A 族 (BCC)
-addMetal_BCC("Li", "鋰", "180.5", "1342");
-addMetal_BCC("Na", "鈉", "97.8", "883");
-addMetal_BCC("K",  "鉀", "63.5", "759");
-addMetal_BCC("Rb", "銣", "39.3", "688");
-addMetal_BCC("Cs", "銫", "28.4", "671");
-
-// 2A 族
-addMetal_HCP("Be", "鈹", "1287", "2469"); // HCP
-addMetal_HCP("Mg", "鎂", "650", "1090");  // HCP
-addMetal_FCC("Ca", "鈣", "842", "1484");  // FCC
-addMetal_FCC("Sr", "鍶", "777", "1382");  // FCC
-addMetal_BCC("Ba", "鋇", "727", "1897");  // BCC
-
-// 其他
-addMetal_SC("Po", "釙", "254", "962");
-addMetal_BCC("Fe", "鐵 (α)", "1538", "2861");
-addMetal_FCC("Cu", "銅", "1085", "2562");
-addMetal_FCC("Ag", "銀", "961.8", "2162");
-addMetal_FCC("Au", "金", "1064", "2970");
-addMetal_FCC("Al", "鋁", "660", "2519");
-addMetal_HCP("Zn", "鋅", "419.5", "907");
-addMetal_HCP("Ti", "鈦", "1668", "3287");
-
-
-
-
-
-
-/*
- ==========================================================================
- ★ 視覺鍵長標準參考表 (Visual Bond Length Standards) v16.2
- ==========================================================================
- 基準：以 1,2-二氯丙烷為錨點 (C-C ~ 70, C-H ~ 50, C-Cl ~ 75)
- 
- [1] 原子視覺半徑貢獻 (Base Radius Contribution)
- --------------------------------------------------------------------------
-  - H (氫) .................... 15  (最小，確保緊湊)
-  - Row 2 (C, N, O, F) ........ 35  (基準)
-  - Row 3 (Si, P, S, Cl) ...... 40  (略大)
-  - Row 4 (Br) ................ 45
-  - Row 5 (I, Xe) ............. 50  (最大)
-
- [2] 鍵級修正係數 (Bond Order Multiplier)
- --------------------------------------------------------------------------
-  - 單鍵 (Single) ............. x 1.00
-  - 雙鍵 (Double) ............. x 0.90
-  - 參鍵 (Triple) ............. x 0.85
-
- [3] 常見鍵長計算範例 (Calculated Examples)
- --------------------------------------------------------------------------
-  Type      Calc (R1 + R2) * Multiplier      Final Value
-  -------   ---------------------------      -----------
-  H-H       (15 + 15) * 1.0                  30
-  C-H       (35 + 15) * 1.0                  50  (基準)
-  N-H       (35 + 15) * 1.0                  50
-  O-H       (35 + 15) * 1.0                  50
-  P-H       (40 + 15) * 1.0                  55
-
-  C-C       (35 + 35) * 1.0                  70  (基準)
-  C=C       (35 + 35) * 0.9                  63
-  C≡C       (35 + 35) * 0.85                 60
-  
-  C-O       (35 + 35) * 1.0                  70
-  C=O       (35 + 35) * 0.9                  63
-
-  S-O       (40 + 35) * 1.0                  75
-  S=O       (40 + 35) * 0.9                  68  (SO4, SO3)
-  
-  P-Cl      (40 + 40) * 1.0                  80  (PCl3)
-  Xe=O      (50 + 35) * 0.9                  76  (XeO3)
-  
-  F-F       (35 + 35) * 1.0                  70
-  Cl-Cl     (40 + 40) * 1.0                  80
-  I-I       (50 + 50) * 1.0                  100
- ==========================================================================
-*/
-
-
-/* 
- ==========================================================================
- 🛠️ addMol 參數開發手冊 (第 13 個參數 variantType 使用說明)
- ==========================================================================
- 格式：addMol(..., pg, variantType);
- 
- 若未填寫 variantType，系統預設為 "isomer" (綠色面板)。
- 
- 1. 🟢 同分異構物 (預設綠色): "isomer"
-    用途: 一般有機異構物 (如: 丁烷 vs 異丁烷)
-    範例: addMol("C4H10...", ..., "isomer");
-
- 2. 🟠 解離狀態 (橘黃色系): "acid"
-    用途: 酸、根、離子、鹽類切換 (如: 硫酸 vs 硫酸根)
-    範例: addMol("H2SO4...", ..., "acid");
-
- 3. ⚪ 同素異形體 (銀白色系): "allotrope"
-    用途: 同元素不同結構 (如: 金剛石 vs 石墨)
-    範例: addMol("C...", ..., "allotrope");
-
- 4. 🔴 同質異形體 (珊瑚紅色): "polymorph"
-    用途: 同成分不同晶型 (如: 氮化硼 立體 vs 平面)
-    範例: addMol("BN...", ..., "polymorph");
-
- 5. 🟣 共振結構 (紫色系): "resonance"
-    用途: 同物質不同電子排布 (如: O3, SCN-)
-    範例: addMol("离离子...", ..., "resonance");
-
- 6. 🔵 結構層次 (深藍色系): "structure"
-    用途: 單個分子與晶體堆積的切換 (如: NaCl)
-    範例: addMol("NaCl...", ..., "structure");
- ==========================================================================
-*/
-
-
-
-// ==========================================
-// [整理後] 資料注入區 (v14.0 含熔沸點數據)
-// ==========================================
-
-/// --- 1. 基礎元素與雙原子分子 (鍵長修正: H=15, 2nd=35, 3rd=40, 4th=45, 5th=50 | Double x0.9, Triple x0.85) ---
-const diatomicNames = {'H': '氫|氫氣', 'N': '氮|氮氣', 'O': '氧|氧氣', 'F': '氟|氟氣', 'Cl': '氯|氯氣', 'Br': '溴', 'I': '碘'};
-const diatomicProps = {'H': {mp: "-259.2", bp: "-252.9"}, 'N': {mp: "-210.0", bp: "-195.8"}, 'O': {mp: "-218.8", bp: "-183.0"}, 'F': {mp: "-219.7", bp: "-188.1"}, 'Cl': {mp: "-101.5", bp: "-34.0"}, 'Br': {mp: "-7.2", bp: "58.8"}, 'I': {mp: "113.7", bp: "184.3"}};
-addMol("H2|氫氣|氫", "雙原子", "s-s", ["直線型", "Linear"], "-", "-259.2", "-252.9", [{elem:"H",x:-15,y:0,z:0},{elem:"H",x:15,y:0,z:0}], [[0,1,"single"]]);
-addMol("N2|氮氣|氮", "雙原子", "sp", ["直線型", "Linear"], "-", "-210.0", "-195.8", [{elem:"N",x:-30,y:0,z:0},{elem:"N",x:30,y:0,z:0}], [[0,1,"triple"]]);
-addMol("O2|氧氣|氧", "雙原子", "sp²", ["直線型", "Linear"], "-", "-218.8", "-183.0", [{elem:"O",x:-32,y:0,z:0},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]]);
-addMol("F2|氟氣|氟", "雙原子", "sp³", ["直線型", "Linear"], "-", "-219.7", "-188.1", [{elem:"F",x:-35,y:0,z:0},{elem:"F",x:35,y:0,z:0}], [[0,1,"single"]]);
-addMol("Cl2|氯氣|氯", "雙原子", "sp³", ["直線型", "Linear"], "-", "-101.5", "-34.0", [{elem:"Cl",x:-40,y:0,z:0},{elem:"Cl",x:40,y:0,z:0}], [[0,1,"single"]]);
-addMol("Br2|溴", "雙原子", "sp³", ["直線型", "Linear"], "-", "-7.2", "58.8", [{elem:"Br",x:-45,y:0,z:0},{elem:"Br",x:45,y:0,z:0}], [[0,1,"single"]]);
-addMol("I2|碘", "雙原子", "sp³", ["直線型", "Linear"], "-", "113.7", "184.3", [{elem:"I",x:-50,y:0,z:0},{elem:"I",x:50,y:0,z:0}], [[0,1,"single"]]);
-["H2", "N2", "O2", "F2", "Cl2", "Br2", "I2"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Dinfh";
-});
-
-addMol("CO|一氧化碳", "雙原子", "sp", ["直線型","Linear"], "-", "-205.0", "-191.5", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"O",x:33,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[1,0,"coordinate_triple"]]);
-addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-164", "-152", [{elem:"N",x:-32,y:0,z:0,radical:true,lp3d:[{x:-1.2,y:1.0,z:0.35},{x:-1.2,y:1.0,z:-0.35},{x:-1.2,y:-1.0,z:0}]},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]]);
-addMol("CN -|氰根|氰離子", "雙原子", "sp", ["直線型","Linear"], "-", "-", "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"N",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
-addMol("O2 2-|過氧根離子", "O", "sp³", ["直線型","Linear"], "180°", "-", "-", [{elem:"O",x:-35,y:0,z:0,lp3d:[{x:-1,y:1.5,z:0},{x:-1,y:-0.75,z:1.3},{x:-1,y:-0.75,z:-1.3}]}, {elem:"O",x:35,y:0,z:0,lp3d:[{x:1,y:1.5,z:0},{x:1,y:-0.75,z:1.3},{x:1,y:-0.75,z:-1.3}]}], [[0,1]]);
-addMol("C2 2-|碳化物離子", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"C",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
-
-// --- 2. 鹵化氫 (HX) ---
-addMol("HF|氟化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-83.6", "19.5", [{elem:"F",x:-25,y:0,z:0}, {elem:"H",x:25,y:0,z:0}], [[0,1]]);
-addMol("HCl|氯化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-114.2", "-85.1", [{elem:"Cl",x:-28,y:0,z:0}, {elem:"H",x:28,y:0,z:0}], [[0,1]]);
-addMol("HBr|溴化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-86.8", "-66.4", [{elem:"Br",x:-30,y:0,z:0}, {elem:"H",x:30,y:0,z:0}], [[0,1]]);
-addMol("HI|碘化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-50.8", "-35.4", [{elem:"I",x:-33,y:0,z:0}, {elem:"H",x:33,y:0,z:0}], [[0,1]]);
-
-// 批次設定異核雙原子分子/離子為 Cinfv (直線非對稱)
-["CO", "NO", "CN -", "HF", "HCl", "HBr", "HI"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Cinfv";
-});
-
-// 批次設定同核雙原子離子為 Dinfh (直線中心對稱)
-["O2 2-", "C2 2-"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Dinfh";
-});
-
-// --- 3. 常見無機分子 (H2O, NH3, CH4 等) ---
-addMol("CH4|甲烷", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", "-182.5", "-161.5", getTetra("C","H", 50), [[0,1],[0,2],[0,3],[0,4]], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心碳原子採取 <strong>sp³ 混成軌域</strong>。由於周圍連接四個相同的氫原子且無孤對電子，四個 C-H 鍵之間的電子斥力完全均等，構成了完美的<strong>正四面體</strong>結構，鍵角為 <strong>109.5°</strong>。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫常壓下為無色、無味、無毒的氣體（家用天然氣的臭味是為了安全而添加的硫醇）。屬於完全對稱的<strong>非極性分子</strong>，難溶於水。由於分子量小且分子間僅有微弱的<strong>凡得瓦力</strong>（倫敦分散力），因此熔沸點極低。<br>
-            <span class="highlight-title">3. 化學性質：</span>化學性質相當穩定，在一般條件下不與強酸、強鹼或強氧化劑反應。具有可燃性，在空氣中完全燃燒生成二氧化碳與水；在紫外線光照下，可與鹵素（如氯氣）發生連鎖的<strong>自由基取代反應</strong>。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 潔淨能源 (天然氣)：</span>甲烷是<strong>天然氣</strong>的主要成分 (含量約 90% 以上)。其氫碳比 (H/C ratio) 是所有烴類中最高的，因此燃燒時產生的單位熱值極高，且碳排放量遠低於煤炭與石油，是現代發電與家庭烹飪的重要燃料。<br>
-            <span class="highlight-title">2. 未來能源 (可燃冰)：</span>在深海高壓低溫的環境下，甲烷分子會被水分子包覆，形成籠狀結晶結構的<strong>「甲烷水合物」</strong>。外觀晶瑩剔透像冰塊，卻可以直接點火燃燒，其蘊藏量極大，被視為未來最具潛力的戰略能源。<br>
-            <span class="highlight-title">3. 溫室氣體效應：</span>雖然大氣中含量遠低於二氧化碳，但甲烷的<strong>全球暖化潛勢 (GWP)</strong> 約是 CO₂ 的 25 倍。這是因為其分子結構中 C-H 鍵的特定震動模式，能非常有效地吸收地表反射的紅外線輻射熱，是造成氣候變遷的關鍵氣體之一。
-        </div>
-    </div>`, "Td");
-
-addMol("SiH4|矽烷", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-185", "-112", getTetra("Si","H", 55), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-addMol("NH3|氨系列", "N", "sp³", ["角錐形","Pyramidal"], "106.7°", "-77.7", "-33.3", [], [], { "NH3|氨|氨氣": {pg: "C3v", mp: "-77.7", bp: "-33.3", desc: "<strong>氨 (Ammonia)</strong><br>三角錐形，具有一對孤對電子，為弱鹼。", atoms: [{elem:"N",x:0,y:10,z:0,lpCount:1}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], bonds: [[0,1],[0,2],[0,3]] }, "NH4 +|銨根離子|銨離子|銨根": {pg: "Td", mp: "-", bp: "-", desc: "<strong>銨離子</strong><br>正四面體結構，是氨氣與氫離子結合的產物。", atoms: getTetra("N","H", 50), bonds: [[0,1],[0,2],[0,3],[0,4]] }, "NH2 -|胺基陰離子|胺基負離子": {pg: "C2v", mp: "-", bp: "-", desc: "<strong>胺基負離子</strong><br>氨失去一個質子後的強鹼性陰離子，V型結構，有兩對孤對電子。", atoms: [{elem:"N",x:0,y:5,z:0,lpCount:2},{elem:"H",x:35,y:-30,z:0},{elem:"H",x:-35,y:-30,z:0}], bonds: [[0,1],[0,2]] }}, null, "-", "acid");
-addMol("PH3|磷化氫系列", "P", "sp³", ["角錐形","Pyramidal"], "93.3°", "-133.8", "-87.7", [], [], { "PH3|磷化氫": {pg: "C3v", mp: "-133.8", bp: "-87.7", desc: "<strong>磷化氫</strong><br>劇毒氣體，鍵角接近90度(p軌域特性)，但VSEPR視為sp³。", atoms: [{elem:"P",x:0,y:15,z:0,lpCount:1}, {elem:"H",x:0,y:-30,z:45}, {elem:"H",x:39,y:-30,z:-22}, {elem:"H",x:-39,y:-30,z:-22}], bonds: [[0,1],[0,2],[0,3]] }, "PH4 +|鏻離子": {pg: "Td", mp: "-", bp: "-", desc: "<strong>鏻離子</strong><br>結構類似銨根，由膦與氫離子形成。", atoms: getTetra("P","H", 55), bonds: [[0,1],[0,2],[0,3],[0,4]] }}, null, "-", "acid");
-// AA
-addMol("H2O|水系列", "O", "sp³", ["角形","Bent"], "104.5°", "0.0", "100.0", [], [], { "H2O|水|水分子": {pg: "C2v",mp: "0.0", bp: "100.0", desc: "<strong>水</strong><br>生命的基石，V型結構，中心氧原子有兩對孤對電子。", atoms: [{elem:"O",x:0,y:5,z:0,lpCount:2}, {elem:"H",x:38,y:-28,z:0}, {elem:"H",x:-38,y:-28,z:0}], bonds: [[0,1],[0,2]] }, "H3O +|水合氫離子|鋞離子": { pg: "C3v",mp: "-", bp: "-", desc: "<strong>水合氫離子</strong><br>水中氫離子的實際存在形式，三角錐形。", atoms: [{elem:"O",x:0,y:10,z:0,lpCount:1}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], bonds: [[0,1],[0,2],[0,3]] }, "OH -|氫氧根|氫氧根離子": { pg: "Cinfv",mp: "-", bp: "-", desc: "<strong>氫氧根</strong><br>強鹼的特徵離子，氧原子周圍有三對孤對電子，帶負電。", atoms: [{elem:"O",x:-20,y:0,z:0,lpCount:3},{elem:"H",x:25,y:0,z:0}], bonds: [[0,1]] }}, null, "-", "acid");
-
-
-addMol("H2S|硫化氫系列", "S", "sp³", ["角形","Bent"], "92.1°", "-85.5", "-60.3", [], [], { "H2S|硫化氫|氫硫酸": {pg: "C2v", mp: "-85.5", bp: "-60.3", desc: "<strong>硫化氫</strong><br>具有腐敗雞蛋味的氣體，V型結構。", atoms: [{elem:"S",x:0,y:5,z:0,lpCount:2}, {elem:"H",x:40,y:-35,z:0}, {elem:"H",x:-40,y:-35,z:0}], bonds: [[0,1],[0,2]] }, "HS -|硫氫根": {pg: "Cinfv", mp: "-", bp: "-", desc: "<strong>氫硫根</strong><br>硫化氫的一級解離產物，硫原子有三對孤對電子。", atoms: [{elem:"S",x:-20,y:0,z:0,lpCount:3},{elem:"H",x:30,y:0,z:0}], bonds: [[0,1]] }}, null, "-", "acid");
-
-// --- 4. 鹵化物系列 (全資料補完與鍵長修正) ---
-const halideProps = { "BF3": ["-126.8", "-100.3"], "BCl3": ["-107", "12.6"], "BBr3": ["-46", "91.3"], "BI3": ["49.9", "210"], "AlF3": ["1290 (昇華)", "-"], "AlCl3": ["192.4", "120 (昇華)"], "AlBr3": ["97.5", "255"], "AlI3": ["191", "360"], "CF4": ["-183.6", "-127.8"], "CCl4": ["-22.9", "76.7"], "CBr4": ["90.1", "189.5"], "CI4": ["171 (分解)", "-"], "SiF4": ["-90", "-86 (昇華)"], "SiCl4": ["-70", "57.7"], "SiBr4": ["5", "154"], "SiI4": ["120.5", "287.5"], "NF3": ["-206.8", "-129"], "NCl3": ["-40", "71"], "NBr3": ["-100", "爆炸"], "NI3": ["-", "爆炸"], "PF3": ["-151.5", "-101.8"], "PCl3": ["-93.6", "76.1"], "PBr3": ["-41.5", "173.2"], "PI3": ["61", "分解"], "OF2": ["-223.8", "-144.8"], "OCl2": ["-135", "2.0"], "OBr2": ["-", "-"], "OI2": ["-", "-"], "SF2": ["-", "-"], "SCl2": ["-121", "59 (分解)"], "SBr2": ["-", "-"], "SI2": ["-", "-"] };
-const haloNames = {'F':'氟', 'Cl':'氯', 'Br':'溴', 'I':'碘'};
-    addMol("Al2Cl6|六氯化二鋁", "Al", "sp³", ["邊對邊雙四面體","Edge-sharing Bitetrahedron"], "79°, 91°, 123°", "192.4", "180 (昇華)", [{elem:"Al",x:71,y:0,z:0},{elem:"Al",x:-71,y:0,z:0},{elem:"Cl",x:0,y:-71,z:0},{elem:"Cl",x:0,y:71,z:0},{elem:"Cl",x:119,y:0,z:82},{elem:"Cl",x:119,y:0,z:-82},{elem:"Cl",x:-119,y:0,z:82},{elem:"Cl",x:-119,y:0,z:-82}], [[0,2],[0,3],[1,2],[1,3],[0,4],[0,5],[1,6],[1,7]], null, null, "D2h");
-
-['F','Cl','Br','I'].forEach(X => {
-    const hn = haloNames[X]; let rX = (X==='F'?35: (X==='Cl'?40: (X==='Br'?45:50)));
-    
-    // BX3 系列
-    let p = halideProps[`B${X}3`] || ["-","-"]; 
-    addMol(`B${X}3|三${hn}化硼`, "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", p[0], p[1], getTrigPlanar("B", X, 35+rX), [[0,1],[0,2],[0,3]], null, null, "D3h");
-    
-    // AlX3 系列
-    p = halideProps[`Al${X}3`] || ["-","-"]; 
-    addMol(`Al${X}3|三${hn}化鋁`, "Al", "sp²", ["平面三角形","Trigonal Planar"], "120°", p[0], p[1], getTrigPlanar("Al", X, 40+rX), [[0,1],[0,2],[0,3]], null, null, "D3h");
-    
-    // CX4 系列
-    p = halideProps[`C${X}4`] || ["-","-"]; 
-    addMol(`C${X}4|四${hn}化碳|四${hn}甲烷`, "C", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("C", X, 35+rX), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-    
-    // SiX4 系列
-    if(X !== 'Cl') { 
-        p = halideProps[`Si${X}4`] || ["-","-"]; 
-        addMol(`Si${X}4|四${hn}化矽`, "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("Si", X, 40+rX), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td"); 
+(addMetal_BCC("\x4c\x69", "\u92f0", "\x31\x38\x30\x2e\x35", "\x31\x33\x34\x32"),
+  addMetal_BCC("\x4e\x61", "\u9209", "\x39\x37\x2e\x38", "\x38\x38\x33"),
+  addMetal_BCC("\x4b", "\u9240", "\x36\x33\x2e\x35", "\x37\x35\x39"),
+  addMetal_BCC("\x52\x62", "\u92a3", "\x33\x39\x2e\x33", "\x36\x38\x38"),
+  addMetal_BCC("\x43\x73", "\u92ab", "\x32\x38\x2e\x34", "\x36\x37\x31"),
+  addMetal_HCP("\x42\x65", "\u9239", "\x31\x32\x38\x37", "\x32\x34\x36\x39"),
+  addMetal_HCP("\x4d\x67", "\u9382", "\x36\x35\x30", "\x31\x30\x39\x30"),
+  addMetal_FCC("\x43\x61", "\u9223", "\x38\x34\x32", "\x31\x34\x38\x34"),
+  addMetal_FCC("\x53\x72", "\u9376", "\x37\x37\x37", "\x31\x33\x38\x32"),
+  addMetal_BCC("\x42\x61", "\u92c7", "\x37\x32\x37", "\x31\x38\x39\x37"),
+  addMetal_SC("\x50\x6f", "\u91d9", "\x32\x35\x34", "\x39\x36\x32"),
+  addMetal_BCC("\x46\x65", "\u9435\x20\x28\u03b1\x29", "\x31\x35\x33\x38", "\x32\x38\x36\x31"),
+  addMetal_FCC("\x43\x75", "\u9285", "\x31\x30\x38\x35", "\x32\x35\x36\x32"),
+  addMetal_FCC("\x41\x67", "\u9280", "\x39\x36\x31\x2e\x38", "\x32\x31\x36\x32"),
+  addMetal_FCC("\x41\x75", "\u91d1", "\x31\x30\x36\x34", "\x32\x39\x37\x30"),
+  addMetal_FCC("\x41\x6c", "\u92c1", "\x36\x36\x30", "\x32\x35\x31\x39"),
+  addMetal_HCP("\x5a\x6e", "\u92c5", "\x34\x31\x39\x2e\x35", "\x39\x30\x37"),
+  addMetal_HCP("\x54\x69", "\u9226", "\x31\x36\x36\x38", "\x33\x32\x38\x37"));
+const diatomicNames = { "\x48": "\u6c2b\x7c\u6c2b\u6c23", "\x4e": "\u6c2e\x7c\u6c2e\u6c23", "\x4f": "\u6c27\x7c\u6c27\u6c23", "\x46": "\u6c1f\x7c\u6c1f\u6c23", "\x43\x6c": "\u6c2f\x7c\u6c2f\u6c23", "\x42\x72": "\u6eb4", "\x49": "\u7898" },
+  diatomicProps = {
+    "\x48": { "\x6d\x70": "\x2d\x32\x35\x39\x2e\x32", "\x62\x70": "\x2d\x32\x35\x32\x2e\x39" },
+    "\x4e": { "\x6d\x70": "\x2d\x32\x31\x30\x2e\x30", "\x62\x70": "\x2d\x31\x39\x35\x2e\x38" },
+    "\x4f": { "\x6d\x70": "\x2d\x32\x31\x38\x2e\x38", "\x62\x70": "\x2d\x31\x38\x33\x2e\x30" },
+    "\x46": { "\x6d\x70": "\x2d\x32\x31\x39\x2e\x37", "\x62\x70": "\x2d\x31\x38\x38\x2e\x31" },
+    "\x43\x6c": { "\x6d\x70": "\x2d\x31\x30\x31\x2e\x35", "\x62\x70": "\x2d\x33\x34\x2e\x30" },
+    "\x42\x72": { "\x6d\x70": "\x2d\x37\x2e\x32", "\x62\x70": "\x35\x38\x2e\x38" },
+    "\x49": { "\x6d\x70": "\x31\x31\x33\x2e\x37", "\x62\x70": "\x31\x38\x34\x2e\x33" },
+  };
+(addMol(
+  "\x48\x32\x7c\u6c2b\u6c23\x7c\u6c2b",
+  "\u96d9\u539f\u5b50",
+  "\x73\x2d\x73",
+  ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+  "\x2d",
+  "\x2d\x32\x35\x39\x2e\x32",
+  "\x2d\x32\x35\x32\x2e\x39",
+  [
+    { "\x65\x6c\x65\x6d": "\x48", "\x78": -0xf, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": "\x48", "\x78": 0xf, "\x79": 0x0, "\x7a": 0x0 },
+  ],
+  [[0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"]],
+),
+  addMol(
+    "\x4e\x32\x7c\u6c2e\u6c23\x7c\u6c2e",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x32\x31\x30\x2e\x30",
+    "\x2d\x31\x39\x35\x2e\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"]],
+  ),
+  addMol(
+    "\x4f\x32\x7c\u6c27\u6c23\x7c\u6c27",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b2",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x32\x31\x38\x2e\x38",
+    "\x2d\x31\x38\x33\x2e\x30",
+    [
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x20, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x20, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"]],
+  ),
+  addMol(
+    "\x46\x32\x7c\u6c1f\u6c23\x7c\u6c1f",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x32\x31\x39\x2e\x37",
+    "\x2d\x31\x38\x38\x2e\x31",
+    [
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x23, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x23, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"]],
+  ),
+  addMol(
+    "\x43\x6c\x32\x7c\u6c2f\u6c23\x7c\u6c2f",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x31\x30\x31\x2e\x35",
+    "\x2d\x33\x34\x2e\x30",
+    [
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x28, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x28, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"]],
+  ),
+  addMol(
+    "\x42\x72\x32\x7c\u6eb4",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x37\x2e\x32",
+    "\x35\x38\x2e\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": -0x2d, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x2d, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"]],
+  ),
+  addMol(
+    "\x49\x32\x7c\u7898",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x31\x31\x33\x2e\x37",
+    "\x31\x38\x34\x2e\x33",
+    [
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": -0x32, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x32, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"]],
+  ),
+  ["\x48\x32", "\x4e\x32", "\x4f\x32", "\x46\x32", "\x43\x6c\x32", "\x42\x72\x32", "\x49\x32"]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x292556) => {
+    if (MOLECULE_DB[_0x292556]) MOLECULE_DB[_0x292556]["\x70\x67"] = "\x44\x69\x6e\x66\x68";
+  }),
+  addMol(
+    "\x43\x4f\x7c\u4e00\u6c27\u5316\u78b3",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x32\x30\x35\x2e\x30",
+    "\x2d\x31\x39\x31\x2e\x35",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x21, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+    ],
+    [[0x1, 0x0, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65\x5f\x74\x72\x69\x70\x6c\x65"]],
+  ),
+  addMol(
+    "\x4e\x4f\x7c\u4e00\u6c27\u5316\u6c2e",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b2",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x31\x36\x34",
+    "\x2d\x31\x35\x32",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x4e",
+        "\x78": -0x20,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x72\x61\x64\x69\x63\x61\x6c": !![],
+        "\x6c\x70\x33\x64": [
+          { "\x78": -1.2, "\x79": 0x1, "\x7a": 0.35 },
+          { "\x78": -1.2, "\x79": 0x1, "\x7a": -0.35 },
+          { "\x78": -1.2, "\x79": -0x1, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x20, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"]],
+  ),
+  addMol(
+    "\x43\x4e\x20\x2d\x7c\u6c30\u6839\x7c\u6c30\u96e2\u5b50",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+    ],
+    [[0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"]],
+  ),
+  addMol(
+    "\x4f\x32\x20\x32\x2d\x7c\u904e\u6c27\u6839\u96e2\u5b50",
+    "\x4f",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x4f",
+        "\x78": -0x23,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": -0x1, "\x79": 1.5, "\x7a": 0x0 },
+          { "\x78": -0x1, "\x79": -0.75, "\x7a": 1.3 },
+          { "\x78": -0x1, "\x79": -0.75, "\x7a": -1.3 },
+        ],
+      },
+      {
+        "\x65\x6c\x65\x6d": "\x4f",
+        "\x78": 0x23,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x1, "\x79": 1.5, "\x7a": 0x0 },
+          { "\x78": 0x1, "\x79": -0.75, "\x7a": 1.3 },
+          { "\x78": 0x1, "\x79": -0.75, "\x7a": -1.3 },
+        ],
+      },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    "\x43\x32\x20\x32\x2d\x7c\u78b3\u5316\u7269\u96e2\u5b50",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+    ],
+    [[0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"]],
+  ),
+  addMol(
+    "\x48\x46\x7c\u6c1f\u5316\u6c2b",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x38\x33\x2e\x36",
+    "\x31\x39\x2e\x35",
+    [
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x19, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x19, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    "\x48\x43\x6c\x7c\u6c2f\u5316\u6c2b",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x31\x31\x34\x2e\x32",
+    "\x2d\x38\x35\x2e\x31",
+    [
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x1c, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x1c, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    "\x48\x42\x72\x7c\u6eb4\u5316\u6c2b",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x38\x36\x2e\x38",
+    "\x2d\x36\x36\x2e\x34",
+    [
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    "\x48\x49\x7c\u7898\u5316\u6c2b",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b3",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x35\x30\x2e\x38",
+    "\x2d\x33\x35\x2e\x34",
+    [
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": -0x21, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x21, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  ["\x43\x4f", "\x4e\x4f", "\x43\x4e\x20\x2d", "\x48\x46", "\x48\x43\x6c", "\x48\x42\x72", "\x48\x49"]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x5dc4a0) => {
+    if (MOLECULE_DB[_0x5dc4a0]) MOLECULE_DB[_0x5dc4a0]["\x70\x67"] = "\x43\x69\x6e\x66\x76";
+  }),
+  ["\x4f\x32\x20\x32\x2d", "\x43\x32\x20\x32\x2d"]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x19986c) => {
+    if (MOLECULE_DB[_0x19986c]) MOLECULE_DB[_0x19986c]["\x70\x67"] = "\x44\x69\x6e\x66\x68";
+  }),
+  addMol(
+    "\x43\x48\x34\x7c\u7532\u70f7",
+    "\x43",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x31\x38\x32\x2e\x35",
+    "\x2d\x31\x36\x31\x2e\x35",
+    getTetra("\x43", "\x48", 0x32),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4e2d\u5fc3\u78b3\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u7531\u65bc\u5468\u570d\u9023\u63a5\u56db\u500b\u76f8\u540c\u7684\u6c2b\u539f\u5b50\u4e14\u7121\u5b64\u5c0d\u96fb\u5b50\uff0c\u56db\u500b\x20\x43\x2d\x48\x20\u9375\u4e4b\u9593\u7684\u96fb\u5b50\u65a5\u529b\u5b8c\u5168\u5747\u7b49\uff0c\u69cb\u6210\u4e86\u5b8c\u7f8e\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b63\u56db\u9762\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7d50\u69cb\uff0c\u9375\u89d2\u70ba\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x30\x39\x2e\x35\u00b0\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5e38\u6eab\u5e38\u58d3\u4e0b\u70ba\u7121\u8272\u3001\u7121\u5473\u3001\u7121\u6bd2\u7684\u6c23\u9ad4\uff08\u5bb6\u7528\u5929\u7136\u6c23\u7684\u81ed\u5473\u662f\u70ba\u4e86\u5b89\u5168\u800c\u6dfb\u52a0\u7684\u786b\u9187\uff09\u3002\u5c6c\u65bc\u5b8c\u5168\u5c0d\u7a31\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u975e\u6975\u6027\u5206\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u96e3\u6eb6\u65bc\u6c34\u3002\u7531\u65bc\u5206\u5b50\u91cf\u5c0f\u4e14\u5206\u5b50\u9593\u50c5\u6709\u5fae\u5f31\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u51e1\u5f97\u74e6\u529b\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff08\u502b\u6566\u5206\u6563\u529b\uff09\uff0c\u56e0\u6b64\u7194\u6cb8\u9ede\u6975\u4f4e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5316\u5b78\u6027\u8cea\u76f8\u7576\u7a69\u5b9a\uff0c\u5728\u4e00\u822c\u689d\u4ef6\u4e0b\u4e0d\u8207\u5f37\u9178\u3001\u5f37\u9e7c\u6216\u5f37\u6c27\u5316\u5291\u53cd\u61c9\u3002\u5177\u6709\u53ef\u71c3\u6027\uff0c\u5728\u7a7a\u6c23\u4e2d\u5b8c\u5168\u71c3\u71d2\u751f\u6210\u4e8c\u6c27\u5316\u78b3\u8207\u6c34\uff1b\u5728\u7d2b\u5916\u7dda\u5149\u7167\u4e0b\uff0c\u53ef\u8207\u9e75\u7d20\uff08\u5982\u6c2f\u6c23\uff09\u767c\u751f\u9023\u9396\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u81ea\u7531\u57fa\u53d6\u4ee3\u53cd\u61c9\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u6f54\u6de8\u80fd\u6e90\x20\x28\u5929\u7136\u6c23\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7532\u70f7\u662f\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5929\u7136\u6c23\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7684\u4e3b\u8981\u6210\u5206\x20\x28\u542b\u91cf\u7d04\x20\x39\x30\x25\x20\u4ee5\u4e0a\x29\u3002\u5176\u6c2b\u78b3\u6bd4\x20\x28\x48\x2f\x43\x20\x72\x61\x74\x69\x6f\x29\x20\u662f\u6240\u6709\u70f4\u985e\u4e2d\u6700\u9ad8\u7684\uff0c\u56e0\u6b64\u71c3\u71d2\u6642\u7522\u751f\u7684\u55ae\u4f4d\u71b1\u503c\u6975\u9ad8\uff0c\u4e14\u78b3\u6392\u653e\u91cf\u9060\u4f4e\u65bc\u7164\u70ad\u8207\u77f3\u6cb9\uff0c\u662f\u73fe\u4ee3\u767c\u96fb\u8207\u5bb6\u5ead\u70f9\u98ea\u7684\u91cd\u8981\u71c3\u6599\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u672a\u4f86\u80fd\u6e90\x20\x28\u53ef\u71c3\u51b0\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u6df1\u6d77\u9ad8\u58d3\u4f4e\u6eab\u7684\u74b0\u5883\u4e0b\uff0c\u7532\u70f7\u5206\u5b50\u6703\u88ab\u6c34\u5206\u5b50\u5305\u8986\uff0c\u5f62\u6210\u7c60\u72c0\u7d50\u6676\u7d50\u69cb\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u300c\u7532\u70f7\u6c34\u5408\u7269\u300d\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u5916\u89c0\u6676\u7469\u5254\u900f\u50cf\u51b0\u584a\uff0c\u537b\u53ef\u4ee5\u76f4\u63a5\u9ede\u706b\u71c3\u71d2\uff0c\u5176\u860a\u85cf\u91cf\u6975\u5927\uff0c\u88ab\u8996\u70ba\u672a\u4f86\u6700\u5177\u6f5b\u529b\u7684\u6230\u7565\u80fd\u6e90\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u6eab\u5ba4\u6c23\u9ad4\u6548\u61c9\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u96d6\u7136\u5927\u6c23\u4e2d\u542b\u91cf\u9060\u4f4e\u65bc\u4e8c\u6c27\u5316\u78b3\uff0c\u4f46\u7532\u70f7\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5168\u7403\u6696\u5316\u6f5b\u52e2\x20\x28\x47\x57\x50\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u7d04\u662f\x20\x43\x4f\u2082\x20\u7684\x20\x32\x35\x20\u500d\u3002\u9019\u662f\u56e0\u70ba\u5176\u5206\u5b50\u7d50\u69cb\u4e2d\x20\x43\x2d\x48\x20\u9375\u7684\u7279\u5b9a\u9707\u52d5\u6a21\u5f0f\uff0c\u80fd\u975e\u5e38\u6709\u6548\u5730\u5438\u6536\u5730\u8868\u53cd\u5c04\u7684\u7d05\u5916\u7dda\u8f3b\u5c04\u71b1\uff0c\u662f\u9020\u6210\u6c23\u5019\u8b8a\u9077\u7684\u95dc\u9375\u6c23\u9ad4\u4e4b\u4e00\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x54\x64",
+  ),
+  addMol(
+    "\x53\x69\x48\x34\x7c\u77fd\u70f7",
+    "\x53\x69",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x31\x38\x35",
+    "\x2d\x31\x31\x32",
+    getTetra("\x53\x69", "\x48", 0x37),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x54\x64",
+  ),
+  addMol(
+    "\x4e\x48\x33\x7c\u6c28\u7cfb\u5217",
+    "\x4e",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x36\x2e\x37\u00b0",
+    "\x2d\x37\x37\x2e\x37",
+    "\x2d\x33\x33\x2e\x33",
+    [],
+    [],
+    {
+      "\x4e\x48\x33\x7c\u6c28\x7c\u6c28\u6c23": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d\x37\x37\x2e\x37",
+        "\x62\x70": "\x2d\x33\x33\x2e\x33",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c28\x20\x28\x41\x6d\x6d\x6f\x6e\x69\x61\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e09\u89d2\u9310\u5f62\uff0c\u5177\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\uff0c\u70ba\u5f31\u9e7c\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x19, "\x7a": 0x28 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x23, "\x79": -0x19, "\x7a": -0x14 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x23, "\x79": -0x19, "\x7a": -0x14 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "\x4e\x48\x34\x20\x2b\x7c\u92a8\u6839\u96e2\u5b50\x7c\u92a8\u96e2\u5b50\x7c\u92a8\u6839": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u92a8\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6b63\u56db\u9762\u9ad4\u7d50\u69cb\uff0c\u662f\u6c28\u6c23\u8207\u6c2b\u96e2\u5b50\u7d50\u5408\u7684\u7522\u7269\u3002",
+        "\x61\x74\x6f\x6d\x73": getTetra("\x4e", "\x48", 0x32),
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x4e\x48\x32\x20\x2d\x7c\u80fa\u57fa\u9670\u96e2\u5b50\x7c\u80fa\u57fa\u8ca0\u96e2\u5b50": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u80fa\u57fa\u8ca0\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6c28\u5931\u53bb\u4e00\u500b\u8cea\u5b50\u5f8c\u7684\u5f37\u9e7c\u6027\u9670\u96e2\u5b50\uff0c\x56\u578b\u7d50\u69cb\uff0c\u6709\u5169\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x23, "\x79": -0x1e, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x23, "\x79": -0x1e, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x50\x48\x33\x7c\u78f7\u5316\u6c2b\u7cfb\u5217",
+    "\x50",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x33\x2e\x33\u00b0",
+    "\x2d\x31\x33\x33\x2e\x38",
+    "\x2d\x38\x37\x2e\x37",
+    [],
+    [],
+    {
+      "\x50\x48\x33\x7c\u78f7\u5316\u6c2b": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d\x31\x33\x33\x2e\x38",
+        "\x62\x70": "\x2d\x38\x37\x2e\x37",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u5316\u6c2b\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5287\u6bd2\u6c23\u9ad4\uff0c\u9375\u89d2\u63a5\u8fd1\x39\x30\u5ea6\x28\x70\u8ecc\u57df\u7279\u6027\x29\uff0c\u4f46\x56\x53\x45\x50\x52\u8996\u70ba\x73\x70\u00b3\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x2d },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x27, "\x79": -0x1e, "\x7a": -0x16 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x27, "\x79": -0x1e, "\x7a": -0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "\x50\x48\x34\x20\x2b\x7c\u93fb\u96e2\u5b50": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u93fb\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7d50\u69cb\u985e\u4f3c\u92a8\u6839\uff0c\u7531\u81a6\u8207\u6c2b\u96e2\u5b50\u5f62\u6210\u3002",
+        "\x61\x74\x6f\x6d\x73": getTetra("\x50", "\x48", 0x37),
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x32\x4f\x7c\u6c34\u7cfb\u5217",
+    "\x4f",
+    "\x73\x70\u00b3",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x30\x34\x2e\x35\u00b0",
+    "\x30\x2e\x30",
+    "\x31\x30\x30\x2e\x30",
+    [],
+    [],
+    {
+      "\x48\x32\x4f\x7c\u6c34\x7c\u6c34\u5206\u5b50": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x30\x2e\x30",
+        "\x62\x70": "\x31\x30\x30\x2e\x30",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c34\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u751f\u547d\u7684\u57fa\u77f3\uff0c\x56\u578b\u7d50\u69cb\uff0c\u4e2d\u5fc3\u6c27\u539f\u5b50\u6709\u5169\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x26, "\x79": -0x1c, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x26, "\x79": -0x1c, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "\x48\x33\x4f\x20\x2b\x7c\u6c34\u5408\u6c2b\u96e2\u5b50\x7c\u92de\u96e2\u5b50": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c34\u5408\u6c2b\u96e2\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6c34\u4e2d\u6c2b\u96e2\u5b50\u7684\u5be6\u969b\u5b58\u5728\u5f62\u5f0f\uff0c\u4e09\u89d2\u9310\u5f62\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x19, "\x7a": 0x28 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x23, "\x79": -0x19, "\x7a": -0x14 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x23, "\x79": -0x19, "\x7a": -0x14 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "\x4f\x48\x20\x2d\x7c\u6c2b\u6c27\u6839\x7c\u6c2b\u6c27\u6839\u96e2\u5b50": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2b\u6c27\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9e7c\u7684\u7279\u5fb5\u96e2\u5b50\uff0c\u6c27\u539f\u5b50\u5468\u570d\u6709\u4e09\u5c0d\u5b64\u5c0d\u96fb\u5b50\uff0c\u5e36\u8ca0\u96fb\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x14, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x19, "\x79": 0x0, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [[0x0, 0x1]],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x32\x53\x7c\u786b\u5316\u6c2b\u7cfb\u5217",
+    "\x53",
+    "\x73\x70\u00b3",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x39\x32\x2e\x31\u00b0",
+    "\x2d\x38\x35\x2e\x35",
+    "\x2d\x36\x30\x2e\x33",
+    [],
+    [],
+    {
+      "\x48\x32\x53\x7c\u786b\u5316\u6c2b\x7c\u6c2b\u786b\u9178": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d\x38\x35\x2e\x35",
+        "\x62\x70": "\x2d\x36\x30\x2e\x33",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u5316\u6c2b\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5177\u6709\u8150\u6557\u96de\u86cb\u5473\u7684\u6c23\u9ad4\uff0c\x56\u578b\u7d50\u69cb\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x28, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x28, "\x79": -0x23, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "\x48\x53\x20\x2d\x7c\u786b\u6c2b\u6839": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2b\u786b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u786b\u5316\u6c2b\u7684\u4e00\u7d1a\u89e3\u96e2\u7522\u7269\uff0c\u786b\u539f\u5b50\u6709\u4e09\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": -0x14, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [[0x0, 0x1]],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ));
+const halideProps = {
+    "\x42\x46\x33": ["\x2d\x31\x32\x36\x2e\x38", "\x2d\x31\x30\x30\x2e\x33"],
+    "\x42\x43\x6c\x33": ["\x2d\x31\x30\x37", "\x31\x32\x2e\x36"],
+    "\x42\x42\x72\x33": ["\x2d\x34\x36", "\x39\x31\x2e\x33"],
+    "\x42\x49\x33": ["\x34\x39\x2e\x39", "\x32\x31\x30"],
+    "\x41\x6c\x46\x33": ["\x31\x32\x39\x30\x20\x28\u6607\u83ef\x29", "\x2d"],
+    "\x41\x6c\x43\x6c\x33": ["\x31\x39\x32\x2e\x34", "\x31\x32\x30\x20\x28\u6607\u83ef\x29"],
+    "\x41\x6c\x42\x72\x33": ["\x39\x37\x2e\x35", "\x32\x35\x35"],
+    "\x41\x6c\x49\x33": ["\x31\x39\x31", "\x33\x36\x30"],
+    "\x43\x46\x34": ["\x2d\x31\x38\x33\x2e\x36", "\x2d\x31\x32\x37\x2e\x38"],
+    "\x43\x43\x6c\x34": ["\x2d\x32\x32\x2e\x39", "\x37\x36\x2e\x37"],
+    "\x43\x42\x72\x34": ["\x39\x30\x2e\x31", "\x31\x38\x39\x2e\x35"],
+    "\x43\x49\x34": ["\x31\x37\x31\x20\x28\u5206\u89e3\x29", "\x2d"],
+    "\x53\x69\x46\x34": ["\x2d\x39\x30", "\x2d\x38\x36\x20\x28\u6607\u83ef\x29"],
+    "\x53\x69\x43\x6c\x34": ["\x2d\x37\x30", "\x35\x37\x2e\x37"],
+    "\x53\x69\x42\x72\x34": ["\x35", "\x31\x35\x34"],
+    "\x53\x69\x49\x34": ["\x31\x32\x30\x2e\x35", "\x32\x38\x37\x2e\x35"],
+    "\x4e\x46\x33": ["\x2d\x32\x30\x36\x2e\x38", "\x2d\x31\x32\x39"],
+    "\x4e\x43\x6c\x33": ["\x2d\x34\x30", "\x37\x31"],
+    "\x4e\x42\x72\x33": ["\x2d\x31\x30\x30", "\u7206\u70b8"],
+    "\x4e\x49\x33": ["\x2d", "\u7206\u70b8"],
+    "\x50\x46\x33": ["\x2d\x31\x35\x31\x2e\x35", "\x2d\x31\x30\x31\x2e\x38"],
+    "\x50\x43\x6c\x33": ["\x2d\x39\x33\x2e\x36", "\x37\x36\x2e\x31"],
+    "\x50\x42\x72\x33": ["\x2d\x34\x31\x2e\x35", "\x31\x37\x33\x2e\x32"],
+    "\x50\x49\x33": ["\x36\x31", "\u5206\u89e3"],
+    "\x4f\x46\x32": ["\x2d\x32\x32\x33\x2e\x38", "\x2d\x31\x34\x34\x2e\x38"],
+    "\x4f\x43\x6c\x32": ["\x2d\x31\x33\x35", "\x32\x2e\x30"],
+    "\x4f\x42\x72\x32": ["\x2d", "\x2d"],
+    "\x4f\x49\x32": ["\x2d", "\x2d"],
+    "\x53\x46\x32": ["\x2d", "\x2d"],
+    "\x53\x43\x6c\x32": ["\x2d\x31\x32\x31", "\x35\x39\x20\x28\u5206\u89e3\x29"],
+    "\x53\x42\x72\x32": ["\x2d", "\x2d"],
+    "\x53\x49\x32": ["\x2d", "\x2d"],
+  },
+  haloNames = { "\x46": "\u6c1f", "\x43\x6c": "\u6c2f", "\x42\x72": "\u6eb4", "\x49": "\u7898" };
+(addMol(
+  "\x41\x6c\x32\x43\x6c\x36\x7c\u516d\u6c2f\u5316\u4e8c\u92c1",
+  "\x41\x6c",
+  "\x73\x70\u00b3",
+  ["\u908a\u5c0d\u908a\u96d9\u56db\u9762\u9ad4", "\x45\x64\x67\x65\x2d\x73\x68\x61\x72\x69\x6e\x67\x20\x42\x69\x74\x65\x74\x72\x61\x68\x65\x64\x72\x6f\x6e"],
+  "\x37\x39\u00b0\x2c\x20\x39\x31\u00b0\x2c\x20\x31\x32\x33\u00b0",
+  "\x31\x39\x32\x2e\x34",
+  "\x31\x38\x30\x20\x28\u6607\u83ef\x29",
+  [
+    { "\x65\x6c\x65\x6d": "\x41\x6c", "\x78": 0x47, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": "\x41\x6c", "\x78": -0x47, "\x79": 0x0, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": -0x47, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x47, "\x7a": 0x0 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x77, "\x79": 0x0, "\x7a": 0x52 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x77, "\x79": 0x0, "\x7a": -0x52 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x77, "\x79": 0x0, "\x7a": 0x52 },
+    { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x77, "\x79": 0x0, "\x7a": -0x52 },
+  ],
+  [
+    [0x0, 0x2],
+    [0x0, 0x3],
+    [0x1, 0x2],
+    [0x1, 0x3],
+    [0x0, 0x4],
+    [0x0, 0x5],
+    [0x1, 0x6],
+    [0x1, 0x7],
+  ],
+  null,
+  null,
+  "\x44\x32\x68",
+),
+  ["\x46", "\x43\x6c", "\x42\x72", "\x49"]["\x66\x6f\x72\x45\x61\x63\x68"]((_0x1bc2a9) => {
+    const _0x511bbc = haloNames[_0x1bc2a9];
+    let _0x5e8470 = _0x1bc2a9 === "\x46" ? 0x23 : _0x1bc2a9 === "\x43\x6c" ? 0x28 : _0x1bc2a9 === "\x42\x72" ? 0x2d : 0x32,
+      _0x44f6f9 = halideProps["\x42" + _0x1bc2a9 + "\x33"] || ["\x2d", "\x2d"];
+    (addMol(
+      "\x42" + _0x1bc2a9 + "\x33\x7c\u4e09" + _0x511bbc + "\u5316\u787c",
+      "\x42",
+      "\x73\x70\u00b2",
+      ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+      "\x31\x32\x30\u00b0",
+      _0x44f6f9[0x0],
+      _0x44f6f9[0x1],
+      getTrigPlanar("\x42", _0x1bc2a9, 0x23 + _0x5e8470),
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+        [0x0, 0x3],
+      ],
+      null,
+      null,
+      "\x44\x33\x68",
+    ),
+      (_0x44f6f9 = halideProps["\x41\x6c" + _0x1bc2a9 + "\x33"] || ["\x2d", "\x2d"]),
+      addMol(
+        "\x41\x6c" + _0x1bc2a9 + "\x33\x7c\u4e09" + _0x511bbc + "\u5316\u92c1",
+        "\x41\x6c",
+        "\x73\x70\u00b2",
+        ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+        "\x31\x32\x30\u00b0",
+        _0x44f6f9[0x0],
+        _0x44f6f9[0x1],
+        getTrigPlanar("\x41\x6c", _0x1bc2a9, 0x28 + _0x5e8470),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+        null,
+        null,
+        "\x44\x33\x68",
+      ),
+      (_0x44f6f9 = halideProps["\x43" + _0x1bc2a9 + "\x34"] || ["\x2d", "\x2d"]),
+      addMol(
+        "\x43" + _0x1bc2a9 + "\x34\x7c\u56db" + _0x511bbc + "\u5316\u78b3\x7c\u56db" + _0x511bbc + "\u7532\u70f7",
+        "\x43",
+        "\x73\x70\u00b3",
+        ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+        "\x31\x30\x39\x2e\x35\u00b0",
+        _0x44f6f9[0x0],
+        _0x44f6f9[0x1],
+        getTetra("\x43", _0x1bc2a9, 0x23 + _0x5e8470),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+        null,
+        null,
+        "\x54\x64",
+      ));
+    _0x1bc2a9 !== "\x43\x6c" &&
+      ((_0x44f6f9 = halideProps["\x53\x69" + _0x1bc2a9 + "\x34"] || ["\x2d", "\x2d"]),
+      addMol(
+        "\x53\x69" + _0x1bc2a9 + "\x34\x7c\u56db" + _0x511bbc + "\u5316\u77fd",
+        "\x53\x69",
+        "\x73\x70\u00b3",
+        ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+        "\x31\x30\x39\x2e\x35\u00b0",
+        _0x44f6f9[0x0],
+        _0x44f6f9[0x1],
+        getTetra("\x53\x69", _0x1bc2a9, 0x28 + _0x5e8470),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+        null,
+        null,
+        "\x54\x64",
+      ));
+    _0x44f6f9 = halideProps["\x4e" + _0x1bc2a9 + "\x33"] || ["\x2d", "\x2d"];
+    let _0x29df25 = 0x23 + _0x5e8470,
+      _0x2d5c60 = _0x29df25 * 0.85,
+      _0x282c89 = _0x29df25 * 0.5;
+    addMol(
+      "\x4e" + _0x1bc2a9 + "\x33\x7c\u4e09" + _0x511bbc + "\u5316\u6c2e",
+      "\x4e",
+      "\x73\x70\u00b3",
+      ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+      _0x1bc2a9 === "\x46" ? "\x31\x30\x32\x2e\x33\u00b0" : _0x1bc2a9 === "\x43\x6c" ? "\x31\x30\x37\x2e\x31\u00b0" : _0x1bc2a9 === "\x42\x72" ? "\x31\x30\x38\u00b0" : "\x31\x31\x30\u00b0",
+      _0x44f6f9[0x0],
+      _0x44f6f9[0x1],
+      [
+        { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": 0x0, "\x79": -0xa, "\x7a": _0x2d5c60 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": _0x2d5c60 * 0.866, "\x79": -0xa, "\x7a": -_0x2d5c60 * 0.5 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": -_0x2d5c60 * 0.866, "\x79": -0xa, "\x7a": -_0x2d5c60 * 0.5 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+        [0x0, 0x3],
+      ],
+      null,
+      null,
+      "\x43\x33\x76",
+    );
+    if (_0x1bc2a9 !== "\x43\x6c") {
+      _0x44f6f9 = halideProps["\x50" + _0x1bc2a9 + "\x33"] || ["\x2d", "\x2d"];
+      let _0x27d152 = 0x28 + _0x5e8470,
+        _0x34c8de = _0x27d152 * 0.85,
+        _0x15f536 = _0x27d152 * 0.5;
+      addMol(
+        "\x50" + _0x1bc2a9 + "\x33\x7c\u4e09" + _0x511bbc + "\u5316\u78f7",
+        "\x50",
+        "\x73\x70\u00b3",
+        ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+        _0x1bc2a9 === "\x46" ? "\x39\x37\x2e\x38\u00b0" : _0x1bc2a9 === "\x43\x6c" ? "\x31\x30\x30\x2e\x33\u00b0" : _0x1bc2a9 === "\x42\x72" ? "\x31\x30\x31\x2e\x35\u00b0" : "\x31\x30\x32\u00b0",
+        _0x44f6f9[0x0],
+        _0x44f6f9[0x1],
+        [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x14, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+          { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": 0x0, "\x79": -0xf, "\x7a": _0x34c8de },
+          { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": _0x34c8de * 0.866, "\x79": -0xf, "\x7a": -_0x34c8de * 0.5 },
+          { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": -_0x34c8de * 0.866, "\x79": -0xf, "\x7a": -_0x34c8de * 0.5 },
+        ],
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+        null,
+        null,
+        "\x43\x33\x76",
+      );
     }
-    
-    // NX3 系列
-    p = halideProps[`N${X}3`] || ["-","-"]; 
-    let dN = 35+rX, hN=dN*0.85, vN=dN*0.5; 
-    addMol(`N${X}3|三${hn}化氮`, "N", "sp³", ["角錐形","Pyramidal"], (X==='F'?"102.3°":(X==='Cl'?"107.1°":(X==='Br'?"108°":"110°"))), p[0], p[1], [{elem:"N",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:X,x:0,y:-10,z:hN},{elem:X,x:hN*0.866,y:-10,z:-hN*0.5},{elem:X,x:-hN*0.866,y:-10,z:-hN*0.5}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-    
-    // PX3 系列
-    if(X !== 'Cl') { 
-        p = halideProps[`P${X}3`] || ["-","-"]; 
-        let dP = 40+rX, hP=dP*0.85, vP=dP*0.5; 
-        addMol(`P${X}3|三${hn}化磷`, "P", "sp³", ["角錐形","Pyramidal"], (X==='F'?"97.8°":(X==='Cl'?"100.3°":(X==='Br'?"101.5°":"102°"))), p[0], p[1], [{elem:"P",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:X,x:0,y:-15,z:hP},{elem:X,x:hP*0.866,y:-15,z:-hP*0.5},{elem:X,x:-hP*0.866,y:-15,z:-hP*0.5}], [[0,1],[0,2],[0,3]], null, null, "C3v"); 
-    }
-    
-    // OX2 系列
-    p = halideProps[`O${X}2`] || ["-","-"]; 
-    let dO = 35+rX; 
-    addMol(`O${X}2|二${hn}化氧`, "O", "sp³", ["角形","Bent"], (X==='F'?"103.3°":(X==='Cl'?"110.9°":"114°")), p[0], p[1], [{elem:"O",x:0,y:0,z:0,lpCount:2},{elem:X,x:dO*0.8,y:-dO*0.6,z:0},{elem:X,x:-dO*0.8,y:-dO*0.6,z:0}], [[0,1],[0,2]], null, null, "C2v");
-    
-    // SX2 系列
-    p = halideProps[`S${X}2`] || ["-","-"]; 
-    let dS = 40+rX; 
-    addMol(`S${X}2|二${hn}化硫`, "S", "sp³", ["角形","Bent"], (X==='F'?"98.2°":(X==='Cl'?"102.7°":"104°")), p[0], p[1], [{elem:"S",x:0,y:0,z:0,lpCount:2},{elem:X,x:dS*0.85,y:-dS*0.55,z:0},{elem:X,x:-dS*0.85,y:-dS*0.55,z:0}], [[0,1],[0,2]], null, null, "C2v");
-});
-
-
-// [保留] SiCl4 詳細資料
-addMol("SiCl4|四氯化矽|Silicon Tetrachloride", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-70", "57.7", getTetra("Si", "Cl", 80), [[0,1],[0,2],[0,3],[0,4]], null,
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心矽原子採取 <strong>sp³ 混成</strong>，與同族的四氯化碳 (CCl₄) 具有相同的<strong>正四面體</strong>幾何結構，鍵角為 <strong>109.5°</strong>。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為無色、易揮發的液體，具有強烈的刺鼻氣味。雖然 Si-Cl 鍵是極性共價鍵，但由於分子對稱性高，偶極矩互相抵銷，整體為<strong>非極性分子</strong>。<br>
-            <span class="highlight-title">3. 化學性質：</span>與化學性質安定的 CCl₄ 不同，SiCl₄ 極易發生<strong>水解反應</strong>。這是因為矽原子的原子半徑較大，且擁有<strong>空 d 軌域</strong>，能接受水分子的氧原子進行親核攻擊，反應後生成矽酸並產生大量的氯化氫 (HCl) 白煙。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 晶片製造 (多晶矽)：</span>它是半導體產業的基石。透過<strong>西門子法 (Siemens process)</strong>，將高純度的 SiCl₄ 與氫氣在 1100°C 高溫下反應還原，可製造出純度高達 99.9999999% (9N) 的<strong>電子級多晶矽</strong>，用於生產電腦晶片與太陽能電池。<br>
-            <span class="highlight-title">2. 光纖通訊核心：</span>在光纖製程中，SiCl₄ 是最關鍵的原料。透過氣相沉積法將其高溫氧化，能生成折射率極高且無雜質的二氧化矽 (SiO₂)，構成光纖內層傳輸訊號的玻璃核心。<br>
-            <span class="highlight-title">3. 軍事煙霧彈：</span>早期軍事上利用其「極易水解」的特性製作煙霧彈。當液態 SiCl₄ 炸開接觸空氣中的水氣時，會瞬間產生極濃密的白色酸霧 (HCl)，能有效遮蔽視線，但因具有毒性與腐蝕性，現代已較少使用。
-        </div>
-    </div>`
-,"Td");
-
-// [保留] PCl3 詳細資料
-addMol("PCl3|三氯化磷|Phosphorus Trichloride", "P", "sp³", ["角錐形","Pyramidal"], "96-100°", "-93.6", "76.1", [{elem:"P",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"Cl",x:0,y:-15,z:68},{elem:"Cl",x:59,y:-15,z:-34},{elem:"Cl",x:-59,y:-15,z:-34}], [[0,1],[0,2],[0,3]], null,
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心磷原子採取 <strong>sp³ 混成</strong>。由於具有一對未共用電子對 (Lone Pair)，其對鍵結電子的斥力較大，導致 P-Cl 鍵角被壓縮至約 <strong>100°</strong>，形成<strong>三角錐形</strong>結構。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為無色或微黃色的液體，會發煙。具有較低的沸點與強烈刺鼻味，可溶於苯、氯仿等有機溶劑。<br>
-            <span class="highlight-title">3. 化學性質：</span>P-Cl 鍵極性大且反應性極高，遇水會劇烈<strong>水解</strong>並放熱，生成亞磷酸 (H₃PO₃) 與鹽酸霧。因磷原子上有一對孤對電子，可作為<strong>路易斯鹼</strong>參與配位反應。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 除草劑原料 (嘉磷塞)：</span>工業上最大宗的用途是作為中間體，用於合成廣效性除草劑<strong>嘉磷塞 (Glyphosate)</strong>，這是目前全球農業使用量最大的農藥之一。<br>
-            <span class="highlight-title">2. 有機合成 (氯化劑)：</span>在製藥與有機化學實驗室中，它是不可或缺的試劑。專門用來將有機分子中的<strong>羥基 (-OH)</strong> 取代為氯原子，或是將羧酸轉化為活性極高的醯氯，是合成染料與藥物的重要步驟。<br>
-            <span class="highlight-title">3. 塑膠添加劑：</span>可用於製造含磷的<strong>阻燃劑</strong>與塑化劑。這些添加劑能讓電子產品的塑膠外殼在受熱時不易燃燒，大幅提升產品安全性。
-        </div>
-    </div>`
-,"C3v");
-
-
-
-
-// --- 5. 碳與其他氧化物 (直線型/平面型) ---
-addMol("CO2|二氧化碳|乾冰", "C", "sp", ["直線型","Linear"], "180°", "-78.5 (昇華)", "-56.6", getLinear("C","O", 70), [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("CS2|二硫化碳", "C", "sp", ["直線型","Linear"], "180°", "-111.6", "46.2", getLinear("C","S", 75), [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("BeCl2|二氯化鈹", "Be", "sp", ["直線型","Linear"], "180°", "399", "482", getLinear("Be","Cl", 75), [[0,1], [0,2]], null, null, "Dinfh");
-addMol("BCl3|三氯化硼", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-107", "12.6", getTrigPlanar("B","Cl", 75), [[0,1], [0,2], [0,3]], null, null, "D3h");
-addMol("SO2|二氧化硫", "S", "sp²", ["角形","Bent"], "119°", "-72", "-10", 
+    _0x44f6f9 = halideProps["\x4f" + _0x1bc2a9 + "\x32"] || ["\x2d", "\x2d"];
+    let _0x1e2d9d = 0x23 + _0x5e8470;
+    (addMol(
+      "\x4f" + _0x1bc2a9 + "\x32\x7c\u4e8c" + _0x511bbc + "\u5316\u6c27",
+      "\x4f",
+      "\x73\x70\u00b3",
+      ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+      _0x1bc2a9 === "\x46" ? "\x31\x30\x33\x2e\x33\u00b0" : _0x1bc2a9 === "\x43\x6c" ? "\x31\x31\x30\x2e\x39\u00b0" : "\x31\x31\x34\u00b0",
+      _0x44f6f9[0x0],
+      _0x44f6f9[0x1],
+      [
+        { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": _0x1e2d9d * 0.8, "\x79": -_0x1e2d9d * 0.6, "\x7a": 0x0 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": -_0x1e2d9d * 0.8, "\x79": -_0x1e2d9d * 0.6, "\x7a": 0x0 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+      ],
+      null,
+      null,
+      "\x43\x32\x76",
+    ),
+      (_0x44f6f9 = halideProps["\x53" + _0x1bc2a9 + "\x32"] || ["\x2d", "\x2d"]));
+    let _0x52f027 = 0x28 + _0x5e8470;
+    addMol(
+      "\x53" + _0x1bc2a9 + "\x32\x7c\u4e8c" + _0x511bbc + "\u5316\u786b",
+      "\x53",
+      "\x73\x70\u00b3",
+      ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+      _0x1bc2a9 === "\x46" ? "\x39\x38\x2e\x32\u00b0" : _0x1bc2a9 === "\x43\x6c" ? "\x31\x30\x32\x2e\x37\u00b0" : "\x31\x30\x34\u00b0",
+      _0x44f6f9[0x0],
+      _0x44f6f9[0x1],
+      [
+        { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": _0x52f027 * 0.85, "\x79": -_0x52f027 * 0.55, "\x7a": 0x0 },
+        { "\x65\x6c\x65\x6d": _0x1bc2a9, "\x78": -_0x52f027 * 0.85, "\x79": -_0x52f027 * 0.55, "\x7a": 0x0 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+      ],
+      null,
+      null,
+      "\x43\x32\x76",
+    );
+  }),
+  addMol(
+    "\x53\x69\x43\x6c\x34\x7c\u56db\u6c2f\u5316\u77fd\x7c\x53\x69\x6c\x69\x63\x6f\x6e\x20\x54\x65\x74\x72\x61\x63\x68\x6c\x6f\x72\x69\x64\x65",
+    "\x53\x69",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x37\x30",
+    "\x35\x37\x2e\x37",
+    getTetra("\x53\x69", "\x43\x6c", 0x50),
     [
-        {elem:"S", x:0, y:15, z:0, lpCount:1, lp3d:[{x:0,y:1,z:0}]}, 
-        {elem:"O", x:55, y:-30, z:0}, 
-        {elem:"O", x:-55, y:-30, z:0}
-    ], 
-    // 預設給兩個雙鍵 (擴大八隅體狀態)，讓程式去切換
-    [[0,1,"double"], [0,2,"double"]], null, null, "C2v");
-addMol("SO3|三氧化硫", "S", "sp²", ["平面三角形","Trigonal Planar"], "120°", "16.9", "44.8", getTrigPlanar("S","O", 68), [[0,1,"double"],[0,2,"double"],[0,3,"double"]], null, null, "D3h");
-addMol("O3|臭氧", "O", "sp²", ["角形","Bent"], "117°", "-192.2", "-112", [{elem:"O",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0,lpCount:3}], [[0,1,"double"],[0,2,"coordinate"]], null, null, "C2v");
-addMol("NO2|二氧化氮", "N", "sp²", ["角形","Bent"], "134°", "-11.2", "21.2", [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}],radical:true},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0,lpCount:3}], [[0,1,"double"],[0,2,"coordinate"]], null, null, "C2v");
-addMol("N2O|一氧化二氮|笑氣", "N", "sp", ["直線型","Linear"], "180°", "-90.8", "-88.5", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-65,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:65,y:0,z:0}], [[0,1,"triple"],[0,2,"coordinate"]], null, null, "Cinfv");
-addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-164", "-152", [{elem:"N",x:-32,y:0,z:0,radical:true,lp3d:[{x:-1,y:1,z:0},{x:-1,y:-1,z:0.4},{x:-1,y:-1,z:-0.4}]},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]], null, null, "Cinfv");
-
-// --- 6. 離子與特殊無機分子 (含共振結構) ---
-// --- SCN- 共振結構展示 (修改：以 N=C=S 為預設) ---
-addMol("SCN -|硫氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "SCN -|主要共振結構 (N=C=S)": {pg: "Cinfv", mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-65, y:0, z:0, lpCount:2},{elem:"S", x:85, y:0, z:0, lpCount:2}], bonds: [[0,1,"double"], [0,2,"double"]] },
-    "SCN -|次要共振結構 (N≡C-S)": {pg: "Cinfv", mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-60, y:0, z:0, lpCount:1}, {elem:"S", x:90, y:0, z:0, lpCount:3}], bonds: [[0,1,"triple"], [0,2,"single"]] }
-}, null, "-", "resonance");
-addMol("NO +|亞硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:-30,y:0,z:0,lpCount:1}, {elem:"O",x:30,y:0,z:0,lpCount:1}], [[0,1,"triple"]], null, null, "Cinfv");
-addMol("NO2 +|硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:65,y:0,z:0}], [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("N3 -|疊氮酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "N3 -|主要共振結構 (N=N=N)": {pg: "Dinfh", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"N",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] },
-    "N3 -|主要共振結構 (N≡N-N)": {pg: "Dinfh", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"N",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] }
-}, null, "-", "resonance");
-addMol("OCN-|氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "OCN -|主要共振結構 (N≡C-O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] },
-    "OCN -|次要共振結構 (N=C=O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] },
-    "OCN -|不穩定共振結構 (N-C≡O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-85,y:0,z:0,lpCount:3},{elem:"O",x:60,y:0,z:0,lpCount:1}], bonds: [[0,1,"single"],[0,2,"triple"]] }
-}, null, "-", "resonance");
-addMol("CNO -|雷酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "CNO -|主要共振結構 (C≡N-O)": {pg: "Cinfv", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] },
-    "CNO -|次要共振結構 (C=N=O)": {pg: "Cinfv", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] }
-}, null, "-", "resonance");
-
-addMol("N2O|一氧化二氮|氧化亞氮|笑氣", "N", "sp", ["直線型","Linear"], "180°", "-91", "-88", [], [], {
-    "N2O|主要共振結構 (N≡N-O)": {pg: "Cinfv", mp: "-91", bp: "-88", atoms: [{elem:"N", x:0, y:0, z:0, radical: false}, {elem:"N", x:-60, y:0, z:0, lpCount:1}, {elem:"O", x:70, y:0, z:0, lpCount:3, radical: false}], bonds: [[0,1,"triple"], [0,2,"single"]] },
-    "N2O|次要共振結構 (N=N=O)": {pg: "Cinfv", mp: "-91", bp: "-88", atoms: [{elem:"N", x:0, y:0, z:0, radical: false}, {elem:"N", x:-63, y:0, z:0, lpCount:2, radical: false}, {elem:"O", x:63, y:0, z:0, lpCount:2}], bonds: [[0,1,"double"], [0,2,"double"]] }
-}, null, "-", "resonance");
-
-addMol("HOCN|氰酸", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", "-86", "23.5", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:65,y:0,z:0,lpCount:1}, {elem:"O",x:-65,y:0,z:0,lpCount:2}, {elem:"H",x:-95,y:30,z:0}], [[0,1,"triple"], [0,2], [2,3]], null, null, "Cs");
-
-// --- 7. 擴大八隅體與複雜幾何構型 ---
-// P-Cl=80, P-Br=85, S-F=75, S=O=68, Xe=O=76
-addMol("PCl5|五氯化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "160.5", "166.8", [{elem:"P",x:0,y:0,z:0},{elem:"Cl",x:0,y:0,z:85},{elem:"Cl",x:0,y:0,z:-85},{elem:"Cl",x:0,y:80,z:0},{elem:"Cl",x:69,y:-40,z:0},{elem:"Cl",x:-69,y:-40,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("PBr5|五溴化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "100 (分解)", "106 (分解)", [{elem:"P",x:0,y:0,z:0},{elem:"Br",x:0,y:0,z:-90},{elem:"Br",x:0,y:0,z:90},{elem:"Br",x:0,y:85,z:0},{elem:"Br",x:-74,y:-42,z:0},{elem:"Br",x:74,y:-42,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("SF6|六氟化硫", "S", "sp³d²", ["八面體","Octahedral"], "90°", "-50.8", "-63.8 (昇華)", getOcta("S","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("SF4|四氟化硫", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "-121", "-38", [{elem:"S",x:0,y:0,z:0},{elem:"F",x:0,y:0,z:80},{elem:"F",x:0,y:0,z:-80},{elem:"F",x:45,y:65,z:0},{elem:"F",x:-45,y:65,z:0}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
-addMol("ClF3|三氟化氯", "Cl", "sp³d", ["T型","T-shaped"], "<90°", "-76.3", "11.8", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}, {x:-1,y:-0.5,z:0}]}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:70,y:0,z:0}], [[0,1],[0,2],[0,3]], null, null, "C2v");
-addMol("XeF2|二氟化氙", "Xe", "sp³d", ["直線型","Linear"], "180°", "128.6", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0.866,y:-0.5,z:0}, {x:-0.866,y:-0.5,z:0}]}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("XeF4|四氟化氙", "Xe", "sp³d²", ["平面四邊形","Square Planar"], "90°", "117 (昇華)", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:1,y:0,z:0}, {x:-1,y:0,z:0}]}, {elem:"F",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
-
-addMol("BrF5|五氟化溴", "Br", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", "-61.3", "40.3", [{elem:"Br",x:0,y:0,z:0},{elem:"F",x:80,y:0,z:0},{elem:"F",x:0,y:0,z:-70},{elem:"F",x:0,y:0,z:70},{elem:"F",x:0,y:-70,z:0},{elem:"F",x:0,y:70,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "C4v");
-
-addMol("IF7|七氟化碘", "I", "sp³d³", ["五角雙錐","Pentagonal Bipyramidal"], "72°, 90°", "4.8", "4.8 (昇華)", [{elem:"I",x:0,y:0,z:0,lpCount:0}, {elem:"F",x:0,y:90,z:0}, {elem:"F",x:0,y:-90,z:0}, {elem:"F",x:80,y:0,z:0}, {elem:"F",x:25,y:0,z:76}, {elem:"F",x:25,y:0,z:-76}, {elem:"F",x:-65,y:0,z:47}, {elem:"F",x:-65,y:0,z:-47}], [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]], null, null, "D5h");
-addMol("SeF6|六氟化硒", "Se", "sp³d²", ["八面體","Octahedral"], "90°", "-34.6", "-46.6 (昇華)", getOcta("Se","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("TeF6|六氟化碲", "Te", "sp³d²", ["八面體","Octahedral"], "90°", "-37.6", "-38.9 (昇華)", getOcta("Te","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("AsF5|五氟化砷", "As", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "-79.8", "-52.8", [{elem:"As",x:0,y:0,z:0}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:70,y:0,z:0}, {elem:"F",x:-35,y:0,z:60}, {elem:"F",x:-35,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("TeF4|四氟化碲", "Te", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "129.6", "193", [{elem:"Te",x:0,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:70,y:0,z:50}, {elem:"F",x:70,y:0,z:-50}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
-addMol("XeO3|三氧化氙", "Xe", "sp³", ["角錐形","Trigonal Pyramidal"], "103°", "25 (爆炸)", "-", [{elem:"Xe",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:0,y:-30,z:57},{elem:"O",x:49,y:-30,z:-28.5},{elem:"O",x:-49,y:-30,z:-28.5}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]], null, null, "C3v");
-addMol("XeO4|四氧化氙", "Xe", "sp³", ["四面體","Tetrahedral"], "109.5°", "-35.9", "0 (分解)", getTetra("Xe","O", 76), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]], null, null, "Td");
-addMol("XeOF4|四氟氧化氙|XeOF4", "Xe", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", "-46", "101", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]}, {elem:"O",x:0,y:80,z:0}, {elem:"F",x:80,y:0,z:0}, {elem:"F",x:-80,y:0,z:0}, {elem:"F",x:0,y:0,z:80}, {elem:"F",x:0,y:0,z:-80}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5]], null, null, "C4v");
-addMol("IOF5|五氟氧化碘", "I", "sp³d²", ["八面體","Octahedral"], "90°", "4.5", "110", [{elem:"I",x:0,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:85,y:0,z:0}, {elem:"F",x:-85,y:0,z:0}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "C4v");
-addMol("AsF3|三氟化砷", "As", "sp³", ["角錐形","Pyramidal"], "96°", "-6", "57.8", [{elem:"As",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"F",x:0,y:-45,z:55}, {elem:"F",x:48,y:-45,z:-28}, {elem:"F",x:-48,y:-45,z:-28}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-addMol("SbCl3|三氯化銻", "Sb", "sp³", ["角錐形","Pyramidal"], "97°", "73.4", "220.3", [{elem:"Sb",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"Cl",x:0,y:-55,z:65}, {elem:"Cl",x:55,y:-55,z:-35}, {elem:"Cl",x:-55,y:-55,z:-35}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-addMol("ICl3|三氯化碘|Iodine Trichloride", "I", "sp³d", ["T型","T-shaped"], "<90°", "101 (分解)", "-", [{elem:"I",x:0,y:0,z:0,lpCount:2,lp3d:[{x:-1,y:0.5,z:0},{x:-1,y:-0.5,z:0}]},{elem:"Cl",x:90,y:0,z:0},{elem:"Cl",x:0,y:90,z:0},{elem:"Cl",x:0,y:-90,z:0}], [[0,1],[0,2],[0,3]], null, '<div class="info-section"><div class="info-title">🧪 物質簡介</div><div class="info-body"><strong>三氯化碘 (ICl₃)</strong><br>中心碘原子採取 sp³d 混成。為了減少電子雲斥力，兩對孤對電子佔據水平位置，使分子呈現 T 型結構。</div></div>', "C2v");
-addMol("B2H6|乙硼烷|Diborane", "B", "sp³", ["特殊 (含氫橋鍵)","Banana Bonds"], "120°(端)/97°(橋)", "-164.8", "-92.5", [{elem:"B",x:-40,y:0,z:0,lpCount:0},{elem:"B",x:40,y:0,z:0,lpCount:0},{elem:"H",x:0,y:0,z:50},{elem:"H",x:0,y:0,z:-50},{elem:"H",x:-65,y:43,z:0},{elem:"H",x:-65,y:-43,z:0},{elem:"H",x:65,y:43,z:0},{elem:"H",x:65,y:-43,z:0}], [[0,2],[0,3],[1,2],[1,3],[0,4],[0,5],[1,6],[1,7]], null, '<div class="info-section"><div class="info-title">🍌 結構特性</div><div class="info-body"><strong>乙硼烷 (B₂H₆)</strong><br>具有三中心二電子鍵。每個硼原子與四個氫原子連線，形成類似 sp³ 的幾何排列。</div></div>', "D2h");
-addMol("B(OH)3|硼酸", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", "169 (分解)", "-", [{elem:"O",x:-58,y:0,z:37},{elem:"B",x:0,y:0,z:0},{elem:"O",x:59,y:0,z:35},{elem:"O",x:-5,y:0,z:-69},{elem:"H",x:-96,y:0,z:8},{elem:"H",x:99,y:0,z:8},{elem:"H",x:37,y:0,z:-93}], [[0,1],[0,4],[1,2],[1,3],[2,5],[3,6]], null, null, "C3h");
-
-
-// --- 8. 陰離子群 (Complex Anions) ---
-addMol("SiF6 2-|六氟矽酸根", "Si", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("Si","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("PF6 -|六氟磷酸根", "P", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("P","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("SbF6 -|六氟銻酸根", "Sb", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("Sb","F", 80), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("I3 -|三碘陰離子|三碘錯離子", "I", "sp³d", ["直線型","Linear"], "180°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]},{elem:"I",x:-100,y:0,z:0},{elem:"I",x:100,y:0,z:0}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("ICl2 -|二氯碘離子", "I", "sp³d", ["直線型","Linear"], "180°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]}, {elem:"Cl",x:-90,y:0,z:0}, {elem:"Cl",x:90,y:0,z:0}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("ICl4 -|四氯碘離子", "I", "sp³d²", ["平面四邊形","Square Planar"], "90°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"Cl",x:90,y:0,z:0}, {elem:"Cl",x:-90,y:0,z:0}, {elem:"Cl",x:0,y:0,z:90}, {elem:"Cl",x:0,y:0,z:-90}], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
-addMol("BF4 -|四氟硼酸根", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("B","F", 70), [[0,1],[0,2],[0,3],[4,0,"coordinate"]], null, null, "Td");
-addMol("AlCl4 -|四氯鋁酸根", "Al", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("Al","Cl", 80), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-addMol("BH4 -|硼氫化離子", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("B","H", 50), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-
-// --- 9. 酸根與含氧酸 ---
-// --- 酸根與含氧酸 (修正離子鍵距離與鍵級顯示) ---
-addMol("H2SO4|硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "10.3", "337", [], [], {
-    "H2SO4|硫酸": { pg: "C2", mp: "10.3", bp: "337", desc: "<strong>硫酸</strong><br>工業之母，具強脫水性與氧化性，由兩個配位鍵 (S→O) 與兩個 S-OH 構成，分子電中性。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:2},{elem:"O",x:-60,y:-30,z:35,lpCount:2},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[3,5],[4,6]] },
-    "HSO4 -|硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>硫酸氫根</strong><br>酸式鹽陰離子，水溶液呈強酸性，S-O⁻ 端帶有負電荷。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:2},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "SO4 2-|硫酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>硫酸根</strong><br>正四面體結構，化學性質穩定，兩個 S-O⁻ 端顯示粉紅電子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "NaHSO4|硫酸氫鈉": { pg: "Cs", mp: "58 (分解)", bp: "-", desc: "<strong>硫酸氫鈉</strong><br>溶於水呈強酸性，常用於清潔劑或降低 pH 值。", atoms: [{elem:"S",x:-20,y:0,z:0},{elem:"O",x:-20,y:68,z:0,lpCount:3},{elem:"O",x:-20,y:-25,z:-63,lpCount:3},{elem:"O",x:40,y:-30,z:35,lpCount:3},{elem:"O",x:-80,y:-30,z:35,lpCount:2},{elem:"H",x:-105,y:-5,z:60},{elem:"Na",x:100,y:40,z:0,r:15}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "KHSO4|硫酸氫鉀": { pg: "Cs", mp: "197", bp: "-", desc: "<strong>硫酸氫鉀</strong><br>易溶於水呈強酸性，加熱失水可製備焦硫酸鉀。", atoms: [{elem:"S",x:-20,y:0,z:0},{elem:"O",x:-20,y:68,z:0,lpCount:3},{elem:"O",x:-20,y:-25,z:-63,lpCount:3},{elem:"O",x:40,y:-30,z:35,lpCount:3},{elem:"O",x:-80,y:-30,z:35,lpCount:2},{elem:"H",x:-105,y:-5,z:60},{elem:"K",x:110,y:40,z:0,r:22}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "CaSO4|硫酸鈣|石膏": { pg: "Td", mp: "1460", bp: "-", desc: "<strong>硫酸鈣 (石膏)</strong><br>微溶於水，廣泛用於建築材料、模型製作與作為豆腐凝固劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Ca",x:0,y:0,z:100,r:20,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "BaSO4|硫酸鋇|重晶石": { pg: "Td", mp: "1580", bp: "-", desc: "<strong>硫酸鋇 (重晶石)</strong><br>極難溶於水與酸，無毒且密度大，醫學上用於消化道X光攝影(鋇餐)。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Ba",x:0,y:0,z:110,r:25,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "CuSO4|硫酸銅": { pg: "Td", mp: "110 (失水)", bp: "-", desc: "<strong>硫酸銅</strong><br>無水物為白色，吸水後變藍色(五水合)，常用於游泳池殺菌、波爾多液原料與電鍍。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Cu",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "FeSO4|硫酸亞鐵|綠礬": { pg: "Td", mp: "64 (失水)", bp: "-", desc: "<strong>硫酸亞鐵 (綠礬)</strong><br>淺綠色晶體，常用於醫療補血劑(鐵劑)、水處理絮凝劑與還原劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Fe",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "ZnSO4|硫酸鋅|皓礬": { pg: "Td", mp: "100 (失水)", bp: "500 (分解)", desc: "<strong>硫酸鋅 (皓礬)</strong><br>無色針狀晶體，用於製造人造纖維、木材防腐與農業微量元素肥料。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Zn",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "MgSO4|硫酸鎂|瀉鹽": { pg: "Td", mp: "1124", bp: "-", desc: "<strong>硫酸鎂 (瀉鹽)</strong><br>易溶於水，醫療上作為瀉劑或緩解子癇，生活中常用於泡澡浴鹽放鬆肌肉。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Mg",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] }
-}, null, "-", "acid");
-
-addMol("H2SO3|亞硫酸系列", "S", "sp³", ["角錐形","Pyramidal"], "106°", "-", "不穩定", [], [], {
-"H2SO3|亞硫酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞硫酸</strong><br>僅存在於水溶液中的二元弱酸，極不穩定。具有強還原性與漂白能力，受熱或久置易分解出二氧化硫氣體。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"O",x:0,y:-30,z:61},{elem:"H",x:-90,y:-38,z:-12},{elem:"H",x:90,y:-38,z:-12}], bonds: [[0,1],[0,2],[0,3,"double"],[1,4],[2,5]] },
-"HSO3 -|亞硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>亞硫酸氫根</strong><br>亞硫酸的第一級電離產物，為兩性離子。在酸性環境中不穩定，廣泛存在於亞硫酸氫鹽溶液中，具抗氧化性質。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"H",x:-90,y:-38,z:-12}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4]] },
-"SO3 2-|亞硫酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞硫酸根</strong><br>亞硫酸的完全電離產物，中心硫原子有一對孤對電子。具有強還原性，易被空氣中的氧氧化成硫酸根。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39}], bonds: [[0,1,"double"],[0,2],[0,3]] },
-"Na2SO3|亞硫酸鈉": { pg: "C3v", mp: "33.4 (分解)", bp: "-", desc: "<strong>亞硫酸鈉</strong><br>常見的亞硫酸鹽，為白色粉末，易溶於水。常用作還原劑、防腐劑以及攝影顯影劑的保護劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"Na",x:-85,y:-32,z:-82},{elem:"Na",x:85,y:-32,z:-82}], bonds: [[0,1,"double"],[0,2],[0,3],[4,2,"ionic_thin"],[5,3,"ionic_thin"]] },
-"NaHSO3|亞硫酸氫鈉": { pg: "Cs", mp: "150 (分解)", bp: "-", desc: "<strong>亞硫酸氫鈉</strong><br>亞硫酸的酸式鹽，為白色結晶粉末，有二氧化硫的刺激氣氣味。常用於漂白織物、食品防腐及處理工業廢水。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"H",x:-90,y:-38,z:-12},{elem:"Na",x:85,y:-32,z:-82}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[5,3,"ionic_thin"]] },
-"CaSO3|亞硫酸鈣": { pg: "C3v", mp: "600 (分解)", bp: "-", desc: "<strong>亞硫酸鈣</strong><br>白色結晶粉末，微溶於水。主要用作食品防腐劑、消毒劑，也是煙氣脫硫工藝中的常見產物。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"Ca",x:0,y:-32,z:-87}], bonds: [[0,1,"double"],[0,2],[0,3],[4,2,"ionic_thin"],[4,3,"ionic_thin"]] }
-}, null, "-", "acid");
-
-addMol("H2S2O3|硫代硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-78 (分解)", "-", [], [], {
-    "H2S2O3|硫代硫酸": { pg: "Cs", mp: "-78", bp: "-", desc: "<strong>硫代硫酸</strong><br>不穩定酸，中心S連接另一個外圍S原子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
-    "HS2O3 -|硫代硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>硫代硫酸氫根</strong><br>結構類似硫酸氫根但一個O被S取代。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
-    "S2O3 2-|硫代硫酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>硫代硫酸根</strong><br>具還原性，中心硫原子與外圍硫形成雙鍵。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[0,4,"single"]] },
-    "Na2S2O3|硫代硫酸鈉|大蘇打|海波": { pg: "C3v", mp: "48.3", bp: "100 (分解)", desc: "<strong>硫代硫酸鈉 (海波)</strong><br>Na⁺ 位於結構外側，無實體鍵連線。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"Na",x:100,y:20,z:0,r:15},{elem:"Na",x:-100,y:20,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[0,4,"single"]] }
-}, null, "-", "acid");
-
-addMol("H2CO3|碳酸系列", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-", "不穩定", [], [], {
-    "H2CO3|碳酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>碳酸</strong><br>二質子弱酸，存在於汽水中。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
-    "HCO3 -|碳酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>碳酸氫根</strong><br>帶-1價電荷，小蘇打的主要成分。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] },
-    "CO3 2-|碳酸根": { pg: "D3h", mp: "-", bp: "-", desc: "<strong>碳酸根</strong><br>帶-2價電荷，共振結構。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "CaCO3|碳酸鈣|灰石": { pg: "D3h", mp: "825 (分解)", bp: "-", desc: "<strong>碳酸鈣</strong><br>Ca²⁺ 位於碳酸根平面上方。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Ca",x:0,y:0,z:90,r:20,lpCount:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "MgCO3|碳酸鎂": { pg: "D3h", mp: "350 (分解)", bp: "-", desc: "<strong>碳酸鎂</strong><br>Mg²⁺ 位於碳酸根平面上方。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Mg",x:0,y:0,z:90,r:18,lpCount:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "Na2CO3|碳酸鈉|蘇打": { pg: "D3h", mp: "851", bp: "-", desc: "<strong>碳酸鈉 (蘇打)</strong><br>兩個 Na⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Na",x:100,y:-20,z:0,r:15},{elem:"Na",x:-100,y:-20,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "K2CO3|碳酸鉀|草木灰": { pg: "D3h", mp: "891", bp: "-", desc: "<strong>碳酸鉀</strong><br>兩個 K⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"K",x:100,y:-20,z:0,r:22},{elem:"K",x:-100,y:-20,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "NaHCO3|碳酸氫鈉|小蘇打": { pg: "Cs", mp: "50 (分解)", bp: "-", desc: "<strong>碳酸氫鈉</strong><br>Na⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0},{elem:"Na",x:100,y:-20,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] }
-}, null, "-", "acid");
-
-addMol("HNO3|硝酸系列", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [], [], {
-    "HNO3|硝酸": { pg: "Cs", mp: "-42", bp: "83", desc: "<strong>硝酸</strong><br>強酸及強氧化劑。光照易分解產生紅棕色 NO₂。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]] },
-    "NO3 -|硝酸根": { pg: "D3h", mp: "-", bp: "-", desc: "<strong>硝酸根</strong><br>具有高度對稱的平面結構 (共振)。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "KNO3|硝酸鉀|硝石": { pg: "D3h", mp: "334", bp: "400 (分解)", desc: "<strong>硝酸鉀</strong><br>俗稱硝石。K⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"K",x:0,y:0,z:90,r:22,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "NaNO3|硝酸鈉|智利硝石": { pg: "D3h", mp: "308", bp: "380 (分解)", desc: "<strong>硝酸鈉</strong><br>俗稱智利硝石。Na⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"Na",x:0,y:0,z:85,r:15,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "AgNO3|硝酸銀": { pg: "D3h", mp: "212", bp: "444 (分解)", desc: "<strong>硝酸銀</strong><br>Ag⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"Ag",x:0,y:0,z:90,r:18,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "Cu(NO3)2|硝酸銅": { pg: "D3h", mp: "114", bp: "170 (分解)", desc: "<strong>硝酸銅</strong><br>藍色晶體。Cu²⁺ 。", atoms: [{elem:"Cu",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"N",x:-90,y:0,z:0,lpCount:0}, {elem:"O",x:-145,y:0,z:0}, {elem:"O",x:-60,y:45,z:35}, {elem:"O",x:-60,y:-45,z:-35}, {elem:"N",x:90,y:0,z:0,lpCount:0}, {elem:"O",x:145,y:0,z:0}, {elem:"O",x:60,y:45,z:35}, {elem:"O",x:60,y:-45,z:-35}], bonds: [[1,2,"double"],[1,3,"coordinate"],[1,4,"single"], [5,6,"double"],[5,7,"coordinate"],[5,8,"single"]] }
-}, null, "-", "acid");
-
-addMol("HNO2|亞硝酸系列", "N", "sp²", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
-    "HNO2|亞硝酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞硝酸</strong><br>弱酸，N原子上有一對孤對電子。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[2,3]] },
-    "NO2 -|亞硝酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>亞硝酸根</strong><br>常見的防腐劑成分(亞硝酸鹽)，結構呈V型。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2]] },
-    "NaNO2|亞硝酸鈉": { pg: "C2v", mp: "271", bp: "320 (分解)", desc: "<strong>亞硝酸鈉</strong><br>Na⁺ 位於外側。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"Na",x:-80,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2]] },
-    "KNO2|亞硝酸鉀": { pg: "C2v", mp: "440 (分解)", bp: "-", desc: "<strong>亞硝酸鉀</strong><br>K⁺ 位於外側。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"K",x:-85,y:0,z:0,r:22}], bonds: [[0,1,"double"],[0,2]] }
-}, null, "-", "acid");
-
-addMol("H3PO4|磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [], [], {
-    "H3PO4|磷酸": { pg: "Cs", mp: "42.4", bp: "213 (分解)", desc: "<strong>磷酸</strong><br>三質子酸，含一個 P=O 與三個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55},{elem:"H",x:0,y:-10,z:-90}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6],[4,7]] },
-    "H2PO4 -|磷酸二氫根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>磷酸二氫根</strong><br>帶 -1 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
-    "HPO4 2-|磷酸氫根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>磷酸氫根</strong><br>帶 -2 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "PO4 3-|磷酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>磷酸根</strong><br>正四面體結構，四個 P-O 鍵長均等。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Ca3(PO4)2|磷酸鈣": { pg: "Td", mp: "1670", bp: "-", desc: "<strong>磷酸鈣</strong><br>難溶於水，變量原料。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"Ca",x:100,y:40,z:0,r:20},{elem:"Ca",x:-100,y:40,z:0,r:20},{elem:"Ca",x:0,y:-100,z:0,r:20}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Na3PO4|磷酸鈉": { pg: "Td", mp: "1583", bp: "-", desc: "<strong>磷酸鈉</strong><br>強鹼性鹽類。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"Na",x:90,y:30,z:0,r:15},{elem:"Na",x:-90,y:30,z:0,r:15},{elem:"Na",x:0,y:-90,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Ca(H2PO4)2|磷酸二氫鈣": { pg: "C2v", mp: "109 (分解)", bp: "-", desc: "<strong>磷酸二氫鈣</strong><br>肥料成分。", atoms: [{elem:"Ca",x:0,y:0,z:0,r:20}, {elem:"P",x:-100,y:0,z:0}, {elem:"O",x:-100,y:65,z:0}, {elem:"O",x:-100,y:-30,z:55}, {elem:"O",x:-145,y:-30,z:-30}, {elem:"O",x:-55,y:-30,z:-30}, {elem:"H",x:-145,y:-60,z:55}, {elem:"H",x:-175,y:-10,z:-30}, {elem:"P",x:100,y:0,z:0}, {elem:"O",x:100,y:65,z:0}, {elem:"O",x:100,y:-30,z:55}, {elem:"O",x:145,y:-30,z:-30}, {elem:"O",x:55,y:-30,z:-30}, {elem:"H",x:145,y:-60,z:55}, {elem:"H",x:175,y:-10,z:-30}], bonds: [[1,2,"double"],[1,3],[1,4],[1,5],[3,6],[4,7], [8,9,"double"],[8,10],[8,11],[8,12],[10,13],[11,14]] }
-}, null, "-", "acid");
-
-addMol("H3PO3|亞磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", [], [], {
-    "H3PO3|亞磷酸": { pg: "Cs", mp: "73.6", bp: "200 (分解)", desc: "<strong>亞磷酸</strong><br>二質子酸，含一個 P-H 鍵 (不解離) 與兩個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60},{elem:"H",x:-90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
-    "H2PO3 -|亞磷酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>亞磷酸二氫根</strong><br>帶 -1 價電荷，P-H 鍵保留。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "HPO3 2-|亞磷酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞磷酸氫根 (亞磷酸根)</strong><br>帶 -2 價電荷，P-H 鍵通常不解離。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"H",x:0,y:-40,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Na2HPO3|亞磷酸鈉": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞磷酸鈉</strong><br>正鹽，P 直接連有一個 H。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"H",x:0,y:-40,z:-60},{elem:"Na",x:90,y:20,z:0,r:15},{elem:"Na",x:-90,y:20,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
-}, null, "-", "acid");
-
-addMol("H3PO2|次磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", [], [], {
-    "H3PO2|次磷酸": { pg: "Cs", mp: "26.5", bp: "130 (分解)", desc: "<strong>次磷酸</strong><br>單質子酸，含兩個 P-H 鍵與一個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35},{elem:"H",x:0,y:-10,z:-100}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "H2PO2 -|次磷酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>次磷酸根</strong><br>帶 -1 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "NaH2PO2|次磷酸鈉": { pg: "C2v", mp: "90 (一水合)", bp: "-", desc: "<strong>次磷酸鈉</strong><br>強還原劑。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35},{elem:"Na",x:-85,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
-}, null, "-", "acid");
-
-addMol("HClO4|過氯酸系列", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", [], [], {
-    "HClO4|過氯酸": { pg: "Cs", mp: "-112", bp: "19 (分解)", desc: "<strong>過氯酸</strong><br>最強無機酸之一，正四面體結構。氯原子與三個氧形成雙鍵，與一個羥基形成單鍵。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35,lpCount:2},{elem:"O",x:-58,y:-25,z:35,lpCount:2},{elem:"O",x:0,y:-25,z:-65,lpCount:2},{elem:"H",x:0,y:-5,z:-105}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"],[4,5]] },
-    "ClO4 -|過氯酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>過氯酸根</strong><br>化學性質穩定，四個 Cl-O 鍵長因共振而均等 (-1價)。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"]] },
-    "Mg(ClO4)2|過氯酸鎂": { pg: "Td", mp: "251", bp: "-", desc: "<strong>過氯酸鎂</strong><br>極強的脫水劑（乾燥劑）。", atoms: [{elem:"Mg",x:0,y:0,z:0,r:20,lpCount:0}, {elem:"Cl",x:-130,y:0,z:0,lpCount:0},{elem:"O",x:-130,y:68,z:0},{elem:"O",x:-72,y:-25,z:35},{elem:"O",x:-188,y:-25,z:35},{elem:"O",x:-130,y:-25,z:-65}, {elem:"Cl",x:130,y:0,z:0,lpCount:0},{elem:"O",x:130,y:68,z:0},{elem:"O",x:72,y:-25,z:35},{elem:"O",x:188,y:-25,z:35},{elem:"O",x:130,y:-25,z:-65}], bonds: [[1,2,"double"],[1,3,"double"],[1,4,"double"],[1,5,"single"], [6,7,"double"],[6,8,"double"],[6,9,"double"],[6,10,"single"]] },
-    "KClO4|過氯酸鉀": { pg: "Td", mp: "610 (分解)", bp: "-", desc: "<strong>過氯酸鉀</strong><br>強氧化劑，用於煙火（紫色火焰）。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65},{elem:"K",x:0,y:0,z:95,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"]] },
-    "NH4ClO4|過氯酸銨": { pg: "Td", mp: "240 (分解)", bp: "-", desc: "<strong>過氯酸銨 (AP)</strong><br>固體火箭燃料氧化劑。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65},{elem:"N",x:110,y:0,z:0,r:18},{elem:"H",x:110,y:40,z:0},{elem:"H",x:110,y:-20,z:35},{elem:"H",x:110,y:-20,z:-35},{elem:"H",x:145,y:0,z:0}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"],[5,6],[5,7],[5,8],[5,9]] }
-}, null, "-", "acid");
-
-addMol("HClO3|氯酸系列", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", [], [], {
-    "HClO3|氯酸": { pg: "Cs", mp: "-20", bp: "分解", desc: "<strong>氯酸</strong><br>強酸，具有強氧化性，中心有一對孤對電子。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "ClO3 -|氯酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>氯酸根</strong><br>三角錐形結構，常用於火藥與炸藥。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KClO3|氯酸鉀": { pg: "C3v", mp: "356", bp: "400 (分解)", desc: "<strong>氯酸鉀</strong><br>強氧化劑，受熱分解產生氧氣。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:0,z:85,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "NaClO3|氯酸鈉": { pg: "C3v", mp: "248", bp: "300 (分解)", desc: "<strong>氯酸鈉</strong><br>工業漂白與除草劑原料。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"Na",x:0,y:0,z:80,r:15}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-addMol("HClO2|亞氯酸系列", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
-    "HClO2|亞氯酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞氯酸</strong><br>弱酸，結構呈V型，中心有兩對孤對電子。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0,lpCount:2},{elem:"H",x:-90,y:-20,z:0}], bonds: [[0,1,"double"],[0,2,"single"],[2,3]] },
-    "ClO2 -|亞氯酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>亞氯酸根</strong><br>V型結構，常用於漂白劑。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0}], bonds: [[0,1,"double"],[0,2,"single"]] },
-    "NaClO2|亞氯酸鈉": { pg: "C2v", mp: "170 (分解)", bp: "-", desc: "<strong>亞氯酸鈉</strong><br>高效漂白劑，反應可生成二氧化氯 (ClO₂)。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0},{elem:"Na",x:-90,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"single"]] }
-}, null, "-", "acid");
-
-addMol("HClO|次氯酸系列", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", [], [], {
-    "HClO|次氯酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>次氯酸</strong><br>弱酸，殺菌力強，結構 H-O-Cl。", atoms: [{elem:"O",x:0,y:10,z:0,lpCount:2},{elem:"Cl",x:65,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0}], bonds: [[0,1],[0,2]] },
-    "ClO -|次氯酸根": { pg: "Cinfv", mp: "-", bp: "-", desc: "<strong>次氯酸根</strong><br>漂白水有效成分。", atoms: [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3}], bonds: [[0,1]] },
-    "NaClO|次氯酸鈉|漂白水": { pg: "Cinfv", mp: "18 (五水合)", bp: "分解", desc: "<strong>次氯酸鈉 (漂白水)</strong><br>家用漂白劑。Na⁺ 與 ClO⁻ 之間為離子鍵。", atoms: [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3},{elem:"Na",x:85,y:0,z:0,r:15}], bonds: [[0,1]] },
-    "Ca(ClO)2|次氯酸鈣|漂白粉": { pg: "Cinfv", mp: "100 (分解)", bp: "-", desc: "<strong>次氯酸鈣</strong><br>漂白粉主要成分。", atoms: [{elem:"Cl",x:-55,y:0,z:0,lpCount:3},{elem:"O",x:15,y:0,z:0,lpCount:3},{elem:"Ca",x:60,y:0,z:0,r:20},{elem:"O",x:105,y:0,z:0,lpCount:3},{elem:"Cl",x:175,y:0,z:0,lpCount:3}], bonds: [[0,1], [3,4]] }
-}, null, "-", "acid");
-
-addMol("HBrO3|溴酸系列", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "不穩定", [], [], {
-    "HBrO3|溴酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>溴酸</strong><br>強酸，中心有一對孤對電子。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "BrO3 -|溴酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>溴酸根</strong><br>三角錐形結構。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KBrO3|溴酸鉀": { pg: "C3v", mp: "350 (分解)", bp: "-", desc: "<strong>溴酸鉀</strong><br>強氧化劑，K⁺ 位於外側。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:60,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "AgBrO3|溴酸銀": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>溴酸銀</strong><br>難溶於水的白色固體。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"Ag",x:0,y:60,z:0,r:18}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-addMol("HIO3|碘酸系列", "I", "sp³", ["角錐形","Pyramidal"], "107°", "110", "分解", [], [], {
-    "HIO3|碘酸": { pg: "Cs", mp: "110", bp: "分解", desc: "<strong>碘酸</strong><br>穩定的白色固體，強酸。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "IO3 -|碘酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>碘酸根</strong><br>三角錐形結構。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KIO3|碘酸鉀": { pg: "C3v", mp: "560 (分解)", bp: "-", desc: "<strong>碘酸鉀</strong><br>食鹽加碘成分，K⁺ 位於外側。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:60,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-
-
-//錯合物
-addMol("Fe(C5H5)2|二茂鐵|Ferrocene", "C", "sp³", ["幾何形狀","Shape"], "角度", "172-174", "249", [{elem:"C",x:-51,y:-35,z:-82},{elem:"Fe",x:0,y:0,z:0},{elem:"C",x:-48,y:36,z:-83},{elem:"C",x:16,y:-60,z:-82},{elem:"C",x:60,y:-4,z:-83},{elem:"C",x:21,y:55,z:-84},{elem:"C",x:25,y:57,z:81},{elem:"C",x:-44,y:43,z:82},{elem:"C",x:-52,y:-28,z:84},{elem:"C",x:12,y:-58,z:84},{elem:"C",x:61,y:-5,z:83},{elem:"H",x:-96,y:-65,z:-80,r:0},{elem:"H",x:-91,y:70,z:-84,r:0},{elem:"H",x:30,y:-112,z:-80,r:0},{elem:"H",x:114,y:-7,z:-82,r:0},{elem:"H",x:40,y:106,z:-85,r:0},{elem:"H",x:48,y:106,z:80,r:0},{elem:"H",x:-84,y:79,z:81,r:0},{elem:"H",x:-99,y:-55,z:84,r:0},{elem:"H",x:23,y:-111,z:84,r:0},{elem:"H",x:115,y:-11,z:82,r:0},{elem:"",x:0,y:-2,z:-82,r:0},{elem:"",x:0,y:2,z:83,r:0}], [[1,21],[1,22],[0,2],[2,5],[5,4],[4,3],[3,0],[6,7],[7,8],[8,9],[9,10],[10,6]], null, null, "D5h");
-addMol("MyMol|Co(NH3)4Cl2", "C", "sp³", ["幾何形狀","Shape"], "角度", "-", "-", [{elem:"N",x:-100,y:0,z:0},{elem:"Cl",x:0,y:100,z:0},{elem:"H",x:-117,y:-39,z:18},{elem:"N",x:100,y:0,z:0},{elem:"H",x:116,y:-40,z:17},{elem:"H",x:122,y:35,z:22},{elem:"N",x:0,y:-100,z:0},{elem:"H",x:-120,y:36,z:23},{elem:"H",x:-115,y:2,z:-44},{elem:"H",x:-40,y:-117,z:8},{elem:"Co",x:0,y:0,z:0},{elem:"H",x:35,y:-119,z:7},{elem:"H",x:-3,y:-112,z:-45},{elem:"H",x:115,y:2,z:-45},{elem:"N",x:0,y:0,z:-100},{elem:"Cl",x:0,y:0,z:100},{elem:"H",x:36,y:23,z:-117},{elem:"H",x:-39,y:20,z:-116},{elem:"H",x:2,y:-43,z:-118}], [[0,2],[0,7],[0,8],[0,10],[1,10],[3,4],[3,5],[3,13],[3,10],[6,9],[6,10],[6,11],[6,12],[14,10],[14,16],[14,17],[14,18],[15,10]], null, null, "");
-
-
-
-
-
-
-//共價網狀固體
-addMol("Si|矽|矽晶體", "Si", "sp³", ["正四面體網狀", "Tetrahedral Network"], "109.5°", "1414", "3265", 
-    [{elem:"Si",x:-92.4,y:92.4,z:-92.4,lpCount:0},{elem:"Si",x:-92.4,y:92.4,z:92.4,lpCount:0},{elem:"Si",x:-92.4,y:-92.4,z:-92.4,lpCount:0},{elem:"Si",x:-92.4,y:-92.4,z:92.4,lpCount:0},{elem:"Si",x:92.4,y:92.4,z:-92.4,lpCount:0},{elem:"Si",x:92.4,y:92.4,z:92.4,lpCount:0},{elem:"Si",x:92.4,y:-92.4,z:-92.4,lpCount:0},{elem:"Si",x:92.4,y:-92.4,z:92.4,lpCount:0},{elem:"Si",x:-92.4,y:0,z:0,lpCount:0},{elem:"Si",x:92.4,y:0,z:0,lpCount:0},{elem:"Si",x:0,y:0,z:-92.4,lpCount:0},{elem:"Si",x:0,y:0,z:92.4,lpCount:0},{elem:"Si",x:0,y:92.4,z:0,lpCount:0},{elem:"Si",x:0,y:-92.4,z:0,lpCount:0},{elem:"Si",x:46.2,y:46.2,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:46.2,z:-46.2,lpCount:0},{elem:"Si",x:-46.2,y:-46.2,z:46.2,lpCount:0},{elem:"Si",x:46.2,y:-46.2,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:138.6,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:46.2,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:138.6,z:-138.6,lpCount:0},{elem:"Si",x:-138.6,y:138.6,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:46.2,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:138.6,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:46.2,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:-46.2,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:-138.6,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:-46.2,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:-138.6,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:-46.2,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:-138.6,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:-138.6,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:138.6,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:46.2,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:138.6,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:46.2,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:138.6,z:138.6,lpCount:0},{elem:"Si",x:138.6,y:138.6,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:46.2,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:-138.6,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:-46.2,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:-138.6,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:-46.2,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:-138.6,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:-46.2,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:-138.6,z:138.6,lpCount:0}], 
-    [[0,18],[0,19],[0,20],[1,22],[1,23],[1,24],[1,21],[2,27],[2,28],[2,26],[2,25],[3,31],[3,29],[3,30],[4,33],[4,32],[4,34],[4,35],[5,38],[5,37],[5,36],[6,39],[6,40],[6,41],[7,42],[7,43],[7,45],[7,44],[8,22],[8,15],[8,16],[8,25],[9,14],[9,35],[9,17],[9,44],[10,27],[10,15],[10,17],[10,33],[11,42],[11,24],[11,16],[11,14],[12,15],[12,14],[12,23],[12,32],[13,16],[13,28],[13,17],[13,43],[14,5],[15,0],[16,3],[17,6]], null, 
-    `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>屬於<strong>共價網狀固體</strong>。每個矽原子採取 <strong>sp³ 混成軌域</strong>，與鄰近的四個矽原子形成強大的共價鍵，並向三維空間無限延伸，形成連續的<strong>正四面體網狀結構</strong>，鍵角約為 109.5°。<br><span class="highlight-title">2. 物理性質：</span>由於原子間完全以極強的<strong>共價鍵</strong>鍵結，具有極高的熔點 (1414°C) 與硬度。不同於絕緣的金剛石，矽具有特殊的電子能隙結構，屬於重要的<strong>半導體</strong>材料。<br><span class="highlight-title">3. 化學性質：</span>化學性質穩定。在常溫下不與大部分酸鹼反應（極少數如 HF 除外），但在高溫下活性增加，可與氧氣結合形成二氧化矽 (SiO₂)。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 生活應用</div><div class="info-body"><span class="highlight-title">1. 資訊產業的核心：</span>矽是製造微處理器與各類半導體元件的基礎。透過在網狀結構中加入微量的磷 (P) 或硼 (B)，可調整其導電性，製成 N 型或 P 型半導體。<br><span class="highlight-title">2. 能源轉型 (太陽能)：</span>利用矽的<strong>光電效應</strong>，可將光能轉化為電能。純度達 99.9999% 的多晶矽或單晶矽是製造太陽能電池板的核心材料。<br><span class="highlight-title">3. 地殼中的分佈：</span>雖然矽在自然界中不以單質形式存在，但其化合物（如矽酸鹽、石英）是地殼中含量第二豐富的元素，是構成地球岩石圈的重要基石。</div></div>`, "Fd3m");
-addMol("C", "C", "sp³", ["同素異形體", "Allotrope"], "-", "-", "-", [], [], {
-    "C|金剛石|鑽石": {pg: "Fd3m",hybrid: "sp³",shape: "正四面體網狀",angle: "109.5°", mp: "3550",bp: "4827",
-        atoms: [{elem:"C",x:-82,y:82,z:0,lpCount:0},{elem:"C",x:-82,y:-82,z:0,lpCount:0},{elem:"C",x:82,y:82,z:0,lpCount:0},{elem:"C",x:82,y:-82,z:0,lpCount:0},{elem:"C",x:-82,y:0,z:-82,lpCount:0},{elem:"C",x:-82,y:0,z:82,lpCount:0},{elem:"C",x:82,y:0,z:-82,lpCount:0},{elem:"C",x:82,y:0,z:82,lpCount:0},{elem:"C",x:0,y:0,z:0,lpCount:0},{elem:"C",x:0,y:82,z:-82,lpCount:0},{elem:"C",x:0,y:82,z:82,lpCount:0},{elem:"C",x:0,y:-82,z:-82,lpCount:0},{elem:"C",x:0,y:-82,z:82,lpCount:0},{elem:"C",x:41,y:41,z:-41,lpCount:0},{elem:"C",x:-41,y:41,z:41,lpCount:0},{elem:"C",x:-41,y:-41,z:-41,lpCount:0},{elem:"C",x:41,y:-41,z:41,lpCount:0},{elem:"C",x:-122,y:122,z:41,lpCount:0},{elem:"C",x:-122,y:41,z:-41,lpCount:0},{elem:"C",x:-41,y:122,z:-41,lpCount:0},{elem:"C",x:-122,y:-41,z:41,lpCount:0},{elem:"C",x:-122,y:-122,z:-41,lpCount:0},{elem:"C",x:-41,y:-122,z:41,lpCount:0},{elem:"C",x:41,y:122,z:41,lpCount:0},{elem:"C",x:122,y:122,z:-41,lpCount:0},{elem:"C",x:122,y:41,z:41,lpCount:0},{elem:"C",x:41,y:-122,z:-41,lpCount:0},{elem:"C",x:122,y:-41,z:-41,lpCount:0},{elem:"C",x:122,y:-122,z:41,lpCount:0},{elem:"C",x:-122,y:-41,z:-122,lpCount:0},{elem:"C",x:-41,y:41,z:-122,lpCount:0},{elem:"C",x:-122,y:41,z:122,lpCount:0},{elem:"C",x:-41,y:-41,z:122,lpCount:0},{elem:"C",x:41,y:-41,z:-122,lpCount:0},{elem:"C",x:122,y:41,z:-122,lpCount:0},{elem:"C",x:41,y:41,z:122,lpCount:0},{elem:"C",x:122,y:-41,z:122,lpCount:0},{elem:"C",x:41,y:122,z:-122,lpCount:0},{elem:"C",x:-41,y:122,z:122,lpCount:0},{elem:"C",x:-41,y:-122,z:-122,lpCount:0},{elem:"C",x:41,y:-122,z:122,lpCount:0}],
-        bonds: [[0,18],[0,19],[0,14],[0,17],[1,15],[1,22],[1,21],[1,20],[2,23],[2,13],[2,25],[2,24],[3,16],[3,26],[3,27],[3,28],[4,18],[4,15],[4,30],[4,29],[5,32],[5,20],[5,14],[5,31],[6,13],[6,33],[6,34],[6,27],[7,16],[7,36],[7,35],[7,25],[8,14],[8,16],[8,13],[8,15],[9,37],[9,19],[9,30],[9,13],[10,35],[10,14],[10,23],[10,38],[11,33],[11,26],[11,15],[11,39],[12,16],[12,32],[12,40],[12,22]],
-        desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>金剛石是著名的<strong>共價網狀固體</strong>。每個碳原子採取 <strong>sp³ 混成軌域</strong>，與鄰近的四個碳原子以強大的共價鍵結合，形成無限延伸的正四面體網狀結構。<br><span class="highlight-title">2. 物理性質：</span>由於原子間完全以極強的共價鍵連結，金剛石擁有自然界物質中最高的硬度與極高的熔點 (約 3550°C)。此外，它不具備自由電子，因此是良好的<strong>絕緣體</strong>。<br><span class="highlight-title">3. 導熱特性：</span>儘管不導電，但金剛石具備極佳的聲子傳導能力，使其導熱率遠高於一般金屬。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">💎 生活應用</div><div class="info-body"><span class="highlight-title">1. 工業切割：</span>利用其極致硬度，廣泛用於鑽頭、鋸片及玻璃切割工具。<br><span class="highlight-title">2. 珠寶飾品：</span>具備高折射率與色散率，經切割後能展現璀璨光澤。<br><span class="highlight-title">3. 科學研究：</span>用於製造「金剛石壓砧」，在極高壓環境下研究物質特性。</div></div>`},
-        "C|石墨|黑鉛": {pg: "Layered",hybrid: "sp²",shape: "層狀網狀結構",angle: "120°",mp: "3550",bp: "4827",
-        atoms: [{elem:"C",x:-54,y:99,z:-156,lpCount:0},{elem:"C",x:-54,y:99,z:155,lpCount:0},{elem:"C",x:-111,y:1,z:-156,lpCount:0},{elem:"C",x:-111,y:1,z:155,lpCount:0},{elem:"C",x:-167,y:-97,z:-156,lpCount:0},{elem:"C",x:-167,y:-97,z:155,lpCount:0},{elem:"C",x:59,y:99,z:-156,lpCount:0},{elem:"C",x:59,y:99,z:155,lpCount:0},{elem:"C",x:2,y:1,z:-156,lpCount:0},{elem:"C",x:2,y:1,z:155,lpCount:0},{elem:"C",x:-54,y:-97,z:-156,lpCount:0},{elem:"C",x:-54,y:-97,z:155,lpCount:0},{elem:"C",x:172,y:99,z:-156,lpCount:0},{elem:"C",x:172,y:99,z:155,lpCount:0},{elem:"C",x:115,y:1,z:-156,lpCount:0},{elem:"C",x:115,y:1,z:155,lpCount:0},{elem:"C",x:59,y:-97,z:-156,lpCount:0},{elem:"C",x:59,y:-97,z:155,lpCount:0},{elem:"C",x:-54,y:99,z:-1,lpCount:0},{elem:"C",x:-111,y:1,z:-1,lpCount:0},{elem:"C",x:-167,y:-97,z:-1,lpCount:0},{elem:"C",x:59,y:99,z:-1,lpCount:0},{elem:"C",x:2,y:1,z:-1,lpCount:0},{elem:"C",x:-54,y:-97,z:-1,lpCount:0},{elem:"C",x:172,y:99,z:-1,lpCount:0},{elem:"C",x:115,y:1,z:-1,lpCount:0},{elem:"C",x:59,y:-97,z:-1,lpCount:0},{elem:"C",x:-54,y:34,z:-155,lpCount:0},{elem:"C",x:-111,y:-64,z:-155,lpCount:0},{elem:"C",x:59,y:34,z:-155,lpCount:0},{elem:"C",x:2,y:-64,z:-155,lpCount:0},{elem:"C",x:2,y:67,z:1,lpCount:0},{elem:"C",x:-54,y:-31,z:1,lpCount:0},{elem:"C",x:115,y:67,z:1,lpCount:0},{elem:"C",x:59,y:-31,z:1,lpCount:0},{elem:"C",x:-111,y:132,z:-155,lpCount:0},{elem:"C",x:2,y:132,z:-155,lpCount:0},{elem:"C",x:-111,y:132,z:156,lpCount:0},{elem:"C",x:2,y:132,z:156,lpCount:0},{elem:"C",x:-54,y:34,z:156,lpCount:0},{elem:"C",x:-167,y:34,z:-155,lpCount:0},{elem:"C",x:-167,y:34,z:156,lpCount:0},{elem:"C",x:-111,y:-64,z:156,lpCount:0},{elem:"C",x:-224,y:-64,z:-155,lpCount:0},{elem:"C",x:-167,y:-162,z:-155,lpCount:0},{elem:"C",x:-224,y:-64,z:156,lpCount:0},{elem:"C",x:-167,y:-162,z:156,lpCount:0},{elem:"C",x:115,y:132,z:-155,lpCount:0},{elem:"C",x:115,y:132,z:156,lpCount:0},{elem:"C",x:59,y:34,z:156,lpCount:0},{elem:"C",x:2,y:-64,z:156,lpCount:0},{elem:"C",x:-54,y:-162,z:-155,lpCount:0},{elem:"C",x:-54,y:-162,z:156,lpCount:0},{elem:"C",x:229,y:132,z:-155,lpCount:0},{elem:"C",x:172,y:34,z:-155,lpCount:0},{elem:"C",x:229,y:132,z:156,lpCount:0},{elem:"C",x:172,y:34,z:156,lpCount:0},{elem:"C",x:115,y:-64,z:-155,lpCount:0},{elem:"C",x:115,y:-64,z:156,lpCount:0},{elem:"C",x:59,y:-162,z:-155,lpCount:0},{elem:"C",x:59,y:-162,z:156,lpCount:0},{elem:"C",x:-54,y:165,z:1,lpCount:0},{elem:"C",x:-111,y:67,z:1,lpCount:0},{elem:"C",x:-167,y:-31,z:1,lpCount:0},{elem:"C",x:-224,y:-129,z:1,lpCount:0},{elem:"C",x:-111,y:-129,z:1,lpCount:0},{elem:"C",x:59,y:165,z:1,lpCount:0},{elem:"C",x:2,y:-129,z:1,lpCount:0},{elem:"C",x:172,y:165,z:1,lpCount:0},{elem:"C",x:229,y:67,z:1,lpCount:0},{elem:"C",x:172,y:-31,z:1,lpCount:0},{elem:"C",x:115,y:-129,z:1,lpCount:0}],
-        bonds: [[0,36,"double"],[0,35],[0,27],[1,38,"double"],[1,37],[1,39],[2,27,"double"],[2,40],[2,28],[3,41],[3,39,"double"],[3,42],[4,28],[4,43],[4,44],[5,42],[5,45],[5,46],[6,36],[6,47,"double"],[6,29],[7,48,"double"],[7,38],[7,49],[8,27],[8,29,"double"],[8,30],[9,49,"double"],[9,39],[9,50],[10,30],[10,28,"double"],[10,51],[11,50],[11,42,"double"],[11,52],[12,47],[12,53],[12,54,"double"],[13,48],[13,55],[13,56,"double"],[14,54],[14,29],[14,57,"double"],[15,56],[15,49],[15,58,"double"],[16,30,"double"],[16,57],[16,59],[17,50,"double"],[17,58],[17,60],[18,62,"double"],[18,31],[18,61],[19,63,"double"],[19,32],[19,62],[20,64],[20,65,"double"],[20,63],[21,31,"double"],[21,33],[21,66],[22,32,"double"],[22,34],[22,31],[23,65],[23,67,"double"],[23,32],[24,33],[24,69],[24,68],[25,34],[25,70],[25,33,"double"],[26,67],[26,71],[26,34,"double"]],
-        desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>碳原子採 <strong>sp² 混成</strong>，層內成六角蜂巢狀；層間靠微弱<strong>凡得瓦力</strong>結合。<br><span class="highlight-title">2. 導電特性：</span>擁有離域 π 電子，是唯一能導電的非金屬網狀固體。</div></div>`}
-}, null, "-", "allotrope");
-
-
-
-addMol("SiO2|二氧化矽|石英", "Si", "sp³", ["正四面體網狀結構", "Tetrahedral Network"], "109.5° (Si)", "1713", "2230", 
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4e2d\u5fc3\u77fd\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u8207\u540c\u65cf\u7684\u56db\u6c2f\u5316\u78b3\x20\x28\x43\x43\x6c\u2084\x29\x20\u5177\u6709\u76f8\u540c\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b63\u56db\u9762\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u5e7e\u4f55\u7d50\u69cb\uff0c\u9375\u89d2\u70ba\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x30\x39\x2e\x35\u00b0\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5e38\u6eab\u4e0b\u70ba\u7121\u8272\u3001\u6613\u63ee\u767c\u7684\u6db2\u9ad4\uff0c\u5177\u6709\u5f37\u70c8\u7684\u523a\u9f3b\u6c23\u5473\u3002\u96d6\u7136\x20\x53\x69\x2d\x43\x6c\x20\u9375\u662f\u6975\u6027\u5171\u50f9\u9375\uff0c\u4f46\u7531\u65bc\u5206\u5b50\u5c0d\u7a31\u6027\u9ad8\uff0c\u5076\u6975\u77e9\u4e92\u76f8\u62b5\u92b7\uff0c\u6574\u9ad4\u70ba\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u975e\u6975\u6027\u5206\u5b50\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8207\u5316\u5b78\u6027\u8cea\u5b89\u5b9a\u7684\x20\x43\x43\x6c\u2084\x20\u4e0d\u540c\uff0c\x53\x69\x43\x6c\u2084\x20\u6975\u6613\u767c\u751f\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c34\u89e3\u53cd\u61c9\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u9019\u662f\u56e0\u70ba\u77fd\u539f\u5b50\u7684\u539f\u5b50\u534a\u5f91\u8f03\u5927\uff0c\u4e14\u64c1\u6709\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7a7a\x20\x64\x20\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u80fd\u63a5\u53d7\u6c34\u5206\u5b50\u7684\u6c27\u539f\u5b50\u9032\u884c\u89aa\u6838\u653b\u64ca\uff0c\u53cd\u61c9\u5f8c\u751f\u6210\u77fd\u9178\u4e26\u7522\u751f\u5927\u91cf\u7684\u6c2f\u5316\u6c2b\x20\x28\x48\x43\x6c\x29\x20\u767d\u7159\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u6676\u7247\u88fd\u9020\x20\x28\u591a\u6676\u77fd\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5b83\u662f\u534a\u5c0e\u9ad4\u7522\u696d\u7684\u57fa\u77f3\u3002\u900f\u904e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u897f\u9580\u5b50\u6cd5\x20\x28\x53\x69\x65\x6d\x65\x6e\x73\x20\x70\x72\x6f\x63\x65\x73\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u5c07\u9ad8\u7d14\u5ea6\u7684\x20\x53\x69\x43\x6c\u2084\x20\u8207\u6c2b\u6c23\u5728\x20\x31\x31\x30\x30\u00b0\x43\x20\u9ad8\u6eab\u4e0b\u53cd\u61c9\u9084\u539f\uff0c\u53ef\u88fd\u9020\u51fa\u7d14\u5ea6\u9ad8\u9054\x20\x39\x39\x2e\x39\x39\x39\x39\x39\x39\x39\x25\x20\x28\x39\x4e\x29\x20\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u96fb\u5b50\u7d1a\u591a\u6676\u77fd\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u7528\u65bc\u751f\u7522\u96fb\u8166\u6676\u7247\u8207\u592a\u967d\u80fd\u96fb\u6c60\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u5149\u7e96\u901a\u8a0a\u6838\u5fc3\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u5149\u7e96\u88fd\u7a0b\u4e2d\uff0c\x53\x69\x43\x6c\u2084\x20\u662f\u6700\u95dc\u9375\u7684\u539f\u6599\u3002\u900f\u904e\u6c23\u76f8\u6c89\u7a4d\u6cd5\u5c07\u5176\u9ad8\u6eab\u6c27\u5316\uff0c\u80fd\u751f\u6210\u6298\u5c04\u7387\u6975\u9ad8\u4e14\u7121\u96dc\u8cea\u7684\u4e8c\u6c27\u5316\u77fd\x20\x28\x53\x69\x4f\u2082\x29\uff0c\u69cb\u6210\u5149\u7e96\u5167\u5c64\u50b3\u8f38\u8a0a\u865f\u7684\u73bb\u7483\u6838\u5fc3\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u8ecd\u4e8b\u7159\u9727\u5f48\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u65e9\u671f\u8ecd\u4e8b\u4e0a\u5229\u7528\u5176\u300c\u6975\u6613\u6c34\u89e3\u300d\u7684\u7279\u6027\u88fd\u4f5c\u7159\u9727\u5f48\u3002\u7576\u6db2\u614b\x20\x53\x69\x43\x6c\u2084\x20\u70b8\u958b\u63a5\u89f8\u7a7a\u6c23\u4e2d\u7684\u6c34\u6c23\u6642\uff0c\u6703\u77ac\u9593\u7522\u751f\u6975\u6fc3\u5bc6\u7684\u767d\u8272\u9178\u9727\x20\x28\x48\x43\x6c\x29\uff0c\u80fd\u6709\u6548\u906e\u853d\u8996\u7dda\uff0c\u4f46\u56e0\u5177\u6709\u6bd2\u6027\u8207\u8150\u8755\u6027\uff0c\u73fe\u4ee3\u5df2\u8f03\u5c11\u4f7f\u7528\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x54\x64",
+  ),
+  addMol(
+    "\x50\x43\x6c\x33\x7c\u4e09\u6c2f\u5316\u78f7\x7c\x50\x68\x6f\x73\x70\x68\x6f\x72\x75\x73\x20\x54\x72\x69\x63\x68\x6c\x6f\x72\x69\x64\x65",
+    "\x50",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x36\x2d\x31\x30\x30\u00b0",
+    "\x2d\x39\x33\x2e\x36",
+    "\x37\x36\x2e\x31",
     [
-        {elem:"Si",x:-64,y:98,z:-36,lpCount:0},{elem:"Si",x:-176,y:-97,z:-36,lpCount:0},{elem:"Si",x:161,y:98,z:-36,lpCount:0},{elem:"Si",x:49,y:-97,z:-36,lpCount:0},{elem:"Si",x:-221,y:8,z:46,lpCount:0},{elem:"Si",x:4,y:8,z:46,lpCount:0},{elem:"Si",x:229,y:8,z:46,lpCount:0},{elem:"Si",x:-108,y:-6,z:-119,lpCount:0},{elem:"Si",x:-108,y:-6,z:129,lpCount:0},{elem:"Si",x:117,y:-6,z:-119,lpCount:0},{elem:"Si",x:117,y:-6,z:129,lpCount:0},
-        {elem:"O",x:-106,y:44,z:-64,lpCount:2},{elem:"O",x:119,y:44,z:-64,lpCount:2},{elem:"O",x:-21,y:71,z:18,lpCount:2},{elem:"O",x:204,y:71,z:18,lpCount:2},{elem:"O",x:-40,y:-15,z:101,lpCount:2},{elem:"O",x:185,y:-15,z:101,lpCount:2},{elem:"O",x:-153,y:17,z:74,lpCount:2},{elem:"O",x:72,y:17,z:74,lpCount:2},{elem:"O",x:-218,y:-42,z:-9,lpCount:2},{elem:"O",x:7,y:-42,z:-9,lpCount:2},{elem:"O",x:-134,y:-70,z:-91,lpCount:2},{elem:"O",x:91,y:-70,z:-91,lpCount:2},{elem:"O",x:-106,y:152,z:-9,lpCount:2},{elem:"O",x:-21,y:125,z:-91,lpCount:2},{elem:"O",x:-218,y:-151,z:-64,lpCount:2},{elem:"O",x:-134,y:-124,z:18,lpCount:2},{elem:"O",x:119,y:152,z:-9,lpCount:2},{elem:"O",x:204,y:125,z:-91,lpCount:2},{elem:"O",x:7,y:-151,z:-64,lpCount:2},{elem:"O",x:91,y:-124,z:18,lpCount:2},{elem:"O",x:-246,y:71,z:18,lpCount:2},{elem:"O",x:-265,y:-15,z:101,lpCount:2},{elem:"O",x:297,y:17,z:74,lpCount:2},{elem:"O",x:232,y:-42,z:-9,lpCount:2},{elem:"O",x:-153,y:17,z:-174,lpCount:2},{elem:"O",x:-40,y:-15,z:-147,lpCount:2},{elem:"O",x:-106,y:44,z:184,lpCount:2},{elem:"O",x:-134,y:-70,z:156,lpCount:2},{elem:"O",x:72,y:17,z:-174,lpCount:2},{elem:"O",x:185,y:-15,z:-147,lpCount:2},{elem:"O",x:119,y:44,z:184,lpCount:2},{elem:"O",x:91,y:-70,z:156,lpCount:2}],
-    [[0,23],[0,11],[0,13],[0,24],[1,19],[1,25],[1,26],[1,21],[2,27],[2,12],[2,14],[2,28],[3,20],[3,29],[3,30],[3,22],[4,17],[4,31],[4,32],[4,19],[5,18],[5,13],[5,15],[5,20],[6,33],[6,14],[6,16],[6,34],[7,36],[7,21],[7,35],[7,11],[8,15],[8,38],[8,17],[8,37],[9,40],[9,22],[9,39],[9,12],[10,16],[10,42],[10,18],[10,41]], 
-    null, `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>二氧化矽 (SiO₂) 是典型的<strong>共價網狀固體</strong>。中心矽原子採取 <strong>sp³ 混成軌域</strong>，每個矽原子與 4 個氧原子結合，而每個氧原子與 2 個矽原子結合。這種 Si-O-Si 的連續橋接結構向三維空間無限延伸，形成了極其穩固的網狀架構。<br>
-            <span class="highlight-title">2. 物理性質：</span>由於原子間完全以高強度的共價鍵連結，石英具有極高的熔點 (1713°C) 與極佳的硬度。純淨的石英晶體透明且無色，屬於優良的<strong>電絕緣體</strong>與光學材料。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>化學性質極為穩定，不溶於水，也不與除氫氟酸 (HF) 外的常見酸類反應（HF 可與其反應生成 SiF₄ 氣體，常用於蝕刻玻璃）。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 工業應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 玻璃與陶瓷工業：</span>二氧化矽是製造普通玻璃、石英玻璃及陶瓷器皿的最主要原料。透過加入不同的金屬氧化物，可製造出各種功能性玻璃。<br>
-            <span class="highlight-title">2. 壓電效應：</span>石英晶體具有獨特的<strong>壓電效應</strong> (Piezoelectric effect)，即受壓時會產生電荷，通電時會產生精確的震盪頻率。這使其成為電子錶、電腦主機板及各類頻率控制器件的核心組件。<br>
-            <span class="highlight-title">3. 光學傳輸：</span>高純度的石英玻璃具有極低的光衰減率，是製造<strong>光纖</strong>的主要材料，支撐著現代全球資訊網路的數據傳輸。
-        </div>
-    </div>`, "Quartz");
-
-addMol("BN", "B", "sp² / sp³", ["同質異形體", "Polymorph"], "-", "2973", "2973", [], [], {
-    "BN|氮化硼(立體)": { pg: "F-43m", hybrid: "sp³", shape: "正四面體網狀結構", angle: "109.5°", mp: "2973", bp: "2973", isIonic: true,
-    atoms: [{elem:"B",x:-83,y:83,z:-83,lpCount:0},{elem:"B",x:-83,y:83,z:83,lpCount:0},{elem:"B",x:-83,y:-83,z:-83,lpCount:0},{elem:"B",x:-83,y:-83,z:83,lpCount:0},{elem:"B",x:83,y:83,z:-83,lpCount:0},{elem:"B",x:83,y:83,z:83,lpCount:0},{elem:"B",x:83,y:-83,z:-83,lpCount:0},{elem:"B",x:83,y:-83,z:83,lpCount:0},{elem:"B",x:-83,y:0,z:0,lpCount:0},{elem:"B",x:83,y:0,z:0,lpCount:0},{elem:"B",x:0,y:83,z:0,lpCount:0},{elem:"B",x:0,y:-83,z:0,lpCount:0},{elem:"B",x:0,y:0,z:-83,lpCount:0},{elem:"B",x:0,y:0,z:83,lpCount:0},{elem:"N",x:-42,y:42,z:42,lpCount:0},{elem:"N",x:42,y:-42,z:42,lpCount:0},{elem:"N",x:42,y:42,z:-42,lpCount:0},{elem:"N",x:-42,y:-42,z:-42,lpCount:0},{elem:"N",x:-125,y:125,z:-125,lpCount:0},{elem:"N",x:-125,y:42,z:42,lpCount:0},{elem:"N",x:-42,y:125,z:-42,lpCount:0},{elem:"N",x:-42,y:42,z:-125,lpCount:0},{elem:"N",x:-125,y:125,z:42,lpCount:0},{elem:"N",x:-125,y:42,z:125,lpCount:0},{elem:"N",x:-42,y:125,z:125,lpCount:0},{elem:"N",x:-125,y:-42,z:-125,lpCount:0},{elem:"N",x:-125,y:-125,z:-42,lpCount:0},{elem:"N",x:-42,y:-125,z:-125,lpCount:0},{elem:"N",x:-125,y:-42,z:42,lpCount:0},{elem:"N",x:-125,y:-125,z:125,lpCount:0},{elem:"N",x:-42,y:-42,z:125,lpCount:0},{elem:"N",x:-42,y:-125,z:42,lpCount:0},{elem:"N",x:42,y:125,z:-125,lpCount:0},{elem:"N",x:125,y:125,z:-42,lpCount:0},{elem:"N",x:125,y:42,z:-125,lpCount:0},{elem:"N",x:42,y:125,z:42,lpCount:0},{elem:"N",x:42,y:42,z:125,lpCount:0},{elem:"N",x:125,y:125,z:125,lpCount:0},{elem:"N",x:125,y:42,z:42,lpCount:0},{elem:"N",x:42,y:-42,z:-125,lpCount:0},{elem:"N",x:42,y:-125,z:-42,lpCount:0},{elem:"N",x:125,y:-42,z:-42,lpCount:0},{elem:"N",x:125,y:-125,z:-125,lpCount:0},{elem:"N",x:42,y:-125,z:125,lpCount:0},{elem:"N",x:125,y:-42,z:125,lpCount:0},{elem:"N",x:125,y:-125,z:42,lpCount:0}],
-    bonds: [[18,0,"coordinate"],[0,19],[0,21],[0,20],[24,1,"coordinate"],[1,23],[1,22],[27,2,"coordinate"],[2,26],[2,25],[30,3,"coordinate"],[3,31],[3,28],[3,29],[33,4,"coordinate"],[4,34],[4,32],[36,5,"coordinate"],[5,38],[5,37],[5,35],[39,6,"coordinate"],[6,40],[6,41],[6,42],[43,7,"coordinate"],[7,45],[7,44],[14,8,"coordinate"],[8,17],[8,19],[8,28],[16,9,"coordinate"],[9,38],[9,15],[9,41],[14,10,"coordinate"],[10,35],[10,16],[10,20],[31,11,"coordinate"],[11,17],[11,15],[11,40],[17,12,"coordinate"],[12,16],[12,39],[12,21],[30,13,"coordinate"],[13,15],[13,36],[13,14],[14,1],[15,7],[16,4],[17,2]],
-    desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>立方氮化硼 (c-BN) 具有與金剛石類似的<strong>閃鋅礦結構</strong>，原子採取 <strong>sp³ 混成軌域</strong>。每個 B 原子與 4 個 N 原子以強共價鍵結合（其中 1/4 為配位鍵），形成無限延伸的網狀固體，其硬度極高，在自然界中僅次於金剛石。<br><span class="highlight-title">2. 物理與化學性質：</span>具有極佳的<strong>熱穩定性</strong>，在 1000°C 以上的高溫空氣中仍不易被氧化，且對鐵族金屬表現出極高的化學惰性，優於金剛石。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 工業應用</div><div class="info-body"><span class="highlight-title">1. 超硬切削工具：</span>由於其高硬度與耐高溫性，c-BN 是加工硬化鋼與高溫合金最理想的切削刀具材料。<br><span class="highlight-title">2. 半導體封裝：</span>具備優異的熱導率與絕緣性，是高性能電子組件理想的基板材料。</div></div>` },
-    "BN|氮化硼(平面層狀)": { 
-    pg: "Layered", hybrid: "sp²", shape: "層狀網狀結構", angle: "120°", mp: "2973", bp: "2973", isIonic: true,
-    atoms: [{elem:"B",x:-74,y:90,z:-176,lpCount:0},{elem:"B",x:-74,y:90,z:176,lpCount:0},{elem:"B",x:-132,y:-10,z:-176,lpCount:0},{elem:"B",x:-132,y:-10,z:176,lpCount:0},{elem:"B",x:-189,y:-109,z:-176,lpCount:0},{elem:"B",x:-189,y:-109,z:176,lpCount:0},{elem:"B",x:41,y:90,z:-176,lpCount:0},{elem:"B",x:41,y:90,z:176,lpCount:0},{elem:"B",x:-17,y:-10,z:-176,lpCount:0},{elem:"B",x:-17,y:-10,z:176,lpCount:0},{elem:"B",x:-74,y:-109,z:-176,lpCount:0},{elem:"B",x:-74,y:-109,z:176,lpCount:0},{elem:"B",x:156,y:90,z:-176,lpCount:0},{elem:"B",x:156,y:90,z:176,lpCount:0},{elem:"B",x:98,y:-10,z:-176,lpCount:0},{elem:"B",x:98,y:-10,z:176,lpCount:0},{elem:"B",x:41,y:-109,z:-176,lpCount:0},{elem:"B",x:41,y:-109,z:176,lpCount:0},{elem:"B",x:-17,y:123,z:0,lpCount:0},{elem:"B",x:-74,y:24,z:0,lpCount:0},{elem:"B",x:-132,y:-76,z:0,lpCount:0},{elem:"B",x:98,y:123,z:0,lpCount:0},{elem:"B",x:41,y:24,z:0,lpCount:0},{elem:"B",x:-17,y:-76,z:0,lpCount:0},{elem:"B",x:213,y:123,z:0,lpCount:0},{elem:"B",x:156,y:24,z:0,lpCount:0},{elem:"B",x:98,y:-76,z:0,lpCount:0},{elem:"N",x:-74,y:90,z:0,lpCount:0},{elem:"N",x:-132,y:-10,z:0,lpCount:0},{elem:"N",x:-189,y:-109,z:0,lpCount:0},{elem:"N",x:41,y:90,z:0,lpCount:0},{elem:"N",x:-17,y:-10,z:0,lpCount:0},{elem:"N",x:-74,y:-109,z:0,lpCount:0},{elem:"N",x:156,y:90,z:0,lpCount:0},{elem:"N",x:98,y:-10,z:0,lpCount:0},{elem:"N",x:41,y:-109,z:0,lpCount:0},{elem:"N",x:-17,y:123,z:-176,lpCount:0},{elem:"N",x:-17,y:123,z:176,lpCount:0},{elem:"N",x:-74,y:24,z:-176,lpCount:0},{elem:"N",x:-74,y:24,z:176,lpCount:0},{elem:"N",x:-132,y:-76,z:-176,lpCount:0},{elem:"N",x:-132,y:-76,z:176,lpCount:0},{elem:"N",x:98,y:123,z:-176,lpCount:0},{elem:"N",x:98,y:123,z:176,lpCount:0},{elem:"N",x:41,y:24,z:-176,lpCount:0},{elem:"N",x:41,y:24,z:176,lpCount:0},{elem:"N",x:-17,y:-76,z:-176,lpCount:0},{elem:"N",x:-17,y:-76,z:176,lpCount:0},{elem:"N",x:213,y:123,z:-176,lpCount:0},{elem:"N",x:213,y:123,z:176,lpCount:0},{elem:"N",x:156,y:24,z:-176,lpCount:0},{elem:"N",x:156,y:24,z:176,lpCount:0},{elem:"N",x:98,y:-76,z:-176,lpCount:0},{elem:"N",x:98,y:-76,z:176,lpCount:0},{elem:"N",x:-132,y:123,z:-176,lpCount:0},{elem:"N",x:-132,y:123,z:176,lpCount:0},{elem:"N",x:-189,y:24,z:-176,lpCount:0},{elem:"N",x:-189,y:24,z:176,lpCount:0},{elem:"N",x:-247,y:-76,z:-176,lpCount:0},{elem:"N",x:-189,y:-176,z:-176,lpCount:0},{elem:"N",x:-247,y:-76,z:176,lpCount:0},{elem:"N",x:-189,y:-176,z:176,lpCount:0},{elem:"N",x:-74,y:-176,z:-176,lpCount:0},{elem:"N",x:-74,y:-176,z:176,lpCount:0},{elem:"N",x:41,y:-176,z:-176,lpCount:0},{elem:"N",x:41,y:-176,z:176,lpCount:0},{elem:"N",x:-17,y:190,z:0,lpCount:0},{elem:"N",x:98,y:190,z:0,lpCount:0},{elem:"N",x:213,y:190,z:0,lpCount:0},{elem:"N",x:271,y:90,z:0,lpCount:0},{elem:"N",x:213,y:-10,z:0,lpCount:0},{elem:"N",x:156,y:-109,z:0,lpCount:0}],
-    bonds: [[38,0,"coordinate"],[36,0,"double"],[0,54,"single"],[39,1,"coordinate"],[37,1,"double"],[1,55,"single"],[40,2,"coordinate"],[38,2,"double"],[2,56,"single"],[41,3,"coordinate"],[39,3,"double"],[3,57,"single"],[59,4,"double"],[4,40,"coordinate"],[4,58,"single"],[61,5,"double"],[41,5,"coordinate"],[5,60,"single"],[44,6,"double"],[36,6,"coordinate"],[6,42,"single"],[45,7,"double"],[43,7,"coordinate"],[7,37,"single"],[46,8,"double"],[38,8,"coordinate"],[8,44,"single"],[47,9,"double"],[39,9,"coordinate"],[9,45,"single"],[62,10,"double"],[40,10,"coordinate"],[10,46,"single"],[63,11,"double"],[41,11,"coordinate"],[11,47,"single"],[48,12,"double"],[50,12,"coordinate"],[12,42,"single"],[49,13,"double"],[51,13,"coordinate"],[13,43,"single"],[50,14,"double"],[52,14,"coordinate"],[14,44,"single"],[51,15,"double"],[53,15,"coordinate"],[15,45,"single"],[46,16,"double"],[64,16,"coordinate"],[16,52,"single"],[47,17,"double"],[65,17,"coordinate"],[17,53,"single"],[66,18,"coordinate"],[18,27,"double"],[18,30,"single"],[27,19,"coordinate"],[19,28,"double"],[19,31,"single"],[28,20,"coordinate"],[20,29,"double"],[20,32,"single"],[67,21,"coordinate"],[21,30,"double"],[21,33,"single"],[30,22,"coordinate"],[22,31,"double"],[22,34,"single"],[31,23,"coordinate"],[23,32,"double"],[23,35,"single"],[68,24,"coordinate"],[24,33,"double"],[24,69,"single"],[33,25,"coordinate"],[25,34,"double"],[25,70,"single"],[34,26,"coordinate"],[26,35,"double"],[26,71,"single"]],
-    desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>六方氮化硼 (h-BN) 被稱為<strong>「白石墨」</strong>。層內原子採 <strong>sp² 混成</strong>成六角網狀，層間靠凡得瓦力結合。與石墨不同，B 與 N 的電負度差異導致電子較為定域化。<br><span class="highlight-title">2. 物理特性：</span>與石墨最大的不同在於它是優良的<strong>電絕緣體</strong>。同時具備極佳的耐高溫性、化學穩定性與潤滑性，且外觀呈白色。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 生活應用</div><div class="info-body"><span class="highlight-title">1. 高溫潤滑劑：</span>在石墨失效的高溫環境下，h-BN 仍能提供穩定的潤滑效果，常用於航太與鑄造業。<br><span class="highlight-title">2. 化妝品添加：</span>由於其細膩的粉末感與安全性，被廣泛用於粉餅與眼影中以增加延展性。</div></div>` }
-}, null, "-", "polymorph");
-
-
-
-
-
-//碳簇
-addMol("C36|碳36|富勒烯", "C", "sp³", ["籠狀結構 (12個五邊形, 8個六邊形)", "Cage (12 Pentagons, 8 Hexagons)"], "120° (彎曲)", "N/A (昇華)", "N/A", 
+      { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x14, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": -0xf, "\x7a": 0x44 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x3b, "\x79": -0xf, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x3b, "\x79": -0xf, "\x7a": -0x22 },
+    ],
     [
-    {elem:"C",x:63,y:50,z:-87},{elem:"C",x:-63,y:50,z:-87},{elem:"C",x:-31,y:96,z:-56},{elem:"C",x:32,y:96,z:-55},{elem:"C",x:114,y:31,z:-54},{elem:"C",x:115,y:-32,z:-55},{elem:"C",x:114,y:-64,z:0},{elem:"C",x:114,y:63,z:0},{elem:"C",x:113,y:31,z:54},{elem:"C",x:113,y:-32,z:54},
-    {elem:"C",x:-32,y:95,z:55},{elem:"C",x:32,y:96,z:56},{elem:"C",x:64,y:101,z:0},{elem:"C",x:-64,y:99,z:-1},{elem:"C",x:32,y:-96,z:56},{elem:"C",x:63,y:-101,z:0},{elem:"C",x:-31,y:-95,z:56},{elem:"C",x:64,y:-50,z:88},{elem:"C",x:32,y:-96,z:-56},{elem:"C",x:64,y:-50,z:-88},
-    {elem:"C",x:-31,y:-95,z:-56},{elem:"C",x:-63,y:-99,z:0},{elem:"C",x:-64,y:-50,z:-87},{elem:"C",x:-32,y:0,z:-112},{elem:"C",x:32,y:0,z:-112},{elem:"C",x:-114,y:-62,z:-1},{elem:"C",x:-115,y:-31,z:-55},{elem:"C",x:-115,y:32,z:-55},{elem:"C",x:-113,y:-32,z:55},{elem:"C",x:32,y:0,z:113},
-    {elem:"C",x:-32,y:0,z:112},{elem:"C",x:-63,y:-50,z:88},{elem:"C",x:63,y:50,z:88},{elem:"C",x:-64,y:50,z:87},{elem:"C",x:-115,y:32,z:54},{elem:"C",x:-116,y:63,z:0}
-],
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4e2d\u5fc3\u78f7\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u7531\u65bc\u5177\u6709\u4e00\u5c0d\u672a\u5171\u7528\u96fb\u5b50\u5c0d\x20\x28\x4c\x6f\x6e\x65\x20\x50\x61\x69\x72\x29\uff0c\u5176\u5c0d\u9375\u7d50\u96fb\u5b50\u7684\u65a5\u529b\u8f03\u5927\uff0c\u5c0e\u81f4\x20\x50\x2d\x43\x6c\x20\u9375\u89d2\u88ab\u58d3\u7e2e\u81f3\u7d04\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x30\x30\u00b0\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u5f62\u6210\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e09\u89d2\u9310\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7d50\u69cb\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5e38\u6eab\u4e0b\u70ba\u7121\u8272\u6216\u5fae\u9ec3\u8272\u7684\u6db2\u9ad4\uff0c\u6703\u767c\u7159\u3002\u5177\u6709\u8f03\u4f4e\u7684\u6cb8\u9ede\u8207\u5f37\u70c8\u523a\u9f3b\u5473\uff0c\u53ef\u6eb6\u65bc\u82ef\u3001\u6c2f\u4eff\u7b49\u6709\u6a5f\u6eb6\u5291\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x50\x2d\x43\x6c\x20\u9375\u6975\u6027\u5927\u4e14\u53cd\u61c9\u6027\u6975\u9ad8\uff0c\u9047\u6c34\u6703\u5287\u70c8\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c34\u89e3\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u4e26\u653e\u71b1\uff0c\u751f\u6210\u4e9e\u78f7\u9178\x20\x28\x48\u2083\x50\x4f\u2083\x29\x20\u8207\u9e7d\u9178\u9727\u3002\u56e0\u78f7\u539f\u5b50\u4e0a\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\uff0c\u53ef\u4f5c\u70ba\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u8def\u6613\u65af\u9e7c\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u53c3\u8207\u914d\u4f4d\u53cd\u61c9\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u9664\u8349\u5291\u539f\u6599\x20\x28\u5609\u78f7\u585e\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5de5\u696d\u4e0a\u6700\u5927\u5b97\u7684\u7528\u9014\u662f\u4f5c\u70ba\u4e2d\u9593\u9ad4\uff0c\u7528\u65bc\u5408\u6210\u5ee3\u6548\u6027\u9664\u8349\u5291\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5609\u78f7\u585e\x20\x28\x47\x6c\x79\x70\x68\x6f\x73\x61\x74\x65\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u9019\u662f\u76ee\u524d\u5168\u7403\u8fb2\u696d\u4f7f\u7528\u91cf\u6700\u5927\u7684\u8fb2\u85e5\u4e4b\u4e00\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u6709\u6a5f\u5408\u6210\x20\x28\u6c2f\u5316\u5291\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u88fd\u85e5\u8207\u6709\u6a5f\u5316\u5b78\u5be6\u9a57\u5ba4\u4e2d\uff0c\u5b83\u662f\u4e0d\u53ef\u6216\u7f3a\u7684\u8a66\u5291\u3002\u5c08\u9580\u7528\u4f86\u5c07\u6709\u6a5f\u5206\u5b50\u4e2d\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7fa5\u57fa\x20\x28\x2d\x4f\x48\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u53d6\u4ee3\u70ba\u6c2f\u539f\u5b50\uff0c\u6216\u662f\u5c07\u7fa7\u9178\u8f49\u5316\u70ba\u6d3b\u6027\u6975\u9ad8\u7684\u91af\u6c2f\uff0c\u662f\u5408\u6210\u67d3\u6599\u8207\u85e5\u7269\u7684\u91cd\u8981\u6b65\u9a5f\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5851\u81a0\u6dfb\u52a0\u5291\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u53ef\u7528\u65bc\u88fd\u9020\u542b\u78f7\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u963b\u71c3\u5291\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\u5851\u5316\u5291\u3002\u9019\u4e9b\u6dfb\u52a0\u5291\u80fd\u8b93\u96fb\u5b50\u7522\u54c1\u7684\u5851\u81a0\u5916\u6bbc\u5728\u53d7\u71b1\u6642\u4e0d\u6613\u71c3\u71d2\uff0c\u5927\u5e45\u63d0\u5347\u7522\u54c1\u5b89\u5168\u6027\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x43\x33\x76",
+  ),
+  addMol(
+    "\x43\x4f\x32\x7c\u4e8c\u6c27\u5316\u78b3\x7c\u4e7e\u51b0",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d\x37\x38\x2e\x35\x20\x28\u6607\u83ef\x29",
+    "\x2d\x35\x36\x2e\x36",
+    getLinear("\x43", "\x4f", 0x46),
     [
-    [0,4],[0,3,"double"],[0,24],[1,27],[1,2,"double"],[1,23],[2,3],[2,13],[3,12],[4,7],[4,5,"double"],[5,6],[5,19],[6,15],[6,9,"double"],[7,12,"double"],[7,8],[8,32,"double"],[8,9],[10,11,"double"],
-    [10,33],[10,13],[11,12],[11,32],[13,35,"double"],[14,16,"double"],[14,17],[14,15],[15,18,"double"],[16,21],[17,9],[17,29],[18,20],[18,19],[19,24,"double"],[20,21,"double"],[20,22],[21,25],[22,26],[22,23,"double"],
-    [23,24],[25,26],[25,28,"double"],[26,27,"double"],[27,35],[28,31],[28,34],[29,30,"double"],[29,32],[30,31],[30,33],[31,16],[33,34,"double"],[34,35]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C36 屬於<strong>富勒烯 (Fullerenes)</strong> 家族中的小尺寸成員。其結構由 36 個碳原子組成封閉籠狀，根據歐拉定律包含 <strong>12 個五邊形</strong>與 <strong>8 個六邊形</strong>。與 C60 相比，C36 的表面曲率更大，導致其碳原子雖然接近 <strong>sp² 混成</strong>，但帶有明顯的張力。<br>
-            <span class="highlight-title">2. 物理性質：</span>通常呈深色固體，具有高度的化學活性能夠進行加成反應。由於其對稱性（此模型為 <strong>D6h</strong>），電子雲分布呈現獨特的電子特性，被認為在超導體材料開發中具有潛力。<br>
-            <span class="highlight-title">3. 幾何穩定性：</span>在 C36 的結構中，五邊形相互鄰接的機率較高（違反離散五邊形規則 IPR），這使得它比 C60 更不穩定，但在特定條件下（如氣相合成）仍可穩定存在。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米電子元件：</span>由於 C36 的獨特曲率與離域電子特性，科學家正研究其作為奈米級<strong>分子元件</strong>的可能性，例如場效電晶體或量子點材料。<br>
-            <span class="highlight-title">2. 超導材料前驅物：</span>如同摻雜鹼金屬的 C60，C36 在特定排列下可展現出高臨界溫度的<strong>超導性</strong>，是未來低損耗輸電與量子計算的重要候選材料。<br>
-            <span class="highlight-title">3. 高能燃料添加劑：</span>碳籠結構儲存了大量的化學能，在極端條件下的燃燒效率極高，目前正探索其在航空航天推進劑中的應用價值。
-        </div>
-    </div>`, "D6h");
-
-addMol("C40|碳40|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 10個六邊形)", "Cage (12 Pentagons, 10 Hexagons)"], "120° (彎曲)", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x43\x53\x32\x7c\u4e8c\u786b\u5316\u78b3",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d\x31\x31\x31\x2e\x36",
+    "\x34\x36\x2e\x32",
+    getLinear("\x43", "\x53", 0x4b),
     [
-    {elem:"C",x:114,y:53,z:46},{elem:"C",x:135,y:0,z:24},{elem:"C",x:114,y:-53,z:46},{elem:"C",x:64,y:-55,z:86},{elem:"C",x:33,y:0,z:105},{elem:"C",x:64,y:55,z:86},{elem:"C",x:51,y:-124,z:11},{elem:"C",x:102,y:-91,z:-3},{elem:"C",x:-31,y:-104,z:67},{elem:"C",x:30,y:-104,z:67},
-    {elem:"C",x:-65,y:56,z:86},{elem:"C",x:-35,y:0,z:105},{elem:"C",x:-66,y:-56,z:87},{elem:"C",x:131,y:0,z:-39},{elem:"C",x:107,y:57,z:-56},{elem:"C",x:54,y:57,z:-92},{elem:"C",x:107,y:-57,z:-56},{elem:"C",x:54,y:-57,z:-92},{elem:"C",x:31,y:0,z:-109},{elem:"C",x:0,y:-130,z:-26},
-    {elem:"C",x:0,y:-92,z:-79},{elem:"C",x:52,y:125,z:11},{elem:"C",x:0,y:130,z:-26},{elem:"C",x:102,y:92,z:-3},{elem:"C",x:1,y:92,z:-79},{elem:"C",x:-52,y:57,z:-92},{elem:"C",x:-51,y:125,z:11},{elem:"C",x:-101,y:91,z:-2},{elem:"C",x:-104,y:56,z:-55},{elem:"C",x:-30,y:0,z:-110},
-    {elem:"C",x:-30,y:105,z:67},{elem:"C",x:30,y:105,z:67},{elem:"C",x:-53,y:-57,z:-92},{elem:"C",x:-104,y:-56,z:-54},{elem:"C",x:-129,y:0,z:-36},{elem:"C",x:-51,y:-125,z:11},{elem:"C",x:-102,y:-91,z:-1},{elem:"C",x:-116,y:53,z:47},{elem:"C",x:-138,y:0,z:26},{elem:"C",x:-117,y:-54,z:48}
-],
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x42\x65\x43\x6c\x32\x7c\u4e8c\u6c2f\u5316\u9239",
+    "\x42\x65",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x33\x39\x39",
+    "\x34\x38\x32",
+    getLinear("\x42\x65", "\x43\x6c", 0x4b),
     [
-    [0,1],[0,23,"double"],[0,5],[1,2,"double"],[1,13],[2,7],[2,3],[3,9,"double"],[3,4],[4,5,"double"],[4,11],[5,31],[6,7,"double"],[6,9],[6,19],[7,16],[8,9],[8,12,"double"],[8,35],[10,30],
-    [10,37],[10,11,"double"],[11,12],[12,39],[13,14,"double"],[13,16],[14,23],[14,15],[15,18],[15,24,"double"],[16,17,"double"],[17,18],[17,20],[18,29,"double"],[19,35,"double"],[19,20],[20,32,"double"],[21,23],[21,31],[21,22,"double"],
-    [22,24],[24,25],[25,29],[25,28,"double"],[26,22],[26,27],[26,30],[27,37],[27,28],[28,34],[29,32],[30,31,"double"],[32,33],[33,36],[33,34,"double"],[34,38],[35,36],[36,39,"double"],[37,38,"double"],[38,39]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C40 是高度對稱的籠狀碳簇，屬於<strong>富勒烯 (Fullerenes)</strong> 家族。結構包含 <strong>12 個五邊形</strong>與 <strong>10 個六邊形</strong>。其原子採取 <strong>sp² 混成</strong>，但由於籠徑較小，碳架構帶有強烈的張力，使其化學活性高於著名的 C60。<br>
-            <span class="highlight-title">2. 物理性質：</span>在高溫與高壓環境下合成，外觀通常呈暗褐色或黑色固體。具有半導體特性，且電子親和力強。由於其特殊的 <strong>C2v 對稱性</strong>，電子在表面分布具有特定的不均勻性。<br>
-            <span class="highlight-title">3. 分子特性：</span>C40 的穩定性受「離散五邊形規則」(IPR) 限制，雖然較不穩定，但在籠內填充特定原子（如金屬鑭）形成內嵌富勒烯時，穩定性會顯著提升。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 光伏材料：</span>由於其優異的電子接受能力，C40 及其衍生物被研究用於<strong>有機太陽能電池</strong>中作為受體材料，提高光電轉換效率。<br>
-            <span class="highlight-title">2. 分子傳感器：</span>其獨特的籠狀開孔與高活性表面，可對特定的氣體分子或離子產生敏感的電訊號變化，適合製作奈米級的精密化學傳感器。<br>
-            <span class="highlight-title">3. 藥物載體：</span>內嵌金屬的 C40 籠結構生物毒性極低，可作為醫療影像（如 MRI）的顯影劑載體，或是作為標靶藥物的微型運輸艙。
-        </div>
-    </div>`, "C2v");
-
-addMol("C50|碳50|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 15個六邊形)", "Cage (12 Pentagons, 15 Hexagons)"], "108°~120° (彎曲)", "N/A (昇華)", "N/A", 
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x42\x43\x6c\x33\x7c\u4e09\u6c2f\u5316\u787c",
+    "\x42",
+    "\x73\x70\u00b2",
+    ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x31\x32\x30\u00b0",
+    "\x2d\x31\x30\x37",
+    "\x31\x32\x2e\x36",
+    getTrigPlanar("\x42", "\x43\x6c", 0x4b),
     [
-    {elem:"C",x:112,y:76,z:-55},{elem:"C",x:135,y:17,z:-55},{elem:"C",x:150,y:-9,z:0},{elem:"C",x:60,y:92,z:-89},{elem:"C",x:106,y:-29,z:-89},{elem:"C",x:53,y:-14,z:-121},{elem:"C",x:29,y:46,z:-122},{elem:"C",x:108,y:-84,z:-55},{elem:"C",x:134,y:-68,z:0},{elem:"C",x:58,y:-122,z:-56},
-    {elem:"C",x:5,y:-110,z:-89},{elem:"C",x:2,y:-54,z:-121},{elem:"C",x:38,y:-144,z:0},{elem:"C",x:59,y:-122,z:56},{elem:"C",x:108,y:-83,z:56},{elem:"C",x:107,y:-29,z:89},{elem:"C",x:53,y:-14,z:121},{elem:"C",x:6,y:-110,z:89},{elem:"C",x:3,y:-54,z:121},{elem:"C",x:113,y:76,z:56},
-    {elem:"C",x:60,y:92,z:89},{elem:"C",x:136,y:18,z:56},{elem:"C",x:30,y:46,z:121},{elem:"C",x:-34,y:42,z:122},{elem:"C",x:25,y:134,z:56},{elem:"C",x:-38,y:130,z:56},{elem:"C",x:-69,y:85,z:89},{elem:"C",x:-103,y:-39,z:89},{elem:"C",x:-51,y:-20,z:122},{elem:"C",x:105,y:105,z:0},
-    {elem:"C",x:54,y:140,z:0},{elem:"C",x:-68,y:132,z:0},{elem:"C",x:-38,y:131,z:-56},{elem:"C",x:25,y:135,z:-56},{elem:"C",x:-116,y:94,z:0},{elem:"C",x:-148,y:-23,z:0},{elem:"C",x:-137,y:4,z:56},{elem:"C",x:-121,y:65,z:56},{elem:"C",x:-46,y:-129,z:56},{elem:"C",x:-126,y:-81,z:0},
-    {elem:"C",x:-99,y:-94,z:55},{elem:"C",x:-51,y:-19,z:-122},{elem:"C",x:-103,y:-39,z:-89},{elem:"C",x:-99,y:-94,z:-56},{elem:"C",x:-46,y:-129,z:-56},{elem:"C",x:-24,y:-148,z:0},{elem:"C",x:-120,y:66,z:-56},{elem:"C",x:-69,y:86,z:-90},{elem:"C",x:-35,y:43,z:-123},{elem:"C",x:-136,y:5,z:-56}
-],
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    "\x44\x33\x68",
+  ),
+  addMol(
+    "\x53\x4f\x32\x7c\u4e8c\u6c27\u5316\u786b",
+    "\x53",
+    "\x73\x70\u00b2",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x31\x39\u00b0",
+    "\x2d\x37\x32",
+    "\x2d\x31\x30",
     [
-    [0,1],[0,29],[0,3,"double"],[1,2,"double"],[1,4],[2,8],[2,21],[3,33],[3,6],[4,7,"double"],[4,5],[5,6,"double"],[5,11],[6,48],[7,9],[7,8],[8,14,"double"],[9,12,"double"],[9,10],[10,44],
-    [10,11,"double"],[11,41],[12,45],[12,13],[13,14],[13,17,"double"],[14,15],[15,21],[15,16,"double"],[16,22],[16,18],[17,38],[17,18],[18,28,"double"],[19,21,"double"],[19,29],[19,20],[20,24,"double"],[20,22],[22,23,"double"],
-    [23,26],[23,28],[24,25],[24,30],[25,31,"double"],[25,26],[26,37,"double"],[27,36,"double"],[27,28],[27,40],[29,30,"double"],[30,33],[31,32],[32,33,"double"],[32,47],[34,31],[34,37],[34,46],[35,39],[35,49],
-    [35,36],[36,37],[38,40,"double"],[38,45],[39,40],[39,43,"double"],[41,48,"double"],[41,42],[42,49,"double"],[42,43],[43,44],[44,45,"double"],[46,49],[46,47,"double"],[47,48]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C50 是<strong>富勒烯 (Fullerenes)</strong> 家族中的中等尺寸成員。其分子結構包含 <strong>12 個五邊形</strong>與 <strong>15 個六邊形</strong>。根據計算，其能量最低的異構物具有 <strong>D5h 對稱性</strong>，外型呈現類似橄欖球的對稱拉伸感。<br>
-            <span class="highlight-title">2. 物理性質：</span>通常存在於碳弧放電產生的炭黑中，具有半導體與非線性的光學特性。由於表面曲率不均勻，其電子親和力分布在不同的碳原子位點上有所差異。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>C50 違反了「離散五邊形規則」(IPR)，因為在 50 個原子的框架下，五邊形不可避免地會相互鄰接。這使得 C50 具有極高的化學反應活性，通常需要透過外接基團或內部嵌入金屬原子（內嵌富勒烯）來使其穩定存在。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 未來應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米超分子化學：</span>C50 高活性的表面使其成為優良的<strong>分子建築基元</strong>，可用於合成具有特殊光電功能的複雜超分子陣列。<br>
-            <span class="highlight-title">2. 電子受體材料：</span>與 C60 類似，C50 具有捕捉電子的能力，目前正探索其在<strong>有機場效電晶體 (OFET)</strong> 與新一代柔性電子元件中的應用潛力。<br>
-            <span class="highlight-title">3. 原子存儲技術：</span>作為<strong>內嵌富勒烯 (Endohedral Fullerenes)</strong> 的優質籠型，C50 內部空間可封裝單個金屬原子或小分子，這在量子計算與單分子磁體研究中具有高度價值。
-        </div>
-    </div>`, "D5h");
-
-addMol("C60|碳60|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 20個六邊形)", "Cage (12 Pentagons, 20 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x0 },
+    ],
     [
-    {elem:"C",x:99,y:-27,z:119},{elem:"C",x:139,y:-8,z:73},{elem:"C",x:59,y:14,z:145},{elem:"C",x:138,y:53,z:54},{elem:"C",x:142,y:66,z:-8},{elem:"C",x:144,y:-55,z:31},{elem:"C",x:149,y:-42,z:-31},{elem:"C",x:148,y:19,z:-51},{elem:"C",x:-20,y:-62,z:144},{elem:"C",x:20,y:-103,z:117},
-    {elem:"C",x:-1,y:-3,z:158},{elem:"C",x:80,y:-86,z:105},{elem:"C",x:108,y:-104,z:51},{elem:"C",x:-12,y:-138,z:75},{elem:"C",x:16,y:-156,z:20},{elem:"C",x:76,y:-138,z:8},{elem:"C",x:-96,y:38,z:119},{elem:"C",x:-115,y:-21,z:105},{elem:"C",x:-39,y:47,z:146},{elem:"C",x:-77,y:-71,z:117},
-    {elem:"C",x:-72,y:-118,z:75},{elem:"C",x:-148,y:-18,z:51},{elem:"C",x:-143,y:-66,z:8},{elem:"C",x:-105,y:-116,z:21},{elem:"C",x:-22,y:134,z:80},{elem:"C",x:-80,y:124,z:54},{elem:"C",x:-2,y:95,z:126},{elem:"C",x:-117,y:77,z:73},{elem:"C",x:-149,y:42,z:31},{elem:"C",x:-76,y:138,z:-8},
-    {elem:"C",x:-108,y:103,z:-51},{elem:"C",x:-145,y:55,z:-31},{elem:"C",x:98,y:94,z:80},{elem:"C",x:77,y:133,z:34},{elem:"C",x:59,y:75,z:126},{elem:"C",x:17,y:153,z:34},{elem:"C",x:-16,y:156,z:-21},{elem:"C",x:105,y:116,z:-21},{elem:"C",x:72,y:118,z:-76},{elem:"C",x:12,y:138,z:-75},
-    {elem:"C",x:-100,y:27,z:-119},{elem:"C",x:-80,y:86,z:-105},{elem:"C",x:-20,y:103,z:-118},{elem:"C",x:-59,y:-14,z:-145},{elem:"C",x:-99,y:-94,z:-79},{elem:"C",x:-140,y:-53,z:-54},{elem:"C",x:-140,y:8,z:-73},{elem:"C",x:-58,y:-75,z:-125},{elem:"C",x:23,y:-134,z:-79},{elem:"C",x:-17,y:-153,z:-34},
-    {elem:"C",x:-77,y:-133,z:-34},{elem:"C",x:2,y:-95,z:-125},{elem:"C",x:96,y:-38,z:-119},{elem:"C",x:117,y:-77,z:-73},{elem:"C",x:81,y:-125,z:-54},{elem:"C",x:39,y:-46,z:-145},{elem:"C",x:21,y:62,z:-145},{elem:"C",x:78,y:71,z:-118},{elem:"C",x:115,y:21,z:-106},{elem:"C",x:1,y:3,z:-158}
-],
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x53\x4f\x33\x7c\u4e09\u6c27\u5316\u786b",
+    "\x53",
+    "\x73\x70\u00b2",
+    ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x31\x32\x30\u00b0",
+    "\x31\x36\x2e\x39",
+    "\x34\x34\x2e\x38",
+    getTrigPlanar("\x53", "\x4f", 0x44),
     [
-    [0,1,"double"],[0,11],[0,2],[1,3],[1,5],[2,10,"double"],[2,34],[3,32],[3,4,"double"],[4,37],[4,7],[5,6,"double"],[5,12],[6,7],[6,53],[7,58,"double"],[8,9,"double"],[8,10],[8,19],[9,13],
-    [9,11],[10,18],[11,12,"double"],[12,15],[13,14,"double"],[13,20],[14,49],[14,15],[15,54,"double"],[16,27],[16,18,"double"],[16,17],[17,21],[17,19,"double"],[18,26],[19,20],[20,23,"double"],[21,28,"double"],[21,22],[22,45,"double"],
-    [22,23],[23,50],[24,35,"double"],[24,26],[24,25],[25,29],[25,27,"double"],[26,34,"double"],[27,28],[28,31],[29,30,"double"],[29,36],[30,41],[30,31],[31,46,"double"],[32,34],[32,33,"double"],[33,37],[33,35],[35,36],
-    [36,39,"double"],[37,38,"double"],[38,57],[38,39],[39,42],[40,46],[40,41],[40,43,"double"],[41,42,"double"],[42,56],[43,59],[43,47],[44,45],[44,50,"double"],[44,47],[45,46],[47,51,"double"],[48,54],[48,51],[48,49,"double"],
-    [49,50],[51,55],[52,53,"double"],[52,55],[52,58],[53,54],[55,59,"double"],[56,59],[56,57,"double"],[57,58]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C60（足球烯）是富勒烯家族中最具代表性的成員。其結構由 60 個碳原子組成的封閉籠狀結構，包含 <strong>12個五邊形</strong>與 <strong>20個六邊形</strong>。這種幾何形狀在數學上稱為「截角二十面體」，具有極高的 <strong>Ih 點群</strong>對稱性。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為深紫色或黑色固體。它不溶於水，但可溶於苯、甲苯等有機溶劑。C60 具有離域 π 電子系統，展現出獨特的 3D 芳香性，且每個碳原子雖然外觀呈曲面，但仍保持 <strong>sp² 混成</strong> 特性。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>化學性質相對穩定，但可進行加成反應。在特定條件下（如摻雜鹼金屬），C60 晶體可表現出高臨界溫度的<strong>超導性</strong>。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 科技應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米技術與材料：</span>C60 被廣泛用於製造光伏電池、感光材料及高效能潤滑劑。其籠狀結構可作為「分子滾珠」，減少微觀機械磨損。<br>
-            <span class="highlight-title">2. 生物醫學：</span>由於 C60 具有捕捉自由基的能力，被研究用於抗衰老、抗氧化及防輻射藥物中。此外，籠內可封裝金屬原子，作為醫療影像的<strong>顯影劑載體</strong>。<br>
-            <span class="highlight-title">3. 高端光學：</span>C60 展現出優異的非線性光學特性，可用於製造光限幅器，保護光學感測器免受強力雷射損傷。
-        </div>
-    </div>`, "Ih");
-
-addMol("C70|碳70|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 25個六邊形)", "Cage (12 Pentagons, 25 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x44\x33\x68",
+  ),
+  addMol(
+    "\x4f\x33\x7c\u81ed\u6c27",
+    "\x4f",
+    "\x73\x70\u00b2",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x31\x37\u00b0",
+    "\x2d\x31\x39\x32\x2e\x32",
+    "\x2d\x31\x31\x32",
     [
-    {elem:"C",x:142,y:102,z:30},{elem:"C",x:108,y:104,z:83},{elem:"C",x:177,y:52,z:14},{elem:"C",x:108,y:55,z:121},{elem:"C",x:54,y:37,z:150},{elem:"C",x:0,y:71,z:144},{elem:"C",x:-54,y:37,z:150},{elem:"C",x:142,y:60,z:-88},{elem:"C",x:108,y:111,z:-74},{elem:"C",x:177,y:30,z:-45},
-    {elem:"C",x:108,y:132,z:-14},{elem:"C",x:54,y:154,z:11},{elem:"C",x:0,y:160,z:-23},{elem:"C",x:-55,y:154,z:11},{elem:"C",x:0,y:123,z:104},{elem:"C",x:54,y:136,z:73},{elem:"C",x:-55,y:136,z:73},{elem:"C",x:143,y:-66,z:-84},{elem:"C",x:108,y:-36,z:-128},{elem:"C",x:178,y:-33,z:-42},
-    {elem:"C",x:108,y:27,z:-130},{elem:"C",x:54,y:58,z:-142},{elem:"C",x:0,y:27,z:-158},{elem:"C",x:-54,y:58,z:-143},{elem:"C",x:0,y:137,z:-85},{elem:"C",x:54,y:112,z:-107},{elem:"C",x:-55,y:112,z:-107},{elem:"C",x:142,y:-100,z:36},{elem:"C",x:108,y:-133,z:-6},{elem:"C",x:178,y:-50,z:18},
-    {elem:"C",x:108,y:-115,z:-66},{elem:"C",x:54,y:-118,z:-99},{elem:"C",x:0,y:-142,z:-76},{elem:"C",x:-54,y:-118,z:-99},{elem:"C",x:0,y:-38,z:-156},{elem:"C",x:55,y:-67,z:-139},{elem:"C",x:-54,y:-67,z:-139},{elem:"C",x:143,y:4,z:107},{elem:"C",x:108,y:-46,z:125},{elem:"C",x:178,y:2,z:54},
-    {elem:"C",x:108,y:-98,z:89},{elem:"C",x:54,y:-131,z:81},{elem:"C",x:0,y:-115,z:112},{elem:"C",x:-54,y:-131,z:81},{elem:"C",x:0,y:-161,z:-12},{elem:"C",x:54,y:-153,z:21},{elem:"C",x:-54,y:-153,z:21},{elem:"C",x:0,y:-61,z:149},{elem:"C",x:54,y:-27,z:152},{elem:"C",x:-54,y:-27,z:152},
-    {elem:"C",x:-141,y:-100,z:36},{elem:"C",x:-108,y:-98,z:90},{elem:"C",x:-108,y:-46,z:125},{elem:"C",x:-176,y:-51,z:18},{elem:"C",x:-142,y:-66,z:-85},{elem:"C",x:-108,y:-116,z:-66},{elem:"C",x:-108,y:-133,z:-6},{elem:"C",x:-177,y:-33,z:-43},{elem:"C",x:-142,y:60,z:-89},{elem:"C",x:-108,y:27,z:-130},
-    {elem:"C",x:-108,y:-36,z:-129},{elem:"C",x:-177,y:30,z:-45},{elem:"C",x:-142,y:103,z:30},{elem:"C",x:-109,y:133,z:-15},{elem:"C",x:-109,y:112,z:-74},{elem:"C",x:-177,y:51,z:15},{elem:"C",x:-143,y:3,z:107},{elem:"C",x:-108,y:55,z:122},{elem:"C",x:-108,y:104,z:83},{elem:"C",x:-177,y:2,z:54}
-],
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0xa, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+    ],
     [
-    [0,1,"double"],[0,10],[0,2],[1,3],[1,15],[2,9,"double"],[2,39],[3,4,"double"],[3,37],[4,5],[4,48],[5,6,"double"],[5,14],[6,67],[6,49],[7,8,"double"],[7,20],[7,9],[8,10],[8,25],
-    [9,19],[10,11,"double"],[11,12],[11,15],[12,13,"double"],[12,24],[13,63],[13,16],[14,15,"double"],[14,16],[16,68,"double"],[17,30],[17,18],[17,19,"double"],[18,20,"double"],[18,35],[19,29],[20,21],[21,22,"double"],[21,25],
-    [22,23],[22,34],[23,59,"double"],[23,26],[24,25,"double"],[24,26],[26,64,"double"],[27,40],[27,28],[27,29,"double"],[28,30,"double"],[28,45],[29,39],[30,31],[31,32,"double"],[31,35],[32,33],[32,44],[33,55,"double"],[33,36],
-    [34,36],[34,35,"double"],[36,60,"double"],[37,39,"double"],[37,38],[38,40,"double"],[38,48],[40,41],[41,42,"double"],[41,45],[42,43],[42,47],[43,51,"double"],[43,46],[44,45,"double"],[44,46],[46,56,"double"],[47,49],[47,48,"double"],[49,52,"double"],
-    [50,51],[50,56],[50,53,"double"],[51,52],[52,66],[53,57],[53,69],[54,60],[54,55],[54,57,"double"],[55,56],[57,61],[58,64],[58,59],[58,61,"double"],[59,60],[61,65],[62,68],[62,63,"double"],[62,65],
-    [63,64],[65,69,"double"],[66,69],[66,67,"double"],[67,68]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C70 是繼 C60 之後最穩定的富勒烯成員。其分子結構包含 70 個碳原子，構成一個封閉的籠狀系統，包含 <strong>12個五邊形</strong> 與 <strong>25個六邊形</strong>。與球形的 C60 不同，C70 的形狀細長，兩端較尖，中間較寬，外觀極像橄欖球，屬於 <strong>D5h</strong> 點群。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為紅棕色固體。由於其不對稱的電子雲分布，C70 在有機溶劑（如甲苯、二硫化碳）中的溶解度通常高於 C60。雖然整體呈現曲面，但每個碳原子仍維持離域 π 電子特性的 <strong>sp² 混成</strong>。<br>
-            <span class="highlight-title">3. 化學活性：</span>由於 C70 的不同位點曲率不一，其化學反應具有區域選擇性，特別是在極點處的活性最高。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 科技應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 光學特性：</span>C70 具有極強的非線性光學吸收能力，常用於製造光學限幅器以保護雷射設備。<br>
-            <span class="highlight-title">2. 光伏能源：</span>C70 與其衍生物是優良的電子受體材料，廣泛應用於<strong>有機太陽能電池</strong>中，能有效地捕捉並傳輸光生電子。<br>
-            <span class="highlight-title">3. 高端潤滑：</span>其獨特的橢球形結構使其在特定壓力下能作為奈米級的「分子滾珠」，提供極低摩擦係數的潤滑性能。
-        </div>
-    </div>`, "D5h");
-
-addMol("C80|碳80|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 30個六邊形)", "Cage (12 Pentagons, 30 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x4e\x4f\x32\x7c\u4e8c\u6c27\u5316\u6c2e",
+    "\x4e",
+    "\x73\x70\u00b2",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x33\x34\u00b0",
+    "\x2d\x31\x31\x2e\x32",
+    "\x32\x31\x2e\x32",
     [
-    {elem:"C",x:84,y:-96,z:114},{elem:"C",x:28,y:-104,z:143},{elem:"C",x:4,y:-54,z:173},{elem:"C",x:-13,y:-142,z:113},{elem:"C",x:1,y:-171,z:58},{elem:"C",x:57,y:-163,z:27},{elem:"C",x:98,y:-125,z:59},{elem:"C",x:-76,y:-131,z:113},{elem:"C",x:-100,y:-80,z:144},{elem:"C",x:-59,y:-42,z:174},
-    {elem:"C",x:-150,y:-53,z:116},{elem:"C",x:-53,y:-176,z:-36},{elem:"C",x:-53,y:-177,z:26},{elem:"C",x:-101,y:-152,z:59},{elem:"C",x:-150,y:-124,z:29},{elem:"C",x:-174,y:-74,z:61},{elem:"C",x:98,y:-121,z:-67},{elem:"C",x:57,y:-161,z:-38},{elem:"C",x:0,y:-167,z:-68},{elem:"C",x:-158,y:11,z:118},
-    {elem:"C",x:-116,y:49,z:148},{elem:"C",x:-67,y:21,z:176},{elem:"C",x:-107,y:105,z:120},{elem:"C",x:-198,y:-22,z:-31},{elem:"C",x:-198,y:-24,z:31},{elem:"C",x:-188,y:29,z:64},{elem:"C",x:-177,y:85,z:36},{elem:"C",x:-136,y:123,z:67},{elem:"C",x:-101,y:-148,z:-67},{elem:"C",x:-150,y:-122,z:-36},
-    {elem:"C",x:-175,y:-70,z:-65},{elem:"C",x:-49,y:133,z:121},{elem:"C",x:1,y:104,z:149},{elem:"C",x:-9,y:48,z:177},{elem:"C",x:57,y:113,z:120},{elem:"C",x:-97,y:163,z:-26},{elem:"C",x:-97,y:161,z:36},{elem:"C",x:-43,y:167,z:68},{elem:"C",x:13,y:175,z:38},{elem:"C",x:63,y:147,z:67},
-    {elem:"C",x:-188,y:32,z:-61},{elem:"C",x:-177,y:87,z:-30},{elem:"C",x:-136,y:127,z:-59},{elem:"C",x:101,y:66,z:119},{elem:"C",x:90,y:10,z:146},{elem:"C",x:35,y:2,z:175},{elem:"C",x:115,y:-40,z:115},{elem:"C",x:110,y:124,z:-28},{elem:"C",x:111,y:122,z:34},{elem:"C",x:134,y:72,z:65},
-    {elem:"C",x:158,y:22,z:33},{elem:"C",x:148,y:-34,z:61},{elem:"C",x:-43,y:171,z:-58},{elem:"C",x:13,y:177,z:-28},{elem:"C",x:63,y:151,z:-59},{elem:"C",x:133,y:76,z:-61},{elem:"C",x:158,y:24,z:-33},{elem:"C",x:147,y:-31,z:-65},{elem:"C",x:138,y:-85,z:-34},{elem:"C",x:138,y:-87,z:28},
-    {elem:"C",x:100,y:74,z:-115},{elem:"C",x:33,y:12,z:-174},{elem:"C",x:89,y:18,z:-145},{elem:"C",x:114,y:-34,z:-119},{elem:"C",x:-50,y:140,z:-113},{elem:"C",x:-11,y:58,z:-173},{elem:"C",x:0,y:113,z:-142},{elem:"C",x:56,y:120,z:-114},{elem:"C",x:-159,y:17,z:-116},{elem:"C",x:-68,y:31,z:-173},
-    {elem:"C",x:-118,y:57,z:-144},{elem:"C",x:-108,y:113,z:-114},{elem:"C",x:-77,y:-124,z:-121},{elem:"C",x:-60,y:-32,z:-175},{elem:"C",x:-101,y:-72,z:-148},{elem:"C",x:-151,y:-46,z:-118},{elem:"C",x:83,y:-90,z:-121},{elem:"C",x:3,y:-44,z:-176},{elem:"C",x:27,y:-96,z:-149},{elem:"C",x:-14,y:-136,z:-122}
-],
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0xa, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }], "\x72\x61\x64\x69\x63\x61\x6c": !![] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+    ],
     [
-    [0,1,"double"],[0,6],[0,46],[1,2],[1,3],[2,45,"double"],[2,9],[3,4,"double"],[3,7],[4,12],[4,5],[5,6,"double"],[5,17],[6,59],[7,8,"double"],[7,13],[8,9],[8,10],[9,21,"double"],[10,15,"double"],
-    [10,19],[11,12,"double"],[11,18],[11,28],[12,13],[13,14,"double"],[14,15],[14,29],[15,24],[16,58],[16,76],[16,17,"double"],[17,18],[18,79,"double"],[19,20,"double"],[19,25],[20,21],[20,22],[21,33],[22,27,"double"],
-    [22,31],[23,24,"double"],[23,40],[23,30],[24,25],[25,26,"double"],[26,27],[26,41],[27,36],[28,72,"double"],[28,29],[29,30,"double"],[30,75],[31,32],[31,37,"double"],[32,33,"double"],[32,34],[33,45],[34,39,"double"],[34,43],
-    [35,36,"double"],[35,42],[35,52],[36,37],[37,38],[38,39],[38,53,"double"],[39,48],[40,68,"double"],[40,41],[41,42,"double"],[42,71],[43,44,"double"],[43,49],[44,45],[44,46],[46,51,"double"],[47,48,"double"],[47,55],[47,54],
-    [48,49],[49,50,"double"],[50,51],[50,56],[51,59],[52,64,"double"],[52,53],[53,54],[54,67,"double"],[55,60,"double"],[55,56],[56,57,"double"],[57,58],[57,63],[58,59,"double"],[60,62],[60,67],[61,62,"double"],[61,65],[61,77],
-    [62,63],[63,76,"double"],[64,66],[64,71],[65,66,"double"],[65,69],[66,67],[68,70],[68,75],[69,70],[69,73,"double"],[70,71,"double"],[72,74],[72,79],[73,74],[73,77],[74,75,"double"],[76,78],[77,78,"double"],[78,79]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C80 是富勒烯家族中的重要成員，其封閉籠狀結構由 80 個碳原子組成，包含 <strong>12個五邊形</strong> 與 <strong>30個六邊形</strong>。C80 具有多種異構物，其中以 <strong>Ih</strong> 和 <strong>D5h</strong> 對稱性最受關注。<br>
-            <span class="highlight-title">2. 物理性質：</span>與 C60 類似，C80 具有高度離域的 π 電子系統。在宏觀狀態下通常為暗黑色固體。其分子內部空間較大，非常適合作為金屬原子的封裝載體。<br>
-            <span class="highlight-title">3. 特殊性質：</span>純 C80 的電子結構相對不穩定，但當籠內嵌入特定金屬原子（如鈧 Sc、鑭 La）形成<strong>內嵌富勒烯</strong>時，結構會變得異常穩定，展現出獨特的磁學與電學特性。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 前端應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 內嵌富勒烯研究：</span>C80 是製造金屬內嵌富勒烯（Endohedral Fullerenes）最常用的材料之一。例如 $Sc_3N@C_{80}$ 是目前產量最高且應用最廣的內嵌結構。<br>
-            <span class="highlight-title">2. 量子計算：</span>由於其穩定的內部空間可保護嵌入原子的自旋態，科學家正研究利用內嵌 C80 作為量子計算中的<strong>量子位元 (Qubits)</strong> 載體。<br>
-            <span class="highlight-title">3. 生物醫學造影：</span>封裝了釓 (Gd) 的 C80 衍生物具有極佳的順磁性，被開發為新一代高效且低毒性的 <strong>MRI 對比劑</strong>。
-        </div>
-    </div>`, "D5h");
-
-    addMol("C90|碳90|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 35個六邊形)", "Cage (12 Pentagons, 35 Hexagons)"], "108°~120°", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x4e\x32\x4f\x7c\u4e00\u6c27\u5316\u4e8c\u6c2e\x7c\u7b11\u6c23",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d\x39\x30\x2e\x38",
+    "\x2d\x38\x38\x2e\x35",
     [
-    {elem:"C",x:200,y:-24,z:-33},{elem:"C",x:188,y:31,z:-63},{elem:"C",x:155,y:-125,z:30},{elem:"C",x:155,y:-124,z:-32},{elem:"C",x:177,y:-74,z:-63},{elem:"C",x:107,y:-152,z:60},{elem:"C",x:103,y:-118,z:-115},{elem:"C",x:142,y:-69,z:-116},{elem:"C",x:125,y:-14,z:-143},{elem:"C",x:152,y:36,z:-115},
-    {elem:"C",x:49,y:-114,z:-143},{elem:"C",x:0,y:-147,z:120},{elem:"C",x:0,y:-180,z:64},{elem:"C",x:57,y:-181,z:32},{elem:"C",x:57,y:-181,z:-34},{elem:"C",x:108,y:-152,z:-62},{elem:"C",x:0,y:-145,z:-121},{elem:"C",x:0,y:-179,z:-65},{elem:"C",x:31,y:-60,z:-171},{elem:"C",x:66,y:-7,z:-170},
-    {elem:"C",x:34,y:51,z:-169},{elem:"C",x:65,y:101,z:-141},{elem:"C",x:123,y:92,z:-114},{elem:"C",x:32,y:147,z:-113},{elem:"C",x:-31,y:-60,z:-171},{elem:"C",x:-66,y:-7,z:-170},{elem:"C",x:-34,y:50,z:-169},{elem:"C",x:-122,y:92,z:-114},{elem:"C",x:-65,y:101,z:-141},{elem:"C",x:-31,y:147,z:-113},
-    {elem:"C",x:-103,y:-118,z:-114},{elem:"C",x:-49,y:-114,z:-143},{elem:"C",x:-142,y:-69,z:-115},{elem:"C",x:-125,y:-13,z:-142},{elem:"C",x:-152,y:36,z:-114},{elem:"C",x:-108,y:-152,z:-62},{elem:"C",x:-108,y:-152,z:61},{elem:"C",x:-57,y:-181,z:-33},{elem:"C",x:-57,y:-181,z:32},{elem:"C",x:52,y:179,z:-62},
-    {elem:"C",x:106,y:165,z:-32},{elem:"C",x:142,y:123,z:-62},{elem:"C",x:181,y:85,z:-31},{elem:"C",x:181,y:84,z:32},{elem:"C",x:0,y:196,z:-30},{elem:"C",x:0,y:195,z:32},{elem:"C",x:51,y:178,z:63},{elem:"C",x:106,y:165,z:33},{elem:"C",x:142,y:122,z:63},{elem:"C",x:-142,y:124,z:-62},
-    {elem:"C",x:-106,y:166,z:-32},{elem:"C",x:-51,y:179,z:-62},{elem:"C",x:176,y:-75,z:62},{elem:"C",x:200,y:-24,z:32},{elem:"C",x:189,y:31,z:63},{elem:"C",x:152,y:35,z:115},{elem:"C",x:126,y:-15,z:142},{elem:"C",x:141,y:-71,z:114},{elem:"C",x:49,y:-115,z:142},{elem:"C",x:102,y:-119,z:114},
-    {elem:"C",x:31,y:146,z:115},{elem:"C",x:65,y:99,z:142},{elem:"C",x:123,y:91,z:115},{elem:"C",x:34,y:49,z:169},{elem:"C",x:67,y:-9,z:170},{elem:"C",x:31,y:-61,z:171},{elem:"C",x:-31,y:146,z:114},{elem:"C",x:-123,y:91,z:115},{elem:"C",x:-65,y:99,z:141},{elem:"C",x:-34,y:49,z:169},
-    {elem:"C",x:-67,y:-8,z:170},{elem:"C",x:-31,y:-62,z:170},{elem:"C",x:-181,y:85,z:-31},{elem:"C",x:-181,y:85,z:32},{elem:"C",x:-142,y:123,z:63},{elem:"C",x:-105,y:166,z:33},{elem:"C",x:-51,y:179,z:63},{elem:"C",x:-176,y:-74,z:-62},{elem:"C",x:-200,y:-23,z:-32},{elem:"C",x:-188,y:32,z:-62},
-    {elem:"C",x:-176,y:-75,z:62},{elem:"C",x:-155,y:-125,z:30},{elem:"C",x:-155,y:-125,z:-31},{elem:"C",x:-188,y:31,z:63},{elem:"C",x:-200,y:-23,z:33},{elem:"C",x:-50,y:-116,z:142},{elem:"C",x:-152,y:35,z:115},{elem:"C",x:-126,y:-15,z:142},{elem:"C",x:-142,y:-71,z:115},{elem:"C",x:-103,y:-119,z:114}
-],
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0 },
+    ],
     [
-    [0,4,"double"],[0,1],[0,53],[1,42,"double"],[1,9],[2,3,"double"],[2,5],[2,52],[3,15],[3,4],[4,7],[5,59,"double"],[5,13],[6,10,"double"],[6,7],[6,15],[7,8,"double"],[8,9],[8,19],[9,22,"double"],
-    [10,16],[10,18],[11,58,"double"],[11,85],[11,12],[12,13,"double"],[12,38],[13,14],[14,15,"double"],[14,17],[16,31,"double"],[16,17],[17,37,"double"],[18,24,"double"],[18,19],[19,20,"double"],[20,21],[20,26],[21,23,"double"],[21,22],
-    [22,41],[23,29],[23,39],[24,31],[24,25],[25,33,"double"],[25,26],[26,28,"double"],[27,34,"double"],[27,49],[27,28],[28,29],[29,51,"double"],[30,31],[30,32,"double"],[30,35],[32,77],[32,33],[33,34],[34,79],
-    [35,82,"double"],[35,37],[36,89],[36,81],[36,38,"double"],[37,38],[39,44,"double"],[39,40],[40,41,"double"],[40,47],[41,42],[42,43],[43,54,"double"],[43,48],[44,45],[44,51],[45,76],[45,46,"double"],[46,47],[46,60],
-    [47,48,"double"],[48,62],[49,72],[49,50,"double"],[50,51],[50,75],[52,57],[52,53,"double"],[53,54],[54,55],[55,62,"double"],[55,56],[56,57,"double"],[56,64],[57,59],[58,59],[58,65],[60,66,"double"],[60,61],[61,62],
-    [61,63,"double"],[63,64],[63,69],[64,65,"double"],[65,71],[66,68],[66,76],[67,86,"double"],[67,74],[67,68],[68,69,"double"],[69,70],[70,71,"double"],[70,87],[71,85],[72,73],[72,79,"double"],[73,83],[73,74,"double"],[74,75],
-    [75,76,"double"],[77,82],[77,78,"double"],[78,79],[78,84],[80,88],[80,81,"double"],[80,84],[81,82],[83,84,"double"],[83,86],[85,89,"double"],[86,87],[87,88,"double"],[88,89]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C90 是富勒烯家族中的高階成員。其分子由 90 個碳原子組成封閉籠狀，包含 <strong>12個五邊形</strong> 與 <strong>35個六邊形</strong>。根據結構對稱性，C90 具有多種異構物，其中以 <strong>C2v</strong> 對稱性結構最為常見。<br>
-            <span class="highlight-title">2. 物理性質：</span>在高階富勒烯中，C90 的分子體積較大，內部空間寬廣。它展現出半導體特性，且具有複雜的電子雲分布。由於其高度不飽和的 <strong>sp² 混成</strong> 碳架構，具有良好的電子捕捉能力。<br>
-            <span class="highlight-title">3. 化學活性：</span>較大的表面積與特定的曲率分布，使得 C90 能夠進行多種官能基化反應，其化學性質較 C60 更為多變。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 潛在應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米電子元件：</span>由於其獨特的對稱性與電子結構，C90 被研究用於製造分子級的<strong>場效電晶體 (FET)</strong> 與非線性光學元件。<br>
-            <span class="highlight-title">2. 超分子化學：</span>較大的籠徑使其成為優良的客體分子載體，可與各種環狀分子（如環糊精）形成穩定的包合物，用於藥物傳遞研究。<br>
-            <span class="highlight-title">3. 能源材料：</span>C90 的衍生物在<strong>有機薄膜太陽能電池</strong>中作為受體材料展現出潛力，其較寬的電子吸收光譜有助於提升光電轉換效率。
-        </div>
-    </div>`, "C2v");
-
-addMol("C100|碳100|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 40個六邊形)", "Cage (12 Pentagons, 40 Hexagons)"], "108°~120°", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+      [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+    ],
+    null,
+    null,
+    "\x43\x69\x6e\x66\x76",
+  ),
+  addMol(
+    "\x4e\x4f\x7c\u4e00\u6c27\u5316\u6c2e",
+    "\u96d9\u539f\u5b50",
+    "\x73\x70\u00b2",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x2d",
+    "\x2d\x31\x36\x34",
+    "\x2d\x31\x35\x32",
     [
-    {elem:"C",x:215,y:-57,z:89},{elem:"C",x:172,y:-99,z:103},{elem:"C",x:241,y:-55,z:31},{elem:"C",x:153,y:-140,z:61},{elem:"C",x:95,y:-160,z:59},{elem:"C",x:-85,y:-29,z:165},{elem:"C",x:21,y:-56,z:165},{elem:"C",x:50,y:-144,z:101},{elem:"C",x:67,y:-96,z:143},{elem:"C",x:127,y:-75,z:140},
-    {elem:"C",x:-41,y:-73,z:156},{elem:"C",x:-121,y:-125,z:94},{elem:"C",x:-81,y:-171,z:3},{elem:"C",x:-23,y:-175,z:24},{elem:"C",x:-11,y:-154,z:85},{elem:"C",x:-60,y:-124,z:118},{elem:"C",x:-130,y:-152,z:37},{elem:"C",x:232,y:53,z:34},{elem:"C",x:205,y:50,z:91},{elem:"C",x:249,y:0,z:3},
-    {elem:"C",x:196,y:-5,z:118},{elem:"C",x:143,y:-14,z:149},{elem:"C",x:-9,y:53,z:170},{elem:"C",x:-69,y:32,z:171},{elem:"C",x:38,y:9,z:173},{elem:"C",x:98,y:30,z:160},{elem:"C",x:109,y:89,z:132},{elem:"C",x:162,y:95,z:97},{elem:"C",x:145,y:132,z:-77},{elem:"C",x:195,y:99,z:-58},
-    {elem:"C",x:206,y:101,z:4},{elem:"C",x:164,y:129,z:44},{elem:"C",x:60,y:164,z:61},{elem:"C",x:113,y:161,z:25},{elem:"C",x:106,y:164,z:-38},{elem:"C",x:-50,y:169,z:63},{elem:"C",x:3,y:179,z:32},{elem:"C",x:1,y:112,z:142},{elem:"C",x:58,y:127,z:118},{elem:"C",x:-51,y:139,z:118},
-    {elem:"C",x:208,y:43,z:-90},{elem:"C",x:234,y:-5,z:-58},{elem:"C",x:109,y:116,z:-124},{elem:"C",x:119,y:62,z:-152},{elem:"C",x:166,y:26,z:-134},{elem:"C",x:51,y:137,z:-118},{elem:"C",x:-108,y:87,z:-133},{elem:"C",x:-162,y:93,z:-97},{elem:"C",x:-58,y:126,z:-118},{elem:"C",x:-1,y:109,z:-143},
-    {elem:"C",x:9,y:51,z:-171},{elem:"C",x:69,y:30,z:-171},{elem:"C",x:-3,y:179,z:-34},{elem:"C",x:49,y:169,z:-65},{elem:"C",x:-106,y:164,z:36},{elem:"C",x:-113,y:160,z:-27},{elem:"C",x:-60,y:164,z:-63},{elem:"C",x:-164,y:128,z:-45},{elem:"C",x:144,y:-33,z:-142},{elem:"C",x:166,y:-80,z:-108},
-    {elem:"C",x:214,y:-66,z:-67},{elem:"C",x:220,y:-95,z:-12},{elem:"C",x:177,y:-137,z:3},{elem:"C",x:85,y:-31,z:-165},{elem:"C",x:41,y:-75,z:-156},{elem:"C",x:60,y:-125,z:-117},{elem:"C",x:121,y:-126,z:-93},{elem:"C",x:130,y:-153,z:-36},{elem:"C",x:-50,y:-144,z:-100},{elem:"C",x:11,y:-155,z:-84},
-    {elem:"C",x:23,y:-175,z:-22},{elem:"C",x:81,y:-172,z:-1},{elem:"C",x:-95,y:-160,z:-58},{elem:"C",x:-67,y:-97,z:-143},{elem:"C",x:-21,y:-58,z:-165},{elem:"C",x:-127,y:-77,z:-140},{elem:"C",x:-98,y:28,z:-160},{elem:"C",x:-38,y:7,z:-173},{elem:"C",x:-143,y:-16,z:-149},{elem:"C",x:-215,y:-58,z:-89},
-    {elem:"C",x:-172,y:-100,z:-102},{elem:"C",x:-154,y:-141,z:-59},{elem:"C",x:-240,y:-55,z:-31},{elem:"C",x:-232,y:53,z:-35},{elem:"C",x:-205,y:49,z:-92},{elem:"C",x:-197,y:-6,z:-118},{elem:"C",x:-248,y:0,z:-3},{elem:"C",x:-145,y:133,z:76},{elem:"C",x:-195,y:99,z:58},{elem:"C",x:-206,y:101,z:-5},
-    {elem:"C",x:-166,y:28,z:135},{elem:"C",x:-119,y:65,z:152},{elem:"C",x:-109,y:118,z:124},{elem:"C",x:-234,y:-4,z:58},{elem:"C",x:-208,y:44,z:90},{elem:"C",x:-177,y:-137,z:-2},{elem:"C",x:-219,y:-94,z:13},{elem:"C",x:-214,y:-65,z:68},{elem:"C",x:-166,y:-79,z:108},{elem:"C",x:-145,y:-31,z:143}
-],
+      {
+        "\x65\x6c\x65\x6d": "\x4e",
+        "\x78": -0x20,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x72\x61\x64\x69\x63\x61\x6c": !![],
+        "\x6c\x70\x33\x64": [
+          { "\x78": -0x1, "\x79": 0x1, "\x7a": 0x0 },
+          { "\x78": -0x1, "\x79": -0x1, "\x7a": 0.4 },
+          { "\x78": -0x1, "\x79": -0x1, "\x7a": -0.4 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x20, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [[0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"]],
+    null,
+    null,
+    "\x43\x69\x6e\x66\x76",
+  ),
+  addMol(
+    "\x53\x43\x4e\x20\x2d\x7c\u786b\u6c30\u9178\u6839",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x53\x43\x4e\x20\x2d\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\x3d\x43\x3d\x53\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+      },
+      "\x53\x43\x4e\x20\x2d\x7c\u6b21\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\u2261\x43\x2d\x53\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x5a, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65",
+  ),
+  addMol(
+    "\x4e\x4f\x20\x2b\x7c\u4e9e\u785d\u9393\u96e2\u5b50",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
     [
-    [0,1,"double"],[0,20],[0,2],[1,3],[1,9],[2,19,"double"],[2,61],[3,4,"double"],[3,62],[4,71],[4,7],[5,23,"double"],[5,10],[6,8,"double"],[6,10],[6,24],[7,14,"double"],[7,8],[8,9],[9,21,"double"],
-    [10,15,"double"],[11,16,"double"],[11,98],[11,15],[12,13,"double"],[12,16],[12,72],[13,70],[13,14],[14,15],[16,95],[17,30,"double"],[17,18],[17,19],[18,20,"double"],[18,27],[19,41],[20,21],[21,25],[22,23],
-    [22,24,"double"],[22,37],[23,91],[24,25],[25,26,"double"],[26,27],[26,38],[27,31,"double"],[28,42],[28,34],[28,29,"double"],[29,30],[29,40],[30,31],[31,33],[32,33,"double"],[32,36],[32,38],[33,34],[34,53,"double"],
-    [35,36,"double"],[35,39],[35,54],[36,52],[37,39],[37,38,"double"],[39,92,"double"],[40,41,"double"],[40,44],[41,60],[42,43,"double"],[42,45],[43,44],[43,51],[44,58,"double"],[45,53],[45,49,"double"],[46,47],[46,48,"double"],[46,76],
-    [47,84,"double"],[47,57],[48,49],[48,56],[49,50],[50,51,"double"],[50,77],[51,63],[52,53],[52,56,"double"],[54,55,"double"],[54,87],[55,57],[55,56],[57,89,"double"],[58,59],[58,63],[59,60,"double"],[59,66],[60,61],
-    [61,62,"double"],[62,67],[63,64,"double"],[64,74],[64,65],[65,69,"double"],[65,66],[66,67,"double"],[67,71],[68,72,"double"],[68,69],[68,73],[69,70],[70,71,"double"],[72,81],[73,75],[73,74,"double"],[74,77],[75,80,"double"],[75,78],
-    [76,78],[76,77,"double"],[78,85,"double"],[79,80],[79,85],[79,82,"double"],[80,81],[81,95,"double"],[82,96],[82,86],[83,89],[83,84],[83,86,"double"],[84,85],[86,93],[87,92],[87,88,"double"],[88,89],[88,94],[90,91,"double"],
-    [90,94],[91,92],[93,94,"double"],[93,97],[95,96],[96,97,"double"],[97,98]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C100 是大型富勒烯家族中的重要成員。其分子由 100 個碳原子組成封閉籠狀，包含 <strong>12個五邊形</strong> 與 <strong>40個六邊形</strong>。隨著碳原子數增加，籠體形狀變得更加多樣化，此結構呈現出複雜的低對稱性（<strong>C2 點群</strong>）。<br>
-            <span class="highlight-title">2. 物理性質：</span>大型富勒烯在宏觀狀態下通常為黑色固體。由於分子體積顯著大於 C60，其分子間的凡得瓦力更強，昇華溫度更高。內部巨大的空腔空間使其具有極高的電子容納能力與內嵌潛力。<br>
-            <span class="highlight-title">3. 電子結構：</span>雖然呈現曲面，但碳原子仍保持 <strong>sp² 混成</strong>。由於表面曲率在不同區域差異巨大，其電子雲分布極不均勻，這賦予了 C100 獨特的區域化學反應活性與非線性光學特性。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 前端科學應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 分子奈米技術：</span>C100 的巨大內腔可同時封裝多個金屬原子或複雜的分子簇（如金屬碳化物或氮化物簇），這類「內嵌富勒烯」被視為<strong>單分子量子磁體</strong>與量子計算的重要載體。<br>
-            <span class="highlight-title">2. 材料改性：</span>因其強大的電負度，C100 被研究作為高性能聚合物的添加劑，能夠顯著提升材料的抗氧化性與熱穩定性。<br>
-            <span class="highlight-title">3. 有機光伏：</span>大型富勒烯具有更寬的電子吸收光譜。其衍生物在<strong>有機薄膜太陽能電池</strong>中可作為高效的受體材料，提升對太陽光能量的轉換效率。
-        </div>
-    </div>`, "C2");
-
-
-
-
-
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x1e, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+    ],
+    [[0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"]],
+    null,
+    null,
+    "\x43\x69\x6e\x66\x76",
+  ),
+  addMol(
+    "\x4e\x4f\x32\x20\x2b\x7c\u785d\u9393\u96e2\u5b50",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x4e\x33\x20\x2d\x7c\u758a\u6c2e\u9178\u6839",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x4e\x33\x20\x2d\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\x3d\x4e\x3d\x4e\x29": {
+        "\x70\x67": "\x44\x69\x6e\x66\x68",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+      },
+      "\x4e\x33\x20\x2d\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\u2261\x4e\x2d\x4e\x29": {
+        "\x70\x67": "\x44\x69\x6e\x66\x68",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65",
+  ),
+  addMol(
+    "\x4f\x43\x4e\x2d\x7c\u6c30\u9178\u6839",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x4f\x43\x4e\x20\x2d\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\u2261\x43\x2d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4f\x43\x4e\x20\x2d\x7c\u6b21\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\x3d\x43\x3d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+      },
+      "\x4f\x43\x4e\x20\x2d\x7c\u4e0d\u7a69\u5b9a\u5171\u632f\u7d50\u69cb\x20\x28\x4e\x2d\x43\u2261\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x55, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x2, "\x74\x72\x69\x70\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65",
+  ),
+  addMol(
+    "\x43\x4e\x4f\x20\x2d\x7c\u96f7\u9178\u6839",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x43\x4e\x4f\x20\x2d\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x43\u2261\x4e\x2d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x43\x4e\x4f\x20\x2d\x7c\u6b21\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x43\x3d\x4e\x3d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65",
+  ),
+  addMol(
+    "\x4e\x32\x4f\x7c\u4e00\u6c27\u5316\u4e8c\u6c2e\x7c\u6c27\u5316\u4e9e\u6c2e\x7c\u7b11\u6c23",
+    "\x4e",
+    "\x73\x70",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d\x39\x31",
+    "\x2d\x38\x38",
+    [],
+    [],
+    {
+      "\x4e\x32\x4f\x7c\u4e3b\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\u2261\x4e\x2d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d\x39\x31",
+        "\x62\x70": "\x2d\x38\x38",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72\x61\x64\x69\x63\x61\x6c": ![] },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x3c, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x46, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3, "\x72\x61\x64\x69\x63\x61\x6c": ![] },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x32\x4f\x7c\u6b21\u8981\u5171\u632f\u7d50\u69cb\x20\x28\x4e\x3d\x4e\x3d\x4f\x29": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d\x39\x31",
+        "\x62\x70": "\x2d\x38\x38",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72\x61\x64\x69\x63\x61\x6c": ![] },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x3f, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2, "\x72\x61\x64\x69\x63\x61\x6c": ![] },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3f, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x72\x65\x73\x6f\x6e\x61\x6e\x63\x65",
+  ),
+  addMol(
+    "\x48\x4f\x43\x4e\x7c\u6c30\u9178",
+    "\x43",
+    "\x73\x70",
+    ["\u76f4\u7dda\x2f\u89d2\u5f62", "\x4c\x69\x6e\x65\x61\x72\x2f\x42\x65\x6e\x74"],
+    "\x31\x38\x30\u00b0\x2f\x31\x30\x35\u00b0",
+    "\x2d\x38\x36",
+    "\x32\x33\x2e\x35",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5f, "\x79": 0x1e, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1, "\x74\x72\x69\x70\x6c\x65"],
+      [0x0, 0x2],
+      [0x2, 0x3],
+    ],
+    null,
+    null,
+    "\x43\x73",
+  ),
+  addMol(
+    "\x50\x43\x6c\x35\x7c\u4e94\u6c2f\u5316\u78f7",
+    "\x50",
+    "\x73\x70\u00b3\x64",
+    ["\u96d9\u4e09\u89d2\u9310", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x42\x69\x70\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x30\u00b0\x2c\x20\x31\x32\x30\u00b0",
+    "\x31\x36\x30\x2e\x35",
+    "\x31\x36\x36\x2e\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x55 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x45, "\x79": -0x28, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x45, "\x79": -0x28, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    "\x44\x33\x68",
+  ),
+  addMol(
+    "\x50\x42\x72\x35\x7c\u4e94\u6eb4\u5316\u78f7",
+    "\x50",
+    "\x73\x70\u00b3\x64",
+    ["\u96d9\u4e09\u89d2\u9310", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x42\x69\x70\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x30\u00b0\x2c\x20\x31\x32\x30\u00b0",
+    "\x31\x30\x30\x20\x28\u5206\u89e3\x29",
+    "\x31\x30\x36\x20\x28\u5206\u89e3\x29",
+    [
+      { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x5a },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": -0x4a, "\x79": -0x2a, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x4a, "\x79": -0x2a, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    "\x44\x33\x68",
+  ),
+  addMol(
+    "\x53\x46\x36\x7c\u516d\u6c1f\u5316\u786b",
+    "\x53",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d\x35\x30\x2e\x38",
+    "\x2d\x36\x33\x2e\x38\x20\x28\u6607\u83ef\x29",
+    getOcta("\x53", "\x46", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x53\x46\x34\x7c\u56db\u6c1f\u5316\u786b",
+    "\x53",
+    "\x73\x70\u00b3\x64",
+    ["\u7ff9\u7ff9\u677f\u578b", "\x53\x65\x65\x73\x61\x77"],
+    "\x3c\x39\x30\u00b0\x2c\x20\x3c\x31\x32\x30\u00b0",
+    "\x2d\x31\x32\x31",
+    "\x2d\x33\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x50 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x50 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x2d, "\x79": 0x41, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x2d, "\x79": 0x41, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x43\x6c\x46\x33\x7c\u4e09\u6c1f\u5316\u6c2f",
+    "\x43\x6c",
+    "\x73\x70\u00b3\x64",
+    ["\x54\u578b", "\x54\x2d\x73\x68\x61\x70\x65\x64"],
+    "\x3c\x39\x30\u00b0",
+    "\x2d\x37\x36\x2e\x33",
+    "\x31\x31\x2e\x38",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x43\x6c",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": -0x1, "\x79": 0.5, "\x7a": 0x0 },
+          { "\x78": -0x1, "\x79": -0.5, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x46, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x58\x65\x46\x32\x7c\u4e8c\u6c1f\u5316\u6c19",
+    "\x58\x65",
+    "\x73\x70\u00b3\x64",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x31\x32\x38\x2e\x36",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x58\x65",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 },
+          { "\x78": 0.866, "\x79": -0.5, "\x7a": 0x0 },
+          { "\x78": -0.866, "\x79": -0.5, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x55 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x58\x65\x46\x34\x7c\u56db\u6c1f\u5316\u6c19",
+    "\x58\x65",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u5e73\u9762\u56db\u908a\u5f62", "\x53\x71\x75\x61\x72\x65\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x39\x30\u00b0",
+    "\x31\x31\x37\x20\x28\u6607\u83ef\x29",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x58\x65",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x1, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x55 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x44\x34\x68",
+  ),
+  addMol(
+    "\x42\x72\x46\x35\x7c\u4e94\u6c1f\u5316\u6eb4",
+    "\x42\x72",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u56db\u89d2\u9310", "\x53\x71\x75\x61\x72\x65\x20\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x3c\x39\x30\u00b0",
+    "\x2d\x36\x31\x2e\x33",
+    "\x34\x30\x2e\x33",
+    [
+      { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x50, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x46 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x46 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x46, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    "\x43\x34\x76",
+  ),
+  addMol(
+    "\x49\x46\x37\x7c\u4e03\u6c1f\u5316\u7898",
+    "\x49",
+    "\x73\x70\u00b3\x64\u00b3",
+    ["\u4e94\u89d2\u96d9\u9310", "\x50\x65\x6e\x74\x61\x67\x6f\x6e\x61\x6c\x20\x42\x69\x70\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x37\x32\u00b0\x2c\x20\x39\x30\u00b0",
+    "\x34\x2e\x38",
+    "\x34\x2e\x38\x20\x28\u6607\u83ef\x29",
+    [
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x5a, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x5a, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x50, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x19, "\x79": 0x0, "\x7a": 0x4c },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x19, "\x79": 0x0, "\x7a": -0x4c },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x41, "\x79": 0x0, "\x7a": 0x2f },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x41, "\x79": 0x0, "\x7a": -0x2f },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+      [0x0, 0x7],
+    ],
+    null,
+    null,
+    "\x44\x35\x68",
+  ),
+  addMol(
+    "\x53\x65\x46\x36\x7c\u516d\u6c1f\u5316\u7852",
+    "\x53\x65",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d\x33\x34\x2e\x36",
+    "\x2d\x34\x36\x2e\x36\x20\x28\u6607\u83ef\x29",
+    getOcta("\x53\x65", "\x46", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x54\x65\x46\x36\x7c\u516d\u6c1f\u5316\u78b2",
+    "\x54\x65",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d\x33\x37\x2e\x36",
+    "\x2d\x33\x38\x2e\x39\x20\x28\u6607\u83ef\x29",
+    getOcta("\x54\x65", "\x46", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x41\x73\x46\x35\x7c\u4e94\u6c1f\u5316\u7837",
+    "\x41\x73",
+    "\x73\x70\u00b3\x64",
+    ["\u96d9\u4e09\u89d2\u9310", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x42\x69\x70\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x30\u00b0\x2c\x20\x31\x32\x30\u00b0",
+    "\x2d\x37\x39\x2e\x38",
+    "\x2d\x35\x32\x2e\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x41\x73", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x46, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x23, "\x79": 0x0, "\x7a": 0x3c },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x23, "\x79": 0x0, "\x7a": -0x3c },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    "\x44\x33\x68",
+  ),
+  addMol(
+    "\x54\x65\x46\x34\x7c\u56db\u6c1f\u5316\u78b2",
+    "\x54\x65",
+    "\x73\x70\u00b3\x64",
+    ["\u7ff9\u7ff9\u677f\u578b", "\x53\x65\x65\x73\x61\x77"],
+    "\x3c\x39\x30\u00b0\x2c\x20\x3c\x31\x32\x30\u00b0",
+    "\x31\x32\x39\x2e\x36",
+    "\x31\x39\x33",
+    [
+      { "\x65\x6c\x65\x6d": "\x54\x65", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": -0x1, "\x79": 0x0, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x46, "\x79": 0x0, "\x7a": 0x32 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x46, "\x79": 0x0, "\x7a": -0x32 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x58\x65\x4f\x33\x7c\u4e09\u6c27\u5316\u6c19",
+    "\x58\x65",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x33\u00b0",
+    "\x32\x35\x20\x28\u7206\u70b8\x29",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x58\x65", "\x78": 0x0, "\x79": 0x14, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x39 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x31, "\x79": -0x1e, "\x7a": -28.5 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x31, "\x79": -0x1e, "\x7a": -28.5 },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x43\x33\x76",
+  ),
+  addMol(
+    "\x58\x65\x4f\x34\x7c\u56db\u6c27\u5316\u6c19",
+    "\x58\x65",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x33\x35\x2e\x39",
+    "\x30\x20\x28\u5206\u89e3\x29",
+    getTetra("\x58\x65", "\x4f", 0x4c),
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+    ],
+    null,
+    null,
+    "\x54\x64",
+  ),
+  addMol(
+    "\x58\x65\x4f\x46\x34\x7c\u56db\u6c1f\u6c27\u5316\u6c19\x7c\x58\x65\x4f\x46\x34",
+    "\x58\x65",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u56db\u89d2\u9310", "\x53\x71\x75\x61\x72\x65\x20\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x3c\x39\x30\u00b0",
+    "\x2d\x34\x36",
+    "\x31\x30\x31",
+    [
+      { "\x65\x6c\x65\x6d": "\x58\x65", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": -0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x50, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x50, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x50 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x50 },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    "\x43\x34\x76",
+  ),
+  addMol(
+    "\x49\x4f\x46\x35\x7c\u4e94\u6c1f\u6c27\u5316\u7898",
+    "\x49",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x34\x2e\x35",
+    "\x31\x31\x30",
+    [
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x55, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x55, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x55 },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x43\x34\x76",
+  ),
+  addMol(
+    "\x41\x73\x46\x33\x7c\u4e09\u6c1f\u5316\u7837",
+    "\x41\x73",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x36\u00b0",
+    "\x2d\x36",
+    "\x35\x37\x2e\x38",
+    [
+      { "\x65\x6c\x65\x6d": "\x41\x73", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x0, "\x79": -0x2d, "\x7a": 0x37 },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": 0x30, "\x79": -0x2d, "\x7a": -0x1c },
+      { "\x65\x6c\x65\x6d": "\x46", "\x78": -0x30, "\x79": -0x2d, "\x7a": -0x1c },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    "\x43\x33\x76",
+  ),
+  addMol(
+    "\x53\x62\x43\x6c\x33\x7c\u4e09\u6c2f\u5316\u92bb",
+    "\x53\x62",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x39\x37\u00b0",
+    "\x37\x33\x2e\x34",
+    "\x32\x32\x30\x2e\x33",
+    [
+      { "\x65\x6c\x65\x6d": "\x53\x62", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x33\x64": [{ "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 }] },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": -0x37, "\x7a": 0x41 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x37, "\x79": -0x37, "\x7a": -0x23 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x37, "\x79": -0x37, "\x7a": -0x23 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    "\x43\x33\x76",
+  ),
+  addMol(
+    "\x49\x43\x6c\x33\x7c\u4e09\u6c2f\u5316\u7898\x7c\x49\x6f\x64\x69\x6e\x65\x20\x54\x72\x69\x63\x68\x6c\x6f\x72\x69\x64\x65",
+    "\x49",
+    "\x73\x70\u00b3\x64",
+    ["\x54\u578b", "\x54\x2d\x73\x68\x61\x70\x65\x64"],
+    "\x3c\x39\x30\u00b0",
+    "\x31\x30\x31\x20\x28\u5206\u89e3\x29",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x49",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2,
+        "\x6c\x70\x33\x64": [
+          { "\x78": -0x1, "\x79": 0.5, "\x7a": 0x0 },
+          { "\x78": -0x1, "\x79": -0.5, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x5a, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x5a, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": -0x5a, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83e\uddea\x20\u7269\u8cea\u7c21\u4ecb\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e09\u6c2f\u5316\u7898\x20\x28\x49\x43\x6c\u2083\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e2d\u5fc3\u7898\u539f\u5b50\u63a1\u53d6\x20\x73\x70\u00b3\x64\x20\u6df7\u6210\u3002\u70ba\u4e86\u6e1b\u5c11\u96fb\u5b50\u96f2\u65a5\u529b\uff0c\u5169\u5c0d\u5b64\u5c0d\u96fb\u5b50\u4f54\u64da\u6c34\u5e73\u4f4d\u7f6e\uff0c\u4f7f\u5206\u5b50\u5448\u73fe\x20\x54\x20\u578b\u7d50\u69cb\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x42\x32\x48\x36\x7c\u4e59\u787c\u70f7\x7c\x44\x69\x62\x6f\x72\x61\x6e\x65",
+    "\x42",
+    "\x73\x70\u00b3",
+    ["\u7279\u6b8a\x20\x28\u542b\u6c2b\u6a4b\u9375\x29", "\x42\x61\x6e\x61\x6e\x61\x20\x42\x6f\x6e\x64\x73"],
+    "\x31\x32\x30\u00b0\x28\u7aef\x29\x2f\x39\x37\u00b0\x28\u6a4b\x29",
+    "\x2d\x31\x36\x34\x2e\x38",
+    "\x2d\x39\x32\x2e\x35",
+    [
+      { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x28, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x28, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x32 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x32 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x41, "\x79": 0x2b, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x41, "\x79": -0x2b, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x41, "\x79": 0x2b, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x41, "\x79": -0x2b, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x1, 0x6],
+      [0x1, 0x7],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udf4c\x20\u7d50\u69cb\u7279\u6027\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e59\u787c\u70f7\x20\x28\x42\u2082\x48\u2086\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5177\u6709\u4e09\u4e2d\u5fc3\u4e8c\u96fb\u5b50\u9375\u3002\u6bcf\u500b\u787c\u539f\u5b50\u8207\u56db\u500b\u6c2b\u539f\u5b50\u9023\u7dda\uff0c\u5f62\u6210\u985e\u4f3c\x20\x73\x70\u00b3\x20\u7684\u5e7e\u4f55\u6392\u5217\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    "\x44\x32\x68",
+  ),
+  addMol(
+    "\x42\x28\x4f\x48\x29\x33\x7c\u787c\u9178",
+    "\x42",
+    "\x73\x70\u00b2",
+    ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x31\x32\x30\u00b0",
+    "\x31\x36\x39\x20\x28\u5206\u89e3\x29",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3a, "\x79": 0x0, "\x7a": 0x25 },
+      { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": 0x0, "\x7a": 0x23 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x5, "\x79": 0x0, "\x7a": -0x45 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x60, "\x79": 0x0, "\x7a": 0x8 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x63, "\x79": 0x0, "\x7a": 0x8 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x25, "\x79": 0x0, "\x7a": -0x5d },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x4],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x2, 0x5],
+      [0x3, 0x6],
+    ],
+    null,
+    null,
+    "\x43\x33\x68",
+  ),
+  addMol(
+    "\x53\x69\x46\x36\x20\x32\x2d\x7c\u516d\u6c1f\u77fd\u9178\u6839",
+    "\x53\x69",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    getOcta("\x53\x69", "\x46", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x50\x46\x36\x20\x2d\x7c\u516d\u6c1f\u78f7\u9178\u6839",
+    "\x50",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    getOcta("\x50", "\x46", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x53\x62\x46\x36\x20\x2d\x7c\u516d\u6c1f\u92bb\u9178\u6839",
+    "\x53\x62",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u516b\u9762\u9ad4", "\x4f\x63\x74\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x39\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    getOcta("\x53\x62", "\x46", 0x50),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "\x4f\x68",
+  ),
+  addMol(
+    "\x49\x33\x20\x2d\x7c\u4e09\u7898\u9670\u96e2\u5b50\x7c\u4e09\u7898\u932f\u96e2\u5b50",
+    "\x49",
+    "\x73\x70\u00b3\x64",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x49",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 },
+          { "\x78": 0x0, "\x79": -0.5, "\x7a": 0.866 },
+          { "\x78": 0x0, "\x79": -0.5, "\x7a": -0.866 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": -0x64, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x64, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x49\x43\x6c\x32\x20\x2d\x7c\u4e8c\u6c2f\u7898\u96e2\u5b50",
+    "\x49",
+    "\x73\x70\u00b3\x64",
+    ["\u76f4\u7dda\u578b", "\x4c\x69\x6e\x65\x61\x72"],
+    "\x31\x38\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x49",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 },
+          { "\x78": 0x0, "\x79": -0.5, "\x7a": 0.866 },
+          { "\x78": 0x0, "\x79": -0.5, "\x7a": -0.866 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x5a, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x5a, "\x79": 0x0, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    "\x44\x69\x6e\x66\x68",
+  ),
+  addMol(
+    "\x49\x43\x6c\x34\x20\x2d\x7c\u56db\u6c2f\u7898\u96e2\u5b50",
+    "\x49",
+    "\x73\x70\u00b3\x64\u00b2",
+    ["\u5e73\u9762\u56db\u908a\u5f62", "\x53\x71\x75\x61\x72\x65\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x39\x30\u00b0",
+    "\x2d",
+    "\x2d",
+    [
+      {
+        "\x65\x6c\x65\x6d": "\x49",
+        "\x78": 0x0,
+        "\x79": 0x0,
+        "\x7a": 0x0,
+        "\x6c\x70\x33\x64": [
+          { "\x78": 0x0, "\x79": 0x1, "\x7a": 0x0 },
+          { "\x78": 0x0, "\x79": -0x1, "\x7a": 0x0 },
+        ],
+      },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x5a, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x5a, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x5a },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x44\x34\x68",
+  ),
+  addMol(
+    "\x42\x46\x34\x20\x2d\x7c\u56db\u6c1f\u787c\u9178\u6839",
+    "\x42",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d",
+    "\x2d",
+    getTetra("\x42", "\x46", 0x46),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x4, 0x0, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+    ],
+    null,
+    null,
+    "\x54\x64",
+  ),
+  addMol(
+    "\x41\x6c\x43\x6c\x34\x20\x2d\x7c\u56db\u6c2f\u92c1\u9178\u6839",
+    "\x41\x6c",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d",
+    "\x2d",
+    getTetra("\x41\x6c", "\x43\x6c", 0x50),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x54\x64",
+  ),
+  addMol(
+    "\x42\x48\x34\x20\x2d\x7c\u787c\u6c2b\u5316\u96e2\u5b50",
+    "\x42",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d",
+    "\x2d",
+    getTetra("\x42", "\x48", 0x32),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "\x54\x64",
+  ),
+  addMol(
+    "\x48\x32\x53\x4f\x34\x7c\u786b\u9178\u7cfb\u5217",
+    "\x53",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x31\x30\x2e\x33",
+    "\x33\x33\x37",
+    [],
+    [],
+    {
+      "\x48\x32\x53\x4f\x34\x7c\u786b\u9178": {
+        "\x70\x67": "\x43\x32",
+        "\x6d\x70": "\x31\x30\x2e\x33",
+        "\x62\x70": "\x33\x33\x37",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5de5\u696d\u4e4b\u6bcd\uff0c\u5177\u5f37\u812b\u6c34\u6027\u8207\u6c27\u5316\u6027\uff0c\u7531\u5169\u500b\u914d\u4f4d\u9375\x20\x28\x53\u2192\x4f\x29\x20\u8207\u5169\u500b\x20\x53\x2d\x4f\x48\x20\u69cb\u6210\uff0c\u5206\u5b50\u96fb\u4e2d\u6027\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x55, "\x79": 0x5, "\x7a": 0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x55, "\x79": 0x5, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3, 0x5],
+          [0x4, 0x6],
+        ],
+      },
+      "\x48\x53\x4f\x34\x20\x2d\x7c\u786b\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u9178\u5f0f\u9e7d\u9670\u96e2\u5b50\uff0c\u6c34\u6eb6\u6db2\u5448\u5f37\u9178\u6027\uff0c\x53\x2d\x4f\u207b\x20\u7aef\u5e36\u6709\u8ca0\u96fb\u8377\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x55, "\x79": 0x5, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x4, 0x5],
+        ],
+      },
+      "\x53\x4f\x34\x20\x32\x2d\x7c\u786b\u9178\u6839": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6b63\u56db\u9762\u9ad4\u7d50\u69cb\uff0c\u5316\u5b78\u6027\u8cea\u7a69\u5b9a\uff0c\u5169\u500b\x20\x53\x2d\x4f\u207b\x20\u7aef\u986f\u793a\u7c89\u7d05\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x48\x53\x4f\x34\x7c\u786b\u9178\u6c2b\u9209": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x35\x38\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u6c2b\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6eb6\u65bc\u6c34\u5448\u5f37\u9178\u6027\uff0c\u5e38\u7528\u65bc\u6e05\u6f54\u5291\u6216\u964d\u4f4e\x20\x70\x48\x20\u503c\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": -0x14, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x14, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x14, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x28, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x50, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x69, "\x79": -0x5, "\x7a": 0x3c },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x64, "\x79": 0x28, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x4, 0x5],
+        ],
+      },
+      "\x4b\x48\x53\x4f\x34\x7c\u786b\u9178\u6c2b\u9240": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x31\x39\x37",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u6c2b\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6613\u6eb6\u65bc\u6c34\u5448\u5f37\u9178\u6027\uff0c\u52a0\u71b1\u5931\u6c34\u53ef\u88fd\u5099\u7126\u786b\u9178\u9240\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": -0x14, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x14, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x14, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x28, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x50, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x69, "\x79": -0x5, "\x7a": 0x3c },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x6e, "\x79": 0x28, "\x7a": 0x0, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x4, 0x5],
+        ],
+      },
+      "\x43\x61\x53\x4f\x34\x7c\u786b\u9178\u9223\x7c\u77f3\u818f": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x34\x36\x30",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u9223\x20\x28\u77f3\u818f\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5fae\u6eb6\u65bc\u6c34\uff0c\u5ee3\u6cdb\u7528\u65bc\u5efa\u7bc9\u6750\u6599\u3001\u6a21\u578b\u88fd\u4f5c\u8207\u4f5c\u70ba\u8c46\u8150\u51dd\u56fa\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64, "\x72": 0x14, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x42\x61\x53\x4f\x34\x7c\u786b\u9178\u92c7\x7c\u91cd\u6676\u77f3": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x35\x38\x30",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u92c7\x20\x28\u91cd\u6676\u77f3\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6975\u96e3\u6eb6\u65bc\u6c34\u8207\u9178\uff0c\u7121\u6bd2\u4e14\u5bc6\u5ea6\u5927\uff0c\u91ab\u5b78\u4e0a\u7528\u65bc\u6d88\u5316\u9053\x58\u5149\u651d\u5f71\x28\u92c7\u9910\x29\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x42\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x6e, "\x72": 0x19, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x43\x75\x53\x4f\x34\x7c\u786b\u9178\u9285": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x31\x30\x20\x28\u5931\u6c34\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u9285\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7121\u6c34\u7269\u70ba\u767d\u8272\uff0c\u5438\u6c34\u5f8c\u8b8a\u85cd\u8272\x28\u4e94\u6c34\u5408\x29\uff0c\u5e38\u7528\u65bc\u6e38\u6cf3\u6c60\u6bba\u83cc\u3001\u6ce2\u723e\u591a\u6db2\u539f\u6599\u8207\u96fb\u934d\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x43\x75", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x46\x65\x53\x4f\x34\x7c\u786b\u9178\u4e9e\u9435\x7c\u7da0\u792c": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x36\x34\x20\x28\u5931\u6c34\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u4e9e\u9435\x20\x28\u7da0\u792c\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6dfa\u7da0\u8272\u6676\u9ad4\uff0c\u5e38\u7528\u65bc\u91ab\u7642\u88dc\u8840\u5291\x28\u9435\u5291\x29\u3001\u6c34\u8655\u7406\u7d6e\u51dd\u5291\u8207\u9084\u539f\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x46\x65", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x5a\x6e\x53\x4f\x34\x7c\u786b\u9178\u92c5\x7c\u7693\u792c": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x30\x30\x20\x28\u5931\u6c34\x29",
+        "\x62\x70": "\x35\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u92c5\x20\x28\u7693\u792c\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7121\u8272\u91dd\u72c0\u6676\u9ad4\uff0c\u7528\u65bc\u88fd\u9020\u4eba\u9020\u7e96\u7dad\u3001\u6728\u6750\u9632\u8150\u8207\u8fb2\u696d\u5fae\u91cf\u5143\u7d20\u80a5\u6599\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x5a\x6e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4d\x67\x53\x4f\x34\x7c\u786b\u9178\u9382\x7c\u7009\u9e7d": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x31\x32\x34",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u9178\u9382\x20\x28\u7009\u9e7d\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6613\u6eb6\u65bc\u6c34\uff0c\u91ab\u7642\u4e0a\u4f5c\u70ba\u7009\u5291\u6216\u7de9\u89e3\u5b50\u7647\uff0c\u751f\u6d3b\u4e2d\u5e38\u7528\u65bc\u6ce1\u6fa1\u6d74\u9e7d\u653e\u9b06\u808c\u8089\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4d\x67", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x32\x53\x4f\x33\x7c\u4e9e\u786b\u9178\u7cfb\u5217",
+    "\x53",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x36\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x32\x53\x4f\x33\x7c\u4e9e\u786b\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u50c5\u5b58\u5728\u65bc\u6c34\u6eb6\u6db2\u4e2d\u7684\u4e8c\u5143\u5f31\u9178\uff0c\u6975\u4e0d\u7a69\u5b9a\u3002\u5177\u6709\u5f37\u9084\u539f\u6027\u8207\u6f02\u767d\u80fd\u529b\uff0c\u53d7\u71b1\u6216\u4e45\u7f6e\u6613\u5206\u89e3\u51fa\u4e8c\u6c27\u5316\u786b\u6c23\u9ad4\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x26, "\x7a": -0xc },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0x26, "\x7a": -0xc },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "\x48\x53\x4f\x33\x20\x2d\x7c\u4e9e\u786b\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e9e\u786b\u9178\u7684\u7b2c\u4e00\u7d1a\u96fb\u96e2\u7522\u7269\uff0c\u70ba\u5169\u6027\u96e2\u5b50\u3002\u5728\u9178\u6027\u74b0\u5883\u4e2d\u4e0d\u7a69\u5b9a\uff0c\u5ee3\u6cdb\u5b58\u5728\u65bc\u4e9e\u786b\u9178\u6c2b\u9e7d\u6eb6\u6db2\u4e2d\uff0c\u5177\u6297\u6c27\u5316\u6027\u8cea\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x26, "\x7a": -0xc },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+        ],
+      },
+      "\x53\x4f\x33\x20\x32\x2d\x7c\u4e9e\u786b\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e9e\u786b\u9178\u7684\u5b8c\u5168\u96fb\u96e2\u7522\u7269\uff0c\u4e2d\u5fc3\u786b\u539f\u5b50\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002\u5177\u6709\u5f37\u9084\u539f\u6027\uff0c\u6613\u88ab\u7a7a\u6c23\u4e2d\u7684\u6c27\u6c27\u5316\u6210\u786b\u9178\u6839\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "\x4e\x61\x32\x53\x4f\x33\x7c\u4e9e\u786b\u9178\u9209": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x33\x33\x2e\x34\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e38\u898b\u7684\u4e9e\u786b\u9178\u9e7d\uff0c\u70ba\u767d\u8272\u7c89\u672b\uff0c\u6613\u6eb6\u65bc\u6c34\u3002\u5e38\u7528\u4f5c\u9084\u539f\u5291\u3001\u9632\u8150\u5291\u4ee5\u53ca\u651d\u5f71\u986f\u5f71\u5291\u7684\u4fdd\u8b77\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x55, "\x79": -0x20, "\x7a": -0x52 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x55, "\x79": -0x20, "\x7a": -0x52 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x4, 0x2, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+          [0x5, 0x3, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+        ],
+      },
+      "\x4e\x61\x48\x53\x4f\x33\x7c\u4e9e\u786b\u9178\u6c2b\u9209": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x31\x35\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\u6c2b\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e9e\u786b\u9178\u7684\u9178\u5f0f\u9e7d\uff0c\u70ba\u767d\u8272\u7d50\u6676\u7c89\u672b\uff0c\u6709\u4e8c\u6c27\u5316\u786b\u7684\u523a\u6fc0\u6c23\u6c23\u5473\u3002\u5e38\u7528\u65bc\u6f02\u767d\u7e54\u7269\u3001\u98df\u54c1\u9632\u8150\u53ca\u8655\u7406\u5de5\u696d\u5ee2\u6c34\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x26, "\x7a": -0xc },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x55, "\x79": -0x20, "\x7a": -0x52 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+          [0x5, 0x3, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+        ],
+      },
+      "\x43\x61\x53\x4f\x33\x7c\u4e9e\u786b\u9178\u9223": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x36\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u786b\u9178\u9223\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u767d\u8272\u7d50\u6676\u7c89\u672b\uff0c\u5fae\u6eb6\u65bc\u6c34\u3002\u4e3b\u8981\u7528\u4f5c\u98df\u54c1\u9632\u8150\u5291\u3001\u6d88\u6bd2\u5291\uff0c\u4e5f\u662f\u7159\u6c23\u812b\u786b\u5de5\u85dd\u4e2d\u7684\u5e38\u898b\u7522\u7269\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": 0x3d },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x38, "\x79": -0x1c, "\x7a": -0x27 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x0, "\x79": -0x20, "\x7a": -0x57 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x4, 0x2, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+          [0x4, 0x3, "\x69\x6f\x6e\x69\x63\x5f\x74\x68\x69\x6e"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x32\x53\x32\x4f\x33\x7c\u786b\u4ee3\u786b\u9178\u7cfb\u5217",
+    "\x53",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x37\x38\x20\x28\u5206\u89e3\x29",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x48\x32\x53\x32\x4f\x33\x7c\u786b\u4ee3\u786b\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d\x37\x38",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u4ee3\u786b\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e0d\u7a69\u5b9a\u9178\uff0c\u4e2d\u5fc3\x53\u9023\u63a5\u53e6\u4e00\u500b\u5916\u570d\x53\u539f\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x55, "\x79": 0x5, "\x7a": 0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x55, "\x79": 0x5, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x3, 0x5],
+          [0x4, 0x6],
+        ],
+      },
+      "\x48\x53\x32\x4f\x33\x20\x2d\x7c\u786b\u4ee3\u786b\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u4ee3\u786b\u9178\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7d50\u69cb\u985e\u4f3c\u786b\u9178\u6c2b\u6839\u4f46\u4e00\u500b\x4f\u88ab\x53\u53d6\u4ee3\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x55, "\x79": 0x5, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x3, 0x5],
+        ],
+      },
+      "\x53\x32\x4f\x33\x20\x32\x2d\x7c\u786b\u4ee3\u786b\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u4ee3\u786b\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5177\u9084\u539f\u6027\uff0c\u4e2d\u5fc3\u786b\u539f\u5b50\u8207\u5916\u570d\u786b\u5f62\u6210\u96d9\u9375\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x32\x53\x32\x4f\x33\x7c\u786b\u4ee3\u786b\u9178\u9209\x7c\u5927\u8607\u6253\x7c\u6d77\u6ce2": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x34\x38\x2e\x33",
+        "\x62\x70": "\x31\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u786b\u4ee3\u786b\u9178\u9209\x20\x28\u6d77\u6ce2\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x4e\x61\u207a\x20\u4f4d\u65bc\u7d50\u69cb\u5916\u5074\uff0c\u7121\u5be6\u9ad4\u9375\u9023\u7dda\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x53", "\x78": 0x0, "\x79": 0x50, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x3f },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x64, "\x79": 0x14, "\x7a": 0x0, "\x72": 0xf },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x64, "\x79": 0x14, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x32\x43\x4f\x33\x7c\u78b3\u9178\u7cfb\u5217",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x31\x32\x30\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x32\x43\x4f\x33\x7c\u78b3\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e8c\u8cea\u5b50\u5f31\u9178\uff0c\u5b58\u5728\u65bc\u6c7d\u6c34\u4e2d\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0xa, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0xa, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+          [0x3, 0x5],
+        ],
+      },
+      "\x48\x43\x4f\x33\x20\x2d\x7c\u78b3\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x2d\x31\u50f9\u96fb\u8377\uff0c\u5c0f\u8607\u6253\u7684\u4e3b\u8981\u6210\u5206\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0xa, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+      "\x43\x4f\x33\x20\x32\x2d\x7c\u78b3\u9178\u6839": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x2d\x32\u50f9\u96fb\u8377\uff0c\u5171\u632f\u7d50\u69cb\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x43\x61\x43\x4f\x33\x7c\u78b3\u9178\u9223\x7c\u7070\u77f3": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x38\x32\x35\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u9223\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x43\x61\u00b2\u207a\x20\u4f4d\u65bc\u78b3\u9178\u6839\u5e73\u9762\u4e0a\u65b9\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a, "\x72": 0x14, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4d\x67\x43\x4f\x33\x7c\u78b3\u9178\u9382": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x33\x35\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u9382\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x4d\x67\u00b2\u207a\x20\u4f4d\u65bc\u78b3\u9178\u6839\u5e73\u9762\u4e0a\u65b9\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4d\x67", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x32\x43\x4f\x33\x7c\u78b3\u9178\u9209\x7c\u8607\u6253": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x38\x35\x31",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u9209\x20\x28\u8607\u6253\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5169\u500b\x20\x4e\x61\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x64, "\x79": -0x14, "\x7a": 0x0, "\x72": 0xf },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x64, "\x79": -0x14, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4b\x32\x43\x4f\x33\x7c\u78b3\u9178\u9240\x7c\u8349\u6728\u7070": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x38\x39\x31",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5169\u500b\x20\x4b\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x64, "\x79": -0x14, "\x7a": 0x0, "\x72": 0x16 },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": -0x64, "\x79": -0x14, "\x7a": 0x0, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x48\x43\x4f\x33\x7c\u78b3\u9178\u6c2b\u9209\x7c\u5c0f\u8607\u6253": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x35\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78b3\u9178\u6c2b\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x4e\x61\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x46, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0xa, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x64, "\x79": -0x14, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x4e\x4f\x33\x7c\u785d\u9178\u7cfb\u5217",
+    "\x4e",
+    "\x73\x70\u00b2",
+    ["\u5e73\u9762\u4e09\u89d2\u5f62", "\x54\x72\x69\x67\x6f\x6e\x61\x6c\x20\x50\x6c\x61\x6e\x61\x72"],
+    "\x31\x32\x30\u00b0",
+    "\x2d\x34\x32",
+    "\x38\x33",
+    [],
+    [],
+    {
+      "\x48\x4e\x4f\x33\x7c\u785d\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d\x34\x32",
+        "\x62\x70": "\x38\x33",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9178\u53ca\u5f37\u6c27\u5316\u5291\u3002\u5149\u7167\u6613\u5206\u89e3\u7522\u751f\u7d05\u68d5\u8272\x20\x4e\x4f\u2082\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": -0x22, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0xf, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+      "\x4e\x4f\x33\x20\x2d\x7c\u785d\u9178\u6839": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5177\u6709\u9ad8\u5ea6\u5c0d\u7a31\u7684\u5e73\u9762\u7d50\u69cb\x20\x28\u5171\u632f\x29\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": -0x22, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3],
+        ],
+      },
+      "\x4b\x4e\x4f\x33\x7c\u785d\u9178\u9240\x7c\u785d\u77f3": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x33\x33\x34",
+        "\x62\x70": "\x34\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4fd7\u7a31\u785d\u77f3\u3002\x4b\u207a\x20\u4f4d\u65bc\u7d50\u69cb\u4e0a\u65b9\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a, "\x72": 0x16, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3],
+        ],
+      },
+      "\x4e\x61\x4e\x4f\x33\x7c\u785d\u9178\u9209\x7c\u667a\u5229\u785d\u77f3": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x33\x30\x38",
+        "\x62\x70": "\x33\x38\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4fd7\u7a31\u667a\u5229\u785d\u77f3\u3002\x4e\x61\u207a\x20\u4f4d\u65bc\u7d50\u69cb\u4e0a\u65b9\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55, "\x72": 0xf, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3],
+        ],
+      },
+      "\x41\x67\x4e\x4f\x33\x7c\u785d\u9178\u9280": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x32\x31\x32",
+        "\x62\x70": "\x34\x34\x34\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\u9280\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x41\x67\u207a\x20\u4f4d\u65bc\u7d50\u69cb\u4e0a\u65b9\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3b, "\x79": -0x22, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x41\x67", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5a, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x3],
+        ],
+      },
+      "\x43\x75\x28\x4e\x4f\x33\x29\x32\x7c\u785d\u9178\u9285": {
+        "\x70\x67": "\x44\x33\x68",
+        "\x6d\x70": "\x31\x31\x34",
+        "\x62\x70": "\x31\x37\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u785d\u9178\u9285\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u85cd\u8272\u6676\u9ad4\u3002\x43\x75\u00b2\u207a\x20\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x75", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x5a, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x91, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": 0x2d, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3c, "\x79": -0x2d, "\x7a": -0x23 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x5a, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x91, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": 0x2d, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x2d, "\x7a": -0x23 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x3, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x1, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x5, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x5, 0x7, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x5, 0x8, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x4e\x4f\x32\x7c\u4e9e\u785d\u9178\u7cfb\u5217",
+    "\x4e",
+    "\x73\x70\u00b2",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x31\x31\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x4e\x4f\x32\x7c\u4e9e\u785d\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u785d\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f31\u9178\uff0c\x4e\u539f\u5b50\u4e0a\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0xa, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x2, 0x3],
+        ],
+      },
+      "\x4e\x4f\x32\x20\x2d\x7c\u4e9e\u785d\u9178\u6839": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u785d\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e38\u898b\u7684\u9632\u8150\u5291\u6210\u5206\x28\u4e9e\u785d\u9178\u9e7d\x29\uff0c\u7d50\u69cb\u5448\x56\u578b\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+        ],
+      },
+      "\x4e\x61\x4e\x4f\x32\x7c\u4e9e\u785d\u9178\u9209": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x32\x37\x31",
+        "\x62\x70": "\x33\x32\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u785d\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x4e\x61\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x50, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+        ],
+      },
+      "\x4b\x4e\x4f\x32\x7c\u4e9e\u785d\u9178\u9240": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x34\x34\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u785d\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x4b\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3c, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": -0x55, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x33\x50\x4f\x34\x7c\u78f7\u9178\u7cfb\u5217",
+    "\x50",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x34\x32\x2e\x34",
+    "\x32\x31\x33\x20\x28\u5206\u89e3\x29",
+    [],
+    [],
+    {
+      "\x48\x33\x50\x4f\x34\x7c\u78f7\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x34\x32\x2e\x34",
+        "\x62\x70": "\x32\x31\x33\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e09\u8cea\u5b50\u9178\uff0c\u542b\u4e00\u500b\x20\x50\x3d\x4f\x20\u8207\u4e09\u500b\x20\x50\x2d\x4f\x48\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x50, "\x79": -0xa, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x50, "\x79": -0xa, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0xa, "\x7a": -0x5a },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+          [0x4, 0x7],
+        ],
+      },
+      "\x48\x32\x50\x4f\x34\x20\x2d\x7c\u78f7\u9178\u4e8c\u6c2b\u6839": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u4e8c\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x20\x2d\x31\x20\u50f9\u96fb\u8377\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x50, "\x79": -0xa, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x50, "\x79": -0xa, "\x7a": 0x37 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+        ],
+      },
+      "\x48\x50\x4f\x34\x20\x32\x2d\x7c\u78f7\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x20\x2d\x32\x20\u50f9\u96fb\u8377\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x50, "\x79": -0xa, "\x7a": 0x37 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "\x50\x4f\x34\x20\x33\x2d\x7c\u78f7\u9178\u6839": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6b63\u56db\u9762\u9ad4\u7d50\u69cb\uff0c\u56db\u500b\x20\x50\x2d\x4f\x20\u9375\u9577\u5747\u7b49\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x43\x61\x33\x28\x50\x4f\x34\x29\x32\x7c\u78f7\u9178\u9223": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x36\x37\x30",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u9223\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u96e3\u6eb6\u65bc\u6c34\uff0c\u8b8a\u91cf\u539f\u6599\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x64, "\x79": 0x28, "\x7a": 0x0, "\x72": 0x14 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": -0x64, "\x79": 0x28, "\x7a": 0x0, "\x72": 0x14 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x0, "\x79": -0x64, "\x7a": 0x0, "\x72": 0x14 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x4e\x61\x33\x50\x4f\x34\x7c\u78f7\u9178\u9209": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x31\x35\x38\x33",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9e7c\u6027\u9e7d\u985e\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x5a, "\x79": 0x1e, "\x7a": 0x0, "\x72": 0xf },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x5a, "\x79": 0x1e, "\x7a": 0x0, "\x72": 0xf },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x0, "\x79": -0x5a, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x43\x61\x28\x48\x32\x50\x4f\x34\x29\x32\x7c\u78f7\u9178\u4e8c\u6c2b\u9223": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x31\x30\x39\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u78f7\u9178\u4e8c\u6c2b\u9223\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u80a5\u6599\u6210\u5206\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x14 },
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": -0x64, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x64, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x64, "\x79": -0x1e, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x91, "\x79": -0x1e, "\x7a": -0x1e },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": -0x1e },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x91, "\x79": -0x3c, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0xaf, "\x79": -0xa, "\x7a": -0x1e },
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x64, "\x79": 0x0, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x64, "\x79": 0x41, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x64, "\x79": -0x1e, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x91, "\x79": -0x1e, "\x7a": -0x1e },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": -0x1e },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x91, "\x79": -0x3c, "\x7a": 0x37 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0xaf, "\x79": -0xa, "\x7a": -0x1e },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x3],
+          [0x1, 0x4],
+          [0x1, 0x5],
+          [0x3, 0x6],
+          [0x4, 0x7],
+          [0x8, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x8, 0xa],
+          [0x8, 0xb],
+          [0x8, 0xc],
+          [0xa, 0xd],
+          [0xb, 0xe],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x33\x50\x4f\x33\x7c\u4e9e\u78f7\u9178\u7cfb\u5217",
+    "\x50",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x37\x33\x2e\x36",
+    "\x32\x30\x30\x20\x28\u5206\u89e3\x29",
+    [],
+    [],
+    {
+      "\x48\x33\x50\x4f\x33\x7c\u4e9e\u78f7\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x37\x33\x2e\x36",
+        "\x62\x70": "\x32\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u78f7\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e8c\u8cea\u5b50\u9178\uff0c\u542b\u4e00\u500b\x20\x50\x2d\x48\x20\u9375\x20\x28\u4e0d\u89e3\u96e2\x29\x20\u8207\u5169\u500b\x20\x50\x2d\x4f\x48\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x28, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0xa, "\x7a": 0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0xa, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+        ],
+      },
+      "\x48\x32\x50\x4f\x33\x20\x2d\x7c\u4e9e\u78f7\u9178\u6c2b\u6839": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u78f7\u9178\u4e8c\u6c2b\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x20\x2d\x31\x20\u50f9\u96fb\u8377\uff0c\x50\x2d\x48\x20\u9375\u4fdd\u7559\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x28, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x5a, "\x79": -0xa, "\x7a": 0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "\x48\x50\x4f\x33\x20\x32\x2d\x7c\u4e9e\u78f7\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u78f7\u9178\u6c2b\u6839\x20\x28\u4e9e\u78f7\u9178\u6839\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x20\x2d\x32\x20\u50f9\u96fb\u8377\uff0c\x50\x2d\x48\x20\u9375\u901a\u5e38\u4e0d\u89e3\u96e2\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x28, "\x7a": -0x3c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x4e\x61\x32\x48\x50\x4f\x33\x7c\u4e9e\u78f7\u9178\u9209": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u78f7\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6b63\u9e7d\uff0c\x50\x20\u76f4\u63a5\u9023\u6709\u4e00\u500b\x20\x48\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x1e, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x28, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x5a, "\x79": 0x14, "\x7a": 0x0, "\x72": 0xf },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x5a, "\x79": 0x14, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x33\x50\x4f\x32\x7c\u6b21\u78f7\u9178\u7cfb\u5217",
+    "\x50",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x32\x36\x2e\x35",
+    "\x31\x33\x30\x20\x28\u5206\u89e3\x29",
+    [],
+    [],
+    {
+      "\x48\x33\x50\x4f\x32\x7c\u6b21\u78f7\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x32\x36\x2e\x35",
+        "\x62\x70": "\x31\x33\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u78f7\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u55ae\u8cea\u5b50\u9178\uff0c\u542b\u5169\u500b\x20\x50\x2d\x48\x20\u9375\u8207\u4e00\u500b\x20\x50\x2d\x4f\x48\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0xa, "\x7a": -0x64 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "\x48\x32\x50\x4f\x32\x20\x2d\x7c\u6b21\u78f7\u9178\u6839": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u78f7\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5e36\x20\x2d\x31\x20\u50f9\u96fb\u8377\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x23 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "\x4e\x61\x48\x32\x50\x4f\x32\x7c\u6b21\u78f7\u9178\u9209": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x39\x30\x20\x28\u4e00\u6c34\u5408\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u78f7\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9084\u539f\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x50", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x1e, "\x7a": -0x3c },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x55, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x43\x6c\x4f\x34\x7c\u904e\u6c2f\u9178\u7cfb\u5217",
+    "\x43\x6c",
+    "\x73\x70\u00b3",
+    ["\u56db\u9762\u9ad4", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x2d\x31\x31\x32",
+    "\x31\x39\x20\x28\u5206\u89e3\x29",
+    [],
+    [],
+    {
+      "\x48\x43\x6c\x4f\x34\x7c\u904e\u6c2f\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d\x31\x31\x32",
+        "\x62\x70": "\x31\x39\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u904e\u6c2f\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6700\u5f37\u7121\u6a5f\u9178\u4e4b\u4e00\uff0c\u6b63\u56db\u9762\u9ad4\u7d50\u69cb\u3002\u6c2f\u539f\u5b50\u8207\u4e09\u500b\u6c27\u5f62\u6210\u96d9\u9375\uff0c\u8207\u4e00\u500b\u7fa5\u57fa\u5f62\u6210\u55ae\u9375\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3a, "\x79": -0x19, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3a, "\x79": -0x19, "\x7a": 0x23, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x41, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x0, "\x79": -0x5, "\x7a": -0x69 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x4, 0x5],
+        ],
+      },
+      "\x43\x6c\x4f\x34\x20\x2d\x7c\u904e\u6c2f\u9178\u6839": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u904e\u6c2f\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5316\u5b78\u6027\u8cea\u7a69\u5b9a\uff0c\u56db\u500b\x20\x43\x6c\x2d\x4f\x20\u9375\u9577\u56e0\u5171\u632f\u800c\u5747\u7b49\x20\x28\x2d\x31\u50f9\x29\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x41 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4d\x67\x28\x43\x6c\x4f\x34\x29\x32\x7c\u904e\u6c2f\u9178\u9382": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x32\x35\x31",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u904e\u6c2f\u9178\u9382\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6975\u5f37\u7684\u812b\u6c34\u5291\uff08\u4e7e\u71e5\u5291\uff09\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4d\x67", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x14, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x82, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x82, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x48, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0xbc, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x82, "\x79": -0x19, "\x7a": -0x41 },
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x82, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x82, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x48, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xbc, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x82, "\x79": -0x19, "\x7a": -0x41 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x5, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x6, 0x7, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x6, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x6, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x6, 0xa, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4b\x43\x6c\x4f\x34\x7c\u904e\u6c2f\u9178\u9240": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x36\x31\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u904e\u6c2f\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u6c27\u5316\u5291\uff0c\u7528\u65bc\u7159\u706b\uff08\u7d2b\u8272\u706b\u7130\uff09\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x41 },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x5f, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x48\x34\x43\x6c\x4f\x34\x7c\u904e\u6c2f\u9178\u92a8": {
+        "\x70\x67": "\x54\x64",
+        "\x6d\x70": "\x32\x34\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u904e\u6c2f\u9178\u92a8\x20\x28\x41\x50\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u56fa\u9ad4\u706b\u7bad\u71c3\u6599\u6c27\u5316\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0x44, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x3a, "\x79": -0x19, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x19, "\x7a": -0x41 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x6e, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x12 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x6e, "\x79": 0x28, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x6e, "\x79": -0x14, "\x7a": 0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x6e, "\x79": -0x14, "\x7a": -0x23 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x91, "\x79": 0x0, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x4, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x5, 0x6],
+          [0x5, 0x7],
+          [0x5, 0x8],
+          [0x5, 0x9],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x43\x6c\x4f\x33\x7c\u6c2f\u9178\u7cfb\u5217",
+    "\x43\x6c",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x37\u00b0",
+    "\x2d\x32\x30",
+    "\u5206\u89e3",
+    [],
+    [],
+    {
+      "\x48\x43\x6c\x4f\x33\x7c\u6c2f\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d\x32\x30",
+        "\x62\x70": "\u5206\u89e3",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9178\uff0c\u5177\u6709\u5f37\u6c27\u5316\u6027\uff0c\u4e2d\u5fc3\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x14, "\x7a": -0x37 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3, 0x4],
+        ],
+      },
+      "\x43\x6c\x4f\x33\x20\x2d\x7c\u6c2f\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e09\u89d2\u9310\u5f62\u7d50\u69cb\uff0c\u5e38\u7528\u65bc\u706b\u85e5\u8207\u70b8\u85e5\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4b\x43\x6c\x4f\x33\x7c\u6c2f\u9178\u9240": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x33\x35\x36",
+        "\x62\x70": "\x34\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u6c27\u5316\u5291\uff0c\u53d7\u71b1\u5206\u89e3\u7522\u751f\u6c27\u6c23\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x55, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x43\x6c\x4f\x33\x7c\u6c2f\u9178\u9209": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x32\x34\x38",
+        "\x62\x70": "\x33\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6c2f\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5de5\u696d\u6f02\u767d\u8207\u9664\u8349\u5291\u539f\u6599\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x50, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x43\x6c\x4f\x32\x7c\u4e9e\u6c2f\u9178\u7cfb\u5217",
+    "\x43\x6c",
+    "\x73\x70\u00b3",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x31\x31\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x43\x6c\x4f\x32\x7c\u4e9e\u6c2f\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u6c2f\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f31\u9178\uff0c\u7d50\u69cb\u5448\x56\u578b\uff0c\u4e2d\u5fc3\u6709\u5169\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x14, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2, 0x3],
+        ],
+      },
+      "\x43\x6c\x4f\x32\x20\x2d\x7c\u4e9e\u6c2f\u9178\u6839": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u6c2f\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\x56\u578b\u7d50\u69cb\uff0c\u5e38\u7528\u65bc\u6f02\u767d\u5291\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4e\x61\x43\x6c\x4f\x32\x7c\u4e9e\u6c2f\u9178\u9209": {
+        "\x70\x67": "\x43\x32\x76",
+        "\x6d\x70": "\x31\x37\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u4e9e\u6c2f\u9178\u9209\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u9ad8\u6548\u6f02\u767d\u5291\uff0c\u53cd\u61c9\u53ef\u751f\u6210\u4e8c\u6c27\u5316\u6c2f\x20\x28\x43\x6c\x4f\u2082\x29\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x5, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x37, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x37, "\x79": -0x23, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": -0x5a, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x43\x6c\x4f\x7c\u6b21\u6c2f\u9178\u7cfb\u5217",
+    "\x4f",
+    "\x73\x70\u00b3",
+    ["\u89d2\u5f62", "\x42\x65\x6e\x74"],
+    "\x31\x30\x34\x2e\x35\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x43\x6c\x4f\x7c\u6b21\u6c2f\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u6c2f\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f31\u9178\uff0c\u6bba\u83cc\u529b\u5f37\uff0c\u7d50\u69cb\x20\x48\x2d\x4f\x2d\x43\x6c\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": 0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x41, "\x79": -0x19, "\x7a": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x23, "\x79": -0x14, "\x7a": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "\x43\x6c\x4f\x20\x2d\x7c\u6b21\u6c2f\u9178\u6839": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u6c2f\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6f02\u767d\u6c34\u6709\u6548\u6210\u5206\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x23, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x23, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [[0x0, 0x1]],
+      },
+      "\x4e\x61\x43\x6c\x4f\x7c\u6b21\u6c2f\u9178\u9209\x7c\u6f02\u767d\u6c34": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x31\x38\x20\x28\u4e94\u6c34\u5408\x29",
+        "\x62\x70": "\u5206\u89e3",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u6c2f\u9178\u9209\x20\x28\u6f02\u767d\u6c34\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5bb6\u7528\u6f02\u767d\u5291\u3002\x4e\x61\u207a\x20\u8207\x20\x43\x6c\x4f\u207b\x20\u4e4b\u9593\u70ba\u96e2\u5b50\u9375\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x23, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x23, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4e\x61", "\x78": 0x55, "\x79": 0x0, "\x7a": 0x0, "\x72": 0xf },
+        ],
+        "\x62\x6f\x6e\x64\x73": [[0x0, 0x1]],
+      },
+      "\x43\x61\x28\x43\x6c\x4f\x29\x32\x7c\u6b21\u6c2f\u9178\u9223\x7c\u6f02\u767d\u7c89": {
+        "\x70\x67": "\x43\x69\x6e\x66\x76",
+        "\x6d\x70": "\x31\x30\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b21\u6c2f\u9178\u9223\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u6f02\u767d\u7c89\u4e3b\u8981\u6210\u5206\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": -0x37, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xf, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x43\x61", "\x78": 0x3c, "\x79": 0x0, "\x7a": 0x0, "\x72": 0x14 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x69, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+          { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0xaf, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x3 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1],
+          [0x3, 0x4],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x42\x72\x4f\x33\x7c\u6eb4\u9178\u7cfb\u5217",
+    "\x42\x72",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x37\u00b0",
+    "\x2d",
+    "\u4e0d\u7a69\u5b9a",
+    [],
+    [],
+    {
+      "\x48\x42\x72\x4f\x33\x7c\u6eb4\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\u4e0d\u7a69\u5b9a",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6eb4\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u9178\uff0c\u4e2d\u5fc3\u6709\u4e00\u5c0d\u5b64\u5c0d\u96fb\u5b50\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x14, "\x7a": -0x37 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3, 0x4],
+        ],
+      },
+      "\x42\x72\x4f\x33\x20\x2d\x7c\u6eb4\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6eb4\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e09\u89d2\u9310\u5f62\u7d50\u69cb\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4b\x42\x72\x4f\x33\x7c\u6eb4\u9178\u9240": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x33\x35\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6eb4\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u5f37\u6c27\u5316\u5291\uff0c\x4b\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x0, "\x79": 0x3c, "\x7a": 0x0, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x41\x67\x42\x72\x4f\x33\x7c\u6eb4\u9178\u9280": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6eb4\u9178\u9280\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u96e3\u6eb6\u65bc\u6c34\u7684\u767d\u8272\u56fa\u9ad4\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42\x72", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x41\x67", "\x78": 0x0, "\x79": 0x3c, "\x7a": 0x0, "\x72": 0x12 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x48\x49\x4f\x33\x7c\u7898\u9178\u7cfb\u5217",
+    "\x49",
+    "\x73\x70\u00b3",
+    ["\u89d2\u9310\u5f62", "\x50\x79\x72\x61\x6d\x69\x64\x61\x6c"],
+    "\x31\x30\x37\u00b0",
+    "\x31\x31\x30",
+    "\u5206\u89e3",
+    [],
+    [],
+    {
+      "\x48\x49\x4f\x33\x7c\u7898\u9178": {
+        "\x70\x67": "\x43\x73",
+        "\x6d\x70": "\x31\x31\x30",
+        "\x62\x70": "\u5206\u89e3",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7898\u9178\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u7a69\u5b9a\u7684\u767d\u8272\u56fa\u9ad4\uff0c\u5f37\u9178\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+          { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5a, "\x79": -0x14, "\x7a": -0x37 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3, 0x4],
+        ],
+      },
+      "\x49\x4f\x33\x20\x2d\x7c\u7898\u9178\u6839": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x2d",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7898\u9178\u6839\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u4e09\u89d2\u9310\u5f62\u7d50\u69cb\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+      "\x4b\x49\x4f\x33\x7c\u7898\u9178\u9240": {
+        "\x70\x67": "\x43\x33\x76",
+        "\x6d\x70": "\x35\x36\x30\x20\x28\u5206\u89e3\x29",
+        "\x62\x70": "\x2d",
+        "\x64\x65\x73\x63": "\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7898\u9178\u9240\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x3c\x62\x72\x3e\u98df\u9e7d\u52a0\u7898\u6210\u5206\uff0c\x4b\u207a\x20\u4f4d\u65bc\u5916\u5074\u3002",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x49", "\x78": 0x0, "\x79": 0xf, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x1 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x0, "\x79": -0x28, "\x7a": 0x32 },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x30, "\x79": -0x28, "\x7a": -0x1c },
+          { "\x65\x6c\x65\x6d": "\x4b", "\x78": 0x0, "\x79": 0x3c, "\x7a": 0x0, "\x72": 0x16 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x3, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x63\x69\x64",
+  ),
+  addMol(
+    "\x46\x65\x28\x43\x35\x48\x35\x29\x32\x7c\u4e8c\u8302\u9435\x7c\x46\x65\x72\x72\x6f\x63\x65\x6e\x65",
+    "\x43",
+    "\x73\x70\u00b3",
+    ["\u5e7e\u4f55\u5f62\u72c0", "\x53\x68\x61\x70\x65"],
+    "\u89d2\u5ea6",
+    "\x31\x37\x32\x2d\x31\x37\x34",
+    "\x32\x34\x39",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": -0x23, "\x7a": -0x52 },
+      { "\x65\x6c\x65\x6d": "\x46\x65", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x30, "\x79": 0x24, "\x7a": -0x53 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x10, "\x79": -0x3c, "\x7a": -0x52 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3c, "\x79": -0x4, "\x7a": -0x53 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x15, "\x79": 0x37, "\x7a": -0x54 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x19, "\x79": 0x39, "\x7a": 0x51 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2c, "\x79": 0x2b, "\x7a": 0x52 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x34, "\x79": -0x1c, "\x7a": 0x54 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc, "\x79": -0x3a, "\x7a": 0x54 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3d, "\x79": -0x5, "\x7a": 0x53 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x60, "\x79": -0x41, "\x7a": -0x50, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x5b, "\x79": 0x46, "\x7a": -0x54, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x1e, "\x79": -0x70, "\x7a": -0x50, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x72, "\x79": -0x7, "\x7a": -0x52, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x28, "\x79": 0x6a, "\x7a": -0x55, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x30, "\x79": 0x6a, "\x7a": 0x50, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x54, "\x79": 0x4f, "\x7a": 0x51, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x63, "\x79": -0x37, "\x7a": 0x54, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x17, "\x79": -0x6f, "\x7a": 0x54, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x73, "\x79": -0xb, "\x7a": 0x52, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "", "\x78": 0x0, "\x79": -0x2, "\x7a": -0x52, "\x72": 0x0 },
+      { "\x65\x6c\x65\x6d": "", "\x78": 0x0, "\x79": 0x2, "\x7a": 0x53, "\x72": 0x0 },
+    ],
+    [
+      [0x1, 0x15],
+      [0x1, 0x16],
+      [0x0, 0x2],
+      [0x2, 0x5],
+      [0x5, 0x4],
+      [0x4, 0x3],
+      [0x3, 0x0],
+      [0x6, 0x7],
+      [0x7, 0x8],
+      [0x8, 0x9],
+      [0x9, 0xa],
+      [0xa, 0x6],
+    ],
+    null,
+    null,
+    "\x44\x35\x68",
+  ),
+  addMol(
+    "\x4d\x79\x4d\x6f\x6c\x7c\x43\x6f\x28\x4e\x48\x33\x29\x34\x43\x6c\x32",
+    "\x43",
+    "\x73\x70\u00b3",
+    ["\u5e7e\u4f55\u5f62\u72c0", "\x53\x68\x61\x70\x65"],
+    "\u89d2\u5ea6",
+    "\x2d",
+    "\x2d",
+    [
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x64, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x64, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x75, "\x79": -0x27, "\x7a": 0x12 },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x64, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x74, "\x79": -0x28, "\x7a": 0x11 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x7a, "\x79": 0x23, "\x7a": 0x16 },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": -0x64, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x78, "\x79": 0x24, "\x7a": 0x17 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x73, "\x79": 0x2, "\x7a": -0x2c },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x28, "\x79": -0x75, "\x7a": 0x8 },
+      { "\x65\x6c\x65\x6d": "\x43\x6f", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x23, "\x79": -0x77, "\x7a": 0x7 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x3, "\x79": -0x70, "\x7a": -0x2d },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x73, "\x79": 0x2, "\x7a": -0x2d },
+      { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x64 },
+      { "\x65\x6c\x65\x6d": "\x43\x6c", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x64 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x24, "\x79": 0x17, "\x7a": -0x75 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": -0x27, "\x79": 0x14, "\x7a": -0x74 },
+      { "\x65\x6c\x65\x6d": "\x48", "\x78": 0x2, "\x79": -0x2b, "\x7a": -0x76 },
+    ],
+    [
+      [0x0, 0x2],
+      [0x0, 0x7],
+      [0x0, 0x8],
+      [0x0, 0xa],
+      [0x1, 0xa],
+      [0x3, 0x4],
+      [0x3, 0x5],
+      [0x3, 0xd],
+      [0x3, 0xa],
+      [0x6, 0x9],
+      [0x6, 0xa],
+      [0x6, 0xb],
+      [0x6, 0xc],
+      [0xe, 0xa],
+      [0xe, 0x10],
+      [0xe, 0x11],
+      [0xe, 0x12],
+      [0xf, 0xa],
+    ],
+    null,
+    null,
+    "",
+  ),
+  addMol(
+    "\x53\x69\x7c\u77fd\x7c\u77fd\u6676\u9ad4",
+    "\x53\x69",
+    "\x73\x70\u00b3",
+    ["\u6b63\u56db\u9762\u9ad4\u7db2\u72c0", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c\x20\x4e\x65\x74\x77\x6f\x72\x6b"],
+    "\x31\x30\x39\x2e\x35\u00b0",
+    "\x31\x34\x31\x34",
+    "\x33\x32\x36\x35",
+    [
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -92.4, "\x79": 92.4, "\x7a": -92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -92.4, "\x79": 92.4, "\x7a": 92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -92.4, "\x79": -92.4, "\x7a": -92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -92.4, "\x79": -92.4, "\x7a": 92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 92.4, "\x79": 92.4, "\x7a": -92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 92.4, "\x79": 92.4, "\x7a": 92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 92.4, "\x79": -92.4, "\x7a": -92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 92.4, "\x79": -92.4, "\x7a": 92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -92.4, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 92.4, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x0, "\x79": 0x0, "\x7a": -92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x0, "\x79": 0x0, "\x7a": 92.4, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x0, "\x79": 92.4, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x0, "\x79": -92.4, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": 46.2, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": 46.2, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": -46.2, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": -46.2, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": 138.6, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": 46.2, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": 138.6, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": 138.6, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": 46.2, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": 138.6, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": 46.2, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": -46.2, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": -138.6, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": -46.2, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": -138.6, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": -46.2, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -138.6, "\x79": -138.6, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -46.2, "\x79": -138.6, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": 138.6, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": 46.2, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": 138.6, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": 46.2, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": 138.6, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": 138.6, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": 46.2, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": -138.6, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": -46.2, "\x7a": -138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": -138.6, "\x7a": -46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": -46.2, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 46.2, "\x79": -138.6, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": -46.2, "\x7a": 46.2, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 138.6, "\x79": -138.6, "\x7a": 138.6, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+    ],
+    [
+      [0x0, 0x12],
+      [0x0, 0x13],
+      [0x0, 0x14],
+      [0x1, 0x16],
+      [0x1, 0x17],
+      [0x1, 0x18],
+      [0x1, 0x15],
+      [0x2, 0x1b],
+      [0x2, 0x1c],
+      [0x2, 0x1a],
+      [0x2, 0x19],
+      [0x3, 0x1f],
+      [0x3, 0x1d],
+      [0x3, 0x1e],
+      [0x4, 0x21],
+      [0x4, 0x20],
+      [0x4, 0x22],
+      [0x4, 0x23],
+      [0x5, 0x26],
+      [0x5, 0x25],
+      [0x5, 0x24],
+      [0x6, 0x27],
+      [0x6, 0x28],
+      [0x6, 0x29],
+      [0x7, 0x2a],
+      [0x7, 0x2b],
+      [0x7, 0x2d],
+      [0x7, 0x2c],
+      [0x8, 0x16],
+      [0x8, 0xf],
+      [0x8, 0x10],
+      [0x8, 0x19],
+      [0x9, 0xe],
+      [0x9, 0x23],
+      [0x9, 0x11],
+      [0x9, 0x2c],
+      [0xa, 0x1b],
+      [0xa, 0xf],
+      [0xa, 0x11],
+      [0xa, 0x21],
+      [0xb, 0x2a],
+      [0xb, 0x18],
+      [0xb, 0x10],
+      [0xb, 0xe],
+      [0xc, 0xf],
+      [0xc, 0xe],
+      [0xc, 0x17],
+      [0xc, 0x20],
+      [0xd, 0x10],
+      [0xd, 0x1c],
+      [0xd, 0x11],
+      [0xd, 0x2b],
+      [0xe, 0x5],
+      [0xf, 0x0],
+      [0x10, 0x3],
+      [0x11, 0x6],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5c6c\u65bc\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5171\u50f9\u7db2\u72c0\u56fa\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u6bcf\u500b\u77fd\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u8207\u9130\u8fd1\u7684\u56db\u500b\u77fd\u539f\u5b50\u5f62\u6210\u5f37\u5927\u7684\u5171\u50f9\u9375\uff0c\u4e26\u5411\u4e09\u7dad\u7a7a\u9593\u7121\u9650\u5ef6\u4f38\uff0c\u5f62\u6210\u9023\u7e8c\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6b63\u56db\u9762\u9ad4\u7db2\u72c0\u7d50\u69cb\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u9375\u89d2\u7d04\u70ba\x20\x31\x30\x39\x2e\x35\u00b0\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u539f\u5b50\u9593\u5b8c\u5168\u4ee5\u6975\u5f37\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5171\u50f9\u9375\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u9375\u7d50\uff0c\u5177\u6709\u6975\u9ad8\u7684\u7194\u9ede\x20\x28\x31\x34\x31\x34\u00b0\x43\x29\x20\u8207\u786c\u5ea6\u3002\u4e0d\u540c\u65bc\u7d55\u7de3\u7684\u91d1\u525b\u77f3\uff0c\u77fd\u5177\u6709\u7279\u6b8a\u7684\u96fb\u5b50\u80fd\u9699\u7d50\u69cb\uff0c\u5c6c\u65bc\u91cd\u8981\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u534a\u5c0e\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u6750\u6599\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5316\u5b78\u6027\u8cea\u7a69\u5b9a\u3002\u5728\u5e38\u6eab\u4e0b\u4e0d\u8207\u5927\u90e8\u5206\u9178\u9e7c\u53cd\u61c9\uff08\u6975\u5c11\u6578\u5982\x20\x48\x46\x20\u9664\u5916\uff09\uff0c\u4f46\u5728\u9ad8\u6eab\u4e0b\u6d3b\u6027\u589e\u52a0\uff0c\u53ef\u8207\u6c27\u6c23\u7d50\u5408\u5f62\u6210\u4e8c\u6c27\u5316\u77fd\x20\x28\x53\x69\x4f\u2082\x29\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u8cc7\u8a0a\u7522\u696d\u7684\u6838\u5fc3\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u77fd\u662f\u88fd\u9020\u5fae\u8655\u7406\u5668\u8207\u5404\u985e\u534a\u5c0e\u9ad4\u5143\u4ef6\u7684\u57fa\u790e\u3002\u900f\u904e\u5728\u7db2\u72c0\u7d50\u69cb\u4e2d\u52a0\u5165\u5fae\u91cf\u7684\u78f7\x20\x28\x50\x29\x20\u6216\u787c\x20\x28\x42\x29\uff0c\u53ef\u8abf\u6574\u5176\u5c0e\u96fb\u6027\uff0c\u88fd\u6210\x20\x4e\x20\u578b\u6216\x20\x50\x20\u578b\u534a\u5c0e\u9ad4\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u80fd\u6e90\u8f49\u578b\x20\x28\u592a\u967d\u80fd\x29\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5229\u7528\u77fd\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5149\u96fb\u6548\u61c9\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u53ef\u5c07\u5149\u80fd\u8f49\u5316\u70ba\u96fb\u80fd\u3002\u7d14\u5ea6\u9054\x20\x39\x39\x2e\x39\x39\x39\x39\x25\x20\u7684\u591a\u6676\u77fd\u6216\u55ae\u6676\u77fd\u662f\u88fd\u9020\u592a\u967d\u80fd\u96fb\u6c60\u677f\u7684\u6838\u5fc3\u6750\u6599\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5730\u6bbc\u4e2d\u7684\u5206\u4f48\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u96d6\u7136\u77fd\u5728\u81ea\u7136\u754c\u4e2d\u4e0d\u4ee5\u55ae\u8cea\u5f62\u5f0f\u5b58\u5728\uff0c\u4f46\u5176\u5316\u5408\u7269\uff08\u5982\u77fd\u9178\u9e7d\u3001\u77f3\u82f1\uff09\u662f\u5730\u6bbc\u4e2d\u542b\u91cf\u7b2c\u4e8c\u8c50\u5bcc\u7684\u5143\u7d20\uff0c\u662f\u69cb\u6210\u5730\u7403\u5ca9\u77f3\u5708\u7684\u91cd\u8981\u57fa\u77f3\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+    "\x46\x64\x33\x6d",
+  ),
+  addMol(
+    "\x43",
+    "\x43",
+    "\x73\x70\u00b3",
+    ["\u540c\u7d20\u7570\u5f62\u9ad4", "\x41\x6c\x6c\x6f\x74\x72\x6f\x70\x65"],
+    "\x2d",
+    "\x2d",
+    "\x2d",
+    [],
+    [],
+    {
+      "\x43\x7c\u91d1\u525b\u77f3\x7c\u947d\u77f3": {
+        "\x70\x67": "\x46\x64\x33\x6d",
+        "\x68\x79\x62\x72\x69\x64": "\x73\x70\u00b3",
+        "\x73\x68\x61\x70\x65": "\u6b63\u56db\u9762\u9ad4\u7db2\u72c0",
+        "\x61\x6e\x67\x6c\x65": "\x31\x30\x39\x2e\x35\u00b0",
+        "\x6d\x70": "\x33\x35\x35\x30",
+        "\x62\x70": "\x34\x38\x32\x37",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x52, "\x79": 0x52, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x52, "\x79": -0x52, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x52, "\x79": 0x52, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x52, "\x79": -0x52, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x52, "\x79": 0x0, "\x7a": -0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x52, "\x79": 0x0, "\x7a": 0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x52, "\x79": 0x0, "\x7a": -0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x52, "\x79": 0x0, "\x7a": 0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x52, "\x7a": -0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x52, "\x7a": 0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x52, "\x7a": -0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x52, "\x7a": 0x52, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": 0x29, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": 0x29, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": -0x29, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": -0x29, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": 0x7a, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": 0x29, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": 0x7a, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": -0x29, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": -0x7a, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": -0x7a, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": 0x7a, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": 0x7a, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": 0x29, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": -0x7a, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": -0x29, "\x7a": -0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": -0x7a, "\x7a": 0x29, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": -0x29, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": 0x29, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": 0x29, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": -0x29, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": -0x29, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": 0x29, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": 0x29, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7a, "\x79": -0x29, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": 0x7a, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": 0x7a, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": -0x7a, "\x7a": -0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": -0x7a, "\x7a": 0x7a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x12],
+          [0x0, 0x13],
+          [0x0, 0xe],
+          [0x0, 0x11],
+          [0x1, 0xf],
+          [0x1, 0x16],
+          [0x1, 0x15],
+          [0x1, 0x14],
+          [0x2, 0x17],
+          [0x2, 0xd],
+          [0x2, 0x19],
+          [0x2, 0x18],
+          [0x3, 0x10],
+          [0x3, 0x1a],
+          [0x3, 0x1b],
+          [0x3, 0x1c],
+          [0x4, 0x12],
+          [0x4, 0xf],
+          [0x4, 0x1e],
+          [0x4, 0x1d],
+          [0x5, 0x20],
+          [0x5, 0x14],
+          [0x5, 0xe],
+          [0x5, 0x1f],
+          [0x6, 0xd],
+          [0x6, 0x21],
+          [0x6, 0x22],
+          [0x6, 0x1b],
+          [0x7, 0x10],
+          [0x7, 0x24],
+          [0x7, 0x23],
+          [0x7, 0x19],
+          [0x8, 0xe],
+          [0x8, 0x10],
+          [0x8, 0xd],
+          [0x8, 0xf],
+          [0x9, 0x25],
+          [0x9, 0x13],
+          [0x9, 0x1e],
+          [0x9, 0xd],
+          [0xa, 0x23],
+          [0xa, 0xe],
+          [0xa, 0x17],
+          [0xa, 0x26],
+          [0xb, 0x21],
+          [0xb, 0x1a],
+          [0xb, 0xf],
+          [0xb, 0x27],
+          [0xc, 0x10],
+          [0xc, 0x20],
+          [0xc, 0x28],
+          [0xc, 0x16],
+        ],
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u91d1\u525b\u77f3\u662f\u8457\u540d\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5171\u50f9\u7db2\u72c0\u56fa\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u6bcf\u500b\u78b3\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u8207\u9130\u8fd1\u7684\u56db\u500b\u78b3\u539f\u5b50\u4ee5\u5f37\u5927\u7684\u5171\u50f9\u9375\u7d50\u5408\uff0c\u5f62\u6210\u7121\u9650\u5ef6\u4f38\u7684\u6b63\u56db\u9762\u9ad4\u7db2\u72c0\u7d50\u69cb\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u539f\u5b50\u9593\u5b8c\u5168\u4ee5\u6975\u5f37\u7684\u5171\u50f9\u9375\u9023\u7d50\uff0c\u91d1\u525b\u77f3\u64c1\u6709\u81ea\u7136\u754c\u7269\u8cea\u4e2d\u6700\u9ad8\u7684\u786c\u5ea6\u8207\u6975\u9ad8\u7684\u7194\u9ede\x20\x28\u7d04\x20\x33\x35\x35\x30\u00b0\x43\x29\u3002\u6b64\u5916\uff0c\u5b83\u4e0d\u5177\u5099\u81ea\u7531\u96fb\u5b50\uff0c\u56e0\u6b64\u662f\u826f\u597d\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u7d55\u7de3\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5c0e\u71b1\u7279\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5118\u7ba1\u4e0d\u5c0e\u96fb\uff0c\u4f46\u91d1\u525b\u77f3\u5177\u5099\u6975\u4f73\u7684\u8072\u5b50\u50b3\u5c0e\u80fd\u529b\uff0c\u4f7f\u5176\u5c0e\u71b1\u7387\u9060\u9ad8\u65bc\u4e00\u822c\u91d1\u5c6c\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83d\udc8e\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5de5\u696d\u5207\u5272\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5229\u7528\u5176\u6975\u81f4\u786c\u5ea6\uff0c\u5ee3\u6cdb\u7528\u65bc\u947d\u982d\u3001\u92f8\u7247\u53ca\u73bb\u7483\u5207\u5272\u5de5\u5177\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u73e0\u5bf6\u98fe\u54c1\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5177\u5099\u9ad8\u6298\u5c04\u7387\u8207\u8272\u6563\u7387\uff0c\u7d93\u5207\u5272\u5f8c\u80fd\u5c55\u73fe\u7480\u74a8\u5149\u6fa4\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u79d1\u5b78\u7814\u7a76\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7528\u65bc\u88fd\u9020\u300c\u91d1\u525b\u77f3\u58d3\u7827\u300d\uff0c\u5728\u6975\u9ad8\u58d3\u74b0\u5883\u4e0b\u7814\u7a76\u7269\u8cea\u7279\u6027\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+      "\x43\x7c\u77f3\u58a8\x7c\u9ed1\u925b": {
+        "\x70\x67": "\x4c\x61\x79\x65\x72\x65\x64",
+        "\x68\x79\x62\x72\x69\x64": "\x73\x70\u00b2",
+        "\x73\x68\x61\x70\x65": "\u5c64\u72c0\u7db2\u72c0\u7d50\u69cb",
+        "\x61\x6e\x67\x6c\x65": "\x31\x32\x30\u00b0",
+        "\x6d\x70": "\x33\x35\x35\x30",
+        "\x62\x70": "\x34\x38\x32\x37",
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x63, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x63, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x1, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x1, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0x61, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0x61, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x63, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x63, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x1, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x1, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x61, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x61, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0x63, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0x63, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x1, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x1, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0x61, "\x7a": -0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0x61, "\x7a": 0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x63, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x1, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0x61, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x63, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x1, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x61, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0x63, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x1, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0x61, "\x7a": -0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x22, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": -0x40, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x22, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": -0x40, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x43, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x1f, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x43, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0x1f, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x84, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x84, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x84, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": 0x84, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x22, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": 0x22, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": 0x22, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": -0x40, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xe0, "\x79": -0x40, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0xa2, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xe0, "\x79": -0x40, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0xa2, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x84, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x84, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x22, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": -0x40, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0xa2, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0xa2, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xe5, "\x79": 0x84, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0x22, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xe5, "\x79": 0x84, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0x22, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": -0x40, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": -0x40, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0xa2, "\x7a": -0x9b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0xa2, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0xa5, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": 0x43, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa7, "\x79": -0x1f, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xe0, "\x79": -0x81, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6f, "\x79": -0x81, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0xa5, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": -0x81, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": 0xa5, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xe5, "\x79": 0x43, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": -0x1f, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": -0x81, "\x7a": 0x1, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x0, 0x24, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x23],
+          [0x0, 0x1b],
+          [0x1, 0x26, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x25],
+          [0x1, 0x27],
+          [0x2, 0x1b, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x2, 0x28],
+          [0x2, 0x1c],
+          [0x3, 0x29],
+          [0x3, 0x27, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x3, 0x2a],
+          [0x4, 0x1c],
+          [0x4, 0x2b],
+          [0x4, 0x2c],
+          [0x5, 0x2a],
+          [0x5, 0x2d],
+          [0x5, 0x2e],
+          [0x6, 0x24],
+          [0x6, 0x2f, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x6, 0x1d],
+          [0x7, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x7, 0x26],
+          [0x7, 0x31],
+          [0x8, 0x1b],
+          [0x8, 0x1d, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x8, 0x1e],
+          [0x9, 0x31, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x9, 0x27],
+          [0x9, 0x32],
+          [0xa, 0x1e],
+          [0xa, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+          [0xa, 0x33],
+          [0xb, 0x32],
+          [0xb, 0x2a, "\x64\x6f\x75\x62\x6c\x65"],
+          [0xb, 0x34],
+          [0xc, 0x2f],
+          [0xc, 0x35],
+          [0xc, 0x36, "\x64\x6f\x75\x62\x6c\x65"],
+          [0xd, 0x30],
+          [0xd, 0x37],
+          [0xd, 0x38, "\x64\x6f\x75\x62\x6c\x65"],
+          [0xe, 0x36],
+          [0xe, 0x1d],
+          [0xe, 0x39, "\x64\x6f\x75\x62\x6c\x65"],
+          [0xf, 0x38],
+          [0xf, 0x31],
+          [0xf, 0x3a, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x10, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x10, 0x39],
+          [0x10, 0x3b],
+          [0x11, 0x32, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x11, 0x3a],
+          [0x11, 0x3c],
+          [0x12, 0x3e, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x12, 0x1f],
+          [0x12, 0x3d],
+          [0x13, 0x3f, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x13, 0x20],
+          [0x13, 0x3e],
+          [0x14, 0x40],
+          [0x14, 0x41, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x14, 0x3f],
+          [0x15, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x15, 0x21],
+          [0x15, 0x42],
+          [0x16, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x16, 0x22],
+          [0x16, 0x1f],
+          [0x17, 0x41],
+          [0x17, 0x43, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x17, 0x20],
+          [0x18, 0x21],
+          [0x18, 0x45],
+          [0x18, 0x44],
+          [0x19, 0x22],
+          [0x19, 0x46],
+          [0x19, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1a, 0x43],
+          [0x1a, 0x47],
+          [0x1a, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+        ],
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u78b3\u539f\u5b50\u63a1\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u5c64\u5167\u6210\u516d\u89d2\u8702\u5de2\u72c0\uff1b\u5c64\u9593\u9760\u5fae\u5f31\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u51e1\u5f97\u74e6\u529b\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7d50\u5408\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u5c0e\u96fb\u7279\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u64c1\u6709\u96e2\u57df\x20\u03c0\x20\u96fb\u5b50\uff0c\u662f\u552f\u4e00\u80fd\u5c0e\u96fb\u7684\u975e\u91d1\u5c6c\u7db2\u72c0\u56fa\u9ad4\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+    },
+    null,
+    "\x2d",
+    "\x61\x6c\x6c\x6f\x74\x72\x6f\x70\x65",
+  ),
+  addMol(
+    "\x53\x69\x4f\x32\x7c\u4e8c\u6c27\u5316\u77fd\x7c\u77f3\u82f1",
+    "\x53\x69",
+    "\x73\x70\u00b3",
+    ["\u6b63\u56db\u9762\u9ad4\u7db2\u72c0\u7d50\u69cb", "\x54\x65\x74\x72\x61\x68\x65\x64\x72\x61\x6c\x20\x4e\x65\x74\x77\x6f\x72\x6b"],
+    "\x31\x30\x39\x2e\x35\u00b0\x20\x28\x53\x69\x29",
+    "\x31\x37\x31\x33",
+    "\x32\x32\x33\x30",
+    [
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -0x40, "\x79": 0x62, "\x7a": -0x24, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -0xb0, "\x79": -0x61, "\x7a": -0x24, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0xa1, "\x79": 0x62, "\x7a": -0x24, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x31, "\x79": -0x61, "\x7a": -0x24, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -0xdd, "\x79": 0x8, "\x7a": 0x2e, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x4, "\x79": 0x8, "\x7a": 0x2e, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0xe5, "\x79": 0x8, "\x7a": 0x2e, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -0x6c, "\x79": -0x6, "\x7a": -0x77, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": -0x6c, "\x79": -0x6, "\x7a": 0x81, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x75, "\x79": -0x6, "\x7a": -0x77, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x53\x69", "\x78": 0x75, "\x79": -0x6, "\x7a": 0x81, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x6a, "\x79": 0x2c, "\x7a": -0x40, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x77, "\x79": 0x2c, "\x7a": -0x40, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x15, "\x79": 0x47, "\x7a": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xcc, "\x79": 0x47, "\x7a": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x28, "\x79": -0xf, "\x7a": 0x65, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xb9, "\x79": -0xf, "\x7a": 0x65, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x99, "\x79": 0x11, "\x7a": 0x4a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x48, "\x79": 0x11, "\x7a": 0x4a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0xda, "\x79": -0x2a, "\x7a": -0x9, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x7, "\x79": -0x2a, "\x7a": -0x9, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x86, "\x79": -0x46, "\x7a": -0x5b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x5b, "\x79": -0x46, "\x7a": -0x5b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x6a, "\x79": 0x98, "\x7a": -0x9, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x15, "\x79": 0x7d, "\x7a": -0x5b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0xda, "\x79": -0x97, "\x7a": -0x40, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x86, "\x79": -0x7c, "\x7a": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x77, "\x79": 0x98, "\x7a": -0x9, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xcc, "\x79": 0x7d, "\x7a": -0x5b, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x7, "\x79": -0x97, "\x7a": -0x40, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x5b, "\x79": -0x7c, "\x7a": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0xf6, "\x79": 0x47, "\x7a": 0x12, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x109, "\x79": -0xf, "\x7a": 0x65, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x129, "\x79": 0x11, "\x7a": 0x4a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xe8, "\x79": -0x2a, "\x7a": -0x9, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x99, "\x79": 0x11, "\x7a": -0xae, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x28, "\x79": -0xf, "\x7a": -0x93, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x6a, "\x79": 0x2c, "\x7a": 0xb8, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": -0x86, "\x79": -0x46, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x48, "\x79": 0x11, "\x7a": -0xae, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0xb9, "\x79": -0xf, "\x7a": -0x93, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x77, "\x79": 0x2c, "\x7a": 0xb8, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+      { "\x65\x6c\x65\x6d": "\x4f", "\x78": 0x5b, "\x79": -0x46, "\x7a": 0x9c, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x2 },
+    ],
+    [
+      [0x0, 0x17],
+      [0x0, 0xb],
+      [0x0, 0xd],
+      [0x0, 0x18],
+      [0x1, 0x13],
+      [0x1, 0x19],
+      [0x1, 0x1a],
+      [0x1, 0x15],
+      [0x2, 0x1b],
+      [0x2, 0xc],
+      [0x2, 0xe],
+      [0x2, 0x1c],
+      [0x3, 0x14],
+      [0x3, 0x1d],
+      [0x3, 0x1e],
+      [0x3, 0x16],
+      [0x4, 0x11],
+      [0x4, 0x1f],
+      [0x4, 0x20],
+      [0x4, 0x13],
+      [0x5, 0x12],
+      [0x5, 0xd],
+      [0x5, 0xf],
+      [0x5, 0x14],
+      [0x6, 0x21],
+      [0x6, 0xe],
+      [0x6, 0x10],
+      [0x6, 0x22],
+      [0x7, 0x24],
+      [0x7, 0x15],
+      [0x7, 0x23],
+      [0x7, 0xb],
+      [0x8, 0xf],
+      [0x8, 0x26],
+      [0x8, 0x11],
+      [0x8, 0x25],
+      [0x9, 0x28],
+      [0x9, 0x16],
+      [0x9, 0x27],
+      [0x9, 0xc],
+      [0xa, 0x10],
+      [0xa, 0x2a],
+      [0xa, 0x12],
+      [0xa, 0x29],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4e8c\u6c27\u5316\u77fd\x20\x28\x53\x69\x4f\u2082\x29\x20\u662f\u5178\u578b\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5171\u50f9\u7db2\u72c0\u56fa\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u4e2d\u5fc3\u77fd\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u6bcf\u500b\u77fd\u539f\u5b50\u8207\x20\x34\x20\u500b\u6c27\u539f\u5b50\u7d50\u5408\uff0c\u800c\u6bcf\u500b\u6c27\u539f\u5b50\u8207\x20\x32\x20\u500b\u77fd\u539f\u5b50\u7d50\u5408\u3002\u9019\u7a2e\x20\x53\x69\x2d\x4f\x2d\x53\x69\x20\u7684\u9023\u7e8c\u6a4b\u63a5\u7d50\u69cb\u5411\u4e09\u7dad\u7a7a\u9593\u7121\u9650\u5ef6\u4f38\uff0c\u5f62\u6210\u4e86\u6975\u5176\u7a69\u56fa\u7684\u7db2\u72c0\u67b6\u69cb\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u539f\u5b50\u9593\u5b8c\u5168\u4ee5\u9ad8\u5f37\u5ea6\u7684\u5171\u50f9\u9375\u9023\u7d50\uff0c\u77f3\u82f1\u5177\u6709\u6975\u9ad8\u7684\u7194\u9ede\x20\x28\x31\x37\x31\x33\u00b0\x43\x29\x20\u8207\u6975\u4f73\u7684\u786c\u5ea6\u3002\u7d14\u6de8\u7684\u77f3\u82f1\u6676\u9ad4\u900f\u660e\u4e14\u7121\u8272\uff0c\u5c6c\u65bc\u512a\u826f\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u96fb\u7d55\u7de3\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\u5149\u5b78\u6750\u6599\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u7a69\u5b9a\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5316\u5b78\u6027\u8cea\u6975\u70ba\u7a69\u5b9a\uff0c\u4e0d\u6eb6\u65bc\u6c34\uff0c\u4e5f\u4e0d\u8207\u9664\u6c2b\u6c1f\u9178\x20\x28\x48\x46\x29\x20\u5916\u7684\u5e38\u898b\u9178\u985e\u53cd\u61c9\uff08\x48\x46\x20\u53ef\u8207\u5176\u53cd\u61c9\u751f\u6210\x20\x53\x69\x46\u2084\x20\u6c23\u9ad4\uff0c\u5e38\u7528\u65bc\u8755\u523b\u73bb\u7483\uff09\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u5de5\u696d\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u73bb\u7483\u8207\u9676\u74f7\u5de5\u696d\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4e8c\u6c27\u5316\u77fd\u662f\u88fd\u9020\u666e\u901a\u73bb\u7483\u3001\u77f3\u82f1\u73bb\u7483\u53ca\u9676\u74f7\u5668\u76bf\u7684\u6700\u4e3b\u8981\u539f\u6599\u3002\u900f\u904e\u52a0\u5165\u4e0d\u540c\u7684\u91d1\u5c6c\u6c27\u5316\u7269\uff0c\u53ef\u88fd\u9020\u51fa\u5404\u7a2e\u529f\u80fd\u6027\u73bb\u7483\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u58d3\u96fb\u6548\u61c9\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u77f3\u82f1\u6676\u9ad4\u5177\u6709\u7368\u7279\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u58d3\u96fb\u6548\u61c9\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\x28\x50\x69\x65\x7a\x6f\x65\x6c\x65\x63\x74\x72\x69\x63\x20\x65\x66\x66\x65\x63\x74\x29\uff0c\u5373\u53d7\u58d3\u6642\u6703\u7522\u751f\u96fb\u8377\uff0c\u901a\u96fb\u6642\u6703\u7522\u751f\u7cbe\u78ba\u7684\u9707\u76ea\u983b\u7387\u3002\u9019\u4f7f\u5176\u6210\u70ba\u96fb\u5b50\u9336\u3001\u96fb\u8166\u4e3b\u6a5f\u677f\u53ca\u5404\u985e\u983b\u7387\u63a7\u5236\u5668\u4ef6\u7684\u6838\u5fc3\u7d44\u4ef6\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5149\u5b78\u50b3\u8f38\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u9ad8\u7d14\u5ea6\u7684\u77f3\u82f1\u73bb\u7483\u5177\u6709\u6975\u4f4e\u7684\u5149\u8870\u6e1b\u7387\uff0c\u662f\u88fd\u9020\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5149\u7e96\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7684\u4e3b\u8981\u6750\u6599\uff0c\u652f\u6490\u8457\u73fe\u4ee3\u5168\u7403\u8cc7\u8a0a\u7db2\u8def\u7684\u6578\u64da\u50b3\u8f38\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x51\x75\x61\x72\x74\x7a",
+  ),
+  addMol(
+    "\x42\x4e",
+    "\x42",
+    "\x73\x70\u00b2\x20\x2f\x20\x73\x70\u00b3",
+    ["\u540c\u8cea\u7570\u5f62\u9ad4", "\x50\x6f\x6c\x79\x6d\x6f\x72\x70\x68"],
+    "\x2d",
+    "\x32\x39\x37\x33",
+    "\x32\x39\x37\x33",
+    [],
+    [],
+    {
+      "\x42\x4e\x7c\u6c2e\u5316\u787c\x28\u7acb\u9ad4\x29": {
+        "\x70\x67": "\x46\x2d\x34\x33\x6d",
+        "\x68\x79\x62\x72\x69\x64": "\x73\x70\u00b3",
+        "\x73\x68\x61\x70\x65": "\u6b63\u56db\u9762\u9ad4\u7db2\u72c0\u7d50\u69cb",
+        "\x61\x6e\x67\x6c\x65": "\x31\x30\x39\x2e\x35\u00b0",
+        "\x6d\x70": "\x32\x39\x37\x33",
+        "\x62\x70": "\x32\x39\x37\x33",
+        "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x53, "\x79": 0x53, "\x7a": -0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x53, "\x79": 0x53, "\x7a": 0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x53, "\x79": -0x53, "\x7a": -0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x53, "\x79": -0x53, "\x7a": 0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x53, "\x79": 0x53, "\x7a": -0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x53, "\x79": 0x53, "\x7a": 0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x53, "\x79": -0x53, "\x7a": -0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x53, "\x79": -0x53, "\x7a": 0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x53, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x53, "\x79": 0x0, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x0, "\x79": 0x53, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x0, "\x79": -0x53, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x0, "\x79": 0x0, "\x7a": -0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x0, "\x79": 0x0, "\x7a": 0x53, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": 0x2a, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": -0x2a, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": 0x2a, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": -0x2a, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": 0x7d, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": 0x2a, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": 0x7d, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": 0x2a, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": 0x7d, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": 0x2a, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": 0x7d, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": -0x2a, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": -0x7d, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": -0x7d, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": -0x2a, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x7d, "\x79": -0x7d, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": -0x2a, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x2a, "\x79": -0x7d, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": 0x7d, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": 0x7d, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": 0x2a, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": 0x7d, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": 0x2a, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": 0x7d, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": 0x2a, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": -0x2a, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": -0x7d, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": -0x2a, "\x7a": -0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": -0x7d, "\x7a": -0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x2a, "\x79": -0x7d, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": -0x2a, "\x7a": 0x7d, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x7d, "\x79": -0x7d, "\x7a": 0x2a, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x12, 0x0, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x0, 0x13],
+          [0x0, 0x15],
+          [0x0, 0x14],
+          [0x18, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x1, 0x17],
+          [0x1, 0x16],
+          [0x1b, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x2, 0x1a],
+          [0x2, 0x19],
+          [0x1e, 0x3, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x3, 0x1f],
+          [0x3, 0x1c],
+          [0x3, 0x1d],
+          [0x21, 0x4, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x4, 0x22],
+          [0x4, 0x20],
+          [0x24, 0x5, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x5, 0x26],
+          [0x5, 0x25],
+          [0x5, 0x23],
+          [0x27, 0x6, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x6, 0x28],
+          [0x6, 0x29],
+          [0x6, 0x2a],
+          [0x2b, 0x7, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x7, 0x2d],
+          [0x7, 0x2c],
+          [0xe, 0x8, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x8, 0x11],
+          [0x8, 0x13],
+          [0x8, 0x1c],
+          [0x10, 0x9, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x9, 0x26],
+          [0x9, 0xf],
+          [0x9, 0x29],
+          [0xe, 0xa, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xa, 0x23],
+          [0xa, 0x10],
+          [0xa, 0x14],
+          [0x1f, 0xb, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xb, 0x11],
+          [0xb, 0xf],
+          [0xb, 0x28],
+          [0x11, 0xc, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xc, 0x10],
+          [0xc, 0x27],
+          [0xc, 0x15],
+          [0x1e, 0xd, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xd, 0xf],
+          [0xd, 0x24],
+          [0xd, 0xe],
+          [0xe, 0x1],
+          [0xf, 0x7],
+          [0x10, 0x4],
+          [0x11, 0x2],
+        ],
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7acb\u65b9\u6c2e\u5316\u787c\x20\x28\x63\x2d\x42\x4e\x29\x20\u5177\u6709\u8207\u91d1\u525b\u77f3\u985e\u4f3c\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u9583\u92c5\u7926\u7d50\u69cb\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b3\x20\u6df7\u6210\u8ecc\u57df\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u6bcf\u500b\x20\x42\x20\u539f\u5b50\u8207\x20\x34\x20\u500b\x20\x4e\x20\u539f\u5b50\u4ee5\u5f37\u5171\u50f9\u9375\u7d50\u5408\uff08\u5176\u4e2d\x20\x31\x2f\x34\x20\u70ba\u914d\u4f4d\u9375\uff09\uff0c\u5f62\u6210\u7121\u9650\u5ef6\u4f38\u7684\u7db2\u72c0\u56fa\u9ad4\uff0c\u5176\u786c\u5ea6\u6975\u9ad8\uff0c\u5728\u81ea\u7136\u754c\u4e2d\u50c5\u6b21\u65bc\u91d1\u525b\u77f3\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u8207\u5316\u5b78\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5177\u6709\u6975\u4f73\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u71b1\u7a69\u5b9a\u6027\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u5728\x20\x31\x30\x30\x30\u00b0\x43\x20\u4ee5\u4e0a\u7684\u9ad8\u6eab\u7a7a\u6c23\u4e2d\u4ecd\u4e0d\u6613\u88ab\u6c27\u5316\uff0c\u4e14\u5c0d\u9435\u65cf\u91d1\u5c6c\u8868\u73fe\u51fa\u6975\u9ad8\u7684\u5316\u5b78\u60f0\u6027\uff0c\u512a\u65bc\u91d1\u525b\u77f3\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u5de5\u696d\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u8d85\u786c\u5207\u524a\u5de5\u5177\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u5176\u9ad8\u786c\u5ea6\u8207\u8010\u9ad8\u6eab\u6027\uff0c\x63\x2d\x42\x4e\x20\u662f\u52a0\u5de5\u786c\u5316\u92fc\u8207\u9ad8\u6eab\u5408\u91d1\u6700\u7406\u60f3\u7684\u5207\u524a\u5200\u5177\u6750\u6599\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u534a\u5c0e\u9ad4\u5c01\u88dd\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5177\u5099\u512a\u7570\u7684\u71b1\u5c0e\u7387\u8207\u7d55\u7de3\u6027\uff0c\u662f\u9ad8\u6027\u80fd\u96fb\u5b50\u7d44\u4ef6\u7406\u60f3\u7684\u57fa\u677f\u6750\u6599\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+      "\x42\x4e\x7c\u6c2e\u5316\u787c\x28\u5e73\u9762\u5c64\u72c0\x29": {
+        "\x70\x67": "\x4c\x61\x79\x65\x72\x65\x64",
+        "\x68\x79\x62\x72\x69\x64": "\x73\x70\u00b2",
+        "\x73\x68\x61\x70\x65": "\u5c64\u72c0\u7db2\u72c0\u7d50\u69cb",
+        "\x61\x6e\x67\x6c\x65": "\x31\x32\x30\u00b0",
+        "\x6d\x70": "\x32\x39\x37\x33",
+        "\x62\x70": "\x32\x39\x37\x33",
+        "\x69\x73\x49\x6f\x6e\x69\x63": !![],
+        "\x61\x74\x6f\x6d\x73": [
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x4a, "\x79": 0x5a, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x4a, "\x79": 0x5a, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x84, "\x79": -0xa, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x84, "\x79": -0xa, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0xbd, "\x79": -0x6d, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0xbd, "\x79": -0x6d, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x29, "\x79": 0x5a, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x29, "\x79": 0x5a, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x11, "\x79": -0xa, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x11, "\x79": -0xa, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x4a, "\x79": -0x6d, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x4a, "\x79": -0x6d, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x9c, "\x79": 0x5a, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x9c, "\x79": 0x5a, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x62, "\x79": -0xa, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x62, "\x79": -0xa, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x29, "\x79": -0x6d, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x29, "\x79": -0x6d, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x11, "\x79": 0x7b, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x4a, "\x79": 0x18, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x84, "\x79": -0x4c, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x62, "\x79": 0x7b, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x29, "\x79": 0x18, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": -0x11, "\x79": -0x4c, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0xd5, "\x79": 0x7b, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x9c, "\x79": 0x18, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x42", "\x78": 0x62, "\x79": -0x4c, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": 0x5a, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x84, "\x79": -0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xbd, "\x79": -0x6d, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": 0x5a, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": -0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": -0x6d, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x9c, "\x79": 0x5a, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": -0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": -0x6d, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": 0x7b, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": 0x7b, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": 0x18, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": 0x18, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x84, "\x79": -0x4c, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x84, "\x79": -0x4c, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": 0x7b, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": 0x7b, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": 0x18, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": 0x18, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": -0x4c, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": -0x4c, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0xd5, "\x79": 0x7b, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0xd5, "\x79": 0x7b, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x9c, "\x79": 0x18, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x9c, "\x79": 0x18, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": -0x4c, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": -0x4c, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x84, "\x79": 0x7b, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x84, "\x79": 0x7b, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xbd, "\x79": 0x18, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xbd, "\x79": 0x18, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xf7, "\x79": -0x4c, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xbd, "\x79": -0xb0, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xf7, "\x79": -0x4c, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0xbd, "\x79": -0xb0, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": -0xb0, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x4a, "\x79": -0xb0, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": -0xb0, "\x7a": -0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x29, "\x79": -0xb0, "\x7a": 0xb0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": -0x11, "\x79": 0xbe, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x62, "\x79": 0xbe, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0xd5, "\x79": 0xbe, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x10f, "\x79": 0x5a, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0xd5, "\x79": -0xa, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+          { "\x65\x6c\x65\x6d": "\x4e", "\x78": 0x9c, "\x79": -0x6d, "\x7a": 0x0, "\x6c\x70\x43\x6f\x75\x6e\x74": 0x0 },
+        ],
+        "\x62\x6f\x6e\x64\x73": [
+          [0x26, 0x0, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x24, 0x0, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x0, 0x36, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x27, 0x1, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x25, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1, 0x37, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x28, 0x2, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x26, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x2, 0x38, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x29, 0x3, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x27, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x3, 0x39, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3b, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x4, 0x28, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x4, 0x3a, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3d, 0x5, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x29, 0x5, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x5, 0x3c, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2c, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x24, 0x6, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x6, 0x2a, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2d, 0x7, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x2b, 0x7, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x7, 0x25, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2e, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x26, 0x8, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x8, 0x2c, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2f, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x27, 0x9, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x9, 0x2d, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3e, 0xa, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x28, 0xa, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xa, 0x2e, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x3f, 0xb, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x29, 0xb, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xb, 0x2f, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x30, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x32, 0xc, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xc, 0x2a, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x31, 0xd, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x33, 0xd, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xd, 0x2b, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x32, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x34, 0xe, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xe, 0x2c, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x33, 0xf, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x35, 0xf, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0xf, 0x2d, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2e, 0x10, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x40, 0x10, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x10, 0x34, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x2f, 0x11, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x41, 0x11, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x11, 0x35, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x42, 0x12, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x12, 0x1b, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x12, 0x1e, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x1b, 0x13, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x13, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x13, 0x1f, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x1c, 0x14, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x14, 0x1d, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x14, 0x20, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x43, 0x15, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x15, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x15, 0x21, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x1e, 0x16, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x16, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x16, 0x22, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x1f, 0x17, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x17, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x17, 0x23, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x44, 0x18, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x18, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x18, 0x45, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x21, 0x19, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x19, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x19, 0x46, "\x73\x69\x6e\x67\x6c\x65"],
+          [0x22, 0x1a, "\x63\x6f\x6f\x72\x64\x69\x6e\x61\x74\x65"],
+          [0x1a, 0x23, "\x64\x6f\x75\x62\x6c\x65"],
+          [0x1a, 0x47, "\x73\x69\x6e\x67\x6c\x65"],
+        ],
+        "\x64\x65\x73\x63":
+          "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u516d\u65b9\u6c2e\u5316\u787c\x20\x28\x68\x2d\x42\x4e\x29\x20\u88ab\u7a31\u70ba\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u300c\u767d\u77f3\u58a8\u300d\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u5c64\u5167\u539f\u5b50\u63a1\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u6210\u516d\u89d2\u7db2\u72c0\uff0c\u5c64\u9593\u9760\u51e1\u5f97\u74e6\u529b\u7d50\u5408\u3002\u8207\u77f3\u58a8\u4e0d\u540c\uff0c\x42\x20\u8207\x20\x4e\x20\u7684\u96fb\u8ca0\u5ea6\u5dee\u7570\u5c0e\u81f4\u96fb\u5b50\u8f03\u70ba\u5b9a\u57df\u5316\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u7279\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8207\u77f3\u58a8\u6700\u5927\u7684\u4e0d\u540c\u5728\u65bc\u5b83\u662f\u512a\u826f\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u96fb\u7d55\u7de3\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u540c\u6642\u5177\u5099\u6975\u4f73\u7684\u8010\u9ad8\u6eab\u6027\u3001\u5316\u5b78\u7a69\u5b9a\u6027\u8207\u6f64\u6ed1\u6027\uff0c\u4e14\u5916\u89c0\u5448\u767d\u8272\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u9ad8\u6eab\u6f64\u6ed1\u5291\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u77f3\u58a8\u5931\u6548\u7684\u9ad8\u6eab\u74b0\u5883\u4e0b\uff0c\x68\x2d\x42\x4e\x20\u4ecd\u80fd\u63d0\u4f9b\u7a69\u5b9a\u7684\u6f64\u6ed1\u6548\u679c\uff0c\u5e38\u7528\u65bc\u822a\u592a\u8207\u9444\u9020\u696d\u3002\x3c\x62\x72\x3e\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u5316\u599d\u54c1\u6dfb\u52a0\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u5176\u7d30\u81a9\u7684\u7c89\u672b\u611f\u8207\u5b89\u5168\u6027\uff0c\u88ab\u5ee3\u6cdb\u7528\u65bc\u7c89\u9905\u8207\u773c\u5f71\u4e2d\u4ee5\u589e\u52a0\u5ef6\u5c55\u6027\u3002\x3c\x2f\x64\x69\x76\x3e\x3c\x2f\x64\x69\x76\x3e",
+      },
+    },
+    null,
+    "\x2d",
+    "\x70\x6f\x6c\x79\x6d\x6f\x72\x70\x68",
+  ),
+  addMol(
+    "\x43\x33\x36\x7c\u78b3\x33\x36\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b3",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x38\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x38\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x32\x30\u00b0\x20\x28\u5f4e\u66f2\x29",
+    "\x4e\x2f\x41\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3f, "\x79": 0x32, "\x7a": -0x57 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3f, "\x79": 0x32, "\x7a": -0x57 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": 0x60, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": 0x60, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": 0x1f, "\x7a": -0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": -0x20, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": -0x40, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": 0x3f, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x71, "\x79": 0x1f, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x71, "\x79": -0x20, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x20, "\x79": 0x5f, "\x7a": 0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": 0x60, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x40, "\x79": 0x65, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x40, "\x79": 0x63, "\x7a": -0x1 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": -0x60, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3f, "\x79": -0x65, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": -0x5f, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x40, "\x79": -0x32, "\x7a": 0x58 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": -0x60, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x40, "\x79": -0x32, "\x7a": -0x58 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": -0x5f, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3f, "\x79": -0x63, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x40, "\x79": -0x32, "\x7a": -0x57 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x20, "\x79": 0x0, "\x7a": -0x70 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": 0x0, "\x7a": -0x70 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x72, "\x79": -0x3e, "\x7a": -0x1 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x73, "\x79": -0x1f, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x73, "\x79": 0x20, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x71, "\x79": -0x20, "\x7a": 0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": 0x0, "\x7a": 0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x20, "\x79": 0x0, "\x7a": 0x70 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3f, "\x79": -0x32, "\x7a": 0x58 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3f, "\x79": 0x32, "\x7a": 0x58 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x40, "\x79": 0x32, "\x7a": 0x57 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x73, "\x79": 0x20, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x74, "\x79": 0x3f, "\x7a": 0x0 },
+    ],
+    [
+      [0x0, 0x4],
+      [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x18],
+      [0x1, 0x1b],
+      [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1, 0x17],
+      [0x2, 0x3],
+      [0x2, 0xd],
+      [0x3, 0xc],
+      [0x4, 0x7],
+      [0x4, 0x5, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0x6],
+      [0x5, 0x13],
+      [0x6, 0xf],
+      [0x6, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x7, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x7, 0x8],
+      [0x8, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x8, 0x9],
+      [0xa, 0xb, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xa, 0x21],
+      [0xa, 0xd],
+      [0xb, 0xc],
+      [0xb, 0x20],
+      [0xd, 0x23, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0x10, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0x11],
+      [0xe, 0xf],
+      [0xf, 0x12, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x15],
+      [0x11, 0x9],
+      [0x11, 0x1d],
+      [0x12, 0x14],
+      [0x12, 0x13],
+      [0x13, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x14, 0x15, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x14, 0x16],
+      [0x15, 0x19],
+      [0x16, 0x1a],
+      [0x16, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x17, 0x18],
+      [0x19, 0x1a],
+      [0x19, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1a, 0x1b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x23],
+      [0x1c, 0x1f],
+      [0x1c, 0x22],
+      [0x1d, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1d, 0x20],
+      [0x1e, 0x1f],
+      [0x1e, 0x21],
+      [0x1f, 0x10],
+      [0x21, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x22, 0x23],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x33\x36\x20\u5c6c\u65bc\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5bcc\u52d2\u70ef\x20\x28\x46\x75\x6c\x6c\x65\x72\x65\x6e\x65\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u5bb6\u65cf\u4e2d\u7684\u5c0f\u5c3a\u5bf8\u6210\u54e1\u3002\u5176\u7d50\u69cb\u7531\x20\x33\x36\x20\u500b\u78b3\u539f\u5b50\u7d44\u6210\u5c01\u9589\u7c60\u72c0\uff0c\u6839\u64da\u6b50\u62c9\u5b9a\u5f8b\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\x20\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x38\x20\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u8207\x20\x43\x36\x30\x20\u76f8\u6bd4\uff0c\x43\x33\x36\x20\u7684\u8868\u9762\u66f2\u7387\u66f4\u5927\uff0c\u5c0e\u81f4\u5176\u78b3\u539f\u5b50\u96d6\u7136\u63a5\u8fd1\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u4f46\u5e36\u6709\u660e\u986f\u7684\u5f35\u529b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u901a\u5e38\u5448\u6df1\u8272\u56fa\u9ad4\uff0c\u5177\u6709\u9ad8\u5ea6\u7684\u5316\u5b78\u6d3b\u6027\u80fd\u5920\u9032\u884c\u52a0\u6210\u53cd\u61c9\u3002\u7531\u65bc\u5176\u5c0d\u7a31\u6027\uff08\u6b64\u6a21\u578b\u70ba\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x44\x36\x68\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff09\uff0c\u96fb\u5b50\u96f2\u5206\u5e03\u5448\u73fe\u7368\u7279\u7684\u96fb\u5b50\u7279\u6027\uff0c\u88ab\u8a8d\u70ba\u5728\u8d85\u5c0e\u9ad4\u6750\u6599\u958b\u767c\u4e2d\u5177\u6709\u6f5b\u529b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5e7e\u4f55\u7a69\u5b9a\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\x20\x43\x33\x36\x20\u7684\u7d50\u69cb\u4e2d\uff0c\u4e94\u908a\u5f62\u76f8\u4e92\u9130\u63a5\u7684\u6a5f\u7387\u8f03\u9ad8\uff08\u9055\u53cd\u96e2\u6563\u4e94\u908a\u5f62\u898f\u5247\x20\x49\x50\x52\uff09\uff0c\u9019\u4f7f\u5f97\u5b83\u6bd4\x20\x43\x36\x30\x20\u66f4\u4e0d\u7a69\u5b9a\uff0c\u4f46\u5728\u7279\u5b9a\u689d\u4ef6\u4e0b\uff08\u5982\u6c23\u76f8\u5408\u6210\uff09\u4ecd\u53ef\u7a69\u5b9a\u5b58\u5728\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5948\u7c73\u96fb\u5b50\u5143\u4ef6\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\x20\x43\x33\x36\x20\u7684\u7368\u7279\u66f2\u7387\u8207\u96e2\u57df\u96fb\u5b50\u7279\u6027\uff0c\u79d1\u5b78\u5bb6\u6b63\u7814\u7a76\u5176\u4f5c\u70ba\u5948\u7c73\u7d1a\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5206\u5b50\u5143\u4ef6\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u7684\u53ef\u80fd\u6027\uff0c\u4f8b\u5982\u5834\u6548\u96fb\u6676\u9ad4\u6216\u91cf\u5b50\u9ede\u6750\u6599\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u8d85\u5c0e\u6750\u6599\u524d\u9a45\u7269\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5982\u540c\u647b\u96dc\u9e7c\u91d1\u5c6c\u7684\x20\x43\x36\x30\uff0c\x43\x33\x36\x20\u5728\u7279\u5b9a\u6392\u5217\u4e0b\u53ef\u5c55\u73fe\u51fa\u9ad8\u81e8\u754c\u6eab\u5ea6\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u8d85\u5c0e\u6027\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u662f\u672a\u4f86\u4f4e\u640d\u8017\u8f38\u96fb\u8207\u91cf\u5b50\u8a08\u7b97\u7684\u91cd\u8981\u5019\u9078\u6750\u6599\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u9ad8\u80fd\u71c3\u6599\u6dfb\u52a0\u5291\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u78b3\u7c60\u7d50\u69cb\u5132\u5b58\u4e86\u5927\u91cf\u7684\u5316\u5b78\u80fd\uff0c\u5728\u6975\u7aef\u689d\u4ef6\u4e0b\u7684\u71c3\u71d2\u6548\u7387\u6975\u9ad8\uff0c\u76ee\u524d\u6b63\u63a2\u7d22\u5176\u5728\u822a\u7a7a\u822a\u5929\u63a8\u9032\u5291\u4e2d\u7684\u61c9\u7528\u50f9\u503c\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x44\x36\x68",
+  ),
+  addMol(
+    "\x43\x34\x30\x7c\u78b3\x34\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x31\x30\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x31\x30\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x32\x30\u00b0\x20\x28\u5f4e\u66f2\x29",
+    "\x4e\x2f\x41\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": 0x35, "\x7a": 0x2e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x87, "\x79": 0x0, "\x7a": 0x18 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": -0x35, "\x7a": 0x2e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x40, "\x79": -0x37, "\x7a": 0x56 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x21, "\x79": 0x0, "\x7a": 0x69 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x40, "\x79": 0x37, "\x7a": 0x56 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x33, "\x79": -0x7c, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x66, "\x79": -0x5b, "\x7a": -0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": -0x68, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1e, "\x79": -0x68, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x41, "\x79": 0x38, "\x7a": 0x56 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x23, "\x79": 0x0, "\x7a": 0x69 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x42, "\x79": -0x38, "\x7a": 0x57 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x83, "\x79": 0x0, "\x7a": -0x27 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6b, "\x79": 0x39, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x39, "\x7a": -0x5c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6b, "\x79": -0x39, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": -0x39, "\x7a": -0x5c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1f, "\x79": 0x0, "\x7a": -0x6d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x82, "\x7a": -0x1a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x5c, "\x7a": -0x4f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x34, "\x79": 0x7d, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x82, "\x7a": -0x1a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x66, "\x79": 0x5c, "\x7a": -0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1, "\x79": 0x5c, "\x7a": -0x4f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x34, "\x79": 0x39, "\x7a": -0x5c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": 0x7d, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x65, "\x79": 0x5b, "\x7a": -0x2 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x68, "\x79": 0x38, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1e, "\x79": 0x0, "\x7a": -0x6e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1e, "\x79": 0x69, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1e, "\x79": 0x69, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x35, "\x79": -0x39, "\x7a": -0x5c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x68, "\x79": -0x38, "\x7a": -0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x81, "\x79": 0x0, "\x7a": -0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": -0x7d, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x66, "\x79": -0x5b, "\x7a": -0x1 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x74, "\x79": 0x35, "\x7a": 0x2f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8a, "\x79": 0x0, "\x7a": 0x1a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x75, "\x79": -0x36, "\x7a": 0x30 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x5],
+      [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1, 0xd],
+      [0x2, 0x7],
+      [0x2, 0x3],
+      [0x3, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3, 0x4],
+      [0x4, 0x5, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4, 0xb],
+      [0x5, 0x1f],
+      [0x6, 0x7, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x6, 0x9],
+      [0x6, 0x13],
+      [0x7, 0x10],
+      [0x8, 0x9],
+      [0x8, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x8, 0x23],
+      [0xa, 0x1e],
+      [0xa, 0x25],
+      [0xa, 0xb, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0xc],
+      [0xc, 0x27],
+      [0xd, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xd, 0x10],
+      [0xe, 0x17],
+      [0xe, 0xf],
+      [0xf, 0x12],
+      [0xf, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x11, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x11, 0x12],
+      [0x11, 0x14],
+      [0x12, 0x1d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x23, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x14],
+      [0x14, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x15, 0x17],
+      [0x15, 0x1f],
+      [0x15, 0x16, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x16, 0x18],
+      [0x18, 0x19],
+      [0x19, 0x1d],
+      [0x19, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1a, 0x16],
+      [0x1a, 0x1b],
+      [0x1a, 0x1e],
+      [0x1b, 0x25],
+      [0x1b, 0x1c],
+      [0x1c, 0x22],
+      [0x1d, 0x20],
+      [0x1e, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x21],
+      [0x21, 0x24],
+      [0x21, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x22, 0x26],
+      [0x23, 0x24],
+      [0x24, 0x27, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x25, 0x26, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x26, 0x27],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x34\x30\x20\u662f\u9ad8\u5ea6\u5c0d\u7a31\u7684\u7c60\u72c0\u78b3\u7c07\uff0c\u5c6c\u65bc\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5bcc\u52d2\u70ef\x20\x28\x46\x75\x6c\x6c\x65\x72\x65\x6e\x65\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u5bb6\u65cf\u3002\u7d50\u69cb\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\x20\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x30\x20\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u5176\u539f\u5b50\u63a1\u53d6\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u4f46\u7531\u65bc\u7c60\u5f91\u8f03\u5c0f\uff0c\u78b3\u67b6\u69cb\u5e36\u6709\u5f37\u70c8\u7684\u5f35\u529b\uff0c\u4f7f\u5176\u5316\u5b78\u6d3b\u6027\u9ad8\u65bc\u8457\u540d\u7684\x20\x43\x36\x30\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u9ad8\u6eab\u8207\u9ad8\u58d3\u74b0\u5883\u4e0b\u5408\u6210\uff0c\u5916\u89c0\u901a\u5e38\u5448\u6697\u8910\u8272\u6216\u9ed1\u8272\u56fa\u9ad4\u3002\u5177\u6709\u534a\u5c0e\u9ad4\u7279\u6027\uff0c\u4e14\u96fb\u5b50\u89aa\u548c\u529b\u5f37\u3002\u7531\u65bc\u5176\u7279\u6b8a\u7684\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x43\x32\x76\x20\u5c0d\u7a31\u6027\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u96fb\u5b50\u5728\u8868\u9762\u5206\u5e03\u5177\u6709\u7279\u5b9a\u7684\u4e0d\u5747\u52fb\u6027\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5206\u5b50\u7279\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x34\x30\x20\u7684\u7a69\u5b9a\u6027\u53d7\u300c\u96e2\u6563\u4e94\u908a\u5f62\u898f\u5247\u300d\x28\x49\x50\x52\x29\x20\u9650\u5236\uff0c\u96d6\u7136\u8f03\u4e0d\u7a69\u5b9a\uff0c\u4f46\u5728\u7c60\u5167\u586b\u5145\u7279\u5b9a\u539f\u5b50\uff08\u5982\u91d1\u5c6c\u946d\uff09\u5f62\u6210\u5167\u5d4c\u5bcc\u52d2\u70ef\u6642\uff0c\u7a69\u5b9a\u6027\u6703\u986f\u8457\u63d0\u5347\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u751f\u6d3b\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5149\u4f0f\u6750\u6599\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u5176\u512a\u7570\u7684\u96fb\u5b50\u63a5\u53d7\u80fd\u529b\uff0c\x43\x34\x30\x20\u53ca\u5176\u884d\u751f\u7269\u88ab\u7814\u7a76\u7528\u65bc\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6709\u6a5f\u592a\u967d\u80fd\u96fb\u6c60\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u4e2d\u4f5c\u70ba\u53d7\u9ad4\u6750\u6599\uff0c\u63d0\u9ad8\u5149\u96fb\u8f49\u63db\u6548\u7387\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u5206\u5b50\u50b3\u611f\u5668\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5176\u7368\u7279\u7684\u7c60\u72c0\u958b\u5b54\u8207\u9ad8\u6d3b\u6027\u8868\u9762\uff0c\u53ef\u5c0d\u7279\u5b9a\u7684\u6c23\u9ad4\u5206\u5b50\u6216\u96e2\u5b50\u7522\u751f\u654f\u611f\u7684\u96fb\u8a0a\u865f\u8b8a\u5316\uff0c\u9069\u5408\u88fd\u4f5c\u5948\u7c73\u7d1a\u7684\u7cbe\u5bc6\u5316\u5b78\u50b3\u611f\u5668\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u85e5\u7269\u8f09\u9ad4\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5167\u5d4c\u91d1\u5c6c\u7684\x20\x43\x34\x30\x20\u7c60\u7d50\u69cb\u751f\u7269\u6bd2\u6027\u6975\u4f4e\uff0c\u53ef\u4f5c\u70ba\u91ab\u7642\u5f71\u50cf\uff08\u5982\x20\x4d\x52\x49\uff09\u7684\u986f\u5f71\u5291\u8f09\u9ad4\uff0c\u6216\u662f\u4f5c\u70ba\u6a19\u9776\u85e5\u7269\u7684\u5fae\u578b\u904b\u8f38\u8259\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x43\x35\x30\x7c\u78b3\x35\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x31\x35\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x31\x35\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0\x20\x28\u5f4e\u66f2\x29",
+    "\x4e\x2f\x41\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x70, "\x79": 0x4c, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x87, "\x79": 0x11, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x96, "\x79": -0x9, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3c, "\x79": 0x5c, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6a, "\x79": -0x1d, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x35, "\x79": -0xe, "\x7a": -0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1d, "\x79": 0x2e, "\x7a": -0x7a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x54, "\x7a": -0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x86, "\x79": -0x44, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3a, "\x79": -0x7a, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x5, "\x79": -0x6e, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": -0x36, "\x7a": -0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x26, "\x79": -0x90, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": -0x7a, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x53, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6b, "\x79": -0x1d, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x35, "\x79": -0xe, "\x7a": 0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6, "\x79": -0x6e, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3, "\x79": -0x36, "\x7a": 0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x71, "\x79": 0x4c, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3c, "\x79": 0x5c, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x88, "\x79": 0x12, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1e, "\x79": 0x2e, "\x7a": 0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x22, "\x79": 0x2a, "\x7a": 0x7a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x19, "\x79": 0x86, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x26, "\x79": 0x82, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x45, "\x79": 0x55, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x67, "\x79": -0x27, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": -0x14, "\x7a": 0x7a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x69, "\x79": 0x69, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x8c, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x44, "\x79": 0x84, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x26, "\x79": 0x83, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x19, "\x79": 0x87, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x74, "\x79": 0x5e, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x94, "\x79": -0x17, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x89, "\x79": 0x4, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x79, "\x79": 0x41, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2e, "\x79": -0x81, "\x7a": 0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7e, "\x79": -0x51, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x63, "\x79": -0x5e, "\x7a": 0x37 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": -0x13, "\x7a": -0x7a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x67, "\x79": -0x27, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x63, "\x79": -0x5e, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2e, "\x79": -0x81, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x18, "\x79": -0x94, "\x7a": 0x0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x78, "\x79": 0x42, "\x7a": -0x38 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x45, "\x79": 0x56, "\x7a": -0x5a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x23, "\x79": 0x2b, "\x7a": -0x7b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x88, "\x79": 0x5, "\x7a": -0x38 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x1d],
+      [0x0, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1, 0x2, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1, 0x4],
+      [0x2, 0x8],
+      [0x2, 0x15],
+      [0x3, 0x21],
+      [0x3, 0x6],
+      [0x4, 0x7, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4, 0x5],
+      [0x5, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0xb],
+      [0x6, 0x30],
+      [0x7, 0x9],
+      [0x7, 0x8],
+      [0x8, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x9, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x9, 0xa],
+      [0xa, 0x2c],
+      [0xa, 0xb, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0x29],
+      [0xc, 0x2d],
+      [0xc, 0xd],
+      [0xd, 0xe],
+      [0xd, 0x11, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0xf],
+      [0xf, 0x15],
+      [0xf, 0x10, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x16],
+      [0x10, 0x12],
+      [0x11, 0x26],
+      [0x11, 0x12],
+      [0x12, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x15, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x1d],
+      [0x13, 0x14],
+      [0x14, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x14, 0x16],
+      [0x16, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x17, 0x1a],
+      [0x17, 0x1c],
+      [0x18, 0x19],
+      [0x18, 0x1e],
+      [0x19, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x19, 0x1a],
+      [0x1a, 0x25, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x24, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x1c],
+      [0x1b, 0x28],
+      [0x1d, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1e, 0x21],
+      [0x1f, 0x20],
+      [0x20, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x2f],
+      [0x22, 0x1f],
+      [0x22, 0x25],
+      [0x22, 0x2e],
+      [0x23, 0x27],
+      [0x23, 0x31],
+      [0x23, 0x24],
+      [0x24, 0x25],
+      [0x26, 0x28, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x26, 0x2d],
+      [0x27, 0x28],
+      [0x27, 0x2b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x29, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x29, 0x2a],
+      [0x2a, 0x31, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2a, 0x2b],
+      [0x2b, 0x2c],
+      [0x2c, 0x2d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2e, 0x31],
+      [0x2e, 0x2f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2f, 0x30],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x35\x30\x20\u662f\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5bcc\u52d2\u70ef\x20\x28\x46\x75\x6c\x6c\x65\x72\x65\x6e\x65\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u5bb6\u65cf\u4e2d\u7684\u4e2d\u7b49\u5c3a\u5bf8\u6210\u54e1\u3002\u5176\u5206\u5b50\u7d50\u69cb\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\x20\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x35\x20\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u6839\u64da\u8a08\u7b97\uff0c\u5176\u80fd\u91cf\u6700\u4f4e\u7684\u7570\u69cb\u7269\u5177\u6709\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x44\x35\x68\x20\u5c0d\u7a31\u6027\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u5916\u578b\u5448\u73fe\u985e\u4f3c\u6a44\u6b16\u7403\u7684\u5c0d\u7a31\u62c9\u4f38\u611f\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u901a\u5e38\u5b58\u5728\u65bc\u78b3\u5f27\u653e\u96fb\u7522\u751f\u7684\u70ad\u9ed1\u4e2d\uff0c\u5177\u6709\u534a\u5c0e\u9ad4\u8207\u975e\u7dda\u6027\u7684\u5149\u5b78\u7279\u6027\u3002\u7531\u65bc\u8868\u9762\u66f2\u7387\u4e0d\u5747\u52fb\uff0c\u5176\u96fb\u5b50\u89aa\u548c\u529b\u5206\u5e03\u5728\u4e0d\u540c\u7684\u78b3\u539f\u5b50\u4f4d\u9ede\u4e0a\u6709\u6240\u5dee\u7570\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u7a69\u5b9a\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x35\x30\x20\u9055\u53cd\u4e86\u300c\u96e2\u6563\u4e94\u908a\u5f62\u898f\u5247\u300d\x28\x49\x50\x52\x29\uff0c\u56e0\u70ba\u5728\x20\x35\x30\x20\u500b\u539f\u5b50\u7684\u6846\u67b6\u4e0b\uff0c\u4e94\u908a\u5f62\u4e0d\u53ef\u907f\u514d\u5730\u6703\u76f8\u4e92\u9130\u63a5\u3002\u9019\u4f7f\u5f97\x20\x43\x35\x30\x20\u5177\u6709\u6975\u9ad8\u7684\u5316\u5b78\u53cd\u61c9\u6d3b\u6027\uff0c\u901a\u5e38\u9700\u8981\u900f\u904e\u5916\u63a5\u57fa\u5718\u6216\u5167\u90e8\u5d4c\u5165\u91d1\u5c6c\u539f\u5b50\uff08\u5167\u5d4c\u5bcc\u52d2\u70ef\uff09\u4f86\u4f7f\u5176\u7a69\u5b9a\u5b58\u5728\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u672a\u4f86\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5948\u7c73\u8d85\u5206\u5b50\u5316\u5b78\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x35\x30\x20\u9ad8\u6d3b\u6027\u7684\u8868\u9762\u4f7f\u5176\u6210\u70ba\u512a\u826f\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5206\u5b50\u5efa\u7bc9\u57fa\u5143\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff0c\u53ef\u7528\u65bc\u5408\u6210\u5177\u6709\u7279\u6b8a\u5149\u96fb\u529f\u80fd\u7684\u8907\u96dc\u8d85\u5206\u5b50\u9663\u5217\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u96fb\u5b50\u53d7\u9ad4\u6750\u6599\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8207\x20\x43\x36\x30\x20\u985e\u4f3c\uff0c\x43\x35\x30\x20\u5177\u6709\u6355\u6349\u96fb\u5b50\u7684\u80fd\u529b\uff0c\u76ee\u524d\u6b63\u63a2\u7d22\u5176\u5728\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6709\u6a5f\u5834\u6548\u96fb\u6676\u9ad4\x20\x28\x4f\x46\x45\x54\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\u65b0\u4e00\u4ee3\u67d4\u6027\u96fb\u5b50\u5143\u4ef6\u4e2d\u7684\u61c9\u7528\u6f5b\u529b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u539f\u5b50\u5b58\u5132\u6280\u8853\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u4f5c\u70ba\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5167\u5d4c\u5bcc\u52d2\u70ef\x20\x28\x45\x6e\x64\x6f\x68\x65\x64\x72\x61\x6c\x20\x46\x75\x6c\x6c\x65\x72\x65\x6e\x65\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u7684\u512a\u8cea\u7c60\u578b\uff0c\x43\x35\x30\x20\u5167\u90e8\u7a7a\u9593\u53ef\u5c01\u88dd\u55ae\u500b\u91d1\u5c6c\u539f\u5b50\u6216\u5c0f\u5206\u5b50\uff0c\u9019\u5728\u91cf\u5b50\u8a08\u7b97\u8207\u55ae\u5206\u5b50\u78c1\u9ad4\u7814\u7a76\u4e2d\u5177\u6709\u9ad8\u5ea6\u50f9\u503c\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x44\x35\x68",
+  ),
+  addMol(
+    "\x43\x36\x30\x7c\u78b3\x36\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x32\x30\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x32\x30\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0",
+    "\x36\x30\x30\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x63, "\x79": -0x1b, "\x7a": 0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8b, "\x79": -0x8, "\x7a": 0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0xe, "\x7a": 0x91 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8a, "\x79": 0x35, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": 0x42, "\x7a": -0x8 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x90, "\x79": -0x37, "\x7a": 0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x95, "\x79": -0x2a, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x94, "\x79": 0x13, "\x7a": -0x33 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x14, "\x79": -0x3e, "\x7a": 0x90 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x14, "\x79": -0x67, "\x7a": 0x75 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1, "\x79": -0x3, "\x7a": 0x9e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x50, "\x79": -0x56, "\x7a": 0x69 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x68, "\x7a": 0x33 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc, "\x79": -0x8a, "\x7a": 0x4b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x10, "\x79": -0x9c, "\x7a": 0x14 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x4c, "\x79": -0x8a, "\x7a": 0x8 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x60, "\x79": 0x26, "\x7a": 0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x73, "\x79": -0x15, "\x7a": 0x69 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x27, "\x79": 0x2f, "\x7a": 0x92 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x4d, "\x79": -0x47, "\x7a": 0x75 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x48, "\x79": -0x76, "\x7a": 0x4b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x94, "\x79": -0x12, "\x7a": 0x33 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8f, "\x79": -0x42, "\x7a": 0x8 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x69, "\x79": -0x74, "\x7a": 0x15 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x16, "\x79": 0x86, "\x7a": 0x50 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x50, "\x79": 0x7c, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2, "\x79": 0x5f, "\x7a": 0x7e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x75, "\x79": 0x4d, "\x7a": 0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x95, "\x79": 0x2a, "\x7a": 0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x4c, "\x79": 0x8a, "\x7a": -0x8 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x67, "\x7a": -0x33 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x91, "\x79": 0x37, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x62, "\x79": 0x5e, "\x7a": 0x50 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x4d, "\x79": 0x85, "\x7a": 0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3b, "\x79": 0x4b, "\x7a": 0x7e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x11, "\x79": 0x99, "\x7a": 0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x10, "\x79": 0x9c, "\x7a": -0x15 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x69, "\x79": 0x74, "\x7a": -0x15 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x48, "\x79": 0x76, "\x7a": -0x4c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc, "\x79": 0x8a, "\x7a": -0x4b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x64, "\x79": 0x1b, "\x7a": -0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x50, "\x79": 0x56, "\x7a": -0x69 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x14, "\x79": 0x67, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3b, "\x79": -0xe, "\x7a": -0x91 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x63, "\x79": -0x5e, "\x7a": -0x4f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8c, "\x79": -0x35, "\x7a": -0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8c, "\x79": 0x8, "\x7a": -0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3a, "\x79": -0x4b, "\x7a": -0x7d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x17, "\x79": -0x86, "\x7a": -0x4f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x11, "\x79": -0x99, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x4d, "\x79": -0x85, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x2, "\x79": -0x5f, "\x7a": -0x7d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x60, "\x79": -0x26, "\x7a": -0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x75, "\x79": -0x4d, "\x7a": -0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x51, "\x79": -0x7d, "\x7a": -0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x27, "\x79": -0x2e, "\x7a": -0x91 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x15, "\x79": 0x3e, "\x7a": -0x91 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x4e, "\x79": 0x47, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": 0x15, "\x7a": -0x6a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1, "\x79": 0x3, "\x7a": -0x9e },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0xb],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0x5],
+      [0x2, 0xa, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2, 0x22],
+      [0x3, 0x20],
+      [0x3, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4, 0x25],
+      [0x4, 0x7],
+      [0x5, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0xc],
+      [0x6, 0x7],
+      [0x6, 0x35],
+      [0x7, 0x3a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x8, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x8, 0xa],
+      [0x8, 0x13],
+      [0x9, 0xd],
+      [0x9, 0xb],
+      [0xa, 0x12],
+      [0xb, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xc, 0xf],
+      [0xd, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xd, 0x14],
+      [0xe, 0x31],
+      [0xe, 0xf],
+      [0xf, 0x36, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x1b],
+      [0x10, 0x12, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x11],
+      [0x11, 0x15],
+      [0x11, 0x13, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x1a],
+      [0x13, 0x14],
+      [0x14, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x15, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x15, 0x16],
+      [0x16, 0x2d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x16, 0x17],
+      [0x17, 0x32],
+      [0x18, 0x23, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x18, 0x1a],
+      [0x18, 0x19],
+      [0x19, 0x1d],
+      [0x19, 0x1b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1a, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x1c],
+      [0x1c, 0x1f],
+      [0x1d, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1d, 0x24],
+      [0x1e, 0x29],
+      [0x1e, 0x1f],
+      [0x1f, 0x2e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x22],
+      [0x20, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x21, 0x25],
+      [0x21, 0x23],
+      [0x23, 0x24],
+      [0x24, 0x27, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x25, 0x26, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x26, 0x39],
+      [0x26, 0x27],
+      [0x27, 0x2a],
+      [0x28, 0x2e],
+      [0x28, 0x29],
+      [0x28, 0x2b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x29, 0x2a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2a, 0x38],
+      [0x2b, 0x3b],
+      [0x2b, 0x2f],
+      [0x2c, 0x2d],
+      [0x2c, 0x32, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2c, 0x2f],
+      [0x2d, 0x2e],
+      [0x2f, 0x33, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x30, 0x36],
+      [0x30, 0x33],
+      [0x30, 0x31, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x31, 0x32],
+      [0x33, 0x37],
+      [0x34, 0x35, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x34, 0x37],
+      [0x34, 0x3a],
+      [0x35, 0x36],
+      [0x37, 0x3b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x38, 0x3b],
+      [0x38, 0x39, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x39, 0x3a],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x36\x30\uff08\u8db3\u7403\u70ef\uff09\u662f\u5bcc\u52d2\u70ef\u5bb6\u65cf\u4e2d\u6700\u5177\u4ee3\u8868\u6027\u7684\u6210\u54e1\u3002\u5176\u7d50\u69cb\u7531\x20\x36\x30\x20\u500b\u78b3\u539f\u5b50\u7d44\u6210\u7684\u5c01\u9589\u7c60\u72c0\u7d50\u69cb\uff0c\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x32\x30\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u9019\u7a2e\u5e7e\u4f55\u5f62\u72c0\u5728\u6578\u5b78\u4e0a\u7a31\u70ba\u300c\u622a\u89d2\u4e8c\u5341\u9762\u9ad4\u300d\uff0c\u5177\u6709\u6975\u9ad8\u7684\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x49\x68\x20\u9ede\u7fa4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u5c0d\u7a31\u6027\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5e38\u6eab\u4e0b\u70ba\u6df1\u7d2b\u8272\u6216\u9ed1\u8272\u56fa\u9ad4\u3002\u5b83\u4e0d\u6eb6\u65bc\u6c34\uff0c\u4f46\u53ef\u6eb6\u65bc\u82ef\u3001\u7532\u82ef\u7b49\u6709\u6a5f\u6eb6\u5291\u3002\x43\x36\x30\x20\u5177\u6709\u96e2\u57df\x20\u03c0\x20\u96fb\u5b50\u7cfb\u7d71\uff0c\u5c55\u73fe\u51fa\u7368\u7279\u7684\x20\x33\x44\x20\u82b3\u9999\u6027\uff0c\u4e14\u6bcf\u500b\u78b3\u539f\u5b50\u96d6\u7136\u5916\u89c0\u5448\u66f2\u9762\uff0c\u4f46\u4ecd\u4fdd\u6301\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u7279\u6027\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u7a69\u5b9a\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5316\u5b78\u6027\u8cea\u76f8\u5c0d\u7a69\u5b9a\uff0c\u4f46\u53ef\u9032\u884c\u52a0\u6210\u53cd\u61c9\u3002\u5728\u7279\u5b9a\u689d\u4ef6\u4e0b\uff08\u5982\u647b\u96dc\u9e7c\u91d1\u5c6c\uff09\uff0c\x43\x36\x30\x20\u6676\u9ad4\u53ef\u8868\u73fe\u51fa\u9ad8\u81e8\u754c\u6eab\u5ea6\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u8d85\u5c0e\u6027\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u79d1\u6280\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5948\u7c73\u6280\u8853\u8207\u6750\u6599\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x36\x30\x20\u88ab\u5ee3\u6cdb\u7528\u65bc\u88fd\u9020\u5149\u4f0f\u96fb\u6c60\u3001\u611f\u5149\u6750\u6599\u53ca\u9ad8\u6548\u80fd\u6f64\u6ed1\u5291\u3002\u5176\u7c60\u72c0\u7d50\u69cb\u53ef\u4f5c\u70ba\u300c\u5206\u5b50\u6efe\u73e0\u300d\uff0c\u6e1b\u5c11\u5fae\u89c0\u6a5f\u68b0\u78e8\u640d\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u751f\u7269\u91ab\u5b78\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\x20\x43\x36\x30\x20\u5177\u6709\u6355\u6349\u81ea\u7531\u57fa\u7684\u80fd\u529b\uff0c\u88ab\u7814\u7a76\u7528\u65bc\u6297\u8870\u8001\u3001\u6297\u6c27\u5316\u53ca\u9632\u8f3b\u5c04\u85e5\u7269\u4e2d\u3002\u6b64\u5916\uff0c\u7c60\u5167\u53ef\u5c01\u88dd\u91d1\u5c6c\u539f\u5b50\uff0c\u4f5c\u70ba\u91ab\u7642\u5f71\u50cf\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u986f\u5f71\u5291\u8f09\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u9ad8\u7aef\u5149\u5b78\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x36\x30\x20\u5c55\u73fe\u51fa\u512a\u7570\u7684\u975e\u7dda\u6027\u5149\u5b78\u7279\u6027\uff0c\u53ef\u7528\u65bc\u88fd\u9020\u5149\u9650\u5e45\u5668\uff0c\u4fdd\u8b77\u5149\u5b78\u611f\u6e2c\u5668\u514d\u53d7\u5f37\u529b\u96f7\u5c04\u640d\u50b7\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x49\x68",
+  ),
+  addMol(
+    "\x43\x37\x30\x7c\u78b3\x37\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x32\x35\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x32\x35\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0",
+    "\x36\x30\x30\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": 0x66, "\x7a": 0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": 0x68, "\x7a": 0x53 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb1, "\x79": 0x34, "\x7a": 0xe },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": 0x37, "\x7a": 0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x25, "\x7a": 0x96 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x47, "\x7a": 0x90 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x25, "\x7a": 0x96 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": 0x3c, "\x7a": -0x58 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": 0x6f, "\x7a": -0x4a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb1, "\x79": 0x1e, "\x7a": -0x2d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": 0x84, "\x7a": -0xe },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x9a, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0xa0, "\x7a": -0x17 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x37, "\x79": 0x9a, "\x7a": 0xb },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x7b, "\x7a": 0x68 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x88, "\x7a": 0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x37, "\x79": 0x88, "\x7a": 0x49 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8f, "\x79": -0x42, "\x7a": -0x54 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x24, "\x7a": -0x80 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb2, "\x79": -0x21, "\x7a": -0x2a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": 0x1b, "\x7a": -0x82 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x3a, "\x7a": -0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x1b, "\x7a": -0x9e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": 0x3a, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x89, "\x7a": -0x55 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": 0x70, "\x7a": -0x6b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x37, "\x79": 0x70, "\x7a": -0x6b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": -0x64, "\x7a": 0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x85, "\x7a": -0x6 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb2, "\x79": -0x32, "\x7a": 0x12 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x73, "\x7a": -0x42 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": -0x76, "\x7a": -0x63 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x8e, "\x7a": -0x4c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x76, "\x7a": -0x63 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x26, "\x7a": -0x9c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x37, "\x79": -0x43, "\x7a": -0x8b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x43, "\x7a": -0x8b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8f, "\x79": 0x4, "\x7a": 0x6b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x2e, "\x7a": 0x7d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb2, "\x79": 0x2, "\x7a": 0x36 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x62, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": -0x83, "\x7a": 0x51 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x73, "\x7a": 0x70 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x83, "\x7a": 0x51 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0xa1, "\x7a": -0xc },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": -0x99, "\x7a": 0x15 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x99, "\x7a": 0x15 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x3d, "\x7a": 0x95 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x36, "\x79": -0x1b, "\x7a": 0x98 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x36, "\x79": -0x1b, "\x7a": 0x98 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8d, "\x79": -0x64, "\x7a": 0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x62, "\x7a": 0x5a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x2e, "\x7a": 0x7d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb0, "\x79": -0x33, "\x7a": 0x12 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": -0x42, "\x7a": -0x55 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x74, "\x7a": -0x42 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x85, "\x7a": -0x6 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": -0x21, "\x7a": -0x2b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": 0x3c, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x1b, "\x7a": -0x82 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x24, "\x7a": -0x81 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": 0x1e, "\x7a": -0x2d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": 0x67, "\x7a": 0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6d, "\x79": 0x85, "\x7a": -0xf },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6d, "\x79": 0x70, "\x7a": -0x4a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": 0x33, "\x7a": 0xf },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8f, "\x79": 0x3, "\x7a": 0x6b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x37, "\x7a": 0x7a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x68, "\x7a": 0x53 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": 0x2, "\x7a": 0x36 },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0xa],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0xf],
+      [0x2, 0x9, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2, 0x27],
+      [0x3, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3, 0x25],
+      [0x4, 0x5],
+      [0x4, 0x30],
+      [0x5, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0xe],
+      [0x6, 0x43],
+      [0x6, 0x31],
+      [0x7, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x7, 0x14],
+      [0x7, 0x9],
+      [0x8, 0xa],
+      [0x8, 0x19],
+      [0x9, 0x13],
+      [0xa, 0xb, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0xc],
+      [0xb, 0xf],
+      [0xc, 0xd, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xc, 0x18],
+      [0xd, 0x3f],
+      [0xd, 0x10],
+      [0xe, 0xf, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0x10],
+      [0x10, 0x44, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x11, 0x1e],
+      [0x11, 0x12],
+      [0x11, 0x13, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x14, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x23],
+      [0x13, 0x1d],
+      [0x14, 0x15],
+      [0x15, 0x16, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x15, 0x19],
+      [0x16, 0x17],
+      [0x16, 0x22],
+      [0x17, 0x3b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x17, 0x1a],
+      [0x18, 0x19, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x18, 0x1a],
+      [0x1a, 0x40, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x28],
+      [0x1b, 0x1c],
+      [0x1b, 0x1d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1c, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1c, 0x2d],
+      [0x1d, 0x27],
+      [0x1e, 0x1f],
+      [0x1f, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1f, 0x23],
+      [0x20, 0x21],
+      [0x20, 0x2c],
+      [0x21, 0x37, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x21, 0x24],
+      [0x22, 0x24],
+      [0x22, 0x23, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x24, 0x3c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x25, 0x27, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x25, 0x26],
+      [0x26, 0x28, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x26, 0x30],
+      [0x28, 0x29],
+      [0x29, 0x2a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x29, 0x2d],
+      [0x2a, 0x2b],
+      [0x2a, 0x2f],
+      [0x2b, 0x33, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2b, 0x2e],
+      [0x2c, 0x2d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2c, 0x2e],
+      [0x2e, 0x38, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2f, 0x31],
+      [0x2f, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x31, 0x34, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x32, 0x33],
+      [0x32, 0x38],
+      [0x32, 0x35, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x33, 0x34],
+      [0x34, 0x42],
+      [0x35, 0x39],
+      [0x35, 0x45],
+      [0x36, 0x3c],
+      [0x36, 0x37],
+      [0x36, 0x39, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x37, 0x38],
+      [0x39, 0x3d],
+      [0x3a, 0x40],
+      [0x3a, 0x3b],
+      [0x3a, 0x3d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3b, 0x3c],
+      [0x3d, 0x41],
+      [0x3e, 0x44],
+      [0x3e, 0x3f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3e, 0x41],
+      [0x3f, 0x40],
+      [0x41, 0x45, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x42, 0x45],
+      [0x42, 0x43, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x43, 0x44],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x37\x30\x20\u662f\u7e7c\x20\x43\x36\x30\x20\u4e4b\u5f8c\u6700\u7a69\u5b9a\u7684\u5bcc\u52d2\u70ef\u6210\u54e1\u3002\u5176\u5206\u5b50\u7d50\u69cb\u5305\u542b\x20\x37\x30\x20\u500b\u78b3\u539f\u5b50\uff0c\u69cb\u6210\u4e00\u500b\u5c01\u9589\u7684\u7c60\u72c0\u7cfb\u7d71\uff0c\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x32\x35\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u8207\u7403\u5f62\u7684\x20\x43\x36\x30\x20\u4e0d\u540c\uff0c\x43\x37\x30\x20\u7684\u5f62\u72c0\u7d30\u9577\uff0c\u5169\u7aef\u8f03\u5c16\uff0c\u4e2d\u9593\u8f03\u5bec\uff0c\u5916\u89c0\u6975\u50cf\u6a44\u6b16\u7403\uff0c\u5c6c\u65bc\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x44\x35\x68\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u9ede\u7fa4\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5e38\u6eab\u4e0b\u70ba\u7d05\u68d5\u8272\u56fa\u9ad4\u3002\u7531\u65bc\u5176\u4e0d\u5c0d\u7a31\u7684\u96fb\u5b50\u96f2\u5206\u5e03\uff0c\x43\x37\x30\x20\u5728\u6709\u6a5f\u6eb6\u5291\uff08\u5982\u7532\u82ef\u3001\u4e8c\u786b\u5316\u78b3\uff09\u4e2d\u7684\u6eb6\u89e3\u5ea6\u901a\u5e38\u9ad8\u65bc\x20\x43\x36\x30\u3002\u96d6\u7136\u6574\u9ad4\u5448\u73fe\u66f2\u9762\uff0c\u4f46\u6bcf\u500b\u78b3\u539f\u5b50\u4ecd\u7dad\u6301\u96e2\u57df\x20\u03c0\x20\u96fb\u5b50\u7279\u6027\u7684\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6d3b\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\x20\x43\x37\x30\x20\u7684\u4e0d\u540c\u4f4d\u9ede\u66f2\u7387\u4e0d\u4e00\uff0c\u5176\u5316\u5b78\u53cd\u61c9\u5177\u6709\u5340\u57df\u9078\u64c7\u6027\uff0c\u7279\u5225\u662f\u5728\u6975\u9ede\u8655\u7684\u6d3b\u6027\u6700\u9ad8\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u79d1\u6280\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5149\u5b78\u7279\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x37\x30\x20\u5177\u6709\u6975\u5f37\u7684\u975e\u7dda\u6027\u5149\u5b78\u5438\u6536\u80fd\u529b\uff0c\u5e38\u7528\u65bc\u88fd\u9020\u5149\u5b78\u9650\u5e45\u5668\u4ee5\u4fdd\u8b77\u96f7\u5c04\u8a2d\u5099\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u5149\u4f0f\u80fd\u6e90\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x37\x30\x20\u8207\u5176\u884d\u751f\u7269\u662f\u512a\u826f\u7684\u96fb\u5b50\u53d7\u9ad4\u6750\u6599\uff0c\u5ee3\u6cdb\u61c9\u7528\u65bc\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6709\u6a5f\u592a\u967d\u80fd\u96fb\u6c60\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u4e2d\uff0c\u80fd\u6709\u6548\u5730\u6355\u6349\u4e26\u50b3\u8f38\u5149\u751f\u96fb\u5b50\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u9ad8\u7aef\u6f64\u6ed1\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5176\u7368\u7279\u7684\u6a62\u7403\u5f62\u7d50\u69cb\u4f7f\u5176\u5728\u7279\u5b9a\u58d3\u529b\u4e0b\u80fd\u4f5c\u70ba\u5948\u7c73\u7d1a\u7684\u300c\u5206\u5b50\u6efe\u73e0\u300d\uff0c\u63d0\u4f9b\u6975\u4f4e\u6469\u64e6\u4fc2\u6578\u7684\u6f64\u6ed1\u6027\u80fd\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x44\x35\x68",
+  ),
+  addMol(
+    "\x43\x38\x30\x7c\u78b3\x38\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x33\x30\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x33\x30\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0",
+    "\x36\x30\x30\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x54, "\x79": -0x60, "\x7a": 0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1c, "\x79": -0x68, "\x7a": 0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x4, "\x79": -0x36, "\x7a": 0xad },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xd, "\x79": -0x8e, "\x7a": 0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1, "\x79": -0xab, "\x7a": 0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x39, "\x79": -0xa3, "\x7a": 0x1b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x62, "\x79": -0x7d, "\x7a": 0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x4c, "\x79": -0x83, "\x7a": 0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x64, "\x79": -0x50, "\x7a": 0x90 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3b, "\x79": -0x2a, "\x7a": 0xae },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x96, "\x79": -0x35, "\x7a": 0x74 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x35, "\x79": -0xb0, "\x7a": -0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x35, "\x79": -0xb1, "\x7a": 0x1a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x65, "\x79": -0x98, "\x7a": 0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x96, "\x79": -0x7c, "\x7a": 0x1d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xae, "\x79": -0x4a, "\x7a": 0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x62, "\x79": -0x79, "\x7a": -0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x39, "\x79": -0xa1, "\x7a": -0x26 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0xa7, "\x7a": -0x44 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9e, "\x79": 0xb, "\x7a": 0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x74, "\x79": 0x31, "\x7a": 0x94 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x43, "\x79": 0x15, "\x7a": 0xb0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6b, "\x79": 0x69, "\x7a": 0x78 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc6, "\x79": -0x16, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc6, "\x79": -0x18, "\x7a": 0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xbc, "\x79": 0x1d, "\x7a": 0x40 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": 0x55, "\x7a": 0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x88, "\x79": 0x7b, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x65, "\x79": -0x94, "\x7a": -0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x96, "\x79": -0x7a, "\x7a": -0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xaf, "\x79": -0x46, "\x7a": -0x41 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x31, "\x79": 0x85, "\x7a": 0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1, "\x79": 0x68, "\x7a": 0x95 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9, "\x79": 0x30, "\x7a": 0xb1 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x39, "\x79": 0x71, "\x7a": 0x78 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x61, "\x79": 0xa3, "\x7a": -0x1a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x61, "\x79": 0xa1, "\x7a": 0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2b, "\x79": 0xa7, "\x7a": 0x44 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xd, "\x79": 0xaf, "\x7a": 0x26 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3f, "\x79": 0x93, "\x7a": 0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xbc, "\x79": 0x20, "\x7a": -0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": 0x57, "\x7a": -0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x88, "\x79": 0x7f, "\x7a": -0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x65, "\x79": 0x42, "\x7a": 0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x5a, "\x79": 0xa, "\x7a": 0x92 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x23, "\x79": 0x2, "\x7a": 0xaf },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x73, "\x79": -0x28, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6e, "\x79": 0x7c, "\x7a": -0x1c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6f, "\x79": 0x7a, "\x7a": 0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x86, "\x79": 0x48, "\x7a": 0x41 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x9e, "\x79": 0x16, "\x7a": 0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x94, "\x79": -0x22, "\x7a": 0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x2b, "\x79": 0xab, "\x7a": -0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xd, "\x79": 0xb1, "\x7a": -0x1c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3f, "\x79": 0x97, "\x7a": -0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x85, "\x79": 0x4c, "\x7a": -0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x9e, "\x79": 0x18, "\x7a": -0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x93, "\x79": -0x1f, "\x7a": -0x41 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8a, "\x79": -0x55, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8a, "\x79": -0x57, "\x7a": 0x1c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x64, "\x79": 0x4a, "\x7a": -0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x21, "\x79": 0xc, "\x7a": -0xae },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x59, "\x79": 0x12, "\x7a": -0x91 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x72, "\x79": -0x22, "\x7a": -0x77 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x32, "\x79": 0x8c, "\x7a": -0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb, "\x79": 0x3a, "\x7a": -0xad },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0x71, "\x7a": -0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x38, "\x79": 0x78, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9f, "\x79": 0x11, "\x7a": -0x74 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x44, "\x79": 0x1f, "\x7a": -0xad },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x76, "\x79": 0x39, "\x7a": -0x90 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x71, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x4d, "\x79": -0x7c, "\x7a": -0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3c, "\x79": -0x20, "\x7a": -0xaf },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x65, "\x79": -0x48, "\x7a": -0x94 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x97, "\x79": -0x2e, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x53, "\x79": -0x5a, "\x7a": -0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3, "\x79": -0x2c, "\x7a": -0xb0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1b, "\x79": -0x60, "\x7a": -0x95 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xe, "\x79": -0x88, "\x7a": -0x7a },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x6],
+      [0x0, 0x2e],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x2, 0x2d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2, 0x9],
+      [0x3, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3, 0x7],
+      [0x4, 0xc],
+      [0x4, 0x5],
+      [0x5, 0x6, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0x11],
+      [0x6, 0x3b],
+      [0x7, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x7, 0xd],
+      [0x8, 0x9],
+      [0x8, 0xa],
+      [0x9, 0x15, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xa, 0xf, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xa, 0x13],
+      [0xb, 0xc, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0x12],
+      [0xb, 0x1c],
+      [0xc, 0xd],
+      [0xd, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0xf],
+      [0xe, 0x1d],
+      [0xf, 0x18],
+      [0x10, 0x3a],
+      [0x10, 0x4c],
+      [0x10, 0x11, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x11, 0x12],
+      [0x12, 0x4f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x14, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x13, 0x19],
+      [0x14, 0x15],
+      [0x14, 0x16],
+      [0x15, 0x21],
+      [0x16, 0x1b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x16, 0x1f],
+      [0x17, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x17, 0x28],
+      [0x17, 0x1e],
+      [0x18, 0x19],
+      [0x19, 0x1a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1a, 0x1b],
+      [0x1a, 0x29],
+      [0x1b, 0x24],
+      [0x1c, 0x48, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1c, 0x1d],
+      [0x1d, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1e, 0x4b],
+      [0x1f, 0x20],
+      [0x1f, 0x25, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x22],
+      [0x21, 0x2d],
+      [0x22, 0x27, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x22, 0x2b],
+      [0x23, 0x24, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x23, 0x2a],
+      [0x23, 0x34],
+      [0x24, 0x25],
+      [0x25, 0x26],
+      [0x26, 0x27],
+      [0x26, 0x35, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x27, 0x30],
+      [0x28, 0x44, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x28, 0x29],
+      [0x29, 0x2a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2a, 0x47],
+      [0x2b, 0x2c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2b, 0x31],
+      [0x2c, 0x2d],
+      [0x2c, 0x2e],
+      [0x2e, 0x33, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2f, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2f, 0x37],
+      [0x2f, 0x36],
+      [0x30, 0x31],
+      [0x31, 0x32, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x32, 0x33],
+      [0x32, 0x38],
+      [0x33, 0x3b],
+      [0x34, 0x40, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x34, 0x35],
+      [0x35, 0x36],
+      [0x36, 0x43, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x37, 0x3c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x37, 0x38],
+      [0x38, 0x39, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x39, 0x3a],
+      [0x39, 0x3f],
+      [0x3a, 0x3b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3c, 0x3e],
+      [0x3c, 0x43],
+      [0x3d, 0x3e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3d, 0x41],
+      [0x3d, 0x4d],
+      [0x3e, 0x3f],
+      [0x3f, 0x4c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x40, 0x42],
+      [0x40, 0x47],
+      [0x41, 0x42, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x41, 0x45],
+      [0x42, 0x43],
+      [0x44, 0x46],
+      [0x44, 0x4b],
+      [0x45, 0x46],
+      [0x45, 0x49, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x46, 0x47, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x48, 0x4a],
+      [0x48, 0x4f],
+      [0x49, 0x4a],
+      [0x49, 0x4d],
+      [0x4a, 0x4b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4c, 0x4e],
+      [0x4d, 0x4e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4e, 0x4f],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x38\x30\x20\u662f\u5bcc\u52d2\u70ef\u5bb6\u65cf\u4e2d\u7684\u91cd\u8981\u6210\u54e1\uff0c\u5176\u5c01\u9589\u7c60\u72c0\u7d50\u69cb\u7531\x20\x38\x30\x20\u500b\u78b3\u539f\u5b50\u7d44\u6210\uff0c\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x33\x30\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x43\x38\x30\x20\u5177\u6709\u591a\u7a2e\u7570\u69cb\u7269\uff0c\u5176\u4e2d\u4ee5\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x49\x68\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u548c\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x44\x35\x68\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u5c0d\u7a31\u6027\u6700\u53d7\u95dc\u6ce8\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8207\x20\x43\x36\x30\x20\u985e\u4f3c\uff0c\x43\x38\x30\x20\u5177\u6709\u9ad8\u5ea6\u96e2\u57df\u7684\x20\u03c0\x20\u96fb\u5b50\u7cfb\u7d71\u3002\u5728\u5b8f\u89c0\u72c0\u614b\u4e0b\u901a\u5e38\u70ba\u6697\u9ed1\u8272\u56fa\u9ad4\u3002\u5176\u5206\u5b50\u5167\u90e8\u7a7a\u9593\u8f03\u5927\uff0c\u975e\u5e38\u9069\u5408\u4f5c\u70ba\u91d1\u5c6c\u539f\u5b50\u7684\u5c01\u88dd\u8f09\u9ad4\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u7279\u6b8a\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7d14\x20\x43\x38\x30\x20\u7684\u96fb\u5b50\u7d50\u69cb\u76f8\u5c0d\u4e0d\u7a69\u5b9a\uff0c\u4f46\u7576\u7c60\u5167\u5d4c\u5165\u7279\u5b9a\u91d1\u5c6c\u539f\u5b50\uff08\u5982\u9227\x20\x53\x63\u3001\u946d\x20\x4c\x61\uff09\u5f62\u6210\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5167\u5d4c\u5bcc\u52d2\u70ef\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u6642\uff0c\u7d50\u69cb\u6703\u8b8a\u5f97\u7570\u5e38\u7a69\u5b9a\uff0c\u5c55\u73fe\u51fa\u7368\u7279\u7684\u78c1\u5b78\u8207\u96fb\u5b78\u7279\u6027\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u524d\u7aef\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5167\u5d4c\u5bcc\u52d2\u70ef\u7814\u7a76\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x38\x30\x20\u662f\u88fd\u9020\u91d1\u5c6c\u5167\u5d4c\u5bcc\u52d2\u70ef\uff08\x45\x6e\x64\x6f\x68\x65\x64\x72\x61\x6c\x20\x46\x75\x6c\x6c\x65\x72\x65\x6e\x65\x73\uff09\u6700\u5e38\u7528\u7684\u6750\u6599\u4e4b\u4e00\u3002\u4f8b\u5982\x20\x24\x53\x63\x5f\x33\x4e\x40\x43\x5f\x7b\x38\x30\x7d\x24\x20\u662f\u76ee\u524d\u7522\u91cf\u6700\u9ad8\u4e14\u61c9\u7528\u6700\u5ee3\u7684\u5167\u5d4c\u7d50\u69cb\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u91cf\u5b50\u8a08\u7b97\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u5176\u7a69\u5b9a\u7684\u5167\u90e8\u7a7a\u9593\u53ef\u4fdd\u8b77\u5d4c\u5165\u539f\u5b50\u7684\u81ea\u65cb\u614b\uff0c\u79d1\u5b78\u5bb6\u6b63\u7814\u7a76\u5229\u7528\u5167\u5d4c\x20\x43\x38\x30\x20\u4f5c\u70ba\u91cf\u5b50\u8a08\u7b97\u4e2d\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u91cf\u5b50\u4f4d\u5143\x20\x28\x51\x75\x62\x69\x74\x73\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8f09\u9ad4\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u751f\u7269\u91ab\u5b78\u9020\u5f71\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5c01\u88dd\u4e86\u91d3\x20\x28\x47\x64\x29\x20\u7684\x20\x43\x38\x30\x20\u884d\u751f\u7269\u5177\u6709\u6975\u4f73\u7684\u9806\u78c1\u6027\uff0c\u88ab\u958b\u767c\u70ba\u65b0\u4e00\u4ee3\u9ad8\u6548\u4e14\u4f4e\u6bd2\u6027\u7684\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x4d\x52\x49\x20\u5c0d\u6bd4\u5291\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x44\x35\x68",
+  ),
+  addMol(
+    "\x43\x39\x30\x7c\u78b3\x39\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x33\x35\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x33\x35\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0",
+    "\x4e\x2f\x41\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc8, "\x79": -0x18, "\x7a": -0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xbc, "\x79": 0x1f, "\x7a": -0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x9b, "\x79": -0x7d, "\x7a": 0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x9b, "\x79": -0x7c, "\x7a": -0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb1, "\x79": -0x4a, "\x7a": -0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6b, "\x79": -0x98, "\x7a": 0x3c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x67, "\x79": -0x76, "\x7a": -0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": -0x45, "\x7a": -0x74 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7d, "\x79": -0xe, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x98, "\x79": 0x24, "\x7a": -0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x31, "\x79": -0x72, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x93, "\x7a": 0x78 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0xb4, "\x7a": 0x40 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x39, "\x79": -0xb5, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x39, "\x79": -0xb5, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6c, "\x79": -0x98, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0x91, "\x7a": -0x79 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": -0xb3, "\x7a": -0x41 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1f, "\x79": -0x3c, "\x7a": -0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x42, "\x79": -0x7, "\x7a": -0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x22, "\x79": 0x33, "\x7a": -0xa9 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x41, "\x79": 0x65, "\x7a": -0x8d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7b, "\x79": 0x5c, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x20, "\x79": 0x93, "\x7a": -0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": -0x3c, "\x7a": -0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x42, "\x79": -0x7, "\x7a": -0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x22, "\x79": 0x32, "\x7a": -0xa9 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7a, "\x79": 0x5c, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x41, "\x79": 0x65, "\x7a": -0x8d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": 0x93, "\x7a": -0x71 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x67, "\x79": -0x76, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x31, "\x79": -0x72, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": -0x45, "\x7a": -0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7d, "\x79": -0xd, "\x7a": -0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x98, "\x79": 0x24, "\x7a": -0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x98, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": -0x98, "\x7a": 0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x39, "\x79": -0xb5, "\x7a": -0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x39, "\x79": -0xb5, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x34, "\x79": 0xb3, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6a, "\x79": 0xa5, "\x7a": -0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": 0x7b, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb5, "\x79": 0x55, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb5, "\x79": 0x54, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0xc4, "\x7a": -0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x0, "\x79": 0xc3, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x33, "\x79": 0xb2, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6a, "\x79": 0xa5, "\x7a": 0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8e, "\x79": 0x7a, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": 0x7c, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6a, "\x79": 0xa6, "\x7a": -0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": 0xb3, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb0, "\x79": -0x4b, "\x7a": 0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc8, "\x79": -0x18, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xbd, "\x79": 0x1f, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x98, "\x79": 0x23, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7e, "\x79": -0xf, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8d, "\x79": -0x47, "\x7a": 0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x31, "\x79": -0x73, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x66, "\x79": -0x77, "\x7a": 0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1f, "\x79": 0x92, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x41, "\x79": 0x63, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7b, "\x79": 0x5b, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x22, "\x79": 0x31, "\x7a": 0xa9 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x43, "\x79": -0x9, "\x7a": 0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1f, "\x79": -0x3d, "\x7a": 0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": 0x92, "\x7a": 0x72 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7b, "\x79": 0x5b, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x41, "\x79": 0x63, "\x7a": 0x8d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x22, "\x79": 0x31, "\x7a": 0xa9 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x43, "\x79": -0x8, "\x7a": 0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1f, "\x79": -0x3e, "\x7a": 0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb5, "\x79": 0x55, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb5, "\x79": 0x55, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": 0x7b, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x69, "\x79": 0xa6, "\x7a": 0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": 0xb3, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb0, "\x79": -0x4a, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc8, "\x79": -0x17, "\x7a": -0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xbc, "\x79": 0x20, "\x7a": -0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb0, "\x79": -0x4b, "\x7a": 0x3e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9b, "\x79": -0x7d, "\x7a": 0x1e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9b, "\x79": -0x7d, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xbc, "\x79": 0x1f, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc8, "\x79": -0x17, "\x7a": 0x21 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x32, "\x79": -0x74, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x98, "\x79": 0x23, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7e, "\x79": -0xf, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8e, "\x79": -0x47, "\x7a": 0x73 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x67, "\x79": -0x77, "\x7a": 0x72 },
+    ],
+    [
+      [0x0, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x1],
+      [0x0, 0x35],
+      [0x1, 0x2a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1, 0x9],
+      [0x2, 0x3, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2, 0x5],
+      [0x2, 0x34],
+      [0x3, 0xf],
+      [0x3, 0x4],
+      [0x4, 0x7],
+      [0x5, 0x3b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0xd],
+      [0x6, 0xa, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x6, 0x7],
+      [0x6, 0xf],
+      [0x7, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x8, 0x9],
+      [0x8, 0x13],
+      [0x9, 0x16, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xa, 0x10],
+      [0xa, 0x12],
+      [0xb, 0x3a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0x55],
+      [0xb, 0xc],
+      [0xc, 0xd, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xc, 0x26],
+      [0xd, 0xe],
+      [0xe, 0xf, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xe, 0x11],
+      [0x10, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x10, 0x11],
+      [0x11, 0x25, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x13],
+      [0x13, 0x14, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x14, 0x15],
+      [0x14, 0x1a],
+      [0x15, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x15, 0x16],
+      [0x16, 0x29],
+      [0x17, 0x1d],
+      [0x17, 0x27],
+      [0x18, 0x1f],
+      [0x18, 0x19],
+      [0x19, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x19, 0x1a],
+      [0x1a, 0x1c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x22, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1b, 0x31],
+      [0x1b, 0x1c],
+      [0x1c, 0x1d],
+      [0x1d, 0x33, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1e, 0x1f],
+      [0x1e, 0x20, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1e, 0x23],
+      [0x20, 0x4d],
+      [0x20, 0x21],
+      [0x21, 0x22],
+      [0x22, 0x4f],
+      [0x23, 0x52, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x23, 0x25],
+      [0x24, 0x59],
+      [0x24, 0x51],
+      [0x24, 0x26, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x25, 0x26],
+      [0x27, 0x2c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x27, 0x28],
+      [0x28, 0x29, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x28, 0x2f],
+      [0x29, 0x2a],
+      [0x2a, 0x2b],
+      [0x2b, 0x36, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2b, 0x30],
+      [0x2c, 0x2d],
+      [0x2c, 0x33],
+      [0x2d, 0x4c],
+      [0x2d, 0x2e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2e, 0x2f],
+      [0x2e, 0x3c],
+      [0x2f, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x30, 0x3e],
+      [0x31, 0x48],
+      [0x31, 0x32, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x32, 0x33],
+      [0x32, 0x4b],
+      [0x34, 0x39],
+      [0x34, 0x35, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x35, 0x36],
+      [0x36, 0x37],
+      [0x37, 0x3e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x37, 0x38],
+      [0x38, 0x39, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x38, 0x40],
+      [0x39, 0x3b],
+      [0x3a, 0x3b],
+      [0x3a, 0x41],
+      [0x3c, 0x42, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3c, 0x3d],
+      [0x3d, 0x3e],
+      [0x3d, 0x3f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3f, 0x40],
+      [0x3f, 0x45],
+      [0x40, 0x41, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x41, 0x47],
+      [0x42, 0x44],
+      [0x42, 0x4c],
+      [0x43, 0x56, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x43, 0x4a],
+      [0x43, 0x44],
+      [0x44, 0x45, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x45, 0x46],
+      [0x46, 0x47, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x46, 0x57],
+      [0x47, 0x55],
+      [0x48, 0x49],
+      [0x48, 0x4f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x49, 0x53],
+      [0x49, 0x4a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4a, 0x4b],
+      [0x4b, 0x4c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4d, 0x52],
+      [0x4d, 0x4e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4e, 0x4f],
+      [0x4e, 0x54],
+      [0x50, 0x58],
+      [0x50, 0x51, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x50, 0x54],
+      [0x51, 0x52],
+      [0x53, 0x54, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x53, 0x56],
+      [0x55, 0x59, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x56, 0x57],
+      [0x57, 0x58, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x58, 0x59],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x39\x30\x20\u662f\u5bcc\u52d2\u70ef\u5bb6\u65cf\u4e2d\u7684\u9ad8\u968e\u6210\u54e1\u3002\u5176\u5206\u5b50\u7531\x20\x39\x30\x20\u500b\u78b3\u539f\u5b50\u7d44\u6210\u5c01\u9589\u7c60\u72c0\uff0c\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x33\x35\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u6839\u64da\u7d50\u69cb\u5c0d\u7a31\u6027\uff0c\x43\x39\x30\x20\u5177\u6709\u591a\u7a2e\u7570\u69cb\u7269\uff0c\u5176\u4e2d\u4ee5\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x43\x32\x76\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u5c0d\u7a31\u6027\u7d50\u69cb\u6700\u70ba\u5e38\u898b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5728\u9ad8\u968e\u5bcc\u52d2\u70ef\u4e2d\uff0c\x43\x39\x30\x20\u7684\u5206\u5b50\u9ad4\u7a4d\u8f03\u5927\uff0c\u5167\u90e8\u7a7a\u9593\u5bec\u5ee3\u3002\u5b83\u5c55\u73fe\u51fa\u534a\u5c0e\u9ad4\u7279\u6027\uff0c\u4e14\u5177\u6709\u8907\u96dc\u7684\u96fb\u5b50\u96f2\u5206\u5e03\u3002\u7531\u65bc\u5176\u9ad8\u5ea6\u4e0d\u98fd\u548c\u7684\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u78b3\u67b6\u69cb\uff0c\u5177\u6709\u826f\u597d\u7684\u96fb\u5b50\u6355\u6349\u80fd\u529b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u5316\u5b78\u6d3b\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8f03\u5927\u7684\u8868\u9762\u7a4d\u8207\u7279\u5b9a\u7684\u66f2\u7387\u5206\u5e03\uff0c\u4f7f\u5f97\x20\x43\x39\x30\x20\u80fd\u5920\u9032\u884c\u591a\u7a2e\u5b98\u80fd\u57fa\u5316\u53cd\u61c9\uff0c\u5176\u5316\u5b78\u6027\u8cea\u8f03\x20\x43\x36\x30\x20\u66f4\u70ba\u591a\u8b8a\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u6f5b\u5728\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5948\u7c73\u96fb\u5b50\u5143\u4ef6\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u7531\u65bc\u5176\u7368\u7279\u7684\u5c0d\u7a31\u6027\u8207\u96fb\u5b50\u7d50\u69cb\uff0c\x43\x39\x30\x20\u88ab\u7814\u7a76\u7528\u65bc\u88fd\u9020\u5206\u5b50\u7d1a\u7684\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u5834\u6548\u96fb\u6676\u9ad4\x20\x28\x46\x45\x54\x29\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\u975e\u7dda\u6027\u5149\u5b78\u5143\u4ef6\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u8d85\u5206\u5b50\u5316\u5b78\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u8f03\u5927\u7684\u7c60\u5f91\u4f7f\u5176\u6210\u70ba\u512a\u826f\u7684\u5ba2\u9ad4\u5206\u5b50\u8f09\u9ad4\uff0c\u53ef\u8207\u5404\u7a2e\u74b0\u72c0\u5206\u5b50\uff08\u5982\u74b0\u7cca\u7cbe\uff09\u5f62\u6210\u7a69\u5b9a\u7684\u5305\u5408\u7269\uff0c\u7528\u65bc\u85e5\u7269\u50b3\u905e\u7814\u7a76\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u80fd\u6e90\u6750\u6599\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x39\x30\x20\u7684\u884d\u751f\u7269\u5728\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6709\u6a5f\u8584\u819c\u592a\u967d\u80fd\u96fb\u6c60\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u4e2d\u4f5c\u70ba\u53d7\u9ad4\u6750\u6599\u5c55\u73fe\u51fa\u6f5b\u529b\uff0c\u5176\u8f03\u5bec\u7684\u96fb\u5b50\u5438\u6536\u5149\u8b5c\u6709\u52a9\u65bc\u63d0\u5347\u5149\u96fb\u8f49\u63db\u6548\u7387\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x43\x32\x76",
+  ),
+  addMol(
+    "\x43\x31\x30\x30\x7c\u78b3\x31\x30\x30\x7c\u5bcc\u52d2\u70ef",
+    "\x43",
+    "\x73\x70\u00b2",
+    ["\u7c60\u72c0\u7d50\u69cb\x20\x28\x31\x32\u500b\u4e94\u908a\u5f62\x2c\x20\x34\x30\u500b\u516d\u908a\u5f62\x29", "\x43\x61\x67\x65\x20\x28\x31\x32\x20\x50\x65\x6e\x74\x61\x67\x6f\x6e\x73\x2c\x20\x34\x30\x20\x48\x65\x78\x61\x67\x6f\x6e\x73\x29"],
+    "\x31\x30\x38\u00b0\x7e\x31\x32\x30\u00b0",
+    "\x4e\x2f\x41\x20\x28\u6607\u83ef\x29",
+    "\x4e\x2f\x41",
+    [
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xd7, "\x79": -0x39, "\x7a": 0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xac, "\x79": -0x63, "\x7a": 0x67 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xf1, "\x79": -0x37, "\x7a": 0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x99, "\x79": -0x8c, "\x7a": 0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x5f, "\x79": -0xa0, "\x7a": 0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x55, "\x79": -0x1d, "\x7a": 0xa5 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x15, "\x79": -0x38, "\x7a": 0xa5 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x32, "\x79": -0x90, "\x7a": 0x65 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x43, "\x79": -0x60, "\x7a": 0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x7f, "\x79": -0x4b, "\x7a": 0x8c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x29, "\x79": -0x49, "\x7a": 0x9c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x79, "\x79": -0x7d, "\x7a": 0x5e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x51, "\x79": -0xab, "\x7a": 0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x17, "\x79": -0xaf, "\x7a": 0x18 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb, "\x79": -0x9a, "\x7a": 0x55 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3c, "\x79": -0x7c, "\x7a": 0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x82, "\x79": -0x98, "\x7a": 0x25 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xe8, "\x79": 0x35, "\x7a": 0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xcd, "\x79": 0x32, "\x7a": 0x5b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xf9, "\x79": 0x0, "\x7a": 0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc4, "\x79": -0x5, "\x7a": 0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x8f, "\x79": -0xe, "\x7a": 0x95 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9, "\x79": 0x35, "\x7a": 0xaa },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x45, "\x79": 0x20, "\x7a": 0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x26, "\x79": 0x9, "\x7a": 0xad },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x62, "\x79": 0x1e, "\x7a": 0xa0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6d, "\x79": 0x59, "\x7a": 0x84 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xa2, "\x79": 0x5f, "\x7a": 0x61 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x91, "\x79": 0x84, "\x7a": -0x4d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xc3, "\x79": 0x63, "\x7a": -0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xce, "\x79": 0x65, "\x7a": 0x4 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xa4, "\x79": 0x81, "\x7a": 0x2c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3c, "\x79": 0xa4, "\x7a": 0x3d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x71, "\x79": 0xa1, "\x7a": 0x19 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6a, "\x79": 0xa4, "\x7a": -0x26 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x32, "\x79": 0xa9, "\x7a": 0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3, "\x79": 0xb3, "\x7a": 0x20 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x1, "\x79": 0x70, "\x7a": 0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3a, "\x79": 0x7f, "\x7a": 0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x33, "\x79": 0x8b, "\x7a": 0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xd0, "\x79": 0x2b, "\x7a": -0x5a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xea, "\x79": -0x5, "\x7a": -0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x6d, "\x79": 0x74, "\x7a": -0x7c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x77, "\x79": 0x3e, "\x7a": -0x98 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xa6, "\x79": 0x1a, "\x7a": -0x86 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x33, "\x79": 0x89, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6c, "\x79": 0x57, "\x7a": -0x85 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa2, "\x79": 0x5d, "\x7a": -0x61 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3a, "\x79": 0x7e, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x1, "\x79": 0x6d, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x9, "\x79": 0x33, "\x7a": -0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x45, "\x79": 0x1e, "\x7a": -0xab },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3, "\x79": 0xb3, "\x7a": -0x22 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x31, "\x79": 0xa9, "\x7a": -0x41 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6a, "\x79": 0xa4, "\x7a": 0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x71, "\x79": 0xa0, "\x7a": -0x1b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x3c, "\x79": 0xa4, "\x7a": -0x3f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa4, "\x79": 0x80, "\x7a": -0x2d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x90, "\x79": -0x21, "\x7a": -0x8e },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xa6, "\x79": -0x50, "\x7a": -0x6c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xd6, "\x79": -0x42, "\x7a": -0x43 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xdc, "\x79": -0x5f, "\x7a": -0xc },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb1, "\x79": -0x89, "\x7a": 0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x55, "\x79": -0x1f, "\x7a": -0xa5 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x29, "\x79": -0x4b, "\x7a": -0x9c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x3c, "\x79": -0x7d, "\x7a": -0x75 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x79, "\x79": -0x7e, "\x7a": -0x5d },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x82, "\x79": -0x99, "\x7a": -0x24 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x32, "\x79": -0x90, "\x7a": -0x64 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0xb, "\x79": -0x9b, "\x7a": -0x54 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x17, "\x79": -0xaf, "\x7a": -0x16 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": 0x51, "\x79": -0xac, "\x7a": -0x1 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x5f, "\x79": -0xa0, "\x7a": -0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x43, "\x79": -0x61, "\x7a": -0x8f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x15, "\x79": -0x3a, "\x7a": -0xa5 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x7f, "\x79": -0x4d, "\x7a": -0x8c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x62, "\x79": 0x1c, "\x7a": -0xa0 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x26, "\x79": 0x7, "\x7a": -0xad },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x8f, "\x79": -0x10, "\x7a": -0x95 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xd7, "\x79": -0x3a, "\x7a": -0x59 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xac, "\x79": -0x64, "\x7a": -0x66 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x9a, "\x79": -0x8d, "\x7a": -0x3b },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xf0, "\x79": -0x37, "\x7a": -0x1f },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xe8, "\x79": 0x35, "\x7a": -0x23 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xcd, "\x79": 0x31, "\x7a": -0x5c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc5, "\x79": -0x6, "\x7a": -0x76 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xf8, "\x79": 0x0, "\x7a": -0x3 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x91, "\x79": 0x85, "\x7a": 0x4c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xc3, "\x79": 0x63, "\x7a": 0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xce, "\x79": 0x65, "\x7a": -0x5 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa6, "\x79": 0x1c, "\x7a": 0x87 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x77, "\x79": 0x41, "\x7a": 0x98 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x6d, "\x79": 0x76, "\x7a": 0x7c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xea, "\x79": -0x4, "\x7a": 0x3a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xd0, "\x79": 0x2c, "\x7a": 0x5a },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xb1, "\x79": -0x89, "\x7a": -0x2 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xdb, "\x79": -0x5e, "\x7a": 0xd },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xd6, "\x79": -0x41, "\x7a": 0x44 },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0xa6, "\x79": -0x4f, "\x7a": 0x6c },
+      { "\x65\x6c\x65\x6d": "\x43", "\x78": -0x91, "\x79": -0x1f, "\x7a": 0x8f },
+    ],
+    [
+      [0x0, 0x1, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x0, 0x14],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0x9],
+      [0x2, 0x13, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2, 0x3d],
+      [0x3, 0x4, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3, 0x3e],
+      [0x4, 0x47],
+      [0x4, 0x7],
+      [0x5, 0x17, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5, 0xa],
+      [0x6, 0x8, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x6, 0xa],
+      [0x6, 0x18],
+      [0x7, 0xe, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x7, 0x8],
+      [0x8, 0x9],
+      [0x9, 0x15, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xa, 0xf, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0x10, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xb, 0x62],
+      [0xb, 0xf],
+      [0xc, 0xd, "\x64\x6f\x75\x62\x6c\x65"],
+      [0xc, 0x10],
+      [0xc, 0x48],
+      [0xd, 0x46],
+      [0xd, 0xe],
+      [0xe, 0xf],
+      [0x10, 0x5f],
+      [0x11, 0x1e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x11, 0x12],
+      [0x11, 0x13],
+      [0x12, 0x14, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x12, 0x1b],
+      [0x13, 0x29],
+      [0x14, 0x15],
+      [0x15, 0x19],
+      [0x16, 0x17],
+      [0x16, 0x18, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x16, 0x25],
+      [0x17, 0x5b],
+      [0x18, 0x19],
+      [0x19, 0x1a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1a, 0x1b],
+      [0x1a, 0x26],
+      [0x1b, 0x1f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1c, 0x2a],
+      [0x1c, 0x22],
+      [0x1c, 0x1d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x1d, 0x1e],
+      [0x1d, 0x28],
+      [0x1e, 0x1f],
+      [0x1f, 0x21],
+      [0x20, 0x21, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x20, 0x24],
+      [0x20, 0x26],
+      [0x21, 0x22],
+      [0x22, 0x35, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x23, 0x24, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x23, 0x27],
+      [0x23, 0x36],
+      [0x24, 0x34],
+      [0x25, 0x27],
+      [0x25, 0x26, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x27, 0x5c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x28, 0x29, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x28, 0x2c],
+      [0x29, 0x3c],
+      [0x2a, 0x2b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2a, 0x2d],
+      [0x2b, 0x2c],
+      [0x2b, 0x33],
+      [0x2c, 0x3a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2d, 0x35],
+      [0x2d, 0x31, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2e, 0x2f],
+      [0x2e, 0x30, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2e, 0x4c],
+      [0x2f, 0x54, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x2f, 0x39],
+      [0x30, 0x31],
+      [0x30, 0x38],
+      [0x31, 0x32],
+      [0x32, 0x33, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x32, 0x4d],
+      [0x33, 0x3f],
+      [0x34, 0x35],
+      [0x34, 0x38, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x36, 0x37, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x36, 0x57],
+      [0x37, 0x39],
+      [0x37, 0x38],
+      [0x39, 0x59, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3a, 0x3b],
+      [0x3a, 0x3f],
+      [0x3b, 0x3c, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3b, 0x42],
+      [0x3c, 0x3d],
+      [0x3d, 0x3e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x3e, 0x43],
+      [0x3f, 0x40, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x40, 0x4a],
+      [0x40, 0x41],
+      [0x41, 0x45, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x41, 0x42],
+      [0x42, 0x43, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x43, 0x47],
+      [0x44, 0x48, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x44, 0x45],
+      [0x44, 0x49],
+      [0x45, 0x46],
+      [0x46, 0x47, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x48, 0x51],
+      [0x49, 0x4b],
+      [0x49, 0x4a, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4a, 0x4d],
+      [0x4b, 0x50, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4b, 0x4e],
+      [0x4c, 0x4e],
+      [0x4c, 0x4d, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4e, 0x55, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x4f, 0x50],
+      [0x4f, 0x55],
+      [0x4f, 0x52, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x50, 0x51],
+      [0x51, 0x5f, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x52, 0x60],
+      [0x52, 0x56],
+      [0x53, 0x59],
+      [0x53, 0x54],
+      [0x53, 0x56, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x54, 0x55],
+      [0x56, 0x5d],
+      [0x57, 0x5c],
+      [0x57, 0x58, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x58, 0x59],
+      [0x58, 0x5e],
+      [0x5a, 0x5b, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5a, 0x5e],
+      [0x5b, 0x5c],
+      [0x5d, 0x5e, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x5d, 0x61],
+      [0x5f, 0x60],
+      [0x60, 0x61, "\x64\x6f\x75\x62\x6c\x65"],
+      [0x61, 0x62],
+    ],
+    null,
+    "\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\u2697\ufe0f\x20\u7269\u8cea\u6027\u8cea\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u7acb\u9ad4\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x31\x30\x30\x20\u662f\u5927\u578b\u5bcc\u52d2\u70ef\u5bb6\u65cf\u4e2d\u7684\u91cd\u8981\u6210\u54e1\u3002\u5176\u5206\u5b50\u7531\x20\x31\x30\x30\x20\u500b\u78b3\u539f\u5b50\u7d44\u6210\u5c01\u9589\u7c60\u72c0\uff0c\u5305\u542b\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x31\x32\u500b\u4e94\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\x20\u8207\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x34\x30\u500b\u516d\u908a\u5f62\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u96a8\u8457\u78b3\u539f\u5b50\u6578\u589e\u52a0\uff0c\u7c60\u9ad4\u5f62\u72c0\u8b8a\u5f97\u66f4\u52a0\u591a\u6a23\u5316\uff0c\u6b64\u7d50\u69cb\u5448\u73fe\u51fa\u8907\u96dc\u7684\u4f4e\u5c0d\u7a31\u6027\uff08\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x43\x32\x20\u9ede\u7fa4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\uff09\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u7269\u7406\u6027\u8cea\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5927\u578b\u5bcc\u52d2\u70ef\u5728\u5b8f\u89c0\u72c0\u614b\u4e0b\u901a\u5e38\u70ba\u9ed1\u8272\u56fa\u9ad4\u3002\u7531\u65bc\u5206\u5b50\u9ad4\u7a4d\u986f\u8457\u5927\u65bc\x20\x43\x36\x30\uff0c\u5176\u5206\u5b50\u9593\u7684\u51e1\u5f97\u74e6\u529b\u66f4\u5f37\uff0c\u6607\u83ef\u6eab\u5ea6\u66f4\u9ad8\u3002\u5167\u90e8\u5de8\u5927\u7684\u7a7a\u8154\u7a7a\u9593\u4f7f\u5176\u5177\u6709\u6975\u9ad8\u7684\u96fb\u5b50\u5bb9\u7d0d\u80fd\u529b\u8207\u5167\u5d4c\u6f5b\u529b\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u96fb\u5b50\u7d50\u69cb\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u96d6\u7136\u5448\u73fe\u66f2\u9762\uff0c\u4f46\u78b3\u539f\u5b50\u4ecd\u4fdd\u6301\x20\x3c\x73\x74\x72\x6f\x6e\x67\x3e\x73\x70\u00b2\x20\u6df7\u6210\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u3002\u7531\u65bc\u8868\u9762\u66f2\u7387\u5728\u4e0d\u540c\u5340\u57df\u5dee\u7570\u5de8\u5927\uff0c\u5176\u96fb\u5b50\u96f2\u5206\u5e03\u6975\u4e0d\u5747\u52fb\uff0c\u9019\u8ce6\u4e88\u4e86\x20\x43\x31\x30\x30\x20\u7368\u7279\u7684\u5340\u57df\u5316\u5b78\u53cd\u61c9\u6d3b\u6027\u8207\u975e\u7dda\u6027\u5149\u5b78\u7279\u6027\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x73\x65\x63\x74\x69\x6f\x6e\x22\x20\x73\x74\x79\x6c\x65\x3d\x22\x6d\x61\x72\x67\x69\x6e\x2d\x74\x6f\x70\x3a\x20\x31\x32\x70\x78\x3b\x20\x62\x6f\x72\x64\x65\x72\x2d\x74\x6f\x70\x3a\x20\x31\x70\x78\x20\x64\x61\x73\x68\x65\x64\x20\x72\x67\x62\x61\x28\x32\x35\x35\x2c\x32\x35\x35\x2c\x32\x35\x35\x2c\x30\x2e\x32\x29\x3b\x20\x70\x61\x64\x64\x69\x6e\x67\x2d\x74\x6f\x70\x3a\x20\x31\x30\x70\x78\x3b\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x74\x69\x74\x6c\x65\x22\x3e\ud83c\udfed\x20\u524d\u7aef\u79d1\u5b78\u61c9\u7528\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x64\x69\x76\x20\x63\x6c\x61\x73\x73\x3d\x22\x69\x6e\x66\x6f\x2d\x62\x6f\x64\x79\x22\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x31\x2e\x20\u5206\u5b50\u5948\u7c73\u6280\u8853\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\x43\x31\x30\x30\x20\u7684\u5de8\u5927\u5167\u8154\u53ef\u540c\u6642\u5c01\u88dd\u591a\u500b\u91d1\u5c6c\u539f\u5b50\u6216\u8907\u96dc\u7684\u5206\u5b50\u7c07\uff08\u5982\u91d1\u5c6c\u78b3\u5316\u7269\u6216\u6c2e\u5316\u7269\u7c07\uff09\uff0c\u9019\u985e\u300c\u5167\u5d4c\u5bcc\u52d2\u70ef\u300d\u88ab\u8996\u70ba\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u55ae\u5206\u5b50\u91cf\u5b50\u78c1\u9ad4\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u8207\u91cf\u5b50\u8a08\u7b97\u7684\u91cd\u8981\u8f09\u9ad4\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x32\x2e\x20\u6750\u6599\u6539\u6027\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u56e0\u5176\u5f37\u5927\u7684\u96fb\u8ca0\u5ea6\uff0c\x43\x31\x30\x30\x20\u88ab\u7814\u7a76\u4f5c\u70ba\u9ad8\u6027\u80fd\u805a\u5408\u7269\u7684\u6dfb\u52a0\u5291\uff0c\u80fd\u5920\u986f\u8457\u63d0\u5347\u6750\u6599\u7684\u6297\u6c27\u5316\u6027\u8207\u71b1\u7a69\u5b9a\u6027\u3002\x3c\x62\x72\x3e\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x73\x70\x61\x6e\x20\x63\x6c\x61\x73\x73\x3d\x22\x68\x69\x67\x68\x6c\x69\x67\x68\x74\x2d\x74\x69\x74\x6c\x65\x22\x3e\x33\x2e\x20\u6709\u6a5f\u5149\u4f0f\uff1a\x3c\x2f\x73\x70\x61\x6e\x3e\u5927\u578b\u5bcc\u52d2\u70ef\u5177\u6709\u66f4\u5bec\u7684\u96fb\u5b50\u5438\u6536\u5149\u8b5c\u3002\u5176\u884d\u751f\u7269\u5728\x3c\x73\x74\x72\x6f\x6e\x67\x3e\u6709\u6a5f\u8584\u819c\u592a\u967d\u80fd\u96fb\u6c60\x3c\x2f\x73\x74\x72\x6f\x6e\x67\x3e\u4e2d\u53ef\u4f5c\u70ba\u9ad8\u6548\u7684\u53d7\u9ad4\u6750\u6599\uff0c\u63d0\u5347\u5c0d\u592a\u967d\u5149\u80fd\u91cf\u7684\u8f49\u63db\u6548\u7387\u3002\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e\x0a\x20\x20\x20\x20\x3c\x2f\x64\x69\x76\x3e",
+    "\x43\x32",
+  ));
