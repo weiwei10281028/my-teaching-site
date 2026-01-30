@@ -1113,13 +1113,12 @@
 }
 
 /* --- 每日運勢 UI (Mystical Theme -> Liquid HUD Theme) --- */
-.fortune-entry-btn {
+.fortune-entry-btn, .calibration-entry-btn {
     position: fixed;
     z-index: 60; 
     
     /* 電腦版位置設定 */
     right: 25px;
-    top: 190px; 
     width: 170px; 
     
     padding: 8px 0; 
@@ -1136,37 +1135,53 @@
     overflow: hidden;
     pointer-events: auto; 
     
-    /* [S33] 液態水銀/多彩漸層背景 */
-    background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #8b5cf6 100%);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: #fff; 
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); 
     text-shadow: 0 0 5px rgba(255,255,255,0.5);
     font-family: 'Rajdhani', sans-serif;
 }
 
+.fortune-entry-btn {
+    top: 155px;
+    /* [S33] 液態水銀/多彩漸層背景 */
+    background: linear-gradient(135deg, #1e1b4b 0%, #3b82f6 50%, #8b5cf6 100%);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+}
+
+.calibration-entry-btn {
+    top: 210px;
+    background: linear-gradient(135deg, #0f172a 0%, #0ea5e9 45%, #22c55e 100%);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
+}
+
 /* 手機版特別優化：位置更緊湊 */
 @media (max-width: 768px) {
-    .fortune-entry-btn {
+    .fortune-entry-btn, .calibration-entry-btn {
         right: 15px;
-        top: 125px; 
         width: 160px; 
         
         padding: 6px 0; 
         font-size: 0.8rem;
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* 手機版稍暗，避免太搶眼 */
         border: 1px solid var(--hud-cyan);
         color: var(--hud-cyan);
     }
+    .fortune-entry-btn {
+        top: 85px;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* 手機版稍暗，避免太搶眼 */
+    }
+    .calibration-entry-btn {
+        top: 130px;
+        background: linear-gradient(135deg, #052e3a 0%, #0f172a 100%);
+    }
 }
 
-.fortune-entry-btn:hover {
+.fortune-entry-btn:hover, .calibration-entry-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(0, 242, 255, 0.8);
     background: var(--hud-cyan);
     color: #000;
 }
-.fortune-entry-btn:active { transform: scale(0.95); }
+.fortune-entry-btn:active, .calibration-entry-btn:active { transform: scale(0.95); }
 
 /* Modal 背景：改用 opacity 做漸變動畫 */
 #fortune-modal {
@@ -1366,6 +1381,7 @@
                 <div class="suggestion-label">你可能還想看：</div>  
             </div>
             <div class="fortune-entry-btn" onclick="openFortuneModal()">🔮 每日元素運勢</div>
+            <div class="calibration-entry-btn" onclick="openCalibrationModal()">🧭 數據校準</div>
 
             <span class="input-note" id="viewport-subtitle"></span>
         </div>
@@ -1386,13 +1402,7 @@
     </div>
     <div id="config-modal">
         <div class="config-panel">
-
-            <div class="config-tabs">
-                <div id="tab-list" class="config-tab active" onclick="switchConfigView('list')">元素清單</div>
-                <div id="tab-quiz" class="config-tab" onclick="switchConfigView('quiz')">數據校準</div>
-            </div>
-            
-            <!-- 視圖 A: 元素清單 -->
+            <!-- 電子組態：元素清單 -->
             <div id="list-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
                 <div class="config-header">
                     <button class="config-close" onclick="closeConfigModal()">✕</button>
@@ -1400,128 +1410,140 @@
                 </div>
                 <div class="config-list" id="configListContainer"></div>
             </div>
+        </div> <!-- 結束 config-panel -->
+    </div> <!-- 結束 config-modal -->
 
-            <!-- 視圖 B: 數據校準 -->
-            <div id="quiz-view">
-                <div class="config-header">
-                    <button class="config-close" onclick="closeConfigModal()">✕</button>
-                    <div class="unified-bar">
-                        <div class="status-tag-hud">READY</div>
-                        <span id="quiz-status-text" class="status-text-hud">Select Level</span>
-                        <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">取消</div>
-                    </div>
+<!-- 新增：數據校準專用 Modal（從電子組態視窗拆出） -->
+<div id="calibration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 210; justify-content: center; align-items: center;">
+    <div class="config-panel" style="border: 1px solid rgba(34, 197, 94, 0.35); box-shadow: 0 0 30px rgba(34, 197, 94, 0.18);">
+        <div id="quiz-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            <div class="config-header">
+                <button class="config-close" onclick="closeCalibrationModal()">✕</button>
+                <div class="unified-bar">
+                    <div class="status-tag-hud">READY</div>
+                    <span id="quiz-status-text" class="status-text-hud">Select Level</span>
+                    <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">取消</div>
                 </div>
-                <div style="flex: 1; overflow-y: auto;">
-                    <div id="quiz-setup-area">
-                        <span class="setup-label">STEP 1: 校準精度 (難度)</span>
-                        <div class="setup-btns">
-                            <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
-                            <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
-                        </div>
-                        <span class="setup-label">STEP 2: 數據通量 (題數)</span>
-                        <div class="setup-btns">
-                            <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
-                            <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
-                            <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
-                        </div>
-                        <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
+            </div>
+            <div style="flex: 1; overflow-y: auto;">
+                <div id="quiz-setup-area">
+                    <span class="setup-label">STEP 1: 校準精度 (難度)</span>
+                    <div class="setup-btns">
+                        <button class="setup-btn active" onclick="setQuizParam('diff', 1, this)">基礎</button>
+                        <button class="setup-btn" onclick="setQuizParam('diff', 2, this)">進階</button>
+                        <button class="setup-btn" onclick="setQuizParam('diff', 3, this)">混成</button>
                     </div>
-                    <div id="quiz-content-area">
-                        <div class="quiz-question-card">
-                            <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
-                            <div id="quiz-question" class="quiz-question-text">--</div>
+                    <span class="setup-label">STEP 2: 數據通量 (題數)</span>
+                    <div class="setup-btns">
+                        <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
+                        <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
+                        <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
+                    </div>
+                    <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
+                </div>
+                <div id="quiz-content-area">
+                    <div class="quiz-question-card">
+                        <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
+                        <div id="quiz-question" class="quiz-question-text">--</div>
+                    </div>
+                    <div id="quiz-options" class="quiz-options-grid"></div>
+                </div>
+                <div id="quiz-result-area">
+                    <div id="quiz-result-card" class="quiz-question-card"></div>
+                    <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
+                </div>
+                <div class="difficulty-grid" id="difficulty-grid">
+                    <!-- 數據校準任務指引 -->
+                    <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; margin-bottom: 5px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
+                        <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
+                            <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
-                        <div id="quiz-options" class="quiz-options-grid"></div>
-                    </div>
-                    <div id="quiz-result-area">
-                        <div id="quiz-result-card" class="quiz-question-card"></div>
-                        <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回級別選擇</button>
-                    </div>
-                    <div class="difficulty-grid" id="difficulty-grid">
-                        <!-- 數據校準任務指引 (固定高度 & 取消標題固定) -->
-                        <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; margin-bottom: 5px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
-                            <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
-                                <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
-                            </div>
-                            <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
-                                <div style="margin-bottom: 12px;"><strong style="color:#38bdf8;">1. 選擇 RANK (範圍)：</strong>決定校準數據的原子序區間。</div>
-                                <div style="margin-bottom: 8px;"><strong style="color:#fbbf24;">2. 設定精度 (題型組合)：</strong>點擊 RANK 後選擇對應難度。</div>
+                        <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
+                            <div style="margin-bottom: 12px;"><strong style="color:#38bdf8;">1. 選擇 RANK (範圍)：</strong>決定校準數據的原子序區間。</div>
+                            <div style="margin-bottom: 8px;"><strong style="color:#fbbf24;">2. 設定精度 (題型組合)：</strong>點擊 RANK 後選擇對應難度。</div>
+                            
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                                <!-- 基礎級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
+                                        ．符號、中文名、英文全名互相辨識<br>
+                                        ．原子序與符號互相辨識<br>
+                                        ．座標定位（週期、族）<br>
+                                        ．元素分類判斷<br>
+                                        ．常溫常壓物理狀態<br>
+                                        ．計算與逆推（電子數、質子數、等電子序列）<br>
+                                        ．同族或同一週期元素辨識<br>
+                                        ．電負度比較
+                                    </div>
+                                </div>
                                 
-                                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                                    <!-- 基礎級 -->
-                                    <div style="margin-bottom: 15px;">
-                                        <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 基礎級 (Basic) ]</span>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
-                                            ．符號、中文名、英文全名互相辨識<br>
-                                            ．原子序與符號互相辨識<br>
-                                            ．座標定位（週期、族）<br>
-                                            ．元素分類判斷<br>
-                                            ．常溫常壓物理狀態<br>
-                                            ．計算與逆推（電子數、質子數、等電子序列）<br>
-                                            ．同族或同一週期元素辨識<br>
-                                            ．電負度比較
-                                        </div>
+                                <!-- 進階級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
+                                        ．基礎級所有題型<br>
+                                        ．電子組態辨識元素<br>
+                                        ．價電子數計算<br>
+                                        ．未成對電子數計算<br>
+                                        ．軌域電子統計<br>
+                                        ．區塊判定<br>
+                                        ．化學性質相似判斷
                                     </div>
-                                    
-                                    <!-- 進階級 -->
-                                    <div style="margin-bottom: 15px;">
-                                        <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 進階級 (Intermediate) ]</span>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
-                                            ．基礎級所有題型<br>
-                                            ．電子組態辨識元素<br>
-                                            ．價電子數計算<br>
-                                            ．未成對電子數計算<br>
-                                            ．軌域電子統計<br>
-                                            ．區塊判定<br>
-                                            ．化學性質相似判斷
-                                        </div>
+                                </div>
+                                
+                                <!-- 混成級 -->
+                                <div style="margin-bottom: 15px;">
+                                    <span style="color:#f59e0b; font-weight: bold; display: block; margin-bottom: 6px;">[ 混成級 (Hybridization) ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f59e0b;">
+                                        ．混成軌域判斷
                                     </div>
-                                    
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- RANK 選擇卡片 -->
-                        <div class="diff-card diff-a" onclick="startQuiz('A')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK A: 初級數據流</span>
-                                <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
-                                <span class="diff-tag">適合基礎同步</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
+                    <!-- RANK 選擇卡片 -->
+                    <div class="diff-card diff-a" onclick="startQuiz('A')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK A: 初級數據流</span>
+                            <span class="diff-range">原子序 1 ~ 36 (H 至 Kr)</span>
+                            <span class="diff-tag">適合基礎同步</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #10b981; font-weight: 900;">01</div>
+                    </div>
 
-                        <div class="diff-card diff-b" onclick="startQuiz('B')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK B: 核心數據流</span>
-                                <span class="diff-range">1 ~ 36 + 所有主族元素 (1A~8A)</span>
-                                <span class="diff-tag">主族元素完整覆蓋</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
+                    <div class="diff-card diff-b" onclick="startQuiz('B')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK B: 核心數據流</span>
+                            <span class="diff-range">1 ~ 36 + 所有主族元素 (1A~8A)</span>
+                            <span class="diff-tag">主族元素完整覆蓋</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #3b82f6; font-weight: 900;">02</div>
+                    </div>
 
-                        <div class="diff-card diff-c" onclick="startQuiz('C')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK C: 專業數據流</span>
-                                <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
-                                <span class="diff-tag">涵蓋常用物質數據</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
+                    <div class="diff-card diff-c" onclick="startQuiz('C')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK C: 專業數據流</span>
+                            <span class="diff-range">1 ~ 88 (移除鑭系/錒系)</span>
+                            <span class="diff-tag">涵蓋常用物質數據</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 900;">03</div>
+                    </div>
 
-                        <div class="diff-card diff-d" onclick="startQuiz('D')">
-                            <div class="diff-info">
-                                <span class="diff-title">RANK D: 全域數據流</span>
-                                <span class="diff-range">1 ~ 118 (完整元素週期表)</span>
-                                <span class="diff-tag">終極數據同步考驗</span>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
+                    <div class="diff-card diff-d" onclick="startQuiz('D')">
+                        <div class="diff-info">
+                            <span class="diff-title">RANK D: 全域數據流</span>
+                            <span class="diff-range">1 ~ 118 (完整元素週期表)</span>
+                            <span class="diff-tag">終極數據同步考驗</span>
                         </div>
+                        <div style="font-size: 1.5rem; color: #ef4444; font-weight: 900;">04</div>
                     </div>
                 </div>
             </div>
-        </div> <!-- 結束 config-panel -->
-    </div> <!-- 結束 config-modal -->
+        </div>
+    </div>
+</div>
 
 <!-- 新增：物質檢索專用 Modal -->
 <div id="substance-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 400; justify-content: center; align-items: center;">
@@ -1606,11 +1628,6 @@
                 <div class="switch-container">
                     <input type="checkbox" id="toggle-plasma">
                     <label for="toggle-plasma" class="clickable-label" style="color:#a5f3fc; font-weight:bold;">⚡ 開啟電漿態模式</label>
-                </div>
-                <!-- 阻尼模式 -->
-                <div class="switch-container">
-                    <input type="checkbox" id="toggle-damping">
-                    <label for="toggle-damping" class="clickable-label" style="color:#c4b5fd; font-weight:bold;">🌊 阻尼模式</label>
                 </div>
             </details>
 
@@ -1714,6 +1731,12 @@
                             style="background:rgba(200, 150, 120, 0.15); border-color:rgba(200, 150, 120, 0.4); color:#C89678;"
                             onclick="OrganicLab.open()">
                         <span>官能基檢驗</span>
+                    </button>
+                    <!-- 化學平衡 (新增) -->
+                    <button class="glass-toggle-btn" 
+                            style="background:rgba(100, 200, 150, 0.15); border-color:rgba(100, 200, 150, 0.4); color:#64C896;"
+                            onclick="EquilibriumLab.open()">
+                        <span>化學平衡</span>
                     </button>
                 </div>
             </details>
@@ -1830,12 +1853,14 @@
 </div>
 
 <script src="data_static.js"></script>
-<script src="data_molecules.js"></script>
+<script src="data_molecules1.js"></script>
+<script src="data_molecules2.js"></script>
 <script src="data_reactions.js"></script>
 <script src="data_substances.js"></script>
 <script src="lab_flame.js"></script>
 <script src="lab_hydrogen.js"></script>
 <script src="lab_organic.js"></script>
+<script src="lab_equilibrium.js"></script>
 <script src="data_fortune.js"></script>
 <script src="guide_system.js"></script>
 <script src="data_element_descriptions.js"></script>
@@ -1964,104 +1989,11 @@ document.addEventListener('click', (e) => {
 });
 
 window.currentVariantKey = null;
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768 || document.body.classList.contains('simulate-mobile');
 let isReactionRunning = false; 
 let isReactionFinished = false; 
 let isPlasmaMode = false;
-let isDampingMode = false; // 阻尼模式開關
 
-// 檢測是否為 iOS 設備
-function isIOSDevice() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-// 創建 iOS 觸覺反饋的隱藏 switch 元素（iOS 18+ workaround）
-let iosHapticSwitch = null;
-let iosHapticLabel = null;
-function createIOSHapticSwitch() {
-    if (iosHapticSwitch && iosHapticLabel) return { switch: iosHapticSwitch, label: iosHapticLabel };
-    
-    // 創建隱藏的 switch 元素和 label 用於觸發 iOS 觸覺反饋
-    iosHapticSwitch = document.createElement('input');
-    iosHapticSwitch.type = 'checkbox';
-    iosHapticSwitch.id = 'ios-haptic-switch';
-    iosHapticSwitch.style.position = 'fixed';
-    iosHapticSwitch.style.opacity = '0';
-    iosHapticSwitch.style.pointerEvents = 'none';
-    iosHapticSwitch.style.width = '1px';
-    iosHapticSwitch.style.height = '1px';
-    iosHapticSwitch.style.top = '-10px';
-    iosHapticSwitch.style.left = '-10px';
-    
-    iosHapticLabel = document.createElement('label');
-    iosHapticLabel.htmlFor = 'ios-haptic-switch';
-    iosHapticLabel.style.position = 'fixed';
-    iosHapticLabel.style.opacity = '0';
-    iosHapticLabel.style.pointerEvents = 'none';
-    iosHapticLabel.style.width = '1px';
-    iosHapticLabel.style.height = '1px';
-    iosHapticLabel.style.top = '-10px';
-    iosHapticLabel.style.left = '-10px';
-    
-    document.body.appendChild(iosHapticSwitch);
-    document.body.appendChild(iosHapticLabel);
-    
-    return { switch: iosHapticSwitch, label: iosHapticLabel };
-}
-
-// 震動輔助函數（支援多平台，包含 iOS workaround）
-function triggerVibration(duration) {
-    if (!duration || duration <= 0) return false;
-    
-    try {
-        // 標準 Web Vibration API（Android/Chrome）
-        if (navigator && typeof navigator.vibrate === 'function') {
-            const result = navigator.vibrate(duration);
-            if (result !== false) {
-                return true;
-            }
-        }
-        
-        // iOS workaround：使用 switch 元素觸發觸覺反饋（iOS 18+）
-        if (isIOSDevice()) {
-            const hapticEls = createIOSHapticSwitch();
-            if (hapticEls && hapticEls.switch && hapticEls.label) {
-                try {
-                    // 方法1：點擊 label 來觸發觸覺反饋（iOS 18+ 支援）
-                    hapticEls.label.click();
-                    // 方法2：切換 switch 狀態
-                    hapticEls.switch.checked = !hapticEls.switch.checked;
-                    // 立即切換回來，準備下次使用
-                    setTimeout(() => {
-                        hapticEls.switch.checked = !hapticEls.switch.checked;
-                    }, 50);
-                    return true;
-                } catch(e) {
-                    console.log('iOS 觸覺反饋觸發失敗:', e);
-                }
-            }
-        }
-        
-        return false;
-    } catch(e) {
-        console.log('震動觸發失敗:', e);
-        return false;
-    }
-}
-
-// 檢查震動是否可用
-function isVibrationSupported() {
-    // Android/Chrome 標準 API
-    if (navigator && typeof navigator.vibrate === 'function') {
-        return true;
-    }
-    // iOS workaround
-    if (isIOSDevice()) {
-        return true;
-    }
-    return false;
-}
 
 // --- [新增] 用來儲存反應歷史紀錄 ---
 let moleculeHistory = [];
@@ -2232,7 +2164,7 @@ let currentFaceColor = 'yellow'; // 預設顏色
 let rotVelocity = { x: 0.004, y: 0.004, z: 0 };
 let panOffset = { x: 0, y: 0 }; 
 let isLongPressActive = false;
-let scale = 1.6; 
+let scale = isMobile ? 1.35 : 1.6; 
 let isDragging = false; 
 let lastMouse = { x: 0, y: 0 };
 let currentMode = 2; 
@@ -2242,7 +2174,7 @@ currentVariantKey = null;
 let lastInteractTime = 0; 
 let lastTouchDist = 0;
 let lastTouchCenter = { x:0, y:0 };
-let lastTouchAngle = 0; 
+let mobileSingleFingerDrag = false; 
 
 function toggleMode() {
     currentMode = (currentMode + 1) % 3; 
@@ -2850,8 +2782,8 @@ function updateSuggestions() {
     const picks = [];
     let safety = 0;
     
-    // 隨機挑選 4 個不重複且不是當前的分子
-    while(picks.length < 4 && picks.length < allKeys.length && safety < 100) {
+    // 隨機挑選 2 個不重複且不是當前的分子
+    while(picks.length < 2 && picks.length < allKeys.length && safety < 100) {
         const r = allKeys[Math.floor(Math.random() * allKeys.length)];
         if(!picks.includes(r) && r !== currentKey) {
             picks.push(r);
@@ -2984,15 +2916,14 @@ function loadMolecule(key, variantKey = null) {
         if (cIdx !== -1) {
             if (isOctetMode) {
                 if (type === 'double') {
-                    const resonanceMols = ["三氧化硫", "二氧化硫", "硫代硫酸"];
-                    const isResonance = resonanceMols.some(n => currentKey.includes(n));
+                    // 修正判定邏輯：同時檢查 ID 與全名，確保 SO2, SO3 命中以保留一條雙鍵
+                    const isResonance = /SO[23]|二氧化硫|三氧化硫|硫代硫酸/.test(currentKey + (data.fullKey || ""));
 
                     if (isResonance && keptDoubleBonds === 0) {
                         keptDoubleBonds++;
                     } else {
                         bond[2] = 'coordinate';
                         bond[0] = cIdx;
-                    
                         bond[1] = tIdx;
                     }
                 }
@@ -4108,29 +4039,7 @@ function animate() {
     if (window.isPaused) return;
 
     if (!isDragging && !isReactionRunning && !isLongPressActive) {
-        // 阻尼模式：使用更強的阻尼係數，讓減速更明顯
-        if (isDampingMode) {
-            let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
-            // 速度越快，阻尼越強（速度依賴性阻尼）
-            // 基礎阻尼係數 0.82，高速時降至 0.75，低速時升至 0.88（非常明顯的阻尼感）
-            const baseDamping = 0.82;
-            const speedFactor = Math.min(1, speed * 150); // 速度因子，最大為1
-            const dampingCoeff = baseDamping - (speedFactor * 0.07); // 0.75-0.88 範圍（非常強阻尼）
-            rotVelocity.x *= dampingCoeff;
-            rotVelocity.y *= dampingCoeff;
-            rotVelocity.z *= dampingCoeff;
-            
-            // 當速度接近停止時，觸發一次輕微震動（模擬停止感）
-            if (speed > 0.0001 && speed < 0.005) {
-                // 只在速度很慢時觸發一次，避免重複震動
-                if (!window.lastDampingVibration || (time - window.lastDampingVibration) > 250) {
-                    triggerVibration(30); // 30ms 輕微震動
-                    window.lastDampingVibration = time;
-                }
-            }
-        } else {
-            rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
-        }
+        rotVelocity.x *= 0.96; rotVelocity.y *= 0.96; rotVelocity.z *= 0.96;
         let speed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
         const MIN_SPEED = 0.004; 
         const autoRotateEl = document.getElementById('toggle-auto-rotate');
@@ -4164,7 +4073,10 @@ function setupInteractions() {
 
     // 1. 基礎按鈕綁定
     const modeBtn = document.getElementById('mode-toggle');
-    if (modeBtn) modeBtn.addEventListener('click', toggleMode);
+    if (modeBtn) {
+        modeBtn.addEventListener('click', toggleMode);
+        if (isMobile) modeBtn.style.display = 'none';
+    }
 
     const loadBtn = document.getElementById('load-btn');
     if (loadBtn) loadBtn.addEventListener('click', handleLoadBtn);
@@ -4199,56 +4111,6 @@ function setupInteractions() {
         });
     }
     
-    // 阻尼模式開關
-    const toggleDamping = document.getElementById('toggle-damping');
-    if (toggleDamping) {
-        toggleDamping.addEventListener('change', (e) => {
-            isDampingMode = e.target.checked;
-            console.log('阻尼模式:', isDampingMode ? '開啟' : '關閉');
-            console.log('設備類型:', isIOSDevice() ? 'iOS' : '其他');
-            console.log('震動支援:', isVibrationSupported());
-            console.log('navigator.vibrate:', typeof navigator?.vibrate);
-            
-            // 開啟時觸發確認震動（必須在用戶交互事件中才能觸發）
-            if (isDampingMode) {
-                // 使用較強的震動讓用戶明顯感受到
-                if (isVibrationSupported()) {
-                    // 先嘗試陣列格式（更明顯的震動模式）
-                    try {
-                        if (navigator && typeof navigator.vibrate === 'function') {
-                            const result = navigator.vibrate([100, 50, 100]);
-                            console.log('標準震動API結果:', result);
-                            if (result === false) {
-                                // 如果返回false，嘗試單次震動
-                                triggerVibration(100);
-                            }
-                        } else {
-                            // iOS workaround
-                            console.log('使用 iOS workaround');
-                            triggerVibration(100);
-                        }
-                    } catch(e) {
-                        // 如果陣列格式不支援，使用單次震動
-                        console.log('震動觸發錯誤:', e);
-                        triggerVibration(100);
-                    }
-                } else {
-                    console.log('此設備不支援震動功能');
-                }
-                
-                // 添加視覺反饋：在按鈕上顯示動畫
-                const label = toggleDamping.nextElementSibling;
-                if (label) {
-                    label.style.animation = 'none';
-                    setTimeout(() => {
-                        label.style.animation = 'pulse 0.6s ease';
-                    }, 10);
-                }
-            }
-        });
-    } else {
-        console.error('找不到阻尼模式開關元素');
-    }
 
     window.togglePerformanceMode = function() {
         const isPerf = !window.isPerformanceMode;
@@ -4464,11 +4326,6 @@ function setupInteractions() {
         startX = x; startY = y; lastMouse = { x, y }; 
         rotVelocity = { x: 0, y: 0, z: 0 }; 
         clearTimeout(longPressTimer);
-        
-        // 阻尼模式：滑動開始時觸發輕微震動（讓用戶感受到開始）
-        if (isDampingMode) {
-            triggerVibration(20); // 20ms 輕微震動
-        }
 
         if (isFaceBuildMode) {
             // 手機版優化：成面模式需停留 0.2 秒才觸發，防止旋轉誤觸導致選取失敗
@@ -4491,21 +4348,8 @@ function setupInteractions() {
         if (Math.abs(x - startX) > MOVE_TOLERANCE || Math.abs(y - startY) > MOVE_TOLERANCE) clearTimeout(longPressTimer);
         if (!isDragging) return;
         const dx = x - lastMouse.x; const dy = y - lastMouse.y;
-        if (currentMode === 1 || (currentMode === 2 && !altKeyIsDown)) {
-            // 阻尼模式：在滑動過程中添加輕微震動反饋（限制頻率，避免過於頻繁）
-            if (isDampingMode) {
-                const moveSpeed = Math.sqrt(dx*dx + dy*dy);
-                const now = performance.now();
-                // 降低觸發門檻，讓震動更容易觸發（移動速度 > 3px 即可）
-                if (moveSpeed > 3) {
-                    if (!window.lastMoveVibration || (now - window.lastMoveVibration) > 100) {
-                        // 使用短脈衝震動，強度根據速度調整（15-30ms）
-                        const vibrationIntensity = Math.min(30, Math.max(15, moveSpeed * 2.5));
-                        triggerVibration(vibrationIntensity);
-                        window.lastMoveVibration = now;
-                    }
-                }
-            }
+        const doRotate = mobileSingleFingerDrag || currentMode === 1 || (currentMode === 2 && !altKeyIsDown);
+        if (doRotate) {
             rotVelocity.y = dx * sensitivity; rotVelocity.x = -dy * sensitivity; 
             applyRotation(rotVelocity.y, rotVelocity.x, 0);
         } else {
@@ -4528,21 +4372,6 @@ function setupInteractions() {
             checkAtomClick(x, y);
         }
         
-        // 阻尼模式：滑動結束時觸發確認震動
-        if (isDampingMode && moveDist > MOVE_TOLERANCE) {
-            // 根據最終速度計算震動強度
-            const finalSpeed = Math.sqrt(rotVelocity.x*rotVelocity.x + rotVelocity.y*rotVelocity.y + rotVelocity.z*rotVelocity.z);
-            // 降低觸發門檻，讓震動更容易觸發
-            if (finalSpeed > 0.0001) {
-                // 使用中等強度的確認震動（50-70ms），讓用戶明顯感受到
-                const vibrationDuration = Math.min(70, Math.max(50, 50 + finalSpeed * 10000));
-                triggerVibration(vibrationDuration);
-            } else {
-                // 即使速度很低，只要有移動就觸發一次輕微震動
-                triggerVibration(30);
-            }
-        }
-        
         isDragging = false; 
         isLongPressActive = false; 
     };
@@ -4554,14 +4383,14 @@ function setupInteractions() {
     viewport.addEventListener("touchstart", e => {
         if(e.target.closest('.control-button') || e.target.closest('.suggestion-tag')) return;
         if (e.touches.length === 1) {
-            // 手機版也強制立即執行 handleStart 邏輯
+            if (isMobile) mobileSingleFingerDrag = true;
             handleStart(e.touches[0].clientX, e.touches[0].clientY);
         } else if (e.touches.length === 2) {
+            mobileSingleFingerDrag = false;
             clearTimeout(longPressTimer); 
             const t1 = e.touches[0], t2 = e.touches[1];
             lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             lastTouchCenter = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
-            lastTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
         }
     }, { passive: false });
 
@@ -4577,21 +4406,15 @@ function setupInteractions() {
             lastTouchCenter = center;
             const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (lastTouchDist > 0) {
-                const zoomDelta = (dist - lastTouchDist) * 0.003;
-                scale = Math.max(0.3, Math.min(8, scale + zoomDelta));
+                const ratio = dist / lastTouchDist;
+                scale = Math.max(0.3, Math.min(8, scale * ratio));
             }
             lastTouchDist = dist;
-            const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-            let angleDelta = angle - lastTouchAngle;
-            if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
-            if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
-            rotVelocity.z = angleDelta;
-            applyRotation(0, 0, rotVelocity.z);
-            lastTouchAngle = angle;
         }
     }, { passive: false });
 
     viewport.addEventListener("touchend", e => {
+        mobileSingleFingerDrag = false;
         if (e.changedTouches.length > 0) {
             handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
         } else {
@@ -5177,15 +5000,22 @@ function openConfigModal() {
 function closeConfigModal() { 
     const modal = document.getElementById('config-modal'); 
     if(modal) modal.style.display = 'none'; 
-    resetToDifficultySelection(); 
 }
 
-function switchConfigView(view) {
-    document.getElementById('tab-list').classList.toggle('active', view === 'list');
-    document.getElementById('tab-quiz').classList.toggle('active', view === 'quiz');
-    document.getElementById('list-view').style.display = (view === 'list' ? 'flex' : 'none');
-    document.getElementById('quiz-view').style.display = (view === 'quiz' ? 'flex' : 'none');
-    if (view === 'quiz') resetToDifficultySelection();
+function openCalibrationModal() {
+    const modal = document.getElementById('calibration-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        if (typeof pauseSystem === 'function') pauseSystem();
+        resetToDifficultySelection();
+    }
+}
+
+function closeCalibrationModal() {
+    const modal = document.getElementById('calibration-modal');
+    if (modal) modal.style.display = 'none';
+    if (typeof resumeSystem === 'function') resumeSystem();
+    resetToDifficultySelection();
 }
 
 window.resetToDifficultySelection = function() {
@@ -5220,7 +5050,7 @@ window.startQuiz = function(level) {
     };
 
     // 取得難度名稱映射
-    const diffMap = { 1: "基礎級", 2: "進階級" };
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "混成級" };
 
     // 預先根據 Rank 設定範圍池
     const poolMap = {
@@ -5252,9 +5082,12 @@ window.quizState.generateTypeDeck = function(diff, total) {
         // 包含：符號識別、原子序、座標、分類、狀態、計算與逆推、同族/同週期、區塊、電負度
         1: [0, 1, 2, 4, 5, 6, 10, 14],             
         
-        // 進階級：包含所有題型
+        // 進階級：包含所有題型（不包含混成軌域）
         // 包含：基礎級題型 + 所有電子組態相關題型（3、7、8、9、11、15）
-        2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]      
+        2: [3, 6, 7, 8, 9, 10, 11, 14, 15],
+        
+        // 混成級：只包含混成軌域判斷
+        3: [16]
     };
     
     const types = typePools[diff] || typePools[1];
@@ -5318,7 +5151,7 @@ window.quizState.generateTypeDeck = function(diff, total) {
 
 // 修正 setQuizParam 讓它也能即時更新 HUD
 window.setQuizParam = function(type, val, btn) {
-    const diffMap = { 1: "基礎級", 2: "進階級" };
+    const diffMap = { 1: "基礎級", 2: "進階級", 3: "混成級" };
     btn.parentElement.querySelectorAll('.setup-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (type === 'diff') {
@@ -5472,6 +5305,14 @@ function generateQuestionKey(type, quizData, target) {
             // 每一輪只能出現一次（不區分元素）
             return `type14-電負度`;
             
+        case 16: // 混成軌域判斷
+            // 使用分子名稱+原子符號作為唯一標識
+            const molMatch = coreQuestion.match(/([^中]+?)(?:中的|的)([A-Z][a-z]?)/);
+            if (molMatch) {
+                return `type16-${molMatch[1].trim()}-${molMatch[2]}`;
+            }
+            return `type16-${coreQuestion.substring(0, 50)}`;
+            
         default:
             // 其他題型：使用題型+問題核心內容
             // 對於單向題型，同一題型只允許問一次（無論什麼元素）
@@ -5503,7 +5344,7 @@ window.renderNextQuestion = function() {
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     
     // 更新 HUD：顯示 Rank、難度與進度
-    const diffNames = { 1: "基礎級", 2: "進階級" };
+    const diffNames = { 1: "基礎級", 2: "進階級", 3: "混成級" };
     const curDiff = diffNames[window.quizState.difficulty] || "未知";
     document.getElementById('quiz-status-text').textContent = 
         `RANK ${window.quizState.rank} | ${curDiff}校準 [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
@@ -5511,18 +5352,24 @@ window.renderNextQuestion = function() {
     // 依照預選牌組類型出題
     const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
     
-    // 元素均等分佈演算法
-    let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
-    if (avail.length === 0) {
-        window.quizState.askedZ = []; 
-        avail = [...window.quizState.pool];
-    }
-    let target = avail[Math.floor(Math.random() * avail.length)];
-    window.quizState.askedZ.push(target.z);
-    
     const quizData = { question: "", answer: "", type: "", displayMode: "symbol" }; 
-    let parsed = QUIZ_HELPER.parse(target.c);
-    let s = `[ ${target.s} ]`;
+    let target = null;
+    let parsed = null;
+    let s = "";
+    
+    // 混成軌域題型（type 16）不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16) {
+        // 元素均等分佈演算法
+        let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
+        if (avail.length === 0) {
+            window.quizState.askedZ = []; 
+            avail = [...window.quizState.pool];
+        }
+        target = avail[Math.floor(Math.random() * avail.length)];
+        window.quizState.askedZ.push(target.z);
+        parsed = QUIZ_HELPER.parse(target.c);
+        s = `[ ${target.s} ]`;
+    }
     
     // 重複問題檢查：生成問題後檢查是否已問過，如果重複則重新生成（最多嘗試20次）
     let questionKey = "";
@@ -5531,8 +5378,8 @@ window.renderNextQuestion = function() {
     
     while (!questionGenerated && attempts < 20) {
         attempts++;
-        // 如果已經嘗試過，重新選擇元素
-        if (attempts > 1) {
+        // 如果已經嘗試過，重新選擇元素（混成軌域題型跳過）
+        if (attempts > 1 && type !== 16) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -5964,7 +5811,8 @@ if (type === 0) {
             `下列何者與 ${s} 位於週期表的相同族？`
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+        const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
         
@@ -5992,7 +5840,8 @@ if (type === 0) {
             `下列何者與 ${s} 位於週期表的相同週期？`
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        const partners       = ELECTRON_DATA.filter(el => el.p === target.p && el.z !== target.z);
+        // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+        const partners       = window.quizState.pool.filter(el => el.p === target.p && el.z !== target.z);
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
         quizData.displayMode = "symbol";
         
@@ -6032,7 +5881,8 @@ if (type === 0) {
 } else if (type === 15) {
     quizData.type        = "邏輯判斷：化學性質相似"; 
     quizData.question    = `根據電子組態特徵，下列哪一個元素與 ${s} 的「化學性質」最相似？`;
-    const partners       = ELECTRON_DATA.filter(el => el.iupac === target.iupac && el.z !== target.z);
+    // 修正：確保正確答案也在pool範圍內（符合RANK限制）
+    const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "無";
     quizData.displayMode = "symbol";
     
@@ -6051,6 +5901,195 @@ if (type === 0) {
         if (!forcedOpts.includes(randomEl.s) && randomEl.z !== target.z) forcedOpts.push(randomEl.s);
     }
     quizData.forcedOpts = forcedOpts.slice(0, 4); // 確保只有4個選項
+} else if (type === 16) {
+    // 混成軌域判斷題型
+    // 從MOLECULE_DB中篩選有混成軌域的分子
+    const validMolecules = [];
+    for (let mKey in MOLECULE_DB) {
+        const mol = MOLECULE_DB[mKey];
+        // 跳過金屬晶體和離子晶體（isIonic為true且isMetal為true的情況）
+        if (mol.isIonic && mol.isMetal) continue;
+        // 跳過沒有混成軌域資訊的（hybrid為"-"或空）
+        if (!mol.hybrid || mol.hybrid === "-" || mol.hybrid === "") continue;
+        
+        // 取得分子名稱（使用fullKey的第一個部分）
+        const nameParts = (mol.fullKey || mKey).split('|');
+        const mainName = nameParts[0].trim();
+        const chineseName = nameParts[1] ? nameParts[1].trim() : null;
+        
+        // 取得中心原子（有混成軌域的原子）
+        const centerAtom = mol.center;
+        if (!centerAtom || centerAtom === "雙原子" || centerAtom === "Metal") continue;
+        
+        // 檢查是否有variants，如果有，也要考慮variants
+        if (mol.variants) {
+            for (let vKey in mol.variants) {
+                const variant = mol.variants[vKey];
+                // 跳過離子晶體的variant
+                if (variant.isIonic && variant.isMetal) continue;
+                if (variant.hybrid && variant.hybrid !== "-" && variant.hybrid !== "") {
+                    const vNameParts = (variant.fullKey || vKey).split('|');
+                    const vMainName = vNameParts[0].trim();
+                    const vChineseName = vNameParts[1] ? vNameParts[1].trim() : null;
+                    const vCenter = variant.center || mol.center;
+                    // 只選擇有混成軌域的原子（中心原子）
+                    if (vCenter && vCenter !== "雙原子" && vCenter !== "Metal") {
+                        validMolecules.push({
+                            key: mKey,
+                            variant: vKey,
+                            name: vMainName,
+                            chineseName: vChineseName,
+                            center: vCenter,
+                            hybrid: variant.hybrid
+                        });
+                    }
+                }
+            }
+        } else {
+            validMolecules.push({
+                key: mKey,
+                variant: null,
+                name: mainName,
+                chineseName: chineseName,
+                center: centerAtom,
+                hybrid: mol.hybrid
+            });
+        }
+    }
+    
+    // 過濾複雜有機物：只保留簡單有機物或特定複雜有機物的特定原子
+    const filteredMolecules = validMolecules.filter(item => {
+        const name = item.name;
+        // 排除二茂鐵
+        if (name.includes("Fe(C5H5)2") || name.includes("二茂鐵") || name.includes("Ferrocene")) return false;
+        
+        // 簡單有機物：直接通過
+        const simpleOrgs = ["CH4", "C2H6", "C2H4", "C2H2", "C6H6"];
+        if (simpleOrgs.some(s => name.startsWith(s))) return true;
+        
+        // 複雜有機物：只允許特定情況
+        const complexOrgMatch = name.match(/^C(\d+)H(\d+)/);
+        if (complexOrgMatch) {
+            // 硝基苯的N、苯胺的N
+            if ((name.includes("NO2") || name.includes("硝基")) && item.center === "N") return true;
+            if ((name.includes("NH2") || name.includes("胺")) && item.center === "N") return true;
+            return false; // 其他複雜有機物不通過
+        }
+        
+        // 無機物：全部通過
+        return true;
+    });
+    
+    if (filteredMolecules.length === 0) {
+        // 如果沒有有效分子，生成一個預設問題
+        quizData.type = "混成軌域判斷";
+        quizData.question = "暫無可用題目";
+        quizData.answer = "sp³";
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = ["sp", "sp²", "sp³", "sp³d"];
+    } else {
+        // 隨機選擇一個分子
+        const selected = filteredMolecules[Math.floor(Math.random() * filteredMolecules.length)];
+        
+        // 確定使用的名稱（優先使用化學式，如果沒有則用中文名）
+        const rawName = selected.name || selected.chineseName;
+        
+        // 判斷是否為化學式（包含大寫字母開頭，可能包含數字和括號）
+        const isFormula = /^[A-Z][A-Za-z0-9()]*\s*([+-]|\d+[+-])?$/.test(rawName);
+        let displayName;
+        if (isFormula) {
+            // 如果是化學式，使用 formatFormula 格式化並套用物質檢索樣式
+            const formattedFormula = formatFormula(rawName);
+            displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formattedFormula}</span>`;
+        } else {
+            // 如果是中文名，直接使用
+            displayName = rawName;
+        }
+        
+        // 混成軌域選項：從sp、sp²、sp³、sp³d、sp³d²中選4個
+        const allHybrids = ["sp", "sp²", "sp³", "sp³d", "sp³d²"];
+        const correctHybrid = selected.hybrid;
+        
+        // 生成錯誤選項（從其他混成軌域中選3個）
+        const wrongHybrids = allHybrids.filter(h => h !== correctHybrid);
+        const shuffledWrong = [...wrongHybrids].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const allOptions = [correctHybrid, ...shuffledWrong].sort(() => 0.5 - Math.random());
+        
+        // 檢查是否需要指明特定原子
+        let atomDescription = selected.center;
+        const molData = selected.variant ? MOLECULE_DB[selected.key].variants[selected.variant] : MOLECULE_DB[selected.key];
+        if (molData && molData.atomsRaw && molData.bondsRaw) {
+            // 找出所有相同類型的原子
+            const sameTypeIndices = [];
+            molData.atomsRaw.forEach((atom, idx) => {
+                if (atom.elem === selected.center) {
+                    sameTypeIndices.push(idx);
+                }
+            });
+            
+            if (sameTypeIndices.length > 1) {
+                // 計算每個相同類型原子的混成軌域
+                const atomHybrids = sameTypeIndices.map(idx => {
+                    const atom = molData.atomsRaw[idx];
+                    // 計算鍵結數（sigma鍵）
+                    let sigmaCount = 0;
+                    let lpCount = atom.lpCount || 0;
+                    molData.bondsRaw.forEach(bond => {
+                        if (bond[0] === idx || bond[1] === idx) {
+                            sigmaCount++; // 每個鍵都算一個sigma鍵
+                        }
+                    });
+                    const sum = sigmaCount + lpCount;
+                    let hybrid = (sum === 2) ? "sp" : (sum === 3) ? "sp²" : (sum === 4) ? "sp³" : (sum === 5) ? "sp³d" : (sum === 6) ? "sp³d²" : "";
+                    return { idx, hybrid };
+                });
+                
+                // 檢查是否有不同的混成軌域
+                const uniqueHybrids = [...new Set(atomHybrids.map(a => a.hybrid))];
+                if (uniqueHybrids.length > 1) {
+                    // 需要指明是哪一個原子，找出目標原子的索引（通常是center對應的原子）
+                    // 由於center屬性可能不直接對應索引，我們需要找到混成軌域匹配的原子
+                    const targetHybrid = atomHybrids.find(a => a.hybrid === correctHybrid);
+                    if (targetHybrid) {
+                        const targetIdx = targetHybrid.idx;
+                        // 找出與目標原子鍵結的其他原子，用於描述
+                        const bondedAtoms = [];
+                        molData.bondsRaw.forEach(bond => {
+                            if (bond[0] === targetIdx) {
+                                const otherAtom = molData.atomsRaw[bond[1]];
+                                if (otherAtom && otherAtom.elem !== selected.center) {
+                                    bondedAtoms.push(otherAtom.elem);
+                                }
+                            } else if (bond[1] === targetIdx) {
+                                const otherAtom = molData.atomsRaw[bond[0]];
+                                if (otherAtom && otherAtom.elem !== selected.center) {
+                                    bondedAtoms.push(otherAtom.elem);
+                                }
+                            }
+                        });
+                        
+                        // 根據鍵結的原子來描述（優先使用N、O等特殊原子）
+                        if (bondedAtoms.includes("N")) {
+                            atomDescription = `連接N原子的${selected.center}`;
+                        } else if (bondedAtoms.includes("O")) {
+                            atomDescription = `連接O原子的${selected.center}`;
+                        } else if (bondedAtoms.includes("Cl")) {
+                            atomDescription = `連接Cl原子的${selected.center}`;
+                        } else if (bondedAtoms.length > 0) {
+                            // 使用第一個鍵結的原子
+                            atomDescription = `連接${bondedAtoms[0]}原子的${selected.center}`;
+                        }
+                    }
+                }
+            }
+        }
+        
+        quizData.type = "混成軌域判斷";
+        quizData.question = `${displayName}中的${atomDescription}原子採取何種混成軌域？`;
+        quizData.answer = correctHybrid;
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = allOptions;
+    }
 }
         
         // 生成問題的唯一標識（用於重複檢查）
@@ -6081,6 +6120,20 @@ if (type === 0) {
     '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">$2</sup>');
     // 如果是電荷符號 (如 2+ 或 -)，處理其上標內的大小
     htmlQ = htmlQ.replace(/(\d*[+-])(?=<\/sup>)/g, '<span style="font-size: 0.85em;">$1</span>');
+    // 處理混成軌域的上標（sp², sp³等）- 將Unicode上標字符轉換為HTML上標
+    htmlQ = htmlQ.replace(/(sp)([²³])/g, function(match, p1, p2) {
+        const num = p2 === '²' ? '2' : '3';
+        return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
+    });
+    // 處理 sp³d, sp³d² 的情況
+    htmlQ = htmlQ.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
+        let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
+        if (p4 === '²') {
+            result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
+        }
+        return result;
+    });
+    
     
     questionEl.innerHTML = htmlQ;
     questionEl.style.fontSize = "1.7rem";
@@ -6119,27 +6172,37 @@ if (type === 0) {
     let safety = 0;
     while (opts.length < 4 && safety < 100) {
         safety++;
-        let cand = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
+        // 混成軌域題型不需要從 pool 選擇元素
+        let cand = (type === 16) ? null : window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
         let val = "";
 
         // 根據 displayMode 決定抓取什麼類型的錯誤選項
         switch (quizData.displayMode) {
-    case "symbol": val = cand.s; break;
-    case "chinese": val = cand.cn; break;
-    case "english": val = cand.n; break;
+    case "hybrid":
+        // 混成軌域選項：從所有混成軌域中隨機選擇
+        const allHybrids = ["sp", "sp²", "sp³", "sp³d", "sp³d²"];
+        val = allHybrids[Math.floor(Math.random() * allHybrids.length)];
+        break;
+    case "symbol": val = cand ? cand.s : ""; break;
+    case "chinese": val = cand ? cand.cn : ""; break;
+    case "english": val = cand ? cand.n : ""; break;
     case "number":
         let offset = Math.floor(Math.random() * 11) - 5;
         val = Math.max(0, parseInt(quizData.answer) + offset).toString();
         break;
     case "ion":
-                let rC = Math.floor(Math.random() * 5) - 2;
-                if (rC === 0) {
-                    val = cand.s;
+                if (cand) {
+                    let rC = Math.floor(Math.random() * 5) - 2;
+                    if (rC === 0) {
+                        val = cand.s;
+                    } else {
+                        let rVal = Math.abs(rC);
+                        let rSign = rC > 0 ? "+" : "-";
+                        // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
+                        val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                    }
                 } else {
-                    let rVal = Math.abs(rC);
-                    let rSign = rC > 0 ? "+" : "-";
-                    // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
-                    val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                    val = "";
                 }
                 break;
             case "raw":
@@ -6158,12 +6221,16 @@ if (type === 0) {
                     val = allStates[Math.floor(Math.random() * allStates.length)];
                 } else if (type === 11) {
                     // Type 11: 區塊
-                    const i = cand.iupac; let b = "f";
-                    if (cand.s === "He") b = "s";
-                    else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
-                    val = `${b} 區`;
+                    if (cand) {
+                        const i = cand.iupac; let b = "f";
+                        if (cand.s === "He") b = "s";
+                        else if (typeof i === 'number') { if (i <= 2) b = "s"; else if (i >= 13) b = "p"; else b = "d"; }
+                        val = `${b} 區`;
+                    } else {
+                        val = "s 區"; // 預設值
+                    }
                 } else {
-                    val = cand.s;
+                    val = cand ? cand.s : "";
                 }
                 break;
             default: val = cand.s; break;
@@ -6195,8 +6262,28 @@ if (type === 0) {
     opts.forEach(o => {
         const b = document.createElement('button'); 
         b.className = 'option-btn'; 
-        b.innerHTML = o; // 支援上標標籤渲染
-        b.dataset.value = o; // 儲存選項值
+        // 處理混成軌域選項的上標顯示
+        let displayText = o;
+        if (quizData.displayMode === "hybrid") {
+            // 將 Unicode 上標字符（²、³）轉換為 HTML 上標格式，確保正確顯示
+            // 處理 sp², sp³ 的情況
+            displayText = o.replace(/(sp)([²³])/g, function(match, p1, p2) {
+                const num = p2 === '²' ? '2' : '3';
+                return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
+            });
+            // 處理 sp³d, sp³d² 的情況（如果還有未轉換的）
+            displayText = displayText.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
+                let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
+                if (p4 === '²') {
+                    result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
+                }
+                return result;
+            });
+            // 處理單獨的 d²（如果存在）
+            displayText = displayText.replace(/(d)(²)/g, 'd<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>');
+        }
+        b.innerHTML = displayText; // 支援上標標籤渲染
+        b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
             if (container.querySelector('.start-cal-btn')) return;
@@ -6249,8 +6336,8 @@ if (type === 0) {
                                         selectedBtn.classList.add('wrong'); 
                                         // 顯示正確答案
                                         container.querySelectorAll('.option-btn').forEach(btn => { 
-                                            // 修正答案顯示比對邏輯，使用 innerHTML
-                                            if(btn.innerHTML === quizData.answer) {
+                                            // 修正答案顯示比對邏輯，使用 dataset.value 來比對原始值
+                                            if(btn.dataset.value === quizData.answer) {
                                                 // 延遲顯示正確答案，讓錯誤動畫先完成
                                                 setTimeout(() => {
                                                     btn.classList.add('correct');
