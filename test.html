@@ -4318,6 +4318,7 @@ function setupInteractions() {
 
     // 6. 3D 拖曳控制
     const MOUSE_SENSITIVITY = 0.005; const TOUCH_SENSITIVITY = 0.004;
+    const MOBILE_ZOOM_GAIN = 1.35;
     let longPressTimer = null; let startX = 0, startY = 0;
     const LONG_PRESS_MS = 500; const MOVE_TOLERANCE = 10;
 
@@ -4407,7 +4408,7 @@ function setupInteractions() {
             const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (lastTouchDist > 0) {
                 const ratio = dist / lastTouchDist;
-                scale = Math.max(0.3, Math.min(8, scale * ratio));
+                scale = Math.max(0.3, Math.min(8, scale * Math.pow(ratio, MOBILE_ZOOM_GAIN)));
             }
             lastTouchDist = dist;
         }
