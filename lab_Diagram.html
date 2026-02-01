@@ -75,6 +75,7 @@
             .side-panel .input-row { gap: 4px; }
             .side-panel .input-row label { font-size: 0.8rem; margin-bottom: 1px; }
             .side-panel .input-row input { padding: 4px 6px; font-size: 0.9rem; }
+            .side-panel .lock-btn { padding: 4px 6px; font-size: 1rem; border-radius: 6px; }
             .side-panel #container-view { height: 85px; margin-top: 2px; border-radius: 6px; }
             .side-panel #particleDesc { font-size: 0.8rem; margin-top: 2px; }
             .side-panel .card:last-child > div:first-child { font-size: 0.9rem; }
@@ -133,8 +134,27 @@
         .data-display { font-size: 1.4rem; margin-bottom: 15px; font-weight: bold; color: #333; }
         .input-row { display: flex; gap: 10px; }
         .input-row div { flex: 1; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
         label { display: block; font-size: 1rem; color: #666; margin-bottom: 5px; }
-        input { width: 90%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.2rem; font-weight: bold; }
+        input { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.2rem; font-weight: bold; width: 0; }
+        input:disabled { background: #f0f0f0; cursor: not-allowed; color: #999; }
+        .lock-btn {
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .lock-btn.locked {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
 
         #container-view {
             width: 100%;
@@ -165,11 +185,17 @@
             <div class="input-row">
                 <div>
                     <label>輸入溫度 ℃</label>
-                    <input type="number" id="inputT" value="25">
+                    <div class="input-group">
+                        <input type="number" id="inputT" value="25">
+                        <button id="lockT" class="lock-btn" title="固定溫度">🔓</button>
+                    </div>
                 </div>
                 <div>
                     <label>輸入壓力 atm</label>
-                    <input type="number" id="inputP" value="1" step="0.1">
+                    <div class="input-group">
+                        <input type="number" id="inputP" value="1" step="0.1">
+                        <button id="lockP" class="lock-btn" title="固定壓力">🔓</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,11 +234,13 @@
         minP: 0, maxP: 2.5,
         tpT: 210, tpP: 0.8,
         cpT: 455, cpP: 2,      // 臨界點再往右
-        hit: 15
+        hit: 8
     };
 
     let mouse = { x: 0, y: 0 };
     let isDragging = false;
+    let isTLocked = false;
+    let isPLocked = false;
     let w, h;
     let particles = [];
     function initParticlePositions() {
@@ -570,6 +598,9 @@
         let state = ""; let cls = "";
         if (dT < cfg.hit) { state = "三相共存"; cls = "status-coexist"; }
         else if (dC < cfg.hit) { state = "臨界點"; cls = "status-critical"; }
+        else if (dVap < cfg.hit) { state = "液氣共存"; cls = "status-coexist"; }
+        else if (dSub < cfg.hit) { state = "固氣共存"; cls = "status-coexist"; }
+        else if (dMelt < cfg.hit) { state = "固液共存"; cls = "status-coexist"; }
         else if (t >= cfg.cpT && p >= cfg.cpP) { state = "超臨界流體"; cls = "status-critical"; }
         else {
             if (p > cfg.tpP) {
@@ -601,77 +632,72 @@
         pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
         const desc = document.getElementById('particleDesc');
         const W = pCanvas.width, H = pCanvas.height;
-        let fillColor = "#60a5fa";
-        let descText = "載入中...";
+        let descText = "";
         
-        // 設定各狀態的粒子顯示參數
-        let particleCount = 40; // 預設粒子數
-        let speedMult = 1;
-        let mode = "gas"; // 預設運動模式
-        
-        if (state.includes("固態")) {
-            fillColor = "#60a5fa";
-            descText = "固態：粒子在固定位置微小振動。";
-            mode = "solid";
-        } else if (state.includes("液態")) {
-            fillColor = "#16a34a";
-            descText = "液態：粒子排列較緊密，且具備流動性。";
-            mode = "liquid";
-            particleCount = 40;
-        } else if (state.includes("蒸氣")) {
-            fillColor = "#fb923c";
-            descText = "蒸氣：溫度低於臨界點，粒子較稀疏。";
-            particleCount = 30;
-            speedMult = 8; // 速度提升至 8 (液態 < 蒸氣 < 氣體)
-        } else if (state.includes("氣體")) {
-            fillColor = "#d946ef"; 
-            descText = "氣體：極高能量，粒子極速運動。";
-            particleCount = 30; // 與蒸氣一樣多
-            speedMult = 12; 
-        } else if (state.includes("超臨界")) {
-            fillColor = "#b91c1c";
-            descText = "超臨界：高密度且具備極高能量。";
-            speedMult = 14; 
-        } else if (state.includes("共存")) {
-            fillColor = "#6b21a8";
-            descText = "共存態：不同相態粒子動態平衡中。";
-            speedMult = 2;
-        }
-
         particles.forEach((p, i) => {
-            // 只有 index 小於當前狀態粒子數的才繪製 (模擬密度變化)
-            if (i >= particleCount) return;
-
-            if (mode === "solid") {
-                let r = Math.floor(i/10), c = i%10;
-                let spacingX = (W - 40) / 9; // 根據容器寬度動態計算間距
-                let spacingY = (H - 40) / 3; // 根據容器高度動態計算間距
-                p.x = 20 + c * spacingX + Math.sin(Date.now()*0.02 + i)*2;
-                p.y = 20 + r * spacingY + Math.cos(Date.now()*0.02 + i)*2;
-            } else if (mode === "liquid") {
-                // 液態：對標固態格點，但加上流動位移與較大振幅
-                let r = Math.floor(i/10), c = i%10;
-                let spacingX = (W - 40) / 9;
-                let spacingY = (H - 40) / 3;
-                let flowX = Math.sin(Date.now()*0.001 + i)*10;
-                let flowY = Math.cos(Date.now()*0.001 + i)*5;
-                p.x = 20 + c * spacingX + Math.sin(Date.now()*0.03 + i)*5 + flowX;
-                p.y = 20 + r * spacingY + Math.cos(Date.now()*0.03 + i)*5 + flowY;
-                // 限制在容器內
-                p.x = Math.max(8, Math.min(W - 8, p.x));
-                p.y = Math.max(8, Math.min(H - 8, p.y));
+            let m = "gas", c = "#d946ef", s = 12, count = 40;
+            // 分流邏輯：處理共存態，將粒子分群呈現不同行為
+            if (state === "三相共存") {
+                if (i < 14) { m = "solid"; c = "#60a5fa"; }
+                else if (i < 28) { m = "liquid"; c = "#16a34a"; }
+                else { m = "gas"; c = "#fb923c"; s = 8; }
+                descText = "三相點：固、液、氣三相動態平衡。";
+            } else if (state === "液氣共存") {
+                if (i < 20) { m = "liquid"; c = "#16a34a"; }
+                else { m = "gas"; c = "#fb923c"; s = 8; }
+                descText = "液氣共存：沸騰或凝結中的平衡狀態。";
+            } else if (state === "固氣共存") {
+                if (i < 20) { m = "solid"; c = "#60a5fa"; }
+                else { m = "gas"; c = "#fb923c"; s = 8; }
+                descText = "固氣共存：昇華或凝華中的平衡狀態。";
+            } else if (state === "固液共存") {
+                if (i < 20) { m = "solid"; c = "#60a5fa"; }
+                else { m = "liquid"; c = "#16a34a"; }
+                descText = "固液共存：熔化或凝固中的平衡狀態。";
+            } else if (state.includes("固態")) {
+                m = "solid"; c = "#60a5fa"; descText = "固態：粒子在固定位置微小振動。";
+            } else if (state.includes("液態")) {
+                m = "liquid"; c = "#16a34a"; descText = "液態：粒子排列較緊密，且具備流動性。";
+            } else if (state.includes("蒸氣")) {
+                m = "gas"; c = "#fb923c"; s = 8; count = 30; descText = "蒸氣：溫度低於臨界點，粒子較稀疏。";
+            } else if (state.includes("超臨界")) {
+                m = "gas"; c = "#b91c1c"; s = 14; descText = "超臨界：高密度且具備極高能量。";
             } else {
-                // 氣體/蒸氣/超臨界：直線反彈運動
-                p.x += p.vx * speedMult;
-                p.y += p.vy * speedMult;
-                if(p.x < 5 || p.x > W - 5) p.vx *= -1;
-                if(p.y < 5 || p.y > H - 5) p.vy *= -1;
-                // 確保不卡在邊界
-                p.x = Math.max(5, Math.min(W - 5, p.x));
-                p.y = Math.max(5, Math.min(H - 5, p.y));
+                count = 30; descText = "氣體：粒子快速混亂運動。";
             }
 
-            pCtx.fillStyle = fillColor;
+            if (i >= count) return;
+
+            // 運動邏輯：根據分配到的 m (mode) 進行運算
+            if (m === "solid" || m === "liquid") {
+                let r = Math.floor(i % 40 / 10), col = i % 10;
+                let sx = (W - 40) / 9, sy = (H - 40) / 3;
+                let yOff = 0;
+                // 若包含氣體的共存態，固/液態粒子下沉至下半部
+                if (state.includes("共存") && (state.includes("氣") || state.includes("三相"))) { 
+                    yOff = H / 2; 
+                }
+                
+                if (m === "solid") {
+                    p.x = 20 + col * sx + Math.sin(Date.now() * 0.02 + i) * 2;
+                    p.y = 20 + yOff + r * sy + Math.cos(Date.now() * 0.02 + i) * 2;
+                } else {
+                    let fx = Math.sin(Date.now() * 0.001 + i) * 10, fy = Math.cos(Date.now() * 0.001 + i) * 5;
+                    p.x = 20 + col * sx + Math.sin(Date.now() * 0.03 + i) * 5 + fx;
+                    p.y = 20 + yOff + r * sy + Math.cos(Date.now() * 0.03 + i) * 5 + fy;
+                }
+                p.x = Math.max(8, Math.min(W - 8, p.x)); p.y = Math.max(8, Math.min(H - 8, p.y));
+            } else {
+                p.x += p.vx * s; p.y += p.vy * s;
+                let yMin = 5, yMax = H - 5;
+                // 若為共存態，氣體粒子上升至上半部
+                if (state.includes("共存")) { yMax = H / 2 - 5; } 
+                if (p.x < 5 || p.x > W - 5) p.vx *= -1; 
+                if (p.y < yMin || p.y > yMax) p.vy *= -1;
+                p.x = Math.max(5, Math.min(W - 5, p.x)); p.y = Math.max(yMin, Math.min(yMax, p.y));
+            }
+
+            pCtx.fillStyle = c;
             pCtx.beginPath(); pCtx.arc(p.x, p.y, 6, 0, 7); pCtx.fill();
         });
         desc.innerText = descText;
@@ -690,13 +716,37 @@
     document.getElementById('inputT').onchange = syncFromInputs;
     document.getElementById('inputP').onchange = syncFromInputs;
 
+    const btnLockT = document.getElementById('lockT');
+    const btnLockP = document.getElementById('lockP');
+    const inputT = document.getElementById('inputT');
+    const inputP = document.getElementById('inputP');
+
+    btnLockT.onclick = () => {
+        isTLocked = !isTLocked;
+        btnLockT.innerText = isTLocked ? "🔒" : "🔓";
+        btnLockT.classList.toggle('locked', isTLocked);
+        inputT.disabled = isTLocked;
+    };
+
+    btnLockP.onclick = () => {
+        isPLocked = !isPLocked;
+        btnLockP.innerText = isPLocked ? "🔒" : "🔓";
+        btnLockP.classList.toggle('locked', isPLocked);
+        inputP.disabled = isPLocked;
+    };
+
     function handleMove(e) {
         if(!isDragging) return;
         const rect = canvas.getBoundingClientRect();
         let cx = e.touches ? e.touches[0].clientX : e.clientX;
         let cy = e.touches ? e.touches[0].clientY : e.clientY;
-        mouse.x = Math.max(cfg.marginLeft, Math.min(w - cfg.marginRight, cx - rect.left));
-        mouse.y = Math.max(cfg.marginTop, Math.min(h - cfg.marginBottom, cy - rect.top));
+        
+        let targetX = Math.max(cfg.marginLeft, Math.min(w - cfg.marginRight, cx - rect.left));
+        let targetY = Math.max(cfg.marginTop, Math.min(h - cfg.marginBottom, cy - rect.top));
+
+        if (!isTLocked) mouse.x = targetX;
+        if (!isPLocked) mouse.y = targetY;
+        
         draw();
         e.preventDefault();
     }
