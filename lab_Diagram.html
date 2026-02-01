@@ -165,6 +165,17 @@
         }
 
         #particleDesc { font-size: 1rem; color: #555; margin-top: 10px; }
+        
+        /* 單位點擊提示樣式 */
+        .unit-clickable { 
+            cursor: pointer; 
+            color: #2563eb; 
+            text-decoration: underline dotted;
+            transition: color 0.2s;
+        }
+        .unit-clickable:hover {
+            color: #1d4ed8;
+        }
     </style>
 </head>
 <body>
@@ -180,18 +191,19 @@
         <div class="card">
             <div id="statusBadge" class="status-badge status-gas">氣態</div>
             <div class="data-display">
-                溫度：<span id="txtT">479</span> ℃　壓力：<span id="txtP">0.8</span> atm
+                溫度：<span id="txtT">479</span> <span id="unitT_display" class="unit-clickable" onclick="toggleTUnit()">℃</span>　
+                壓力：<span id="txtP">0.8</span> <span id="unitP_display" class="unit-clickable" onclick="togglePUnit()">atm</span>
             </div>
             <div class="input-row">
                 <div>
-                    <label>輸入溫度 ℃</label>
+                    <label>輸入溫度 <span id="unitT_label" class="unit-clickable" onclick="toggleTUnit()">℃</span></label>
                     <div class="input-group">
                         <input type="number" id="inputT" value="25">
                         <button id="lockT" class="lock-btn" title="固定溫度">🔓</button>
                     </div>
                 </div>
                 <div>
-                    <label>輸入壓力 atm</label>
+                    <label>輸入壓力 <span id="unitP_label" class="unit-clickable" onclick="togglePUnit()">atm</span></label>
                     <div class="input-group">
                         <input type="number" id="inputP" value="1" step="0.1">
                         <button id="lockP" class="lock-btn" title="固定壓力">🔓</button>
@@ -234,13 +246,15 @@
         minP: 0, maxP: 2.5,
         tpT: 210, tpP: 0.8,
         cpT: 455, cpP: 2,      // 臨界點再往右
-        hit: 8
+        hit: 4                 // 縮小感應範圍，確保 101度時能脫離「共存」顯示「氣態」
     };
 
     let mouse = { x: 0, y: 0 };
     let isDragging = false;
     let isTLocked = false;
     let isPLocked = false;
+    let tUnit = '℃'; // '℃' or 'K'
+    let pUnit = 'atm'; // 'atm' or 'mmHg'
     let w, h;
     let particles = [];
     function initParticlePositions() {
@@ -303,18 +317,18 @@
     function getVapP(t) {
         if (t < cfg.tpT || t > cfg.cpT) return null;
         const r = (t - cfg.tpT) / (cfg.cpT - cfg.tpT);
-        return cfg.tpP + (cfg.cpP - cfg.tpP) * Math.pow(r, 1.4);
+        return cfg.tpP + (cfg.cpP - cfg.tpP) * Math.pow(r, 1.3945); // 修正冪次以精確對齊 100度/1atm
     }
     function getMeltT(p) { return p < cfg.tpP ? null : cfg.tpT - (p - cfg.tpP) * 60; }
     function getTForVapP(p) {
         if (p <= cfg.tpP || p >= cfg.cpP) return null;
-        const r = Math.pow((p - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.4);
+        const r = Math.pow((p - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.3945);
         return cfg.tpT + (cfg.cpT - cfg.tpT) * r;
     }
 
     function getVapT(p) {
         if (p < cfg.tpP || p > cfg.cpP) return null;
-        const r = Math.pow((p - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.4);
+        const r = Math.pow((p - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.3945);
         return cfg.tpT + (cfg.cpT - cfg.tpT) * r;
     }
     function getSubT(p) {
@@ -350,7 +364,7 @@
         const axisFont = isMobile ? "bold 14px Arial" : "bold 24px Arial";
         const smallFont = isMobile ? "bold 11px Arial" : "bold 20px Arial";
         const ref25P = 0.95;
-        const ref25T = cfg.tpT + (cfg.cpT - cfg.tpT) * Math.pow((ref25P - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.4);
+        const ref25T = cfg.tpT + (cfg.cpT - cfg.tpT) * Math.pow((ref25P - cfg.tpP) / (cfg.cpP - cfg.tpP), 1 / 1.3945);
         const y25 = pToY(ref25P);
 
         // 1. 座標軸
@@ -447,7 +461,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const lblTpP = "約 0.006 atm";
+        const lblTpP = "0.006 atm";
         const yTpP = pToY(cfg.tpP);
         ctx.font = smallFont;
         const twTpP = ctx.measureText(lblTpP).width;
@@ -468,7 +482,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const lbl25P = "約 0.03 atm";
+        const lbl25P = "0.03 atm";
         ctx.font = smallFont;
         const tw25P = ctx.measureText(lbl25P).width;
         const th25P = isMobile ? 14 : 20;
@@ -582,25 +596,39 @@
 
     function updateState() {
         const t = xToT(mouse.x); const p = yToP(mouse.y);
-        const displayP = pToDisplayP(p);
-        const displayT = tToDisplayT(t);
-        document.getElementById('txtT').innerText = Math.round(displayT);
-        document.getElementById('txtP').innerText = displayP >= 100 ? Math.round(displayP) : (displayP < 0.1 ? displayP.toFixed(3) : displayP.toFixed(2));
+        let displayP = pToDisplayP(p);
+        let displayT = tToDisplayT(t);
+        
+        // 單位轉換
+        let outT = displayT;
+        if (tUnit === 'K') outT = displayT + 273.15;
+        
+        let outP = displayP;
+        if (pUnit === 'mmHg') outP = displayP * 760;
+
+        document.getElementById('txtT').innerText = outT.toFixed(1);
+        if (pUnit === 'atm') {
+            document.getElementById('txtP').innerText = outP >= 100 ? Math.round(outP) : (outP < 0.1 ? outP.toFixed(3) : outP.toFixed(2));
+        } else {
+            document.getElementById('txtP').innerText = Math.round(outP);
+        }
         
         const badge = document.getElementById('statusBadge');
         const vP = getVapP(t); const sP = getSubP(t); const mT = getMeltT(p);
-        const dVap = vP ? Math.abs(mouse.y - pToY(vP)) : 999;
-        const dSub = sP ? Math.abs(mouse.y - pToY(sP)) : 999;
-        const dMelt = mT ? Math.abs(mouse.x - tToX(mT)) : 999;
+        
+        // 改用數值誤差判定，確保 101度 與 100度 能精確區分
+        const dVap = vP ? Math.abs(displayP - pToDisplayP(vP)) : 999;
+        const dSub = sP ? Math.abs(displayP - pToDisplayP(sP)) : 999;
+        const dMelt = mT ? Math.abs(displayT - tToDisplayT(mT)) : 999;
         const dT = Math.hypot(mouse.x - tToX(cfg.tpT), mouse.y - pToY(cfg.tpP));
         const dC = Math.hypot(mouse.x - tToX(cfg.cpT), mouse.y - pToY(cfg.cpP));
 
         let state = ""; let cls = "";
-        if (dT < cfg.hit) { state = "三相共存"; cls = "status-coexist"; }
-        else if (dC < cfg.hit) { state = "臨界點"; cls = "status-critical"; }
-        else if (dVap < cfg.hit) { state = "液氣共存"; cls = "status-coexist"; }
-        else if (dSub < cfg.hit) { state = "固氣共存"; cls = "status-coexist"; }
-        else if (dMelt < cfg.hit) { state = "固液共存"; cls = "status-coexist"; }
+        if (dT < 10) { state = "三相共存"; cls = "status-coexist"; }
+        else if (dC < 10) { state = "臨界點"; cls = "status-critical"; }
+        else if (dVap < 0.005) { state = "液氣共存"; cls = "status-coexist"; } // 容許誤差 0.005 atm
+        else if (dSub < 0.0005) { state = "固氣共存"; cls = "status-coexist"; }
+        else if (dMelt < 0.1) { state = "固液共存"; cls = "status-coexist"; }
         else if (t >= cfg.cpT && p >= cfg.cpP) { state = "超臨界流體"; cls = "status-critical"; }
         else {
             if (p > cfg.tpP) {
@@ -706,11 +734,46 @@
     function syncFromInputs() {
         let tInput = parseFloat(document.getElementById('inputT').value);
         let pInput = parseFloat(document.getElementById('inputP').value);
+        
+        // 轉換回內部 ℃ 與 atm
+        if (tUnit === 'K') tInput -= 273.15;
+        if (pUnit === 'mmHg') pInput /= 760;
+
         if (!isNaN(tInput) && !isNaN(pInput)) {
             mouse.x = tToX(displayTToT(tInput));
             mouse.y = pToY(displayPToP(pInput));
             draw();
         }
+    }
+
+    function toggleTUnit() {
+        const val = parseFloat(document.getElementById('inputT').value);
+        if (tUnit === '℃') {
+            tUnit = 'K';
+            if (!isNaN(val)) document.getElementById('inputT').value = (val + 273.15).toFixed(1);
+        } else {
+            tUnit = '℃';
+            if (!isNaN(val)) document.getElementById('inputT').value = (val - 273.15).toFixed(1);
+        }
+        document.getElementById('unitT_display').innerText = tUnit;
+        document.getElementById('unitT_label').innerText = tUnit;
+        updateState();
+    }
+
+    function togglePUnit() {
+        const val = parseFloat(document.getElementById('inputP').value);
+        if (pUnit === 'atm') {
+            pUnit = 'mmHg';
+            if (!isNaN(val)) document.getElementById('inputP').value = Math.round(val * 760);
+            document.getElementById('inputP').step = "1";
+        } else {
+            pUnit = 'atm';
+            if (!isNaN(val)) document.getElementById('inputP').value = (val / 760).toFixed(3);
+            document.getElementById('inputP').step = "0.1";
+        }
+        document.getElementById('unitP_display').innerText = pUnit;
+        document.getElementById('unitP_label').innerText = pUnit;
+        updateState();
     }
 
     document.getElementById('inputT').onchange = syncFromInputs;
