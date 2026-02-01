@@ -606,11 +606,15 @@
         let outP = displayP;
         if (pUnit === 'mmHg') outP = displayP * 760;
 
-        document.getElementById('txtT').innerText = outT.toFixed(1);
-        if (pUnit === 'atm') {
-            document.getElementById('txtP').innerText = outP >= 100 ? Math.round(outP) : (outP < 0.1 ? outP.toFixed(3) : outP.toFixed(2));
-        } else {
-            document.getElementById('txtP').innerText = Math.round(outP);
+        const txtT = outT.toFixed(1);
+        const txtP = pUnit === 'atm' ? (outP >= 100 ? Math.round(outP) : (outP < 0.1 ? outP.toFixed(3) : outP.toFixed(2))) : Math.round(outP);
+        
+        document.getElementById('txtT').innerText = txtT;
+        document.getElementById('txtP').innerText = txtP;
+        
+        if (isDragging) {
+            if (!isTLocked) document.getElementById('inputT').value = txtT;
+            if (!isPLocked) document.getElementById('inputP').value = txtP;
         }
         
         const badge = document.getElementById('statusBadge');
@@ -757,7 +761,7 @@
         }
         document.getElementById('unitT_display').innerText = tUnit;
         document.getElementById('unitT_label').innerText = tUnit;
-        updateState();
+        syncFromInputs();
     }
 
     function togglePUnit() {
@@ -773,11 +777,11 @@
         }
         document.getElementById('unitP_display').innerText = pUnit;
         document.getElementById('unitP_label').innerText = pUnit;
-        updateState();
+        syncFromInputs();
     }
 
-    document.getElementById('inputT').onchange = syncFromInputs;
-    document.getElementById('inputP').onchange = syncFromInputs;
+    document.getElementById('inputT').oninput = syncFromInputs;
+    document.getElementById('inputP').oninput = syncFromInputs;
 
     const btnLockT = document.getElementById('lockT');
     const btnLockP = document.getElementById('lockP');
@@ -789,6 +793,7 @@
         btnLockT.innerText = isTLocked ? "🔒" : "🔓";
         btnLockT.classList.toggle('locked', isTLocked);
         inputT.disabled = isTLocked;
+        if (isTLocked) syncFromInputs();
     };
 
     btnLockP.onclick = () => {
@@ -796,6 +801,7 @@
         btnLockP.innerText = isPLocked ? "🔒" : "🔓";
         btnLockP.classList.toggle('locked', isPLocked);
         inputP.disabled = isPLocked;
+        if (isPLocked) syncFromInputs();
     };
 
     function handleMove(e) {
