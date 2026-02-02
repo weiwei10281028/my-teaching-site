@@ -3012,7 +3012,7 @@
         // 更新平衡移動方向指示（返回 Q 和 K 的比較）
         function getDirectionText(Q, K) {
             const diff = Q - K;
-            if (Math.abs(diff) < 0.01) {
+            if (K > 0 && Math.abs(diff) < K * 0.001) {
                 // Q 等於 K，達到平衡
                 return '：Q＝K';
             }
@@ -3850,7 +3850,7 @@
             const statusEl = document.getElementById('status');
             const directionText = getDirectionText(Q, K);
             
-            if (Math.abs(Q - K) < 0.01) {
+            if (K > 0 && Math.abs(Q - K) < K * 0.001) {
                 statusEl.textContent = "平衡破壞：Q＝K";
                 statusEl.style.color = "#27ae60";
                 statusEl.style.borderColor = "#27ae60";
@@ -5531,7 +5531,7 @@
         // N2 + 3H2 ⇌ 2NH3 場景的方向文字
         function getDirectionTextNH3(Q, K) {
             const diff = Q - K;
-            if (Math.abs(diff) < 0.01) {
+            if (K > 0 && Math.abs(diff) < K * 0.001) {
                 return '：Q＝K';
             }
             
@@ -7610,7 +7610,7 @@
 
         function getDirectionTextHI(Q, K) {
             const diff = Q - K;
-            if (Math.abs(diff) < 0.01) {
+            if (K > 0 && Math.abs(diff) < K * 0.001) {
                 return '：Q＝K';
             }
             
