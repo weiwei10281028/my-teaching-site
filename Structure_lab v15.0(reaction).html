@@ -2235,6 +2235,18 @@ function toFraction(val) {
     }
     return `${best_n}/${best_d}`;
 }
+// 步驟 4「目前比例」用：整數直接顯示，分數用直立格式
+function toFractionVertical(val) {
+    if (Math.abs(val - Math.round(val)) < 1e-4) return Math.round(val).toString();
+    let best_n = 1, best_d = 1, min_err = Math.abs(val - 1);
+    for (let d = 2; d <= 64; d++) {
+        let n = Math.round(val * d);
+        let err = Math.abs(val - n / d);
+        if (err < min_err) { min_err = err; best_n = n; best_d = d; }
+        if (err < 1e-4) break;
+    }
+    return `<span style="display:inline-block;text-align:center;vertical-align:middle;line-height:1.2;margin:0 1px;"><span style="display:block;border-bottom:1px solid currentColor;">${best_n}</span><span style="display:block;">${best_d}</span></span>`;
+}
 
 function parseCharge(c) {
     if (!c) return 0;
@@ -2265,6 +2277,68 @@ function parseAtoms(f) {
         }
     }
     return stack[0];
+}
+
+// 依規則順序計算化學式的平均氧化數，回傳 { "K": 1, "N": 5, "O": -2 } 等
+function getAverageOxidationNumbers(formula, charge) {
+    const atoms = parseAtoms(formula);
+    const els = Object.keys(atoms);
+    const ox = {};
+    if (els.length === 0) return ox;
+    // 1. 單質：僅一種元素，氧化數 0
+    if (els.length === 1) { ox[els[0]] = 0; return ox; }
+    const has = (el) => (atoms[el] || 0) > 0;
+    const onlyO = els.length === 1 && els[0] === 'O';
+    // 2. F 一律 -1
+    if (has('F')) ox['F'] = -1;
+    // 3. O：一般 -2；過氧化物 O=-1；超氧化物 O=-1/2；OF2 中 O=+2
+    if (has('O')) {
+        const f = formula.replace(/\s/g, '');
+        if (f === 'OF2') ox['O'] = 2;
+        else if (/^[A-Za-z0-9]*O2$/.test(f) && (f.startsWith('H2') || f.startsWith('Na2') || f.startsWith('K2') || f.startsWith('Ba'))) ox['O'] = -1;
+        else if (f === 'KO2' || f === 'RbO2' || f === 'CsO2') ox['O'] = -0.5;
+        else ox['O'] = -2;
+    }
+    const alkali = ['Li','Na','K','Rb','Cs'], alkaline = ['Be','Mg','Ca','Sr','Ba'];
+    const isMetalOnly = (list) => els.every(el => list.includes(el));
+    // 4. H：一般 +1；僅鹼/鹼土＋H 時 H=-1
+    if (has('H')) ox['H'] = (els.length === 2 && (alkali.includes(els.find(e=>e!='H')) || alkaline.includes(els.find(e=>e!='H')))) ? -1 : 1;
+    // 5. 鹼金屬 +1
+    alkali.forEach(el => { if (has(el)) ox[el] = 1; });
+    // 6. 鹼土金屬 +2
+    alkaline.forEach(el => { if (has(el)) ox[el] = 2; });
+    // 7. 鹵素：化合物中多為 -1；若含 O 則留給步驟 8 由電荷反推
+    if (!has('O')) { if (has('Cl')) ox['Cl'] = -1; if (has('Br')) ox['Br'] = -1; if (has('I')) ox['I'] = -1; }
+    // 8. 其餘由電荷守恆反推：charge = Σ(n_el × ox_el)
+    const unknown = els.filter(el => ox[el] === undefined);
+    if (unknown.length === 0) return ox;
+    let knownSum = 0;
+    els.forEach(el => { if (ox[el] !== undefined) knownSum += (atoms[el] || 0) * ox[el]; });
+    if (unknown.length === 1) {
+        const el = unknown[0], n = atoms[el] || 1;
+        ox[el] = n !== 0 ? (charge - knownSum) / n : 0;
+    } else {
+        // 多個未知：依常見約定（如 N 在 NO3- 為 +5，在 NH3 為 -3）此處簡化：依電荷平分或常見價
+        // C、N、S 等：用電荷與已知項反推一個合理分配（取整數解）
+        const rem = charge - knownSum;
+        if (unknown.length === 2 && unknown.includes('N') && unknown.includes('C')) {
+            // 例如 HCN：N 更陰電性 N=-3, C 由電荷反推
+            ox['N'] = -3;
+            const nC = atoms['C'] || 1, nN = atoms['N'] || 1;
+            ox['C'] = nC ? (rem - nN * (-3)) / nC : 0;
+        } else if (unknown.length === 2) {
+            const [a, b] = unknown, na = atoms[a] || 1, nb = atoms[b] || 1;
+            ox[a] = 0; ox[b] = nb ? (rem - na * 0) / nb : 0;
+        } else {
+            unknown.forEach(el => { ox[el] = 0; });
+            let sum = knownSum; els.forEach(el => { sum += (atoms[el] || 0) * (ox[el] || 0); });
+            if (unknown.length >= 1 && Math.abs(sum - charge) > 0.01) {
+                const u = unknown[0], n = atoms[u] || 1;
+                ox[u] = n ? (charge - (sum - (ox[u]||0)*n)) / n : 0;
+            }
+        }
+    }
+    return ox;
 }
 
 function setupEquationBalancer() {
@@ -2414,11 +2488,17 @@ function solveChemicalEquationWithSteps(eqn) {
     // 將變數定義在外部作用域，讓後面的詳解步驟也能讀取
     let redoxInfo = { partnerEl: null, partnerDelta: 0, h2o2Delta: 0, h2o2Idx: -1 };
 
+    let nullSpaceDim = 0; // 解空間維度：大於 1 表示係數有無限多組
+    const speciesTotalOx = species.map(s => {
+        const ox = getAverageOxidationNumbers(s.formula, s.charge);
+        return Object.entries(s.atoms).reduce((sum, [el, n]) => sum + n * (ox[el] ?? 0), 0);
+    });
     const finalCoeffs = (function() {
-        // 初始化矩陣：原子守恆(elements.length) + 電子守恆(1) + 電荷守恆(1)
-        let m = Array.from({ length: elements.length + 2 }, () => new Array(species.length).fill(0));
+        // 初始化矩陣：原子守恆 + 電子守恆(1) + 電荷守恆(1) + 氧化數守恆(1)
+        let m = Array.from({ length: elements.length + 3 }, () => new Array(species.length).fill(0));
         const redoxRowIdx = elements.length;
         const chargeRowIdx = elements.length + 1;
+        const oxRowIdx = elements.length + 2;
 
         // --- 氧化還原邏輯判定 ---
         const h2o2 = species.find(s => s.formula === "H2O2" && s.index < leftRaw.length);
@@ -2455,7 +2535,17 @@ function solveChemicalEquationWithSteps(eqn) {
 
             // 3. 電荷守恆
             m[chargeRowIdx][j] = s.charge * sign;
+            // 4. 氧化數守恆：總氧化數（反應物）= 總氧化數（產物）
+            m[oxRowIdx][j] = speciesTotalOx[j] * sign;
         });
+
+        const mCopy = m.map(row => row.slice());
+        const { rank, pivotCols, reduced } = rrefWithPivots(mCopy);
+        nullSpaceDim = species.length - rank;
+        if (nullSpaceDim >= 2) {
+            const basis = getNullSpaceBasis(reduced, m.length, species.length, pivotCols);
+            return findMinimalPositiveIntegerInNullSpace(basis);
+        }
         return gaussElimination(m);
     })();
 
@@ -2471,8 +2561,7 @@ function solveChemicalEquationWithSteps(eqn) {
     };
 
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
-    
-    // cc (修改部分：加入 Priority 0 - 單元素大下標優先判定)
+
     let startIdx = -1;
     
     // Priority 0: 優先尋找單元素物質 (Element) 且原子數 >= 3 的 (如 P4, S8, O3)
@@ -2497,19 +2586,13 @@ function solveChemicalEquationWithSteps(eqn) {
         const lcmCalc = (a, b) => (a * b) / gcdCalc(a, b);
 
         let atomMap = {}; 
-        let rList = [], pList = [];
-        // 安全獲取列表
-        if (typeof reactants !== 'undefined' && typeof products !== 'undefined') {
-            rList = reactants; pList = products;
-        } else {
-            rList = species.filter(s => s.type === 'reactant' || s.side === 'left' || s.isReactant === true);
-            pList = species.filter(s => s.type === 'product' || s.side === 'right' || s.isReactant === false);
-        }
+        const rList = species.filter((s, i) => i < leftRaw.length);
+        const pList = species.filter((s, i) => i >= leftRaw.length);
 
         if (rList.length > 0 && pList.length > 0) {
             const scan = (list, sideName, offset) => {
                 list.forEach((s, i) => {
-                    let globalIdx = offset + i; 
+                    const globalIdx = offset + i; 
                     Object.entries(s.atoms).forEach(([el, count]) => {
                         if (!atomMap[el]) atomMap[el] = { reactant: [], product: [] };
                         atomMap[el][sideName].push({ idx: globalIdx, count });
@@ -2614,7 +2697,9 @@ function solveChemicalEquationWithSteps(eqn) {
             }
         }
     }
-    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsDetails.length > 0 ? obsDetails.join('<br>') : "此階段無可直接利用觀察法平衡的原子，將進入代數法設定未知數。"}</div></div>`;
+    const obsIntro = nullSpaceDim >= 2 ? "此方程式的係數有無限多種寫法。原子種類與守恆條件不足以唯一決定各物質的係數比；只要滿足原子守恆，就有無窮多組係數都是「正確」的平衡式。本工具從中挑選一組全為正整數且已約分至最簡的係數供參考，因此無法像一般題僅用觀察法逐步鎖定，以下改以代數法。" + (obsDetails.length > 0 ? "<br><br>" : "") : "";
+    const obsBody = obsDetails.length > 0 ? obsDetails.join('<br>') : (nullSpaceDim >= 2 ? "" : "此階段無可直接利用觀察法平衡的原子，將進入代數法設定未知數。");
+    stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsIntro}${obsBody}</div></div>`;
     // --- 步驟 3：氧化還原守恆說法 ---
     if (redoxInfo && redoxInfo.h2o2Delta !== 0) {
         const h2o2Role = redoxInfo.h2o2Delta > 0 ? "還原劑 (氧化成 O<sub>2</sub>)" : "氧化劑 (還原成 H<sub>2</sub>O)";
@@ -2704,15 +2789,151 @@ function solveChemicalEquationWithSteps(eqn) {
     });
 
     const finalBox = buildModularEq(finalCoeffs);
-     stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div>目前比例：<span style="color:#94a3b8;">(${finalCoeffs.map(c => toFraction(c/baseV)).join(' : ')})</span>。<br>全體乘以 <span style="color:#facc15; font-weight:bold;">${multiplier}</span> 消除分母，得到最終平衡反應式：<br><div class="step-formula-box">${finalBox}</div></div>`;
+    const ratioStr = finalCoeffs.map(c => toFractionVertical(c/baseV)).join(' <span style="color:#64748b;">:</span> ');
+    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div><div style="margin-bottom:10px;">目前比例：<span style="color:#f472b6; font-family:serif; font-size:1.08rem;">(${ratioStr})</span></div><div style="margin-bottom:10px;">全體乘以 <span style="color:#facc15; font-weight:bold; font-size:1.15em;">${multiplier}</span> 消除分母，得到最終平衡反應式：</div><div class="step-formula-box">${finalBox}</div></div>`;
 
     
     const resDom = document.getElementById('balance-result');
     if(resDom) { resDom.style.marginBottom = "20px"; }
 
+    // 氧化數判定（僅顯示有變化的元素及其變化，並計算氧化數上升量／下降量，預設摺疊）
+    const leftOxByEl = {}, rightOxByEl = {};
+    const leftContrib = {}, rightContrib = {};
+    species.forEach((s, i) => {
+        const ox = getAverageOxidationNumbers(s.formula, s.charge);
+        Object.keys(s.atoms).forEach(el => {
+            const v = ox[el] ?? 0;
+            const set = (i < leftRaw.length) ? leftOxByEl : rightOxByEl;
+            if (!set[el]) set[el] = new Set(); set[el].add(v);
+            const n = s.atoms[el] || 0;
+            const contrib = finalCoeffs[i] * n * v;
+            if (i < leftRaw.length) { leftContrib[el] = (leftContrib[el] || 0) + contrib; } else { rightContrib[el] = (rightContrib[el] || 0) + contrib; }
+        });
+    });
+    let totalOxUp = 0, totalOxDown = 0;
+    elements.forEach(el => {
+        const L = leftContrib[el] || 0, R = rightContrib[el] || 0;
+        if (R > L) totalOxUp += (R - L); else if (L > R) totalOxDown += (L - R);
+    });
+    const fmtSet = (arr) => arr.map(x => (x >= 0 ? '+' : '') + x).join('、');
+    let oxChangeParts = [];
+    elements.forEach(el => {
+        const left = leftOxByEl[el] ? [...leftOxByEl[el]].sort((a,b)=>a-b) : [];
+        const right = rightOxByEl[el] ? [...rightOxByEl[el]].sort((a,b)=>a-b) : [];
+        if (left.length === 0 || right.length === 0) return;
+        const leftStr = fmtSet(left), rightStr = fmtSet(right);
+        if (leftStr === rightStr) return;
+        let changeStr = '';
+        if (left.length === 1 && right.length === 1) changeStr = `（變化 ${(right[0] - left[0]) >= 0 ? '+' : ''}${right[0] - left[0]}）`;
+        else changeStr = `（氧化數變化）`;
+        oxChangeParts.push(`<span class="highlight-atom">${el}</span>：反應物中 ${leftStr} → 產物中 ${rightStr}${changeStr}`);
+    });
+    const oxUpStr = Math.abs(totalOxUp - Math.round(totalOxUp)) < 0.01 ? Math.round(totalOxUp) : totalOxUp.toFixed(2);
+    const oxDownStr = Math.abs(totalOxDown - Math.round(totalOxDown)) < 0.01 ? Math.round(totalOxDown) : totalOxDown.toFixed(2);
+    const oxSummary = `<div style="margin-top:12px; padding:8px 12px; background:rgba(255,255,255,0.04); border-radius:6px;">氧化數上升量 = <span style="color:#f87171; font-weight:bold;">${oxUpStr}</span> &nbsp;；&nbsp; 氧化數下降量 = <span style="color:#60a5fa; font-weight:bold;">${oxDownStr}</span>${Math.abs(totalOxUp - totalOxDown) < 0.01 ? ' <span style="color:#4ade80;">✓ 守恆</span>' : ''}</div>`;
+    const oxBlock = `<details style="margin-top:16px; border:1px solid rgba(250,204,21,0.3); border-radius:8px; overflow:hidden;"><summary style="padding:10px 14px; cursor:pointer; background:rgba(250,204,21,0.08); color:#fbbf24; font-weight:bold;">顯示氧化數判定</summary><div style="padding:14px; font-size:0.95rem; line-height:1.8; color:#e2e8f0;">${oxChangeParts.length > 0 ? oxChangeParts.join('<br>') : '本反應無元素氧化數變化。'}${oxSummary}</div></details>`;
+    stp += oxBlock;
+
     let html = buildModularEq(finalCoeffs);
 
     return { html, stepsHtml: stp };
+}
+
+// 對矩陣做 RREF，並回傳秩與 pivot 欄位索引（用於判斷解空間維度與求 null space）
+function rrefWithPivots(matrix) {
+    const rows = matrix.length, cols = matrix[0].length;
+    const m = matrix.map(row => row.slice());
+    const pivotCols = [];
+    let pivot = 0;
+    for (let j = 0; j < cols && pivot < rows; j++) {
+        let max = pivot;
+        for (let i = pivot + 1; i < rows; i++) { if (Math.abs(m[i][j]) > Math.abs(m[max][j])) max = i; }
+        [m[pivot], m[max]] = [m[max], m[pivot]];
+        if (Math.abs(m[pivot][j]) < 1e-10) continue;
+        const val = m[pivot][j];
+        for (let k = 0; k < cols; k++) m[pivot][k] /= val;
+        for (let i = 0; i < rows; i++) { if (i !== pivot) { const factor = m[i][j]; for (let k = 0; k < cols; k++) m[i][k] -= factor * m[pivot][k]; } }
+        pivotCols.push(j);
+        pivot++;
+    }
+    return { rank: pivotCols.length, pivotCols, reduced: m };
+}
+
+// 由 RREF 與 pivot 欄位計算 null space 的基底（每個基底向量長度為 cols）
+function getNullSpaceBasis(reduced, rows, cols, pivotCols) {
+    const pivotSet = new Set(pivotCols);
+    const freeCols = [];
+    for (let j = 0; j < cols; j++) if (!pivotSet.has(j)) freeCols.push(j);
+    const basis = [];
+    for (const f of freeCols) {
+        const v = new Array(cols).fill(0);
+        v[f] = 1;
+        for (let i = 0; i < pivotCols.length && i < rows; i++) v[pivotCols[i]] = -reduced[i][f];
+        basis.push(v);
+    }
+    return basis;
+}
+
+// 在 null space 中找一組全為正且最簡整數的係數（搜尋線性組合後整數化並約分）
+function findMinimalPositiveIntegerInNullSpace(basis) {
+    const cols = basis[0].length;
+    const d = basis.length;
+    const gcd = (a, b) => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+    const lcm = (a, b) => (a * b) / gcd(a, b);
+    const tryCombination = (coeffs) => {
+        const v = new Array(cols).fill(0);
+        for (let i = 0; i < d; i++) for (let j = 0; j < cols; j++) v[j] += coeffs[i] * basis[i][j];
+        return v;
+    };
+    const allPositive = (v) => v.every(x => x > 1e-10);
+    const toIntegers = (v) => {
+        let denom = 1;
+        for (let i = 0; i < v.length; i++) {
+            const x = v[i];
+            for (let d = 1; d <= 120; d++) if (Math.abs(x * d - Math.round(x * d)) < 1e-8) { denom = lcm(denom, d); break; }
+        }
+        return v.map(x => Math.round(x * denom));
+    };
+    const reduceByGcd = (arr) => {
+        let g = 0;
+        for (const x of arr) g = gcd(g, x);
+        return g > 0 ? arr.map(x => x / g) : arr;
+    };
+    const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+    let best = null, bestSum = Infinity;
+    const maxTry = 40;
+    if (d === 1) {
+        const v = tryCombination([1]);
+        if (!allPositive(v)) {
+            const vn = tryCombination([-1]);
+            if (allPositive(vn)) { best = reduceByGcd(toIntegers(vn)); bestSum = sum(best); }
+        } else { best = reduceByGcd(toIntegers(v)); bestSum = sum(best); }
+    } else if (d === 2) {
+        for (let c1 = 1; c1 <= maxTry; c1++) for (let c2 = 1; c2 <= maxTry; c2++) {
+            const v = tryCombination([c1, c2]);
+            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+        }
+        if (best) return best;
+        for (let c1 = 1; c1 <= maxTry; c1++) for (let c2 = -maxTry; c2 <= -1; c2++) {
+            const v = tryCombination([c1, c2]);
+            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+        }
+    } else {
+        for (let c1 = 1; c1 <= 20; c1++) for (let c2 = 1; c2 <= 20; c2++) for (let c3 = 1; c3 <= 20; c3++) {
+            const v = tryCombination([c1, c2, c3]);
+            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+        }
+        if (!best) {
+            for (let c1 = 1; c1 <= 15; c1++) for (let c2 = -15; c2 <= 15; c2++) for (let c3 = 1; c3 <= 15; c3++) {
+                if (c2 === 0) continue;
+                const v = tryCombination([c1, c2, c3]);
+                if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            }
+        }
+    }
+    if (best) return best;
+    const fallback = tryCombination(basis.map((_, i) => 1));
+    return allPositive(fallback) ? reduceByGcd(toIntegers(fallback)) : basis[0].map((_, j) => Math.max(1, Math.round(Math.abs(fallback[j]) * 100)));
 }
 
 function gaussElimination(matrix) {
