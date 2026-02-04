@@ -179,35 +179,37 @@
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
 
-        /* 手機版：上方約 70% 顯示結構，下方約 30% 操作區 */
+        /* 手機版：顯示區：操作區＝3：1，操作區可捲動看齊選項 */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             #viewer-container {
                 order: 1;
-                flex: 0 0 70vh;
-                min-height: 70vh;
+                flex: 0 0 75vh;
+                min-height: 0;
             }
             #sidebar {
                 order: 2;
-                flex: 0 0 auto;
+                flex: 0 0 25vh;
                 width: 100%;
-                max-height: 30vh;
+                min-height: 0;
                 border-right: none;
                 border-top: 1px solid var(--border-color);
-                padding: 12px 16px 16px;
+                padding: 10px 14px 14px;
                 overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
             }
-            .app-header { margin-bottom: 12px; }
-            .app-title { font-size: 18px; }
-            .app-logo-mark { height: 24px; }
-            .section-header { margin: 10px 0 6px 0; }
+            .app-header { margin-bottom: 8px; }
+            .app-title { font-size: 17px; }
+            .app-logo-mark { height: 22px; }
+            .section-header { margin: 8px 0 4px 0; }
             .section-label { font-size: 11px; }
-            .control-card { padding: 8px 12px; border-radius: 12px; }
-            .control-row { padding: 10px 0; }
-            .control-row label { font-size: 14px; }
-            .dropdown-btn { padding: 12px 14px; font-size: 15px; }
-            .option { padding: 12px 14px; font-size: 14px; }
-            .dropdown-content { margin-top: 0; margin-bottom: 6px; bottom: 100%; top: auto; max-height: 25vh; overflow-y: auto; }
+            .control-card { padding: 6px 10px; border-radius: 10px; }
+            .control-row { padding: 8px 0; }
+            .control-row label { font-size: 13px; }
+            .dropdown-btn { padding: 10px 12px; font-size: 14px; }
+            .option { padding: 10px 12px; font-size: 13px; }
+            .dropdown-content { margin-top: 0; margin-bottom: 4px; bottom: 100%; top: auto; max-height: 20vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
             #viewer-container, #myViewer { touch-action: none; }
         }
     </style>
@@ -281,7 +283,7 @@
             loadWater: true
         });
 
-        // 結構載入後套用視覺與水分子；啟用選取/焦點（點擊或手機點擊會顯示該處骨架）
+        // 結構載入後套用視覺與水分子；啟用選取/焦點；手機版補上「點擊」以顯示骨架
         setTimeout(() => {
             updateVisuals();
             updateComponents();
@@ -289,6 +291,7 @@
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
+                setupMobileTapToClick();
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -364,6 +367,12 @@
         viewer.visual.focus();
     }
 
+    // 對應 .cif 檔名（胰島素若檔名為 1nzi.cif 也支援）
+    function getCifUrl(id) {
+        if (id === '1zni') return '1nzi.cif';
+        return id + '.cif';
+    }
+
     // 切換結構（僅從同目錄 .cif 載入，不上網）
     function changePDB(id, label, el) {
         document.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
@@ -372,7 +381,7 @@
         document.getElementById('pdbDropdown').classList.remove('open');
 
         viewer.visual.update({
-            customData: { url: id + '.cif', format: 'cif' },
+            customData: { url: getCifUrl(id), format: 'cif' },
             visualStyle: 'cartoon'
         });
 
@@ -382,8 +391,33 @@
             viewer.visual.setColor({ water: '#FFB6C1' });
             viewer.visual.update({ selectInteraction: true });
             applyMobileSettings();
+            setupMobileTapToClick();
             viewer.visual.focus();
         }, 1200);
+    }
+
+    // 手機版：短按轉成 click，讓點蛋白質能顯示骨架（與電腦版一致）
+    function setupMobileTapToClick() {
+        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
+        var container = document.getElementById('viewer-container');
+        if (!container) return;
+        var startTime = 0, startX = 0, startY = 0;
+        container.addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) return;
+            startTime = Date.now();
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        container.addEventListener('touchend', function(e) {
+            if (e.changedTouches.length !== 1) return;
+            var t = e.changedTouches[0];
+            var dt = Date.now() - startTime;
+            var dx = t.clientX - startX, dy = t.clientY - startY;
+            if (dt > 350 || (dx * dx + dy * dy) > 400) return;
+            var el = document.elementFromPoint(t.clientX, t.clientY);
+            if (!el || !container.contains(el)) return;
+            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY }));
+        }, { passive: true });
     }
 
     // 手機：縮放速度調慢（外掛有支援時生效）
