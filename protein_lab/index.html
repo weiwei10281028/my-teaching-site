@@ -209,7 +209,19 @@
             .control-row label { font-size: 13px; }
             .dropdown-btn { padding: 10px 12px; font-size: 14px; }
             .option { padding: 10px 12px; font-size: 13px; }
-            .dropdown-content { margin-top: 0; margin-bottom: 4px; bottom: 100%; top: auto; max-height: 20vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            /* 手機版下拉選單改為靜態定位（推擠式），讓選單內容能被捲動看見 */
+            .dropdown-content { 
+                position: static; 
+                margin-top: 4px; 
+                margin-bottom: 4px; 
+                box-shadow: none; 
+                border: 1px solid #eee;
+                max-height: none; 
+                display: none;
+                width: 100%;
+            }
+            .dropdown.open .dropdown-content { display: block; }
+            
             #viewer-container, #myViewer { touch-action: none; }
         }
     </style>
@@ -396,27 +408,73 @@
         }, 1200);
     }
 
-    // 手機版：短按轉成 click，讓點蛋白質能顯示骨架（與電腦版一致）
+    // 手機版：短按轉成 click/pointer event，讓點蛋白質能顯示骨架（模擬完整點擊流程）
     function setupMobileTapToClick() {
         if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
         var container = document.getElementById('viewer-container');
         if (!container) return;
         var startTime = 0, startX = 0, startY = 0;
+        
         container.addEventListener('touchstart', function(e) {
             if (e.touches.length !== 1) return;
             startTime = Date.now();
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
         }, { passive: true });
+
         container.addEventListener('touchend', function(e) {
             if (e.changedTouches.length !== 1) return;
             var t = e.changedTouches[0];
             var dt = Date.now() - startTime;
             var dx = t.clientX - startX, dy = t.clientY - startY;
-            if (dt > 350 || (dx * dx + dy * dy) > 400) return;
-            var el = document.elementFromPoint(t.clientX, t.clientY);
-            if (!el || !container.contains(el)) return;
-            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY }));
+            
+            // 判定為短按（tap）
+            if (dt < 300 && (dx * dx + dy * dy) < 100) {
+                // 找出目標元素（通常是 canvas）
+                var target = document.elementFromPoint(t.clientX, t.clientY);
+                if (!target || !container.contains(target)) return;
+
+                // 模擬完整的點擊序列 (PointerDown -> PointerUp -> Click) 以觸發外掛行為
+                var eventProps = {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: t.clientX,
+                    clientY: t.clientY,
+                    screenX: t.screenX,
+                    screenY: t.screenY,
+                    button: 0,
+                    buttons: 1,
+                    pointerId: 1,
+                    pointerType: 'touch',
+                    isPrimary: true
+                };
+
+                // Dispatch PointerDown
+                try {
+                    target.dispatchEvent(new PointerEvent('pointerdown', eventProps));
+                } catch(err) {}
+
+                // Dispatch PointerUp (shortly after)
+                setTimeout(function() {
+                    try {
+                        // PointerUp needs buttons: 0
+                        var upProps = Object.assign({}, eventProps, { buttons: 0 });
+                        target.dispatchEvent(new PointerEvent('pointerup', upProps));
+                        
+                        // Dispatch Click
+                        target.dispatchEvent(new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            clientX: t.clientX,
+                            clientY: t.clientY,
+                            button: 0,
+                            buttons: 0
+                        }));
+                    } catch(err) {}
+                }, 10);
+            }
         }, { passive: true });
     }
 
