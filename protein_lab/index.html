@@ -319,7 +319,8 @@
     };
 
     var BACKBONE_RANGE = 24;
-    var OTHER_RIBBON_COLOR = '#E8EAED';     // 點擊段以外的緞帶變很淡，對比明顯；選取段不填 color 以維持原色
+    var LOAD_GREY = '#9CA3AF';              // 與一開始載入畫面的緞帶同色，點擊段緞帶＋原子/鍵都固定此色，絕不變橘
+    var OTHER_RIBBON_COLOR = '#E8EAED';      // 點擊段以外的緞帶變很淡，凸顯選取段
 
     function onProteinClick(e) {
         var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
@@ -336,7 +337,9 @@
                 start_residue_number: Math.max(1, num - BACKBONE_RANGE),
                 end_residue_number: num + BACKBONE_RANGE,
                 focus: true,
-                representation: true
+                representation: true,
+                color: LOAD_GREY,
+                representationColor: LOAD_GREY
             }],
             nonSelectedColor: OTHER_RIBBON_COLOR
         });
