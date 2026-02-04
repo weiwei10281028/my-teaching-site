@@ -17,27 +17,30 @@
         .protein-btn:hover { background: #f8f9fa; border-color: #007bff; }
         .protein-btn.active { background: #007bff; color: white; border-color: #007bff; }
         
-        #viewer-container { flex: 1; position: relative; background: #fff; }
+        #viewer-container { flex: 1; position: relative; background: #fff !important; }
         #myViewer { width: 100%; height: 100%; }
 
-        /* --- 3. UI 修改 (隱藏不需要的按鈕) --- */
+        /* --- 核心修改：隱藏你不想要的按鈕 --- */
+
+        /* 隱藏右側垂直的那排圖示按鈕 (板手、相機、重整等) */
+        .msp-plugin-control-side-menu { display: none !important; }
         
-        /* 隱藏右側垂直工具欄的所有按鈕，除了控制台切換鈕(選配) */
-        /* .msp-sequence-viewer, .msp-stats-viewer { display: none !important; } */
-        
-        /* 隱藏 Components 面板中的垃圾桶圖示 */
-        .msp-btn-remove, .msp-control-group-header-buttons .msp-btn-action[title*="Remove"] { 
+        /* 隱藏右側面板頂部的 "Structure Tools" 標題與 "Structure" 資訊區塊 */
+        .msp-section-header, .msp-control-group-header { 
+            /* 我們待會用 JS 只把 Components 留著，CSS 先藏掉雜項 */
+        }
+
+        /* 隱藏垃圾桶圖示 (防止誤刪) */
+        .msp-btn-remove, button[title*="Remove"], .msp-control-group-header-buttons button:last-child { 
             display: none !important; 
         }
 
-        /* 隱藏底部的 FO-FC 與不必要的資訊按鈕 */
-        .msp-gui-control-button[title*="Density"], 
-        .msp-gui-control-button[title*="Volume"],
-        .msp-widget-section-header[title*="Volume"],
-        .msp-layout-region-bottom { display: none !important; }
+        /* 隱藏右邊面板裡除了組件以外的所有區塊 (Quick Styles, Measurements 等) */
+        /* 這邊利用 JS 動態處理會更精準，CSS 先處理明顯的 */
+        .msp-layout-region-top, .msp-layout-region-bottom { display: none !important; }
 
-        /* 強制將畫布背景設為白色 */
-        canvas { background-color: #ffffff !important; }
+        /* 強制畫布背景為白色 */
+        canvas { background: #ffffff !important; }
     </style>
 </head>
 <body>
@@ -57,43 +60,67 @@
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
 
-    // 設置初始化選項
     var options = {
         customData: { url: './1zni.cif', format: 'cif' },
-        expanded: true,        // 展開右側面板
-        hideControls: false,   // 顯示官方控制欄 (以便操作 Components)
-        bgColor: {r: 255, g: 255, b: 255}, // 背景白色
-        displayVolume: false,  // 隱藏電子密度
+        expanded: true,        
+        hideControls: false,   
+        bgColor: {r: 255, g: 255, b: 255}, 
+        displayVolume: false,  
         loadEmptyStyle: false,
-        
-        // 2. 增加清晰度
-        pixelRatio: window.devicePixelRatio || 1, // 根據螢幕密度調整
-        quality: 'highest' // 設置最高畫質模式
+        pixelRatio: window.devicePixelRatio * 2, // 強制雙倍像素提高清晰度
+        quality: 'highest'
     };
 
     window.onload = function() {
         var viewerContainer = document.getElementById('myViewer');
         viewerInstance.render(viewerContainer, options);
         
-        // 啟動定時翻譯器 (處理動態生成的 UI 文字)
-        setInterval(translateUI, 500);
+        // 核心設定：確保背景是白色的 API 調用
+        setTimeout(() => {
+            if(viewerInstance.canvas) {
+                viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
+            }
+            // 執行深度清理與翻譯
+            cleanAndTranslateUI();
+        }, 1000);
+
+        // 持續監控 UI 變化，確保雜物不跑出來
+        setInterval(cleanAndTranslateUI, 500);
     };
 
-    // 翻譯函數：尋找對應的英文標籤並替換為中文
-    function translateUI() {
-        // 取得所有帶有文字的標籤元素
-        const labels = document.querySelectorAll('.msp-widget-section-header, .msp-control-group-header-label, .msp-generic-list-item-label, span');
+    /**
+     * 清理右側面板：只留下組件清單並翻譯
+     */
+    function cleanAndTranslateUI() {
+        // 1. 處理翻譯與顯示
+        const allElements = document.querySelectorAll('.msp-widget-section-header, .msp-control-group-header-label, span');
         
-        labels.forEach(el => {
+        allElements.forEach(el => {
             const text = el.innerText.trim();
-            if (text === 'Polymer') el.innerText = '聚合物';
-            if (text === 'Water') el.innerText = '結晶水';
-            if (text === '[Focus] Target') el.innerText = '[對焦] 目標';
-            if (text === '[Focus] Surroundings (5 Å)') el.innerText = '[對焦] 周邊 (5 Å)';
-            if (text === 'Components') el.innerText = '組件列表';
-            // 隱藏不需要的標題如 "Volume Streaming"
-            if (text === 'Volume Streaming') el.parentElement.style.display = 'none';
+            
+            // 翻譯核心組件
+            if (text === 'Polymer') el.innerText = '聚合物 (Polymer)';
+            if (text === 'Water') el.innerText = '結晶水 (Water)';
+            if (text === 'Components') el.innerText = '組件顯示控制';
+
+            // 隱藏雜項區塊：如果標題不是 Components，就隱藏整個區塊
+            const parentSection = el.closest('.msp-widget-section, .msp-control-group');
+            if (parentSection) {
+                const headerText = parentSection.innerText;
+                // 只有包含「組件」或 "Polymer" 的區塊留著，其他通通隱藏
+                if (headerText.includes('Structure') || 
+                    headerText.includes('Quick Styles') || 
+                    headerText.includes('Volume') || 
+                    headerText.includes('Measurements') || 
+                    headerText.includes('Export')) {
+                    parentSection.style.display = 'none';
+                }
+            }
         });
+
+        // 2. 再次確保背景色
+        const canvas = document.querySelector('canvas');
+        if (canvas) canvas.style.background = '#ffffff';
     }
 
     function changeProtein(fileName, element) {
@@ -105,7 +132,11 @@
             hideWater: false
         });
 
-        setTimeout(() => { viewerInstance.visual.focus(); }, 500);
+        // 切換後再次強制對焦與確保背景
+        setTimeout(() => { 
+            viewerInstance.visual.focus(); 
+            viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
+        }, 500);
     }
 </script>
 
