@@ -272,22 +272,23 @@
     const viewer = new PDBeMolstarPlugin();
     
     window.onload = () => {
-        // 優先從同目錄載入 mmCIF（檔名 1ubq.cif），無檔案時外掛會用 moleculeId 從網路載入
+        // 僅從同目錄 .cif 檔載入，不透過 API（請上傳 1ubq.cif 等）
         viewer.render(document.getElementById('myViewer'), {
             customData: { url: '1ubq.cif', format: 'cif' },
-            moleculeId: '1ubq',
             hideControls: true,
             bgColor: {r: 255, g: 255, b: 255},
             visualStyle: 'cartoon',
             loadWater: true
         });
 
-        // 結構載入後套用視覺與水分子淺紅色；不覆寫點擊行為，使用外掛預設（點擊選取、Shift+點擊多重選取，手機觸控同様支援）
+        // 結構載入後套用視覺與水分子；啟用選取/焦點（點擊或手機點擊會顯示該處骨架）
         setTimeout(() => {
             updateVisuals();
             updateComponents();
             if(viewer.plugin) {
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
+                viewer.visual.update({ selectInteraction: true });
+                applyMobileSettings();
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -363,29 +364,41 @@
         viewer.visual.focus();
     }
 
-    // 切換結構（1zni 本機 cif 易出錯，改為僅用 moleculeId 從網路載入）
+    // 切換結構（僅從同目錄 .cif 載入，不上網）
     function changePDB(id, label, el) {
         document.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('selectedLabel').innerText = label;
         document.getElementById('pdbDropdown').classList.remove('open');
 
-        if (id === '1zni') {
-            viewer.visual.update({ moleculeId: id, visualStyle: 'cartoon' });
-        } else {
-            viewer.visual.update({
-                customData: { url: id + '.cif', format: 'cif' },
-                moleculeId: id,
-                visualStyle: 'cartoon'
-            });
-        }
+        viewer.visual.update({
+            customData: { url: id + '.cif', format: 'cif' },
+            visualStyle: 'cartoon'
+        });
 
         setTimeout(() => {
             updateVisuals();
             updateComponents();
             viewer.visual.setColor({ water: '#FFB6C1' });
+            viewer.visual.update({ selectInteraction: true });
+            applyMobileSettings();
             viewer.visual.focus();
         }, 1200);
+    }
+
+    // 手機：縮放速度調慢（外掛有支援時生效）
+    function applyMobileSettings() {
+        if (!viewer.plugin || !viewer.plugin.canvas3d) return;
+        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
+        try {
+            var p = viewer.plugin;
+            var props = p.canvas3d.getProps && p.canvas3d.getProps();
+            if (props && props.input) {
+                p.canvas3d.setProps({ input: Object.assign({}, props.input, { scale: 0.45 }) });
+            } else if (p.canvas3d.setProps) {
+                p.canvas3d.setProps({ input: { scale: 0.45 } });
+            }
+        } catch (e) {}
     }
 </script>
 
