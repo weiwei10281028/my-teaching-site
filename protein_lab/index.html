@@ -175,21 +175,38 @@
         /* 視圖區域 */
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; display: flex; flex-direction: column; }
         #myViewer { width: 100%; height: 100%; flex: 1; min-height: 0; }
-        /* 手機版：畫面上方多選開關列（僅手機顯示） */
+        /* 手機版：顯示面左側多選開關（僅手機顯示，絕對定位以利點擊） */
         .viewer-mobile-bar { display: none; }
         @media (max-width: 768px) {
+            #viewer-container { position: relative; }
             .viewer-mobile-bar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 70px;
                 display: flex;
-                flex: 0 0 auto;
+                flex-direction: column;
                 align-items: center;
-                justify-content: flex-end;
-                padding: 8px 12px;
-                background: rgba(255,255,255,0.95);
-                border-bottom: 1px solid var(--border-color);
-                z-index: 5;
+                justify-content: flex-start;
+                padding-top: 14px;
+                background: rgba(255,255,255,0.96);
+                border-right: 1px solid var(--border-color);
+                z-index: 20;
+                pointer-events: auto;
+                touch-action: manipulation;
             }
-            .mobile-multi-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 0; cursor: pointer; }
-            .mobile-multi-label { font-size: 13px; font-weight: 500; color: var(--text-label); }
+            .mobile-multi-row {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                cursor: pointer;
+                min-height: 56px;
+                justify-content: center;
+            }
+            .mobile-multi-label { font-size: 12px; font-weight: 600; color: var(--text-label); text-align: center; }
         }
 
         /* 隱藏原生組件 */
@@ -296,9 +313,9 @@
 
 <div id="viewer-container">
     <div id="viewer-mobile-bar" class="viewer-mobile-bar">
-        <label class="mobile-multi-row">
+        <label class="mobile-multi-row" for="mobileMultiSelect">
             <span class="mobile-multi-label">多選模式</span>
-            <label class="switch"><input type="checkbox" id="mobileMultiSelect"><span class="slider"></span></label>
+            <label class="switch" onclick="event.stopPropagation()"><input type="checkbox" id="mobileMultiSelect"><span class="slider"></span></label>
         </label>
     </div>
     <div id="myViewer"></div>
@@ -464,13 +481,14 @@
             var dx = t.clientX - touchStart.x;
             var dy = t.clientY - touchStart.y;
             var duration = Date.now() - touchStart.t;
-            if (duration < 350 && (dx * dx + dy * dy) < 400) {
+            // 嚴格判定為「輕觸」：時間短且幾乎沒移動，避免誤觸清掉選取、也避免干擾單指旋轉
+            var isTap = duration < 220 && (dx * dx + dy * dy) < 100;
+            if (isTap) {
                 e.preventDefault();
                 var target = container.querySelector('canvas') || container;
                 var multiOn = document.getElementById('mobileMultiSelect') && document.getElementById('mobileMultiSelect').checked;
                 var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0, shiftKey: !!multiOn };
-                target.dispatchEvent(new MouseEvent('mousedown', opts));
-                target.dispatchEvent(new MouseEvent('mouseup', opts));
+                // 只派送 click，不派送 mousedown/mouseup，減少與外掛觸控旋轉的衝突
                 target.dispatchEvent(new MouseEvent('click', opts));
             }
         }, { passive: false });
