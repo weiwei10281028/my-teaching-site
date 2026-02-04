@@ -175,38 +175,45 @@
         /* 視圖區域 */
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; display: flex; flex-direction: column; }
         #myViewer { width: 100%; height: 100%; flex: 1; min-height: 0; }
-        /* 手機版：顯示面左側多選開關（僅手機顯示，絕對定位以利點擊） */
+        /* 手機版：右上角畫面內浮動多選開關（不佔獨立區塊、大點擊區） */
         .viewer-mobile-bar { display: none; }
         @media (max-width: 768px) {
             #viewer-container { position: relative; }
             .viewer-mobile-bar {
                 position: absolute;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                width: 70px;
+                right: 10px;
+                top: 10px;
+                left: auto;
+                bottom: auto;
+                width: auto;
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
                 align-items: center;
-                justify-content: flex-start;
-                padding-top: 14px;
-                background: rgba(255,255,255,0.96);
-                border-right: 1px solid var(--border-color);
+                justify-content: flex-end;
+                padding: 10px 12px;
+                gap: 10px;
+                background: rgba(255,255,255,0.95);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
                 z-index: 20;
                 pointer-events: auto;
                 touch-action: manipulation;
+                min-height: 44px;
+                box-sizing: border-box;
             }
             .mobile-multi-row {
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
                 align-items: center;
-                gap: 8px;
+                gap: 10px;
                 margin: 0;
                 cursor: pointer;
-                min-height: 56px;
+                min-height: 44px;
+                padding: 4px 0;
                 justify-content: center;
+                -webkit-tap-highlight-color: transparent;
             }
-            .mobile-multi-label { font-size: 12px; font-weight: 600; color: var(--text-label); text-align: center; }
+            .mobile-multi-label { font-size: 13px; font-weight: 600; color: var(--text-label); }
         }
 
         /* 隱藏原生組件 */
@@ -313,10 +320,10 @@
 
 <div id="viewer-container">
     <div id="viewer-mobile-bar" class="viewer-mobile-bar">
-        <label class="mobile-multi-row" for="mobileMultiSelect">
+        <div class="mobile-multi-row" id="mobileMultiSelectBtn" role="button" tabindex="0">
             <span class="mobile-multi-label">多選模式</span>
             <label class="switch" onclick="event.stopPropagation()"><input type="checkbox" id="mobileMultiSelect"><span class="slider"></span></label>
-        </label>
+        </div>
     </div>
     <div id="myViewer"></div>
 </div>
@@ -471,28 +478,52 @@
         var touchStart = { x: 0, y: 0, t: 0 };
         container.addEventListener('touchstart', function (e) {
             if (e.touches.length !== 1) return;
+            if (e.target.closest('#viewer-mobile-bar')) return;
             touchStart.x = e.touches[0].clientX;
             touchStart.y = e.touches[0].clientY;
             touchStart.t = Date.now();
         }, { passive: true });
         container.addEventListener('touchend', function (e) {
             if (e.changedTouches.length !== 1) return;
+            if (e.target.closest('#viewer-mobile-bar')) return;
             var t = e.changedTouches[0];
             var dx = t.clientX - touchStart.x;
             var dy = t.clientY - touchStart.y;
             var duration = Date.now() - touchStart.t;
-            // 嚴格判定為「輕觸」：時間短且幾乎沒移動，避免誤觸清掉選取、也避免干擾單指旋轉
-            var isTap = duration < 220 && (dx * dx + dy * dy) < 100;
+            // 輕觸即選取：時間與移動門檻適中，可點選胺基酸骨架、又不過度干擾旋轉
+            var isTap = duration < 320 && (dx * dx + dy * dy) < 256;
             if (isTap) {
                 e.preventDefault();
                 var target = container.querySelector('canvas') || container;
                 var multiOn = document.getElementById('mobileMultiSelect') && document.getElementById('mobileMultiSelect').checked;
                 var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0, shiftKey: !!multiOn };
-                // 只派送 click，不派送 mousedown/mouseup，減少與外掛觸控旋轉的衝突
+                target.dispatchEvent(new MouseEvent('mousedown', opts));
+                target.dispatchEvent(new MouseEvent('mouseup', opts));
                 target.dispatchEvent(new MouseEvent('click', opts));
             }
         }, { passive: false });
     }
+
+    // 手機版多選開關：整塊點一下即切換（輕點即可）
+    (function initMobileMultiSelectTap() {
+        var bar = document.getElementById('viewer-mobile-bar');
+        var cb = document.getElementById('mobileMultiSelect');
+        if (!bar || !cb) return;
+        var lastTap = 0;
+        function toggleMulti() { cb.checked = !cb.checked; }
+        bar.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMulti();
+            lastTap = Date.now();
+        }, { passive: false });
+        bar.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (Date.now() - lastTap < 400) return;
+            toggleMulti();
+        });
+    })();
 </script>
 
 </body>
