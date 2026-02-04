@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構專業教學系統 V2.2</title>
+    <title>蛋白質結構專業教學系統 V3.0</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
@@ -11,13 +11,13 @@
         body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; color: var(--text); }
         #main-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
         @media (max-width: 768px) { #main-container { flex-direction: column; } }
-        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; }
-        .section-title { font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; color: #666; text-transform: uppercase; }
-        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; font-size: 14px; }
+        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .section-title { font-size: 14px; font-weight: bold; margin: 15px 0 8px 0; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; font-size: 14px; transition: 0.3s; }
         .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .control-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
         .control-label { font-size: 14px; font-weight: bold; }
-        .control-sub { font-size: 11px; color: #999; display: block; }
+        .control-sub { font-size: 11px; color: #999; display: block; line-height: 1.2; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -41,13 +41,20 @@
             <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
         </div>
 
-        <div class="section-title">互動邏輯</div>
+        <div class="section-title">高級互動邏輯</div>
         <div class="control-item">
             <div class="control-info">
                 <span class="control-label">對焦模式 (Focus)</span>
-                <span class="control-sub">關閉時結構 100% 實心且不位移</span>
+                <span class="control-sub">關閉時：點擊不淡化其餘結構</span>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-focus" onchange="applyStrictLogic()"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="toggle-focus" onchange="applyInteractionUpdate()"><span class="slider"></span></label>
+        </div>
+        <div class="control-item">
+            <div class="control-info">
+                <span class="control-label">多重選取模式</span>
+                <span class="control-sub">開啟後：可按 Shift 選取多個片段</span>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-select" checked onchange="applyInteractionUpdate()"><span class="slider"></span></label>
         </div>
 
         <div class="section-title">顯示開關</div>
@@ -60,7 +67,7 @@
             <label class="switch"><input type="checkbox" checked id="toggle-water" onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
         </div>
 
-        <div class="section-title">特徵顯示</div>
+        <div class="section-title">化學特徵</div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span></div>
             <label class="switch"><input type="checkbox" id="check-hbond" checked onchange="updateBonds()"><span class="slider"></span></label>
@@ -83,53 +90,62 @@
         customData: { url: './1zni.cif', format: 'cif' },
         hideControls: true,
         bgColor: {r: 255, g: 255, b: 255},
-        lighting: 'flat' // 使用平滑光照減少陰影感
+        lighting: 'glossy' 
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        // 重複嘗試直到外掛完全載入
-        var checkReady = setInterval(() => {
+        var initInterval = setInterval(() => {
             if (viewerInstance.plugin) {
-                applyStrictLogic();
-                clearInterval(checkReady);
+                applyInteractionUpdate();
+                clearInterval(initInterval);
             }
         }, 500);
     };
 
-    // 強制套用底層邏輯：解決遮蔽與背景變黑
-    function applyStrictLogic() {
+    // 核心改善：從底層鎖定透明度與互動模式
+    function applyInteractionUpdate() {
         if (!viewerInstance.plugin) return;
 
-        const isFocusEnabled = document.getElementById('toggle-focus').checked;
+        const focusOn = document.getElementById('toggle-focus').checked;
+        const selectOn = document.getElementById('toggle-select').checked;
         const canvas = viewerInstance.plugin.canvas3d;
 
-        // 1. 強制設定畫布參數 (防止變黑、防止背景淡化)
+        // 1. 底層渲染攔截：鎖定所有透明度為 1.0 (實心)
+        // 這樣即使 Mol* 想淡化背景，背景也會保持不透明
         canvas.setProps({
             renderer: {
-                backgroundColor: {r: 1, g: 1, b: 1},
-                highlightAlpha: 1.0,  // 點擊時不改變不透明度
-                selectAlpha: 1.0,     // 選取時不改變不透明度
-                dimAlpha: 1.0         // 關鍵：強制淡化後的透明度也是 1.0 (即不淡化)
+                ...canvas.props.renderer,
+                dimAlpha: focusOn ? 0.2 : 1.0,        // 關鍵：關閉對焦時，淡化透明度設為 1 (實心)
+                highlightAlpha: 1.0,                  // 高亮不透明
+                selectAlpha: 1.0                      // 選取不透明
             },
             postprocessing: {
-                occlusion: { name: 'off', params: {} }, // 關閉環境光遮蔽 (解決黑影)
-                outline: { name: 'off', params: {} }    // 關閉輪廓線
-            },
-            cameraFog: { name: 'off', params: {} }      // 關閉霧化 (解決若隱若現)
+                occlusion: { name: 'off', params: {} } // 關閉環境遮蔽避免旋轉黑影
+            }
         });
 
-        // 2. 固定背景為白色 (PDBe 特有 API)
-        viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
-
-        // 3. 處理點擊互動
+        // 2. 更新互動模式
+        // 如果對焦模式關閉，我們將點擊改為「純選取 (select)」模式，這不會觸發 Mol* 的自動縮放與自動淡化
         viewerInstance.plugin.managers.interactivity.setProps({
-            props: { click: isFocusEnabled ? 'default' : 'select' }
+            props: { 
+                click: focusOn ? 'default' : 'select' 
+            }
         });
 
-        if (!isFocusEnabled) {
+        // 3. 恢復/同步多選 UI 邏輯
+        viewerInstance.visual.update({ 
+            selectInteraction: selectOn,
+            hideCanvasControls: true
+        });
+
+        // 如果從對焦模式切換回來，強制重置視圖狀態
+        if (!focusOn) {
             viewerInstance.plugin.managers.structure.focus.clear();
         }
+
+        // 確保背景固定
+        viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
     }
 
     function updateBonds() {
@@ -158,12 +174,13 @@
             btnElement.classList.add('active');
         }
         
-        // 載入新模型
-        viewerInstance.visual.update({ customData: { url: './' + fileName + '.cif', format: 'cif' } });
+        viewerInstance.visual.update({ 
+            customData: { url: './' + fileName + '.cif', format: 'cif' } 
+        });
         
-        // 載入後延遲強制重設畫布與背景，防止變黑
+        // 模型更換後，PDBe 會重置畫布，必須重新強制執行底層邏輯
         setTimeout(() => {
-            applyStrictLogic();
+            applyInteractionUpdate();
             updateBonds();
             viewerInstance.visual.focus();
         }, 800);
