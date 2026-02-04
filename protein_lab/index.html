@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>蛋白質 3D 結構教學系統</title>
-    <!-- 引入 PDBe 官方資源 -->
-    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
-    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
+    <!-- 升級至 PDBe Molstar 3.2.0 以獲得更好的手機觸控支援 -->
+    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.2.0.css">
+    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.2.0.js"></script>
     <style>
         :root {
             --primary-color: #007aff;
@@ -303,7 +303,6 @@
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
-                setupMobileTapToClick();
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -403,79 +402,8 @@
             viewer.visual.setColor({ water: '#FFB6C1' });
             viewer.visual.update({ selectInteraction: true });
             applyMobileSettings();
-            setupMobileTapToClick();
             viewer.visual.focus();
         }, 1200);
-    }
-
-    // 手機版：短按轉成 click/pointer event，讓點蛋白質能顯示骨架（模擬完整點擊流程）
-    function setupMobileTapToClick() {
-        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
-        var container = document.getElementById('viewer-container');
-        if (!container) return;
-        var startTime = 0, startX = 0, startY = 0;
-        
-        container.addEventListener('touchstart', function(e) {
-            if (e.touches.length !== 1) return;
-            startTime = Date.now();
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        }, { passive: true });
-
-        container.addEventListener('touchend', function(e) {
-            if (e.changedTouches.length !== 1) return;
-            var t = e.changedTouches[0];
-            var dt = Date.now() - startTime;
-            var dx = t.clientX - startX, dy = t.clientY - startY;
-            
-            // 判定為短按（tap）
-            if (dt < 300 && (dx * dx + dy * dy) < 100) {
-                // 找出目標元素（通常是 canvas）
-                var target = document.elementFromPoint(t.clientX, t.clientY);
-                if (!target || !container.contains(target)) return;
-
-                // 模擬完整的點擊序列 (PointerDown -> PointerUp -> Click) 以觸發外掛行為
-                var eventProps = {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: t.clientX,
-                    clientY: t.clientY,
-                    screenX: t.screenX,
-                    screenY: t.screenY,
-                    button: 0,
-                    buttons: 1,
-                    pointerId: 1,
-                    pointerType: 'touch',
-                    isPrimary: true
-                };
-
-                // Dispatch PointerDown
-                try {
-                    target.dispatchEvent(new PointerEvent('pointerdown', eventProps));
-                } catch(err) {}
-
-                // Dispatch PointerUp (shortly after)
-                setTimeout(function() {
-                    try {
-                        // PointerUp needs buttons: 0
-                        var upProps = Object.assign({}, eventProps, { buttons: 0 });
-                        target.dispatchEvent(new PointerEvent('pointerup', upProps));
-                        
-                        // Dispatch Click
-                        target.dispatchEvent(new MouseEvent('click', {
-                            bubbles: true,
-                            cancelable: true,
-                            view: window,
-                            clientX: t.clientX,
-                            clientY: t.clientY,
-                            button: 0,
-                            buttons: 0
-                        }));
-                    } catch(err) {}
-                }, 10);
-            }
-        }, { passive: true });
     }
 
     // 手機：縮放速度調慢（外掛有支援時生效）
