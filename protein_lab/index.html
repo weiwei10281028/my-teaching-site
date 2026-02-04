@@ -303,6 +303,7 @@
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
+                setupMobileTapToSelect();
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -420,6 +421,36 @@
                 p.canvas3d.setProps({ input: { scale: 0.45 } });
             }
         } catch (e) {}
+    }
+
+    // 手機版：快速輕觸視圖時模擬點擊，讓外掛的選取邏輯觸發並顯示胺基酸骨架
+    function setupMobileTapToSelect() {
+        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
+        var container = document.getElementById('viewer-container');
+        if (!container || container.dataset.mobileTapSetup === '1') return;
+        container.dataset.mobileTapSetup = '1';
+        var touchStart = { x: 0, y: 0, t: 0 };
+        container.addEventListener('touchstart', function (e) {
+            if (e.touches.length !== 1) return;
+            touchStart.x = e.touches[0].clientX;
+            touchStart.y = e.touches[0].clientY;
+            touchStart.t = Date.now();
+        }, { passive: true });
+        container.addEventListener('touchend', function (e) {
+            if (e.changedTouches.length !== 1) return;
+            var t = e.changedTouches[0];
+            var dx = t.clientX - touchStart.x;
+            var dy = t.clientY - touchStart.y;
+            var duration = Date.now() - touchStart.t;
+            if (duration < 350 && (dx * dx + dy * dy) < 400) {
+                e.preventDefault();
+                var target = container.querySelector('canvas') || container;
+                var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0 };
+                target.dispatchEvent(new MouseEvent('mousedown', opts));
+                target.dispatchEvent(new MouseEvent('mouseup', opts));
+                target.dispatchEvent(new MouseEvent('click', opts));
+            }
+        }, { passive: false });
     }
 </script>
 
