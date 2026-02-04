@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構專業教學系統 V2.0</title>
+    <title>蛋白質結構專業教學系統 V2.1</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
@@ -11,35 +11,23 @@
         body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: var(--text); }
         #main-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
         @media (max-width: 768px) { #main-container { flex-direction: column; } }
-
-        #sidebar { 
-            width: 320px; background: #fff; border-right: 1px solid #ddd; 
-            display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-        }
+        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
         @media (max-width: 768px) { #sidebar { width: 100%; height: auto; padding: 15px; } }
-
         .section-title { font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; color: #666; text-transform: uppercase; letter-spacing: 1px; }
         .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #fff; text-align: left; font-size: 14px; }
         .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .mobile-select { display: none; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
-        @media (max-width: 768px) { #protein-list { display: none; } .mobile-select { display: block; } }
-
         .control-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
         .control-info { display: flex; flex-direction: column; }
         .control-label { font-size: 14px; font-weight: bold; }
         .control-sub { font-size: 11px; color: #999; }
-
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
-
         #viewer-container { flex: 1; position: relative; background: #fff; }
         #myViewer { width: 100%; height: 100%; }
-        /* 隱藏原生多餘 UI */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
@@ -48,35 +36,20 @@
 <div id="main-container">
     <div id="sidebar">
         <div class="section-title">物質選擇</div>
-        <div id="protein-select-container">
-            <div id="protein-list">
-                <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
-                <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
-                <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
-                <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
-            </div>
-            <select class="mobile-select" onchange="changeProtein(this.value, null)">
-                <option value="1zni">胰島素 (Insulin)</option>
-                <option value="1mbn">肌紅蛋白 (Myoglobin)</option>
-                <option value="1ema">綠色螢光蛋白 (GFP)</option>
-                <option value="1ubq">泛素 (Ubiquitin)</option>
-            </select>
+        <div id="protein-list">
+            <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
+            <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
+            <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
+            <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
         </div>
 
         <div class="section-title">互動邏輯</div>
         <div class="control-item">
             <div class="control-info">
                 <span class="control-label">對焦模式 (Focus)</span>
-                <span class="control-sub">關閉時結構保持實心且不位移</span>
+                <span class="control-sub">關閉時維持 100% 實心不遮蔽</span>
             </div>
             <label class="switch"><input type="checkbox" id="toggle-focus" onchange="updateInteraction()"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info">
-                <span class="control-label">多重選取模式</span>
-                <span class="control-sub">開啟後可按住 Shift 多選</span>
-            </div>
-            <label class="switch"><input type="checkbox" id="toggle-select" onchange="updateInteraction()"><span class="slider"></span></label>
         </div>
 
         <div class="section-title">基礎顯示</div>
@@ -86,7 +59,7 @@
         </div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">結晶水 (Water)</span></div>
-            <label class="switch"><input type="checkbox" checked onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" checked id="toggle-water" onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
         </div>
 
         <div class="section-title">化學特徵</div>
@@ -107,73 +80,66 @@
             <label class="switch"><input type="checkbox" onchange="toggleSpin(this.checked)"><span class="slider"></span></label>
         </div>
     </div>
-
-    <div id="viewer-container">
-        <div id="myViewer"></div>
-    </div>
+    <div id="viewer-container"><div id="myViewer"></div></div>
 </div>
 
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
-    
     var options = {
         customData: { url: './1zni.cif', format: 'cif' },
-        expanded: false,
         hideControls: true,
         bgColor: {r: 255, g: 255, b: 255},
-        pixelRatio: window.devicePixelRatio * 2,
-        quality: 'highest',
-        moleculeId: '1zni'
+        quality: 'highest'
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        setTimeout(() => {
-            // 強制設定相機與渲染參數，防止閃爍與若隱若現
-            if (viewerInstance.plugin) {
-                const renderer = viewerInstance.plugin.canvas3d.props.renderer;
-                viewerInstance.plugin.canvas3d.setProps({
-                    renderer: { ...renderer, backgroundColor: {r:1, g:1, b:1} },
-                    camera: { helper: { axes: { name: 'off', params: {} } } },
-                    // 防止旋轉時近距離物體被裁切消失
-                    cameraFog: { name: 'off', params: {} }
-                });
-            }
-            updateInteraction();
-            updateBonds();
-        }, 1500);
+        setTimeout(initEngineSettings, 1500);
     };
+
+    function initEngineSettings() {
+        if (!viewerInstance.plugin) return;
+        
+        // 核心修正：調整渲染器參數，防止任何形式的透明度淡化與裁切
+        viewerInstance.plugin.canvas3d.setProps({
+            renderer: {
+                ...viewerInstance.plugin.canvas3d.props.renderer,
+                highlightAlpha: 1.0, // 點擊高亮時，背景不變透明
+                selectAlpha: 1.0,    // 選取時，其餘部分不變透明
+            },
+            cameraFog: { name: 'off', params: {} }, // 關閉遠方霧化，防止消失
+            camera: {
+                helper: { axes: { name: 'off', params: {} } }
+            }
+        });
+        updateInteraction();
+        updateBonds();
+    }
 
     function updateInteraction() {
         const isFocusEnabled = document.getElementById('toggle-focus').checked;
-        const isSelectionEnabled = document.getElementById('toggle-select').checked;
-
         if (viewerInstance.plugin) {
-            // 核心修正：當對焦關閉時，設定為 'nothing' 或 'select' 並清除所有透明度變動
+            // 切換互動模式
             viewerInstance.plugin.managers.interactivity.setProps({
-                props: {
-                    click: isFocusEnabled ? 'default' : 'select'
-                }
+                props: { click: isFocusEnabled ? 'default' : 'select' }
             });
 
+            // 如果關閉對焦，強制移除所有現有的「遮蔽/陰影」效果
             if (!isFocusEnabled) {
-                // 強制清除「對焦」產生的透明遮罩與陰影感
                 viewerInstance.plugin.managers.structure.focus.clear();
-                // 讓所有組件回到 100% 不透明度
-                viewerInstance.visual.update({ selectInteraction: isSelectionEnabled });
-            } else {
-                viewerInstance.visual.update({ selectInteraction: isSelectionEnabled });
+                // 設定底層不允許透明度疊加
+                viewerInstance.plugin.canvas3d.setProps({
+                    postprocessing: { outline: { name: 'off' } }
+                });
             }
         }
     }
 
     function updateBonds() {
-        const hbond = document.getElementById('check-hbond').checked;
-        const ssbond = document.getElementById('check-ssbond').checked;
         viewerInstance.visual.update({
-            hideHydrogenBonds: !hbond,
-            hideMetalInteractions: !ssbond, 
-            hideWater: !document.querySelector('input[onchange*="water"]').checked
+            hideHydrogenBonds: !document.getElementById('check-hbond').checked,
+            hideMetalInteractions: !document.getElementById('check-ssbond').checked, 
+            hideWater: !document.getElementById('toggle-water').checked
         });
     }
 
@@ -195,14 +161,8 @@
             document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
         }
-        viewerInstance.visual.update({
-            customData: { url: './' + fileName + '.cif', format: 'cif' }
-        });
-        setTimeout(() => {
-            updateInteraction();
-            updateBonds();
-            viewerInstance.visual.focus();
-        }, 1000);
+        viewerInstance.visual.update({ customData: { url: './' + fileName + '.cif', format: 'cif' } });
+        setTimeout(initEngineSettings, 1000);
     }
 </script>
 
