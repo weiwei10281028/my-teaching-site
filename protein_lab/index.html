@@ -208,6 +208,7 @@
             .dropdown-btn { padding: 12px 14px; font-size: 15px; }
             .option { padding: 12px 14px; font-size: 14px; }
             .dropdown-content { margin-top: 0; margin-bottom: 6px; bottom: 100%; top: auto; max-height: 25vh; overflow-y: auto; }
+            #viewer-container, #myViewer { touch-action: none; }
         }
     </style>
 </head>
@@ -257,10 +258,6 @@
             <label class="switch"><input type="checkbox" id="poly" checked onchange="updateComponents()"><span class="slider"></span></label>
         </div>
         <div class="control-row">
-            <label>顯示主鏈骨架 (Backbone)</label>
-            <label class="switch"><input type="checkbox" id="backbone" onchange="updateBackbone()"><span class="slider"></span></label>
-        </div>
-        <div class="control-row">
             <label>水分子 (Water)</label>
             <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
         </div>
@@ -285,17 +282,23 @@
             loadWater: true
         });
 
-        // 結構載入後套用視覺與水分子淺紅色
+        // 結構載入後套用視覺與水分子淺紅色；不覆寫點擊行為，使用外掛預設（點擊選取、Shift+點擊多重選取，手機觸控同様支援）
         setTimeout(() => {
             updateVisuals();
             updateComponents();
             if(viewer.plugin) {
-                viewer.plugin.managers.interactivity.setProps({ props: { click: 'toggle' } });
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
             }
         }, 1200);
-        // 外掛會稍晚覆蓋水分子顏色，多次套用以盡量維持淺紅色（外掛限制可能仍會先綠後紅）
-        [2500, 3500].forEach(ms => setTimeout(() => { if (viewer.plugin) viewer.visual.setColor({ water: '#FFB6C1' }); }, ms));
+        // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
+        setTimeout(() => {
+            let t = 0;
+            const waterColorInterval = setInterval(() => {
+                t += 600;
+                if (viewer.plugin) viewer.visual.setColor({ water: '#FFB6C1' });
+                if (t >= 5000) clearInterval(waterColorInterval);
+            }, 600);
+        }, 1200);
     };
 
     // 下拉選單開關
@@ -348,7 +351,6 @@
     // 重新整理：重置為原始狀態（選取清除、開關還原、視角重設）
     function refreshView() {
         if (!viewer.plugin) return;
-        document.getElementById('backbone').checked = false;
         document.getElementById('poly').checked = true;
         document.getElementById('water').checked = true;
         document.getElementById('spin').checked = false;
@@ -357,51 +359,31 @@
         viewer.visual.clearSelection();
         updateVisuals();
         updateComponents();
+        viewer.visual.setColor({ water: '#FFB6C1' });
         viewer.visual.focus();
     }
 
-    // 顯示主鏈骨架 (Backbone)。註：PDBe Molstar 外掛的 select 表示法不支援元素色，骨架可能仍為單一色（綠/黑），屬外掛限制。
-    function updateBackbone() {
-        if (!viewer.plugin) return;
-        const show = document.getElementById('backbone').checked;
-        
-        if (show) {
-            viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
-            viewer.visual.select({
-                data: [{
-                    backbone: true,
-                    representation: 'ball-and-stick',
-                    color: 'element',
-                    representationColor: 'element'
-                }],
-                nonSelectedColor: 'theme',
-                keepRepresentations: true
-            });
-        } else {
-            viewer.visual.clearSelection();
-            viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
-        }
-    }
-
-    // 切換結構
+    // 切換結構（1zni 本機 cif 易出錯，改為僅用 moleculeId 從網路載入）
     function changePDB(id, label, el) {
         document.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('selectedLabel').innerText = label;
         document.getElementById('pdbDropdown').classList.remove('open');
-        
-        // 切換結構時重設骨架按鈕狀態
-        document.getElementById('backbone').checked = false;
 
-        viewer.visual.update({
-            customData: { url: id + '.cif', format: 'cif' },
-            moleculeId: id,
-            visualStyle: 'cartoon'
-        });
+        if (id === '1zni') {
+            viewer.visual.update({ moleculeId: id, visualStyle: 'cartoon' });
+        } else {
+            viewer.visual.update({
+                customData: { url: id + '.cif', format: 'cif' },
+                moleculeId: id,
+                visualStyle: 'cartoon'
+            });
+        }
 
         setTimeout(() => {
             updateVisuals();
             updateComponents();
+            viewer.visual.setColor({ water: '#FFB6C1' });
             viewer.visual.focus();
         }, 1200);
     }
