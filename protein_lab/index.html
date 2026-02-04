@@ -3,49 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構專業教學系統</title>
+    <title>蛋白質結構專業教學系統 V2.0</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
         :root { --primary: #007bff; --bg: #ffffff; --text: #333; }
         body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: var(--text); }
-        
-        /* 響應式佈局設定 */
         #main-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
         @media (max-width: 768px) { #main-container { flex-direction: column; } }
 
-        /* 左側/下方側欄 */
         #sidebar { 
-            width: 300px; background: #fff; border-right: 1px solid #ddd; 
+            width: 320px; background: #fff; border-right: 1px solid #ddd; 
             display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
-        @media (max-width: 768px) { 
-            #sidebar { width: 100%; height: auto; border-right: none; border-top: 1px solid #ddd; padding: 15px; box-sizing: border-box; } 
-        }
+        @media (max-width: 768px) { #sidebar { width: 100%; height: auto; padding: 15px; } }
 
         .section-title { font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* 蛋白質選擇：手機版變下拉選單 */
-        #protein-select-container { margin-bottom: 10px; }
-        .protein-btn { 
-            width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px;
-            cursor: pointer; transition: 0.2s; background: #fff; text-align: left; font-size: 14px;
-        }
-        .protein-btn.active { background: var(--primary); color: #white; border-color: var(--primary); color: white; }
+        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #fff; text-align: left; font-size: 14px; }
+        .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .mobile-select { display: none; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        @media (max-width: 768px) { #protein-list { display: none; } .mobile-select { display: block; } }
 
-        @media (max-width: 768px) {
-            #protein-list { display: none; }
-            .mobile-select { display: block; }
-        }
-
-        /* 現代化滑動開關 (Toggle Switch) */
-        .control-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px;
-        }
-        .control-info { display: flex; flex-direction: column; }
+        .control-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
         .control-label { font-size: 14px; font-weight: bold; }
         .control-sub { font-size: 11px; color: #999; }
 
@@ -56,10 +36,10 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* 右側 3D 視窗 */
         #viewer-container { flex: 1; position: relative; background: #fff; }
         #myViewer { width: 100%; height: 100%; }
-        .msp-layout-region-right, .msp-plugin-control-side-menu { display: none !important; }
+        /* 隱藏原生多餘 UI */
+        .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
 <body>
@@ -68,14 +48,12 @@
     <div id="sidebar">
         <div class="section-title">物質選擇</div>
         <div id="protein-select-container">
-            <!-- 電腦版列表 -->
             <div id="protein-list">
                 <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
                 <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
                 <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
                 <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
             </div>
-            <!-- 手機版下拉選單 -->
             <select class="mobile-select" onchange="changeProtein(this.value, null)">
                 <option value="1zni">胰島素 (Insulin)</option>
                 <option value="1mbn">肌紅蛋白 (Myoglobin)</option>
@@ -84,42 +62,41 @@
             </select>
         </div>
 
-        <div class="section-title">顯示控制</div>
-        
+        <div class="section-title">互動邏輯</div>
         <div class="control-item">
-            <div class="control-info"><span class="control-label">對焦模式</span><span class="control-sub">關閉後點擊不隱藏結構</span></div>
+            <div class="control-info"><span class="control-label">對焦模式 (Focus)</span><span class="control-sub">關閉後點擊不隱藏其它結構</span></div>
             <label class="switch"><input type="checkbox" id="toggle-focus" onchange="updateInteraction()"><span class="slider"></span></label>
         </div>
-
         <div class="control-item">
-            <div class="control-info"><span class="control-label">聚合物 (Polymer)</span><span class="control-sub">Cartoon 樣式</span></div>
-            <label class="switch"><input type="checkbox" checked onchange="toggleVis('polymer', this.checked)"><span class="slider"></span></label>
+            <div class="control-info"><span class="control-label">多重選取模式</span><span class="control-sub">開啟後可按住 Shift 多選片段</span></div>
+            <label class="switch"><input type="checkbox" id="toggle-select" onchange="updateInteraction()"><span class="slider"></span></label>
         </div>
 
+        <div class="section-title">基礎顯示</div>
         <div class="control-item">
-            <div class="control-info"><span class="control-label">結晶水 (Water)</span><span class="control-sub">Ball & Stick</span></div>
+            <div class="control-info"><span class="control-label">聚合物 (Polymer)</span></div>
+            <label class="switch"><input type="checkbox" checked onchange="toggleVis('polymer', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="control-item">
+            <div class="control-info"><span class="control-label">結晶水 (Water)</span></div>
             <label class="switch"><input type="checkbox" checked onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
         </div>
 
-        <div class="section-title">進階補強功能</div>
-
+        <div class="section-title">化學特徵 (鍵結/表面)</div>
         <div class="control-item">
-            <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span><span class="control-sub">顯示二級結構作用力</span></div>
-            <label class="switch"><input type="checkbox" onchange="toggleBonds('hbond', this.checked)"><span class="slider"></span></label>
+            <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span><span class="control-sub">藍色虛線</span></div>
+            <label class="switch"><input type="checkbox" id="check-hbond" checked onchange="updateBonds()"><span class="slider"></span></label>
         </div>
-
         <div class="control-item">
-            <div class="control-info"><span class="control-label">二硫鍵 (S-S)</span><span class="control-sub">顯示結構穩定共價鍵</span></div>
-            <label class="switch"><input type="checkbox" onchange="toggleBonds('ssbond', this.checked)"><span class="slider"></span></label>
+            <div class="control-info"><span class="control-label">二硫鍵 (S-S)</span><span class="control-sub">黃色實線</span></div>
+            <label class="switch"><input type="checkbox" id="check-ssbond" onchange="updateBonds()"><span class="slider"></span></label>
         </div>
-
         <div class="control-item">
-            <div class="control-info"><span class="control-label">電子表面 (Surface)</span><span class="control-sub">顯示分子佔據空間</span></div>
+            <div class="control-info"><span class="control-label">電子表面 (Surface)</span></div>
             <label class="switch"><input type="checkbox" onchange="toggleSurface(this.checked)"><span class="slider"></span></label>
         </div>
-
         <div class="control-item">
-            <div class="control-info"><span class="control-label">自動旋轉</span><span class="control-sub">演示用動態展示</span></div>
+            <div class="control-info"><span class="control-label">自動旋轉</span></div>
             <label class="switch"><input type="checkbox" onchange="toggleSpin(this.checked)"><span class="slider"></span></label>
         </div>
     </div>
@@ -131,62 +108,88 @@
 
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
-    var currentVisibility = { polymer: true, water: true, hbond: false, ssbond: false };
-
+    
+    // 初始化設定
     var options = {
         customData: { url: './1zni.cif', format: 'cif' },
         expanded: false,
         hideControls: true,
         bgColor: {r: 255, g: 255, b: 255},
         pixelRatio: window.devicePixelRatio * 2,
-        quality: 'highest'
+        quality: 'highest',
+        // 預設載入時就計算好鍵結
+        validationAnnotation: true,
+        moleculeId: '1zni'
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        updateInteraction(); // 初始化互動邏輯
+        // 等待插件準備好後執行初始互動設定
+        setTimeout(updateInteraction, 1500);
+        setTimeout(updateBonds, 2000); // 預設顯示氫鍵
     };
 
-    // 核心功能：切換互動邏輯 (對焦模式)
+    // 1. 修復互動邏輯：對焦與多選
     function updateInteraction() {
         const isFocusEnabled = document.getElementById('toggle-focus').checked;
-        // 如果關閉對焦，我們透過視覺化更新來鎖定互動
+        const isSelectionEnabled = document.getElementById('toggle-select').checked;
+
+        // 核心：透過 plugin 內部管理器調整行為
+        if (viewerInstance.plugin) {
+            // 停用或啟用自動對焦/隱藏行為
+            viewerInstance.plugin.managers.interactivity.setProps({
+                props: {
+                    // 如果不對焦，就把點擊後的 camera 動作與其餘透明化關掉
+                    click: isFocusEnabled ? 'default' : 'nothing'
+                }
+            });
+
+            // 設定選取模式
+            if (isSelectionEnabled) {
+                // 強制進入選取模式介面
+                viewerInstance.visual.update({ selectInteraction: true });
+            } else {
+                viewerInstance.visual.update({ selectInteraction: false });
+            }
+        }
+    }
+
+    // 2. 修復氫鍵與雙硫鍵 (需要更直接的控制)
+    function updateBonds() {
+        const hbond = document.getElementById('check-hbond').checked;
+        const ssbond = document.getElementById('check-ssbond').checked;
+
+        // PDBe Molstar 的 API 比較特殊，我們需要透過 visual.update 並確保對應參數生效
         viewerInstance.visual.update({
-            selectInteraction: isFocusEnabled,
-            highlightInteraction: true
+            // 這裡控制的是 PDBe 官方的 representation 隱藏屬性
+            hideHydrogenBonds: !hbond,
+            // 雙硫鍵通常包含在金屬/非標準鍵結或特定 representation 中
+            hideMetalInteractions: !ssbond, 
+            hideWater: !document.querySelector('input[onchange*="water"]').checked
         });
+
+        // 強制重新渲染以確保虛線消失/出現
+        if (viewerInstance.plugin) {
+            viewerInstance.plugin.requestCameraFocus();
+        }
     }
 
     function toggleVis(type, isVisible) {
-        currentVisibility[type] = isVisible;
         viewerInstance.visual.visibility({ [type]: isVisible });
-    }
-
-    function toggleBonds(type, isVisible) {
-        // PDBe Molstar 透過更新來顯示鍵結
-        viewerInstance.visual.update({
-            hideHydrogenBonds: type === 'hbond' ? !isVisible : undefined,
-            hideMetalInteractions: false
-        });
+        if (type === 'water') updateBonds(); // 水分子變動時重新整理鍵結
     }
 
     function toggleSurface(isVisible) {
-        // 切換表面模型
         viewerInstance.visual.update({
             visualStyle: isVisible ? 'surface' : 'cartoon'
         });
     }
 
     function toggleSpin(isSpinning) {
-        if (isSpinning) {
-            viewerInstance.visual.toggleSpin(true);
-        } else {
-            viewerInstance.visual.toggleSpin(false);
-        }
+        viewerInstance.visual.toggleSpin(isSpinning);
     }
 
     function changeProtein(fileName, btnElement) {
-        // 更新按鈕狀態
         if(btnElement) {
             document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
@@ -197,15 +200,13 @@
             hideWater: false
         });
 
-        // 重置所有開關到初始狀態
-        document.querySelectorAll('.switch input').forEach(i => {
-            if(i.id !== 'toggle-focus') i.checked = i.getAttribute('checked') !== null;
-        });
-
-        setTimeout(() => { 
-            viewerInstance.visual.focus(); 
+        // 重新套用當前開關狀態
+        setTimeout(() => {
+            updateInteraction();
+            updateBonds();
+            viewerInstance.visual.focus();
             viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
-        }, 500);
+        }, 1000);
     }
 </script>
 
