@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>蛋白質結構查看器</title>
+    <!-- 引入 PDBe Molstar 官方資源 -->
+    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
+    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; }
+        #sidebar { width: 250px; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 15px; z-index: 100; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .menu-header { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .protein-btn { 
+            padding: 12px 15px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s; background: #fff; font-size: 15px; color: #444; text-align: left;
+        }
+        .protein-btn:hover { background: #f0f7ff; border-color: #007bff; }
+        .protein-btn.active { background: #007bff; color: white; border-color: #007bff; }
+        #viewer-container { flex: 1; position: relative; height: 100vh; }
+        #myViewer { width: 100%; height: 100%; }
+
+        /* 隱藏 FO-FC 密度圖相關控制 */
+        .msp-gui-control-button[title*="Density"], 
+        .msp-gui-control-button[title*="Volume"],
+        .msp-widget-section-header[title*="Volume"] { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="menu-header">選擇蛋白質結構</div>
+    <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
+    <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
+    <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
+    <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
+</div>
+
+<div id="viewer-container">
+    <div id="myViewer"></div>
+</div>
+
+<script>
+    var viewerInstance = new PDBeMolstarPlugin();
+
+    // 初始設定 (使用相對路徑，確保在任何資料夾結構下都有效)
+    var options = {
+        customData: {
+            url: './1zni.cif', 
+            format: 'cif'
+        },
+        expanded: true,        
+        hideControls: false,   
+        bgColor: {r: 255, g: 255, b: 255},
+        displayVolume: false,  
+        loadEmptyStyle: false
+    };
+
+    window.onload = function() {
+        var viewerContainer = document.getElementById('myViewer');
+        viewerInstance.render(viewerContainer, options);
+    };
+
+    function changeProtein(fileName, element) {
+        document.querySelectorAll('.protein-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+
+        // 使用 ./ 代表當前 HTML 所在的資料夾
+        viewerInstance.visual.update({
+            customData: {
+                url: './' + fileName + '.cif',
+                format: 'cif'
+            },
+            hideWater: false
+        });
+
+        setTimeout(() => { viewerInstance.visual.focus(); }, 500);
+    }
+</script>
+
+</body>
+</html>
