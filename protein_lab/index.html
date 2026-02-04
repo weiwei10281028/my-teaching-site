@@ -3,69 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構教學系統 V5.0</title>
+    <title>蛋白質結構教學系統 V6.0</title>
+    <!-- 引入官方樣式與腳本 -->
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
-        :root { --primary: #007bff; }
-        body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; }
-        #sidebar { width: 300px; background: #fff; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; z-index: 10; }
-        .section-title { font-size: 12px; font-weight: bold; color: #888; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
-        .protein-btn { width: 100%; padding: 12px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; }
-        .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .control-group { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
-        .control-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .label-text { font-size: 14px; font-weight: 500; }
-        input[type="range"] { width: 100%; cursor: pointer; margin-top: 10px; }
-        /* Switch UI */
+        :root { --primary: #007bff; --border: #e0e0e0; }
+        body { margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background: #fff; overflow: hidden; }
+        
+        /* 側邊欄樣式 */
+        #sidebar { width: 320px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #ffffff; z-index: 100; overflow-y: auto; padding: 20px; }
+        .nav-title { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px 0; }
+        
+        /* 按鈕樣式 */
+        .protein-btn { width: 100%; padding: 12px 15px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; transition: all 0.2s; font-size: 14px; }
+        .protein-btn:hover { background: #f8f9fa; border-color: #ccc; }
+        .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+
+        /* 控制組件樣式 */
+        .control-card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .control-row:last-child { margin-bottom: 0; }
+        .control-label { font-size: 14px; color: #333; font-weight: 500; }
+        
+        /* 滑動開關 */
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(18px); }
+
+        /* 滑桿 */
+        input[type="range"] { width: 100%; height: 6px; background: #ddd; border-radius: 5px; outline: none; margin-top: 10px; cursor: pointer; }
+
+        /* 畫布容器 */
         #viewer-container { flex: 1; position: relative; background: #fff; }
-        #myViewer { width: 100%; height: 100%; }
+        #myViewer { width: 100%; height: 100%; background-color: #ffffff; }
+
+        /* 強制隱藏 PDBe 內建的 UI 元素 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="section-title">Structure Selection</div>
+    <div class="nav-title">Structure Selection</div>
     <div id="protein-list">
-        <div class="protein-btn active" onclick="changeProtein('1ubq', this)">1UBQ (Ubiquitin)</div>
-        <div class="protein-btn" onclick="changeProtein('1zni', this)">1ZNI (Insulin)</div>
-        <div class="protein-btn" onclick="changeProtein('1mbn', this)">1MBN (Myoglobin)</div>
+        <div class="protein-btn active" onclick="loadPDB('1ubq', this)">1UBQ (Ubiquitin)</div>
+        <div class="protein-btn" onclick="loadPDB('1zni', this)">1ZNI (Insulin)</div>
+        <div class="protein-btn" onclick="loadPDB('1mbn', this)">1MBN (Myoglobin)</div>
     </div>
 
-    <div class="section-title">Settings / Controls</div>
-    <div class="control-group">
-        <div class="control-item">
-            <span class="label-text">Animate (Spin)</span>
-            <label class="switch"><input type="checkbox" id="check-animate" onchange="applyAllSettings()"><span class="slider"></span></label>
+    <div class="nav-title">Visual Settings</div>
+    <div class="control-card">
+        <div class="control-row">
+            <span class="control-label">Spin (Animate)</span>
+            <label class="switch"><input type="checkbox" id="btn-spin" onchange="applyVisualSettings()"><span class="slider"></span></label>
         </div>
-        <div class="control-item">
-            <span class="label-text">Outline</span>
-            <label class="switch"><input type="checkbox" id="check-outline" onchange="applyAllSettings()"><span class="slider"></span></label>
+        <div class="control-row">
+            <span class="control-label">Outline</span>
+            <label class="switch"><input type="checkbox" id="btn-outline" checked onchange="applyVisualSettings()"><span class="slider"></span></label>
         </div>
-        <div class="control-item">
-            <span class="label-text">Fog</span>
-            <label class="switch"><input type="checkbox" id="check-fog" onchange="applyAllSettings()"><span class="slider"></span></label>
+        <div class="control-row">
+            <span class="control-label">Fog</span>
+            <label class="switch"><input type="checkbox" id="btn-fog" onchange="applyVisualSettings()"><span class="slider"></span></label>
         </div>
-        <div class="section-title" style="margin:10px 0 5px 0; border:none;">Clipping ( 透視 )</div>
-        <input type="range" id="range-clipping" min="0" max="100" value="0" oninput="applyAllSettings()">
+        <div class="control-label" style="margin-top:15px;">Clipping ( 透視 )</div>
+        <input type="range" id="slider-clip" min="0" max="100" value="0" oninput="applyVisualSettings()">
     </div>
 
-    <div class="section-title">Components</div>
-    <div class="control-group">
-        <div class="control-item">
-            <span class="label-text">Polymer (Cartoon)</span>
-            <label class="switch"><input type="checkbox" id="comp-polymer" checked onchange="syncComponents()"><span class="slider"></span></label>
+    <div class="nav-title">Components</div>
+    <div class="control-card">
+        <div class="control-row">
+            <span class="control-label">Polymer (Cartoon)</span>
+            <label class="switch"><input type="checkbox" id="btn-polymer" checked onchange="syncComponentVisibility()"><span class="slider"></span></label>
         </div>
-        <div class="control-item">
-            <span class="label-text">Water (Red Dots)</span>
-            <label class="switch"><input type="checkbox" id="comp-water" onchange="syncComponents()"><span class="slider"></span></label>
+        <div class="control-row">
+            <span class="control-label">Water (Solvent)</span>
+            <label class="switch"><input type="checkbox" id="btn-water" onchange="syncComponentVisibility()"><span class="slider"></span></label>
         </div>
     </div>
 </div>
@@ -76,55 +92,59 @@
 
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
-    var options = {
-        moleculeId: '1ubq',
-        hideControls: true,
-        bgColor: {r: 255, g: 255, b: 255},
-        visualStyle: 'cartoon',
-        loadEmpty: false
-    };
+    var currentPDB = '1ubq';
 
+    // 初始化渲染
     window.onload = function() {
+        const options = {
+            moleculeId: currentPDB,
+            hideControls: true,
+            bgColor: {r: 255, g: 255, b: 255},
+            visualStyle: 'cartoon'
+        };
         viewerInstance.render(document.getElementById('myViewer'), options);
         
-        // 強力初始化循環
-        var readyTimer = setInterval(() => {
+        // 核心：每隔 500ms 檢查一次，直到插件完全加載並強制執行初始化
+        var initInterval = setInterval(() => {
             if (viewerInstance.plugin) {
-                setupCoreEngine();
-                syncComponents();
-                applyAllSettings();
-                clearInterval(readyTimer);
+                forceInitialState();
+                clearInterval(initInterval);
             }
         }, 500);
     };
 
-    // 初始化引擎底層設定
-    function setupCoreEngine() {
+    // 強制設定初始狀態 (解決背景變黑與水分子問題)
+    function forceInitialState() {
         const p = viewerInstance.plugin;
-        
-        // 1. 禁用點擊淡化與縮放，確保 100% 實心
-        p.managers.interactivity.setProps({ props: { click: 'select' } });
+
+        // 1. 強制畫布不透明與背景白底
         p.canvas3d.setProps({
             renderer: { 
-                backgroundColor: {r: 1, g: 1, b: 1},
-                dimAlpha: 1.0, 
-                highlightAlpha: 1.0, 
-                selectAlpha: 1.0 
+                backgroundColor: {r: 1, g: 1, b: 1}, // 白色
+                highlightAlpha: 1.0,
+                selectAlpha: 1.0,
+                dimAlpha: 1.0 // 徹底消除點擊遮蔽感
             }
         });
+
+        // 2. 鎖定互動模式 (只選取，不對焦縮放)
+        p.managers.interactivity.setProps({ props: { click: 'select' } });
+
+        // 3. 同步 UI 設定
+        syncComponentVisibility();
+        applyVisualSettings();
     }
 
-    // 解決組件開關失效的問題
-    function syncComponents() {
+    // 同步組件可見性 (Polymer & Water)
+    function syncComponentVisibility() {
         if (!viewerInstance.plugin) return;
         const p = viewerInstance.plugin;
         
-        const showPolymer = document.getElementById('comp-polymer').checked;
-        const showWater = document.getElementById('comp-water').checked;
+        const showPolymer = document.getElementById('btn-polymer').checked;
+        const showWater = document.getElementById('btn-water').checked;
 
-        // 直接從 Mol* 組件管理器抓取所有結構組件
+        // 直接操作 Mol* 內部的組件管理器
         const components = p.managers.structure.component.state.components;
-        
         components.forEach(c => {
             const label = c.cell.obj.label.toLowerCase();
             if (label.includes('polymer')) {
@@ -136,35 +156,35 @@
         });
     }
 
-    // 解決 Fog 黑屏與 Clipping 失效的問題
-    function applyAllSettings() {
+    // 應用視覺效果 (Fog, Outline, Spin, Clipping)
+    function applyVisualSettings() {
         if (!viewerInstance.plugin) return;
         const p = viewerInstance.plugin;
 
-        const isAnimate = document.getElementById('check-animate').checked;
-        const isOutline = document.getElementById('check-outline').checked;
-        const isFog = document.getElementById('check-fog').checked;
-        const clipVal = parseInt(document.getElementById('range-clipping').value);
+        const isSpin = document.getElementById('btn-spin').checked;
+        const isOutline = document.getElementById('btn-outline').checked;
+        const isFog = document.getElementById('btn-fog').checked;
+        const clipVal = parseInt(document.getElementById('slider-clip').value);
 
-        // 旋轉
-        viewerInstance.visual.toggleSpin(isAnimate);
+        // 自動旋轉
+        viewerInstance.visual.toggleSpin(isSpin);
 
-        // 渲染參數更新
+        // 渲染管線設定
         p.canvas3d.setProps({
             postprocessing: {
-                // Outline 修正
+                // Outline 修復：設定顏色為黑色
                 outline: { 
                     name: isOutline ? 'on' : 'off', 
                     params: { scale: 1, threshold: 0.1, color: {r: 0, g: 0, b: 0} } 
                 }
             },
-            // Fog 修正：強制 Fog 顏色為白色，防止黑屏
+            // Fog 修復：顏色必須設為白色，否則會變黑
             cameraFog: isFog ? { 
                 name: 'on', 
-                params: { intensity: 50, color: {r: 1, g: 1, b: 1} } 
+                params: { intensity: 45, color: {r: 1, g: 1, b: 1} } 
             } : { name: 'off', params: {} },
             
-            // Clipping 修正
+            // Clipping 修復
             cameraClipping: {
                 radiusContext: 0,
                 far: true,
@@ -173,26 +193,27 @@
             }
         });
 
-        // 補丁：確保背景色不跳掉
+        // 補丁：確保任何時候背景都不會跳回黑色
         viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
     }
 
-    function changeProtein(pdbId, btn) {
+    // 切換蛋白質
+    function loadPDB(pdbId, btn) {
+        // 更新按鈕樣式
         document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
+        // 加載新結構
         viewerInstance.visual.update({
             moleculeId: pdbId,
             visualStyle: 'cartoon'
         });
 
-        // 模型換完後，強制執行所有同步
+        // 加載後強制重設背景與組件狀態
         setTimeout(() => {
-            setupCoreEngine();
-            syncComponents();
-            applyAllSettings();
+            forceInitialState();
             viewerInstance.visual.focus();
-        }, 1500);
+        }, 1200);
     }
 </script>
 
