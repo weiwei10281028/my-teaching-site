@@ -262,6 +262,8 @@
                 viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
             }
         }, 1200);
+        // 外掛稍晚會覆蓋水分子顏色，再套用一次讓一開啟就是淺紅色
+        setTimeout(() => { if (viewer.plugin) viewer.visual.setColor({ water: '#FFB6C1' }); }, 2500);
     };
 
     // 下拉選單開關
@@ -326,11 +328,10 @@
         viewer.visual.focus();
     }
 
-    // 顯示主鏈骨架 (Backbone)：在 data 內用 RGB 指定骨架顏色，避免外掛選取表示變成全黑
+    // 顯示主鏈骨架 (Backbone)：以元素色顯示（鍵結灰、C 灰、N 藍、O 紅等原始預設）
     function updateBackbone() {
         if (!viewer.plugin) return;
         const show = document.getElementById('backbone').checked;
-        const green = { r: 46, g: 125, b: 50 };
         
         if (show) {
             viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
@@ -338,8 +339,8 @@
                 data: [{
                     backbone: true,
                     representation: 'ball-and-stick',
-                    color: green,
-                    representationColor: green
+                    color: 'element',
+                    representationColor: 'element'
                 }],
                 nonSelectedColor: 'theme',
                 keepRepresentations: true
