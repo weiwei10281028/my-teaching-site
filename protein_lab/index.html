@@ -3,29 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構專業教學系統 V3.0</title>
+    <title>蛋白質結構教學系統 V4.0</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
-        :root { --primary: #007bff; --bg: #ffffff; --text: #333; }
-        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; color: var(--text); }
-        #main-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
-        @media (max-width: 768px) { #main-container { flex-direction: column; } }
-        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
-        .section-title { font-size: 14px; font-weight: bold; margin: 15px 0 8px 0; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; font-size: 14px; transition: 0.3s; }
+        :root { --primary: #007bff; --bg: #ffffff; }
+        body { margin: 0; padding: 0; font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; }
+        #main-container { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        .section-title { font-size: 13px; font-weight: bold; color: #555; margin: 15px 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        
+        .protein-btn { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: #fff; text-align: left; }
         .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .control-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
-        .control-label { font-size: 14px; font-weight: bold; }
-        .control-sub { font-size: 11px; color: #999; display: block; line-height: 1.2; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+
+        .control-group { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .control-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .control-item:last-child { margin-bottom: 0; }
+        .label-text { font-size: 14px; color: #333; }
+
+        input[type="range"] { width: 100%; margin-top: 5px; }
+
+        /* Switch Style */
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
-        #viewer-container { flex: 1; position: relative; background: #fff; }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        #viewer-container { flex: 1; position: relative; }
         #myViewer { width: 100%; height: 100%; }
+        
+        /* 隱藏 PDBe 原生控制介面 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
@@ -33,157 +43,152 @@
 
 <div id="main-container">
     <div id="sidebar">
-        <div class="section-title">物質選擇</div>
+        <div class="section-title">Structure Selection</div>
         <div id="protein-list">
-            <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
-            <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
-            <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
-            <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
+            <div class="protein-btn active" onclick="changeProtein('1ubq', this)">1UBQ (Ubiquitin)</div>
+            <div class="protein-btn" onclick="changeProtein('1zni', this)">1ZNI (Insulin)</div>
+            <div class="protein-btn" onclick="changeProtein('1mbn', this)">1MBN (Myoglobin)</div>
         </div>
 
-        <div class="section-title">高級互動邏輯</div>
-        <div class="control-item">
-            <div class="control-info">
-                <span class="control-label">對焦模式 (Focus)</span>
-                <span class="control-sub">關閉時：點擊不淡化其餘結構</span>
+        <div class="section-title">Settings / Controls</div>
+        <div class="control-group">
+            <div class="control-item">
+                <span class="label-text">Animate</span>
+                <label class="switch"><input type="checkbox" id="check-animate" onchange="updateSettings()"><span class="slider"></span></label>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-focus" onchange="applyInteractionUpdate()"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info">
-                <span class="control-label">多重選取模式</span>
-                <span class="control-sub">開啟後：可按 Shift 選取多個片段</span>
+            <div class="control-item">
+                <span class="label-text">Outline</span>
+                <label class="switch"><input type="checkbox" id="check-outline" onchange="updateSettings()"><span class="slider"></span></label>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-select" checked onchange="applyInteractionUpdate()"><span class="slider"></span></label>
+            <div class="control-item">
+                <span class="label-text">Fog</span>
+                <label class="switch"><input type="checkbox" id="check-fog" onchange="updateSettings()"><span class="slider"></span></label>
+            </div>
+            <div class="section-title" style="border:none; margin:10px 0 0 0;">Clipping</div>
+            <input type="range" id="range-clipping" min="0" max="100" value="0" oninput="updateSettings()">
         </div>
 
-        <div class="section-title">顯示開關</div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">聚合物 (Polymer)</span></div>
-            <label class="switch"><input type="checkbox" checked onchange="toggleVis('polymer', this.checked)"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">結晶水 (Water)</span></div>
-            <label class="switch"><input type="checkbox" checked id="toggle-water" onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
-        </div>
-
-        <div class="section-title">化學特徵</div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span></div>
-            <label class="switch"><input type="checkbox" id="check-hbond" checked onchange="updateBonds()"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">電子表面 (Surface)</span></div>
-            <label class="switch"><input type="checkbox" onchange="toggleSurface(this.checked)"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">自動旋轉</span></div>
-            <label class="switch"><input type="checkbox" onchange="toggleSpin(this.checked)"><span class="slider"></span></label>
+        <div class="section-title">Components</div>
+        <div class="control-group">
+            <div class="control-item">
+                <span class="label-text">Polymer</span>
+                <label class="switch"><input type="checkbox" id="comp-polymer" checked onchange="updateComponents()"><span class="slider"></span></label>
+            </div>
+            <div class="control-item">
+                <span class="label-text">Water</span>
+                <label class="switch"><input type="checkbox" id="comp-water" onchange="updateComponents()"><span class="slider"></span></label>
+            </div>
         </div>
     </div>
+    
     <div id="viewer-container"><div id="myViewer"></div></div>
 </div>
 
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
     var options = {
-        customData: { url: './1zni.cif', format: 'cif' },
+        moleculeId: '1ubq',
+        pdbeUrl: 'https://www.ebi.ac.uk/pdbe/',
+        loadEmpty: false,
         hideControls: true,
         bgColor: {r: 255, g: 255, b: 255},
-        lighting: 'glossy' 
+        visualStyle: 'cartoon'
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        var initInterval = setInterval(() => {
-            if (viewerInstance.plugin) {
-                applyInteractionUpdate();
-                clearInterval(initInterval);
-            }
-        }, 500);
+        // 初始化延遲，確保外掛載入完成
+        setTimeout(initUI, 1500);
     };
 
-    // 核心改善：從底層鎖定透明度與互動模式
-    function applyInteractionUpdate() {
+    function initUI() {
         if (!viewerInstance.plugin) return;
-
-        const focusOn = document.getElementById('toggle-focus').checked;
-        const selectOn = document.getElementById('toggle-select').checked;
-        const canvas = viewerInstance.plugin.canvas3d;
-
-        // 1. 底層渲染攔截：鎖定所有透明度為 1.0 (實心)
-        // 這樣即使 Mol* 想淡化背景，背景也會保持不透明
-        canvas.setProps({
+        
+        // 強制初始化環境：關閉水分子，確保 Cartoon 顯示
+        updateComponents();
+        updateSettings();
+        
+        // 徹底阻斷「對焦淡化」邏輯
+        viewerInstance.plugin.canvas3d.setProps({
             renderer: {
-                ...canvas.props.renderer,
-                dimAlpha: focusOn ? 0.2 : 1.0,        // 關鍵：關閉對焦時，淡化透明度設為 1 (實心)
-                highlightAlpha: 1.0,                  // 高亮不透明
-                selectAlpha: 1.0                      // 選取不透明
-            },
-            postprocessing: {
-                occlusion: { name: 'off', params: {} } // 關閉環境遮蔽避免旋轉黑影
+                dimAlpha: 1.0,
+                highlightAlpha: 1.0,
+                selectAlpha: 1.0
             }
         });
-
-        // 2. 更新互動模式
-        // 如果對焦模式關閉，我們將點擊改為「純選取 (select)」模式，這不會觸發 Mol* 的自動縮放與自動淡化
+        // 設定點擊不縮放
         viewerInstance.plugin.managers.interactivity.setProps({
-            props: { 
-                click: focusOn ? 'default' : 'select' 
+            props: { click: 'select' }
+        });
+    }
+
+    function updateSettings() {
+        if (!viewerInstance.plugin) return;
+        
+        const isAnimate = document.getElementById('check-animate').checked;
+        const isOutline = document.getElementById('check-outline').checked;
+        const isFog = document.getElementById('check-fog').checked;
+        const clipVal = document.getElementById('range-clipping').value;
+
+        // 旋轉控制
+        viewerInstance.visual.toggleSpin(isAnimate);
+
+        // 渲染控制 (Outline, Fog)
+        viewerInstance.plugin.canvas3d.setProps({
+            postprocessing: {
+                outline: { name: isOutline ? 'on' : 'off', params: {} }
+            },
+            cameraFog: isFog ? { name: 'on', params: { intensity: 50 } } : { name: 'off', params: {} }
+        });
+
+        // 裁切控制 (Clipping)
+        // 將滑桿 0-100 對應到近端剪裁面
+        viewerInstance.plugin.canvas3d.setProps({
+            camera: {
+                helper: { axes: { name: 'off', params: {} } },
+                manualReset: false
+            },
+            cameraClipping: {
+                radiusContext: 0,
+                far: true,
+                near: true,
+                // 滑桿控制 near plane 的距離百分比
+                minNear: parseFloat(clipVal)
             }
         });
-
-        // 3. 恢復/同步多選 UI 邏輯
-        viewerInstance.visual.update({ 
-            selectInteraction: selectOn,
-            hideCanvasControls: true
-        });
-
-        // 如果從對焦模式切換回來，強制重置視圖狀態
-        if (!focusOn) {
-            viewerInstance.plugin.managers.structure.focus.clear();
-        }
-
-        // 確保背景固定
-        viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
     }
 
-    function updateBonds() {
+    function updateComponents() {
+        const polymer = document.getElementById('comp-polymer').checked;
+        const water = document.getElementById('comp-water').checked;
+
+        // PDBe API 控制組件顯示
+        viewerInstance.visual.visibility({
+            polymer: polymer,
+            water: water
+        });
+
+        // 確保水分子預設不顯示骨架以外的東西 (Fo-Fc 等)
         viewerInstance.visual.update({
-            hideHydrogenBonds: !document.getElementById('check-hbond').checked,
-            hideWater: !document.getElementById('toggle-water').checked
+            hideWater: !water,
+            visualStyle: 'cartoon'
         });
     }
 
-    function toggleVis(type, isVisible) {
-        viewerInstance.visual.visibility({ [type]: isVisible });
-        if (type === 'water') updateBonds();
-    }
+    function changeProtein(pdbId, btn) {
+        document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-    function toggleSurface(isVisible) {
-        viewerInstance.visual.update({ visualStyle: isVisible ? 'surface' : 'cartoon' });
-    }
-
-    function toggleSpin(isSpinning) {
-        viewerInstance.visual.toggleSpin(isSpinning);
-    }
-
-    function changeProtein(fileName, btnElement) {
-        if(btnElement) {
-            document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-        }
-        
-        viewerInstance.visual.update({ 
-            customData: { url: './' + fileName + '.cif', format: 'cif' } 
+        viewerInstance.visual.update({
+            moleculeId: pdbId,
+            visualStyle: 'cartoon'
         });
-        
-        // 模型更換後，PDBe 會重置畫布，必須重新強制執行底層邏輯
+
+        // 重新同步 UI 狀態
         setTimeout(() => {
-            applyInteractionUpdate();
-            updateBonds();
+            initUI();
             viewerInstance.visual.focus();
-        }, 800);
+        }, 1000);
     }
 </script>
 
