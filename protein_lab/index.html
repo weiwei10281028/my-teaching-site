@@ -318,9 +318,8 @@
         }, 1200);
     };
 
-    var BACKBONE_RANGE = 12;
-    var ORIGINAL_GRAY = '#9CA3AF';           // 選取段緞帶＋骨架原子/鍵維持此色
-    var OTHER_RIBBON_COLOR = '#D1D5DB';      // 點擊段以外的緞帶變此色，凸顯選取段
+    var BACKBONE_RANGE = 24;
+    var OTHER_RIBBON_COLOR = '#E8EAED';     // 點擊段以外的緞帶變很淡，對比明顯；選取段不填 color 以維持原色
 
     function onProteinClick(e) {
         var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
@@ -337,9 +336,7 @@
                 start_residue_number: Math.max(1, num - BACKBONE_RANGE),
                 end_residue_number: num + BACKBONE_RANGE,
                 focus: true,
-                representation: true,
-                representationColor: ORIGINAL_GRAY,
-                color: ORIGINAL_GRAY
+                representation: true
             }],
             nonSelectedColor: OTHER_RIBBON_COLOR
         });
