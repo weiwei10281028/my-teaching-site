@@ -1,3 +1,4 @@
+--- START OF FILE ai_studio_code (44).html ---
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -38,7 +39,6 @@
 
         #viewer-container { flex: 1; position: relative; background: #fff; }
         #myViewer { width: 100%; height: 100%; }
-        /* 隱藏原生多餘 UI */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
@@ -64,7 +64,7 @@
 
         <div class="section-title">互動邏輯</div>
         <div class="control-item">
-            <div class="control-info"><span class="control-label">對焦模式 (Focus)</span><span class="control-sub">關閉後點擊不隱藏其它結構</span></div>
+            <div class="control-info"><span class="control-label">對焦模式 (Focus)</span><span class="control-sub">關閉後點擊不縮放/不隱藏結構</span></div>
             <label class="switch"><input type="checkbox" id="toggle-focus" onchange="updateInteraction()"><span class="slider"></span></label>
         </div>
         <div class="control-item">
@@ -82,7 +82,7 @@
             <label class="switch"><input type="checkbox" checked onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
         </div>
 
-        <div class="section-title">化學特徵 (鍵結/表面)</div>
+        <div class="section-title">化學特徵</div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span><span class="control-sub">藍色虛線</span></div>
             <label class="switch"><input type="checkbox" id="check-hbond" checked onchange="updateBonds()"><span class="slider"></span></label>
@@ -109,7 +109,6 @@
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
     
-    // 初始化設定
     var options = {
         customData: { url: './1zni.cif', format: 'cif' },
         expanded: false,
@@ -117,72 +116,59 @@
         bgColor: {r: 255, g: 255, b: 255},
         pixelRatio: window.devicePixelRatio * 2,
         quality: 'highest',
-        // 預設載入時就計算好鍵結
         validationAnnotation: true,
         moleculeId: '1zni'
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        // 等待插件準備好後執行初始互動設定
         setTimeout(updateInteraction, 1500);
-        setTimeout(updateBonds, 2000); // 預設顯示氫鍵
+        setTimeout(updateBonds, 2000);
     };
 
-    // 1. 修復互動邏輯：對焦與多選
+    // 核心修改部分：修正對焦邏輯
     function updateInteraction() {
         const isFocusEnabled = document.getElementById('toggle-focus').checked;
         const isSelectionEnabled = document.getElementById('toggle-select').checked;
 
-        // 核心：透過 plugin 內部管理器調整行為
         if (viewerInstance.plugin) {
-            // 停用或啟用自動對焦/隱藏行為
+            // 調整對焦行為
             viewerInstance.plugin.managers.interactivity.setProps({
                 props: {
-                    // 如果不對焦，就把點擊後的 camera 動作與其餘透明化關掉
-                    click: isFocusEnabled ? 'default' : 'nothing'
+                    // default: 點擊會對焦並淡化背景
+                    // select: 點擊僅選取，不改變相機視角，不淡化背景
+                    click: isFocusEnabled ? 'default' : 'select'
                 }
             });
 
-            // 設定選取模式
-            if (isSelectionEnabled) {
-                // 強制進入選取模式介面
-                viewerInstance.visual.update({ selectInteraction: true });
-            } else {
-                viewerInstance.visual.update({ selectInteraction: false });
+            // 如果關閉對焦模式，立即清除現有的對焦狀態(讓被隱藏的部分現形)
+            if (!isFocusEnabled) {
+                viewerInstance.plugin.managers.structure.focus.clear();
             }
+
+            // 更新選取互動 UI
+            viewerInstance.visual.update({ selectInteraction: isSelectionEnabled });
         }
     }
 
-    // 2. 修復氫鍵與雙硫鍵 (需要更直接的控制)
     function updateBonds() {
         const hbond = document.getElementById('check-hbond').checked;
         const ssbond = document.getElementById('check-ssbond').checked;
 
-        // PDBe Molstar 的 API 比較特殊，我們需要透過 visual.update 並確保對應參數生效
         viewerInstance.visual.update({
-            // 這裡控制的是 PDBe 官方的 representation 隱藏屬性
             hideHydrogenBonds: !hbond,
-            // 雙硫鍵通常包含在金屬/非標準鍵結或特定 representation 中
             hideMetalInteractions: !ssbond, 
             hideWater: !document.querySelector('input[onchange*="water"]').checked
         });
-
-        // 強制重新渲染以確保虛線消失/出現
-        if (viewerInstance.plugin) {
-            viewerInstance.plugin.requestCameraFocus();
-        }
     }
 
     function toggleVis(type, isVisible) {
         viewerInstance.visual.visibility({ [type]: isVisible });
-        if (type === 'water') updateBonds(); // 水分子變動時重新整理鍵結
+        if (type === 'water') updateBonds();
     }
 
     function toggleSurface(isVisible) {
-        viewerInstance.visual.update({
-            visualStyle: isVisible ? 'surface' : 'cartoon'
-        });
+        viewerInstance.visual.update({ visualStyle: isVisible ? 'surface' : 'cartoon' });
     }
 
     function toggleSpin(isSpinning) {
@@ -200,7 +186,6 @@
             hideWater: false
         });
 
-        // 重新套用當前開關狀態
         setTimeout(() => {
             updateInteraction();
             updateBonds();
