@@ -2,33 +2,48 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>蛋白質結構查看器</title>
-    <!-- 引入 PDBe Molstar 官方資源 -->
+    <title>蛋白質結構教學系統</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
+        /* 1. 基礎佈局 */
         body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; }
-        #sidebar { width: 250px; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 15px; z-index: 100; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        #sidebar { width: 240px; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 15px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .menu-header { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333; }
         .protein-btn { 
             padding: 12px 15px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 6px;
-            cursor: pointer; transition: all 0.2s; background: #fff; font-size: 15px; color: #444; text-align: left;
+            cursor: pointer; transition: all 0.2s; background: #fff; font-size: 14px; color: #444; text-align: left;
         }
-        .protein-btn:hover { background: #f0f7ff; border-color: #007bff; }
+        .protein-btn:hover { background: #f8f9fa; border-color: #007bff; }
         .protein-btn.active { background: #007bff; color: white; border-color: #007bff; }
-        #viewer-container { flex: 1; position: relative; height: 100vh; }
+        
+        #viewer-container { flex: 1; position: relative; background: #fff; }
         #myViewer { width: 100%; height: 100%; }
 
-        /* 隱藏 FO-FC 密度圖相關控制 */
+        /* --- 3. UI 修改 (隱藏不需要的按鈕) --- */
+        
+        /* 隱藏右側垂直工具欄的所有按鈕，除了控制台切換鈕(選配) */
+        /* .msp-sequence-viewer, .msp-stats-viewer { display: none !important; } */
+        
+        /* 隱藏 Components 面板中的垃圾桶圖示 */
+        .msp-btn-remove, .msp-control-group-header-buttons .msp-btn-action[title*="Remove"] { 
+            display: none !important; 
+        }
+
+        /* 隱藏底部的 FO-FC 與不必要的資訊按鈕 */
         .msp-gui-control-button[title*="Density"], 
         .msp-gui-control-button[title*="Volume"],
-        .msp-widget-section-header[title*="Volume"] { display: none !important; }
+        .msp-widget-section-header[title*="Volume"],
+        .msp-layout-region-bottom { display: none !important; }
+
+        /* 強制將畫布背景設為白色 */
+        canvas { background-color: #ffffff !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="menu-header">選擇蛋白質結構</div>
+    <div class="menu-header">蛋白質選擇</div>
     <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
     <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
     <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
@@ -42,34 +57,51 @@
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
 
-    // 初始設定 (使用相對路徑，確保在任何資料夾結構下都有效)
+    // 設置初始化選項
     var options = {
-        customData: {
-            url: './1zni.cif', 
-            format: 'cif'
-        },
-        expanded: true,        
-        hideControls: false,   
-        bgColor: {r: 255, g: 255, b: 255},
-        displayVolume: false,  
-        loadEmptyStyle: false
+        customData: { url: './1zni.cif', format: 'cif' },
+        expanded: true,        // 展開右側面板
+        hideControls: false,   // 顯示官方控制欄 (以便操作 Components)
+        bgColor: {r: 255, g: 255, b: 255}, // 背景白色
+        displayVolume: false,  // 隱藏電子密度
+        loadEmptyStyle: false,
+        
+        // 2. 增加清晰度
+        pixelRatio: window.devicePixelRatio || 1, // 根據螢幕密度調整
+        quality: 'highest' // 設置最高畫質模式
     };
 
     window.onload = function() {
         var viewerContainer = document.getElementById('myViewer');
         viewerInstance.render(viewerContainer, options);
+        
+        // 啟動定時翻譯器 (處理動態生成的 UI 文字)
+        setInterval(translateUI, 500);
     };
+
+    // 翻譯函數：尋找對應的英文標籤並替換為中文
+    function translateUI() {
+        // 取得所有帶有文字的標籤元素
+        const labels = document.querySelectorAll('.msp-widget-section-header, .msp-control-group-header-label, .msp-generic-list-item-label, span');
+        
+        labels.forEach(el => {
+            const text = el.innerText.trim();
+            if (text === 'Polymer') el.innerText = '聚合物';
+            if (text === 'Water') el.innerText = '結晶水';
+            if (text === '[Focus] Target') el.innerText = '[對焦] 目標';
+            if (text === '[Focus] Surroundings (5 Å)') el.innerText = '[對焦] 周邊 (5 Å)';
+            if (text === 'Components') el.innerText = '組件列表';
+            // 隱藏不需要的標題如 "Volume Streaming"
+            if (text === 'Volume Streaming') el.parentElement.style.display = 'none';
+        });
+    }
 
     function changeProtein(fileName, element) {
         document.querySelectorAll('.protein-btn').forEach(btn => btn.classList.remove('active'));
         element.classList.add('active');
 
-        // 使用 ./ 代表當前 HTML 所在的資料夾
         viewerInstance.visual.update({
-            customData: {
-                url: './' + fileName + '.cif',
-                format: 'cif'
-            },
+            customData: { url: './' + fileName + '.cif', format: 'cif' },
             hideWater: false
         });
 
