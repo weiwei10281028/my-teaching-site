@@ -3,54 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <title>蛋白質結構教學系統</title>
+    <!-- 引入 PDBe Molstar 資源 -->
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
-        /* 1. 基礎佈局 */
         body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; }
-        #sidebar { width: 240px; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 15px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
-        .menu-header { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        
+        /* 左側選單欄 */
+        #sidebar { 
+            width: 280px; background: #ffffff; border-right: 1px solid #ddd; 
+            display: flex; flex-direction: column; padding: 20px; z-index: 1000; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05); 
+        }
+        .section-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px 0; color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px; }
+        .section-title:first-child { margin-top: 0; }
+
+        /* 蛋白質切換按鈕 */
         .protein-btn { 
-            padding: 12px 15px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 6px;
-            cursor: pointer; transition: all 0.2s; background: #fff; font-size: 14px; color: #444; text-align: left;
+            padding: 12px 15px; margin-bottom: 8px; border: 1px solid #e0e0e0; border-radius: 6px;
+            cursor: pointer; transition: 0.2s; background: #fff; font-size: 14px; color: #444;
         }
         .protein-btn:hover { background: #f8f9fa; border-color: #007bff; }
         .protein-btn.active { background: #007bff; color: white; border-color: #007bff; }
+
+        /* --- 獨立製作的組件控制區 (符合你的需求) --- */
+        .component-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; margin-bottom: 5px; background: #fcfcfc; border: 1px solid #eee; border-radius: 6px;
+        }
+        .component-info { display: flex; flex-direction: column; }
+        .comp-name { font-size: 14px; font-weight: bold; color: #333; }
+        .comp-style { font-size: 12px; color: #888; }
         
-        #viewer-container { flex: 1; position: relative; background: #fff !important; }
+        /* 眼睛按鈕樣式 (模擬原版) */
+        .eye-btn {
+            cursor: pointer; font-size: 20px; transition: 0.2s; user-select: none;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 4px;
+        }
+        .eye-btn:hover { background: #eee; }
+        .eye-btn.hidden { opacity: 0.3; filter: grayscale(1); }
+
+        /* 右側渲染區 */
+        #viewer-container { flex: 1; position: relative; background: #fff; }
         #myViewer { width: 100%; height: 100%; }
 
-        /* --- 核心修改：隱藏你不想要的按鈕 --- */
-
-        /* 隱藏右側垂直的那排圖示按鈕 (板手、相機、重整等) */
-        .msp-plugin-control-side-menu { display: none !important; }
-        
-        /* 隱藏右側面板頂部的 "Structure Tools" 標題與 "Structure" 資訊區塊 */
-        .msp-section-header, .msp-control-group-header { 
-            /* 我們待會用 JS 只把 Components 留著，CSS 先藏掉雜項 */
-        }
-
-        /* 隱藏垃圾桶圖示 (防止誤刪) */
-        .msp-btn-remove, button[title*="Remove"], .msp-control-group-header-buttons button:last-child { 
+        /* 強制隱藏右側所有官方面板與雜項按鈕 */
+        .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { 
             display: none !important; 
         }
-
-        /* 隱藏右邊面板裡除了組件以外的所有區塊 (Quick Styles, Measurements 等) */
-        /* 這邊利用 JS 動態處理會更精準，CSS 先處理明顯的 */
-        .msp-layout-region-top, .msp-layout-region-bottom { display: none !important; }
-
-        /* 強制畫布背景為白色 */
         canvas { background: #ffffff !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="menu-header">蛋白質選擇</div>
-    <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
-    <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
-    <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
-    <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
+    <div class="section-title">選擇蛋白質</div>
+    <div id="protein-list">
+        <div class="protein-btn active" onclick="changeProtein('1zni', this)">胰島素 (Insulin)</div>
+        <div class="protein-btn" onclick="changeProtein('1mbn', this)">肌紅蛋白 (Myoglobin)</div>
+        <div class="protein-btn" onclick="changeProtein('1ema', this)">綠色螢光蛋白 (GFP)</div>
+        <div class="protein-btn" onclick="changeProtein('1ubq', this)">泛素 (Ubiquitin)</div>
+    </div>
+
+    <div class="section-title">組件顯示控制 (Components)</div>
+    
+    <!-- 獨立製作的 Polymer 控制項 -->
+    <div class="component-item">
+        <div class="component-info">
+            <span class="comp-name">聚合物 (Polymer)</span>
+            <span class="comp-style">樣式: 卡通圖 (Cartoon)</span>
+        </div>
+        <div class="eye-btn" id="eye-polymer" onclick="toggleVisibility('polymer')">👁️</div>
+    </div>
+
+    <!-- 獨立製作的 Water 控制項 -->
+    <div class="component-item">
+        <div class="component-info">
+            <span class="comp-name">結晶水 (Water)</span>
+            <span class="comp-style">樣式: 球棍模型 (Ball & Stick)</span>
+        </div>
+        <div class="eye-btn" id="eye-water" onclick="toggleVisibility('water')">👁️</div>
+    </div>
 </div>
 
 <div id="viewer-container">
@@ -59,68 +93,47 @@
 
 <script>
     var viewerInstance = new PDBeMolstarPlugin();
+    var currentVisibility = { polymer: true, water: true };
 
     var options = {
         customData: { url: './1zni.cif', format: 'cif' },
-        expanded: true,        
-        hideControls: false,   
-        bgColor: {r: 255, g: 255, b: 255}, 
-        displayVolume: false,  
-        loadEmptyStyle: false,
-        pixelRatio: window.devicePixelRatio * 2, // 強制雙倍像素提高清晰度
+        expanded: false,       // 關閉官方側欄，我們用自己做的
+        hideControls: true,    // 隱藏官方控制項
+        bgColor: {r: 255, g: 255, b: 255},
+        pixelRatio: window.devicePixelRatio * 2, // 高清晰度
         quality: 'highest'
     };
 
     window.onload = function() {
-        var viewerContainer = document.getElementById('myViewer');
-        viewerInstance.render(viewerContainer, options);
+        viewerInstance.render(document.getElementById('myViewer'), options);
         
-        // 核心設定：確保背景是白色的 API 調用
+        // 確保初次載入也是白背景
         setTimeout(() => {
-            if(viewerInstance.canvas) {
-                viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
-            }
-            // 執行深度清理與翻譯
-            cleanAndTranslateUI();
+            if(viewerInstance.canvas) viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
         }, 1000);
-
-        // 持續監控 UI 變化，確保雜物不跑出來
-        setInterval(cleanAndTranslateUI, 500);
     };
 
     /**
-     * 清理右側面板：只留下組件清單並翻譯
+     * 獨立控制顯示/隱藏的函式
      */
-    function cleanAndTranslateUI() {
-        // 1. 處理翻譯與顯示
-        const allElements = document.querySelectorAll('.msp-widget-section-header, .msp-control-group-header-label, span');
+    function toggleVisibility(type) {
+        currentVisibility[type] = !currentVisibility[type];
         
-        allElements.forEach(el => {
-            const text = el.innerText.trim();
-            
-            // 翻譯核心組件
-            if (text === 'Polymer') el.innerText = '聚合物 (Polymer)';
-            if (text === 'Water') el.innerText = '結晶水 (Water)';
-            if (text === 'Components') el.innerText = '組件顯示控制';
+        // 更新眼睛圖示 UI
+        const btn = document.getElementById('eye-' + type);
+        if (currentVisibility[type]) {
+            btn.classList.remove('hidden');
+            btn.innerText = '👁️';
+        } else {
+            btn.classList.add('hidden');
+            btn.innerText = '❌'; // 或者使用另一個閉眼圖示
+        }
 
-            // 隱藏雜項區塊：如果標題不是 Components，就隱藏整個區塊
-            const parentSection = el.closest('.msp-widget-section, .msp-control-group');
-            if (parentSection) {
-                const headerText = parentSection.innerText;
-                // 只有包含「組件」或 "Polymer" 的區塊留著，其他通通隱藏
-                if (headerText.includes('Structure') || 
-                    headerText.includes('Quick Styles') || 
-                    headerText.includes('Volume') || 
-                    headerText.includes('Measurements') || 
-                    headerText.includes('Export')) {
-                    parentSection.style.display = 'none';
-                }
-            }
+        // 調用 Molstar API 切換顯示
+        viewerInstance.visual.visibility({
+            polymer: currentVisibility.polymer,
+            water: currentVisibility.water
         });
-
-        // 2. 再次確保背景色
-        const canvas = document.querySelector('canvas');
-        if (canvas) canvas.style.background = '#ffffff';
     }
 
     function changeProtein(fileName, element) {
@@ -132,7 +145,14 @@
             hideWater: false
         });
 
-        // 切換後再次強制對焦與確保背景
+        // 重置按鈕狀態為顯示
+        currentVisibility.polymer = true;
+        currentVisibility.water = true;
+        document.querySelectorAll('.eye-btn').forEach(b => {
+            b.classList.remove('hidden');
+            b.innerText = '👁️';
+        });
+
         setTimeout(() => { 
             viewerInstance.visual.focus(); 
             viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
