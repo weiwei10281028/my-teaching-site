@@ -276,14 +276,6 @@
             <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
         </div>
     </div>
-
-    <div class="section-header"><div class="section-label">點擊資訊</div></div>
-    <div class="control-card" id="clickInfoCard">
-        <div class="control-row" style="border-bottom:none;">
-            <label>胺基酸種類</label>
-            <span id="aminoAcidDisplay" style="font-weight:600;color:var(--primary-color);">—</span>
-        </div>
-    </div>
 </div>
 
 <div id="viewer-container">
@@ -292,44 +284,7 @@
 
 <script>
     const viewer = new PDBeMolstarPlugin();
-    var currentCifResidues = {};  // 從 CIF 解析的 (chain_seqId) -> 胺基酸代碼
-
-    // 從 CIF 文字解析胺基酸：傳回 { "鏈號_序號": "ALA", ... }（使用本地 CIF，不用 API）
-    function parseCifResidues(cifText) {
-        var out = {};
-        var lines = cifText.split(/\r?\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].trim() !== 'loop_') continue;
-            var headers = [];
-            var j = i + 1;
-            while (j < lines.length && lines[j].indexOf('_atom_site.') === 0) {
-                var h = lines[j].replace(/^_atom_site\./, '').trim().split(/\s+/)[0];
-                headers.push(h);
-                j++;
-            }
-            var colAsym = headers.indexOf('label_asym_id') >= 0 ? headers.indexOf('label_asym_id') : headers.indexOf('auth_asym_id');
-            var colSeq = headers.indexOf('label_seq_id') >= 0 ? headers.indexOf('label_seq_id') : headers.indexOf('auth_seq_id');
-            var colComp = headers.indexOf('label_comp_id') >= 0 ? headers.indexOf('label_comp_id') : headers.indexOf('auth_comp_id');
-            if (colAsym < 0 || colSeq < 0 || colComp < 0) continue;
-            while (j < lines.length && lines[j].trim() && lines[j].trim().indexOf('_') !== 0 && lines[j].trim().indexOf('#') !== 0) {
-                var parts = lines[j].trim().split(/\s+/);
-                if (parts.length > Math.max(colAsym, colSeq, colComp)) {
-                    var key = parts[colAsym] + '_' + parts[colSeq];
-                    out[key] = parts[colComp];
-                }
-                j++;
-            }
-            break;
-        }
-        return out;
-    }
-
-    function loadAndParseCif(url) {
-        fetch(url).then(function(r) { return r.text(); }).then(function(text) {
-            currentCifResidues = parseCifResidues(text);
-        }).catch(function() { currentCifResidues = {}; });
-    }
-
+    
     window.onload = () => {
         // 僅從同目錄 .cif 檔載入，不透過 API（請上傳 1ubq.cif 等）
         viewer.render(document.getElementById('myViewer'), {
@@ -339,7 +294,6 @@
             visualStyle: 'cartoon',
             loadWater: true
         });
-        loadAndParseCif('1ubq.cif');
 
         // 結構載入後套用視覺與水分子；啟用選取/焦點；手機版補上「點擊」以顯示骨架
         setTimeout(() => {
@@ -361,42 +315,7 @@
                 if (t >= 5000) clearInterval(waterColorInterval);
             }, 600);
         }, 1200);
-
-        // 點擊蛋白質：顯示胺基酸種類（本地 CIF）；手機版擴大顯示骨架範圍
-        document.addEventListener('PDB.molstar.click', onMolstarClick);
     };
-
-    var MOBILE_SELECT_RANGE = 12;  // 手機版點擊時，前後各顯示幾顆胺基酸（骨架範圍更大）
-
-    function onMolstarClick(e) {
-        var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
-        var chain = d.struct_asym_id || d.auth_asym_id || '';
-        var resNum = d.residue_number != null ? d.residue_number : (d.auth_seq_id != null ? d.auth_seq_id : d.label_seq_id);
-        var entityId = (d.entity_id != null) ? String(d.entity_id) : '1';
-
-        var key = chain + '_' + resNum;
-        var aminoName = currentCifResidues[key] || (currentCifResidues[chain + '_' + (resNum && resNum.toString())]) || '—';
-        var el = document.getElementById('aminoAcidDisplay');
-        if (el) el.textContent = aminoName;
-
-        if (!viewer.plugin || chain === '' || resNum == null) return;
-        var num = parseInt(resNum, 10);
-        if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
-            // 維持原本顏色：選取區與其餘都用同一灰色，不變色只擴大骨架顯示範圍
-            var originalGray = '#A8A8A8';
-            viewer.visual.select({
-                data: [{
-                    entity_id: entityId,
-                    struct_asym_id: chain,
-                    start_residue_number: Math.max(1, num - MOBILE_SELECT_RANGE),
-                    end_residue_number: num + MOBILE_SELECT_RANGE,
-                    focus: true,
-                    color: originalGray
-                }],
-                nonSelectedColor: originalGray
-            });
-        }
-    }
 
     // 下拉選單開關
     function toggleDropdown() {
@@ -453,8 +372,6 @@
         document.getElementById('spin').checked = false;
         document.getElementById('outline').checked = false;
         document.getElementById('fog').checked = false;
-        var aaEl = document.getElementById('aminoAcidDisplay');
-        if (aaEl) aaEl.textContent = '—';
         viewer.visual.clearSelection();
         updateVisuals();
         updateComponents();
@@ -475,14 +392,11 @@
         document.getElementById('selectedLabel').innerText = label;
         document.getElementById('pdbDropdown').classList.remove('open');
 
-        var cifUrl = getCifUrl(id);
-        loadAndParseCif(cifUrl);
         viewer.visual.update({
-            customData: { url: cifUrl, format: 'cif' },
+            customData: { url: getCifUrl(id), format: 'cif' },
             visualStyle: 'cartoon'
         });
 
-        document.getElementById('aminoAcidDisplay').textContent = '—';
         setTimeout(() => {
             updateVisuals();
             updateComponents();
