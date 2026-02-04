@@ -382,15 +382,18 @@
         if (!viewer.plugin || chain === '' || resNum == null) return;
         var num = parseInt(resNum, 10);
         if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+            // 維持原本顏色：選取區與其餘都用同一灰色，不變色只擴大骨架顯示範圍
+            var originalGray = '#A8A8A8';
             viewer.visual.select({
                 data: [{
                     entity_id: entityId,
                     struct_asym_id: chain,
                     start_residue_number: Math.max(1, num - MOBILE_SELECT_RANGE),
                     end_residue_number: num + MOBILE_SELECT_RANGE,
-                    focus: true
+                    focus: true,
+                    color: originalGray
                 }],
-                nonSelectedColor: '#E2E8F0'
+                nonSelectedColor: originalGray
             });
         }
     }
