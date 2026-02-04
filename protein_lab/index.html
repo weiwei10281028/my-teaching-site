@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構專業教學系統 V2.1</title>
+    <title>蛋白質結構專業教學系統 V2.2</title>
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
         :root { --primary: #007bff; --bg: #ffffff; --text: #333; }
-        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: var(--text); }
+        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; display: flex; height: 100vh; overflow: hidden; background: #fff; color: var(--text); }
         #main-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
         @media (max-width: 768px) { #main-container { flex-direction: column; } }
-        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
-        @media (max-width: 768px) { #sidebar { width: 100%; height: auto; padding: 15px; } }
-        .section-title { font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #fff; text-align: left; font-size: 14px; }
+        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; z-index: 1000; overflow-y: auto; }
+        .section-title { font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; color: #666; text-transform: uppercase; }
+        .protein-btn { width: 100%; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; font-size: 14px; }
         .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .control-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
-        .control-info { display: flex; flex-direction: column; }
         .control-label { font-size: 14px; font-weight: bold; }
-        .control-sub { font-size: 11px; color: #999; }
+        .control-sub { font-size: 11px; color: #999; display: block; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -47,12 +45,12 @@
         <div class="control-item">
             <div class="control-info">
                 <span class="control-label">對焦模式 (Focus)</span>
-                <span class="control-sub">關閉時維持 100% 實心不遮蔽</span>
+                <span class="control-sub">關閉時結構 100% 實心且不位移</span>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-focus" onchange="updateInteraction()"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="toggle-focus" onchange="applyStrictLogic()"><span class="slider"></span></label>
         </div>
 
-        <div class="section-title">基礎顯示</div>
+        <div class="section-title">顯示開關</div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">聚合物 (Polymer)</span></div>
             <label class="switch"><input type="checkbox" checked onchange="toggleVis('polymer', this.checked)"><span class="slider"></span></label>
@@ -62,14 +60,10 @@
             <label class="switch"><input type="checkbox" checked id="toggle-water" onchange="toggleVis('water', this.checked)"><span class="slider"></span></label>
         </div>
 
-        <div class="section-title">化學特徵</div>
+        <div class="section-title">特徵顯示</div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">氫鍵 (H-Bonds)</span></div>
             <label class="switch"><input type="checkbox" id="check-hbond" checked onchange="updateBonds()"><span class="slider"></span></label>
-        </div>
-        <div class="control-item">
-            <div class="control-info"><span class="control-label">二硫鍵 (S-S)</span></div>
-            <label class="switch"><input type="checkbox" id="check-ssbond" onchange="updateBonds()"><span class="slider"></span></label>
         </div>
         <div class="control-item">
             <div class="control-info"><span class="control-label">電子表面 (Surface)</span></div>
@@ -89,56 +83,58 @@
         customData: { url: './1zni.cif', format: 'cif' },
         hideControls: true,
         bgColor: {r: 255, g: 255, b: 255},
-        quality: 'highest'
+        lighting: 'flat' // 使用平滑光照減少陰影感
     };
 
     window.onload = function() {
         viewerInstance.render(document.getElementById('myViewer'), options);
-        setTimeout(initEngineSettings, 1500);
+        // 重複嘗試直到外掛完全載入
+        var checkReady = setInterval(() => {
+            if (viewerInstance.plugin) {
+                applyStrictLogic();
+                clearInterval(checkReady);
+            }
+        }, 500);
     };
 
-    function initEngineSettings() {
+    // 強制套用底層邏輯：解決遮蔽與背景變黑
+    function applyStrictLogic() {
         if (!viewerInstance.plugin) return;
-        
-        // 核心修正：調整渲染器參數，防止任何形式的透明度淡化與裁切
-        viewerInstance.plugin.canvas3d.setProps({
-            renderer: {
-                ...viewerInstance.plugin.canvas3d.props.renderer,
-                highlightAlpha: 1.0, // 點擊高亮時，背景不變透明
-                selectAlpha: 1.0,    // 選取時，其餘部分不變透明
-            },
-            cameraFog: { name: 'off', params: {} }, // 關閉遠方霧化，防止消失
-            camera: {
-                helper: { axes: { name: 'off', params: {} } }
-            }
-        });
-        updateInteraction();
-        updateBonds();
-    }
 
-    function updateInteraction() {
         const isFocusEnabled = document.getElementById('toggle-focus').checked;
-        if (viewerInstance.plugin) {
-            // 切換互動模式
-            viewerInstance.plugin.managers.interactivity.setProps({
-                props: { click: isFocusEnabled ? 'default' : 'select' }
-            });
+        const canvas = viewerInstance.plugin.canvas3d;
 
-            // 如果關閉對焦，強制移除所有現有的「遮蔽/陰影」效果
-            if (!isFocusEnabled) {
-                viewerInstance.plugin.managers.structure.focus.clear();
-                // 設定底層不允許透明度疊加
-                viewerInstance.plugin.canvas3d.setProps({
-                    postprocessing: { outline: { name: 'off' } }
-                });
-            }
+        // 1. 強制設定畫布參數 (防止變黑、防止背景淡化)
+        canvas.setProps({
+            renderer: {
+                backgroundColor: {r: 1, g: 1, b: 1},
+                highlightAlpha: 1.0,  // 點擊時不改變不透明度
+                selectAlpha: 1.0,     // 選取時不改變不透明度
+                dimAlpha: 1.0         // 關鍵：強制淡化後的透明度也是 1.0 (即不淡化)
+            },
+            postprocessing: {
+                occlusion: { name: 'off', params: {} }, // 關閉環境光遮蔽 (解決黑影)
+                outline: { name: 'off', params: {} }    // 關閉輪廓線
+            },
+            cameraFog: { name: 'off', params: {} }      // 關閉霧化 (解決若隱若現)
+        });
+
+        // 2. 固定背景為白色 (PDBe 特有 API)
+        viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
+
+        // 3. 處理點擊互動
+        viewerInstance.plugin.managers.interactivity.setProps({
+            props: { click: isFocusEnabled ? 'default' : 'select' }
+        });
+
+        if (!isFocusEnabled) {
+            viewerInstance.plugin.managers.structure.focus.clear();
         }
     }
 
     function updateBonds() {
         viewerInstance.visual.update({
             hideHydrogenBonds: !document.getElementById('check-hbond').checked,
-            hideMetalInteractions: !document.getElementById('check-ssbond').checked, 
             hideWater: !document.getElementById('toggle-water').checked
         });
     }
@@ -161,8 +157,16 @@
             document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
         }
+        
+        // 載入新模型
         viewerInstance.visual.update({ customData: { url: './' + fileName + '.cif', format: 'cif' } });
-        setTimeout(initEngineSettings, 1000);
+        
+        // 載入後延遲強制重設畫布與背景，防止變黑
+        setTimeout(() => {
+            applyStrictLogic();
+            updateBonds();
+            viewerInstance.visual.focus();
+        }, 800);
     }
 </script>
 
