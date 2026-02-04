@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>生化教學實驗室</title>
+    
+    <!-- 引入最新的 Mol* 3.1.2 穩定版資源 -->
+    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
+    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #f0f2f5;
+            overflow: hidden;
+        }
+
+        #app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: row; /* 電腦版：左邊 3D，右邊按鈕 */
+        }
+
+        /* 3D 顯示區 */
+        #viewer-section {
+            flex: 1;
+            height: 100vh;
+            background-color: #ffffff;
+            position: relative;
+        }
+
+        /* 右側控制面板 */
+        #controls-panel {
+            width: 350px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #d1d5da;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+        }
+
+        h3 { margin-top: 0; color: #333; font-size: 1.1rem; border-left: 4px solid #007bff; padding-left: 10px; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        
+        button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        button:hover { background: #f0f7ff; }
+        button.active {
+            background: #007bff;
+            color: white;
+            border-color: #0056b3;
+            font-weight: bold;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comp-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .comp-info .name { font-size: 0.9rem; font-weight: bold; color: #333; }
+        .comp-info .desc { font-size: 0.75rem; color: #999; }
+
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .status-on { color: #28a745; font-size: 0.8rem; font-weight: bold; }
+
+        /* 手機版：上方 3D，下方按鈕 */
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; }
+            #viewer-section { height: 55vh; width: 100vw; flex: none; }
+            #controls-panel { 
+                width: 100vw; 
+                height: 45vh; 
+                border-left: none; 
+                border-top: 1px solid #d1d5da; 
+            }
+        }
+
+        /* 隱藏 Mol* 內建不需要的按鈕 */
+        .msp-plugin-content-help { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- 左側 3D 顯示區 -->
+    <div id="viewer-section"></div>
+
+    <!-- 右側控制面板 -->
+    <div id="controls-panel">
+        <h3>指定蛋白質選擇</h3>
+        <div class="btn-group" id="preset-buttons">
+            <button onclick="loadProtein('1ZNI', this)" class="active">胰島素 (Insulin)</button>
+            <button onclick="loadProtein('1MBO', this)">肌紅蛋白 (Myoglobin)</button>
+            <button onclick="loadProtein('1EMA', this)">綠色螢光蛋白 (GFP)</button>
+            <button onclick="loadProtein('1UBQ', this)">泛素 (Ubiquitin)</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">元件清單 (Components) <span id="current-id" style="color:#007bff">1ZNI</span></div>
+            
+            <div class="comp-row">
+                <div class="comp-info">
+                    <div class="name">聚合物 (Polymer)</div>
+                    <div class="desc">帶狀結構 (Cartoon)</div>
+                </div>
+                <input type="checkbox" id="check-poly" checked onchange="toggleComp('polymer', this.checked)">
+            </div>
+
+            <div class="comp-row">
+                <div class="comp-info">
+                    <div class="name">結晶水 (Water)</div>
+                    <div class="desc">球棍模型 (Ball & Stick)</div>
+                </div>
+                <input type="checkbox" id="check-water" checked onchange="toggleComp('water', this.checked)">
+            </div>
+
+            <div class="comp-row">
+                <div class="comp-info">
+                    <div class="name">自動聚焦 (Focus)</div>
+                    <div class="desc">點擊處顯示原子</div>
+                </div>
+                <span class="status-on">已啟用</span>
+            </div>
+        </div>
+
+        <div style="font-size: 0.8rem; color: #777; line-height: 1.5; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+            💡 <b>教學提示：</b><br>
+            • 點擊任何部位可自動放大並顯示原子細節。<br>
+            • 手機版可直接在畫面上單指旋轉、雙指縮放。<br>
+            • 本工具已自動屏蔽電子密度圖 (Fo-Fc)。
+        </div>
+    </div>
+</div>
+
+<script>
+    var viewerInstance = new PDBeMolstarPlugin();
+    var viewerContainer = document.getElementById('viewer-section');
+
+    function initViewer() {
+        var options = {
+            target: viewerContainer,
+            moleculeId: '1zni',
+            domain: 'https://www.ebi.ac.uk/pdbe',
+            loadDataAutomatically: true,
+            bgColor: {r: 255, g: 255, b: 255},
+            hideCanvasControls: ['selection', 'animation', 'player', 'controlPanel', 'layoutControls'],
+        };
+
+        viewerInstance.render(options);
+    }
+
+    function loadProtein(pdbId, btn) {
+        // 切換按鈕樣式
+        const btns = document.querySelectorAll('#preset-buttons button');
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // 更新標籤
+        document.getElementById('current-id').innerText = pdbId;
+        document.getElementById('check-poly').checked = true;
+        document.getElementById('check-water').checked = true;
+
+        // 執行更新
+        viewerInstance.visual.update({
+            moleculeId: pdbId.toLowerCase()
+        });
+    }
+
+    function toggleComp(type, isVisible) {
+        if (type === 'polymer') {
+            viewerInstance.visual.visibility({ polymer: isVisible });
+        } else if (type === 'water') {
+            viewerInstance.visual.visibility({ water: isVisible });
+        }
+    }
+
+    // 關鍵：等待頁面完全載入後再初始化插件
+    window.onload = function() {
+        initViewer();
+    };
+
+    // 視窗大小改變時，強制重新計算 3D 畫布大小
+    window.addEventListener('resize', function() {
+        if (viewerInstance && viewerInstance.canvas) {
+            viewerInstance.canvas.resize();
+        }
+    });
+</script>
+
+</body>
+</html>
