@@ -173,48 +173,8 @@
         input:checked + .slider:before { transform: translateX(22px); }
 
         /* 視圖區域 */
-        #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; display: flex; flex-direction: column; }
-        #myViewer { width: 100%; height: 100%; flex: 1; min-height: 0; }
-        /* 手機版：右上角畫面內浮動多選開關（不佔獨立區塊、大點擊區） */
-        .viewer-mobile-bar { display: none; }
-        @media (max-width: 768px) {
-            #viewer-container { position: relative; }
-            .viewer-mobile-bar {
-                position: absolute;
-                right: 10px;
-                top: 10px;
-                left: auto;
-                bottom: auto;
-                width: auto;
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: flex-end;
-                padding: 10px 12px;
-                gap: 10px;
-                background: rgba(255,255,255,0.95);
-                border: 1px solid var(--border-color);
-                border-radius: 12px;
-                z-index: 20;
-                pointer-events: auto;
-                touch-action: manipulation;
-                min-height: 44px;
-                box-sizing: border-box;
-            }
-            .mobile-multi-row {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 10px;
-                margin: 0;
-                cursor: pointer;
-                min-height: 44px;
-                padding: 4px 0;
-                justify-content: center;
-                -webkit-tap-highlight-color: transparent;
-            }
-            .mobile-multi-label { font-size: 13px; font-weight: 600; color: var(--text-label); }
-        }
+        #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; }
+        #myViewer { width: 100%; height: 100%; }
 
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
@@ -319,12 +279,6 @@
 </div>
 
 <div id="viewer-container">
-    <div id="viewer-mobile-bar" class="viewer-mobile-bar">
-        <div class="mobile-multi-row" id="mobileMultiSelectBtn" role="button" tabindex="0">
-            <span class="mobile-multi-label">多選模式</span>
-            <label class="switch" onclick="event.stopPropagation()"><input type="checkbox" id="mobileMultiSelect"><span class="slider"></span></label>
-        </div>
-    </div>
     <div id="myViewer"></div>
 </div>
 
@@ -462,9 +416,9 @@
             var p = viewer.plugin;
             var props = p.canvas3d.getProps && p.canvas3d.getProps();
             if (props && props.input) {
-                p.canvas3d.setProps({ input: Object.assign({}, props.input, { scale: 0.18 }) });
+                p.canvas3d.setProps({ input: Object.assign({}, props.input, { scale: 0.45 }) });
             } else if (p.canvas3d.setProps) {
-                p.canvas3d.setProps({ input: { scale: 0.18 } });
+                p.canvas3d.setProps({ input: { scale: 0.45 } });
             }
         } catch (e) {}
     }
@@ -478,52 +432,26 @@
         var touchStart = { x: 0, y: 0, t: 0 };
         container.addEventListener('touchstart', function (e) {
             if (e.touches.length !== 1) return;
-            if (e.target.closest('#viewer-mobile-bar')) return;
             touchStart.x = e.touches[0].clientX;
             touchStart.y = e.touches[0].clientY;
             touchStart.t = Date.now();
         }, { passive: true });
         container.addEventListener('touchend', function (e) {
             if (e.changedTouches.length !== 1) return;
-            if (e.target.closest('#viewer-mobile-bar')) return;
             var t = e.changedTouches[0];
             var dx = t.clientX - touchStart.x;
             var dy = t.clientY - touchStart.y;
             var duration = Date.now() - touchStart.t;
-            // 輕觸即選取：時間與移動門檻適中，可點選胺基酸骨架、又不過度干擾旋轉
-            var isTap = duration < 320 && (dx * dx + dy * dy) < 256;
-            if (isTap) {
+            if (duration < 350 && (dx * dx + dy * dy) < 400) {
                 e.preventDefault();
                 var target = container.querySelector('canvas') || container;
-                var multiOn = document.getElementById('mobileMultiSelect') && document.getElementById('mobileMultiSelect').checked;
-                var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0, shiftKey: !!multiOn };
+                var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0 };
                 target.dispatchEvent(new MouseEvent('mousedown', opts));
                 target.dispatchEvent(new MouseEvent('mouseup', opts));
                 target.dispatchEvent(new MouseEvent('click', opts));
             }
         }, { passive: false });
     }
-
-    // 手機版多選開關：整塊點一下即切換（輕點即可）
-    (function initMobileMultiSelectTap() {
-        var bar = document.getElementById('viewer-mobile-bar');
-        var cb = document.getElementById('mobileMultiSelect');
-        if (!bar || !cb) return;
-        var lastTap = 0;
-        function toggleMulti() { cb.checked = !cb.checked; }
-        bar.addEventListener('touchend', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMulti();
-            lastTap = Date.now();
-        }, { passive: false });
-        bar.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (Date.now() - lastTap < 400) return;
-            toggleMulti();
-        });
-    })();
 </script>
 
 </body>
