@@ -2,86 +2,235 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蛋白質結構教學系統 V6.0</title>
-    <!-- 引入官方樣式與腳本 -->
+    <title>蛋白質 3D 結構教學系統</title>
+    <!-- 引入 PDBe 官方資源 -->
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
-        :root { --primary: #007bff; --border: #e0e0e0; }
-        body { margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background: #fff; overflow: hidden; }
-        
-        /* 側邊欄樣式 */
-        #sidebar { width: 320px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #ffffff; z-index: 100; overflow-y: auto; padding: 20px; }
-        .nav-title { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px 0; }
-        
-        /* 按鈕樣式 */
-        .protein-btn { width: 100%; padding: 12px 15px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; background: #fff; text-align: left; transition: all 0.2s; font-size: 14px; }
-        .protein-btn:hover { background: #f8f9fa; border-color: #ccc; }
-        .protein-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+        :root {
+            --primary-color: #007aff;
+            --primary-hover: #0056b3;
+            --bg-sidebar: #ffffff;
+            --bg-body: #f4f7f9;
+            --text-title: #1a202c;
+            --text-label: #4a5568;
+            --text-muted: #a0aec0;
+            --border-color: #e2e8f0;
+            --card-bg: #f8fafc;
+        }
 
-        /* 控制組件樣式 */
-        .control-card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .control-row:last-child { margin-bottom: 0; }
-        .control-label { font-size: 14px; color: #333; font-weight: 500; }
+        body { 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
+            background: var(--bg-body); 
+            overflow: hidden; 
+        }
         
-        /* 滑動開關 */
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        /* 側邊欄容器 */
+        #sidebar { 
+            width: 360px; 
+            background: var(--bg-sidebar); 
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.03);
+            z-index: 10;
+            padding: 35px 28px; 
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* 標題設計 */
+        .app-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        .app-logo-mark {
+            width: 8px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        .app-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-title);
+            letter-spacing: -0.5px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin: 28px 0 12px 2px;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .clear-btn {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        /* 下拉選單 UI 重塑 */
+        .dropdown { position: relative; width: 100%; }
+        .dropdown-btn { 
+            width: 100%; 
+            padding: 16px 20px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 14px; 
+            background: #fff; 
+            text-align: left; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 16px; 
+            color: var(--text-title); 
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-sizing: border-box;
+        }
+        .dropdown-btn:hover { 
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0,122,255,0.1);
+        }
+        .dropdown-btn::after { 
+            content: ''; 
+            width: 8px; height: 8px;
+            border-right: 2px solid var(--text-muted);
+            border-bottom: 2px solid var(--text-muted);
+            transform: rotate(45deg);
+            margin-bottom: 4px;
+            transition: 0.3s;
+        }
+        .dropdown.open .dropdown-btn::after { transform: rotate(-135deg); margin-bottom: -4px; }
+        
+        .dropdown-content { 
+            display: none; position: absolute; width: 100%; background: white; 
+            border: 1px solid var(--border-color); border-radius: 14px; 
+            margin-top: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.1); 
+            z-index: 100; overflow: hidden;
+            animation: slideIn 0.25s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown.open .dropdown-content { display: block; }
+        
+        .option { 
+            padding: 16px 20px; cursor: pointer; font-size: 15px; color: var(--text-label); 
+            transition: 0.2s; border-bottom: 1px solid #f7fafc; 
+        }
+        .option:last-child { border-bottom: none; }
+        .option:hover { background: #f0f7ff; color: var(--primary-color); }
+        .option.active { background: #f0f7ff; color: var(--primary-color); font-weight: 600; }
+
+        /* 控制面板卡片 */
+        .control-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color);
+            border-radius: 18px; 
+            padding: 10px 20px; 
+        }
+        .control-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+        }
+        .control-row:last-child { border-bottom: none; }
+        .control-row label { font-size: 15px; font-weight: 500; color: var(--text-label); }
+        
+        /* 切換開關 (Switch) */
+        .switch { position: relative; width: 46px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(18px); }
+        .slider { 
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #cbd5e0; transition: .3s; border-radius: 24px; 
+        }
+        .slider:before { 
+            position: absolute; content: ""; height: 18px; width: 18px; 
+            left: 3px; bottom: 3px; background-color: white; transition: .3s; 
+            border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
-        /* 滑桿 */
-        input[type="range"] { width: 100%; height: 6px; background: #ddd; border-radius: 5px; outline: none; margin-top: 10px; cursor: pointer; }
-
-        /* 畫布容器 */
+        /* 視圖區域 */
         #viewer-container { flex: 1; position: relative; background: #fff; }
-        #myViewer { width: 100%; height: 100%; background-color: #ffffff; }
+        #myViewer { width: 100%; height: 100%; }
 
-        /* 強制隱藏 PDBe 內建的 UI 元素 */
+        /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="nav-title">Structure Selection</div>
-    <div id="protein-list">
-        <div class="protein-btn active" onclick="loadPDB('1ubq', this)">1UBQ (Ubiquitin)</div>
-        <div class="protein-btn" onclick="loadPDB('1zni', this)">1ZNI (Insulin)</div>
-        <div class="protein-btn" onclick="loadPDB('1mbn', this)">1MBN (Myoglobin)</div>
+    <div class="app-header">
+        <div class="app-logo-mark"></div>
+        <div class="app-title">蛋白質結構系統</div>
     </div>
 
-    <div class="nav-title">Visual Settings</div>
-    <div class="control-card">
-        <div class="control-row">
-            <span class="control-label">Spin (Animate)</span>
-            <label class="switch"><input type="checkbox" id="btn-spin" onchange="applyVisualSettings()"><span class="slider"></span></label>
+    <div class="section-header">
+        <div class="section-label">選擇蛋白質結構</div>
+        <button class="clear-btn" onclick="refreshView()">重新整理</button>
+    </div>
+    
+    <div class="dropdown" id="pdbDropdown">
+        <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (Ubiquitin)</div>
+        <div class="dropdown-content">
+            <div class="option active" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
+            <div class="option" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
+            <div class="option" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
+            <div class="option" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
         </div>
-        <div class="control-row">
-            <span class="control-label">Outline</span>
-            <label class="switch"><input type="checkbox" id="btn-outline" checked onchange="applyVisualSettings()"><span class="slider"></span></label>
-        </div>
-        <div class="control-row">
-            <span class="control-label">Fog</span>
-            <label class="switch"><input type="checkbox" id="btn-fog" onchange="applyVisualSettings()"><span class="slider"></span></label>
-        </div>
-        <div class="control-label" style="margin-top:15px;">Clipping ( 透視 )</div>
-        <input type="range" id="slider-clip" min="0" max="100" value="0" oninput="applyVisualSettings()">
     </div>
 
-    <div class="nav-title">Components</div>
+    <div class="section-header"><div class="section-label">視覺效果設定</div></div>
     <div class="control-card">
         <div class="control-row">
-            <span class="control-label">Polymer (Cartoon)</span>
-            <label class="switch"><input type="checkbox" id="btn-polymer" checked onchange="syncComponentVisibility()"><span class="slider"></span></label>
+            <label>自動旋轉動畫</label>
+            <label class="switch"><input type="checkbox" id="spin" onchange="updateVisuals()"><span class="slider"></span></label>
         </div>
         <div class="control-row">
-            <span class="control-label">Water (Solvent)</span>
-            <label class="switch"><input type="checkbox" id="btn-water" onchange="syncComponentVisibility()"><span class="slider"></span></label>
+            <label>外輪廓描邊</label>
+            <label class="switch"><input type="checkbox" id="outline" onchange="updateVisuals()"><span class="slider"></span></label>
+        </div>
+        <div class="control-row">
+            <label>遠景霧化效果</label>
+            <label class="switch"><input type="checkbox" id="fog" onchange="updateVisuals()"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="section-header"><div class="section-label">結構組件顯示</div></div>
+    <div class="control-card">
+        <div class="control-row">
+            <label>蛋白質主體 (Polymer)</label>
+            <label class="switch"><input type="checkbox" id="poly" checked onchange="updateComponents()"><span class="slider"></span></label>
+        </div>
+        <div class="control-row">
+            <label>顯示主鏈骨架 (Backbone)</label>
+            <label class="switch"><input type="checkbox" id="backbone" onchange="updateBackbone()"><span class="slider"></span></label>
+        </div>
+        <div class="control-row">
+            <label>水分子 (Water)</label>
+            <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
         </div>
     </div>
 </div>
@@ -91,128 +240,136 @@
 </div>
 
 <script>
-    var viewerInstance = new PDBeMolstarPlugin();
-    var currentPDB = '1ubq';
-
-    // 初始化渲染
-    window.onload = function() {
-        const options = {
-            moleculeId: currentPDB,
+    const viewer = new PDBeMolstarPlugin();
+    
+    window.onload = () => {
+        // 優先從同目錄載入 mmCIF（檔名 1ubq.cif），無檔案時外掛會用 moleculeId 從網路載入
+        viewer.render(document.getElementById('myViewer'), {
+            customData: { url: '1ubq.cif', format: 'cif' },
+            moleculeId: '1ubq',
             hideControls: true,
             bgColor: {r: 255, g: 255, b: 255},
-            visualStyle: 'cartoon'
-        };
-        viewerInstance.render(document.getElementById('myViewer'), options);
-        
-        // 核心：每隔 500ms 檢查一次，直到插件完全加載並強制執行初始化
-        var initInterval = setInterval(() => {
-            if (viewerInstance.plugin) {
-                forceInitialState();
-                clearInterval(initInterval);
+            visualStyle: 'cartoon',
+            loadWater: true
+        });
+
+        // 結構載入後套用視覺與水分子淺紅色
+        setTimeout(() => {
+            updateVisuals();
+            updateComponents();
+            if(viewer.plugin) {
+                viewer.plugin.managers.interactivity.setProps({ props: { click: 'toggle' } });
+                viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
             }
-        }, 500);
+        }, 1200);
     };
 
-    // 強制設定初始狀態 (解決背景變黑與水分子問題)
-    function forceInitialState() {
-        const p = viewerInstance.plugin;
-
-        // 1. 強制畫布不透明與背景白底
-        p.canvas3d.setProps({
-            renderer: { 
-                backgroundColor: {r: 1, g: 1, b: 1}, // 白色
-                highlightAlpha: 1.0,
-                selectAlpha: 1.0,
-                dimAlpha: 1.0 // 徹底消除點擊遮蔽感
-            }
-        });
-
-        // 2. 鎖定互動模式 (只選取，不對焦縮放)
-        p.managers.interactivity.setProps({ props: { click: 'select' } });
-
-        // 3. 同步 UI 設定
-        syncComponentVisibility();
-        applyVisualSettings();
+    // 下拉選單開關
+    function toggleDropdown() {
+        document.getElementById('pdbDropdown').classList.toggle('open');
     }
 
-    // 同步組件可見性 (Polymer & Water)
-    function syncComponentVisibility() {
-        if (!viewerInstance.plugin) return;
-        const p = viewerInstance.plugin;
-        
-        const showPolymer = document.getElementById('btn-polymer').checked;
-        const showWater = document.getElementById('btn-water').checked;
-
-        // 直接操作 Mol* 內部的組件管理器
-        const components = p.managers.structure.component.state.components;
-        components.forEach(c => {
-            const label = c.cell.obj.label.toLowerCase();
-            if (label.includes('polymer')) {
-                p.managers.structure.component.setVisibility([c], showPolymer);
-            }
-            if (label.includes('water') || label.includes('solvent')) {
-                p.managers.structure.component.setVisibility([c], showWater);
-            }
-        });
+    // 點擊選單外部關閉
+    window.onclick = function(e) {
+        if (!e.target.closest('#pdbDropdown')) {
+            document.getElementById('pdbDropdown').classList.remove('open');
+        }
     }
 
-    // 應用視覺效果 (Fog, Outline, Spin, Clipping)
-    function applyVisualSettings() {
-        if (!viewerInstance.plugin) return;
-        const p = viewerInstance.plugin;
+    // 視覺控制
+    function updateVisuals() {
+        if (!viewer.plugin) return;
+        const p = viewer.plugin;
+        const isSpin = document.getElementById('spin').checked;
+        const isOutline = document.getElementById('outline').checked;
+        const isFog = document.getElementById('fog').checked;
 
-        const isSpin = document.getElementById('btn-spin').checked;
-        const isOutline = document.getElementById('btn-outline').checked;
-        const isFog = document.getElementById('btn-fog').checked;
-        const clipVal = parseInt(document.getElementById('slider-clip').value);
+        viewer.visual.toggleSpin(isSpin);
 
-        // 自動旋轉
-        viewerInstance.visual.toggleSpin(isSpin);
-
-        // 渲染管線設定
         p.canvas3d.setProps({
+            renderer: { backgroundColor: 0xFFFFFF, transparentBackground: false },
             postprocessing: {
-                // Outline 修復：設定顏色為黑色
-                outline: { 
-                    name: isOutline ? 'on' : 'off', 
-                    params: { scale: 1, threshold: 0.1, color: {r: 0, g: 0, b: 0} } 
-                }
+                outline: isOutline ? { name: 'on', params: { color: 0x000000, threshold: 0.35, scale: 1.0 } } : { name: 'off', params: {} },
+                occlusion: { name: 'off' }, 
+                shadow: { name: 'off' }
             },
-            // Fog 修復：顏色必須設為白色，否則會變黑
-            cameraFog: isFog ? { 
-                name: 'on', 
-                params: { intensity: 45, color: {r: 1, g: 1, b: 1} } 
-            } : { name: 'off', params: {} },
-            
-            // Clipping 修復
-            cameraClipping: {
-                radiusContext: 0,
-                far: true,
-                near: true,
-                minNear: clipVal
-            }
+            cameraFog: isFog ? { name: 'on', params: { intensity: 45, color: 0xFFFFFF } } : { name: 'off', params: {} }
         });
-
-        // 補丁：確保任何時候背景都不會跳回黑色
-        viewerInstance.canvas.setBgColor({r: 255, g: 255, b: 255});
     }
 
-    // 切換蛋白質
-    function loadPDB(pdbId, btn) {
-        // 更新按鈕樣式
-        document.querySelectorAll('.protein-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    // 組件控制（水分子使用淺紅色）
+    function updateComponents() {
+        if (!viewer.plugin) return;
+        const polyOn = document.getElementById('poly').checked;
+        const waterOn = document.getElementById('water').checked;
 
-        // 加載新結構
-        viewerInstance.visual.update({
-            moleculeId: pdbId,
+        viewer.visual.visibility({
+            polymer: polyOn,
+            water: waterOn,
+            het: true 
+        });
+        viewer.visual.setColor({ water: '#FFB6C1' });
+    }
+
+    // 重新整理：重置為原始狀態（選取清除、開關還原、視角重設）
+    function refreshView() {
+        if (!viewer.plugin) return;
+        document.getElementById('backbone').checked = false;
+        document.getElementById('poly').checked = true;
+        document.getElementById('water').checked = true;
+        document.getElementById('spin').checked = false;
+        document.getElementById('outline').checked = false;
+        document.getElementById('fog').checked = false;
+        viewer.visual.clearSelection();
+        updateVisuals();
+        updateComponents();
+        viewer.visual.focus();
+    }
+
+    // 顯示主鏈骨架 (Backbone)：在 data 內用 RGB 指定骨架顏色，避免外掛選取表示變成全黑
+    function updateBackbone() {
+        if (!viewer.plugin) return;
+        const show = document.getElementById('backbone').checked;
+        const green = { r: 46, g: 125, b: 50 };
+        
+        if (show) {
+            viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
+            viewer.visual.select({
+                data: [{
+                    backbone: true,
+                    representation: 'ball-and-stick',
+                    color: green,
+                    representationColor: green
+                }],
+                nonSelectedColor: 'theme',
+                keepRepresentations: true
+            });
+        } else {
+            viewer.visual.clearSelection();
+            viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
+        }
+    }
+
+    // 切換結構
+    function changePDB(id, label, el) {
+        document.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('selectedLabel').innerText = label;
+        document.getElementById('pdbDropdown').classList.remove('open');
+        
+        // 切換結構時重設骨架按鈕狀態
+        document.getElementById('backbone').checked = false;
+
+        viewer.visual.update({
+            customData: { url: id + '.cif', format: 'cif' },
+            moleculeId: id,
             visualStyle: 'cartoon'
         });
 
-        // 加載後強制重設背景與組件狀態
         setTimeout(() => {
-            forceInitialState();
-            viewerInstance.visual.focus();
+            updateVisuals();
+            updateComponents();
+            viewer.visual.focus();
         }, 1200);
     }
 </script>
