@@ -300,12 +300,13 @@
             updateVisuals();
             updateComponents();
             if(viewer.plugin) {
-                viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
+                viewer.visual.setColor({ select: '#9CA3AF', water: '#FFB6C1' });
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
                 setupMobileTapToSelect();
             }
         }, 1200);
+        document.addEventListener('PDB.molstar.click', onProteinClick);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
         setTimeout(() => {
             let t = 0;
@@ -316,6 +317,32 @@
             }, 600);
         }, 1200);
     };
+
+    var BACKBONE_RANGE = 12;
+    var ORIGINAL_GRAY = '#9CA3AF';
+
+    function onProteinClick(e) {
+        var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
+        var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
+        var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
+        var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
+        if (!viewer.plugin || chain === '' || resNum == null) return;
+        var num = parseInt(resNum, 10);
+        if (isNaN(num)) return;
+        viewer.visual.select({
+            data: [{
+                entity_id: entityId,
+                struct_asym_id: chain,
+                start_residue_number: Math.max(1, num - BACKBONE_RANGE),
+                end_residue_number: num + BACKBONE_RANGE,
+                focus: true,
+                representation: true,
+                representationColor: ORIGINAL_GRAY,
+                color: ORIGINAL_GRAY
+            }],
+            nonSelectedColor: ORIGINAL_GRAY
+        });
+    }
 
     // 下拉選單開關
     function toggleDropdown() {
