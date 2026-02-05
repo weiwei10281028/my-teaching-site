@@ -699,6 +699,9 @@
         var closeBtn = document.getElementById('viewer-close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage('closeProteinLab', '*');
+                }
                 window.dispatchEvent(new CustomEvent('viewer-close'));
             });
         }
