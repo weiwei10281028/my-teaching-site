@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>蛋白質 3D 結構教學系統</title>
-    <!-- 引入 PDBe 官方資源 (回復至穩定版 3.1.2) -->
+    <!-- 引入 PDBe 官方資源 -->
     <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
     <style>
@@ -176,41 +176,6 @@
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; }
         #myViewer { width: 100%; height: 100%; }
 
-        /* 圖表左上角：點擊的胺基酸名稱（質感卡片） */
-        #aminoAcidOverlay {
-            position: absolute;
-            left: 16px;
-            top: 16px;
-            z-index: 20;
-            padding: 12px 18px;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-title);
-            letter-spacing: 0.02em;
-            pointer-events: none;
-            min-width: 80px;
-            text-align: center;
-        }
-        #aminoAcidOverlay .label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-        #aminoAcidOverlay .value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
 
@@ -244,83 +209,66 @@
             .control-row label { font-size: 13px; }
             .dropdown-btn { padding: 10px 12px; font-size: 14px; }
             .option { padding: 10px 12px; font-size: 13px; }
-            /* 手機版下拉選單改為靜態定位（推擠式），讓選單內容能被捲動看見 */
-            .dropdown-content { 
-                position: static; 
-                margin-top: 4px; 
-                margin-bottom: 4px; 
-                box-shadow: none; 
-                border: 1px solid #eee;
-                max-height: none; 
-                display: none;
-                width: 100%;
-            }
-            .dropdown.open .dropdown-content { display: block; }
-            
+            .dropdown-content { margin-top: 0; margin-bottom: 4px; bottom: 100%; top: auto; max-height: 20vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
             #viewer-container, #myViewer { touch-action: none; }
-            #aminoAcidOverlay { left: 10px; top: 10px; padding: 10px 14px; font-size: 13px; }
-            #aminoAcidOverlay .label { font-size: 10px; }
-            #aminoAcidOverlay .value { font-size: 15px; }
         }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="app-header">
-        <div class="app-logo-mark"></div>
-        <div class="app-title">蛋白質結構系統</div>
-    </div>
+    <div class="sidebar-inner">
+        <div class="app-header">
+            <div class="app-logo-mark"></div>
+            <div class="app-title">蛋白質結構系統</div>
+        </div>
 
-    <div class="section-header">
-        <div class="section-label">選擇蛋白質結構</div>
-        <button class="clear-btn" onclick="refreshView()">重新整理</button>
-    </div>
-    
-    <div class="dropdown" id="pdbDropdown">
-        <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (Ubiquitin)</div>
-        <div class="dropdown-content">
-            <div class="option active" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
-            <div class="option" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
-            <div class="option" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
-            <div class="option" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
+        <div class="section-header">
+            <div class="section-label">選擇蛋白質結構</div>
+            <button class="clear-btn" onclick="refreshView()">重新整理</button>
         </div>
-    </div>
+        
+        <div class="dropdown" id="pdbDropdown">
+            <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (Ubiquitin)</div>
+            <div class="dropdown-content">
+                <div class="option active" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
+                <div class="option" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
+                <div class="option" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
+                <div class="option" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
+            </div>
+        </div>
 
-    <div class="section-header"><div class="section-label">視覺效果設定</div></div>
-    <div class="control-card">
-        <div class="control-row">
-            <label>自動旋轉動畫</label>
-            <label class="switch"><input type="checkbox" id="spin" onchange="updateVisuals()"><span class="slider"></span></label>
+        <div class="section-header"><div class="section-label">視覺效果設定</div></div>
+        <div class="control-card">
+            <div class="control-row">
+                <label>自動旋轉動畫</label>
+                <label class="switch"><input type="checkbox" id="spin" onchange="updateVisuals()"><span class="slider"></span></label>
+            </div>
+            <div class="control-row">
+                <label>外輪廓描邊</label>
+                <label class="switch"><input type="checkbox" id="outline" onchange="updateVisuals()"><span class="slider"></span></label>
+            </div>
+            <div class="control-row">
+                <label>遠景霧化效果</label>
+                <label class="switch"><input type="checkbox" id="fog" onchange="updateVisuals()"><span class="slider"></span></label>
+            </div>
         </div>
-        <div class="control-row">
-            <label>外輪廓描邊</label>
-            <label class="switch"><input type="checkbox" id="outline" onchange="updateVisuals()"><span class="slider"></span></label>
-        </div>
-        <div class="control-row">
-            <label>遠景霧化效果</label>
-            <label class="switch"><input type="checkbox" id="fog" onchange="updateVisuals()"><span class="slider"></span></label>
-        </div>
-    </div>
 
-    <div class="section-header"><div class="section-label">結構組件顯示</div></div>
-    <div class="control-card">
-        <div class="control-row">
-            <label>蛋白質主體 (Polymer)</label>
-            <label class="switch"><input type="checkbox" id="poly" checked onchange="updateComponents()"><span class="slider"></span></label>
-        </div>
-        <div class="control-row">
-            <label>水分子 (Water)</label>
-            <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
+        <div class="section-header"><div class="section-label">結構組件顯示</div></div>
+        <div class="control-card">
+            <div class="control-row">
+                <label>蛋白質主體 (Polymer)</label>
+                <label class="switch"><input type="checkbox" id="poly" checked onchange="updateComponents()"><span class="slider"></span></label>
+            </div>
+            <div class="control-row">
+                <label>水分子 (Water)</label>
+                <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
+            </div>
         </div>
     </div>
 </div>
 
 <div id="viewer-container">
-    <div id="aminoAcidOverlay">
-        <div class="label">胺基酸</div>
-        <div class="value" id="aminoAcidName">—</div>
-    </div>
     <div id="myViewer"></div>
 </div>
 
@@ -336,96 +284,30 @@
             visualStyle: 'cartoon',
             loadWater: true
         });
-        loadAndParseCif('1ubq.cif');
 
         // 結構載入後套用視覺與水分子；啟用選取/焦點；手機版補上「點擊」以顯示骨架
         setTimeout(() => {
             updateVisuals();
             updateComponents();
             if(viewer.plugin) {
-                viewer.visual.setColor({ select: '#9CA3AF', water: '#FFB6C1' });
+                viewer.visual.setColor({ water: '#FFB6C1' });
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
-                setupMobileTapToSelect();
+                setupMobileTapToClick();
+                setupClickKeepTheme();
             }
-        }, 1200);
-        document.addEventListener('PDB.molstar.click', onProteinClick);
-        // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
-        setTimeout(() => {
-            let t = 0;
-            const waterColorInterval = setInterval(() => {
-                t += 600;
-                if (viewer.plugin) viewer.visual.setColor({ water: '#FFB6C1' });
-                if (t >= 5000) clearInterval(waterColorInterval);
-            }, 600);
         }, 1200);
     };
 
-    var BACKBONE_RANGE = 24;
-    var LOAD_GREY = '#9CA3AF';
-    var currentCifResidues = {};
-
-    function parseCifResidues(cifText) {
-        var out = {};
-        var lines = cifText.split(/\r?\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].trim() !== 'loop_') continue;
-            var headers = [];
-            var j = i + 1;
-            while (j < lines.length && lines[j].indexOf('_atom_site.') === 0) {
-                var h = lines[j].replace(/^_atom_site\./, '').trim().split(/\s+/)[0];
-                headers.push(h);
-                j++;
-            }
-            var colAsym = headers.indexOf('label_asym_id') >= 0 ? headers.indexOf('label_asym_id') : headers.indexOf('auth_asym_id');
-            var colSeq = headers.indexOf('label_seq_id') >= 0 ? headers.indexOf('label_seq_id') : headers.indexOf('auth_seq_id');
-            var colComp = headers.indexOf('label_comp_id') >= 0 ? headers.indexOf('label_comp_id') : headers.indexOf('auth_comp_id');
-            if (colAsym < 0 || colSeq < 0 || colComp < 0) continue;
-            while (j < lines.length && lines[j].trim() && lines[j].trim().indexOf('_') !== 0 && lines[j].trim().indexOf('#') !== 0) {
-                var parts = lines[j].trim().split(/\s+/);
-                if (parts.length > Math.max(colAsym, colSeq, colComp)) {
-                    var key = parts[colAsym] + '_' + parts[colSeq];
-                    out[key] = parts[colComp];
+    // 點擊緞帶後重設主題，讓緞帶與骨架維持預設顏色（不變灰）
+    function setupClickKeepTheme() {
+        document.addEventListener('PDB.molstar.click', function() {
+            setTimeout(function() {
+                if (viewer.plugin) {
+                    viewer.visual.reset({ theme: true });
+                    viewer.visual.setColor({ water: '#FFB6C1' });
                 }
-                j++;
-            }
-            break;
-        }
-        return out;
-    }
-
-    function loadAndParseCif(url) {
-        fetch(url).then(function(r) { return r.text(); }).then(function(text) {
-            currentCifResidues = parseCifResidues(text);
-        }).catch(function() { currentCifResidues = {}; });
-    }
-
-    function onProteinClick(e) {
-        var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
-        var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
-        var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
-        var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
-
-        var key = chain + '_' + resNum;
-        var aminoName = currentCifResidues[key] || currentCifResidues[chain + '_' + (resNum && resNum.toString())] || '—';
-        var el = document.getElementById('aminoAcidName');
-        if (el) el.textContent = aminoName;
-
-        if (!viewer.plugin || chain === '' || resNum == null) return;
-        var num = parseInt(resNum, 10);
-        if (isNaN(num)) return;
-        viewer.visual.select({
-            data: [{
-                entity_id: entityId,
-                struct_asym_id: chain,
-                start_residue_number: Math.max(1, num - BACKBONE_RANGE),
-                end_residue_number: num + BACKBONE_RANGE,
-                focus: true,
-                representation: true,
-                color: LOAD_GREY,
-                representationColor: LOAD_GREY
-            }],
-            nonSelectedColor: LOAD_GREY
+            }, 150);
         });
     }
 
@@ -484,8 +366,6 @@
         document.getElementById('spin').checked = false;
         document.getElementById('outline').checked = false;
         document.getElementById('fog').checked = false;
-        var aaEl = document.getElementById('aminoAcidName');
-        if (aaEl) aaEl.textContent = '—';
         viewer.visual.clearSelection();
         updateVisuals();
         updateComponents();
@@ -506,12 +386,8 @@
         document.getElementById('selectedLabel').innerText = label;
         document.getElementById('pdbDropdown').classList.remove('open');
 
-        var cifUrl = getCifUrl(id);
-        loadAndParseCif(cifUrl);
-        var aaEl = document.getElementById('aminoAcidName');
-        if (aaEl) aaEl.textContent = '—';
         viewer.visual.update({
-            customData: { url: cifUrl, format: 'cif' },
+            customData: { url: getCifUrl(id), format: 'cif' },
             visualStyle: 'cartoon'
         });
 
@@ -521,9 +397,33 @@
             viewer.visual.setColor({ water: '#FFB6C1' });
             viewer.visual.update({ selectInteraction: true });
             applyMobileSettings();
-            setupMobileTapToSelect();
+            setupMobileTapToClick();
             viewer.visual.focus();
         }, 1200);
+    }
+
+    // 手機版：短按轉成 click，讓點蛋白質能顯示骨架（與電腦版一致）
+    function setupMobileTapToClick() {
+        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
+        var container = document.getElementById('viewer-container');
+        if (!container) return;
+        var startTime = 0, startX = 0, startY = 0;
+        container.addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) return;
+            startTime = Date.now();
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        container.addEventListener('touchend', function(e) {
+            if (e.changedTouches.length !== 1) return;
+            var t = e.changedTouches[0];
+            var dt = Date.now() - startTime;
+            var dx = t.clientX - startX, dy = t.clientY - startY;
+            if (dt > 350 || (dx * dx + dy * dy) > 400) return;
+            var el = document.elementFromPoint(t.clientX, t.clientY);
+            if (!el || !container.contains(el)) return;
+            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY }));
+        }, { passive: true });
     }
 
     // 手機：縮放速度調慢（外掛有支援時生效）
@@ -539,36 +439,6 @@
                 p.canvas3d.setProps({ input: { scale: 0.45 } });
             }
         } catch (e) {}
-    }
-
-    // 手機版：快速輕觸視圖時模擬點擊，讓外掛的選取邏輯觸發並顯示胺基酸骨架
-    function setupMobileTapToSelect() {
-        if (typeof window.matchMedia === 'undefined' || !window.matchMedia('(max-width: 768px)').matches) return;
-        var container = document.getElementById('viewer-container');
-        if (!container || container.dataset.mobileTapSetup === '1') return;
-        container.dataset.mobileTapSetup = '1';
-        var touchStart = { x: 0, y: 0, t: 0 };
-        container.addEventListener('touchstart', function (e) {
-            if (e.touches.length !== 1) return;
-            touchStart.x = e.touches[0].clientX;
-            touchStart.y = e.touches[0].clientY;
-            touchStart.t = Date.now();
-        }, { passive: true });
-        container.addEventListener('touchend', function (e) {
-            if (e.changedTouches.length !== 1) return;
-            var t = e.changedTouches[0];
-            var dx = t.clientX - touchStart.x;
-            var dy = t.clientY - touchStart.y;
-            var duration = Date.now() - touchStart.t;
-            if (duration < 350 && (dx * dx + dy * dy) < 400) {
-                e.preventDefault();
-                var target = container.querySelector('canvas') || container;
-                var opts = { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, button: 0 };
-                target.dispatchEvent(new MouseEvent('mousedown', opts));
-                target.dispatchEvent(new MouseEvent('mouseup', opts));
-                target.dispatchEvent(new MouseEvent('click', opts));
-            }
-        }, { passive: false });
     }
 </script>
 
