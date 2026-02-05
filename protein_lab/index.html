@@ -176,6 +176,84 @@
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; }
         #myViewer { width: 100%; height: 100%; }
 
+        /* 左上角點擊胺基酸資訊（質感卡片） */
+        #aminoAcidOverlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 8;
+            min-width: 160px;
+            padding: 0;
+            background: linear-gradient(145deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 14px;
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            color: var(--text-title);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+            overflow: hidden;
+        }
+        #aminoAcidOverlay.visible { opacity: 1; }
+        #aminoAcidOverlay::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #5ac8fa 100%);
+            border-radius: 14px 0 0 14px;
+        }
+        #aminoAcidOverlay .overlay-inner {
+            padding: 14px 16px 14px 20px;
+        }
+        #aminoAcidOverlay .overlay-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #aminoAcidOverlay .overlay-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%);
+            max-width: 40px;
+        }
+        #aminoAcidOverlay .overlay-value {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            line-height: 1.4;
+        }
+        #aminoAcidOverlay .overlay-value .chain { color: var(--primary-color); font-weight: 700; }
+        #aminoAcidOverlay .overlay-value .res-num { color: var(--text-label); }
+        #aminoAcidOverlay .overlay-value .comp-id {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--primary-color);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        @media (max-width: 768px) {
+            #aminoAcidOverlay { top: 12px; left: 12px; min-width: 140px; }
+            #aminoAcidOverlay .overlay-inner { padding: 12px 14px 12px 18px; }
+            #aminoAcidOverlay .overlay-value { font-size: 15px; }
+            #aminoAcidOverlay .overlay-value .comp-id { font-size: 13px; padding: 2px 6px; }
+        }
+
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
 
@@ -279,6 +357,12 @@
 </div>
 
 <div id="viewer-container">
+    <div id="aminoAcidOverlay" aria-hidden="true">
+        <div class="overlay-inner">
+            <div class="overlay-label">點擊的胺基酸</div>
+            <div class="overlay-value" id="aminoAcidValue">—</div>
+        </div>
+    </div>
     <div id="myViewer"></div>
 </div>
 
@@ -304,6 +388,7 @@
                 viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
                 setupMobileTapToSelect();
+                document.addEventListener('PDB.molstar.click', onRibbonClick);
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -316,6 +401,53 @@
             }, 600);
         }, 1200);
     };
+
+    // 點擊緞帶：左上角顯示胺基酸種類（質感）；擴大周圍顯示的胺基酸數量
+    var BACKBONE_RANGE = 48;
+
+    function onRibbonClick(e) {
+        var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
+        var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
+        var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
+        var compId = (d.label_comp_id || d.auth_comp_id || d.comp_id || '').toUpperCase();
+        var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
+
+        var valueEl = document.getElementById('aminoAcidValue');
+        var overlay = document.getElementById('aminoAcidOverlay');
+        if (valueEl && overlay) {
+            if (chain && resNum != null) {
+                valueEl.innerHTML = '<span class="chain">鏈 ' + escapeHtml(chain) + '</span> <span class="res-num">' + escapeHtml(String(resNum)) + '</span>' + (compId ? ' <span class="comp-id">' + escapeHtml(compId) + '</span>' : '');
+            } else {
+                valueEl.textContent = '—';
+            }
+            overlay.classList.add('visible');
+        }
+
+        if (!viewer.plugin || chain === '' || resNum == null) return;
+        var num = parseInt(resNum, 10);
+        if (isNaN(num)) return;
+        viewer.visual.select({
+            data: [{
+                entity_id: entityId,
+                struct_asym_id: chain,
+                start_residue_number: Math.max(1, num - BACKBONE_RANGE),
+                end_residue_number: num + BACKBONE_RANGE,
+                representation: true
+            }],
+            keepColors: true
+        });
+    }
+
+    function escapeHtml(s) {
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+
+    function hideAminoAcidOverlay() {
+        var el = document.getElementById('aminoAcidOverlay');
+        if (el) el.classList.remove('visible');
+    }
 
     // 下拉選單開關
     function toggleDropdown() {
@@ -373,6 +505,7 @@
         document.getElementById('outline').checked = false;
         document.getElementById('fog').checked = false;
         viewer.visual.clearSelection();
+        hideAminoAcidOverlay();
         updateVisuals();
         updateComponents();
         viewer.visual.setColor({ water: '#FFB6C1' });
@@ -404,6 +537,7 @@
             viewer.visual.update({ selectInteraction: true });
             applyMobileSettings();
             setupMobileTapToSelect();
+            hideAminoAcidOverlay();
             viewer.visual.focus();
         }, 1200);
     }
