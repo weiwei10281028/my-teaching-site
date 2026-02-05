@@ -402,15 +402,12 @@
         }, 1200);
     };
 
-    // 點擊緞帶：左上角顯示胺基酸種類（質感）；擴大周圍顯示的胺基酸數量
-    var BACKBONE_RANGE = 48;
-
+    // 點擊緞帶：左上角顯示胺基酸種類
     function onRibbonClick(e) {
         var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
         var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
         var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
         var compId = (d.label_comp_id || d.auth_comp_id || d.comp_id || '').toUpperCase();
-        var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
 
         var valueEl = document.getElementById('aminoAcidValue');
         var overlay = document.getElementById('aminoAcidOverlay');
@@ -422,20 +419,6 @@
             }
             overlay.classList.add('visible');
         }
-
-        if (!viewer.plugin || chain === '' || resNum == null) return;
-        var num = parseInt(resNum, 10);
-        if (isNaN(num)) return;
-        viewer.visual.select({
-            data: [{
-                entity_id: entityId,
-                struct_asym_id: chain,
-                start_residue_number: Math.max(1, num - BACKBONE_RANGE),
-                end_residue_number: num + BACKBONE_RANGE,
-                representation: true
-            }],
-            keepColors: true
-        });
     }
 
     function escapeHtml(s) {
