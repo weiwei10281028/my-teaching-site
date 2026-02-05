@@ -393,6 +393,15 @@
             }],
             keepColors: true
         });
+        // 選取後清除 overpaint，讓選取區維持原本主題色（僅桌面版，避免手機出問題）
+        if (typeof window.matchMedia !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches) {
+            setTimeout(function() {
+                if (viewer.plugin) {
+                    viewer.visual.reset({ theme: true });
+                    viewer.visual.setColor({ water: '#FFB6C1' });
+                }
+            }, 150);
+        }
     }
 
     // 下拉選單開關
