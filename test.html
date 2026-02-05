@@ -696,22 +696,21 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* 化學實驗式按鈕：符合 HUD 深色背景、青色邊線風格 */
+    /* 化學實驗室按鈕：HUD 深色基底（以 !important 覆蓋 inline），保留各按鈕 inline 的 color */
     .glass-toggle-btn {
-        width: 100%; height: 46px; margin-bottom: 12px;
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.9) 100%);
+        width: 100% !important; height: 46px !important; margin-bottom: 12px !important;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.95) 100%) !important;
         backdrop-filter: blur(8px);
-        border: 1px solid rgba(0, 242, 255, 0.25);
-        color: #e2e8f0; font-size: 1rem; font-weight: 600; border-radius: 10px;
+        border: 1px solid rgba(0, 242, 255, 0.35) !important;
+        font-size: 1rem !important; font-weight: 600 !important; border-radius: 10px !important;
         cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
         transition: all 0.25s ease;
         font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0, 242, 255, 0.06);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(0, 242, 255, 0.08) !important;
     }
     .glass-toggle-btn:hover {
-        border-color: rgba(0, 242, 255, 0.5);
-        box-shadow: 0 0 18px rgba(0, 242, 255, 0.15), inset 0 1px 0 rgba(0, 242, 255, 0.1);
-        color: var(--hud-cyan);
+        border-color: rgba(0, 242, 255, 0.6) !important;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.2), inset 0 1px 0 rgba(0, 242, 255, 0.12) !important;
     }
 
     .glass-content-panel {
