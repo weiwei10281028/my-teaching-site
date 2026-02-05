@@ -347,6 +347,8 @@
             transition: background 0.2s, color 0.2s;
         }
         #viewer-close-btn:hover { background: #ef4444; color: #fff; }
+        /* 與三相圖一致：關閉按鈕類名（可選樣式） */
+        .close-btn { user-select: none; -webkit-tap-highlight-color: transparent; }
         @media (max-width: 768px) {
             #viewer-close-btn { top: 10px; right: 10px; width: 44px; height: 44px; font-size: 22px; z-index: 9999; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         }
@@ -470,7 +472,7 @@
 </div>
 
 <div id="viewer-container">
-    <button type="button" id="viewer-close-btn" aria-label="關閉">×</button>
+    <button type="button" id="viewer-close-btn" class="close-btn" onclick="closeLab()" title="關閉" aria-label="關閉">✕</button>
     <div id="aminoAcidOverlay" aria-hidden="true">
         <div class="overlay-inner">
             <div class="overlay-label">點擊的胺基酸</div>
@@ -482,6 +484,14 @@
 </div>
 
 <script>
+    // 與三相圖一致：關閉函式（postMessage 給父視窗，非 iframe 時回上一頁）
+    function closeLab() {
+        window.parent.postMessage('closeProteinLab', '*');
+        if (window.self === window.top) {
+            window.history.back();
+        }
+    }
+
     const viewer = new PDBeMolstarPlugin();
     
     window.onload = () => {
@@ -695,27 +705,6 @@
         if (id === '1zni') return '1nzi.cif';
         return id + '.cif';
     }
-
-    // 右上角關閉按鈕：發出事件供嵌入頁面監聽（例如 iframe 父頁可關閉視窗）
-    document.addEventListener('DOMContentLoaded', function() {
-        var closeBtn = document.getElementById('viewer-close-btn');
-        if (closeBtn) {
-            function doClose() {
-                try {
-                    if (window.top !== window) {
-                        window.top.postMessage('closeProteinLab', '*');
-                        window.parent.postMessage('closeProteinLab', '*');
-                    }
-                } catch (err) {}
-                window.dispatchEvent(new CustomEvent('viewer-close'));
-            }
-            closeBtn.addEventListener('click', doClose);
-            closeBtn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                doClose();
-            }, { passive: false });
-        }
-    });
 
     // 切換結構（僅從同目錄 .cif 載入，不上網）；el 可為 null（從中央選單點選時）
     function changePDB(id, label, el) {
