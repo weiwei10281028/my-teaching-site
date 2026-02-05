@@ -140,6 +140,61 @@
         .option:hover { background: #f0f7ff; color: var(--primary-color); }
         .option.active { background: #f0f7ff; color: var(--primary-color); font-weight: 600; }
 
+        /* 螢幕中央蛋白質選單（點擊後出現，選完關閉） */
+        #protein-select-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.35);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #protein-select-overlay.open { display: flex; }
+        #protein-select-modal {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            min-width: 280px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #protein-select-modal .modal-title {
+            padding: 18px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #protein-select-modal .modal-list {
+            overflow-y: auto;
+            padding: 8px 0;
+            max-height: 60vh;
+        }
+        #protein-select-modal .modal-option {
+            padding: 14px 20px;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--text-label);
+            transition: background 0.2s, color 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        #protein-select-modal .modal-option:hover {
+            background: #f0f7ff;
+            color: var(--primary-color);
+        }
+
         /* 控制面板卡片 */
         .control-card { 
             background: var(--card-bg); 
@@ -355,17 +410,23 @@
     </div>
     
     <div class="dropdown" id="pdbDropdown">
-        <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (泛素)</div>
-        <div class="dropdown-content">
-            <div class="option active" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
-            <div class="option" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
-            <div class="option" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
-            <div class="option" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
-            <div class="option" onclick="changePDB('1lzs', '1LZS (溶菌酶)', this)">1LZS (溶菌酶)</div>
-            <div class="option" onclick="changePDB('1ema', '1EMA (綠色螢光蛋白)', this)">1EMA (綠色螢光蛋白)</div>
-            <div class="option" onclick="changePDB('1cag', '1CAG (膠原蛋白)', this)">1CAG (膠原蛋白)</div>
-            <div class="option" onclick="changePDB('1fvd', '1FVD (抗體片段)', this)">1FVD (抗體片段)</div>
-            <div class="option" onclick="changePDB('1s0r', '1S0R (胰蛋白酶)', this)">1S0R (胰蛋白酶)</div>
+        <div class="dropdown-btn" onclick="openProteinSelectModal()" id="selectedLabel">1UBQ (泛素)</div>
+        <div class="dropdown-content" id="sidebarProteinList" aria-hidden="true" style="display:none;">
+            <div class="option active" data-id="1ubq" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
+            <div class="option" data-id="1zni" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
+            <div class="option" data-id="1mbn" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
+            <div class="option" data-id="4hhb" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
+            <div class="option" data-id="1lzs" onclick="changePDB('1lzs', '1LZS (溶菌酶)', this)">1LZS (溶菌酶)</div>
+            <div class="option" data-id="1ema" onclick="changePDB('1ema', '1EMA (綠色螢光蛋白)', this)">1EMA (綠色螢光蛋白)</div>
+            <div class="option" data-id="1cag" onclick="changePDB('1cag', '1CAG (膠原蛋白)', this)">1CAG (膠原蛋白)</div>
+            <div class="option" data-id="1fvd" onclick="changePDB('1fvd', '1FVD (抗體片段)', this)">1FVD (抗體片段)</div>
+            <div class="option" data-id="1s0r" onclick="changePDB('1s0r', '1S0R (胰蛋白酶)', this)">1S0R (胰蛋白酶)</div>
+            <div class="option" data-id="4ub6" onclick="changePDB('4ub6', '4UB6 (光系統 II，含葉綠素 Mg²⁺)', this)">4UB6 (光系統 II，含葉綠素 Mg²⁺)</div>
+            <div class="option" data-id="1crn" onclick="changePDB('1crn', '1CRN (胰凝乳蛋白酶抑制劑)', this)">1CRN (胰凝乳蛋白酶抑制劑)</div>
+            <div class="option" data-id="1atl" onclick="changePDB('1atl', '1ATL (腺苷酸激酶)', this)">1ATL (腺苷酸激酶)</div>
+            <div class="option" data-id="2lzt" onclick="changePDB('2lzt', '2LZT (溶菌酶 T4)', this)">2LZT (溶菌酶 T4)</div>
+            <div class="option" data-id="1hzh" onclick="changePDB('1hzh', '1HZH (抗體)', this)">1HZH (抗體)</div>
+            <div class="option" data-id="1rwt" onclick="changePDB('1rwt', '1RWT (光捕獲複合體 LHC-II，含葉綠素)', this)">1RWT (光捕獲複合體 LHC-II，含葉綠素)</div>
         </div>
     </div>
 
@@ -395,6 +456,14 @@
             <label>水分子 (Water)</label>
             <label class="switch"><input type="checkbox" id="water" checked onchange="updateComponents()"><span class="slider"></span></label>
         </div>
+    </div>
+</div>
+
+<!-- 螢幕中央蛋白質選單（點擊「選擇蛋白質」後出現，選完自動關閉） -->
+<div id="protein-select-overlay" aria-hidden="true">
+    <div id="protein-select-modal" onclick="event.stopPropagation()">
+        <div class="modal-title">選擇蛋白質結構</div>
+        <div class="modal-list" id="proteinSelectList"></div>
     </div>
 </div>
 
@@ -516,17 +585,57 @@
         if (el) el.classList.remove('visible');
     }
 
-    // 下拉選單開關
-    function toggleDropdown() {
-        document.getElementById('pdbDropdown').classList.toggle('open');
+    // 蛋白質列表（與側欄、中央選單共用）
+    var PROTEIN_LIST = [
+        { id: '1ubq', label: '1UBQ (泛素)' },
+        { id: '1zni', label: '1ZNI (胰島素)' },
+        { id: '1mbn', label: '1MBN (肌紅蛋白)' },
+        { id: '4hhb', label: '4HHB (血紅蛋白)' },
+        { id: '1lzs', label: '1LZS (溶菌酶)' },
+        { id: '1ema', label: '1EMA (綠色螢光蛋白)' },
+        { id: '1cag', label: '1CAG (膠原蛋白)' },
+        { id: '1fvd', label: '1FVD (抗體片段)' },
+        { id: '1s0r', label: '1S0R (胰蛋白酶)' },
+        { id: '4ub6', label: '4UB6 (光系統 II，含葉綠素 Mg²⁺)' },
+        { id: '1crn', label: '1CRN (胰凝乳蛋白酶抑制劑)' },
+        { id: '1atl', label: '1ATL (腺苷酸激酶)' },
+        { id: '2lzt', label: '2LZT (溶菌酶 T4)' },
+        { id: '1hzh', label: '1HZH (抗體)' },
+        { id: '1rwt', label: '1RWT (光捕獲複合體 LHC-II，含葉綠素)' }
+    ];
+
+    // 開啟螢幕中央蛋白質選單
+    function openProteinSelectModal() {
+        var listEl = document.getElementById('proteinSelectList');
+        if (listEl && listEl.children.length === 0) {
+            PROTEIN_LIST.forEach(function(p) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'modal-option';
+                btn.setAttribute('data-id', p.id);
+                btn.setAttribute('data-label', p.label);
+                btn.textContent = p.label;
+                btn.addEventListener('click', function() {
+                    changePDB(p.id, p.label, null);
+                    closeProteinSelectModal();
+                });
+                listEl.appendChild(btn);
+            });
+        }
+        var overlay = document.getElementById('protein-select-overlay');
+        if (overlay) { overlay.classList.add('open'); overlay.setAttribute('aria-hidden', 'false'); }
     }
 
-    // 點擊選單外部關閉
-    window.onclick = function(e) {
-        if (!e.target.closest('#pdbDropdown')) {
-            document.getElementById('pdbDropdown').classList.remove('open');
-        }
+    // 關閉螢幕中央蛋白質選單
+    function closeProteinSelectModal() {
+        var overlay = document.getElementById('protein-select-overlay');
+        if (overlay) { overlay.classList.remove('open'); overlay.setAttribute('aria-hidden', 'true'); }
     }
+
+    // 點擊中央選單外（背板）關閉
+    document.getElementById('protein-select-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeProteinSelectModal();
+    });
 
     // 視覺控制
     function updateVisuals() {
@@ -595,11 +704,12 @@
         }
     });
 
-    // 切換結構（僅從同目錄 .cif 載入，不上網）
+    // 切換結構（僅從同目錄 .cif 載入，不上網）；el 可為 null（從中央選單點選時）
     function changePDB(id, label, el) {
-        document.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
-        el.classList.add('active');
         document.getElementById('selectedLabel').innerText = label;
+        document.querySelectorAll('.option').forEach(function(opt) { opt.classList.remove('active'); });
+        if (!el) el = document.querySelector('.option[data-id="' + id + '"]');
+        if (el) el.classList.add('active');
         document.getElementById('pdbDropdown').classList.remove('open');
 
         viewer.visual.update({
