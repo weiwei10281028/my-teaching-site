@@ -484,36 +484,10 @@
 </div>
 
 <script>
-    // 與三相圖一致：關閉函式（postMessage 給父視窗，非 iframe 時回上一頁）
-    // 防呆：只執行一次，避免手機 touchend+click 雙重觸發導致 history.back() 兩次
-    var _closeLabDone = false;
     function closeLab() {
-        if (_closeLabDone) return;
-        _closeLabDone = true;
-        // 手機版：若在 iframe 內，先嘗試直接呼叫父層關閉（同源），再送 postMessage
-        if (window.self !== window.top) {
-            try {
-                if (window.parent.ProteinLab && typeof window.parent.ProteinLab.close === 'function') {
-                    window.parent.ProteinLab.close();
-                    return;
-                }
-            } catch (err) {}
-            window.parent.postMessage('closeProteinLab', '*');
-        } else {
-            window.history.back();
-        }
+        if (window.self !== window.top && window.parent.ProteinLab) window.parent.ProteinLab.close();
+        else window.history.back();
     }
-    // 手機版：關閉按鈕加上 touchend，確保觸控能觸發關閉（不被 viewer touch-action 吃掉）
-    (function() {
-        var closeBtn = document.getElementById('viewer-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                closeLab();
-            }, { passive: false });
-        }
-    })();
 
     const viewer = new PDBeMolstarPlugin();
     
