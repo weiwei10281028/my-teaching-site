@@ -11,7 +11,7 @@ const ProteinLab = {
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 z-index: 999999; background: #020617; display: none; flex-direction: column;
             `;
-            container.innerHTML = `<iframe src="protein_lab/lab_Protein.html" style="width:100%; height:100%; border:none;"></iframe>`;
+            container.innerHTML = `<iframe src="lab_Protein.html" style="width:100%; height:100%; border:none;"></iframe>`;
             document.body.appendChild(container);
         }
 
