@@ -324,33 +324,31 @@
         /* 隱藏右側藍框／紅框工具列（畫布控制圖示：重新整理、焦點等） */
         .msp-layout-region-right, [class*="canvas-controls"], [class*="CanvasControls"], .msp-viewport-controls, [class*="viewport-controls"] { display: none !important; visibility: hidden !important; }
 
-        /* 右上角關閉按鈕（供之後嵌入其它網頁使用） */
+        /* 關閉按鈕：固定於視窗右上，不在 viewer 內，手機才收得到點擊 */
         #viewer-close-btn {
-            position: absolute;
+            position: fixed;
             top: 12px;
             right: 12px;
-            z-index: 9;
+            z-index: 99999;
             width: 36px;
             height: 36px;
             border: none;
             border-radius: 50%;
-            background: rgba(255,255,255,0.9);
-            color: #374151;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
             font-size: 20px;
             line-height: 1;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: sans-serif;
-            transition: background 0.2s, color 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
-        #viewer-close-btn:hover { background: #ef4444; color: #fff; }
-        /* 與三相圖一致：關閉按鈕類名（可選樣式） */
-        .close-btn { user-select: none; -webkit-tap-highlight-color: transparent; }
+        #viewer-close-btn:hover { background: #ef4444; }
         @media (max-width: 768px) {
-            #viewer-close-btn { top: 10px; right: 10px; width: 44px; height: 44px; font-size: 22px; z-index: 9999; touch-action: manipulation; -webkit-tap-highlight-color: transparent; pointer-events: auto; }
+            #viewer-close-btn { top: 10px; right: 10px; width: 44px; height: 44px; font-size: 22px; }
         }
 
         /* 手機版：顯示區：操作區＝3：1，操作區可捲動看齊選項 */
@@ -471,8 +469,9 @@
     </div>
 </div>
 
+<button type="button" id="viewer-close-btn" onclick="closeLab()" title="關閉">✕</button>
+
 <div id="viewer-container">
-    <button type="button" id="viewer-close-btn" class="close-btn" onclick="closeLab()" title="關閉" aria-label="關閉">✕</button>
     <div id="aminoAcidOverlay" aria-hidden="true">
         <div class="overlay-inner">
             <div class="overlay-label">點擊的胺基酸</div>
@@ -485,8 +484,8 @@
 
 <script>
     function closeLab() {
-        if (window.self !== window.top && window.parent.ProteinLab) window.parent.ProteinLab.close();
-        else window.history.back();
+        window.parent.postMessage('closeProteinLab', '*');
+        if (window.self === window.top) window.history.back();
     }
 
     const viewer = new PDBeMolstarPlugin();
