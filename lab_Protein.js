@@ -29,6 +29,9 @@ const ProteinLab = {
     }
 };
 
+// 掛到 window，供 iframe 內同源頁面直接呼叫 parent.ProteinLab.close()（手機版關閉更可靠）
+if (typeof window !== 'undefined') window.ProteinLab = ProteinLab;
+
 // 腳本載入時就註冊 postMessage 監聽（iframe 關閉按鈕會發送此訊息）
 (function() {
     window.addEventListener('message', function(e) {
