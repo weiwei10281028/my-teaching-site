@@ -1,7 +1,13 @@
-// lab_Protein.js 容器
+// lab_Protein.js（與三相圖相同：postMessage 關閉）
 const ProteinLab = {
     open: function() {
-        let container = document.getElementById('protein-lab-wrapper');
+        if (!window._proteinListenerAdded) {
+            window.addEventListener('message', function(e) {
+                if (e.data === 'closeProteinLab') ProteinLab.close();
+            });
+            window._proteinListenerAdded = true;
+        }
+        var container = document.getElementById('protein-lab-wrapper');
         if (!container) {
             container = document.createElement('div');
             container.id = 'protein-lab-wrapper';
@@ -18,4 +24,3 @@ const ProteinLab = {
         document.body.style.overflow = 'auto';
     }
 };
-window.ProteinLab = ProteinLab;
