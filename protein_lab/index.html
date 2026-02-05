@@ -247,11 +247,19 @@
             font-size: 14px;
             font-weight: 700;
         }
+        #aminoAcidOverlay .overlay-formula {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.35;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+        }
         @media (max-width: 768px) {
             #aminoAcidOverlay { top: 12px; left: 12px; min-width: 140px; }
             #aminoAcidOverlay .overlay-inner { padding: 12px 14px 12px 18px; }
             #aminoAcidOverlay .overlay-value { font-size: 15px; }
             #aminoAcidOverlay .overlay-value .comp-id { font-size: 13px; padding: 2px 6px; }
+            #aminoAcidOverlay .overlay-formula { font-size: 10px; margin-top: 4px; }
         }
 
         /* 隱藏原生組件 */
@@ -314,7 +322,7 @@
 
     <div class="section-header">
         <div class="section-label">選擇蛋白質結構</div>
-        <button class="clear-btn" onclick="refreshView()">重新整理</button>
+        <button class="clear-btn" onclick="refreshView()">重置</button>
     </div>
     
     <div class="dropdown" id="pdbDropdown">
@@ -361,6 +369,7 @@
         <div class="overlay-inner">
             <div class="overlay-label">點擊的胺基酸</div>
             <div class="overlay-value" id="aminoAcidValue">—</div>
+            <div class="overlay-formula" id="aminoAcidFormula"></div>
         </div>
     </div>
     <div id="myViewer"></div>
@@ -402,7 +411,31 @@
         }, 1200);
     };
 
-    // 點擊緞帶：左上角顯示胺基酸種類
+    // 胺基酸三碼 → 中文名、示性式（20 種標準胺基酸）
+    var AMINO_ZH = {
+        ALA: { zh: '丙胺酸', formula: '側鏈 −CH₃' },
+        ARG: { zh: '精胺酸', formula: '側鏈 −(CH₂)₃NH-C(NH)NH₂' },
+        ASN: { zh: '天冬醯胺', formula: '側鏈 −CH₂CONH₂' },
+        ASP: { zh: '天冬胺酸', formula: '側鏈 −CH₂COO⁻' },
+        CYS: { zh: '半胱胺酸', formula: '側鏈 −CH₂SH' },
+        GLN: { zh: '麩醯胺酸', formula: '側鏈 −(CH₂)₂CONH₂' },
+        GLU: { zh: '麩胺酸', formula: '側鏈 −(CH₂)₂COO⁻' },
+        GLY: { zh: '甘胺酸', formula: '側鏈 −H' },
+        HIS: { zh: '組胺酸', formula: '側鏈 −CH₂-咪唑環' },
+        ILE: { zh: '異白胺酸', formula: '側鏈 −CH(CH₃)CH₂CH₃' },
+        LEU: { zh: '白胺酸', formula: '側鏈 −CH₂CH(CH₃)₂' },
+        LYS: { zh: '離胺酸', formula: '側鏈 −(CH₂)₄NH₃⁺' },
+        MET: { zh: '甲硫胺酸', formula: '側鏈 −(CH₂)₂SCH₃' },
+        PHE: { zh: '苯丙胺酸', formula: '側鏈 −CH₂-C₆H₅' },
+        PRO: { zh: '脯胺酸', formula: '環狀（亞胺酸）' },
+        SER: { zh: '絲胺酸', formula: '側鏈 −CH₂OH' },
+        THR: { zh: '蘇胺酸', formula: '側鏈 −CH(OH)CH₃' },
+        TRP: { zh: '色胺酸', formula: '側鏈 −CH₂-吲哚環' },
+        TYR: { zh: '酪胺酸', formula: '側鏈 −CH₂-C₆H₄OH' },
+        VAL: { zh: '纈胺酸', formula: '側鏈 −CH(CH₃)₂' }
+    };
+
+    // 點擊緞帶：左上角顯示胺基酸種類（中文、示性式）
     function onRibbonClick(e) {
         var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
         var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
@@ -410,12 +443,27 @@
         var compId = (d.label_comp_id || d.auth_comp_id || d.comp_id || '').toUpperCase();
 
         var valueEl = document.getElementById('aminoAcidValue');
+        var formulaEl = document.getElementById('aminoAcidFormula');
         var overlay = document.getElementById('aminoAcidOverlay');
         if (valueEl && overlay) {
             if (chain && resNum != null) {
-                valueEl.innerHTML = '<span class="chain">鏈 ' + escapeHtml(chain) + '</span> <span class="res-num">' + escapeHtml(String(resNum)) + '</span>' + (compId ? ' <span class="comp-id">' + escapeHtml(compId) + '</span>' : '');
+                var info = compId ? AMINO_ZH[compId] : null;
+                var zhName = info ? info.zh : '';
+                var display = '<span class="chain">鏈 ' + escapeHtml(chain) + '</span> <span class="res-num">' + escapeHtml(String(resNum)) + '</span>';
+                if (compId) {
+                    display += ' <span class="comp-id">' + escapeHtml(compId) + (zhName ? ' (' + escapeHtml(zhName) + ')' : '') + '</span>';
+                }
+                valueEl.innerHTML = display;
+                if (formulaEl && info && info.formula) {
+                    formulaEl.textContent = '示性式：' + info.formula;
+                    formulaEl.style.display = '';
+                } else if (formulaEl) {
+                    formulaEl.textContent = '';
+                    formulaEl.style.display = 'none';
+                }
             } else {
                 valueEl.textContent = '—';
+                if (formulaEl) { formulaEl.textContent = ''; formulaEl.style.display = 'none'; }
             }
             overlay.classList.add('visible');
         }
@@ -479,7 +527,7 @@
         viewer.visual.setColor({ water: '#FFB6C1' });
     }
 
-    // 重新整理：重置為原始狀態（選取清除、開關還原、視角重設）
+    // 重置：回到初始狀態（選取清除、開關還原、視角重設）
     function refreshView() {
         if (!viewer.plugin) return;
         document.getElementById('poly').checked = true;
