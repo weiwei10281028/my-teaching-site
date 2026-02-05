@@ -347,7 +347,9 @@
             transition: background 0.2s, color 0.2s;
         }
         #viewer-close-btn:hover { background: #ef4444; color: #fff; }
-        @media (max-width: 768px) { #viewer-close-btn { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 18px; } }
+        @media (max-width: 768px) {
+            #viewer-close-btn { top: 10px; right: 10px; width: 44px; height: 44px; font-size: 22px; z-index: 9999; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        }
 
         /* 手機版：顯示區：操作區＝3：1，操作區可捲動看齊選項 */
         @media (max-width: 768px) {
@@ -698,7 +700,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         var closeBtn = document.getElementById('viewer-close-btn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
+            function doClose() {
                 try {
                     if (window.top !== window) {
                         window.top.postMessage('closeProteinLab', '*');
@@ -706,7 +708,12 @@
                     }
                 } catch (err) {}
                 window.dispatchEvent(new CustomEvent('viewer-close'));
-            });
+            }
+            closeBtn.addEventListener('click', doClose);
+            closeBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                doClose();
+            }, { passive: false });
         }
     });
 
