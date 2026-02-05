@@ -266,8 +266,33 @@
 
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
-        /* 隱藏右側藍框工具列（畫布控制圖示） */
-        .msp-layout-region-right, [class*="canvas-controls"], [class*="CanvasControls"] { display: none !important; visibility: hidden !important; }
+        /* 隱藏右側藍框／紅框工具列（畫布控制圖示：重新整理、焦點等） */
+        .msp-layout-region-right, [class*="canvas-controls"], [class*="CanvasControls"], .msp-viewport-controls, [class*="viewport-controls"] { display: none !important; visibility: hidden !important; }
+
+        /* 右上角關閉按鈕（供之後嵌入其它網頁使用） */
+        #viewer-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 9;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            color: #374151;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: sans-serif;
+            transition: background 0.2s, color 0.2s;
+        }
+        #viewer-close-btn:hover { background: #ef4444; color: #fff; }
+        @media (max-width: 768px) { #viewer-close-btn { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 18px; } }
 
         /* 手機版：顯示區：操作區＝3：1，操作區可捲動看齊選項 */
         @media (max-width: 768px) {
@@ -330,12 +355,17 @@
     </div>
     
     <div class="dropdown" id="pdbDropdown">
-        <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (Ubiquitin)</div>
+        <div class="dropdown-btn" onclick="toggleDropdown()" id="selectedLabel">1UBQ (泛素)</div>
         <div class="dropdown-content">
             <div class="option active" onclick="changePDB('1ubq', '1UBQ (泛素)', this)">1UBQ (泛素)</div>
             <div class="option" onclick="changePDB('1zni', '1ZNI (胰島素)', this)">1ZNI (胰島素)</div>
             <div class="option" onclick="changePDB('1mbn', '1MBN (肌紅蛋白)', this)">1MBN (肌紅蛋白)</div>
             <div class="option" onclick="changePDB('4hhb', '4HHB (血紅蛋白)', this)">4HHB (血紅蛋白)</div>
+            <div class="option" onclick="changePDB('1lzs', '1LZS (溶菌酶)', this)">1LZS (溶菌酶)</div>
+            <div class="option" onclick="changePDB('1ema', '1EMA (綠色螢光蛋白)', this)">1EMA (綠色螢光蛋白)</div>
+            <div class="option" onclick="changePDB('1cag', '1CAG (膠原蛋白)', this)">1CAG (膠原蛋白)</div>
+            <div class="option" onclick="changePDB('1fvd', '1FVD (抗體片段)', this)">1FVD (抗體片段)</div>
+            <div class="option" onclick="changePDB('1s0r', '1S0R (胰蛋白酶)', this)">1S0R (胰蛋白酶)</div>
         </div>
     </div>
 
@@ -369,6 +399,7 @@
 </div>
 
 <div id="viewer-container">
+    <button type="button" id="viewer-close-btn" aria-label="關閉">×</button>
     <div id="aminoAcidOverlay" aria-hidden="true">
         <div class="overlay-inner">
             <div class="overlay-label">點擊的胺基酸</div>
@@ -548,11 +579,21 @@
         viewer.visual.focus();
     }
 
-    // 對應 .cif 檔名（胰島素若檔名為 1nzi.cif 也支援）
+    // 對應 .cif 檔名（請將下載的 CIF 放在同目錄，檔名小寫如 1ubq.cif）
     function getCifUrl(id) {
         if (id === '1zni') return '1nzi.cif';
         return id + '.cif';
     }
+
+    // 右上角關閉按鈕：發出事件供嵌入頁面監聽（例如 iframe 父頁可關閉視窗）
+    document.addEventListener('DOMContentLoaded', function() {
+        var closeBtn = document.getElementById('viewer-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                window.dispatchEvent(new CustomEvent('viewer-close'));
+            });
+        }
+    });
 
     // 切換結構（僅從同目錄 .cif 載入，不上網）
     function changePDB(id, label, el) {
