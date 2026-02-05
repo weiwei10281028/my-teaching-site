@@ -176,47 +176,6 @@
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; }
         #myViewer { width: 100%; height: 100%; }
 
-        /* 左上角胺基酸資訊（質感卡片） */
-        #aminoAcidOverlay {
-            position: absolute;
-            top: 14px;
-            left: 14px;
-            z-index: 8;
-            min-width: 140px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-            color: var(--text-title);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-        #aminoAcidOverlay.visible { opacity: 1; }
-        #aminoAcidOverlay .overlay-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-        #aminoAcidOverlay .overlay-value {
-            font-size: 15px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            line-height: 1.35;
-        }
-        #aminoAcidOverlay .overlay-value .res-id { color: var(--primary-color); }
-        @media (max-width: 768px) {
-            #aminoAcidOverlay { top: 10px; left: 10px; min-width: 120px; padding: 10px 12px; }
-            #aminoAcidOverlay .overlay-value { font-size: 14px; }
-        }
-
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
 
@@ -320,10 +279,6 @@
 </div>
 
 <div id="viewer-container">
-    <div id="aminoAcidOverlay" aria-hidden="true">
-        <div class="overlay-label">點擊的胺基酸</div>
-        <div class="overlay-value">—</div>
-    </div>
     <div id="myViewer"></div>
 </div>
 
@@ -340,16 +295,15 @@
             loadWater: true
         });
 
-        // 結構載入後套用視覺與水分子；點擊由自訂邏輯處理（範圍 24、不變色、不縮放）
+        // 結構載入後套用視覺與水分子；啟用選取/焦點；手機版補上「點擊」以顯示骨架
         setTimeout(() => {
             updateVisuals();
             updateComponents();
             if(viewer.plugin) {
-                viewer.visual.setColor({ water: '#FFB6C1' });
-                viewer.visual.update({ selectInteraction: false });
+                viewer.visual.setColor({ select: '#87CEEB', water: '#FFB6C1' });
+                viewer.visual.update({ selectInteraction: true });
                 applyMobileSettings();
                 setupMobileTapToSelect();
-                document.addEventListener('PDB.molstar.click', onRibbonClick);
             }
         }, 1200);
         // 水分子淺紅色：外掛會覆蓋，於結構載入後 1.2s 起每 0.6s 套用一次，共約 5 秒
@@ -362,47 +316,6 @@
             }, 600);
         }, 1200);
     };
-
-    // 點擊緞帶：顯示胺基酸於左上角；擴增骨架範圍 24；維持全蛋白顯示、不變色
-    var BACKBONE_RANGE = 24;
-
-    function onRibbonClick(e) {
-        var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
-        var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
-        var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
-        var compId = (d.label_comp_id || d.auth_comp_id || d.comp_id || '').toUpperCase();
-        var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
-
-        var overlay = document.getElementById('aminoAcidOverlay');
-        if (overlay) {
-            var label = chain && (resNum != null) ? '鏈 ' + chain + ' · 殘基 ' + resNum + (compId ? ' · ' + compId : '') : '—';
-            overlay.querySelector('.overlay-value').textContent = label || '—';
-            overlay.classList.add('visible');
-        }
-
-        if (!viewer.plugin || chain === '' || resNum == null) return;
-        var num = parseInt(resNum, 10);
-        if (isNaN(num)) return;
-        viewer.visual.select({
-            data: [{
-                entity_id: entityId,
-                struct_asym_id: chain,
-                start_residue_number: Math.max(1, num - BACKBONE_RANGE),
-                end_residue_number: num + BACKBONE_RANGE,
-                representation: true
-            }],
-            keepColors: true
-        });
-        // 選取後清除 overpaint，讓選取區維持原本主題色（僅桌面版，避免手機出問題）
-        if (typeof window.matchMedia !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches) {
-            setTimeout(function() {
-                if (viewer.plugin) {
-                    viewer.visual.reset({ theme: true });
-                    viewer.visual.setColor({ water: '#FFB6C1' });
-                }
-            }, 150);
-        }
-    }
 
     // 下拉選單開關
     function toggleDropdown() {
@@ -460,16 +373,10 @@
         document.getElementById('outline').checked = false;
         document.getElementById('fog').checked = false;
         viewer.visual.clearSelection();
-        hideAminoAcidOverlay();
         updateVisuals();
         updateComponents();
         viewer.visual.setColor({ water: '#FFB6C1' });
         viewer.visual.focus();
-    }
-
-    function hideAminoAcidOverlay() {
-        var el = document.getElementById('aminoAcidOverlay');
-        if (el) el.classList.remove('visible');
     }
 
     // 對應 .cif 檔名（胰島素若檔名為 1nzi.cif 也支援）
@@ -494,10 +401,9 @@
             updateVisuals();
             updateComponents();
             viewer.visual.setColor({ water: '#FFB6C1' });
-            viewer.visual.update({ selectInteraction: false });
+            viewer.visual.update({ selectInteraction: true });
             applyMobileSettings();
             setupMobileTapToSelect();
-            hideAminoAcidOverlay();
             viewer.visual.focus();
         }, 1200);
     }
