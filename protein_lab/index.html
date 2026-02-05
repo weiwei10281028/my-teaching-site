@@ -176,6 +176,41 @@
         #viewer-container { flex: 1; position: relative; background: #fff; min-height: 0; }
         #myViewer { width: 100%; height: 100%; }
 
+        /* 圖表左上角：點擊的胺基酸名稱（質感卡片） */
+        #aminoAcidOverlay {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            z-index: 20;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-title);
+            letter-spacing: 0.02em;
+            pointer-events: none;
+            min-width: 80px;
+            text-align: center;
+        }
+        #aminoAcidOverlay .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        #aminoAcidOverlay .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
         /* 隱藏原生組件 */
         .msp-layout-region-right, .msp-plugin-control-side-menu, .msp-layout-region-bottom { display: none !important; }
 
@@ -223,6 +258,9 @@
             .dropdown.open .dropdown-content { display: block; }
             
             #viewer-container, #myViewer { touch-action: none; }
+            #aminoAcidOverlay { left: 10px; top: 10px; padding: 10px 14px; font-size: 13px; }
+            #aminoAcidOverlay .label { font-size: 10px; }
+            #aminoAcidOverlay .value { font-size: 15px; }
         }
     </style>
 </head>
@@ -279,6 +317,10 @@
 </div>
 
 <div id="viewer-container">
+    <div id="aminoAcidOverlay">
+        <div class="label">胺基酸</div>
+        <div class="value" id="aminoAcidName">—</div>
+    </div>
     <div id="myViewer"></div>
 </div>
 
@@ -294,6 +336,7 @@
             visualStyle: 'cartoon',
             loadWater: true
         });
+        loadAndParseCif('1ubq.cif');
 
         // 結構載入後套用視覺與水分子；啟用選取/焦點；手機版補上「點擊」以顯示骨架
         setTimeout(() => {
@@ -319,14 +362,55 @@
     };
 
     var BACKBONE_RANGE = 24;
-    var LOAD_GREY = '#9CA3AF';              // 與一開始載入畫面的緞帶同色，點擊段緞帶＋原子/鍵都固定此色，絕不變橘
-    var OTHER_RIBBON_COLOR = '#E8EAED';      // 點擊段以外的緞帶變很淡，凸顯選取段
+    var LOAD_GREY = '#9CA3AF';
+    var currentCifResidues = {};
+
+    function parseCifResidues(cifText) {
+        var out = {};
+        var lines = cifText.split(/\r?\n/);
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].trim() !== 'loop_') continue;
+            var headers = [];
+            var j = i + 1;
+            while (j < lines.length && lines[j].indexOf('_atom_site.') === 0) {
+                var h = lines[j].replace(/^_atom_site\./, '').trim().split(/\s+/)[0];
+                headers.push(h);
+                j++;
+            }
+            var colAsym = headers.indexOf('label_asym_id') >= 0 ? headers.indexOf('label_asym_id') : headers.indexOf('auth_asym_id');
+            var colSeq = headers.indexOf('label_seq_id') >= 0 ? headers.indexOf('label_seq_id') : headers.indexOf('auth_seq_id');
+            var colComp = headers.indexOf('label_comp_id') >= 0 ? headers.indexOf('label_comp_id') : headers.indexOf('auth_comp_id');
+            if (colAsym < 0 || colSeq < 0 || colComp < 0) continue;
+            while (j < lines.length && lines[j].trim() && lines[j].trim().indexOf('_') !== 0 && lines[j].trim().indexOf('#') !== 0) {
+                var parts = lines[j].trim().split(/\s+/);
+                if (parts.length > Math.max(colAsym, colSeq, colComp)) {
+                    var key = parts[colAsym] + '_' + parts[colSeq];
+                    out[key] = parts[colComp];
+                }
+                j++;
+            }
+            break;
+        }
+        return out;
+    }
+
+    function loadAndParseCif(url) {
+        fetch(url).then(function(r) { return r.text(); }).then(function(text) {
+            currentCifResidues = parseCifResidues(text);
+        }).catch(function() { currentCifResidues = {}; });
+    }
 
     function onProteinClick(e) {
         var d = (e.detail && (e.detail.eventData || e.detail)) || (e.eventData) || {};
         var chain = d.struct_asym_id || d.auth_asym_id || d.label_asym_id || '';
         var resNum = d.residue_number != null ? d.residue_number : (d.label_seq_id != null ? d.label_seq_id : d.auth_seq_id);
         var entityId = (d.entity_id != null || d.label_entity_id != null) ? String(d.entity_id || d.label_entity_id) : '1';
+
+        var key = chain + '_' + resNum;
+        var aminoName = currentCifResidues[key] || currentCifResidues[chain + '_' + (resNum && resNum.toString())] || '—';
+        var el = document.getElementById('aminoAcidName');
+        if (el) el.textContent = aminoName;
+
         if (!viewer.plugin || chain === '' || resNum == null) return;
         var num = parseInt(resNum, 10);
         if (isNaN(num)) return;
@@ -341,7 +425,7 @@
                 color: LOAD_GREY,
                 representationColor: LOAD_GREY
             }],
-            nonSelectedColor: OTHER_RIBBON_COLOR
+            nonSelectedColor: LOAD_GREY
         });
     }
 
@@ -400,6 +484,8 @@
         document.getElementById('spin').checked = false;
         document.getElementById('outline').checked = false;
         document.getElementById('fog').checked = false;
+        var aaEl = document.getElementById('aminoAcidName');
+        if (aaEl) aaEl.textContent = '—';
         viewer.visual.clearSelection();
         updateVisuals();
         updateComponents();
@@ -420,8 +506,12 @@
         document.getElementById('selectedLabel').innerText = label;
         document.getElementById('pdbDropdown').classList.remove('open');
 
+        var cifUrl = getCifUrl(id);
+        loadAndParseCif(cifUrl);
+        var aaEl = document.getElementById('aminoAcidName');
+        if (aaEl) aaEl.textContent = '—';
         viewer.visual.update({
-            customData: { url: getCifUrl(id), format: 'cif' },
+            customData: { url: cifUrl, format: 'cif' },
             visualStyle: 'cartoon'
         });
 
