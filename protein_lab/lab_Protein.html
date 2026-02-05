@@ -699,9 +699,12 @@
         var closeBtn = document.getElementById('viewer-close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
-                if (window.parent && window.parent !== window) {
-                    window.parent.postMessage('closeProteinLab', '*');
-                }
+                try {
+                    if (window.top !== window) {
+                        window.top.postMessage('closeProteinLab', '*');
+                        window.parent.postMessage('closeProteinLab', '*');
+                    }
+                } catch (err) {}
                 window.dispatchEvent(new CustomEvent('viewer-close'));
             });
         }
