@@ -4,14 +4,6 @@ const ProteinLab = {
         console.log("嘗試開啟蛋白質 3D 展示...");
         let container = document.getElementById('protein-lab-wrapper');
 
-        // 監聽來自內部的關閉訊息（iframe postMessage）
-        if (!window._proteinListenerAdded) {
-            window.addEventListener('message', function(e) {
-                if (e.data === 'closeProteinLab') ProteinLab.close();
-            });
-            window._proteinListenerAdded = true;
-        }
-
         if (!container) {
             container = document.createElement('div');
             container.id = 'protein-lab-wrapper';
@@ -36,3 +28,11 @@ const ProteinLab = {
         document.body.style.overflow = 'auto';
     }
 };
+
+// 腳本載入時就註冊 postMessage 監聽（iframe 關閉按鈕會發送此訊息）
+(function() {
+    window.addEventListener('message', function(e) {
+        var ok = e.data === 'closeProteinLab' || (e.data && e.data.type === 'closeProteinLab');
+        if (ok && typeof ProteinLab !== 'undefined') ProteinLab.close();
+    });
+})();
