@@ -4942,8 +4942,6 @@ function renderConfigList() {
     const filter = input ? input.value.toLowerCase() : "";
     const container = document.getElementById('configListContainer');
     container.innerHTML = "";
-    let shownCount = 0;
-    const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
     ELECTRON_DATA.forEach(el => {
         if (filter) {
@@ -4958,10 +4956,6 @@ function renderConfigList() {
                 if (!isSymbolMatch && !isChineseMatch) return;
             }
         }
-
-        // 2. 效能限制邏輯 (搜尋時通常不會達到限制，主要是保護空搜尋狀態)
-        if (shownCount >= MAX_SHOW) return;
-        shownCount++;
 
         const card = document.createElement('div');
         card.className = 'element-card';
