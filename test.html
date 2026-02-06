@@ -4937,144 +4937,82 @@ function generateEcViz(configStr) {
     return html;
 }
 
+function buildConfigCard(el) {
+    const card = document.createElement('div');
+    card.className = 'element-card';
+    let nobleHtml = formatConfigHtml(el.noble);
+    const vizHtml = generateEcViz(el.c);
+    let ieTableHtml = "";
+    if (el.ie && Array.isArray(el.ie) && el.ie.length > 0) {
+        const headers = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+        let headCells = "", bodyCells = "";
+        headers.forEach((h, i) => {
+            let val = el.ie[i], dispVal = "-";
+            if (val !== undefined && val !== null) dispVal = (typeof val === 'number') ? val.toFixed(1) : val;
+            headCells += `<th style="padding: 6px 4px; border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; font-weight: 900;">${h}</th>`;
+            bodyCells += `<td style="padding: 8px 4px; border: 1px solid rgba(251, 191, 36, 0.2); color: #f1f5f9; font-size: 0.8rem; font-family: monospace;">${dispVal}</td>`;
+        });
+        ieTableHtml = `<div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; width: 100%;"><div style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 8px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-weight: bold; padding-left: 2px;">游離能 Ionization Energy <span style="font-size: 0.7rem; opacity: 0.7;">(kJ/mol)</span></div><div class="ec-scroll" style="background: rgba(251, 191, 36, 0.03); border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.12);"><table style="width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; min-width: 650px;"><thead><tr style="background: rgba(251, 191, 36, 0.08);">${headCells}</tr></thead><tbody><tr>${bodyCells}</tr></tbody></table></div></div>`;
+    }
+    const periodGroupStr = (el.g === "鑭系" || el.g === "錒系") ? `第${toChineseNum(el.p)}週期 <span style="color:#f472b6;">${el.g}</span>` : `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
+    const cardId = `card-${el.s}`;
+    card.innerHTML = `<div class="ec-header"><div class="ec-top-row"><div class="ec-sym-box"><div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0;"><div class="ec-sym">${el.s}</div><button onclick="toggleElementIntro('${el.s}')" class="ec-btn-mini" style="background: rgba(251, 113, 133, 0.15); border-color: #fb7185; color: #fda4af;">Info</button></div><div class="ec-info"><span class="ec-name">${el.cn ? el.cn + " " : ""}${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span><span class="ec-tag">${periodGroupStr}</span><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;"><div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">分類: ${el.type || "-"}</div><div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">狀態: ${el.state || "-"}</div><div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">熔點: ${el.mp || "-"}</div><div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">沸點: ${el.bp || "-"}</div></div></div></div></div><div id="ion-group-${el.s}" style="display:flex; gap:4px; margin:10px 0; flex-wrap:nowrap; align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch;"><button class="ion-btn active" data-charge="0" data-type="neutral" onclick="updateIonViz('${el.s}', '${el.c}', 0)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #64748b; border-radius:4px; color:#cbd5e1; background:#1e293b; cursor:pointer;">中性</button><button class="ion-btn" data-charge="1" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button><button class="ion-btn" data-charge="2" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button><button class="ion-btn" data-charge="3" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button><button class="ion-btn" data-charge="-1" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -1)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button><button class="ion-btn" data-charge="-2" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -2)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button><button class="ion-btn" data-charge="-3" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -3)" style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button><div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div><button onclick="toggleConfigMode('${el.s}', '${el.c}')" class="ec-btn-mini" id="${cardId}-mode-btn" style="background:rgba(255,255,255,0.05); border-color:#555; color:#aaa; flex-shrink:0; margin:0;">縮寫</button></div><input type="hidden" id="${cardId}-charge" value="0"><input type="hidden" id="${cardId}-mode" value="noble"><div class="ec-config-row ec-scroll" id="${cardId}-text" style="justify-content: flex-start;"><div class="ec-config" style="white-space: nowrap;">${nobleHtml}</div></div></div><div class="ec-scroll"><div class="ec-row" id="${cardId}-viz">${vizHtml}</div></div>${ieTableHtml}`;
+    return card;
+}
+
 function renderConfigList() {
     const input = document.getElementById('configSearchInput');
     const filter = input ? input.value.toLowerCase() : "";
     const container = document.getElementById('configListContainer');
     container.innerHTML = "";
-    let shownCount = 0;
-    const MAX_SHOW = (window.innerWidth < 768) ? 15 : 118;
 
-    ELECTRON_DATA.forEach(el => {
+    var filtered = [];
+    ELECTRON_DATA.forEach(function(el) {
         if (filter) {
-            const isNumeric = !isNaN(filter) && filter !== "";
-            const isSymbolMatch = el.s.toLowerCase().startsWith(filter); 
-            const isChineseMatch = el.cn === filter; // 中文完全匹配
-            const isZMatch = el.z.toString() === filter;
-
-            if (isNumeric) {
-                if (!isZMatch) return;
-            } else {
-                if (!isSymbolMatch && !isChineseMatch) return;
-            }
+            var isNumeric = !isNaN(filter) && filter !== "";
+            var isSymbolMatch = el.s.toLowerCase().startsWith(filter);
+            var isChineseMatch = el.cn === filter;
+            var isZMatch = el.z.toString() === filter;
+            if (isNumeric) { if (!isZMatch) return; } else { if (!isSymbolMatch && !isChineseMatch) return; }
         }
-
-        // 2. 效能限制邏輯 (搜尋時通常不會達到限制，主要是保護空搜尋狀態)
-        if (shownCount >= MAX_SHOW) return;
-        shownCount++;
-
-        const card = document.createElement('div');
-        card.className = 'element-card';
-        
-        // 預設顯示：縮寫版
-        // 我們將 "完整組態" 存在 data-full-config 屬性中
-        // 將 "當前電荷" 存在 data-charge 屬性中 (預設0)
-        // 將 "顯示模式" 存在 data-mode 屬性中 (預設 'noble')
-        
-        let nobleHtml = formatConfigHtml(el.noble);
-        const vizHtml = generateEcViz(el.c);
-        // 1. 強制每一圈都清空 ieTableHtml，防止數據殘留
-        let ieTableHtml = ""; 
-        if (el.ie && Array.isArray(el.ie) && el.ie.length > 0) {
-            const headers = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
-            let headCells = "";
-            let bodyCells = "";
-
-            headers.forEach((h, i) => {
-                let val = el.ie[i];
-                let dispVal = "-";
-                if (val !== undefined && val !== null) {
-                    // 數據處理：移除 k 縮寫判斷，直接顯示原始數值並保留一位小數
-                    dispVal = (typeof val === 'number') ? val.toFixed(1) : val;
-                }
-                headCells += `<th style="padding: 6px 4px; border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; font-weight: 900;">${h}</th>`;
-                bodyCells += `<td style="padding: 8px 4px; border: 1px solid rgba(251, 191, 36, 0.2); color: #f1f5f9; font-size: 0.8rem; font-family: monospace;">${dispVal}</td>`;
-            });
-
-            ieTableHtml = `
-                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; width: 100%;">
-                    <div style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 8px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-weight: bold; padding-left: 2px;">
-                        游離能 Ionization Energy <span style="font-size: 0.7rem; opacity: 0.7;">(kJ/mol)</span>
-                    </div>
-                    <div class="ec-scroll" style="background: rgba(251, 191, 36, 0.03); border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.12);">
-                        <table style="width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; min-width: 650px;">
-                            <thead><tr style="background: rgba(251, 191, 36, 0.08);">${headCells}</tr></thead>
-                            <tbody><tr>${bodyCells}</tr></tbody>
-                        </table>
-                    </div>
-                </div>`;
-        }
-        
-        let periodGroupStr = "";
-        if (el.g === "鑭系" || el.g === "錒系") {
-            periodGroupStr = `第${toChineseNum(el.p)}週期 <span style="color:#f472b6;">${el.g}</span>`;
-        } else {
-            periodGroupStr = `第${toChineseNum(el.p)}週期 ${el.g}族 (第${el.iupac}族)`;
-        }
-
-        const cardId = `card-${el.s}`;
-
-        card.innerHTML = `
-            <div class="ec-header">
-                <div class="ec-top-row">
-                    <div class="ec-sym-box">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0;">
-                            <div class="ec-sym">${el.s}</div>
-                            <button onclick="toggleElementIntro('${el.s}')" class="ec-btn-mini" 
-                                style="background: rgba(251, 113, 133, 0.15); border-color: #fb7185; color: #fda4af;">Info</button>
-                        </div>
-                        <div class="ec-info">
-                            <span class="ec-name">${el.cn ? el.cn + " " : ""}${el.n} <span style="color:#22d3ee; font-family:monospace;">Z=${el.z}</span></span>
-                            <span class="ec-tag">${periodGroupStr}</span>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
-                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">分類: ${el.type || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">狀態: ${el.state || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">熔點: ${el.mp || "-"}</div>
-                                <div style="border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; font-size:0.75rem; color:#cbd5e1; background:rgba(20,20,20,0.3); white-space:nowrap;">沸點: ${el.bp || "-"}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-            <!-- 離子與模式控制列 -->
-            <div id="ion-group-${el.s}" style="display:flex; gap:4px; margin:10px 0; flex-wrap:nowrap; align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch;">
-                <button class="ion-btn active" data-charge="0" data-type="neutral" onclick="updateIonViz('${el.s}', '${el.c}', 0)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #64748b; border-radius:4px; color:#cbd5e1; background:#1e293b; cursor:pointer;">中性</button>
-                <button class="ion-btn" data-charge="1" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 1)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+1</button>
-                <button class="ion-btn" data-charge="2" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 2)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+2</button>
-                <button class="ion-btn" data-charge="3" data-type="pos" onclick="updateIonViz('${el.s}', '${el.c}', 3)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #f87171; border-radius:4px; color:#f87171; background:rgba(248,113,113,0.1); cursor:pointer;">+3</button>
-                <button class="ion-btn" data-charge="-1" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -1)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-1</button>
-                <button class="ion-btn" data-charge="-2" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -2)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-2</button>
-                <button class="ion-btn" data-charge="-3" data-type="neg" onclick="updateIonViz('${el.s}', '${el.c}', -3)" 
-                    style="font-size:0.75rem; padding:4px 8px; border:1px solid #60a5fa; border-radius:4px; color:#60a5fa; background:rgba(96,165,250,0.1); cursor:pointer;">-3</button>
-                
-                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div>
-                <button onclick="toggleConfigMode('${el.s}', '${el.c}')" class="ec-btn-mini" id="${cardId}-mode-btn"
-    style="background:rgba(255,255,255,0.05); border-color:#555; color:#aaa; flex-shrink:0; margin:0;">縮寫</button>
-            </div>
-
-                <!-- 隱藏欄位：儲存當前電荷與模式 -->
-                <input type="hidden" id="${cardId}-charge" value="0">
-                <input type="hidden" id="${cardId}-mode" value="noble">
-                
-                <div class="ec-config-row ec-scroll" id="${cardId}-text" style="justify-content: flex-start;">
-                    <div class="ec-config" style="white-space: nowrap;">${nobleHtml}</div>
-                </div>
-            </div>
-            <div class="ec-scroll">
-                <div class="ec-row" id="${cardId}-viz">
-                    ${vizHtml}
-                </div>
-            </div>
-            ${ieTableHtml}
-        `;
-        container.appendChild(card);
+        filtered.push(el);
     });
+
+    var isMobile = window.innerWidth < 768;
+    var BATCH = 25;
+    if (!isMobile) {
+        filtered.forEach(function(el) { container.appendChild(buildConfigCard(el)); });
+        return;
+    }
+    window._configFilteredList = filtered;
+    window._configLoadMoreStart = 0;
+    var end = Math.min(BATCH, filtered.length);
+    for (var i = 0; i < end; i++) container.appendChild(buildConfigCard(filtered[i]));
+    window._configLoadMoreStart = end;
+    if (filtered.length > BATCH) {
+        var btnWrap = document.createElement('div');
+        btnWrap.style.cssText = "text-align:center; padding:16px;";
+        var loadBtn = document.createElement('button');
+        loadBtn.className = 'glass-toggle-btn';
+        loadBtn.style.cssText = "padding:10px 24px; border:1px solid var(--hud-cyan); color:var(--hud-cyan); background:rgba(0,242,255,0.1); border-radius:6px; cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:bold;";
+        loadBtn.textContent = "載入更多 (" + end + " / " + filtered.length + ")";
+        loadBtn.onclick = function() {
+            var list = window._configFilteredList;
+            var start = window._configLoadMoreStart;
+            var nextEnd = Math.min(start + BATCH, list.length);
+            for (var j = start; j < nextEnd; j++) container.insertBefore(buildConfigCard(list[j]), btnWrap);
+            window._configLoadMoreStart = nextEnd;
+            if (nextEnd >= list.length) {
+                loadBtn.textContent = "已全部載入 (" + list.length + ")";
+                loadBtn.disabled = true;
+                loadBtn.style.opacity = "0.7";
+            } else {
+                loadBtn.textContent = "載入更多 (" + nextEnd + " / " + list.length + ")";
+            }
+        };
+        btnWrap.appendChild(loadBtn);
+        container.appendChild(btnWrap);
+    }
 }
 // ========== [請替換 updateIonViz 並新增 toggleConfigMode] ==========
 // [修改] 更新離子視覺化 (加入按鈕發亮邏輯)
