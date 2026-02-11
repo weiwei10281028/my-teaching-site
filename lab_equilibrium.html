@@ -2308,6 +2308,8 @@
                         <button class="control-btn" onclick="runDisturb('V_DOUBLE', this)">體積加倍(壓↓)</button>
                         <button class="control-btn" onclick="runDisturb('HEAT', this)">加熱 (K↑)</button>
                         <button class="control-btn" onclick="runDisturb('COOL', this)">降溫 (K↓)</button>
+                        <button class="control-btn" onclick="runDisturb('HE_P', this)">定溫定壓加 He</button>
+                        <button class="control-btn" onclick="runDisturb('HE_V', this)">定溫定容加 He</button>
                         <button class="control-btn reset-btn" onclick="resetExperiment()">重置實驗</button>
                     </div>
                 </div>
@@ -3253,6 +3255,15 @@
                     kf *= 0.4; kr *= 0.6; K = kf / kr; 
                     document.getElementById('k-val').innerText = K.toFixed(2);
                     break;
+                case 'HE_P':
+                    // 定溫定壓加 He，相當於體積加倍
+                    concA /= 2; 
+                    concB /= 2; 
+                    checkAndAdjustYAxis();
+                    break;
+                case 'HE_V':
+                    // 定溫定容加 He，分壓不變，無影響平衡
+                    break;
             }
             
             // 記錄擾動後的瞬間垂直跳躍點（在紅線位置，約2.5秒記錄新值）
@@ -3531,6 +3542,30 @@
                     kChange = '變小';
                     rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
                     rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+
+                case 'HE_P':  // 定溫定壓加 He（相當於體積加倍）
+                    factorName = '定溫定壓加 He';
+                    direction = Q > K ? '往左' : (Q < K ? '往右' : '不移動');
+                    concAChange = formatArrowChange('DOWN', direction === '往左' ? 'UP' : 'DOWN');
+                    nAChange = formatArrowChange('NONE', direction === '往左' ? 'UP' : 'DOWN');
+                    concBChange = formatArrowChange('DOWN', direction === '往左' ? 'DOWN' : 'UP');
+                    nBChange = formatArrowChange('NONE', direction === '往左' ? 'DOWN' : 'UP');
+                    kChange = '不變';
+                    rForwardArrow = newVf > originalVf ? arrowUpHtml : (newVf < originalVf ? arrowDownHtml : arrowDash);
+                    rReverseArrow = newVr > originalVr ? arrowUpHtml : (newVr < originalVr ? arrowDownHtml : arrowDash);
+                    break;
+
+                case 'HE_V':  // 定溫定容加 He（無影響）
+                    factorName = '定溫定容加 He';
+                    direction = '不移動';
+                    concAChange = formatArrowChange('NONE', 'NONE');
+                    nAChange = formatArrowChange('NONE', 'NONE');
+                    concBChange = formatArrowChange('NONE', 'NONE');
+                    nBChange = formatArrowChange('NONE', 'NONE');
+                    kChange = '不變';
+                    rForwardArrow = arrowDash;
+                    rReverseArrow = arrowDash;
                     break;
                     
                 default:
