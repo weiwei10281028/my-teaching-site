@@ -6961,7 +6961,16 @@ function setupMobilePanel() {
         // 考慮iOS安全區域，底部留出空間（避免被切換APP的橫線擋住）
         // 但仍然允許滑到底部看最下方資訊，所以只留出必要的安全區域
         const safeAreaBottom = 60; // 適中的安全區域高度，既能避免被擋住，又能滑到底部
-        return { P98: 0, P70: H * 0.3, P35: H * 0.65, PMIN: H - safeAreaBottom };
+        
+        // 計算「你可能還想看:」元素的底部位置作為最高限制
+        let PMAX = 0;
+        const suggestionLabel = document.querySelector('.suggestion-label');
+        if (suggestionLabel) {
+            const rect = suggestionLabel.getBoundingClientRect();
+            PMAX = rect.bottom; // 取得元素底部位置
+        }
+        
+        return { P98: PMAX, P70: H * 0.3, P35: H * 0.65, PMIN: H - safeAreaBottom, PMAX: PMAX };
     };
 
     // 核心新增：動態調整底部留白
@@ -7037,9 +7046,10 @@ function setupMobilePanel() {
         let newY = startTransY + deltaY;
         
         // 優化邊界處理：使用彈性效果
-        if (newY < 0) {
-            // 向上拉超過頂部時，使用彈性效果
-            newY = newY * 0.3;
+        if (newY < p.PMAX) {
+            // 向上拉超過最高限制時，使用彈性效果
+            const over = p.PMAX - newY;
+            newY = p.PMAX - over * 0.3;
         } else if (newY > p.PMIN) {
             // 向下拉超過底部時，使用彈性效果
             const over = newY - p.PMIN;
@@ -7087,11 +7097,16 @@ function setupMobilePanel() {
                 // 在中間位置（或接近），切換到上方
                 target = p.P70;
             } else if (curY >= p.P70 - threshold) {
-                // 在上方（或接近），切換到最上方
-                target = p.P98;
+                // 在上方（或接近），切換到最上方（最高限制）
+                target = p.PMAX;
             } else {
                 // 在最上方（或接近），切換到中間位置（形成循環）
                 target = p.P35;
+            }
+            
+            // 確保目標位置不超過最高限制
+            if (target < p.PMAX) {
+                target = p.PMAX;
             }
             
             panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -7108,7 +7123,7 @@ function setupMobilePanel() {
         
         // 優化位置判斷：考慮拖曳方向和速度
         const dists = [
-            {v: p.P98, d: Math.abs(currentTransY - p.P98)},
+            {v: p.PMAX, d: Math.abs(currentTransY - p.PMAX)},
             {v: p.P70, d: Math.abs(currentTransY - p.P70)},
             {v: p.P35, d: Math.abs(currentTransY - p.P35)},
             {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
@@ -7124,6 +7139,11 @@ function setupMobilePanel() {
         if (closest.d < 50 && secondClosest.d < 100) {
             // 如果兩個位置都很近，優先選擇更靠近頂部的位置
             target = Math.min(closest.v, secondClosest.v);
+        }
+        
+        // 確保目標位置不超過最高限制
+        if (target < p.PMAX) {
+            target = p.PMAX;
         }
         
         panel.style.transform = `translateY(${target}px)`;
@@ -7153,11 +7173,16 @@ function setupMobilePanel() {
             // 在中間位置，切換到上方
             target = p.P70;
         } else if (curY >= p.P70 - threshold) {
-            // 在上方，切換到最上方
-            target = p.P98;
+            // 在上方，切換到最上方（最高限制）
+            target = p.PMAX;
         } else {
             // 在最上方，切換到中間位置
             target = p.P35;
+        }
+        
+        // 確保目標位置不超過最高限制
+        if (target < p.PMAX) {
+            target = p.PMAX;
         }
 
         panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -7206,8 +7231,9 @@ function setupMobilePanel() {
         let newY = mouseStartTransY + deltaY;
         p = getPos();
         
-        if (newY < 0) {
-            newY = newY * 0.3;
+        if (newY < p.PMAX) {
+            const over = p.PMAX - newY;
+            newY = p.PMAX - over * 0.3;
         } else if (newY > p.PMIN) {
             const over = newY - p.PMIN;
             newY = p.PMIN + over * 0.3;
@@ -7243,9 +7269,14 @@ function setupMobilePanel() {
             } else if (curY >= p.P35 - threshold) {
                 target = p.P70;
             } else if (curY >= p.P70 - threshold) {
-                target = p.P98;
+                target = p.PMAX;
             } else {
                 target = p.P35;
+            }
+            
+            // 確保目標位置不超過最高限制
+            if (target < p.PMAX) {
+                target = p.PMAX;
             }
             
             panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -7261,7 +7292,7 @@ function setupMobilePanel() {
         p = getPos();
         
         const dists = [
-            {v: p.P98, d: Math.abs(currentTransY - p.P98)},
+            {v: p.PMAX, d: Math.abs(currentTransY - p.PMAX)},
             {v: p.P70, d: Math.abs(currentTransY - p.P70)},
             {v: p.P35, d: Math.abs(currentTransY - p.P35)},
             {v: p.PMIN, d: Math.abs(currentTransY - p.PMIN)}
@@ -7274,6 +7305,11 @@ function setupMobilePanel() {
         let target = closest.v;
         if (closest.d < 50 && secondClosest.d < 100) {
             target = Math.min(closest.v, secondClosest.v);
+        }
+        
+        // 確保目標位置不超過最高限制
+        if (target < p.PMAX) {
+            target = p.PMAX;
         }
         
         panel.style.transform = `translateY(${target}px)`;
@@ -7290,7 +7326,10 @@ function setupMobilePanel() {
         const curY = matrix.m42;
         
         // 確保位置不超出範圍
-        if (curY > p.PMIN) {
+        if (curY < p.PMAX) {
+            panel.style.transform = `translateY(${p.PMAX}px)`;
+            updateContentPadding(p.PMAX);
+        } else if (curY > p.PMIN) {
             panel.style.transform = `translateY(${p.PMIN}px)`;
             updateContentPadding(p.PMIN);
         }
