@@ -227,14 +227,15 @@
         <div v-if="TV_SIGNALS_URL && viewMode !== 'watchlist'" class="glass-card p-4 md:p-6 mb-8 border-l-4 border-[#F59E0B]">
             <div class="flex flex-wrap justify-between items-center gap-3 mb-3 md:mb-4">
                 <h2 class="noto-serif font-bold text-base md:text-xl">TV 每日開倉 <span v-if="tvSignalsFiltered.length" class="text-xs font-normal opacity-60">共 {{ tvSignalsFiltered.length }} 種</span></h2>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <div class="flex rounded-lg border border-white/10 overflow-hidden">
                         <button @click="tvSignalsFilter = 'today'"
                             :class="tvSignalsFilter === 'today' ? 'bg-[#F59E0B] text-black' : 'bg-black/30 text-white/70'"
                             class="px-3 py-2 text-xs font-bold">今日</button>
-                        <button @click="tvSignalsFilter = 'all'"
-                            :class="tvSignalsFilter === 'all' ? 'bg-[#F59E0B] text-black' : 'bg-black/30 text-white/70'"
-                            class="px-3 py-2 text-xs font-bold">全部</button>
+                        <select v-model="tvSignalsFilter" class="bg-black/40 text-white text-xs font-bold py-2 pl-2 pr-6 border-l border-white/10 focus:outline-none cursor-pointer">
+                            <option value="today">今日</option>
+                            <option v-for="d in tvSignalsDateOptions" :key="d" :value="d">{{ d }}</option>
+                        </select>
                     </div>
                     <button v-if="tvDailySymbols.length" @click="addTVSignalsToWatchlist"
                         class="px-4 py-2 text-sm bg-[#F59E0B]/20 text-[#F59E0B] rounded-lg border border-[#F59E0B]/50 hover:bg-[#F59E0B]/30 transition-all">
@@ -242,9 +243,10 @@
                     </button>
                 </div>
             </div>
+            <p class="text-[10px] opacity-50 mb-2">依所選日期顯示試算表內該日的訊號（去重），全部來自試算表、無固定幣種清單。</p>
             <div v-if="tvSignalsLoading" class="py-4 text-center text-[#F59E0B] opacity-80">載入訊號中...</div>
             <div v-else-if="!tvSignals.length" class="py-4 text-center opacity-50 text-sm">尚無 TV 訊號，或尚未設定訊號來源</div>
-            <div v-else-if="!tvSignalsFiltered.length" class="py-4 text-center opacity-50 text-sm">今日尚無訊號，請切換「全部」查看</div>
+            <div v-else-if="!tvSignalsFiltered.length" class="py-4 text-center opacity-50 text-sm">所選日期尚無訊號，請改選其他日期</div>
             <div v-else class="flex flex-wrap gap-2">
                 <div v-for="(s, i) in tvSignalsFiltered" :key="i"
                     class="bg-black/30 px-3 py-2 rounded-lg border border-white/10 flex items-center gap-2">
@@ -464,7 +466,7 @@
                 const watchlist = ref(JSON.parse(localStorage.getItem('fundingRateWatchlist') || '[]'));
                 const tvSignals = ref([]);
                 const tvSignalsLoading = ref(false);
-                const tvSignalsFilter = ref('today'); // 'today' | 'all'
+                const tvSignalsFilter = ref('today'); // 'today' 或 'YYYY-MM-DD'
 
                 const prioritySymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
 
@@ -515,12 +517,25 @@
                     const d = new Date(ts);
                     return d.getMonth() + 1 + '/' + d.getDate();
                 };
+                const toDateKey = (ts) => {
+                    if (!ts) return '';
+                    const d = new Date(ts);
+                    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                };
                 const isToday = (ts) => {
                     if (!ts) return false;
                     const d = new Date(ts);
                     const now = new Date();
                     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
                 };
+                const tvSignalsDateOptions = computed(() => {
+                    const set = new Set();
+                    tvSignals.value.forEach(s => {
+                        const key = toDateKey(s.time);
+                        if (key) set.add(key);
+                    });
+                    return Array.from(set).sort().reverse();
+                });
                 const normalizeSymbolForDedup = (s) => {
                     let sym = (s.symbol || '').toUpperCase().replace(/\s/g, '').replace(/\.P$/i, '');
                     if (sym && !/USDT$/i.test(sym)) sym = sym + 'USDT';
@@ -528,7 +543,10 @@
                 };
                 const tvSignalsFiltered = computed(() => {
                     let list = tvSignals.value.filter(s => (s.symbol || '').trim());
-                    if (tvSignalsFilter.value === 'today') {
+                    const sel = tvSignalsFilter.value;
+                    if (sel && sel !== 'today') {
+                        list = list.filter(s => toDateKey(s.time) === sel);
+                    } else {
                         list = list.filter(s => isToday(s.time));
                     }
                     const seen = new Set();
@@ -549,7 +567,6 @@
                     });
                     return Array.from(syms);
                 });
-
                 const addTVSignalsToWatchlist = () => {
                     tvDailySymbols.value.forEach(sym => {
                         if (watchlist.value.indexOf(sym) === -1) watchlist.value.push(sym);
@@ -724,7 +741,7 @@
 
                 return {
                     TV_SIGNALS_URL,
-                    tvSignals, tvSignalsLoading, tvSignalsFilter, tvSignalsFiltered, formatTVSignalDate,
+                    tvSignals, tvSignalsLoading, tvSignalsFilter, tvSignalsFiltered, tvSignalsDateOptions, formatTVSignalDate,
                     tvDailySymbols, fetchTVSignals, addTVSignalsToWatchlist,
                     filteredList, paginatedList, searchQuery, displayLimit,
                     top5High, top5Low, getRateClass, formatPrice, formatVolume,
