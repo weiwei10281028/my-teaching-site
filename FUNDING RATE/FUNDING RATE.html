@@ -124,6 +124,12 @@
             margin-left: 8px;
             font-family: 'Space Mono', monospace;
         }
+        /* 觀察清單內 badge 與字級放大 */
+        .watchlist-content .decile-badge {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
 
         /* Layout Adjustments */
         .col-funding {
@@ -337,44 +343,61 @@
                     <div class="text-xl mb-2">📋</div>
                     <div>尚無觀察項目，請從下方選擇幣種加入</div>
                 </div>
-                <div v-else class="space-y-4">
+                <div v-else class="space-y-4 watchlist-content">
+                    <!-- 欄位標題（適中大小、較亮） -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-3 px-3 text-sm tracking-wider text-white/85 border-b border-white/10">
+                            <span>交易對</span>
+                            <span>分位 / 24h 成交量</span>
+                            <span>24h 漲跌</span>
+                            <span class="-ml-1">資金費率</span>
+                            <span></span>
+                        </div>
+                        <div class="hidden md:grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-3 px-3 text-sm tracking-wider text-white/85 border-b border-white/10">
+                            <span>交易對</span>
+                            <span>分位 / 24h 成交量</span>
+                            <span>24h 漲跌</span>
+                            <span class="-ml-1">資金費率</span>
+                            <span></span>
+                        </div>
+                    </div>
                     <div v-for="(row, rowIndex) in watchlistRows" :key="rowIndex" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
                             <div v-for="item in row.left" :key="item.symbol"
-                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-2.5 px-3 hover:bg-white/5 transition-colors">
-                                <div class="font-black text-sm md:text-base tracking-tighter cursor-pointer min-w-0 truncate"
+                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-3 px-3 hover:bg-white/5 transition-colors">
+                                <div class="font-semibold text-base text-white tracking-tight cursor-pointer min-w-0 truncate"
                                     @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
                                 <div class="flex items-center gap-1.5 min-w-0">
                                     <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
-                                    <span class="text-xs space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
+                                    <span class="text-sm space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
                                 </div>
-                                <div class="text-xs md:text-sm font-bold"
+                                <div class="text-sm font-bold"
                                     :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
                                     {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
                                 </div>
-                                <div class="text-xs md:text-sm font-bold space-mono text-right" :class="getRateClass(item.lastFundingRate)">
+                                <div class="text-sm font-bold space-mono text-left" :class="getRateClass(item.lastFundingRate)">
                                     {{ (item.lastFundingRate * 100).toFixed(4) }}%
                                 </div>
-                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-lg leading-none">&times;</button>
+                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-xl leading-none">&times;</button>
                             </div>
                         </div>
                         <div v-if="row.right.length" class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
                             <div v-for="item in row.right" :key="item.symbol"
-                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-2.5 px-3 hover:bg-white/5 transition-colors">
-                                <div class="font-black text-sm md:text-base tracking-tighter cursor-pointer min-w-0 truncate"
+                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-3 px-3 hover:bg-white/5 transition-colors">
+                                <div class="font-semibold text-base text-white tracking-tight cursor-pointer min-w-0 truncate"
                                     @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
-                                <div class="flex items-center gap-1.5 min-w-0">
+                                <div class="flex items-center gap-1.5 min-w-0 ml-[5px]">
                                     <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
-                                    <span class="text-xs space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
+                                    <span class="text-sm space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
                                 </div>
-                                <div class="text-xs md:text-sm font-bold"
+                                <div class="text-sm font-bold ml-[5px]"
                                     :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
                                     {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
                                 </div>
-                                <div class="text-xs md:text-sm font-bold space-mono text-right" :class="getRateClass(item.lastFundingRate)">
+                                <div class="text-sm font-bold space-mono text-left ml-[5px]" :class="getRateClass(item.lastFundingRate)">
                                     {{ (item.lastFundingRate * 100).toFixed(4) }}%
                                 </div>
-                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-lg leading-none">&times;</button>
+                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-xl leading-none">&times;</button>
                             </div>
                         </div>
                     </div>
