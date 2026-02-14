@@ -223,6 +223,26 @@
             </div>
         </div>
 
+        <!-- TV 每日開倉（有填 TV_SIGNALS_URL 才顯示） -->
+        <div v-if="TV_SIGNALS_URL && viewMode !== 'watchlist'" class="glass-card p-4 md:p-6 mb-8 border-l-4 border-[#F59E0B]">
+            <div class="flex flex-wrap justify-between items-center gap-3 mb-3 md:mb-4">
+                <h2 class="noto-serif font-bold text-base md:text-xl">TV 每日開倉</h2>
+                <button v-if="tvDailySymbols.length" @click="addTVSignalsToWatchlist"
+                    class="px-4 py-2 text-sm bg-[#F59E0B]/20 text-[#F59E0B] rounded-lg border border-[#F59E0B]/50 hover:bg-[#F59E0B]/30 transition-all">
+                    一鍵加入觀察清單
+                </button>
+            </div>
+            <div v-if="tvSignalsLoading" class="py-4 text-center text-[#F59E0B] opacity-80">載入訊號中...</div>
+            <div v-else-if="!tvSignals.length" class="py-4 text-center opacity-50 text-sm">今日尚無 TV 訊號，或尚未設定訊號來源</div>
+            <div v-else class="flex flex-wrap gap-2">
+                <div v-for="(s, i) in tvSignals" :key="i"
+                    class="bg-black/30 px-3 py-2 rounded-lg border border-white/10 flex items-center gap-2">
+                    <span class="font-bold text-sm">{{ (s.symbol || '').replace('USDT','') || '—' }}</span>
+                    <span v-if="s.direction" class="text-xs opacity-70">{{ s.direction }}</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Data Table (Table View) -->
         <div v-if="viewMode === 'table'" class="glass-card overflow-hidden">
             <div class="overflow-x-auto">
@@ -413,6 +433,9 @@
     <script>
         const { createApp, ref, onMounted, computed } = Vue;
 
+        // 填寫 Google Apps Script 部署後的網址（GET 讀取訊號）。留空則不顯示 TV 區塊。
+        const TV_SIGNALS_URL = 'https://script.google.com/macros/s/AKfycbyYBLG8_yAgUFnZgXnZVd53ScRsZhk4K2A-6mlPwj7CtHnz8C_zpaDnvN_O5inMiGc-cQ/exec';
+
         createApp({
             setup() {
                 const rawData = ref([]);
@@ -427,6 +450,8 @@
                 const marketAvgVol = ref(0);
                 const viewMode = ref('table'); // 'table' or 'watchlist'
                 const watchlist = ref(JSON.parse(localStorage.getItem('fundingRateWatchlist') || '[]'));
+                const tvSignals = ref([]);
+                const tvSignalsLoading = ref(false);
 
                 const prioritySymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
 
@@ -452,6 +477,42 @@
                     } catch (e) {
                         console.error("API Error");
                     }
+                };
+
+                const fetchTVSignals = () => {
+                    if (!TV_SIGNALS_URL) return;
+                    tvSignalsLoading.value = true;
+                    const callbackName = 'tvSignalsCallback_' + Date.now();
+                    window[callbackName] = (list) => {
+                        tvSignals.value = Array.isArray(list) ? list : [];
+                        tvSignalsLoading.value = false;
+                        delete window[callbackName];
+                        const el = document.getElementById('tv-jsonp');
+                        if (el) el.remove();
+                    };
+                    const script = document.createElement('script');
+                    script.id = 'tv-jsonp';
+                    script.src = TV_SIGNALS_URL + (TV_SIGNALS_URL.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName + '&days=1';
+                    script.onerror = () => { tvSignalsLoading.value = false; delete window[callbackName]; };
+                    document.body.appendChild(script);
+                };
+
+                const tvDailySymbols = computed(() => {
+                    const syms = new Set();
+                    tvSignals.value.forEach(s => {
+                        let sym = (s.symbol || '').toUpperCase().replace(/\s/g, '');
+                        if (!sym) return;
+                        if (!/USDT$/.test(sym)) sym = sym + 'USDT';
+                        syms.add(sym);
+                    });
+                    return Array.from(syms);
+                });
+
+                const addTVSignalsToWatchlist = () => {
+                    tvDailySymbols.value.forEach(sym => {
+                        if (watchlist.value.indexOf(sym) === -1) watchlist.value.push(sym);
+                    });
+                    saveWatchlist();
                 };
 
                 const openHistory = async (symbol) => {
@@ -613,9 +674,15 @@
                     fetchData();
                     setInterval(fetchData, 10000);
                     setInterval(() => { currentTime.value = Date.now(); }, 1000);
+                    if (TV_SIGNALS_URL) {
+                        fetchTVSignals();
+                        setInterval(fetchTVSignals, 300000);
+                    }
                 });
 
                 return {
+                    TV_SIGNALS_URL,
+                    tvSignals, tvSignalsLoading, tvDailySymbols, fetchTVSignals, addTVSignalsToWatchlist,
                     filteredList, paginatedList, searchQuery, displayLimit,
                     top5High, top5Low, getRateClass, formatPrice, formatVolume,
                     historySymbol, historyList, historyLoading,
