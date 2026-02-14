@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TERMINAL | Funding Rate Monitor</title>
     <!-- 引入字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Serif+TC:wght@700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Serif+TC:wght@700;900&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,19 +20,26 @@
             --accent: #F59E0B;
         }
 
-        [v-cloak] { display: none; }
-        
-        body { 
-            margin: 0; 
-            font-family: 'Inter', 'Noto Serif TC', sans-serif; 
-            background: var(--sunset-gradient); 
+        [v-cloak] {
+            display: none;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Noto Serif TC', sans-serif;
+            background: var(--sunset-gradient);
             background-attachment: fixed;
             color: #fff;
             min-height: 100vh;
         }
 
-        .space-mono { font-family: 'Space Mono', monospace; }
-        .noto-serif { font-family: 'Noto Serif TC', serif; }
+        .space-mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .noto-serif {
+            font-family: 'Noto Serif TC', serif;
+        }
 
         .glass-card {
             background: var(--glass-bg);
@@ -38,14 +48,22 @@
             border-radius: 12px;
         }
 
-        .rate-positive { color: #4ade80; } /* 亮綠 */
-        .rate-negative { color: #f87171; } /* 亮紅 */
+        .rate-positive {
+            color: #4ade80;
+        }
 
-        .report-label { 
-            font-size: 0.75rem; 
-            letter-spacing: 2px; 
-            opacity: 0.8; 
-            font-weight: 700; 
+        /* 亮綠 */
+        .rate-negative {
+            color: #f87171;
+        }
+
+        /* 亮紅 */
+
+        .report-label {
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            font-weight: 700;
             color: var(--accent);
         }
 
@@ -55,23 +73,76 @@
                 padding: 0.5rem !important;
                 gap: 0.25rem !important;
             }
-            .mobile-text-xs { font-size: 0.65rem !important; }
-            .mobile-text-sm { font-size: 0.8rem !important; }
+
+            .mobile-text-xs {
+                font-size: 0.65rem !important;
+            }
+
+            .mobile-text-sm {
+                font-size: 0.8rem !important;
+            }
         }
 
         /* 遮蔽資料可左右/上下滑動 */
-        .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .scroll-y { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .scroll-x table { min-width: 100%; }
-        .record-table-wrap { max-height: 40vh; overflow: auto; }
+        .scroll-x {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        .scroll-y {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .scroll-x table {
+            min-width: 100%;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        /* Volume Decile Badge */
+        .decile-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #0891b2;
+            /* Cyan-600 */
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 8px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Layout Adjustments */
+        .col-funding {
+            padding-left: 2rem !important;
+            /* pl-8 */
+        }
+
+        @media (min-width: 768px) {
+            .col-funding {
+                padding-left: 3rem !important;
+                /* md:pl-12 */
+            }
+        }
     </style>
 </head>
+
 <body class="p-3 md:p-8">
     <div id="app" v-cloak class="max-w-7xl mx-auto">
-        
+
         <!-- Header Section -->
         <header class="mb-6 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
@@ -80,26 +151,48 @@
                 </h1>
                 <div class="report-label mt-2">即時資金費率監測系統</div>
             </div>
-            <div class="w-full md:w-72">
-                <input v-model="searchQuery" type="text" placeholder="搜尋交易對..." 
-                       class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#F59E0B] transition-all text-base">
+            <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                <!-- View Mode Toggle -->
+                <div class="flex gap-2">
+                    <button @click="viewMode = 'table'"
+                        :class="viewMode === 'table' ? 'bg-[#F59E0B] text-black' : 'bg-black/40 text-white/70'"
+                        class="px-4 py-3 rounded-lg font-bold text-sm transition-all border border-white/10">
+                        表格模式
+                    </button>
+                    <button @click="viewMode = 'watchlist'"
+                        :class="viewMode === 'watchlist' ? 'bg-[#F59E0B] text-black' : 'bg-black/40 text-white/70'"
+                        class="px-4 py-3 rounded-lg font-bold text-sm transition-all border border-white/10">
+                        觀察清單 <span class="ml-1 opacity-60">({{ watchlist.length }})</span>
+                    </button>
+                </div>
+                <input v-model="searchQuery" type="text" placeholder="搜尋交易對..."
+                    class="w-full md:w-72 bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#F59E0B] transition-all text-base">
             </div>
         </header>
 
-        <!-- Top 5 Sections: 手機版並排 -->
-        <div class="grid grid-cols-1 gap-4 mb-8">
+        <!-- Top 5 Sections: 觀察清單時不顯示 -->
+        <div v-if="viewMode !== 'watchlist'" class="grid grid-cols-1 gap-4 mb-8">
             <!-- Top 5 High -->
             <div class="glass-card p-4 md:p-6 border-l-4 border-green-500">
                 <div class="flex justify-between items-center mb-3 md:mb-4">
-                    <h2 class="noto-serif font-bold text-base md:text-xl">極端正費率 <span class="text-xs font-normal opacity-50 ml-1">TOP 5</span></h2>
+                    <h2 class="noto-serif font-bold text-base md:text-xl">極端正費率 <span
+                            class="text-xs font-normal opacity-50 ml-1">TOP 5</span></h2>
                 </div>
                 <!-- 5 欄並排 Grid -->
                 <div class="grid grid-cols-5 gap-1 md:gap-4">
-                    <div v-for="item in top5High" :key="item.symbol" class="bg-black/30 p-2 md:p-3 rounded-lg border border-white/5 text-center">
-                        <div class="text-[10px] md:text-xs font-bold opacity-60 truncate">{{ item.symbol.replace('USDT','') }}</div>
-                        <div class="text-xs md:text-lg rate-positive space-mono font-bold leading-none mt-1">{{ (item.lastFundingRate * 100).toFixed(3) }}%</div>
+                    <div v-for="item in top5High" :key="item.symbol" @click="openHistory(item.symbol)"
+                        class="bg-black/30 p-2 md:p-3 rounded-lg border border-white/5 text-center cursor-pointer hover:bg-white/10 transition-colors">
+                        <div class="text-xs md:text-sm font-black truncate">{{
+                            item.symbol.replace('USDT','') }}
+                            <span class="decile-badge ml-1 inline-flex"
+                                style="width: 18px; height: 18px; font-size: 10px;" title="成交量分位 (1-10)">{{
+                                item.decileRank }}</span>
+                        </div>
+                        <div class="text-xs md:text-lg rate-positive space-mono font-bold leading-none mt-1">{{
+                            (item.lastFundingRate * 100).toFixed(3) }}%</div>
                         <!-- 新增：倒數時間 -->
-                        <div class="text-[9px] md:text-xs space-mono text-[#F59E0B] mt-1 font-bold opacity-90">{{ item.countdown }}</div>
+                        <div class="text-[9px] md:text-xs space-mono text-[#F59E0B] mt-1 font-bold opacity-90">{{
+                            item.countdown }}</div>
                     </div>
                 </div>
             </div>
@@ -107,114 +200,77 @@
             <!-- Top 5 Low -->
             <div class="glass-card p-4 md:p-6 border-l-4 border-red-500">
                 <div class="flex justify-between items-center mb-3 md:mb-4">
-                    <h2 class="noto-serif font-bold text-base md:text-xl">極端負費率 <span class="text-xs font-normal opacity-50 ml-1">TOP 5</span></h2>
+                    <h2 class="noto-serif font-bold text-base md:text-xl">極端負費率 <span
+                            class="text-xs font-normal opacity-50 ml-1">TOP 5</span></h2>
                 </div>
                 <!-- 5 欄並排 Grid -->
                 <div class="grid grid-cols-5 gap-1 md:gap-4">
-                    <div v-for="item in top5Low" :key="item.symbol" class="bg-black/30 p-2 md:p-3 rounded-lg border border-white/5 text-center">
-                        <div class="text-[10px] md:text-xs font-bold opacity-60 truncate">{{ item.symbol.replace('USDT','') }}</div>
-                        <div class="text-xs md:text-lg rate-negative space-mono font-bold leading-none mt-1">{{ (item.lastFundingRate * 100).toFixed(3) }}%</div>
-                        <!-- 新增：倒數時間 -->
-                        <div class="text-[9px] md:text-xs space-mono text-[#F59E0B] mt-1 font-bold opacity-90">{{ item.countdown }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 極端費率紀錄 -->
-        <div class="glass-card p-4 md:p-6 mb-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                <h2 class="noto-serif font-bold text-base md:text-xl">極端費率紀錄 <span class="text-xs font-normal opacity-50 ml-1">|rate| &gt; 0.1% · 保留一週</span></h2>
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <select v-model="recordFilterSymbol" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F59E0B] w-full sm:w-36">
-                        <option value="">全部幣種</option>
-                        <option v-for="s in recordSymbols" :key="s" :value="s">{{ s.replace('USDT','') }}</option>
-                    </select>
-                </div>
-            </div>
-            <div class="scroll-y max-h-[60vh] md:max-h-[50vh] pr-1">
-                <div v-if="filteredRecords.length === 0" class="py-8 text-center opacity-50 text-sm">尚無紀錄或篩選後無資料</div>
-                <div v-else class="space-y-3">
-                    <div v-for="rec in filteredRecords" :key="rec.id" class="bg-black/30 rounded-lg border border-white/5 overflow-hidden">
-                        <button type="button" @click="toggleRecord(rec.id)" class="w-full flex flex-wrap items-center justify-between gap-2 p-3 md:p-4 text-left hover:bg-white/5 transition-colors">
-                            <span class="font-bold">{{ rec.symbol.replace('USDT','') }}</span>
-                            <span class="text-xs opacity-70">{{ formatRecordTime(rec.fundingTime) }}</span>
-                            <span :class="rec.direction === 'high' ? 'rate-positive' : 'rate-negative'" class="text-sm font-bold">{{ rec.direction === 'high' ? '正費率' : '負費率' }}</span>
-                            <span class="text-xs opacity-50">當日參考 {{ rec.dailyChangePercent != null ? (rec.dailyChangePercent >= 0 ? '+' : '') + Number(rec.dailyChangePercent).toFixed(2) + '%' : '-' }}</span>
-                            <span class="text-[#F59E0B] text-xs">{{ expandedRecordId === rec.id ? '收起' : '展開' }}</span>
-                        </button>
-                        <div v-show="expandedRecordId === rec.id" class="border-t border-white/5 p-3 md:p-4 space-y-4">
-                            <div class="scroll-x record-table-wrap">
-                                <table class="w-full text-left border-collapse text-xs md:text-sm min-w-[480px]">
-                                    <thead class="bg-white/5 uppercase tracking-wider opacity-60">
-                                        <tr>
-                                            <th class="px-2 py-2 whitespace-nowrap">時間</th>
-                                            <th class="px-2 py-2 whitespace-nowrap">資金費率</th>
-                                            <th class="px-2 py-2 whitespace-nowrap">價格</th>
-                                            <th class="px-2 py-2 whitespace-nowrap">區間漲跌%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-white/5">
-                                        <tr v-for="(s, i) in rec.samples" :key="i" class="hover:bg-white/5">
-                                            <td class="px-2 py-1.5 whitespace-nowrap space-mono">{{ formatSampleTime(s.t, rec.fundingTime) }}</td>
-                                            <td class="px-2 py-1.5 space-mono" :class="(s.fundingRate * 100) >= 0 ? 'rate-positive' : 'rate-negative'">{{ (s.fundingRate * 100).toFixed(4) }}%</td>
-                                            <td class="px-2 py-1.5 space-mono">${{ formatPrice(s.price) }}</td>
-                                            <td class="px-2 py-1.5" :class="s.intervalChangePercent != null && s.intervalChangePercent >= 0 ? 'rate-positive' : 'rate-negative'">{{ s.intervalChangePercent != null ? (s.intervalChangePercent >= 0 ? '+' : '') + s.intervalChangePercent.toFixed(3) + '%' : '-' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="min-w-0">
-                                    <div class="report-label mb-1">資金費率</div>
-                                    <div class="bg-black/30 rounded-lg overflow-hidden" style="height: 180px;">
-                                        <canvas :ref="el => setChartRef(rec.id, 'rate', el)" class="w-full h-full" width="400" height="180"></canvas>
-                                    </div>
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="report-label mb-1">區間漲跌 %</div>
-                                    <div class="bg-black/30 rounded-lg overflow-hidden" style="height: 180px;">
-                                        <canvas :ref="el => setChartRef(rec.id, 'change', el)" class="w-full h-full" width="400" height="180"></canvas>
-                                    </div>
-                                </div>
-                            </div>
+                    <div v-for="item in top5Low" :key="item.symbol" @click="openHistory(item.symbol)"
+                        class="bg-black/30 p-2 md:p-3 rounded-lg border border-white/5 text-center cursor-pointer hover:bg-white/10 transition-colors">
+                        <div class="text-xs md:text-sm font-black truncate">{{
+                            item.symbol.replace('USDT','') }}
+                            <span class="decile-badge ml-1 inline-flex"
+                                style="width: 18px; height: 18px; font-size: 10px;" title="成交量分位 (1-10)">{{
+                                item.decileRank }}</span>
                         </div>
+                        <div class="text-xs md:text-lg rate-negative space-mono font-bold leading-none mt-1">{{
+                            (item.lastFundingRate * 100).toFixed(3) }}%</div>
+                        <!-- 新增：倒數時間 -->
+                        <div class="text-[9px] md:text-xs space-mono text-[#F59E0B] mt-1 font-bold opacity-90">{{
+                            item.countdown }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Data Table -->
-        <div class="glass-card overflow-hidden">
+        <!-- Main Data Table (Table View) -->
+        <div v-if="viewMode === 'table'" class="glass-card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-white/5 text-xs uppercase tracking-widest opacity-60">
+                    <thead class="bg-white/5 text-sm md:text-base uppercase tracking-widest opacity-60">
                         <tr>
-                            <th class="px-4 md:px-6 py-4">交易對 / 價格</th>
+                            <th class="px-4 md:px-6 py-4 text-center">交易對 / 價格</th>
                             <th class="px-4 md:px-6 py-4 text-center">24h 漲跌</th>
-                            <th class="px-4 md:px-6 py-4">資金費率</th>
-                            <th class="px-4 md:px-6 py-4 text-right">結算倒數</th>
+                            <th class="px-4 md:px-6 py-4 text-center">
+                                24h 成交量 <span v-if="marketAvgVol > 0"
+                                    class="text-[10px] opacity-60 normal-case block md:inline">(均量: {{
+                                    formatVolume(marketAvgVol) }})</span>
+                            </th>
+                            <th class="px-4 md:px-6 py-4 col-funding text-center">資金費率</th>
+                            <th class="px-4 md:px-6 py-4 text-center">結算倒數</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
                         <tr v-for="item in paginatedList" :key="item.symbol" class="hover:bg-white/5 transition-colors">
-                            <td class="px-4 md:px-6 py-5">
-                                <div class="font-black text-base md:text-xl tracking-tighter">{{ item.symbol.replace('USDT', '') }}</div>
-                                <div class="text-xs md:text-sm space-mono opacity-60">${{ formatPrice(item.lastPrice) }}</div>
+                            <td class="px-4 md:px-6 py-5 cursor-pointer text-center" @click="openHistory(item.symbol)">
+                                <div class="font-black text-base md:text-xl tracking-tighter">{{
+                                    item.symbol.replace('USDT', '') }}</div>
+                                <div class="text-xs md:text-sm space-mono opacity-60">${{ formatPrice(item.lastPrice) }}
+                                </div>
                             </td>
                             <td class="px-4 md:px-6 py-5 text-center">
-                                <div class="text-sm md:text-lg font-bold" :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
-                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
+                                <div class="text-sm md:text-lg font-bold"
+                                    :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
+                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{
+                                    Math.abs(item.priceChangePercent) }}%
                                 </div>
                             </td>
-                            <td class="px-4 md:px-6 py-5">
-                                <div class="text-base md:text-2xl font-black space-mono" :class="getRateClass(item.lastFundingRate)">
+                            <td class="px-4 md:px-6 py-5 text-center">
+                                <span class="text-sm md:text-lg space-mono font-bold opacity-80">{{
+                                    formatVolume(item.quoteVolume) }}</span>
+                                <span class="decile-badge" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
+                            </td>
+                            <td class="px-4 md:px-6 py-5 col-funding text-center">
+                                <div class="text-base md:text-2xl font-black space-mono"
+                                    :class="getRateClass(item.lastFundingRate)">
                                     {{ (item.lastFundingRate * 100).toFixed(4) }}%
                                 </div>
-                                <div class="text-[10px] opacity-40 uppercase">Interval: {{ item.fundingIntervalHours }}H</div>
+                                <div class="text-[10px] opacity-40 uppercase">Interval: {{ item.fundingIntervalHours }}H
+                                </div>
                             </td>
-                            <td class="px-4 md:px-6 py-5 text-right">
-                                <div class="text-sm md:text-xl space-mono text-[#F59E0B] font-bold">{{ item.countdown }}</div>
+                            <td class="px-4 md:px-6 py-5 text-center">
+                                <div class="text-sm md:text-xl space-mono text-[#F59E0B] font-bold">{{ item.countdown }}
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -223,75 +279,139 @@
 
             <!-- Load More -->
             <div v-if="displayLimit < filteredList.length" class="p-8 text-center bg-black/20">
-                <button @click="displayLimit += 25" class="px-12 py-4 rounded-full text-sm font-black tracking-[4px] uppercase border border-white/20 hover:bg-[#F59E0B] hover:text-black transition-all">
+                <button @click="displayLimit += 25"
+                    class="px-12 py-4 rounded-full text-sm font-black tracking-[4px] uppercase border border-white/20 hover:bg-[#F59E0B] hover:text-black transition-all">
                     Load More 展開更多
                 </button>
             </div>
         </div>
 
+        <!-- Watchlist View -->
+        <div v-if="viewMode === 'watchlist'" class="space-y-4">
+            <!-- Watchlist Management Section -->
+            <div class="glass-card p-4 md:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="noto-serif font-bold text-lg md:text-xl">我的觀察清單</h2>
+                    <button v-if="watchlist.length > 0" @click="clearWatchlist"
+                        class="px-4 py-2 text-sm bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/30 transition-all">
+                        清空清單
+                    </button>
+                </div>
+
+                <!-- Watchlist Items：兩排，左欄 1-5 / 11-15…，右欄 6-10 / 16-20… -->
+                <div v-if="watchlist.length === 0" class="text-center py-12 opacity-50">
+                    <div class="text-xl mb-2">📋</div>
+                    <div>尚無觀察項目，請從下方選擇幣種加入</div>
+                </div>
+                <div v-else class="space-y-4">
+                    <div v-for="(row, rowIndex) in watchlistRows" :key="rowIndex" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
+                            <div v-for="item in row.left" :key="item.symbol"
+                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-2.5 px-3 hover:bg-white/5 transition-colors">
+                                <div class="font-black text-sm md:text-base tracking-tighter cursor-pointer min-w-0 truncate"
+                                    @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
+                                    <span class="text-xs space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
+                                </div>
+                                <div class="text-xs md:text-sm font-bold"
+                                    :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
+                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
+                                </div>
+                                <div class="text-xs md:text-sm font-bold space-mono text-right" :class="getRateClass(item.lastFundingRate)">
+                                    {{ (item.lastFundingRate * 100).toFixed(4) }}%
+                                </div>
+                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-lg leading-none">&times;</button>
+                            </div>
+                        </div>
+                        <div v-if="row.right.length" class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
+                            <div v-for="item in row.right" :key="item.symbol"
+                                class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-3 py-2.5 px-3 hover:bg-white/5 transition-colors">
+                                <div class="font-black text-sm md:text-base tracking-tighter cursor-pointer min-w-0 truncate"
+                                    @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
+                                    <span class="text-xs space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
+                                </div>
+                                <div class="text-xs md:text-sm font-bold"
+                                    :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
+                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
+                                </div>
+                                <div class="text-xs md:text-sm font-bold space-mono text-right" :class="getRateClass(item.lastFundingRate)">
+                                    {{ (item.lastFundingRate * 100).toFixed(4) }}%
+                                </div>
+                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-lg leading-none">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coin Selector -->
+            <div class="glass-card p-4 md:p-6">
+                <h3 class="noto-serif font-bold text-base md:text-lg mb-4">選擇幣種加入觀察清單</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[60vh] overflow-y-auto pr-2">
+                    <button v-for="item in filteredList" :key="item.symbol" @click="toggleWatchlist(item.symbol)"
+                        :class="isInWatchlist(item.symbol) ? 'bg-[#F59E0B]/20 border-[#F59E0B]' : 'bg-black/30 border-white/10'"
+                        class="p-3 rounded-lg border hover:bg-white/10 transition-all text-left">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="font-bold text-sm truncate">{{ item.symbol.replace('USDT', '') }}</div>
+                            <span v-if="isInWatchlist(item.symbol)" class="text-[#F59E0B] text-lg">✓</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="decile-badge" style="width: 16px; height: 16px; font-size: 9px;"
+                                title="成交量分位">{{ item.decileRank }}</span>
+                            <span class="text-[10px] opacity-60">{{ formatVolume(item.quoteVolume) }}</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 資金費率歷史 Modal -->
+        <div v-if="historySymbol"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            @click.self="historySymbol = null">
+            <div class="glass-card w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center p-4 border-b border-white/10">
+                    <h3 class="noto-serif font-bold text-lg md:text-xl">{{ historySymbol ?
+                        historySymbol.replace('USDT','') : '' }} 資金費率歷史</h3>
+                    <button type="button" @click="historySymbol = null"
+                        class="text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-4 scroll-y flex-1 min-h-0">
+                    <div v-if="historyLoading" class="py-8 text-center text-[#F59E0B]">載入中...</div>
+                    <div v-else-if="!historyList.length" class="py-8 text-center opacity-50">無資料</div>
+                    <div v-else class="scroll-x">
+                        <table class="w-full text-left border-collapse text-xs md:text-sm min-w-[320px]">
+                            <thead class="bg-white/5 uppercase tracking-wider opacity-60 sticky top-0">
+                                <tr>
+                                    <th class="px-2 py-2 whitespace-nowrap">結算時間</th>
+                                    <th class="px-2 py-2 whitespace-nowrap text-right">資金費率</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr v-for="(row, i) in historyList" :key="i" class="hover:bg-white/5">
+                                    <td class="px-2 py-1.5 whitespace-nowrap space-mono">{{
+                                        formatHistoryTime(row.fundingTime) }}</td>
+                                    <td class="px-2 py-1.5 text-right space-mono"
+                                        :class="(row.fundingRate * 100) >= 0 ? 'rate-positive' : 'rate-negative'">{{
+                                        (row.fundingRate * 100).toFixed(4) }}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer class="mt-12 mb-20 text-center opacity-30 text-[10px] space-mono tracking-[4px]">
-            TERMINAL v8.6 // DATA 10s · 極端紀錄 |rate|&gt;0.1% 保留一週
+            TERMINAL v8.7 // DATA 10s
         </footer>
     </div>
 
     <script>
-        const { createApp, ref, onMounted, computed, watch, nextTick } = Vue;
-
-        const STORAGE_KEY = 'funding_extreme_records';
-        const RECORD_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
-        const EXTREME_THRESHOLD = 0.001;
-        const WINDOW_MS = 10 * 60 * 1000;
-        const SAMPLE_INTERVAL_MS = 60 * 1000;
-
-        function loadRecords() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return [];
-                const list = JSON.parse(raw);
-                const cut = Date.now() - RECORD_KEEP_MS;
-                return list.filter(r => r.createdAt >= cut);
-            } catch (e) { return []; }
-        }
-
-        function saveRecords(list) {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
-        }
-
-        function drawLineChart(canvas, labels, values, color, isPercent) {
-            if (!canvas || !values || values.length === 0) return;
-            const ctx = canvas.getContext('2d');
-            const dpr = window.devicePixelRatio || 1;
-            const w = canvas.offsetWidth;
-            const h = canvas.offsetHeight;
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, w, h);
-            const pad = { left: 32, right: 8, top: 8, bottom: 24 };
-            const gw = w - pad.left - pad.right;
-            const gh = h - pad.top - pad.bottom;
-            const min = Math.min(...values);
-            const max = Math.max(...values);
-            const range = max === min ? 1 : max - min;
-            const scale = (v) => pad.top + gh - ((v - min) / range) * gh;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            values.forEach((v, i) => {
-                const x = pad.left + (i / Math.max(1, values.length - 1)) * gw;
-                const y = scale(v);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.font = '10px Space Mono';
-            const fmt = (n) => isPercent ? n.toFixed(3) + '%' : String(n);
-            if (values.length > 0) {
-                ctx.fillText(fmt(min), pad.left - 28, pad.top + 4);
-                ctx.fillText(fmt(max), pad.left - 28, pad.bottom - 4);
-            }
-        }
+        const { createApp, ref, onMounted, computed } = Vue;
 
         createApp({
             setup() {
@@ -301,11 +421,12 @@
                 const searchQuery = ref('');
                 const displayLimit = ref(25);
                 const currentTime = ref(Date.now());
-                const extremeRecords = ref(loadRecords());
-                const recordingBuffers = ref({});
-                const recordFilterSymbol = ref('');
-                const expandedRecordId = ref(null);
-                const chartRefs = ref({});
+                const historySymbol = ref(null);
+                const historyList = ref([]);
+                const historyLoading = ref(false);
+                const marketAvgVol = ref(0);
+                const viewMode = ref('table'); // 'table' or 'watchlist'
+                const watchlist = ref(JSON.parse(localStorage.getItem('fundingRateWatchlist') || '[]'));
 
                 const prioritySymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
 
@@ -328,81 +449,27 @@
                         }
 
                         rawData.value = resIndex.filter(item => item.nextFundingTime > 0);
-                        recordTick();
                     } catch (e) {
                         console.error("API Error");
                     }
                 };
 
-                const fullListForRecord = () => {
-                    return rawData.value.map(item => {
-                        const ticker = tickerData.value[item.symbol] || {};
-                        return {
-                            ...item,
-                            lastPrice: ticker.lastPrice || 0,
-                            priceChangePercent: ticker.priceChangePercent || '0.00',
-                            fundingIntervalHours: fundingInfo.value[item.symbol] || 8
-                        };
-                    });
+                const openHistory = async (symbol) => {
+                    historySymbol.value = symbol;
+                    historyList.value = [];
+                    historyLoading.value = true;
+                    try {
+                        const res = await fetch(`https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}&limit=100`).then(r => r.json());
+                        historyList.value = Array.isArray(res) ? res : [];
+                    } catch (e) {
+                        historyList.value = [];
+                    }
+                    historyLoading.value = false;
                 };
 
-                const recordTick = () => {
-                    const now = Date.now();
-                    const list = fullListForRecord();
-                    const extreme = list.filter(i => Math.abs(parseFloat(i.lastFundingRate)) > EXTREME_THRESHOLD);
-                    const buf = recordingBuffers.value;
-
-                    extreme.forEach(item => {
-                        const nextFt = item.nextFundingTime;
-                        const start = nextFt - WINDOW_MS;
-                        const end = nextFt + WINDOW_MS;
-                        if (now < start) return;
-                        if (now > end) {
-                            if (buf[item.symbol] && buf[item.symbol].fundingTime === nextFt) {
-                                const b = buf[item.symbol];
-                                const baseline = b.samples[0] && parseFloat(b.samples[0].price);
-                                if (baseline != null && b.samples.length >= 2) {
-                                    const prices = b.samples.map(s => parseFloat(s.price));
-                                    const rates = b.samples.map(s => parseFloat(s.fundingRate));
-                                    const priceRange = Math.max(...prices) - Math.min(...prices);
-                                    const rateRange = Math.max(...rates) - Math.min(...rates);
-                                    if (priceRange >= baseline * 0.0001 || rateRange >= 1e-8) {
-                                        b.samples.forEach(s => {
-                                            const p = parseFloat(s.price);
-                                            s.intervalChangePercent = ((p - baseline) / baseline) * 100;
-                                        });
-                                        const rec = {
-                                            id: item.symbol + '_' + nextFt,
-                                            symbol: item.symbol,
-                                            fundingTime: nextFt,
-                                            direction: parseFloat(b.samples[0].fundingRate) > 0 ? 'high' : 'low',
-                                            baselinePrice: baseline,
-                                            dailyChangePercent: b.samples[0] ? parseFloat(b.samples[0].priceChangePercent) : null,
-                                            samples: b.samples,
-                                            createdAt: now
-                                        };
-                                        extremeRecords.value = [rec, ...extremeRecords.value.filter(r => r.id !== rec.id)];
-                                        saveRecords(extremeRecords.value);
-                                    }
-                                }
-                                delete buf[item.symbol];
-                            }
-                            return;
-                        }
-                        if (!buf[item.symbol]) buf[item.symbol] = { fundingTime: nextFt, samples: [], lastSampleMinute: -1 };
-                        const b = buf[item.symbol];
-                        if (b.fundingTime !== nextFt) return;
-                        const currentMinute = Math.floor((now - start) / SAMPLE_INTERVAL_MS);
-                        if (currentMinute > b.lastSampleMinute) {
-                            b.samples.push({
-                                t: now,
-                                fundingRate: item.lastFundingRate,
-                                price: item.lastPrice,
-                                priceChangePercent: item.priceChangePercent
-                            });
-                            b.lastSampleMinute = currentMinute;
-                        }
-                    });
+                const formatHistoryTime = (ts) => {
+                    const d = new Date(ts);
+                    return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
                 };
 
                 const formatCountdown = (nextTime) => {
@@ -418,31 +485,68 @@
                     const p = parseFloat(price);
                     if (p < 0.1) return p.toFixed(6);
                     if (p < 10) return p.toFixed(4);
-                    return p.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    return p.toLocaleString(undefined, { minimumFractionDigits: 2 });
+                };
+
+                const formatVolume = (vol) => {
+                    const v = parseFloat(vol);
+                    if (v >= 1000000000) return (v / 1000000000).toFixed(2) + 'B';
+                    if (v >= 1000000) return (v / 1000000).toFixed(2) + 'M';
+                    if (v >= 1000) return (v / 1000).toFixed(2) + 'K';
+                    return v.toFixed(0);
                 };
 
                 const fullList = computed(() => {
-                    return rawData.value.map(item => {
+                    // 1. Map raw data
+                    let mapped = rawData.value.map(item => {
                         const ticker = tickerData.value[item.symbol] || {};
                         return {
                             ...item,
                             lastPrice: ticker.lastPrice || 0,
                             priceChangePercent: ticker.priceChangePercent || '0.00',
+                            quoteVolume: parseFloat(ticker.quoteVolume || 0),
                             fundingIntervalHours: fundingInfo.value[item.symbol] || 8,
                             countdown: formatCountdown(item.nextFundingTime),
                             priority: prioritySymbols.indexOf(item.symbol)
                         };
-                    }).sort((a, b) => {
+                    });
+
+                    // 2. Calculate Deciles & Average
+                    if (mapped.length > 0) {
+                        const sortedByVol = [...mapped].sort((a, b) => a.quoteVolume - b.quoteVolume);
+                        const n = sortedByVol.length;
+
+                        const totalVol = sortedByVol.reduce((sum, item) => sum + item.quoteVolume, 0);
+                        marketAvgVol.value = totalVol / n;
+
+                        sortedByVol.forEach((item, index) => {
+                            let rank = Math.floor((index / n) * 10) + 1;
+                            if (rank > 10) rank = 10;
+                            item.decileRank = rank;
+                        });
+                    } else {
+                        marketAvgVol.value = 0;
+                    }
+
+                    // 3. Final Sort by Priority
+                    return mapped.sort((a, b) => {
                         if (a.priority !== -1 && b.priority !== -1) return a.priority - b.priority;
                         if (a.priority !== -1) return -1;
                         if (b.priority !== -1) return 1;
-                        return 0;
+                        return b.quoteVolume - a.quoteVolume;
                     });
                 });
 
                 const filteredList = computed(() => {
                     if (!searchQuery.value) return fullList.value;
-                    return fullList.value.filter(i => i.symbol.toLowerCase().includes(searchQuery.value.toLowerCase()));
+                    const query = searchQuery.value;
+                    // 如果搜尋詞以空格結尾，則精確匹配（去除USDT後）
+                    if (query.endsWith(' ')) {
+                        const exactMatch = query.trim().toUpperCase();
+                        return fullList.value.filter(i => i.symbol.replace('USDT', '') === exactMatch);
+                    }
+                    // 否則使用包含搜尋
+                    return fullList.value.filter(i => i.symbol.toLowerCase().includes(query.toLowerCase()));
                 });
 
                 const paginatedList = computed(() => filteredList.value.slice(0, displayLimit.value));
@@ -456,72 +560,72 @@
                     return val > 0 ? 'rate-positive' : (val < 0 ? 'rate-negative' : '');
                 };
 
-                const formatRecordTime = (ts) => {
-                    const d = new Date(ts);
-                    return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+                // Watchlist methods
+                const saveWatchlist = () => {
+                    localStorage.setItem('fundingRateWatchlist', JSON.stringify(watchlist.value));
                 };
 
-                const formatSampleTime = (t, fundingTime) => {
-                    const rel = Math.round((t - (fundingTime - WINDOW_MS)) / 60000);
-                    const minFromSettle = rel - 10;
-                    if (minFromSettle === 0) return '0min';
-                    return (minFromSettle > 0 ? '+' : '') + minFromSettle + 'min';
+                const toggleWatchlist = (symbol) => {
+                    const index = watchlist.value.indexOf(symbol);
+                    if (index === -1) {
+                        watchlist.value.push(symbol);
+                    } else {
+                        watchlist.value.splice(index, 1);
+                    }
+                    saveWatchlist();
                 };
 
-                const toggleRecord = (id) => {
-                    expandedRecordId.value = expandedRecordId.value === id ? null : id;
+                const removeFromWatchlist = (symbol) => {
+                    const index = watchlist.value.indexOf(symbol);
+                    if (index !== -1) {
+                        watchlist.value.splice(index, 1);
+                        saveWatchlist();
+                    }
                 };
 
-                const setChartRef = (recId, type, el) => {
-                    if (el) chartRefs.value[recId + '_' + type] = el;
+                const clearWatchlist = () => {
+                    if (confirm('確定要清空觀察清單嗎？')) {
+                        watchlist.value = [];
+                        saveWatchlist();
+                    }
                 };
 
-                const recordSymbols = computed(() => {
-                    const set = new Set(extremeRecords.value.map(r => r.symbol));
-                    return [...set].sort();
+                const isInWatchlist = (symbol) => {
+                    return watchlist.value.includes(symbol);
+                };
+
+                const watchlistItems = computed(() => {
+                    return fullList.value.filter(item => watchlist.value.includes(item.symbol));
                 });
 
-                const filteredRecords = computed(() => {
-                    const list = extremeRecords.value;
-                    if (!recordFilterSymbol.value) return list;
-                    return list.filter(r => r.symbol === recordFilterSymbol.value);
-                });
-
-                const drawRecordCharts = (rec) => {
-                    if (!rec || !rec.samples.length) return;
-                    nextTick(() => {
-                        setTimeout(() => {
-                            const rateEl = chartRefs.value[rec.id + '_rate'];
-                            const changeEl = chartRefs.value[rec.id + '_change'];
-                            const rateValues = rec.samples.map(s => parseFloat(s.fundingRate) * 100);
-                            const changeValues = rec.samples.map(s => s.intervalChangePercent != null ? s.intervalChangePercent : 0);
-                            if (rateEl) drawLineChart(rateEl, [], rateValues, '#F59E0B', true);
-                            if (changeEl) drawLineChart(changeEl, [], changeValues, '#4ade80', true);
-                        }, 80);
-                    });
-                };
-
-                watch(expandedRecordId, (id) => {
-                    if (!id) return;
-                    const rec = extremeRecords.value.find(r => r.id === id);
-                    if (rec) drawRecordCharts(rec);
+                // 每 10 個一組，左欄 1-5、右欄 6-10，下一組 11-15 左、16-20 右...
+                const watchlistRows = computed(() => {
+                    const items = watchlistItems.value;
+                    const rows = [];
+                    for (let i = 0; i < items.length; i += 10) {
+                        const chunk = items.slice(i, i + 10);
+                        rows.push({ left: chunk.slice(0, 5), right: chunk.slice(5, 10) });
+                    }
+                    return rows;
                 });
 
                 onMounted(() => {
                     fetchData();
                     setInterval(fetchData, 10000);
                     setInterval(() => { currentTime.value = Date.now(); }, 1000);
-                    extremeRecords.value = loadRecords();
                 });
 
                 return {
                     filteredList, paginatedList, searchQuery, displayLimit,
-                    top5High, top5Low, getRateClass, formatPrice,
-                    extremeRecords, recordFilterSymbol, recordSymbols, filteredRecords,
-                    expandedRecordId, formatRecordTime, formatSampleTime, toggleRecord, setChartRef
+                    top5High, top5Low, getRateClass, formatPrice, formatVolume,
+                    historySymbol, historyList, historyLoading,
+                    openHistory, formatHistoryTime, marketAvgVol,
+                    viewMode, watchlist, watchlistItems, watchlistRows,
+                    toggleWatchlist, removeFromWatchlist, clearWatchlist, isInWatchlist
                 };
             }
         }).mount('#app');
     </script>
 </body>
+
 </html>
