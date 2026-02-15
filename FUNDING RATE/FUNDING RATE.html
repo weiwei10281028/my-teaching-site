@@ -166,11 +166,11 @@
                         class="px-4 py-3 rounded-lg font-bold text-sm transition-all border border-white/10">
                         表格模式
                     </button>
-                    <button @click="viewMode = 'watchlist'"
-                        :class="viewMode === 'watchlist' ? 'bg-[#F59E0B] text-black' : 'bg-black/40 text-white/70'"
-                        class="px-4 py-3 rounded-lg font-bold text-sm transition-all border border-white/10">
-                        觀察清單 <span class="ml-1 opacity-60">({{ watchlist.length }})</span>
-                    </button>
+                <button @click="viewMode = 'watchlist'"
+                    :class="viewMode === 'watchlist' ? 'bg-[#F59E0B] text-black' : 'bg-black/40 text-white/70'"
+                    class="px-4 py-3 rounded-lg font-bold text-sm transition-all border border-white/10">
+                    觀察清單 <span v-if="watchlistItems.length > 0" class="ml-1 opacity-60">({{ watchlistItems.length }})</span>
+                </button>
                 </div>
                 <input v-model="searchQuery" type="text" placeholder="搜尋交易對..."
                     class="w-full md:w-72 bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#F59E0B] transition-all text-base">
@@ -332,7 +332,7 @@
             <!-- Watchlist Management Section -->
             <div class="glass-card p-4 md:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="noto-serif font-bold text-lg md:text-xl">我的觀察清單</h2>
+                    <h2 class="noto-serif font-bold text-lg md:text-xl">我的觀察清單 <span v-if="watchlistItems.length > 0" class="text-sm font-normal opacity-60">({{ watchlistItems.length }} 種)</span></h2>
                     <button v-if="watchlist.length > 0" @click="clearWatchlist"
                         class="px-4 py-2 text-sm bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/30 transition-all">
                         清空清單
@@ -480,7 +480,7 @@
                 <div class="p-4 scroll-y flex-1 min-h-0">
                     <div class="mb-4 text-center">
                         <div class="text-3xl font-black text-[#F59E0B] space-mono">{{ scoreDetailTotal }}</div>
-                        <div class="text-xs opacity-60 mt-1">總分 (5-30)</div>
+                        <div class="text-xs opacity-60 mt-1">總分 (7-35)</div>
                     </div>
                     <div class="space-y-3">
                         <div class="bg-black/30 p-3 rounded-lg">
@@ -509,24 +509,43 @@
                         </div>
                         <div class="bg-black/30 p-3 rounded-lg">
                             <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm opacity-80">收盤與13EMA偏離</span>
-                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s4 }} 分</span>
-                            </div>
-                            <div class="text-xs opacity-60">{{ scoreDetailScores.devPct != null ? (scoreDetailScores.devPct > 0 ? '+' : '') + scoreDetailScores.devPct.toFixed(2) + '%' : '計算中...' }}</div>
-                        </div>
-                        <div class="bg-black/30 p-3 rounded-lg">
-                            <div class="flex justify-between items-center mb-1">
                                 <span class="text-sm opacity-80">24h 價格區間位置</span>
-                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s5 }} 分</span>
+                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s4 }} 分</span>
                             </div>
                             <div class="text-xs opacity-60">{{ scoreDetailScores.rangePos != null ? scoreDetailScores.rangePos.toFixed(1) + '%' : '—' }}</div>
                         </div>
                         <div class="bg-black/30 p-3 rounded-lg">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-sm opacity-80">相對強弱 vs 大盤</span>
-                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s6 }} 分</span>
+                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s5 }} 分</span>
                             </div>
                             <div class="text-xs opacity-60">{{ scoreDetailScores.rel > 0 ? '+' : '' }}{{ scoreDetailScores.rel.toFixed(2) }}%</div>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm opacity-80">成交量遞增結構</span>
+                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s6 }} 分</span>
+                            </div>
+                            <div class="text-xs opacity-60">
+                                <span v-if="scoreDetailScores.volumes">
+                                    前三根：{{ formatVolume(scoreDetailScores.volumes[0]) }} → {{ formatVolume(scoreDetailScores.volumes[1]) }} → {{ formatVolume(scoreDetailScores.volumes[2]) }}
+                                </span>
+                                <span v-else>計算中...</span>
+                            </div>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm opacity-80">是否創短期新高</span>
+                                <span class="font-bold text-[#F59E0B]">{{ scoreDetailScores.s7 }} 分</span>
+                            </div>
+                            <div class="text-xs opacity-60">
+                                <span v-if="scoreDetailScores.prevClose && scoreDetailScores.high13">
+                                    前一根收盤：${{ scoreDetailScores.prevClose.toFixed(8) }} / 13日高點：${{ scoreDetailScores.high13.toFixed(8) }}
+                                    <span v-if="scoreDetailScores.prevClose >= scoreDetailScores.high13"> (創新高)</span>
+                                    <span v-else> (距高點 {{ (((scoreDetailScores.high13 - scoreDetailScores.prevClose) / scoreDetailScores.high13) * 100).toFixed(2) }}%)</span>
+                                </span>
+                                <span v-else>計算中...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -544,7 +563,9 @@
                         class="text-white/70 hover:text-white text-2xl leading-none">&times;</button>
                 </div>
                 <div class="p-4 scroll-y flex-1 min-h-0 text-sm text-left">
-                    <p class="opacity-80 mb-3">觀察清單內每個幣種依六項指標各得 1～5 分，總分 5～30 分。點擊標題旁 <strong>i</strong> 可再次開啟本說明。</p>
+                    <p class="opacity-80 mb-3">觀察清單內每個幣種依七項指標各得 1～5 分，總分 7～35 分。<br>
+                    <span class="text-xs opacity-70">註：成交量等級、漲跌幅、價格區間位置、相對強弱皆使用「前一根日線」數據（固定不變），資金費率使用「當前值」（即時更新）。</span><br>
+                    點擊標題旁 <strong>i</strong> 可再次開啟本說明。</p>
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse text-xs md:text-sm">
                             <thead class="bg-white/5">
@@ -558,12 +579,13 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5">
-                                <tr><td class="px-2 py-1.5 font-medium">成交量等級</td><td class="px-2 py-1.5">9～10</td><td class="px-2 py-1.5">7～8</td><td class="px-2 py-1.5">5～6</td><td class="px-2 py-1.5">3～4</td><td class="px-2 py-1.5">1～2</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">資金費率</td><td class="px-2 py-1.5">-0.5%～-0.15%</td><td class="px-2 py-1.5">-1%～-0.5% 或 -0.15%～-0.01%</td><td class="px-2 py-1.5">-0.01%～+0.01%</td><td class="px-2 py-1.5">+0.01%～+0.05%</td><td class="px-2 py-1.5">>+0.05%</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">漲跌幅</td><td class="px-2 py-1.5">3%～7%</td><td class="px-2 py-1.5">2%～3% 或 7%～12%</td><td class="px-2 py-1.5">1%～2% 或 12%～18%</td><td class="px-2 py-1.5">0%～1% 或 18%～25%</td><td class="px-2 py-1.5">&lt;0% 或 &gt;25%</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">收盤與13EMA偏離</td><td class="px-2 py-1.5">-1%～+1%</td><td class="px-2 py-1.5">±1%～2%</td><td class="px-2 py-1.5">±2%～3%</td><td class="px-2 py-1.5">±3%～5%</td><td class="px-2 py-1.5">|偏離|&gt;5%</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">24h 價格區間位置</td><td class="px-2 py-1.5">70%～100%</td><td class="px-2 py-1.5">50%～70%</td><td class="px-2 py-1.5">30%～50%</td><td class="px-2 py-1.5">10%～30%</td><td class="px-2 py-1.5">0%～10%</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">相對強弱 vs (BTC+ETH)/2</td><td class="px-2 py-1.5">>+3%</td><td class="px-2 py-1.5">+1%～+3%</td><td class="px-2 py-1.5">-1%～+1%</td><td class="px-2 py-1.5">-3%～-1%</td><td class="px-2 py-1.5">&lt;-3%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">成交量等級<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">10</td><td class="px-2 py-1.5">8～9</td><td class="px-2 py-1.5">6～7</td><td class="px-2 py-1.5">4～5</td><td class="px-2 py-1.5">1～3</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">資金費率<br><span class="text-[10px] opacity-50 font-normal">(當前值)</span></td><td class="px-2 py-1.5">-0.8%～-0.3%</td><td class="px-2 py-1.5">-1.5%～-0.8% 或 -0.3%～-0.05%</td><td class="px-2 py-1.5">-0.05%～+0.005%</td><td class="px-2 py-1.5">+0.005%～+0.03%</td><td class="px-2 py-1.5">&gt;+0.03%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">24h 漲跌幅<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">4%～6%</td><td class="px-2 py-1.5">3%～4% 或 6%～8%</td><td class="px-2 py-1.5">1%～3% 或 8%～12%</td><td class="px-2 py-1.5">0%～1% 或 12%～20%</td><td class="px-2 py-1.5">&lt;0% 或 &gt;20%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">24h 價格區間位置<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">&ge;80%</td><td class="px-2 py-1.5">65%～80%</td><td class="px-2 py-1.5">40%～65%</td><td class="px-2 py-1.5">20%～40%</td><td class="px-2 py-1.5">&lt;20%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">相對強弱 vs (BTC+ETH)/2<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">&gt;+5%</td><td class="px-2 py-1.5">+3%～+5%</td><td class="px-2 py-1.5">0%～+3%</td><td class="px-2 py-1.5">-2%～0%</td><td class="px-2 py-1.5">&lt;-2%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">成交量遞增結構<br><span class="text-[10px] opacity-50 font-normal">(前三根)</span></td><td class="px-2 py-1.5">三連增</td><td class="px-2 py-1.5">兩連增</td><td class="px-2 py-1.5">只有本根放量</td><td class="px-2 py-1.5">無明顯增加</td><td class="px-2 py-1.5">縮量</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">是否創短期新高 (13日)<br><span class="text-[10px] opacity-50 font-normal">(前一根 vs 前2~14根)</span></td><td class="px-2 py-1.5">創新高</td><td class="px-2 py-1.5">距高點≤5%</td><td class="px-2 py-1.5">距高點≤10%</td><td class="px-2 py-1.5">距高點≤15%</td><td class="px-2 py-1.5">距高點&gt;15%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -725,6 +747,9 @@
                     tvDailySymbols.value.forEach(sym => {
                         if (watchlist.value.indexOf(sym) === -1) watchlist.value.push(sym);
                     });
+                    // 確保BTC和ETH在清單中（用於計算相對強弱）
+                    if (!watchlist.value.includes('BTCUSDT')) watchlist.value.push('BTCUSDT');
+                    if (!watchlist.value.includes('ETHUSDT')) watchlist.value.push('ETHUSDT');
                     saveWatchlist();
                     fetchWatchlistExtraData();
                 };
@@ -847,6 +872,9 @@
                     const index = watchlist.value.indexOf(symbol);
                     if (index === -1) {
                         watchlist.value.push(symbol);
+                        // 確保BTC和ETH在清單中（用於計算相對強弱）
+                        if (!watchlist.value.includes('BTCUSDT')) watchlist.value.push('BTCUSDT');
+                        if (!watchlist.value.includes('ETHUSDT')) watchlist.value.push('ETHUSDT');
                     } else {
                         watchlist.value.splice(index, 1);
                     }
@@ -861,6 +889,7 @@
                         saveWatchlist();
                         fetchWatchlistExtraData();
                     }
+                    // 注意：不移除 BTC 和 ETH，因為它們用於計算相對強弱
                 };
 
                 const clearWatchlist = () => {
@@ -875,7 +904,12 @@
                 };
 
                 const watchlistItems = computed(() => {
-                    return fullList.value.filter(item => watchlist.value.includes(item.symbol));
+                    // 過濾掉 BTC 和 ETH（它們只用於計算相對強弱，不顯示在清單中）
+                    return fullList.value.filter(item => 
+                        watchlist.value.includes(item.symbol) && 
+                        item.symbol !== 'BTCUSDT' && 
+                        item.symbol !== 'ETHUSDT'
+                    );
                 });
 
                 const toggleWatchlistSort = (field) => {
@@ -911,7 +945,7 @@
                     return items;
                 });
 
-                // 每 10 個一組，左欄 1-5、右欄 6-10，下一組 11-15 左、16-20 右...
+                // 每 10 個一組，左欄 1-5、右欄 6-10，下一組 11-15 左、16-20 右...（不限數量）
                 const watchlistRows = computed(() => {
                     const items = watchlistItemsSorted.value;
                     const rows = [];
@@ -926,22 +960,98 @@
                     const syms = watchlist.value;
                     if (!syms.length) { symbolExtraData.value = {}; return; }
                     const out = {};
-                    const alpha = 2 / 14;
+                    const allVolumes = []; // 用於計算成交量等級
+                    
                     for (const symbol of syms) {
                         try {
-                            const res = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=13`).then(r => r.json());
-                            if (!Array.isArray(res) || res.length < 13) continue;
-                            let ema = parseFloat(res[0][4]);
-                            for (let i = 1; i < 13; i++) ema = ema * (1 - alpha) + parseFloat(res[i][4]) * alpha;
-                            const close = parseFloat(res[12][4]);
-                            out[symbol] = { ema13: ema, close };
+                            // 取得最近15根日線（包含今天）
+                            const res = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1d&limit=15`).then(r => r.json());
+                            if (!Array.isArray(res) || res.length < 15) continue;
+                            
+                            // 前一根（res.length - 2，索引13）
+                            const prevBar = res[res.length - 2];
+                            const prevOpen = Number(prevBar[1]);
+                            const prevHigh = Number(prevBar[2]);
+                            const prevLow = Number(prevBar[3]);
+                            const prevClose = Number(prevBar[4]);
+                            const prevVolume = Number(prevBar[5]);
+                            
+                            // 前第三根、前第二根、前第一根的成交量（不含今天）
+                            const volumes = [
+                                Number(res[res.length - 4][5]), // 前第三根（索引11）
+                                Number(res[res.length - 3][5]), // 前第二根（索引12）
+                                Number(res[res.length - 2][5])  // 前第一根（索引13）
+                            ];
+                            
+                            // 前一根的漲跌幅（使用高精度計算）
+                            const prevChange = prevOpen !== 0 ? ((prevClose - prevOpen) / prevOpen) * 100 : 0;
+                            
+                            // 前一根的價格區間位置
+                            let prevRangePos = null;
+                            if (prevHigh > prevLow) {
+                                prevRangePos = ((prevClose - prevLow) / (prevHigh - prevLow)) * 100;
+                            }
+                            
+                            // 過去13天的最高價（前2根到前14根，不含前一根，索引0到12）
+                            let high13 = 0;
+                            for (let i = 0; i < res.length - 2; i++) {
+                                const h = Number(res[i][2]); // 最高價
+                                if (h > high13) high13 = h;
+                            }
+                            
+                            out[symbol] = { 
+                                volumes, 
+                                prevClose, 
+                                prevVolume,
+                                prevChange,
+                                prevRangePos,
+                                high13 
+                            };
+                            
+                            allVolumes.push({ symbol, volume: prevVolume });
                         } catch (e) { /* skip */ }
                     }
+                    
+                    // 計算成交量等級（基於前一根的成交量）
+                    if (allVolumes.length > 0) {
+                        const sorted = [...allVolumes].sort((a, b) => a.volume - b.volume);
+                        const n = sorted.length;
+                        sorted.forEach((item, index) => {
+                            let rank = Math.floor((index / n) * 10) + 1;
+                            if (rank > 10) rank = 10;
+                            if (out[item.symbol]) {
+                                out[item.symbol].volumeDecile = rank;
+                            }
+                        });
+                    }
+                    
                     symbolExtraData.value = out;
                 };
 
                 const scoreVolume = (decile) => {
                     if (decile >= 10) return 5; if (decile >= 8) return 4; if (decile >= 6) return 3; if (decile >= 4) return 2; return 1;
+                };
+                const scoreVolumeStructure = (volumes) => {
+                    // volumes = [前第三根, 前第二根, 前第一根]
+                    if (!volumes || volumes.length < 3) return 3;
+                    const v1 = volumes[0], v2 = volumes[1], v3 = volumes[2];
+                    if (v3 > v2 && v2 > v1) return 5; // 三連增
+                    if (v3 > v2) return 4; // 兩連增
+                    if (v3 > v1) return 3; // 只有本根放量
+                    if (v3 < v2 && v3 < v1) return 1; // 縮量
+                    return 2; // 無明顯增加
+                };
+                const scoreNewHigh = (currentClose, highPrice) => {
+                    // currentClose = 前一根的收盤價
+                    // highPrice = 過去13天（前2根到前14根，不含前一根）的最高價
+                    if (!currentClose || !highPrice || highPrice === 0) return 3;
+                    // 使用高精度計算，避免小數字精度問題
+                    const deviation = Number(((highPrice - currentClose) / highPrice) * 100);
+                    if (deviation <= 0) return 5; // 創新高或超越
+                    if (deviation <= 5) return 4; // 5%以內
+                    if (deviation <= 10) return 3; // 10%以內
+                    if (deviation <= 15) return 2; // 15%以內
+                    return 1; // 超過15%
                 };
                 const scoreFunding = (ratePercent, fundingIntervalHours = 8) => {
                     // 將費率標準化為8小時基準：實際費率 * (結算時間 / 8)
@@ -960,11 +1070,6 @@
                     if ((pct >= 0 && pct < 1) || (pct > 12 && pct <= 20)) return 2;
                     return 1;
                 };
-                const scoreEmaDeviation = (devPct) => {
-                    if (devPct == null) return 3;
-                    const a = Math.abs(devPct);
-                    if (a <= 0.5) return 5; if (a <= 1) return 4; if (a <= 2) return 3; if (a <= 4) return 2; return 1;
-                };
                 const scoreRangePosition = (pos) => {
                     if (pos == null || isNaN(pos)) return 3;
                     if (pos >= 80) return 5; if (pos >= 65) return 4; if (pos >= 40) return 3; if (pos >= 20) return 2; return 1;
@@ -975,29 +1080,37 @@
                 };
 
                 const getWatchlistScore = (item) => {
-                    const ratePct = (item.lastFundingRate || 0) * 100;
-                    const changePct = parseFloat(item.priceChangePercent || 0);
-                    const btc = parseFloat((tickerData.value['BTCUSDT'] || {}).priceChangePercent || 0);
-                    const eth = parseFloat((tickerData.value['ETHUSDT'] || {}).priceChangePercent || 0);
-                    const btcEthAvg = (btc + eth) / 2;
-                    const rel = changePct - btcEthAvg;
-
-                    const high = item.highPrice || 0, low = item.lowPrice || 0, close = parseFloat(item.lastPrice || 0);
-                    let rangePos = null;
-                    if (high > low && close) rangePos = ((close - low) / (high - low)) * 100;
-
                     const extra = symbolExtraData.value[item.symbol];
-                    let devPct = null;
-                    if (extra && extra.ema13 && extra.close) devPct = ((extra.close - extra.ema13) / extra.ema13) * 100;
-
+                    
+                    // 使用前一根的數據（固定不變）
+                    const volumeDecile = extra?.volumeDecile || 1;
+                    const changePct = extra?.prevChange || 0;
+                    const rangePos = extra?.prevRangePos || null;
+                    
+                    // BTC和ETH也用前一根的漲跌幅
+                    const btcExtra = symbolExtraData.value['BTCUSDT'];
+                    const ethExtra = symbolExtraData.value['ETHUSDT'];
+                    const btcChange = btcExtra?.prevChange || 0;
+                    const ethChange = ethExtra?.prevChange || 0;
+                    const btcEthAvg = (btcChange + ethChange) / 2;
+                    const rel = changePct - btcEthAvg;
+                    
+                    const volumes = extra?.volumes || null;
+                    const prevClose = extra?.prevClose || null;
+                    const high13 = extra?.high13 || null;
+                    
+                    // 資金費率使用當前值
+                    const ratePct = (item.lastFundingRate || 0) * 100;
                     const fundingInterval = item.fundingIntervalHours || 8;
-                    const s1 = scoreVolume(item.decileRank || 1);
+
+                    const s1 = scoreVolume(volumeDecile);
                     const s2 = scoreFunding(ratePct, fundingInterval);
                     const s3 = scoreChange(changePct);
-                    const s4 = scoreEmaDeviation(devPct);
-                    const s5 = scoreRangePosition(rangePos);
-                    const s6 = scoreRelativeStrength(rel);
-                    return s1 + s2 + s3 + s4 + s5 + s6;
+                    const s4 = scoreRangePosition(rangePos);
+                    const s5 = scoreRelativeStrength(rel);
+                    const s6 = scoreVolumeStructure(volumes);
+                    const s7 = scoreNewHigh(prevClose, high13);
+                    return s1 + s2 + s3 + s4 + s5 + s6 + s7;
                 };
 
                 const showScoreDetail = (item) => {
@@ -1011,42 +1124,52 @@
                 });
 
                 const scoreDetailScores = computed(() => {
-                    if (!scoreDetailSymbol.value) return { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0, decile: 0, ratePct: 0, changePct: 0, devPct: null, rangePos: null, rel: 0, fundingInterval: 8 };
+                    if (!scoreDetailSymbol.value) return { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0, s7: 0, decile: 0, ratePct: 0, changePct: 0, rangePos: null, rel: 0, fundingInterval: 8, volumes: null, prevClose: null, high13: null };
                     const item = watchlistItems.value.find(i => i.symbol === scoreDetailSymbol.value);
-                    if (!item) return { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0, decile: 0, ratePct: 0, changePct: 0, devPct: null, rangePos: null, rel: 0, fundingInterval: 8 };
-
-                    const ratePct = (item.lastFundingRate || 0) * 100;
-                    const changePct = parseFloat(item.priceChangePercent || 0);
-                    const btc = parseFloat((tickerData.value['BTCUSDT'] || {}).priceChangePercent || 0);
-                    const eth = parseFloat((tickerData.value['ETHUSDT'] || {}).priceChangePercent || 0);
-                    const btcEthAvg = (btc + eth) / 2;
-                    const rel = changePct - btcEthAvg;
-
-                    const high = item.highPrice || 0, low = item.lowPrice || 0, close = parseFloat(item.lastPrice || 0);
-                    let rangePos = null;
-                    if (high > low && close) rangePos = ((close - low) / (high - low)) * 100;
+                    if (!item) return { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0, s7: 0, decile: 0, ratePct: 0, changePct: 0, rangePos: null, rel: 0, fundingInterval: 8, volumes: null, prevClose: null, high13: null };
 
                     const extra = symbolExtraData.value[item.symbol];
-                    let devPct = null;
-                    if (extra && extra.ema13 && extra.close) devPct = ((extra.close - extra.ema13) / extra.ema13) * 100;
-
+                    
+                    // 使用前一根的數據
+                    const volumeDecile = extra?.volumeDecile || 1;
+                    const changePct = extra?.prevChange || 0;
+                    const rangePos = extra?.prevRangePos || null;
+                    
+                    // BTC和ETH也用前一根的漲跌幅
+                    const btcExtra = symbolExtraData.value['BTCUSDT'];
+                    const ethExtra = symbolExtraData.value['ETHUSDT'];
+                    const btcChange = btcExtra?.prevChange || 0;
+                    const ethChange = ethExtra?.prevChange || 0;
+                    const btcEthAvg = (btcChange + ethChange) / 2;
+                    const rel = changePct - btcEthAvg;
+                    
+                    const volumes = extra?.volumes || null;
+                    const prevClose = extra?.prevClose || null;
+                    const high13 = extra?.high13 || null;
+                    
+                    // 資金費率使用當前值
+                    const ratePct = (item.lastFundingRate || 0) * 100;
                     const fundingInterval = item.fundingIntervalHours || 8;
-                    const s1 = scoreVolume(item.decileRank || 1);
+
+                    const s1 = scoreVolume(volumeDecile);
                     const s2 = scoreFunding(ratePct, fundingInterval);
                     const s3 = scoreChange(changePct);
-                    const s4 = scoreEmaDeviation(devPct);
-                    const s5 = scoreRangePosition(rangePos);
-                    const s6 = scoreRelativeStrength(rel);
+                    const s4 = scoreRangePosition(rangePos);
+                    const s5 = scoreRelativeStrength(rel);
+                    const s6 = scoreVolumeStructure(volumes);
+                    const s7 = scoreNewHigh(prevClose, high13);
 
                     return {
-                        s1, s2, s3, s4, s5, s6,
-                        decile: item.decileRank || 1,
+                        s1, s2, s3, s4, s5, s6, s7,
+                        decile: volumeDecile,
                         ratePct: ratePct.toFixed(4),
                         changePct: changePct.toFixed(2),
-                        devPct,
                         rangePos,
                         rel,
-                        fundingInterval
+                        fundingInterval,
+                        volumes,
+                        prevClose,
+                        high13
                     };
                 });
 
