@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>TERMINAL | Funding Rate Monitor</title>
     <!-- 引入字體 -->
     <link
@@ -260,6 +263,10 @@
                     <span class="text-[10px] opacity-60">{{ formatTVSignalDate(s.time) }}</span>
                     <span class="font-bold text-sm">{{ (s.symbol || '').replace(/\.P$/i,'').replace(/PERP$/i,'').replace(/USDT$/i,'').trim() || '—' }}</span>
                     <span v-if="s.direction" class="text-xs opacity-70">{{ s.direction }}</span>
+                    <!-- 顯示此幣種是否在 Binance 合約市場存在 -->
+                    <span v-if="!isBinanceSymbol((s.symbol || '').replace(/\.P$/i,'').replace(/PERP$/i,'').trim())" 
+                        class="text-[9px] bg-red-500/20 text-red-400 px-1 py-0.5 rounded" 
+                        title="此幣種不在 Binance 合約市場">⚠</span>
                 </div>
             </div>
         </div>
@@ -339,71 +346,67 @@
                     </button>
                 </div>
 
-                <!-- Watchlist Items：兩排，左欄 1-5 / 11-15…，右欄 6-10 / 16-20… -->
+                <!-- Watchlist Items：單排往下排列 -->
                 <div v-if="watchlist.length === 0" class="text-center py-12 opacity-50">
                     <div class="text-xl mb-2">📋</div>
                     <div>尚無觀察項目，請從下方選擇幣種加入</div>
                 </div>
-                <div v-else class="space-y-4 watchlist-content">
-                    <!-- 欄位標題（適中大小、較亮） -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <div class="grid grid-cols-[0.8fr_1fr_0.9fr_1fr_5rem_auto] items-center gap-2 py-3 px-3 text-sm tracking-wider text-white/85 border-b border-white/10">
-                            <span>交易對</span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('volume')">成交量 <span v-if="watchlistSortBy === 'volume'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('change')">24h 漲跌 <span v-if="watchlistSortBy === 'change'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('funding')">資金費率 <span class="text-[10px] opacity-50 normal-case">(上期)</span> <span v-if="watchlistSortBy === 'funding'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block whitespace-nowrap" @click="toggleWatchlistSort('score')">評分 <span v-if="watchlistSortBy === 'score'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span> <button type="button" @click.stop="showScoreHelp = true" class="w-4 h-4 rounded-full border border-white/50 text-white/70 hover:bg-white/20 inline-flex items-center justify-center text-[10px] font-bold leading-none" title="評分標準">i</button></span>
-                            <span></span>
-                        </div>
-                        <div class="hidden md:grid grid-cols-[0.8fr_1fr_0.9fr_1fr_5rem_auto] items-center gap-2 py-3 px-3 text-sm tracking-wider text-white/85 border-b border-white/10">
-                            <span>交易對</span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('volume')">成交量 <span v-if="watchlistSortBy === 'volume'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('change')">24h 漲跌 <span v-if="watchlistSortBy === 'change'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block" @click="toggleWatchlistSort('funding')">資金費率 <span class="text-[10px] opacity-50 normal-case">(上期)</span> <span v-if="watchlistSortBy === 'funding'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span></span>
-                            <span class="cursor-pointer hover:text-white text-center block whitespace-nowrap" @click="toggleWatchlistSort('score')">評分 <span v-if="watchlistSortBy === 'score'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span> <button type="button" @click.stop="showScoreHelp = true" class="w-4 h-4 rounded-full border border-white/50 text-white/70 hover:bg-white/20 inline-flex items-center justify-center text-[10px] font-bold leading-none" title="評分標準">i</button></span>
+                <div v-else class="space-y-3 watchlist-content">
+                    <div class="overflow-x-auto md:overflow-x-visible scroll-x min-w-0">
+                        <div class="min-w-[800px] md:min-w-0">
+                    <!-- 欄位標題 -->
+                    <div class="glass-card rounded-lg overflow-hidden">
+                        <div class="grid grid-cols-[0.7fr_1fr_0.9fr_0.9fr_1fr_4rem_auto] items-center gap-2 py-3 px-3 text-xs md:text-sm tracking-wider text-white/85 bg-white/5">
+                            <span class="cursor-pointer hover:text-white" @click="toggleWatchlistSort('symbol')">交易對</span>
+                            <span class="cursor-pointer hover:text-white text-center" @click="toggleWatchlistSort('volume')">
+                                24h 成交量 <span v-if="watchlistSortBy === 'volume'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span>
+                            </span>
+                            <span class="cursor-pointer hover:text-white text-center" @click="toggleWatchlistSort('change')">
+                                24h 漲跌 <span v-if="watchlistSortBy === 'change'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span>
+                            </span>
+                            <span class="cursor-pointer hover:text-white text-center" @click="toggleWatchlistSort('price')">
+                                價格 <span v-if="watchlistSortBy === 'price'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span>
+                            </span>
+                            <span class="cursor-pointer hover:text-white text-center" @click="toggleWatchlistSort('funding')">
+                                資金費率 <span v-if="watchlistSortBy === 'funding'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span>
+                            </span>
+                            <span class="cursor-pointer hover:text-white text-center whitespace-nowrap" @click="toggleWatchlistSort('score')">
+                                評分 <span v-if="watchlistSortBy === 'score'">{{ watchlistSortOrder === 'desc' ? '▼' : '▲' }}</span>
+                                <button type="button" @click.stop="showScoreHelp = true" class="w-4 h-4 rounded-full border border-white/50 text-white/70 hover:bg-white/20 inline-flex items-center justify-center text-[10px] font-bold leading-none ml-1" title="評分標準">i</button>
+                            </span>
                             <span></span>
                         </div>
                     </div>
-                    <div v-for="(row, rowIndex) in watchlistRows" :key="rowIndex" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <div class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
-                            <div v-for="item in row.left" :key="item.symbol"
-                                class="grid grid-cols-[0.8fr_1fr_0.9fr_1fr_5rem_auto] items-center gap-2 py-3 px-3 hover:bg-white/5 transition-colors">
-                                <div class="font-semibold text-base text-white tracking-tight cursor-pointer min-w-0 truncate"
-                                    @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
-                                <div class="flex items-center gap-1.5 min-w-0 justify-center">
-                                    <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
-                                    <span class="text-sm space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
-                                </div>
-                                <div class="text-sm font-bold text-center"
-                                    :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
-                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
-                                </div>
-                                <div class="text-sm font-bold space-mono text-center pl-3" :class="getRateClass(item.lastFundingRate)">
-                                    {{ (item.lastFundingRate * 100).toFixed(4) }}%
-                                </div>
-                                <div class="text-sm font-bold text-[#F59E0B] space-mono text-center cursor-pointer hover:underline" @click="showScoreDetail(item)">{{ getWatchlistScore(item) }}</div>
-                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-xl leading-none">&times;</button>
+                    
+                    <!-- 資料列 -->
+                    <div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+                        <div v-for="item in watchlistRows" :key="item.symbol"
+                            class="grid grid-cols-[0.7fr_1fr_0.9fr_0.9fr_1fr_4rem_auto] items-center gap-2 py-3 px-3 hover:bg-white/5 transition-colors">
+                            <!-- 交易對 -->
+                            <div class="font-semibold text-sm md:text-base text-white tracking-tight cursor-pointer whitespace-nowrap min-w-0 md:truncate"
+                                @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
+                            <!-- 24h 成交量 -->
+                            <div class="flex items-center gap-1 min-w-0 justify-center">
+                                <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
+                                <span class="text-xs md:text-sm space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
                             </div>
+                            <!-- 24h 漲跌 -->
+                            <div class="text-xs md:text-sm font-bold text-center"
+                                :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
+                                {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
+                            </div>
+                            <!-- 價格 -->
+                            <div class="text-xs md:text-sm space-mono text-center opacity-80">${{ formatPrice(item.lastPrice) }}</div>
+                            <!-- 資金費率 -->
+                            <div class="text-xs md:text-sm font-bold space-mono text-center" :class="getRateClass(item.lastFundingRate)">
+                                {{ (item.lastFundingRate * 100).toFixed(4) }}%
+                            </div>
+                            <!-- 評分 -->
+                            <div class="text-sm md:text-base font-bold text-[#F59E0B] space-mono text-center cursor-pointer hover:underline" @click="showScoreDetail(item)">{{ getWatchlistScore(item) }}</div>
+                            <!-- 移除按鈕 -->
+                            <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-lg md:text-xl leading-none">&times;</button>
                         </div>
-                        <div v-if="row.right.length" class="divide-y divide-white/5 glass-card md:rounded-lg overflow-hidden">
-                            <div v-for="item in row.right" :key="item.symbol"
-                                class="grid grid-cols-[0.8fr_1fr_0.9fr_1fr_5rem_auto] items-center gap-2 py-3 px-3 hover:bg-white/5 transition-colors">
-                                <div class="font-semibold text-base text-white tracking-tight cursor-pointer min-w-0 truncate"
-                                    @click="openHistory(item.symbol)">{{ item.symbol.replace('USDT', '') }}</div>
-                                <div class="flex items-center gap-1.5 min-w-0 justify-center">
-                                    <span class="decile-badge shrink-0" title="成交量分位 (1-10)">{{ item.decileRank }}</span>
-                                    <span class="text-sm space-mono opacity-80 truncate">{{ formatVolume(item.quoteVolume) }}</span>
-                                </div>
-                                <div class="text-sm font-bold text-center"
-                                    :class="parseFloat(item.priceChangePercent) >= 0 ? 'rate-positive' : 'rate-negative'">
-                                    {{ parseFloat(item.priceChangePercent) > 0 ? '▲' : '▼' }}{{ Math.abs(item.priceChangePercent) }}%
-                                </div>
-                                <div class="text-sm font-bold space-mono text-center pl-3" :class="getRateClass(item.lastFundingRate)">
-                                    {{ (item.lastFundingRate * 100).toFixed(4) }}%
-                                </div>
-                                <div class="text-sm font-bold text-[#F59E0B] space-mono text-center cursor-pointer hover:underline" @click="showScoreDetail(item)">{{ getWatchlistScore(item) }}</div>
-                                <button @click="removeFromWatchlist(item.symbol)" class="text-red-400 hover:text-red-300 text-xl leading-none">&times;</button>
-                            </div>
+                    </div>
                         </div>
                     </div>
                 </div>
@@ -579,8 +582,30 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5">
-                                <tr><td class="px-2 py-1.5 font-medium">成交量等級<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">10</td><td class="px-2 py-1.5">8～9</td><td class="px-2 py-1.5">6～7</td><td class="px-2 py-1.5">4～5</td><td class="px-2 py-1.5">1～3</td></tr>
-                                <tr><td class="px-2 py-1.5 font-medium">資金費率<br><span class="text-[10px] opacity-50 font-normal">(當前值)</span></td><td class="px-2 py-1.5">-0.8%～-0.3%</td><td class="px-2 py-1.5">-1.5%～-0.8% 或 -0.3%～-0.05%</td><td class="px-2 py-1.5">-0.05%～+0.005%</td><td class="px-2 py-1.5">+0.005%～+0.03%</td><td class="px-2 py-1.5">&gt;+0.03%</td></tr>
+                                <tr><td class="px-2 py-1.5 font-medium">成交量等級<br><span class="text-[10px] opacity-50 font-normal">(實時 24h)</span></td><td class="px-2 py-1.5">10</td><td class="px-2 py-1.5">8～9</td><td class="px-2 py-1.5">6～7</td><td class="px-2 py-1.5">4～5</td><td class="px-2 py-1.5">1～3</td></tr>
+                                <tr>
+                                    <td class="px-2 py-1.5 font-medium" rowspan="2">資金費率<br><span class="text-[10px] opacity-50 font-normal">(當前值，標準化為每小時)</span></td>
+                                    <td class="px-2 py-1.5">≤ -0.3%</td>
+                                    <td class="px-2 py-1.5">-0.3% ~ -0.05%</td>
+                                    <td class="px-2 py-1.5">-0.05% ~ +0.01%</td>
+                                    <td class="px-2 py-1.5">+0.01% ~ +0.03%</td>
+                                    <td class="px-2 py-1.5">&gt; +0.03%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">8h結算: ≤ -0.3%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">8h結算: -0.3% ~ -0.05%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">8h結算: -0.05% ~ +0.01%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">8h結算: +0.01% ~ +0.03%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">8h結算: &gt; +0.03%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-2 py-1.5 font-medium"></td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">4h結算: ≤ -0.15%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">4h結算: -0.15% ~ -0.025%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">4h結算: -0.025% ~ +0.005%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">4h結算: +0.005% ~ +0.015%</td>
+                                    <td class="px-2 py-1.5 opacity-70 text-[11px]">4h結算: &gt; +0.015%</td>
+                                </tr>
                                 <tr><td class="px-2 py-1.5 font-medium">24h 漲跌幅<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">4%～6%</td><td class="px-2 py-1.5">3%～4% 或 6%～8%</td><td class="px-2 py-1.5">1%～3% 或 8%～12%</td><td class="px-2 py-1.5">0%～1% 或 12%～20%</td><td class="px-2 py-1.5">&lt;0% 或 &gt;20%</td></tr>
                                 <tr><td class="px-2 py-1.5 font-medium">24h 價格區間位置<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">&ge;80%</td><td class="px-2 py-1.5">65%～80%</td><td class="px-2 py-1.5">40%～65%</td><td class="px-2 py-1.5">20%～40%</td><td class="px-2 py-1.5">&lt;20%</td></tr>
                                 <tr><td class="px-2 py-1.5 font-medium">相對強弱 vs (BTC+ETH)/2<br><span class="text-[10px] opacity-50 font-normal">(前一根)</span></td><td class="px-2 py-1.5">&gt;+5%</td><td class="px-2 py-1.5">+3%～+5%</td><td class="px-2 py-1.5">0%～+3%</td><td class="px-2 py-1.5">-2%～0%</td><td class="px-2 py-1.5">&lt;-2%</td></tr>
@@ -592,10 +617,6 @@
                 </div>
             </div>
         </div>
-
-        <footer class="mt-12 mb-20 text-center opacity-30 text-[10px] space-mono tracking-[4px]">
-            TERMINAL v9.2 // DATA 10s
-        </footer>
     </div>
 
     <script>
@@ -647,11 +668,9 @@
                             fundingInfo.value = iMap;
                         }
 
-                        // 處理 premiumIndex 數據，確保有 lastFundingRate（評分用）
-                        // markPrice 相關數據可用來計算當前預估費率（顯示用）
                         rawData.value = resIndex.filter(item => item.nextFundingTime > 0);
                     } catch (e) {
-                        console.error("API Error");
+                        console.error("API Error", e);
                     }
                 };
 
@@ -677,6 +696,12 @@
                     if (!ts) return '';
                     const d = new Date(ts);
                     return d.getMonth() + 1 + '/' + d.getDate();
+                };
+                const isBinanceSymbol = (rawSymbol) => {
+                    if (!rawSymbol) return false;
+                    let sym = rawSymbol.toUpperCase().trim();
+                    if (!/USDT$/i.test(sym)) sym = sym + 'USDT';
+                    return fullList.value.some(item => item.symbol === sym);
                 };
                 const toDateKey = (ts) => {
                     if (!ts) return '';
@@ -739,19 +764,28 @@
                         sym = sym.replace(/\.P$/i, '').replace(/PERP$/i, '');
                         // 如果不是以USDT結尾，加上USDT
                         if (!/USDT$/i.test(sym)) sym = sym + 'USDT';
+                        // 只加入在 Binance 合約市場存在的幣種
+                        // 檢查 fullList 中是否有這個幣種
                         syms.add(sym);
                     });
-                    return Array.from(syms).sort();
+                    // 過濾掉不存在於 Binance 合約的幣種
+                    const validSyms = Array.from(syms).filter(sym => {
+                        return fullList.value.some(item => item.symbol === sym);
+                    });
+                    return validSyms.sort();
                 });
                 const addTVSignalsToWatchlist = () => {
+                    let addedCount = 0;
                     tvDailySymbols.value.forEach(sym => {
-                        if (watchlist.value.indexOf(sym) === -1) watchlist.value.push(sym);
+                        if (watchlist.value.indexOf(sym) === -1) {
+                            watchlist.value.push(sym);
+                            addedCount++;
+                        }
                     });
-                    // 確保BTC和ETH在清單中（用於計算相對強弱）
-                    if (!watchlist.value.includes('BTCUSDT')) watchlist.value.push('BTCUSDT');
-                    if (!watchlist.value.includes('ETHUSDT')) watchlist.value.push('ETHUSDT');
                     saveWatchlist();
                     fetchWatchlistExtraData();
+                    // 提示用戶實際加入的數量
+                    console.log(`已加入 ${addedCount} 個 TV 訊號到觀察清單（共 ${tvDailySymbols.value.length} 個訊號）`);
                 };
 
                 const openHistory = async (symbol) => {
@@ -872,9 +906,6 @@
                     const index = watchlist.value.indexOf(symbol);
                     if (index === -1) {
                         watchlist.value.push(symbol);
-                        // 確保BTC和ETH在清單中（用於計算相對強弱）
-                        if (!watchlist.value.includes('BTCUSDT')) watchlist.value.push('BTCUSDT');
-                        if (!watchlist.value.includes('ETHUSDT')) watchlist.value.push('ETHUSDT');
                     } else {
                         watchlist.value.splice(index, 1);
                     }
@@ -899,18 +930,11 @@
                     }
                 };
 
-                const isInWatchlist = (symbol) => {
-                    return watchlist.value.includes(symbol);
-                };
+                const isInWatchlist = (symbol) => watchlist.value.includes(symbol);
 
-                const watchlistItems = computed(() => {
-                    // 過濾掉 BTC 和 ETH（它們只用於計算相對強弱，不顯示在清單中）
-                    return fullList.value.filter(item => 
-                        watchlist.value.includes(item.symbol) && 
-                        item.symbol !== 'BTCUSDT' && 
-                        item.symbol !== 'ETHUSDT'
-                    );
-                });
+                const watchlistItems = computed(() => 
+                    fullList.value.filter(item => watchlist.value.includes(item.symbol))
+                );
 
                 const toggleWatchlistSort = (field) => {
                     if (watchlistSortBy.value === field) {
@@ -933,32 +957,34 @@
                         } else if (watchlistSortBy.value === 'change') {
                             valA = parseFloat(a.priceChangePercent || 0);
                             valB = parseFloat(b.priceChangePercent || 0);
+                        } else if (watchlistSortBy.value === 'price') {
+                            valA = parseFloat(a.lastPrice || 0);
+                            valB = parseFloat(b.lastPrice || 0);
                         } else if (watchlistSortBy.value === 'funding') {
                             valA = (a.lastFundingRate || 0) * 100;
                             valB = (b.lastFundingRate || 0) * 100;
                         } else if (watchlistSortBy.value === 'score') {
                             valA = getWatchlistScore(a);
                             valB = getWatchlistScore(b);
+                        } else if (watchlistSortBy.value === 'symbol') {
+                            valA = a.symbol;
+                            valB = b.symbol;
+                            return watchlistSortOrder.value === 'desc' ? valB.localeCompare(valA) : valA.localeCompare(valB);
                         }
                         return watchlistSortOrder.value === 'desc' ? valB - valA : valA - valB;
                     });
                     return items;
                 });
 
-                // 每 10 個一組，左欄 1-5、右欄 6-10，下一組 11-15 左、16-20 右...（不限數量）
+                // 觀察清單：單排往下排列（不再分左右兩欄）
                 const watchlistRows = computed(() => {
-                    const items = watchlistItemsSorted.value;
-                    const rows = [];
-                    for (let i = 0; i < items.length; i += 10) {
-                        const chunk = items.slice(i, i + 10);
-                        rows.push({ left: chunk.slice(0, 5), right: chunk.slice(5, 10) });
-                    }
-                    return rows;
+                    return watchlistItemsSorted.value;
                 });
 
                 const fetchWatchlistExtraData = async () => {
-                    const syms = watchlist.value;
-                    if (!syms.length) { symbolExtraData.value = {}; return; }
+                    if (!watchlist.value.length) { symbolExtraData.value = {}; return; }
+                    // 評分需 BTC/ETH 資料算相對強弱，一併抓取
+                    const syms = [...new Set([...watchlist.value, 'BTCUSDT', 'ETHUSDT'])];
                     const out = {};
                     const allVolumes = []; // 用於計算成交量等級
                     
@@ -1054,13 +1080,23 @@
                     return 1; // 超過15%
                 };
                 const scoreFunding = (ratePercent, fundingIntervalHours = 8) => {
-                    // 將費率標準化為8小時基準：實際費率 * (結算時間 / 8)
-                    const normalizedRate = ratePercent * (fundingIntervalHours / 8);
+                    // 標準化為「每小時費率」：實際費率 / 結算小時數
+                    const hourlyRate = ratePercent / fundingIntervalHours;
                     
-                    if (normalizedRate >= -0.8 && normalizedRate <= -0.3) return 5;
-                    if (normalizedRate >= -0.05 && normalizedRate <= 0.005) return 3;
-                    if ((normalizedRate >= -1.5 && normalizedRate < -0.8) || (normalizedRate >= -0.3 && normalizedRate < -0.05)) return 4;
-                    if (normalizedRate > 0.005 && normalizedRate <= 0.03) return 2;
+                    // 評分標準（以每小時費率計算）：
+                    // 5分：負費率 <= -0.0375%/h (包含更大的負值)
+                    if (hourlyRate <= -0.0375) return 5;
+                    
+                    // 4分：負費率 -0.0375% ~ -0.00625%/h
+                    if (hourlyRate < -0.00625) return 4;
+                    
+                    // 3分：-0.00625% ~ +0.00125%/h (接近中性)
+                    if (hourlyRate <= 0.00125) return 3;
+                    
+                    // 2分：+0.00125% ~ +0.00375%/h (小正費率)
+                    if (hourlyRate <= 0.00375) return 2;
+                    
+                    // 1分：> +0.00375%/h (大正費率)
                     return 1;
                 };
                 const scoreChange = (pct) => {
@@ -1082,8 +1118,9 @@
                 const getWatchlistScore = (item) => {
                     const extra = symbolExtraData.value[item.symbol];
                     
-                    // 使用前一根的數據（固定不變）
-                    const volumeDecile = extra?.volumeDecile || 1;
+                    // 成交量等級使用實時 24h 成交量的分位
+                    const volumeDecile = item.decileRank || 1;
+                    // 其他使用前一根的數據（固定不變）
                     const changePct = extra?.prevChange || 0;
                     const rangePos = extra?.prevRangePos || null;
                     
@@ -1130,8 +1167,9 @@
 
                     const extra = symbolExtraData.value[item.symbol];
                     
-                    // 使用前一根的數據
-                    const volumeDecile = extra?.volumeDecile || 1;
+                    // 成交量等級使用實時 24h 成交量的分位
+                    const volumeDecile = item.decileRank || 1;
+                    // 其他使用前一根的數據
                     const changePct = extra?.prevChange || 0;
                     const rangePos = extra?.prevRangePos || null;
                     
@@ -1187,7 +1225,7 @@
 
                 return {
                     TV_SIGNALS_URL,
-                    tvSignals, tvSignalsLoading, tvSignalsFilter, tvSignalsFiltered, tvSignalsDateOptions, formatTVSignalDate,
+                    tvSignals, tvSignalsLoading, tvSignalsFilter, tvSignalsFiltered, tvSignalsDateOptions, formatTVSignalDate, isBinanceSymbol,
                     tvDailySymbols, fetchTVSignals, addTVSignalsToWatchlist,
                     filteredList, paginatedList, searchQuery, displayLimit,
                     top5High, top5Low, getRateClass, formatPrice, formatVolume,
