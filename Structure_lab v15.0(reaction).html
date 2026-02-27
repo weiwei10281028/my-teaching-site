@@ -1467,11 +1467,18 @@
                                         ．化學性質相似判斷
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-bottom: 12px;">
                                     <span style="color:#f59e0b; font-weight: bold; display: block; margin-bottom: 6px;">[ 混成 ]</span>
                                     <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f59e0b;">
                                         ．混成軌域判斷<br>
                                         ．分子形狀判斷
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style="color:#ef4444; font-weight: bold; display: block; margin-bottom: 6px;">[ 氧化還原 ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #ef4444;">
+                                        ．分子中原子氧化數判斷<br>
+                                        ．依氧化數反向辨識物質
                                     </div>
                                 </div>
                             </div>
@@ -1496,6 +1503,13 @@
                             <span class="diff-title" style="color:#f59e0b;">混成</span>
                             <span class="diff-range">混成軌域判斷、分子形狀判斷</span>
                             <span class="diff-tag" style="border-color:#f59e0b; color:#f59e0b;">直接開始 ▸</span>
+                        </div>
+                    </div>
+                    <div class="diff-card diff-d" onclick="selectCalCategory('redox')">
+                        <div class="diff-info">
+                            <span class="diff-title" style="color:#ef4444;">氧化還原</span>
+                            <span class="diff-range">分子中原子氧化數判斷</span>
+                            <span class="diff-tag" style="border-color:#ef4444; color:#ef4444;">直接開始 ▸</span>
                         </div>
                     </div>
                 </div>
@@ -5169,6 +5183,64 @@ const QUIZ_HELPER = {
         const c = picked.z - electrons;
         const sign = c === 0 ? "" : (c > 0 ? (c===1?"+":`${c}+`) : (c===-1?"-":`${Math.abs(c)}-`));
         return `${picked.s}<sup>${sign}</sup>`;
+    },
+    // 8. 計算原子氧化數（傳統氧化數規則）
+    calculateAtomOxidationNumber: (targetAtomIdx, atomsRaw, bondsRaw, molCharge) => {
+        if (!atomsRaw || !bondsRaw || targetAtomIdx < 0 || targetAtomIdx >= atomsRaw.length) return 0;
+        const targetAtom = atomsRaw[targetAtomIdx];
+        const elem = targetAtom.elem;
+        const charge = molCharge || 0;
+        const elemCounts = {};
+        atomsRaw.forEach(a => { elemCounts[a.elem] = (elemCounts[a.elem] || 0) + 1; });
+        const fixedOx = { 'H': 1, 'O': -2, 'F': -1, 'Cl': -1, 'Br': -1, 'I': -1 };
+        if (elem === 'H') {
+            const hasMoreEN = atomsRaw.some(a => ['N','O','F','Cl','Br','I','S'].includes(a.elem));
+            return hasMoreEN ? 1 : -1;
+        }
+        if (elem === 'O') {
+            const hasF = atomsRaw.some(a => a.elem === 'F');
+            if (hasF) return 2;
+            const hasOnlyO = atomsRaw.every(a => a.elem === 'O');
+            const peroxideLike = elemCounts['O'] === 2 && elemCounts['H'] === 2;
+            if (peroxideLike) return -1;
+            if (hasOnlyO) return 0;
+            return -2;
+        }
+        if (elem === 'F') return -1;
+        let knownSum = 0;
+        let unknownCount = 0;
+        let unknownElem = null;
+        for (const e in elemCounts) {
+            if (fixedOx[e] !== undefined) {
+                let ox = fixedOx[e];
+                if (e === 'H') { const hasMoreEN = atomsRaw.some(a => ['N','O','F','Cl','Br','I','S'].includes(a.elem)); ox = hasMoreEN ? 1 : -1; }
+                if (e === 'O') { const peroxideLike = elemCounts['O'] === 2 && elemCounts['H'] === 2; ox = peroxideLike ? -1 : -2; }
+                knownSum += ox * elemCounts[e];
+            } else {
+                unknownCount++;
+                unknownElem = e;
+            }
+        }
+        if (unknownCount === 1 && unknownElem === elem) {
+            return (charge - knownSum) / elemCounts[elem];
+        }
+        const props = ELEMENT_PROPS[elem];
+        const enSelf = props ? (props.en || 0) : 0;
+        let oxState = 0;
+        bondsRaw.forEach(b => {
+            if (b[0] === targetAtomIdx || b[1] === targetAtomIdx) {
+                const otherIdx = (b[0] === targetAtomIdx) ? b[1] : b[0];
+                const otherAtom = atomsRaw[otherIdx];
+                if (!otherAtom) return;
+                const enOther = ELEMENT_PROPS[otherAtom.elem]?.en || 0;
+                const bType = b[2] || "single";
+                let lines = bType.includes("triple") ? 3 : (bType.includes("double") ? 2 : 1);
+                if (bType.includes("coordinate")) lines = bType.includes("triple") ? 3 : (bType.includes("double") ? 2 : 1);
+                if (elem === otherAtom.elem) oxState += 0;
+                else oxState += (enSelf > enOther) ? -lines : lines;
+            }
+        });
+        return oxState;
     }
 };
 
@@ -5226,18 +5298,19 @@ window.resetToDifficultySelection = function() {
 window.selectCalCategory = function(cat) {
     window.calCategory = cat;
     document.getElementById('cal-category-area').style.display = 'none';
-    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成' };
+    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原' };
     document.getElementById('quiz-cancel-btn').style.display = 'block';
 
-    if (cat === 'hybrid') {
+    if (cat === 'hybrid' || cat === 'redox') {
+        const diff = cat === 'hybrid' ? 3 : 4;
         const prevTotal = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
         window.quizState = {
-            rank: null, difficulty: 3, totalQ: prevTotal, currentQ: 0, correctCount: 0,
+            rank: null, difficulty: diff, totalQ: prevTotal, currentQ: 0, correctCount: 0,
             pool: [], askedZ: [], typeDeck: [], askedQuestions: []
         };
         window.quizState.generateTypeDeck = window._generateTypeDeck;
         document.getElementById('quiz-setup-area').style.display = 'flex';
-        document.getElementById('quiz-status-text').textContent = '混成 > 選擇題數';
+        document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇題數`;
         setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
     } else {
         document.getElementById('difficulty-grid').style.setProperty('display', 'flex', 'important');
@@ -5251,7 +5324,8 @@ window._generateTypeDeck = function(diff, total) {
     const typePools = {
         1: [0, 1, 2, 4, 5, 6, 10, 14],
         2: [3, 6, 7, 8, 9, 10, 11, 14, 15],
-        3: [16, 17]
+        3: [16, 17],
+        4: [18]
     };
     const types = typePools[diff] || typePools[1];
     const restrictedInPool = types.filter(t => restrictedTypes.includes(t));
@@ -5455,6 +5529,16 @@ function generateQuestionKey(type, quizData, target) {
             }
             return `type17-${coreQuestion.substring(0, 50)}`;
             
+        case 18: // 氧化數判斷（正向＋反向）
+            if (coreQuestion.includes('下列何者')) {
+                return `type18-reverse-${coreQuestion.substring(0, 50)}`;
+            }
+            const oxMatch = coreQuestion.match(/(.+?)中的\s*([A-Z][a-z]?)/);
+            if (oxMatch) {
+                return `type18-${oxMatch[1].trim()}-${oxMatch[2]}`;
+            }
+            return `type18-${coreQuestion.substring(0, 50)}`;
+            
         default:
             // 其他題型：使用題型+問題核心內容
             // 對於單向題型，同一題型只允許問一次（無論什麼元素）
@@ -5485,7 +5569,7 @@ window.renderNextQuestion = function() {
     window.quizState.currentQ++;
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     
-    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成" };
+    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原" };
     const catName = catNames[window.quizState.difficulty] || "未知";
     const rankPfx = window.quizState.rank ? `RANK ${window.quizState.rank} | ` : '';
     document.getElementById('quiz-status-text').textContent = 
@@ -5499,8 +5583,8 @@ window.renderNextQuestion = function() {
     let parsed = null;
     let s = "";
     
-    // 混成軌域/形狀題型不依賴元素 pool，直接跳過元素選擇
-    if (type !== 16 && type !== 17) {
+    // 混成軌域/形狀/氧化數題型不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16 && type !== 17 && type !== 18) {
         // 元素均等分佈演算法
         let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
@@ -6412,6 +6496,118 @@ if (type === 0) {
             quizData.forcedOpts = allOptions;
         }
     }
+} else if (type === 18) {
+    // 氧化數判斷題型（正向＋反向）
+    const METAL_ELEMS = new Set(["Li","Na","K","Rb","Cs","Be","Mg","Ca","Sr","Ba","Al","Ga","In","Fe","Cu","Ag","Au","Zn","Cd","Hg","Sn","Pb","Ni","Co","Mn","Cr","Ti","V","Pt","Pd"]);
+    const oxItems = [];
+    const _countElem = (atoms, elem) => atoms.filter(a => a.elem === elem).length;
+    const _isComplexOrg = (name) => { const m = name.match(/^C(\d+)/); return m && parseInt(m[1]) > 2; };
+    const _parseCharge = (name) => {
+        const m = name.match(/\s+(\d*)([+-])\s*$/);
+        if (!m) return 0;
+        const num = m[1] ? parseInt(m[1]) : 1;
+        return m[2] === '+' ? num : -num;
+    };
+    for (let mKey in MOLECULE_DB) {
+        const mol = MOLECULE_DB[mKey];
+        if (mol.isIonic || mol.isMetal) continue;
+        if (!mol.atomsRaw || !mol.bondsRaw || mol.atomsRaw.length < 2) continue;
+        const hasOnlyH = mol.atomsRaw.every(a => a.elem === "H");
+        if (hasOnlyH) continue;
+        const hasMetal = mol.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
+        if (hasMetal) continue;
+        const nameParts = (mol.fullKey || mKey).split('|');
+        const mainName = nameParts[0].trim();
+        if (_isComplexOrg(mainName)) continue;
+        const charge = _parseCharge(mainName);
+        mol.atomsRaw.forEach((atom, idx) => {
+            if (_countElem(mol.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
+            const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, mol.atomsRaw, mol.bondsRaw, charge);
+            oxItems.push({ molKey: mKey, name: mainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox });
+        });
+        if (mol.variants) {
+            for (let vKey in mol.variants) {
+                const variant = mol.variants[vKey];
+                if (variant.isIonic) continue;
+                if (!variant.atomsRaw || !variant.bondsRaw || variant.atomsRaw.length < 2) continue;
+                const vHasMetal = variant.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
+                if (vHasMetal) continue;
+                const vNameParts = (variant.fullKey || vKey).split('|');
+                const vMainName = vNameParts[0].trim();
+                if (_isComplexOrg(vMainName)) continue;
+                const vCharge = _parseCharge(vMainName);
+                variant.atomsRaw.forEach((atom, idx) => {
+                    if (_countElem(variant.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
+                    const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, variant.atomsRaw, variant.bondsRaw, vCharge);
+                    oxItems.push({ molKey: vKey, name: vMainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox });
+                });
+            }
+        }
+    }
+    const uniqueOxItems = [];
+    const seenKeys = new Set();
+    oxItems.forEach(item => {
+        const key = `${item.name}-${item.atomElem}-${item.oxidationNumber}`;
+        if (!seenKeys.has(key)) { seenKeys.add(key); uniqueOxItems.push(item); }
+    });
+    const interestingItems = uniqueOxItems.filter(item => item.oxidationNumber !== 0);
+    const finalItems = interestingItems.length > 5 ? interestingItems : uniqueOxItems;
+    if (finalItems.length === 0) {
+        quizData.type = "氧化數判斷";
+        quizData.question = "暫無可用題目";
+        quizData.answer = "0";
+        quizData.displayMode = "text";
+        quizData.forcedOpts = ["-2", "-1", "0", "+1"];
+    } else {
+        const isReverse = Math.random() < 0.4;
+        const _formatOx = (ox) => ox > 0 ? `+${ox}` : `${ox}`;
+        if (isReverse) {
+            const availOx = [...new Set(finalItems.map(m => m.oxidationNumber))];
+            const targetOx = availOx[Math.floor(Math.random() * availOx.length)];
+            const correctPool = finalItems.filter(m => m.oxidationNumber === targetOx);
+            const wrongPool = finalItems.filter(m => m.oxidationNumber !== targetOx);
+            const correctMol = correctPool[Math.floor(Math.random() * correctPool.length)];
+            const correctDisplay = formatFormula(correctMol.name) + ` 中的 ${correctMol.atomElem}`;
+            const wrongOpts = [];
+            const usedNames = new Set([correctMol.name + correctMol.atomElem]);
+            const shuffledWrong = [...wrongPool].sort(() => 0.5 - Math.random());
+            for (const w of shuffledWrong) {
+                if (wrongOpts.length >= 3) break;
+                const wKey = w.name + w.atomElem;
+                if (!usedNames.has(wKey)) { usedNames.add(wKey); wrongOpts.push(formatFormula(w.name) + ` 中的 ${w.atomElem}`); }
+            }
+            let safety = 0;
+            while (wrongOpts.length < 3 && safety < 50) {
+                safety++;
+                const filler = finalItems[Math.floor(Math.random() * finalItems.length)];
+                const fKey = filler.name + filler.atomElem;
+                if (!usedNames.has(fKey) && filler.oxidationNumber !== targetOx) {
+                    usedNames.add(fKey);
+                    wrongOpts.push(formatFormula(filler.name) + ` 中的 ${filler.atomElem}`);
+                }
+            }
+            quizData.type = "氧化數判斷（反向）";
+            quizData.question = `下列何者的氧化數為 ${_formatOx(targetOx)}？`;
+            quizData.answer = correctDisplay;
+            quizData.displayMode = "formula";
+            quizData.forcedOpts = [correctDisplay, ...wrongOpts].sort(() => 0.5 - Math.random());
+        } else {
+            const selected = finalItems[Math.floor(Math.random() * finalItems.length)];
+            const displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formatFormula(selected.name)}</span>`;
+            const correctOx = _formatOx(selected.oxidationNumber);
+            const wrongOxSet = new Set();
+            const candidates = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].filter(x => x !== selected.oxidationNumber);
+            candidates.sort(() => 0.5 - Math.random());
+            for (let i = 0; i < 3 && i < candidates.length; i++) wrongOxSet.add(candidates[i]);
+            const wrongOxArr = [...wrongOxSet].map(x => _formatOx(x));
+            const allOptions = [correctOx, ...wrongOxArr].sort(() => 0.5 - Math.random());
+            quizData.type = "氧化數判斷";
+            quizData.question = `${displayName} 中的 ${selected.atomElem} 原子，其氧化數為何？`;
+            quizData.answer = correctOx;
+            quizData.displayMode = "text";
+            quizData.forcedOpts = allOptions;
+        }
+    }
 }
         
         // 生成問題的唯一標識（用於重複檢查）
@@ -7007,47 +7203,52 @@ function showHybridInfo(atomObj, x, y) {
     // --- 1. 氧化數 (Oxidation Number) 核心運算 ---
     let oxState = 0;
     let oxDetailParts = [];
-    if (currentMolecule.bonds3D) {
-        currentMolecule.bonds3D.forEach(b => {
-            if (b[0] === atomIdx || b[1] === atomIdx) {
-                const isSelfIdx0 = (b[0] === atomIdx);
-                const otherIdx = isSelfIdx0 ? b[1] : b[0];
-                const otherAtomObj = currentMolecule.renderObjects.find(o => o.type === 'atom' && o.originalIndex === otherIdx);
-                if (!otherAtomObj) return;
-
-                const enSelf = props ? (props.en || 0) : 0;
-                const enOther = ELEMENT_PROPS[otherAtomObj.elem]?.en || 0;
-                const bType = b[2] || "single";
-                let c = 0; // 此鍵對 self 的貢獻
-
-                if (bType.includes("coordinate")) {
-                    // 配位鍵邏輯
-                    const isDonor = isSelfIdx0; // 假設資料庫定義 b[0] 為 Donor
-                    if (atomObj.elem === otherAtomObj.elem) {
-                        // 規則 3：同原子配位，Donor+1, Acceptor-1
-                        c = isDonor ? 1 : -1;
-                    } else if (isDonor) {
-                        // 規則 2：Donor 判斷，EN小給EN大=+2，否則=0
-                        c = (enSelf < enOther) ? 2 : 0;
+    const atomsData = currentMolecule.renderObjects.filter(o => o.type === 'atom');
+    const elem = atomObj.elem;
+    if (elem === 'O') {
+        const hasF = atomsData.some(a => a.elem === 'F');
+        const allO = atomsData.every(a => a.elem === 'O');
+        const elemCounts = {}; atomsData.forEach(a => { elemCounts[a.elem] = (elemCounts[a.elem] || 0) + 1; });
+        if (hasF) { oxState = 2; oxDetailParts.push('+2'); }
+        else if (allO) { oxState = 0; oxDetailParts.push('0'); }
+        else if (elemCounts['O'] === 2 && elemCounts['H'] === 2) { oxState = -1; oxDetailParts.push('-1'); }
+        else { oxState = -2; oxDetailParts.push('-2'); }
+    } else if (elem === 'F') {
+        oxState = -1; oxDetailParts.push('-1');
+    } else if (elem === 'H') {
+        const hasHighEN = atomsData.some(a => ['N','O','F','Cl','Br','I','S'].includes(a.elem));
+        oxState = hasHighEN ? 1 : -1; oxDetailParts.push(hasHighEN ? '+1' : '-1');
+    } else {
+        if (currentMolecule.bonds3D) {
+            currentMolecule.bonds3D.forEach(b => {
+                if (b[0] === atomIdx || b[1] === atomIdx) {
+                    const isSelfIdx0 = (b[0] === atomIdx);
+                    const otherIdx = isSelfIdx0 ? b[1] : b[0];
+                    const otherAtomObj = currentMolecule.renderObjects.find(o => o.type === 'atom' && o.originalIndex === otherIdx);
+                    if (!otherAtomObj) return;
+                    const enSelf = props ? (props.en || 0) : 0;
+                    const enOther = ELEMENT_PROPS[otherAtomObj.elem]?.en || 0;
+                    const bType = b[2] || "single";
+                    let c = 0;
+                    if (bType.includes("coordinate")) {
+                        const isDonor = isSelfIdx0;
+                        if (elem === otherAtomObj.elem) c = isDonor ? 1 : -1;
+                        else if (isDonor) c = (enSelf < enOther) ? 2 : 0;
+                        else c = (enOther < enSelf) ? -2 : 0;
                     } else {
-                        // 規則 2：Acceptor 判斷，EN小給EN大=-2，否則=0
-                        c = (enOther < enSelf) ? -2 : 0;
+                        let lines = bType.includes("triple") ? 3 : (bType.includes("double") ? 2 : 1);
+                        if (elem === otherAtomObj.elem) c = 0;
+                        else c = (enSelf > enOther) ? -lines : lines;
                     }
-                } else {
-                    // 一般共價鍵邏輯
-                    let lines = bType.includes("triple") ? 3 : (bType.includes("double") ? 2 : 1);
-                    if (atomObj.elem === otherAtomObj.elem) {
-                        // 規則 3：同原子一般鍵=0
-                        c = 0;
-                    } else {
-                        // 規則 1：EN大=-1, EN小=+1
-                        c = (enSelf > enOther) ? -lines : lines;
-                    }
+                    oxState += c;
+                    oxDetailParts.push(c > 0 ? `+${c}` : `${c}`);
                 }
-                oxState += c;
-                oxDetailParts.push(c > 0 ? `+${c}` : c);
-            }
-        });
+            });
+        }
+        const molName = currentVariantKey || currentKey || "";
+        const chargeMatch = molName.match(/\s+(\d*)([+-])\s*$/);
+        const molCharge = chargeMatch ? (chargeMatch[2] === '+' ? (chargeMatch[1] ? parseInt(chargeMatch[1]) : 1) : -(chargeMatch[1] ? parseInt(chargeMatch[1]) : 1)) : 0;
+        if (molCharge > 0 && elem === currentMolecule.center) { oxState += molCharge; oxDetailParts.push(`+${molCharge}`); }
     }
     const oxStr = oxState > 0 ? `+${oxState}` : `${oxState}`;
     const oxColor = oxState === 0 ? "#9ca3af" : (oxState > 0 ? "#f87171" : "#60a5fa");
@@ -7069,7 +7270,7 @@ function showHybridInfo(atomObj, x, y) {
 
     // 區塊 C: 氧化數
     contentHtml += `<div>氧化數: <span style="color:${oxColor}; font-size:1.2em; font-weight:bold;">${oxStr}</span></div>`;
-    contentHtml += `<div style="${subStyle}">(Σ貢獻: ${oxDetailParts.join(', ') || '0'})</div>`;
+    contentHtml += `<div style="${subStyle}">(Σ貢獻: ${oxDetailParts.join(', ') || '電荷平衡'})</div>`;
 
     tooltip.innerHTML = contentHtml;
     tooltip.classList.add('show');
