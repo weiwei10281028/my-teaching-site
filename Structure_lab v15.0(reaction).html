@@ -6217,6 +6217,22 @@ if (type === 0) {
         "N2O4": "平面形"
     };
     const METAL_ELEMS = new Set(["Li","Na","K","Rb","Cs","Be","Mg","Ca","Sr","Ba","Al","Ga","In","Fe","Cu","Ag","Au","Zn","Cd","Hg","Sn","Pb","Ni","Co","Mn","Cr","Ti","V","Pt","Pd"]);
+    const shouldExcludeFromShapeQuiz = (rawName) => {
+        const formula = (rawName || "").replace(/\s+/g, "");
+        if (!formula) return false;
+        const elems = [...formula.matchAll(/([A-Z][a-z]?)/g)].map(m => m[1]);
+        if (elems.length === 0) return false;
+        const uniqueElems = [...new Set(elems)];
+        const hasO = uniqueElems.includes("O");
+        if (!hasO) return false;
+        // 含氧酸 / 含氧酸根（例如 H2SO4、HSO4-）
+        const isOxyAcidLike = /^H\d*/.test(formula) && uniqueElems.some(e => e !== "H" && e !== "O");
+        if (isOxyAcidLike) return true;
+        // 離子化合物中的含氧鹽（例如 Na2SO4、MgSO4）
+        const hasMetal = uniqueElems.some(e => METAL_ELEMS.has(e));
+        const hasCentralNonMetal = uniqueElems.some(e => e !== "O" && !METAL_ELEMS.has(e));
+        return hasMetal && hasCentralNonMetal;
+    };
 
     // 收集可用的形狀題目
     const shapeItems = [];
@@ -6232,6 +6248,7 @@ if (type === 0) {
         const nameParts = (mol.fullKey || mKey).split('|');
         const mainName = nameParts[0].trim();
         const chineseName = nameParts[1] ? nameParts[1].trim() : null;
+        if (shouldExcludeFromShapeQuiz(mainName)) continue;
 
         // 單中心分子（無 variants）：用 VSEPR 自動計算形狀
         if (centerAtom !== "雙原子" && !mol.variants) {
@@ -6281,6 +6298,7 @@ if (type === 0) {
                 const vNameParts = (variant.fullKey || vKey).split('|');
                 const vMainName = vNameParts[0].trim();
                 const vChineseName = vNameParts[1] ? vNameParts[1].trim() : null;
+                if (shouldExcludeFromShapeQuiz(vMainName)) continue;
                 let sc = 0;
                 variant.bondsRaw.forEach(bond => { if (bond[0] === cIdx || bond[1] === cIdx) sc++; });
                 const lp = variant.atomsRaw[cIdx].lpCount || (variant.atomsRaw[cIdx].lp3d ? variant.atomsRaw[cIdx].lp3d.length : 0);
