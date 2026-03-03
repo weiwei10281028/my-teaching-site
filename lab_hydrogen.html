@@ -1058,8 +1058,8 @@
             // 能量數據與常數處理
             let eVal, eLabel, eConst = 13.6, eExpHtml = "";
             if (unit === 'eV') { eVal = eV_base.toFixed(3); eLabel = 'eV'; eConst = 13.6; }
-            else if (unit === 'kJ') { eVal = Math.round(eV_base * 96.485).toLocaleString(); eLabel = 'kJ/mol'; eConst = 1312; }
-            else if (unit === 'kcal') { eVal = (eV_base * 23.061).toFixed(1); eLabel = 'kcal/mol'; eConst = 313.6; }
+            else if (unit === 'kJ') { const rawKJ = 1312 * factor * z2; eVal = (Math.round(rawKJ * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); eLabel = 'kJ/mol'; eConst = 1312; }
+            else if (unit === 'kcal') { const rawKcal = eV_base * 23.061; eVal = (Math.round(rawKcal * 100) / 100).toFixed(2); eLabel = 'kcal/mol'; eConst = 313.6; }
             else if (unit === 'J') { 
                 let jVal = 2.179 * factor * z2; eConst = 2.179; eExpHtml = `×10<span class="calc-math-exp">-18</span>`;
                 let jExp = -18;
@@ -1080,19 +1080,19 @@
             // 波長數據處理
             const nmVal = 1239.84 / eV_base;
             let wDisplay, wLabel;
-            if (wUnit === 'nm') { wDisplay = nmVal.toFixed(1); wLabel = 'nm'; }
-            else if (wUnit === 'Å') { wDisplay = (nmVal * 10).toFixed(1); wLabel = 'Å'; }
+            if (wUnit === 'nm') { wDisplay = (Math.round(nmVal * 100) / 100).toFixed(2); wLabel = 'nm'; }
+            else if (wUnit === 'Å') { wDisplay = (Math.round(nmVal * 10 * 100) / 100).toFixed(2); wLabel = 'Å'; }
             else if (wUnit === 'm') {
                 let mCoeff = nmVal; let mExp = -9;
                 while (mCoeff >= 10) { mCoeff /= 10; mExp += 1; }
                 while (mCoeff < 1) { mCoeff *= 10; mExp -= 1; }
-                wDisplay = `${mCoeff.toFixed(3)} × 10<span class="calc-math-exp">${mExp}</span>`; wLabel = 'm';
+                wDisplay = `${(Math.round(mCoeff * 100) / 100).toFixed(2)} × 10<span class="calc-math-exp">${mExp}</span>`; wLabel = 'm';
             }
             else if (wUnit === 'cm') {
                 let cmCoeff = nmVal; let cmExp = -7;
                 while (cmCoeff >= 10) { cmCoeff /= 10; cmExp += 1; }
                 while (cmCoeff < 1) { cmCoeff *= 10; cmExp -= 1; }
-                wDisplay = `${cmCoeff.toFixed(3)} × 10<span class="calc-math-exp">${cmExp}</span>`; wLabel = 'cm';
+                wDisplay = `${(Math.round(cmCoeff * 100) / 100).toFixed(2)} × 10<span class="calc-math-exp">${cmExp}</span>`; wLabel = 'cm';
             }
 
             const highText = nh === Infinity ? "∞" : `${nh}<span class="calc-math-exp">2</span>`;
@@ -1116,7 +1116,7 @@
             document.getElementById('math-f-low-n2').innerHTML = lowText;
             document.getElementById('math-f-high-n2').innerHTML = highText;
             document.getElementById('math-f-z-factor').innerHTML = z === 1 ? "" : `<span class="calc-math-op">×</span>${z}<span class="calc-math-exp">2</span>`;
-            document.getElementById('math-f-res').innerHTML = ` = ${fCoeff.toFixed(4)} × 10<span class="calc-math-exp">${fExp}</span> <small>Hz</small>`;
+            document.getElementById('math-f-res').innerHTML = ` = ${(Math.round(fCoeff * 100) / 100).toFixed(2)} × 10<span class="calc-math-exp">${fExp}</span> <small>Hz</small>`;
 
             document.getElementById('math-w-low-n2').innerHTML = lowText;
             document.getElementById('math-w-high-n2').innerHTML = highText;
@@ -1127,7 +1127,7 @@
             document.getElementById('math-wn-low-n2').innerHTML = lowText;
             document.getElementById('math-wn-high-n2').innerHTML = highText;
             document.getElementById('math-wn-z-factor').innerHTML = z === 1 ? "" : `<span class="calc-math-op">×</span>${z}<span class="calc-math-exp">2</span>`;
-            document.getElementById('math-wn-res').innerHTML = ` = ${Math.round(wn).toLocaleString()} <small>cm<span class="calc-math-exp">-1</span></small>`;
+            document.getElementById('math-wn-res').innerHTML = ` = ${(Math.round(wn * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>cm<span class="calc-math-exp">-1</span></small>`;
         }
     };
     window.openSpectrumCalc = () => SpectrumCalc.open();
@@ -1290,16 +1290,17 @@
                 const ordinal = ["", "第一條", "第二條", "第三條", "第四條", "第五條"][n - s.low];
                 const lineTitle = `${s.name.replace('系列', '系')}${ordinal}`;
                 const factor = (1 / (s.low ** 2) - 1 / (n ** 2));
-                const kj = 1312 * factor;
-                const freq = 3.29 * factor;
-                const nm = 91.2 / factor;
-                const color = nmToRGB(nm);
+                const kj = (Math.round(1312 * factor * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const freq = (Math.round(3.29 * factor * 100) / 100).toFixed(2);
+                const nmRaw = 91.2 / factor;
+                const nm = (Math.round(nmRaw * 100) / 100).toFixed(2);
+                const color = nmToRGB(nmRaw);
                 html += `
                     <div class="analysis-card">
                         <div class="data-value-wrapper">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div class="color-dot" style="background:${color}; box-shadow: 0 0 10px ${color};"></div>
-                                <div class="data-value">${nm.toFixed(1)}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                                <div class="data-value">${nm}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 12px; margin-right: 15px;">
                                 <div style="width: 3px; height: 38px; background: var(--pearl-gold); border-radius: 2px; flex-shrink: 0;"></div>
@@ -1312,10 +1313,10 @@
                         <div class="data-scroll-area">
                             <div class="math-block">
                                 <div class="math-row">
-                                    <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${kj.toFixed(0)} kJ/mol</span>
+                                    <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${kj} kJ/mol</span>
                                 </div>
                                 <div class="math-row">
-                                    <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${freq.toFixed(4)} × 10<span class="math-exp">15</span> Hz</span>
+                                    <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span> <span class="math-op">= ${freq} × 10<span class="math-exp">15</span> Hz</span>
                                 </div>
                                 <div class="math-row">
                                     <span class="math-label">波長：</span><span class="math-op">91.2 × </span><div class="math-frac" style="transform: translateY(12px);">
@@ -1323,7 +1324,7 @@
                                         <div class="math-den">
                                             <span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> <div class="math-frac"><span class="math-num">1</span><span class="math-den">${n}<span class="math-exp">2</span></span></div><span class="math-parens">)</span>
                                         </div>
-                                    </div> <span class="math-op">= ${nm.toFixed(1)} nm</span>
+                                    </div> <span class="math-op">= ${nm} nm</span>
                                 </div>
                             </div>
                         </div>
@@ -1331,15 +1332,15 @@
             }
             // 插入極限線數據 (n=∞)
             const limitFactor = (1 / (s.low ** 2));
-            const kjLimit = 1312 * limitFactor;
-            const freqLimit = 3.29 * limitFactor;
-            const nmLimit = 91.2 / limitFactor;
+            const kjLimit = (Math.round(1312 * limitFactor * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const freqLimit = (Math.round(3.29 * limitFactor * 100) / 100).toFixed(2);
+            const nmLimit = (Math.round((91.2 / limitFactor) * 100) / 100).toFixed(2);
             html += `
                 <div class="analysis-card" style="border: 1px dashed var(--pearl-gold);">
                     <div class="data-value-wrapper">
                         <div style="display:flex; align-items:center; gap:10px;">
                             <div class="color-dot" style="background:white; box-shadow: 0 0 10px white;"></div>
-                            <div class="data-value">${nmLimit.toFixed(1)}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
+                            <div class="data-value">${nmLimit}<span style="font-size:1.2rem; margin-left:2px; font-weight:400; opacity:0.6;">nm</span></div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px; margin-right: 15px;">
                         <div style="width: 3px; height: 42px; background: var(--pearl-gold); border-radius: 2px; flex-shrink: 0;"></div>
@@ -1352,16 +1353,16 @@
                     <div class="data-scroll-area">
                         <div class="math-block">
                             <div class="math-row">
-                                <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${kjLimit.toFixed(1)} kJ/mol</span>
+                                <span class="math-label">能量：</span><span class="math-op">1312 × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${kjLimit} kJ/mol</span>
                             </div>
                             <div class="math-row">
-                                <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${freqLimit.toFixed(4)} × 10<span class="math-exp">15</span> Hz</span>
+                                <span class="math-label">頻率：</span><span class="math-op">3.29 × 10<span class="math-exp">15</span> × </span><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span> <span class="math-op">= ${freqLimit} × 10<span class="math-exp">15</span> Hz</span>
                             </div>
                             <div class="math-row">
                                 <span class="math-label">波長：</span><span class="math-op">91.2 × </span><div class="math-frac" style="transform: translateY(12px);">
                                     <span class="math-num">1</span>
                                     <div class="math-den"><span class="math-parens">(</span><div class="math-frac"><span class="math-num">1</span><span class="math-den">${s.low}<span class="math-exp">2</span></span></div> <span class="math-op">-</span> 0<span class="math-parens">)</span></div>
-                                </div> <span class="math-op">= ${nmLimit.toFixed(1)} nm</span>
+                                </div> <span class="math-op">= ${nmLimit} nm</span>
                             </div>
                         </div>
                     </div>
