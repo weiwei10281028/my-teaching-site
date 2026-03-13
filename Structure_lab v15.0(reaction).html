@@ -867,6 +867,7 @@
     /* 題目與按鈕組件 */
     .quiz-question-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; }
     .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #fbbf24; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.8; }
+    #quiz-type { display: none; }
     .quiz-question-text { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
     .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 15px 10px; border-radius: 6px; color: #ffffff; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; will-change: transform, background-color, border-color, box-shadow; }
@@ -1040,6 +1041,16 @@
     .diff-b::before { background: #3b82f6 !important; }
     .diff-c::before { background: #f59e0b !important; }
     .diff-d::before { background: #ef4444 !important; }
+    #hybrid-type-select-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
+    .hybrid-type-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px; }
+    .hybrid-type-card.selected { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.6); border-left-color: #f59e0b; }
+    .hybrid-type-card:hover { background: rgba(245,158,11,0.08); border-left-color: #f59e0b; }
+    .hybrid-type-check { width: 18px; height: 18px; border: 2px solid rgba(245,158,11,0.5); border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
+    .hybrid-type-card.selected .hybrid-type-check { background: #f59e0b; border-color: #f59e0b; }
+    .hybrid-type-check-mark { color: #000; font-size: 0.75rem; font-weight: 900; display: none; }
+    .hybrid-type-card.selected .hybrid-type-check-mark { display: block; }
+    .hybrid-type-name { font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; }
+    .hybrid-type-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
     /* 數據校準專用組件 */
     .unified-bar { flex: 1; height: 46px; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; background: rgba(251, 191, 36, 0.05); border-left: 4px solid #fbbf24; margin: 0; }
     .status-tag-hud { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; color: #000; background: #fbbf24; padding: 1px 6px; font-weight: 900; border-radius: 2px; margin-right: 15px; letter-spacing: 1px; }
@@ -1435,6 +1446,32 @@
                     <div id="quiz-result-card" class="quiz-question-card"></div>
                     <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回類別選擇</button>
                 </div>
+                <div id="hybrid-type-select-area">
+                    <span class="setup-label">選擇題型（可複選，至少一種）</span>
+                    <div id="hybrid-type-cards" style="display:flex;flex-direction:column;gap:10px;">
+                        <div class="hybrid-type-card selected" onclick="toggleHybridType(this,'16f')" data-type="16f">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">給分子，問混成</div><div class="hybrid-type-desc">顯示分子式或名稱，判斷中心原子的混成軌域</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="toggleHybridType(this,'16r')" data-type="16r">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">給混成類型，問分子</div><div class="hybrid-type-desc">顯示混成類型，從選項中找出符合的分子</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="toggleHybridType(this,'17f')" data-type="17f">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">給分子，問形狀</div><div class="hybrid-type-desc">顯示分子式，依 VSEPR 判斷幾何形狀</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="toggleHybridType(this,'17r')" data-type="17r">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">給形狀，問分子</div><div class="hybrid-type-desc">顯示幾何形狀名稱，從選項中找出符合的分子</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="toggleHybridType(this,'19')" data-type="19">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">結構圖，問混成</div><div class="hybrid-type-desc">顯示 3D 結構模擬圖，判斷標示原子的混成軌域</div></div>
+                        </div>
+                    </div>
+                    <button class="start-cal-btn" id="hybrid-confirm-btn" onclick="confirmHybridTypes()">確認題型，繼續 ▸</button>
+                </div>
                 <div id="cal-category-area" style="display:flex; flex-direction:column; gap:15px; padding:20px 15px;">
                     <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
                         <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
@@ -1470,8 +1507,11 @@
                                 <div style="margin-bottom: 12px;">
                                     <span style="color:#f59e0b; font-weight: bold; display: block; margin-bottom: 6px;">[ 混成 ]</span>
                                     <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #f59e0b;">
-                                        ．混成軌域判斷<br>
-                                        ．分子形狀判斷
+                                        ．給分子，問混成軌域<br>
+                                        ．給混成類型，問分子<br>
+                                        ．給分子，問幾何形狀<br>
+                                        ．給形狀，問分子<br>
+                                        ．結構圖，問混成（新）
                                     </div>
                                 </div>
                                 <div>
@@ -5273,6 +5313,7 @@ window.resetToDifficultySelection = function() {
     document.getElementById('quiz-result-area').style.display = 'none';
     document.getElementById('quiz-setup-area').style.display = 'none';
     document.getElementById('quiz-content-area').style.display = 'none';
+    document.getElementById('hybrid-type-select-area').style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
     document.getElementById('cal-category-area').style.display = 'flex';
     document.getElementById('quiz-cancel-btn').style.display = 'none';
@@ -5300,13 +5341,223 @@ window.selectCalCategory = function(cat) {
             pool: [], askedZ: [], typeDeck: [], askedQuestions: []
         };
         window.quizState.generateTypeDeck = window._generateTypeDeck;
-        document.getElementById('quiz-setup-area').style.display = 'flex';
-        document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇題數`;
-        setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
+        if (cat === 'hybrid') {
+            document.getElementById('hybrid-type-select-area').style.display = 'flex';
+            document.getElementById('quiz-status-text').textContent = '混成 > 選擇題型';
+        } else {
+            document.getElementById('quiz-setup-area').style.display = 'flex';
+            document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇題數`;
+            setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
+        }
     } else {
         document.getElementById('difficulty-grid').style.setProperty('display', 'flex', 'important');
         document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇範圍`;
     }
+};
+
+// === Quiz Mini 3D Viewer (與主畫面渲染風格一致) ===
+function renderQuizMini(viewer) {
+    const svgEl = viewer.svgEl;
+    if (!svgEl || !document.body.contains(svgEl)) return;
+    const W = 280, H = 240;
+    const renderObjects = viewer.renderObjects;
+    const bonds = viewer.bonds, atoms = viewer.atoms, hl = viewer.highlightIdx;
+    const m = viewer.matrix;
+
+    // 計算 scale（與主畫面 project 同邏輯，但縮放至 mini 尺寸）
+    let maxR = 1;
+    renderObjects.forEach(o => { maxR = Math.max(maxR, Math.abs(o.x), Math.abs(o.y), Math.abs(o.z||0)); });
+    const sc = Math.min(W, H) * 0.33 / (maxR || 1) * (viewer.zoom || 1);
+
+    const proj = o => {
+        const x3 = o.x*m[0]+o.y*m[1]+(o.z||0)*m[2];
+        const y3 = o.x*m[3]+o.y*m[4]+(o.z||0)*m[5];
+        const z3 = o.x*m[6]+o.y*m[7]+(o.z||0)*m[8];
+        const s = (600/(600-Math.min(z3*sc,590)))*sc;
+        return { px: x3*s+W/2, py: y3*s+H/2, z: z3*sc, scale: s };
+    };
+
+    const projRO = renderObjects.map(o => ({ ...o, ...proj(o) }));
+    const projAtoms = atoms.map(a => proj(a));
+
+    // 建立渲染清單（鍵 + 原子/電子），按 z 排序
+    const list = [];
+    bonds.forEach(b => {
+        const pa1 = projAtoms[b[0]], pa2 = projAtoms[b[1]];
+        if (!pa1||!pa2) return;
+        const ro1 = renderObjects.find(o=>o.type==='atom'&&o.originalIndex===b[0]);
+        const ro2 = renderObjects.find(o=>o.type==='atom'&&o.originalIndex===b[1]);
+        const r1 = (ro1?.r||15)*pa1.scale, r2 = (ro2?.r||15)*pa2.scale;
+        list.push({ type:'bond', z:(pa1.z+pa2.z)/2, x1:pa1.px,y1:pa1.py,x2:pa2.px,y2:pa2.py, r1, r2, bt:b[2]||'single' });
+    });
+    projRO.forEach(o => list.push(o));
+    list.sort((a,b)=>a.z-b.z);
+
+    const NS = "http://www.w3.org/2000/svg";
+    const mk = tag => document.createElementNS(NS,tag);
+    const set = (el,attrs) => { for(const k in attrs) el.setAttribute(k,attrs[k]); return el; };
+    svgEl.innerHTML = '';
+
+    // defs：濾鏡 + 漸層
+    const defs = mk('defs');
+    const glowF = mk('filter'); glowF.setAttribute('id','qmglow');
+    glowF.innerHTML='<feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>';
+    defs.appendChild(glowF);
+    const hlGrad = mk('radialGradient');
+    set(hlGrad,{id:'qmhl',cx:'50%',cy:'50%',r:'50%'});
+    hlGrad.innerHTML='<stop offset="0%" stop-color="#facc15" stop-opacity="0.6"/><stop offset="100%" stop-color="#facc15" stop-opacity="0"/>';
+    defs.appendChild(hlGrad);
+    const seenCols=new Set();
+    renderObjects.filter(o=>o.type==='atom').forEach(a=>{
+        if(seenCols.has(a.color))return; seenCols.add(a.color);
+        const id='qmag'+a.color.replace('#','');
+        const g=mk('radialGradient');
+        set(g,{id,cx:'35%',cy:'35%',r:'60%'});
+        g.innerHTML=`<stop offset="0%" stop-color="#fff" stop-opacity="0.95"/><stop offset="40%" stop-color="${a.color}"/><stop offset="100%" stop-color="${adjustColor(a.color,-80)}"/>`;
+        defs.appendChild(g);
+    });
+    svgEl.appendChild(defs);
+
+    list.forEach(obj=>{
+        if(obj.type==='bond'){
+            const {x1,y1,x2,y2,r1,r2,bt}=obj;
+            const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+            const nx=dx/len,ny=dy/len,px2=-ny,py2=nx;
+            const sh=0.75; // 縮短到原子表面
+            const sx1=x1+nx*r1*sh,sy1=y1+ny*r1*sh,sx2=x2-nx*r2*sh,sy2=y2-ny*r2*sh;
+            const sep=Math.min(r1,r2)*0.22;
+            const bline=(ox,oy,w,da='')=>{
+                const l=mk('line');
+                const extra = da ? {'stroke-dasharray':da} : {};
+                set(l,{x1:(sx1+ox).toFixed(1),y1:(sy1+oy).toFixed(1),x2:(sx2+ox).toFixed(1),y2:(sy2+oy).toFixed(1),stroke:'#fff','stroke-width':w,'stroke-linecap':'round',opacity:'0.65',...extra});
+                svgEl.appendChild(l);
+            };
+            if(bt==='double'){bline(px2*sep,py2*sep,3.5);bline(-px2*sep,-py2*sep,3.5);}
+            else if(bt==='triple'){bline(0,0,3);bline(px2*sep*1.8,py2*sep*1.8,2.5);bline(-px2*sep*1.8,-py2*sep*1.8,2.5);}
+            else if(bt==='coordinate'){bline(0,0,3.5,'6,3');}
+            else{bline(0,0,4);}
+        } else if(obj.type==='atom'){
+            const isHL = obj.originalIndex===hl;
+            const r=obj.r*obj.scale;
+            if(isHL){
+                const h=set(mk('circle'),{cx:obj.px.toFixed(1),cy:obj.py.toFixed(1),r:(r*2.5).toFixed(1),fill:'url(#qmhl)'});
+                svgEl.appendChild(h);
+                const ring=set(mk('circle'),{cx:obj.px.toFixed(1),cy:obj.py.toFixed(1),r:(r*1.35).toFixed(1),fill:'none',stroke:'#f59e0b','stroke-width':'2.5',opacity:'0.9'});
+                svgEl.appendChild(ring);
+            }
+            const c=set(mk('circle'),{cx:obj.px.toFixed(1),cy:obj.py.toFixed(1),r:r.toFixed(1),fill:`url(#qmag${obj.color.replace('#','')})`});
+            svgEl.appendChild(c);
+            const fs=obj.r*0.75*obj.scale;
+            const t=set(mk('text'),{x:obj.px.toFixed(1),y:(obj.py+fs*0.38).toFixed(1),'font-size':fs.toFixed(1),'font-weight':'bold',fill:isHL?'#f59e0b':'#fff','text-anchor':'middle','font-family':'monospace','pointer-events':'none'});
+            t.textContent=obj.elem;
+            svgEl.appendChild(t);
+        } else if(obj.type==='electron'){
+            const r=obj.r*obj.scale;
+            const col=obj.isNegativeCharge?'#ec4899':'#fff';
+            svgEl.appendChild(set(mk('circle'),{cx:obj.px.toFixed(1),cy:obj.py.toFixed(1),r:r.toFixed(1),fill:col,opacity:'0.88'}));
+        }
+    });
+}
+
+function startQuizMiniViewer(svgEl, atoms, bonds, highlightIdx, center) {
+    if (window.quizViewer) {
+        if(window.quizViewer.animFrame) cancelAnimationFrame(window.quizViewer.animFrame);
+        window.removeEventListener('mousemove', window.quizViewer._onMove);
+        window.removeEventListener('mouseup',   window.quizViewer._onUp);
+        window.removeEventListener('touchmove', window.quizViewer._onMove);
+        window.removeEventListener('touchend',  window.quizViewer._onUp);
+        if(window.quizViewer.svgEl && window.quizViewer._onWheel) window.quizViewer.svgEl.removeEventListener('wheel', window.quizViewer._onWheel);
+    }
+    // 用 processAtomsData 取得完整渲染物件（含孤對電子）
+    const renderObjects = processAtomsData(
+        JSON.parse(JSON.stringify(atoms)),
+        JSON.parse(JSON.stringify(bonds)),
+        center || (atoms[0]&&atoms[0].elem)
+    );
+    // 標記要高亮的原子
+    renderObjects.forEach(o => {
+        if(o.type==='atom' && o.originalIndex===highlightIdx) o.isQuizHL = true;
+    });
+    const hlOrigIdx = highlightIdx;
+
+    const viewer = { svgEl, atoms, bonds, renderObjects, highlightIdx:hlOrigIdx,
+        matrix:[1,0,0,0,1,0,0,0,1], rotVel:{x:0,y:0},
+        zoom:1, isDragging:false, lastPos:null, animFrame:null };
+
+    const getPos = e => e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
+    let _pinchDist = null;
+    const onDown = e => {
+        viewer.isDragging=true; viewer.rotVel={x:0,y:0}; viewer.lastPos=getPos(e);
+        if(e.touches&&e.touches.length===2) _pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+        e.preventDefault();
+    };
+    const onMove = e => {
+        if(!viewer.isDragging)return;
+        if(e.touches&&e.touches.length===2){
+            const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+            if(_pinchDist) viewer.zoom=Math.max(0.3,Math.min(4,viewer.zoom*(d/_pinchDist)));
+            _pinchDist=d; e.preventDefault(); return;
+        }
+        _pinchDist=null;
+        const p=getPos(e);
+        const dx=(p.x-viewer.lastPos.x)*0.009, dy=(p.y-viewer.lastPos.y)*0.009;
+        viewer.lastPos=p; viewer.rotVel={x:-dy,y:dx};
+        const cx=Math.cos(-dy),sx=Math.sin(-dy),cy2=Math.cos(dx),sy2=Math.sin(dx);
+        const rx=[1,0,0,0,cx,-sx,0,sx,cx],ry=[cy2,0,sy2,0,1,0,-sy2,0,cy2];
+        viewer.matrix=normalizeMatrix(multiplyMatrix(multiplyMatrix(ry,rx),viewer.matrix));
+        e.preventDefault();
+    };
+    const onUp=()=>{viewer.isDragging=false; _pinchDist=null;};
+    const onWheel=e=>{ viewer.zoom=Math.max(0.3,Math.min(4,viewer.zoom*(e.deltaY>0?0.88:1.14))); e.preventDefault(); };
+    viewer._onMove=onMove; viewer._onUp=onUp; viewer._onWheel=onWheel;
+    svgEl.addEventListener('mousedown',onDown);
+    svgEl.addEventListener('touchstart',onDown,{passive:false});
+    svgEl.addEventListener('wheel',onWheel,{passive:false});
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp);
+
+    const loop=()=>{
+        if(!document.body.contains(svgEl)){cancelAnimationFrame(viewer.animFrame);return;}
+        if(!viewer.isDragging && (Math.abs(viewer.rotVel.x)>0.0001 || Math.abs(viewer.rotVel.y)>0.0001)){
+            viewer.rotVel.x*=0.92; viewer.rotVel.y*=0.92;
+            if(Math.hypot(viewer.rotVel.x,viewer.rotVel.y)<0.0001) viewer.rotVel={x:0,y:0};
+            const cx=Math.cos(viewer.rotVel.x),sx=Math.sin(viewer.rotVel.x);
+            const cy2=Math.cos(viewer.rotVel.y),sy2=Math.sin(viewer.rotVel.y);
+            const rx=[1,0,0,0,cx,-sx,0,sx,cx],ry=[cy2,0,sy2,0,1,0,-sy2,0,cy2];
+            viewer.matrix=normalizeMatrix(multiplyMatrix(multiplyMatrix(ry,rx),viewer.matrix));
+        }
+        renderQuizMini(viewer);
+        viewer.animFrame=requestAnimationFrame(loop);
+    };
+    window.quizViewer=viewer;
+    loop();
+}
+
+window.toggleHybridType = function(card, typeKey) {
+    card.classList.toggle('selected');
+};
+
+window.confirmHybridTypes = function() {
+    const cards = document.querySelectorAll('#hybrid-type-cards .hybrid-type-card');
+    const selected = [];
+    cards.forEach(c => { if (c.classList.contains('selected')) selected.push(c.dataset.type); });
+    if (selected.length === 0) {
+        const btn = document.getElementById('hybrid-confirm-btn');
+        const orig = btn.textContent;
+        btn.textContent = '請至少選擇一種題型！';
+        btn.style.background = '#ef4444';
+        btn.style.color = '#fff';
+        setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+        return;
+    }
+    window.hybridSelectedSubtypes = {};
+    selected.forEach(t => { window.hybridSelectedSubtypes[t] = true; });
+    document.getElementById('hybrid-type-select-area').style.display = 'none';
+    document.getElementById('quiz-setup-area').style.display = 'flex';
+    document.getElementById('quiz-status-text').textContent = '混成 > 選擇題數';
+    setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
 };
 
 // 獨立的牌組生成函式
@@ -5318,7 +5569,17 @@ window._generateTypeDeck = function(diff, total) {
         3: [16, 17],
         4: [18]
     };
-    const types = typePools[diff] || typePools[1];
+    let types;
+    if (diff === 3 && window.hybridSelectedSubtypes) {
+        const sub = window.hybridSelectedSubtypes;
+        types = [];
+        if (sub['16f'] || sub['16r']) types.push(16);
+        if (sub['17f'] || sub['17r']) types.push(17);
+        if (sub['19']) types.push(19);
+        if (types.length === 0) types = [16, 17];
+    } else {
+        types = typePools[diff] || typePools[1];
+    }
     const restrictedInPool = types.filter(t => restrictedTypes.includes(t));
     const normalTypes = types.filter(t => !restrictedTypes.includes(t));
     let deck = [];
@@ -5519,6 +5780,9 @@ function generateQuestionKey(type, quizData, target) {
                 return `type17-reverse-${coreQuestion.substring(0, 50)}`;
             }
             return `type17-${coreQuestion.substring(0, 50)}`;
+        
+        case 19: // 結構圖問混成
+            return `type19-${quizData._imgMolName || ''}-${quizData._imgAtomElem || ''}-${quizData.answer || ''}`;
             
         case 18: // 氧化數判斷（正向＋反向）
             if (coreQuestion.includes('下列何者')) {
@@ -5574,8 +5838,8 @@ window.renderNextQuestion = function() {
     let parsed = null;
     let s = "";
     
-    // 混成軌域/形狀/氧化數題型不依賴元素 pool，直接跳過元素選擇
-    if (type !== 16 && type !== 17 && type !== 18) {
+    // 混成軌域/形狀/氧化數/結構圖題型不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16 && type !== 17 && type !== 18 && type !== 19) {
         // 元素均等分佈演算法
         let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
@@ -5595,8 +5859,8 @@ window.renderNextQuestion = function() {
     
     while (!questionGenerated && attempts < 20) {
         attempts++;
-        // 如果已經嘗試過，重新選擇元素（混成/形狀題型跳過）
-        if (attempts > 1 && type !== 16 && type !== 17) {
+        // 如果已經嘗試過，重新選擇元素（混成/形狀/結構圖題型跳過）
+        if (attempts > 1 && type !== 16 && type !== 17 && type !== 19) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -6168,10 +6432,11 @@ if (type === 0) {
         quizData.displayMode = "hybrid";
         quizData.forcedOpts = ["sp", "sp²", "sp³", "sp³d"];
     } else {
-        // 隨機決定正向或反向
-        const isReverse = Math.random() < 0.4;
-        const allHybrids = ["sp", "sp²", "sp³", "sp³d", "sp³d²"];
-
+        // 依題型選擇決定正向或反向（type 16）
+        const _sub16 = window.hybridSelectedSubtypes;
+        const _allow16f = !_sub16 || _sub16['16f'];
+        const _allow16r = !_sub16 || _sub16['16r'];
+        const isReverse = (_allow16f && _allow16r) ? (Math.random() < 0.4) : (!_allow16f);
         if (isReverse) {
             // 反向：給混成類型，問哪個分子是此混成
             const availHybrids = [...new Set(filteredMolecules.map(m => m.hybrid))];
@@ -6231,9 +6496,16 @@ if (type === 0) {
                 displayName = rawName;
             }
             const correctHybrid = selected.hybrid;
-            const wrongHybrids = allHybrids.filter(h => h !== correctHybrid);
-            const shuffledWrong = [...wrongHybrids].sort(() => 0.5 - Math.random()).slice(0, 3);
-            const allOptions = [correctHybrid, ...shuffledWrong].sort(() => 0.5 - Math.random());
+            const _spOpts = ["sp", "sp²", "sp³"], _dOpts = ["sp³d", "sp³d²", "sp³d³"];
+            let allOptions;
+            if (_spOpts.includes(correctHybrid)) {
+                const dPick = _dOpts[Math.floor(Math.random()*_dOpts.length)];
+                allOptions = [..._spOpts, dPick].sort(() => 0.5 - Math.random());
+            } else {
+                const otherD = _dOpts.filter(h=>h!==correctHybrid).sort(()=>0.5-Math.random()).slice(0,1);
+                const spPick = [..._spOpts].sort(()=>0.5-Math.random()).slice(0,2);
+                allOptions = [correctHybrid, ...otherD, ...spPick].sort(() => 0.5 - Math.random());
+            }
 
             let atomDescription = selected.center;
             const molData = selected.variant ? MOLECULE_DB[selected.key].variants[selected.variant] : MOLECULE_DB[selected.key];
@@ -6419,7 +6691,10 @@ if (type === 0) {
         quizData.forcedOpts = ["直線形", "角形", "平面三角形", "正四面體"];
     } else {
         const allShapeNames = [...new Set([...Object.values(VSEPR_SHAPES), ...Object.values(MULTI_CENTER_SHAPES)])];
-        const isReverse = Math.random() < 0.4;
+        const _sub17 = window.hybridSelectedSubtypes;
+        const _allow17f = !_sub17 || _sub17['17f'];
+        const _allow17r = !_sub17 || _sub17['17r'];
+        const isReverse = (_allow17f && _allow17r) ? (Math.random() < 0.4) : (!_allow17f);
 
         if (isReverse) {
             // 反向：給形狀，問哪個分子
@@ -6486,6 +6761,93 @@ if (type === 0) {
             quizData.displayMode = "shape";
             quizData.forcedOpts = allOptions;
         }
+    }
+} else if (type === 19) {
+    // 結構圖問混成：顯示 2D 投影結構圖，問標示原子的混成軌域
+    const _calcHybrid19 = (sigma, lp) => {
+        const s = sigma + lp;
+        return s === 2 ? "sp" : s === 3 ? "sp²" : s === 4 ? "sp³" : s === 5 ? "sp³d" : s === 6 ? "sp³d²" : null;
+    };
+    const _simpleOrgs19 = ["CH4","C2H6","C2H4","C2H2","CH3Cl","CH2Cl2","CHCl3","HCN","CH3CN"];
+    const molPool19 = [];
+    for (let mKey in MOLECULE_DB) {
+        const mol = MOLECULE_DB[mKey];
+        if (mol.isIonic || mol.isMetal) continue;
+        const nameParts = (mol.fullKey || mKey).split('|');
+        const mainName = nameParts[0].trim();
+        const chName = nameParts[1] ? nameParts[1].trim() : null;
+        const orgMatch = mainName.match(/^C(\d+)H(\d+)/);
+        if (orgMatch && parseInt(orgMatch[1]) > 2 && !_simpleOrgs19.some(s => mainName === s)) continue;
+        const processAtoms19 = (atoms, bonds, name, cName, center) => {
+            if (!atoms || !bonds || atoms.length < 2 || atoms.length > 18) return;
+            const seen = new Set();
+            atoms.forEach((atom, idx) => {
+                if (atom.elem === 'H') return;
+                let sigma = 0, bondElectrons = 0;
+                bonds.forEach(b => {
+                    if (b[0] !== idx && b[1] !== idx) return;
+                    sigma++;
+                    const bt = b[2] || 'single';
+                    if (bt === 'triple' || bt === 'coordinate_triple') bondElectrons += 3;
+                    else if (bt === 'double') bondElectrons += 2;
+                    else if (bt === 'coordinate') { if (b[0] === idx) bondElectrons += 2; }
+                    else bondElectrons += 1;
+                });
+                let lp;
+                if (atom.lpCount !== undefined) {
+                    lp = atom.lpCount;
+                } else {
+                    const props = ELEMENT_PROPS[atom.elem];
+                    lp = props ? Math.max(0, Math.floor((props.ve - bondElectrons) / 2)) : 0;
+                }
+                const hybrid = _calcHybrid19(sigma, lp);
+                if (!hybrid) return;
+                const k = `${name}-${idx}-${hybrid}`;
+                if (!seen.has(k)) { seen.add(k); molPool19.push({ name, chName: cName, atoms, bonds, atomIdx: idx, elem: atom.elem, hybrid, center: center || atom.elem }); }
+            });
+        };
+        if (mol.atomsRaw && mol.atomsRaw.length > 0) {
+            processAtoms19(mol.atomsRaw, mol.bondsRaw, mainName, chName, mol.center);
+        }
+        if (mol.variants) {
+            for (let vKey in mol.variants) {
+                const v = mol.variants[vKey];
+                if (v.isIonic) continue;
+                const vParts = (v.fullKey || vKey).split('|');
+                const vName = vParts[0].trim();
+                const vCh = vParts[1] ? vParts[1].trim() : null;
+                const vOrgM = vName.match(/^C(\d+)H(\d+)/);
+                if (vOrgM && parseInt(vOrgM[1]) > 2 && !_simpleOrgs19.some(s => vName === s)) continue;
+                processAtoms19(v.atomsRaw, v.bondsRaw, vName, vCh, v.center || mol.center);
+            }
+        }
+    }
+    if (molPool19.length === 0) {
+        quizData.type = "結構圖問混成";
+        quizData.question = "暫無可用題目";
+        quizData.answer = "sp³";
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = ["sp", "sp²", "sp³", "sp³d"];
+    } else {
+        const sel19 = molPool19[Math.floor(Math.random() * molPool19.length)];
+        const _sp19 = ["sp", "sp²", "sp³"], _d19 = ["sp³d", "sp³d²", "sp³d³"];
+        let opts19;
+        if (_sp19.includes(sel19.hybrid)) {
+            const dPick = _d19[Math.floor(Math.random()*_d19.length)];
+            opts19 = [..._sp19, dPick].sort(() => 0.5 - Math.random());
+        } else {
+            const otherD = _d19.filter(h=>h!==sel19.hybrid).sort(()=>0.5-Math.random()).slice(0,1);
+            const spPick = [..._sp19].sort(()=>0.5-Math.random()).slice(0,2);
+            opts19 = [sel19.hybrid, ...otherD, ...spPick].sort(() => 0.5 - Math.random());
+        }
+        quizData.type = "結構圖問混成";
+        quizData.question = `圖中標示的 ${sel19.elem} 原子採取何種混成軌域？`;
+        quizData.answer = sel19.hybrid;
+        quizData.displayMode = "hybrid";
+        quizData.forcedOpts = opts19;
+        quizData._mol19 = { atoms: sel19.atoms, bonds: sel19.bonds, atomIdx: sel19.atomIdx, elem: sel19.elem, name: sel19.chName || sel19.name, center: sel19.center };
+        quizData._imgMolName = sel19.name;
+        quizData._imgAtomElem = sel19.elem;
     }
 } else if (type === 18) {
     // 氧化數判斷題型（正向＋反向）
@@ -6644,8 +7006,26 @@ if (type === 0) {
     });
     
     
-    questionEl.innerHTML = htmlQ;
-    questionEl.style.fontSize = "1.7rem";
+    // 停止前一題的 mini viewer
+    if (window.quizViewer) {
+        if (window.quizViewer.animFrame) cancelAnimationFrame(window.quizViewer.animFrame);
+        window.removeEventListener('mousemove', window.quizViewer._onMove);
+        window.removeEventListener('mouseup', window.quizViewer._onUp);
+        window.removeEventListener('touchmove', window.quizViewer._onMove);
+        window.removeEventListener('touchend', window.quizViewer._onUp);
+        window.quizViewer = null;
+    }
+
+    if (quizData.type === "結構圖問混成" && quizData._mol19) {
+        const mol = quizData._mol19;
+        questionEl.style.fontSize = "1.7rem";
+        questionEl.innerHTML = `<svg id="quiz-mol-svg" width="280" height="240" viewBox="0 0 280 240" style="background:rgba(0,0,0,0.45);border-radius:8px;border:1px solid rgba(245,158,11,0.35);display:block;margin:4px auto;cursor:grab;touch-action:none;"></svg><div style="margin-top:8px;">圖中標示的 <b style="color:#f59e0b;">${mol.elem}</b> 原子（${mol.name}）採取何種混成軌域？</div>`;
+        const svgEl = document.getElementById('quiz-mol-svg');
+        if (svgEl) startQuizMiniViewer(svgEl, mol.atoms, mol.bonds, mol.atomIdx, mol.center);
+    } else {
+        questionEl.innerHTML = htmlQ;
+        questionEl.style.fontSize = "1.7rem";
+    }
 
     // 5. 智慧選項生成 (建立 opts 陣列)
     // 從問題中提取元素符號，確保選項中不包含問題中提到的元素
