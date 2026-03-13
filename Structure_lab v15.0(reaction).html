@@ -4886,41 +4886,32 @@ function calculateIonConfig(baseConfigStr, charge) {
     // --- CASE B: 陰離子 (得到電子) ---
     else {
         let addCount = Math.abs(charge);
-        
-        // 1. 先嘗試填滿現有的最後一個軌域
-        // 依照能量排序 (原本的字串順序通常就是能量順序，除了例外，但這邊我們簡單處理)
-        // 為了保險，我們直接看最後一個軌域
-        while (addCount > 0) {
-            let lastOrbital = orbitals[orbitals.length - 1];
-            let maxCap = capacity[lastOrbital.type];
 
-            if (lastOrbital.count < maxCap) {
-                let space = maxCap - lastOrbital.count;
-                let fill = Math.min(space, addCount);
-                lastOrbital.count += fill;
-                addCount -= fill;
-            } else {
-                // 當前軌域已滿，尋找下一個軌域
-                let currentName = lastOrbital.name; // e.g. "2p"
-                let idx = ORBITAL_ORDER.indexOf(currentName);
-                
-                if (idx !== -1 && idx < ORBITAL_ORDER.length - 1) {
-                    let nextName = ORBITAL_ORDER[idx + 1]; // e.g. "3s"
-                    let nextMatch = nextName.match(/(\d)([spdf])/);
-                    
-                    // 新增一個空軌域到陣列中
-                    let newOrb = {
-                        n: parseInt(nextMatch[1]),
-                        type: nextMatch[2],
-                        l: typeVal[nextMatch[2]],
-                        count: 0, // 初始為0，下一輪迴圈會填入
-                        name: nextName
-                    };
-                    orbitals.push(newOrb);
-                } else {
-                    break; // 超出範圍或找不到，停止 (避免無窮迴圈)
-                }
+        while (addCount > 0) {
+            // 依照 Aufbau 順序找第一個未填滿的現有軌域，避免重複新增已存在的軌域
+            let target = null;
+            for (let name of ORBITAL_ORDER) {
+                let orb = orbitals.find(o => o.name === name);
+                if (orb && orb.count < capacity[orb.type]) { target = orb; break; }
             }
+
+            if (!target) {
+                // 所有現有軌域已填滿，依 Aufbau 順序新增下一個軌域
+                let highestIdx = -1;
+                for (let i = ORBITAL_ORDER.length - 1; i >= 0; i--) {
+                    if (orbitals.some(o => o.name === ORBITAL_ORDER[i])) { highestIdx = i; break; }
+                }
+                if (highestIdx === -1 || highestIdx >= ORBITAL_ORDER.length - 1) break;
+                let nextName = ORBITAL_ORDER[highestIdx + 1];
+                let nextMatch = nextName.match(/(\d)([spdf])/);
+                target = { n: parseInt(nextMatch[1]), type: nextMatch[2], l: typeVal[nextMatch[2]], count: 0, name: nextName };
+                orbitals.push(target);
+            }
+
+            let space = capacity[target.type] - target.count;
+            let fill = Math.min(space, addCount);
+            target.count += fill;
+            addCount -= fill;
         }
     }
 
