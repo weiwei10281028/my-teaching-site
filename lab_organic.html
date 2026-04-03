@@ -433,6 +433,7 @@
             border-radius: 0 0 38px 38px;
             pointer-events: none;
             z-index: 10;
+            -webkit-mask-image: -webkit-linear-gradient(white, white);
         }
 
         #precipitate {
@@ -536,7 +537,7 @@
                 radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
                 linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
             background-color: #5C3317;
-            border-radius: 0 0 40px 40px;
+            border-radius: 0 0 38px 38px;
             transition: height 6.0s cubic-bezier(0.25, 0.1, 0.25, 1.0), opacity 2.5s ease-in;
             opacity: 0;
             z-index: 5;
@@ -1291,8 +1292,7 @@
         }
 
         function universalCleanup() {
-            // 1. 中斷背景鬧鐘
-            activeTimers.forEach(clearTimeout);
+            activeTimers.forEach(id => { clearTimeout(id); clearInterval(id); });
             activeTimers = [];
             // 2. 物理清除所有動態零件
             document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
@@ -3055,8 +3055,9 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
         async function runTest(subObject) {
             if (isProcessing) return;
             isProcessing = true;
+            try {
 
-            const liquid = document.getElementById('liquid'); // 唯一宣告點
+            const liquid = document.getElementById('liquid');
             const pre = document.getElementById('precipitate');
 
             // 1. 瞬間清理與 UI 同步
@@ -3199,51 +3200,10 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                 liquid.style.background = (tempState === 'heat') ? subData.heatColor : subData.resultColor;
             }
             document.getElementById('reportContent').innerText = subData.text;
-            isProcessing = false;
+
+            } finally { isProcessing = false; }
         }
 
-        function triggerInkyReaction(color) {
-            const liquid = document.getElementById('liquid');
-            liquid.innerHTML = '';
-            for (let i = 0; i < 80; i++) {
-                const g = document.createElement('div');
-                g.className = 'grain';
-                g.style.left = (Math.random() * 100) + '%';
-                g.style.top = (Math.random() * 100) + '%';
-                g.style.background = color;
-                g.style.animation = `dissolve ${5 + Math.random() * 5}s ease-out ${Math.random() * 5}s forwards`;
-                liquid.appendChild(g);
-            }
-            // 關鍵：將顯色鬧鐘納入管理，切換物質時會被強制關閉
-            safeTimeout(() => {
-                liquid.style.transition = 'background 10s ease-in-out';
-                liquid.style.background = color;
-            }, 3000);
-        }
-
-        // 【Reset 鍵修復】：調用全域清理核心，實現瞬間淨空
-        async function resetToStandard() {
-            const liq = document.getElementById('liquid');
-            liq.style.transition = 'height 0.8s ease-in';
-            liq.style.height = '0';
-
-            // 瞬間清除所有現象、背景變色指令與計時器
-            universalCleanup();
-
-            const data = experimentData[activeReagent];
-            let color = 'rgba(255,255,255,0.1)';
-            if (data) {
-                color = (activeReagent === 'kmno4') ? (kmno4Env === 'neutral' ? data.neutralColor : data.acidicColor)
-                    : (activeReagent === 'alkyne') ? (alkyneReagent === 'ag' ? data.agColor : data.cuColor) : data.reagentColor;
-            }
-
-            document.getElementById('reportContent').innerText = "請選擇待測物質。";
-            await new Promise(r => safeTimeout(r, 900));
-
-            liq.style.background = color;
-            liq.style.transition = 'height 1s cubic-bezier(0.22, 1, 0.36, 1)';
-            liq.style.height = '45%';
-        }
 
         async function animateGas() {
             const tube = document.getElementById('gas-tube');
@@ -3296,29 +3256,29 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
             drop.style.top = '10px';
             drop.style.opacity = '1';
 
-            await new Promise(r => setTimeout(r, moveSpeed + startDelay));
+            await new Promise(r => safeTimeout(r, moveSpeed + startDelay));
 
             return new Promise(resolve => {
                 let count = 0;
                 const totalDrops = 4;
-                const interval = setInterval(() => {
+                const dropInterval = setInterval(() => {
                     const d = document.createElement('div'); d.className = 'drop';
-                    // 如果是氯化鐵實驗，滴下的液體呈現黃褐色試劑色
                     if (activeReagent === 'fecl3') {
                         d.style.background = 'rgba(218, 165, 32, 0.9)';
                         d.style.filter = 'drop-shadow(0 0 2px rgba(218, 165, 32, 0.5))';
                     }
                     document.querySelector('.test-tube').appendChild(d);
-                    setTimeout(() => d.remove(), 500);
+                    safeTimeout(() => d.remove(), 500);
                     if (count++ >= totalDrops - 1) {
-                        clearInterval(interval);
-                        setTimeout(() => {
+                        clearInterval(dropInterval);
+                        safeTimeout(() => {
                             drop.style.top = '-80px';
                             drop.style.opacity = '0';
                             resolve();
                         }, 800);
                     }
                 }, 500);
+                activeTimers.push(dropInterval);
             });
         }
         async function animateAcidDrop() {
@@ -3500,8 +3460,7 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                 liquid.appendChild(g);
             }
 
-            // 使用極長過渡時間，讓背景底色隨粒子慢慢顯現
-            setTimeout(() => {
+            safeTimeout(() => {
                 liquid.style.transition = 'background 10s ease-in-out';
                 liquid.style.background = color;
             }, 3000);
@@ -3516,7 +3475,7 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
             banner.classList.remove('show');
             setTimeout(() => { banner.innerHTML = ''; }, 600);
             // 物理移除所有元素，確保切換或重置時試管完全淨空
-            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop').forEach(el => el.remove());
+            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
 
             // 隱藏沉澱層與歸零所有外觀參數
             const pre = document.getElementById('precipitate');
