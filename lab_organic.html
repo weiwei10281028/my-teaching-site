@@ -455,34 +455,6 @@
             transition: height 5s cubic-bezier(0.33, 1, 0.68, 1), opacity 2s ease-in;
         }
 
-        /* 樣式 3：溶解顆粒基礎樣式 */
-        .grain {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* 溶解動畫：從細小顆粒擴散成雲霧 */
-        @keyframes dissolve {
-            0% {
-                opacity: 0;
-                transform: scale(1);
-            }
-
-            30% {
-                opacity: 0.7;
-            }
-
-            100% {
-                opacity: 0.9;
-                transform: scale(18);
-                filter: blur(12px);
-            }
-        }
 
         /* 動態器材：導管與滴管 */
         #gas-tube {
@@ -1293,7 +1265,7 @@
             activeTimers.forEach(id => { clearTimeout(id); clearInterval(id); });
             activeTimers = [];
             // 2. 物理清除所有動態零件
-            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
+            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop').forEach(el => el.remove());
             // 3. 視覺重置：立即移除所有專屬類名與底層沈澱
             const liq = document.getElementById('liquid');
             const pre = document.getElementById('precipitate');
@@ -1831,13 +1803,13 @@ H</text><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333
                 reagentColor: 'rgba(255,255,255,0.15)', // 試管先裝填透明的受質溶液
                 substrates: [
                     {
-                        zh: '苯 酚', en: 'Phenol', state: 'liquid', react: true, resultColor: 'rgba(60, 20, 95, 0.65)', eq: '6C₆H₅OH + Fe³⁺ → [Fe(OC₆H₅)₆]³⁻ + 6H⁺', text: '溶液迅速變為深紫色。原因是因為苯酚具有直接連在苯環上的羥基（酚羥基），能與鐵離子產生配位作用，生成深紫色的錯合物。',
+                        zh: '苯 酚', en: 'Phenol', state: 'liquid', react: true, resultColor: 'rgba(75, 30, 110, 0.55)', eq: '6C₆H₅OH + Fe³⁺ → [Fe(OC₆H₅)₆]³⁻ + 6H⁺', text: '溶液迅速變為深紫色。原因是因為苯酚具有直接連在苯環上的羥基（酚羥基），能與鐵離子產生配位作用，生成深紫色的錯合物。',
                         x: 8, y: 0, s: 1,
                         structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 168 121" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2923.58,6042.23 L 2903.58,6053.77 L 2903.58,5442.23 L 2923.58,5453.77 L 2923.58,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2995.58,6006.43 L 2975.58,6006.43 L 2975.58,5489.57 L 2995.58,5489.57 L 2995.58,6006.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3433.2,6336.45 L 3433.2,6359.55 L 2903.58,6053.77 L 2923.58,6042.23 L 3433.2,6336.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3942.82,6042.23 L 3962.82,6053.77 L 3433.2,6359.55 L 3433.2,6336.45 L 3942.82,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3875.82,5997.77 L 3885.82,6015.09 L 3438.2,6273.52 L 3428.2,6256.2 L 3875.82,5997.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3942.82,5453.77 L 3952.82,5448 L 3962.82,5453.77 L 3962.82,6053.77 L 3942.82,6042.23 L 3942.82,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3433.2,5159.55 L 3433.2,5136.45 L 3952.82,5436.45 L 3952.82,5448 L 3942.82,5453.77 L 3433.2,5159.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3428.2,5239.8 L 3438.2,5222.48 L 3885.82,5480.91 L 3875.82,5498.23 L 3428.2,5239.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2923.58,5453.77 L 2903.58,5442.23 L 3433.2,5136.45 L 3433.2,5159.55 L 2923.58,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 124.403 26.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
 OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 4329.93,5218.73 L 4339.93,5236.05 L 3962.82,5453.77 L 3952.82,5448 L 3952.82,5436.45 L 4329.93,5218.73 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>`
                     },
                     {
-                        zh: '柳 酸', en: 'Salicylic Acid', state: 'liquid', react: true, resultColor: 'rgba(80, 30, 110, 0.6)', eq: 'C₆H₄(OH)COOH + Fe³⁺ → 紫色錯合物', text: '溶液變為紫紅色。原因是因為柳酸分子結構中仍保有酚羥基，能與鐵離子發生典型的顯色反應；它是合成阿斯匹靈的主要原料。',
+                        zh: '柳 酸', en: 'Salicylic Acid', state: 'liquid', react: true, resultColor: 'rgba(90, 40, 120, 0.5)', eq: 'C₆H₄(OH)COOH + Fe³⁺ → 紫色錯合物', text: '溶液變為紫紅色。原因是因為柳酸分子結構中仍保有酚羥基，能與鐵離子發生典型的顯色反應；它是合成阿斯匹靈的主要原料。',
                         x: 8, y: 0, s: 1,
                         structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 209 131" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2923.58,6042.23 L 2903.58,6053.77 L 2903.58,5442.23 L 2923.58,5453.77 L 2923.58,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2995.58,6006.43 L 2975.58,6006.43 L 2975.58,5489.57 L 2995.58,5489.57 L 2995.58,6006.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3433.2,6336.45 L 3433.2,6359.55 L 2903.58,6053.77 L 2923.58,6042.23 L 3433.2,6336.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3942.82,6042.23 L 3952.82,6048 L 3952.82,6059.55 L 3433.2,6359.55 L 3433.2,6336.45 L 3942.82,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3875.82,5997.77 L 3885.82,6015.09 L 3438.2,6273.52 L 3428.2,6256.2 L 3875.82,5997.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3942.82,5453.77 L 3952.82,5448 L 3962.82,5453.77 L 3962.82,6042.23 L 3952.82,6048 L 3942.82,6042.23 L 3942.82,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3433.2,5159.55 L 3433.2,5136.45 L 3952.82,5436.45 L 3952.82,5448 L 3942.82,5453.77 L 3433.2,5159.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 3428.2,5239.8 L 3438.2,5222.48 L 3885.82,5480.91 L 3875.82,5498.23 L 3428.2,5239.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 2923.58,5453.77 L 2903.58,5442.23 L 3433.2,5136.45 L 3433.2,5159.55 L 2923.58,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 125.153 26.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
 COOH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -413)" d="M 4335.9,5215.28 L 4345.9,5232.6 L 3962.82,5453.77 L 3952.82,5448 L 3952.82,5436.45 L 4335.9,5215.28 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 124.403 126.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
@@ -1867,7 +1839,7 @@ C</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
 OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -103.925 -285)" d="M 2824.2,4196 L 2824.2,4216 L 2515.2,4216 L 2515.2,4196 L 2824.2,4196 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path></svg>`
                     },
                     {
-                        zh: '柳酸甲酯', en: 'Methyl Salicylate', state: 'liquid', react: true, resultColor: 'rgba(95, 40, 120, 0.55)', eq: 'C₆H₄(OH)COOCH₃ + Fe³⁺ → 紫色錯合物', text: '溶液呈現紫紅色。原因是因為柳酸甲酯（冬青油）雖然酯化了柳酸的羧基（-COOH），但苯環上的酚羥基依然存在，因此仍能與鐵離子結合顯色。',
+                        zh: '柳酸甲酯', en: 'Methyl Salicylate', state: 'liquid', react: true, resultColor: 'rgba(105, 50, 130, 0.48)', eq: 'C₆H₄(OH)COOCH₃ + Fe³⁺ → 紫色錯合物', text: '溶液呈現紫紅色。原因是因為柳酸甲酯（冬青油）雖然酯化了柳酸的羧基（-COOH），但苯環上的酚羥基依然存在，因此仍能與鐵離子結合顯色。',
                         x: 8, y: 0, s: 1,
                         structure: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 234 177" version="1.1"><style>path,line,polyline,polygon,rect{stroke:white!important;fill:none;stroke-width:3.5px!important;stroke-linecap:round;cursor:pointer;transition:0.2s}text,tspan{fill:white!important;stroke:none!important;font-family:'Space Mono',monospace;font-weight:700;cursor:pointer}.h{stroke:#E9D5FF!important;fill:#E9D5FF!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #E9D5FF) drop-shadow(0 0 15px #A855F7)}text.h,tspan.h{stroke:none!important;fill:#E9D5FF!important}</style><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 2923.58,6042.23 L 2903.58,6053.77 L 2903.58,5442.23 L 2923.58,5453.77 L 2923.58,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 2995.58,6006.43 L 2975.58,6006.43 L 2975.58,5489.57 L 2995.58,5489.57 L 2995.58,6006.43 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3433.2,6336.45 L 3433.2,6359.55 L 2903.58,6053.77 L 2923.58,6042.23 L 3433.2,6336.45 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3942.82,6042.23 L 3952.82,6048 L 3952.82,6059.55 L 3433.2,6359.55 L 3433.2,6336.45 L 3942.82,6042.23 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3875.82,5997.77 L 3885.82,6015.09 L 3438.2,6273.52 L 3428.2,6256.2 L 3875.82,5997.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3942.82,5453.77 L 3952.82,5448 L 3962.82,5453.49 L 3962.82,6042.23 L 3952.82,6048 L 3942.82,6042.23 L 3942.82,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3433.2,5159.55 L 3433.2,5136.45 L 3952.56,5436.31 L 3952.82,5448 L 3942.82,5453.77 L 3433.2,5159.55 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 3428.2,5239.8 L 3438.2,5222.48 L 3885.82,5480.91 L 3875.82,5498.23 L 3428.2,5239.8 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 2923.58,5453.77 L 2903.58,5442.23 L 3433.2,5136.45 L 3433.2,5159.55 L 2923.58,5453.77 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 4424.43,5136.15 L 4424.43,5159.85 L 3962.82,5453.49 L 3952.82,5448 L 3952.56,5436.31 L 4424.43,5136.15 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 124.403 172.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
 OH</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 -237.925 -367)" d="M 4349.19,6265.3 L 4339.19,6282.62 L 3952.82,6059.55 L 3952.82,6048 L 3962.82,6042.23 L 4349.19,6265.3 Z " onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();" stroke-width="3.5"></path><text x="0" y="0" stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.0833333 120.403 26.5)" font-style="normal" font-weight="normal" font-size="320px" font-family="Arial" onclick="this.classList.toggle(&quot;h&quot;); window.updateCode();">
@@ -3147,8 +3119,12 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                 }
             }
             if (activeReagent === 'fecl3') {
-                if (subData.react) { triggerInkyReaction(subData.resultColor); }
-                else { liquid.style.background = subData.resultColor; }
+                if (subData.react) {
+                    liquid.style.transition = 'background 4s ease-in-out';
+                    liquid.style.background = subData.resultColor;
+                } else {
+                    liquid.style.background = subData.resultColor;
+                }
             } else if (subData.react && !['lucas', 'k2cr2o7', 'iodine'].includes(activeReagent)) {
                 liquid.style.background = subData.resultColor || 'rgba(255,255,255,0.2)';
             }
@@ -3435,34 +3411,6 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                 }
             }, LAB_PARAMS.bubbleLife);
         }
-        /**
-         * 執行隨機顯色效果 (模板 1 + 3 混合版)
-         * @param {string} color 目標紫色
-         */
-        function triggerInkyReaction(color) {
-            const liquid = document.getElementById('liquid');
-            liquid.innerHTML = '';
-
-            const grainCount = 80;
-            for (let i = 0; i < grainCount; i++) {
-                const g = document.createElement('div');
-                g.className = 'grain';
-                g.style.left = (Math.random() * 100) + '%';
-                g.style.top = (Math.random() * 100) + '%';
-                g.style.background = color;
-
-                const delay = Math.random() * 5.0;
-                const duration = 5 + Math.random() * 5;
-
-                g.style.animation = `dissolve ${duration}s ease-out ${delay}s forwards`;
-                liquid.appendChild(g);
-            }
-
-            safeTimeout(() => {
-                liquid.style.transition = 'background 10s ease-in-out';
-                liquid.style.background = color;
-            }, 3000);
-        }
 
         async function resetToStandard() {
             const liquid = document.getElementById('liquid');
@@ -3473,7 +3421,7 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
             banner.classList.remove('show');
             setTimeout(() => { banner.innerHTML = ''; }, 600);
             // 物理移除所有元素，確保切換或重置時試管完全淨空
-            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop, .grain').forEach(el => el.remove());
+            document.querySelectorAll('.solid-particle, .bubble, #na-cube, #tweezer, .drop').forEach(el => el.remove());
 
             // 隱藏沉澱層與歸零所有外觀參數
             const pre = document.getElementById('precipitate');
@@ -3513,7 +3461,5 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
 
     </script>
 </body>
-
-</html>
 
 </html>
