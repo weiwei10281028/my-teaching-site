@@ -6,65 +6,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CHEM STUDIO</title>
 <style>
-/* --- 1. 基礎設定 --- */
     :root {
-        --bg-radial-inner: #0f172a; /* 深藍灰底色 (S33) */
-        --bg-radial-outer: #020617; /* 極深黑 (S33) */
-        --panel-glass: rgba(15, 23, 42, 0.7); /* HUD 高透明感 (S96) */
-        --panel-border: rgba(0, 242, 255, 0.3); /* 青色雷射邊框 (S96) */
-        --card-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 242, 255, 0.02) 100%); /* 微金屬光澤 (S33) */
+        --bg-radial-inner: #0f172a;
+        --bg-radial-outer: #020617;
+        --panel-glass: rgba(15, 23, 42, 0.7);
+        --panel-border: rgba(0, 242, 255, 0.3);
+        --card-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 242, 255, 0.02) 100%);
         --text-main: #f1f5f9;
         --text-sub: #94a3b8;
-        --text-highlight: #22d3ee; /* HUD 青色高亮 (S96) */
+        --text-highlight: #22d3ee;
         --accent-blue: #3b82f6;
         --accent-green: #10b981;
-        
-        /* 新增風格變數 */
         --hud-cyan: #00f2ff;
-        --liquid-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 48%, #475569 100%); /* 液態金屬漸層 (S33) */
+        --liquid-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 48%, #475569 100%);
         --hud-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
     }
 
     * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-    /* --- [修改] 上下標與正負號 分離控制區 --- */
-    
-    /* 1. 下標設定 (控制原子數量，如 H2 的 2) */
     sub {
-        font-size: 0.8em;      /* 下標字體大小 */
+        font-size: 0.8em;
         line-height: 1;
         position: relative;
         vertical-align: baseline;
-        bottom: -0.2em;        /* 下標位置：越負越往下 */
+        bottom: -0.2em;
     }
-
-    /* 2. 上標設定 (控制電荷的"數字"，如 3- 的 3) */
     sup {
-    font-size: 0.8em;         /* 稍微放大整體上標 */
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline;
-    top: -0.5em;              /* 顯著調高位置，實現真正的「右上角」 */
-    margin-left: 2px;
+        font-size: 0.8em;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+        top: -0.5em;
+        margin-left: 2px;
     }
-
-    /* 3. 特殊處理電荷的正負號 (+, -) */
     .charge-sign {
-    font-size: 1.4em;         /* 保持 1.4em 的大視覺感 */
-    font-weight: bold;        
-    display: inline-block;    
-    margin-left: 1px;         
-    line-height: 1;
-    
-    /* 微調關鍵： */
-    position: relative;
-    top: 0.02em;              /* 如果符號太高，正值往下壓；如果太低，負值往上提 */
-    vertical-align: baseline; /* 改用 baseline 配合 top 微調會比 middle 更穩定 */
- }
+        font-size: 1.4em;
+        font-weight: bold;
+        display: inline-block;
+        margin-left: 1px;
+        line-height: 1;
+        position: relative;
+        top: 0.02em;
+        vertical-align: baseline;
+    }
 
     body {
         margin: 0;
-        /* 改用更具科技感的字體優先順序 (S96) */
         font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
         background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
         color: var(--text-main);
@@ -74,16 +61,14 @@
 
     .app-container { display: flex; width: 100%; height: 100%; flex-direction: row; }
 
-/* --- 3D 顯示區 --- */
     .viewport-area {
         flex: 1; position: relative;
-        /* 將背景網格改為更精細的 HUD 瞄準線風格 (S96) */
         background-image: 
             linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), 
             linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
         background-size: 40px 40px; 
         background-position: center center;
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.8); /* 增加深邃感 (S33) */
+        box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
@@ -99,27 +84,23 @@
 
     .viewport-header h1 {
         margin: 0; 
-        font-size: 1.6rem; /*稍微大一點*/
+        font-size: 1.6rem;
         letter-spacing: 2px;
-        /* 改為純白，不再半透明 */
         color: #ffffff; 
-        /* 增強光暈效果：雙層陰影讓它更亮 */
         text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(56, 189, 248, 0.4);
         margin-bottom: 5px;
         display: flex;
-        align-items: baseline; /* 讓版本號對齊文字底部 */
+        align-items: baseline;
         gap: 8px;
     }
 
     .molecule-display-info {
         margin-top: 5px;
-        /* [S96] HUD 風格：深色高透背景 + 青色邊框 */
         background: rgba(2, 6, 23, 0.8);
         border: 1px solid rgba(0, 242, 255, 0.3);
         box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
         backdrop-filter: blur(4px);
         padding: 10px 15px;
-        /* [S96] 切角設計或科技感左邊框 */
         border-radius: 4px; 
         border-left: 4px solid var(--hud-cyan);
         pointer-events: auto;
@@ -131,9 +112,8 @@
         font-weight: 700;
         color: #fff;
         line-height: 1.1;
-        /* [S96] 文字發光 */
         text-shadow: 0 0 10px rgba(0, 242, 255, 0.6);
-        font-family: 'Rajdhani', sans-serif; /* 科技字體 */
+        font-family: 'Rajdhani', sans-serif;
     }
     
     .info-name {
@@ -157,12 +137,11 @@
     }
 
     .suggestion-tag {
-        /* [S33] 液態金屬質感：使用銀灰色漸層模擬金屬反光 */
         background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.8) 100%);
         border: 1px solid rgba(255, 255, 255, 0.3);
         color: #e2e8f0; 
         padding: 6px 0; 
-        border-radius: 20px; /* [S33] 流體圓角 */
+        border-radius: 20px;
         font-size: 0.85rem;
         cursor: pointer; 
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -172,7 +151,6 @@
     }
 
     .suggestion-tag:hover {
-        /* [S33] Hover 時金屬變亮，模擬液態流動 */
         background: linear-gradient(145deg, rgba(255,255,255,0.3) 0%, var(--hud-cyan) 100%);
         color: #000; 
         border-color: #fff;
@@ -200,7 +178,6 @@
         fill: #ffffff; text-shadow: 0 0 4px #000;
     }
 
-/* --- 控制面板 --- */
     .controls-container {
         position: absolute; top: 25px; right: 25px; z-index: 50; 
         display: flex; gap: 15px; align-items: center; pointer-events: auto;
@@ -209,23 +186,20 @@
     .control-button {
         padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
         cursor: pointer; transition: all 0.3s;
-        /* [S33] 金屬按鈕風格 */
         background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 1) 100%);
         border: 1px solid rgba(255,255,255,0.15);
-        border-top: 1px solid rgba(255,255,255,0.4); /* 頂部高光 */
+        border-top: 1px solid rgba(255,255,255,0.4);
         color: var(--text-sub);
         backdrop-filter: blur(4px); 
         box-shadow: 0 4px 6px rgba(0,0,0,0.5);
     }
     .control-button.active { 
-        /* [S96] 激活狀態：HUD 青色光暈 + 金屬底 */
         background: rgba(6, 182, 212, 0.15); 
         border-color: var(--hud-cyan); 
         color: var(--hud-cyan);
         box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.1); 
     }
 
-    /* --- 新增：摺疊選單樣式 (讓 details 看起來像 card) --- */
     details.control-group {
         background: var(--card-glass);
         border: 1px solid var(--panel-border);
@@ -233,7 +207,6 @@
         padding: 15px;
         margin-bottom: 20px;
         transition: all 0.3s ease;
-        /* [S33] 內部微光，增加厚度感 */
         box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05);
     }
     details.control-group[open] { 
@@ -244,10 +217,10 @@
     details.control-group summary {
         list-style: none; cursor: pointer; 
         font-weight: 700; 
-        color: var(--text-highlight); /* 青色文字 */
+        color: var(--text-highlight);
         display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;
         font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;
-        font-family: 'Rajdhani', sans-serif; /* 科技字體 */
+        font-family: 'Rajdhani', sans-serif;
         text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
     }
     details.control-group[open] summary { margin-bottom: 15px; border-bottom: 1px solid rgba(0, 242, 255, 0.3); padding-bottom: 10px; }
@@ -257,10 +230,9 @@
     details.control-group .input-group { width: 100%; }
 
     .card { 
-        /* [S33] 卡片背景：深色金屬漸層 */
         background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.4) 100%);
         border: 1px solid var(--panel-border); 
-        border-radius: 8px; /* HUD 風格較為方正 */
+        border-radius: 8px;
         padding: 20px; margin-bottom: 20px; 
         position: relative;
         backdrop-filter: blur(10px);
@@ -269,34 +241,29 @@
         font-size: 1rem; font-weight: 700; color: var(--hud-cyan); 
         margin-bottom: 15px; display: flex; align-items: center; gap: 10px; 
         text-transform: uppercase; letter-spacing: 2px;
-        border-left: 3px solid var(--hud-cyan); padding-left: 10px; /* HUD 標記 */
+        border-left: 3px solid var(--hud-cyan); padding-left: 10px;
         text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
     }
-    /* 1. 修改每一列的對齊方式 */
 .data-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* 改為頂端對齊，避免標籤縮到中間 */
+    align-items: flex-start;
     margin-bottom: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
-    gap: 15px; /* 增加標籤與數值間的間距 */
+    gap: 15px;
 }
-
-/* 2. 修改標籤，確保它不會被擠扁 */
 .data-label {
     font-size: 0.95rem;
     color: var(--text-sub);
     font-family: 'Rajdhani', sans-serif;
     letter-spacing: 1px;
-    flex-shrink: 0; /* 重要：防止標籤被擠壓換行 */
-    width: 80px;    /* 建議設定固定寬度，視覺會更整齊 */
-    padding-top: 2px; /* 微調讓標籤對齊第一行文字 */
+    flex-shrink: 0;
+    width: 80px;
+    padding-top: 2px;
 }
-
-/* 3. 修改數值顯示 */
 .data-value {
-    font-size: 1.1rem; /* 稍微縮小字體以容納更多內容 */
+    font-size: 1.1rem;
     color: #fff;
     font-weight: 500;
     text-shadow: 0 0 5px rgba(255,255,255,0.3);
@@ -323,7 +290,7 @@
 #balance-result::-webkit-scrollbar { display: none; }
 
 .balance-tools {
-    display: none; /* 由 JS 開啟為 flex */
+    display: none;
     flex-direction: row;
     gap: 12px;
     margin-top: 24px;
@@ -384,22 +351,20 @@
         font-family: 'Times New Roman', serif; 
         font-size: 1.15rem; 
         border: 1px solid rgba(255,255,255,0.1); 
-        /* 橫向滾動關鍵 */
         overflow-x: auto;
         white-space: nowrap;
         cursor: grab;
         display: block;
-        scrollbar-width: none; /* Firefox */
+        scrollbar-width: none;
         user-select: none;
     }
-    .step-formula-box::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+    .step-formula-box::-webkit-scrollbar { display: none; }
     .step-formula-box:active { cursor: grabbing; }
     .highlight-atom { color: var(--hud-cyan); font-weight: bold; border-bottom: 2px solid var(--hud-cyan); padding: 0 2px; }
     
     .input-group { display: flex; gap: 8px; }
     .input-group input { 
         flex-grow: 1; padding: 12px; 
-        /* [S96] 輸入框：深色底 + 底部亮線 */
         border: 1px solid rgba(255,255,255,0.1); 
         border-bottom: 2px solid rgba(255,255,255,0.2);
         border-radius: 4px; 
@@ -413,7 +378,6 @@
     }
     .input-group button { 
         padding: 10px 20px; 
-        /* [S33] 按鈕：液態質感 */
         background: linear-gradient(180deg, var(--accent-blue) 0%, #1e3a8a 100%); 
         color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; 
         cursor: pointer; font-weight: bold; text-transform: uppercase;
@@ -430,17 +394,15 @@
     .switch-container:hover { border-color: rgba(0, 242, 255, 0.3); background: rgba(0, 242, 255, 0.05); }
     .switch-container input { width: 18px; height: 18px; accent-color: var(--hud-cyan); cursor: pointer; }
 
-    /* --- 🟢 異構物選擇區核心定義 (刪除舊代碼後換成這段) --- */
     #variant-selector {
         display: none; 
-        --t: #10b981; /* 核心主題色變數 */
+        --t: #10b981;
         background: rgba(16, 185, 129, 0.12); 
         border: 1px solid rgba(16, 185, 129, 0.3);
         padding: 15px; border-radius: 4px; margin-bottom: 15px;
         position: relative; backdrop-filter: blur(10px);
     }
 
-    /* 角落標記：粗度加強且顏色強制同步變數 --t */
     #variant-selector::before, #variant-selector::after {
         content: ''; position: absolute; width: 12px; height: 12px;
         border-color: var(--t) !important;
@@ -449,20 +411,17 @@
     #variant-selector::before { top: -1.5px; left: -1.5px; border-top: 3px solid var(--t); border-left: 3px solid var(--t); }
     #variant-selector::after { bottom: -1.5px; right: -1.5px; border-bottom: 3px solid var(--t); border-right: 3px solid var(--t); }
 
-    /* 標題與選項：同步主題色 */
     .variant-header { font-weight: bold; color: var(--t) !important; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; font-size: 1rem; }
     .variant-option { padding: 6px 4px; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--t) !important; font-weight: 600; transition: all 0.2s; }
     .variant-option span { color: inherit !important; }
     .variant-option:hover { background: rgba(255, 255, 255, 0.05); color: #fff !important; text-shadow: 0 0 8px var(--t); }
     
-    /* 自定義 Radio 按鈕 */
     #variant-selector input[type="radio"] { 
         appearance: none; width: 14px; height: 14px; border: 2px solid var(--t); 
         border-radius: 50%; outline: none; cursor: pointer; position: relative;
     }
     #variant-selector input[type="radio"]:checked { background: var(--t); box-shadow: 0 0 8px var(--t); }
 
-    /* 各主題切換：只需定義 --t，底色、字、框就會連動 */
     #variant-selector.acid-theme      { --t: #fbbf24; background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.3); } 
     #variant-selector.resonance-theme { --t: #a78bfa; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.3); } 
     #variant-selector.structure-theme { --t: #38bdf8; background: rgba(14, 165, 233, 0.12); border-color: rgba(14, 165, 233, 0.3); } 
@@ -474,19 +433,16 @@
     .reaction-btn {
         flex: 1 0 42%; max-width: 48%; min-width: 140px; height: 50px;
         padding: 0 10px; font-size: 0.95rem; font-weight: 600; color: white;
-        /* [S33] 液態金屬：移除邊框，改用光影塑造立體感 */
         border: none; 
-        border-radius: 25px; /* Pill shape */
+        border-radius: 25px;
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         display: none; align-items: center; justify-content: center; white-space: nowrap;
         position: relative; overflow: hidden;
-        /* 金屬反光層 + 底部陰影 */
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 5px 15px rgba(0,0,0,0.5);
         font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
     }
     
-    /* [S33] 液態光澤遮罩 (上半部高光) */
     .reaction-btn::before {
         content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 50%;
         background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
@@ -496,12 +452,10 @@
     .reaction-btn:hover { 
         transform: translateY(-2px) scale(1.02); 
         filter: brightness(1.2); 
-        /* 強烈發光 */
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.6); 
     }
     .reaction-btn:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-    /* [S33] 各種化學試劑的金屬色調 (深淺漸層模擬金屬) */
     .btn-h2o { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); border: 1px solid #60a5fa; }
     .btn-cl2 { background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%); border: 1px solid #38bdf8; }
     .btn-h2  { background: linear-gradient(180deg, #ec4899 0%, #be185d 100%); border: 1px solid #f472b6; }
@@ -515,7 +469,6 @@
 
     .reset-btn {
         flex: 1; padding: 12px; 
-        /* [S96] 重置按鈕：警示風格 HUD */
         background: rgba(0, 0, 0, 0.6);
         border: 1px solid rgba(255, 255, 255, 0.2); 
         color: var(--text-sub); border-radius: 8px;
@@ -528,14 +481,12 @@
         box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
     }
 
-    /* 手機版樣式 */
     body.simulate-mobile .app-container { flex-direction: column; }
     body.simulate-mobile .controls-container { display: none !important; }
     body.simulate-mobile .viewport-area { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     body.simulate-mobile .controls-area {
         position: fixed; bottom: 0; left: 0; width: 100%; height: 98vh; max-height: 98vh;
         border-left: none; 
-        /* [S96] 手機面板頂部光條 */
         border-top: 1px solid var(--hud-cyan);
         box-shadow: 0 -5px 20px rgba(0, 242, 255, 0.2);
         border-radius: 20px 20px 0 0; 
@@ -549,20 +500,18 @@
         background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.1), transparent);
         border-bottom: 1px solid rgba(255,255,255,0.05);
         position: relative;
-        z-index: 1001; /* 提高z-index，確保在面板最上方且高於所有內容 */
+        z-index: 1001;
         pointer-events: auto;
-        /* 確保橫條區域完全可點擊，不會穿透到後方 */
-        -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+        -webkit-tap-highlight-color: transparent;
         user-select: none;
         -webkit-user-select: none;
-        touch-action: none; /* 鎖定瀏覽器預設滑動 */
+        touch-action: none;
     }
 
     .controls-area { 
         width: 400px; min-width: 320px;
         background-color: var(--panel-glass);
         backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        /* [S96] 電腦版左側邊框：青色光刃 */
         border-left: 1px solid rgba(0, 242, 255, 0.3);
         box-shadow: -5px 0 30px rgba(0,0,0,0.8);
         display: flex; flex-direction: column; 
@@ -575,7 +524,6 @@
     .clickable-label { cursor: pointer; font-weight: bold; }
     .variant-header { font-weight: bold; color: var(--accent-green); margin-bottom: 5px; }
 
-/* --- 手機版極速優化 (iOS Native Like) --- */
 @media (max-width: 768px), (max-height: 500px) { 
     .app-container { flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
     .controls-container { display: none !important; } 
@@ -588,7 +536,6 @@
         width: 100%; 
         height: 98vh; 
         max-height: 98vh;
-        /* [S96] 手機版面板背景：極深藍 */
         background-color: rgba(10, 15, 30, 0.98); 
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         border-radius: 20px 20px 0 0; 
@@ -597,7 +544,7 @@
         z-index: 100;
         display: flex; flex-direction: column;
         padding: 0;
-        transform: translateY(65vh); /* 對應 P35 段位 (100% - 35%) */
+        transform: translateY(65vh);
         will-change: transform;
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     }
@@ -606,11 +553,9 @@
         display: flex; width: 100%; height: 40px; 
         justify-content: center; align-items: center;
         cursor: grab; flex-shrink: 0; 
-        /* 把手背景：科技掃描感 */
         background: linear-gradient(90deg, transparent 0%, rgba(0, 242, 255, 0.05) 50%, transparent 100%);
         border-bottom: 1px solid rgba(255,255,255,0.05); 
-        touch-action: none; /* 重要：鎖定瀏覽器預設滑動 */
-        /* 確保點擊區域完全獨立，不會觸發後方元素 */
+        touch-action: none;
         position: relative;
         z-index: 1001;
         -webkit-tap-highlight-color: transparent;
@@ -618,64 +563,50 @@
         -webkit-user-select: none;
     }
     
-    /* 修改這裡：把手的樣式 */
     .handle-bar {
         width: 40px; 
         height: 4px; 
-        /* [S96] 把手：青色發光條 */
         background-color: var(--hud-cyan);
         border-radius: 2px;
         box-shadow: 0 0 10px var(--hud-cyan);
-        /* 加入過渡動畫，讓變大變小很滑順 */
         transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-
-    /* 新增這裡：當把手被按住 (active) 時的效果 */
     #mobile-panel-handle:active .handle-bar,
     #mobile-panel-handle.active .handle-bar {
-        width: 60px; /* 變寬 */
-        background-color: #fff; /* 變亮 */
-        box-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px var(--hud-cyan); /* 強烈發光 */
+        width: 60px;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px var(--hud-cyan);
     }
-    
     .controls-content { 
         flex: 1; 
         padding: 20px; 
         overflow-y: auto; 
         overscroll-behavior: contain;
-        padding-bottom: 15px; /* 全開的底部留白 */
+        padding-bottom: 15px;
         transition: padding-bottom 0.4s ease;
     }
-
     .controls-area.half-open .controls-content {
-        padding-bottom: 20vh; /* 半開的底部留白 */
+        padding-bottom: 20vh;
     }
 }
 
-    /* AA - 上方不變代碼 */
-/* BB - 下方不變代碼 */
     .hybrid-tooltip {
-/* CC - 修改代碼 (懸浮提示 HUD 化、運勢卡片科幻化、電子組態表資料庫化) */
         position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
-        /* [S96] HUD 標籤風格 */
         background: rgba(2, 6, 23, 0.9); 
         color: var(--hud-cyan); 
         padding: 15px 25px;
         border: 1px solid var(--hud-cyan);
-        border-radius: 4px; /* 方正導角 */
+        border-radius: 4px;
         font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: bold;
         pointer-events: none; opacity: 0; transition: opacity 0.2s;
         z-index: 9999; white-space: nowrap; text-align: center;
-        /* 強烈光暈 */
         box-shadow: 0 0 20px rgba(0, 242, 255, 0.4), inset 0 0 10px rgba(0, 242, 255, 0.1);
         text-shadow: 1px 1px 2px #000;
         max-width: 90vw; 
     }
     
-    /* --- 知識小百科卡片樣式 --- */
     .knowledge-card {
         border: 1px solid rgba(251, 191, 36, 0.5); 
-        /* [S33] 金屬金質感 */
         background: linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(0, 0, 0, 0.6) 100%);
         transition: all 0.3s ease;
         box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
@@ -684,7 +615,7 @@
     .knowledge-card .card-title {
         color: #fbbf24; cursor: pointer; justify-content: space-between; margin-bottom: 0; 
         text-shadow: 0 0 5px rgba(251, 191, 36, 0.6);
-        border-left: 3px solid #fbbf24; /* 覆蓋原本的青色設定 */
+        border-left: 3px solid #fbbf24;
     }
 
     .toggle-icon { font-size: 0.8rem; transition: transform 0.3s; color: #fbbf24; }
@@ -696,7 +627,6 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* 化學實驗室／進階功能按鈕：HUD 深色基底，文字一律白色（不與背景相近的藍色） */
     .glass-toggle-btn,
     .glass-toggle-btn * {
         color: #fff !important;
@@ -723,7 +653,6 @@
         margin-top: -6px; margin-bottom: 15px;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
-    /* 子選單專用樣式 */
     .sub-panel-btn {
         height: 40px !important;
         font-size: 0.95rem !important;
@@ -741,13 +670,11 @@
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
-    /* 輸入框適配 */
     .sub-content .input-group input {
         padding: 8px;
         font-size: 0.9rem;
     }
 
-    /* 軌域按鈕微調 */
     .orbital-btn-group {
         gap: 5px;
         margin-bottom: 8px;
@@ -804,7 +731,6 @@
     .res-box:hover { background: rgba(0, 242, 255, 0.1); border-color: var(--hud-cyan); transform: translateY(-5px); box-shadow: 0 0 10px var(--hud-cyan); }
     .pg-final { display: block; margin-top: 8px; font-size: 1.3rem; font-weight: bold; color: var(--hud-cyan); font-family: serif; text-shadow: 0 0 8px var(--hud-cyan); }
 
-    /* 電子閃爍動畫 */
     @keyframes spark-flicker {
         0%, 100% { opacity: 1; transform: scale(1); }
         50% { opacity: 0.4; transform: scale(0.6); }
@@ -813,7 +739,6 @@
     /* ========== [請插入這段 CSS] 電子組態表樣式 ========== */
     #config-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; }
     .config-panel { 
-        /* [S96] 科幻資料庫面板 */
         background: #020617; 
         border: 1px solid var(--hud-cyan); 
         display: flex; flex-direction: column; width: 500px; height: 85vh; 
@@ -840,7 +765,6 @@
         color: var(--hud-cyan); padding: 12px; border-radius: 4px; font-size: 1rem; outline: none; font-family: 'Rajdhani', sans-serif;
     }
     .config-search:focus { border-color: var(--hud-cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-    /* 統一標頭基礎：確保高度絕對一致，消除跳動 */
     .unified-bar {
         flex: 1 !important; height: 46px !important; display: flex !important;
         align-items: center !important; padding: 0 15px !important;
@@ -5260,7 +5184,7 @@ const QUIZ_HELPER = {
     getIsoelectronicParticle: (electrons, excludeZ) => {
         const candidates = ELECTRON_DATA.filter(el => {
             const charge = el.z - electrons;
-            return Math.abs(charge) <= 2 && el.z !== excludeZ;
+            return Math.abs(charge) <= 3 && el.z !== excludeZ;
         });
         if (candidates.length === 0) return null;
         const picked = candidates[Math.floor(Math.random() * candidates.length)];
@@ -6032,10 +5956,10 @@ if (type === 0) {
         quizData.displayMode = "symbol";
     }
 } else if (type === 2) {
-    // 多向：座標 ↔ 符號 ↔ 原子序，座標分「IUPAC族號」和「A/B族號」兩種問法
+    const periodCh = ["","一","二","三","四","五","六","七"][target.p] || `${target.p}`;
     const isLanthanide = (target.g === "鑭系" || target.g === "錒系");
     const iupacCoord = `第 ${target.p} 週期、第 ${target.iupac} 族`;
-    const abCoord    = isLanthanide ? `第 ${target.p} 週期、${target.g}` : `第 ${target.p} 週期、第 ${target.g} 族`;
+    const abCoord    = isLanthanide ? `第${periodCh}週期、${target.g}` : `第${periodCh}週期、${target.g}族`;
     const direction = Math.random();
     if (direction < 0.125) {
         // 座標(IUPAC) → 符號
@@ -6178,11 +6102,23 @@ if (type === 0) {
         }
         
         quizData.type        = "特性校準：分類 > 元素"; 
-        const questionTemplates = [
-            `下列哪個元素屬於「${target.type}」？`,
-            `下列何者為「${target.type}」元素？`,
-            `「${target.type}」類別中包含下列哪個元素？`
-        ];
+        let questionTemplates;
+        if (answerDisplayMode === "number") {
+            questionTemplates = [
+                `下列哪個原子序的元素屬於「${target.type}」？`,
+                `下列哪個原子序對應的元素，其性質屬於「${target.type}」？`
+            ];
+        } else if (answerDisplayMode === "english") {
+            questionTemplates = [
+                `下列哪個元素（英文名稱）屬於「${target.type}」？`,
+                `下列何者為「${target.type}」元素？`
+            ];
+        } else {
+            questionTemplates = [
+                `下列哪個元素屬於「${target.type}」？`,
+                `「${target.type}」類別中包含下列哪個元素？`
+            ];
+        }
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
         quizData.answer      = answerValue;
         quizData.displayMode = answerDisplayMode;
@@ -6347,7 +6283,7 @@ if (type === 0) {
         quizData.displayMode = "ion";
     } else {
         // Type 18: 邏輯判斷：等電子序列
-        let c = Math.floor(Math.random() * 5) - 2;
+        let c = Math.floor(Math.random() * 7) - 3;
         const eCount = target.z - c;
         const signHTML = c === 0 ? "" : `<sup>${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign">${c > 0 ? "+" : "-"}</span></sup>`;
         const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
@@ -7239,13 +7175,12 @@ if (type === 0) {
         break;
     case "ion":
                 if (cand) {
-                    let rC = Math.floor(Math.random() * 5) - 2;
+                    let rC = Math.floor(Math.random() * 7) - 3;
                     if (rC === 0) {
                         val = cand.s;
                     } else {
                         let rVal = Math.abs(rC);
                         let rSign = rC > 0 ? "+" : "-";
-                        // 直接一次性拼接正確的 HTML，避免後續使用 replace 造成二次傷害
                         val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
                     }
                 } else {
@@ -7259,7 +7194,8 @@ if (type === 0) {
                     const randomEl = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
                     const isLanEl = (randomEl.g === "鑭系" || randomEl.g === "錒系");
                     if (quizData.coordMode === "ab") {
-                        val = isLanEl ? `第 ${randomEl.p} 週期、${randomEl.g}` : `第 ${randomEl.p} 週期、第 ${randomEl.g} 族`;
+                        const pCh = ["","一","二","三","四","五","六","七"][randomEl.p] || randomEl.p;
+                        val = isLanEl ? `第${pCh}週期、${randomEl.g}` : `第${pCh}週期、${randomEl.g}族`;
                     } else {
                         val = `第 ${randomEl.p} 週期、第 ${randomEl.iupac} 族`;
                     }
