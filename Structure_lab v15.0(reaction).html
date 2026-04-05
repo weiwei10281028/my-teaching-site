@@ -854,7 +854,7 @@
     
     /* 測驗視圖容器 */
     #quiz-view { display: none; flex-direction: column; flex: 1; overflow: hidden; padding: 0 !important; }
-    #quiz-setup-area, #quiz-content-area, #quiz-result-area { display: none; padding: 20px 15px; flex-direction: column; gap: 20px; }
+    #quiz-setup-area, #quiz-content-area, #quiz-result-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
     
     /* 設定頁面組件 */
     .setup-label { color: var(--hud-cyan); font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 10px; display: block; border-left: 3px solid var(--hud-cyan); padding-left: 8px; }
@@ -865,32 +865,48 @@
     .start-cal-btn:hover { background: #fff; }
 
     /* 題目與按鈕組件 */
-    .quiz-question-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; }
-    .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #fbbf24; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.8; }
+    .quiz-question-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; min-height: calc(5.2rem + 40px); display: flex; flex-direction: column; justify-content: center; }
+    .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #94a3b8; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.7; }
     #quiz-type { display: none; }
-    .quiz-question-text { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+    .quiz-question-text { font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); line-height: 1.3; }
     .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 15px 10px; border-radius: 6px; color: #ffffff; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; will-change: transform, background-color, border-color, box-shadow; }
     .option-btn:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
-    .option-btn.selected { background: rgba(250, 204, 21, 0.2) !important; border-color: #facc15 !important; color: #facc15 !important; box-shadow: 0 0 10px rgba(250, 204, 21, 0.3) !important; }
-    .option-btn.correct { background: rgba(34, 211, 238, 0.2) !important; border-color: var(--hud-cyan) !important; color: var(--hud-cyan) !important; animation: correctPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-    .option-btn.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #ef4444 !important; animation: wrongShake 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .option-btn.selected { background: rgba(234, 138, 60, 0.18) !important; border-color: #ea8a3c !important; color: #f5b07a !important; box-shadow: 0 0 8px rgba(234, 138, 60, 0.25) !important; }
+    .option-btn.correct { background: rgba(74, 195, 137, 0.18) !important; border-color: #4ac389 !important; color: #7edcb0 !important; animation: correctPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .option-btn.wrong { background: rgba(205, 80, 70, 0.18) !important; border-color: #cd5046 !important; color: #e88880 !important; animation: wrongShake 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
     .option-btn:disabled { opacity: 0.6; cursor: not-allowed; transition: opacity 0.3s ease; }
     @keyframes correctPulse {
-        0% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 242, 255, 0.3); }
-        50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
-        100% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 242, 255, 0.3); }
+        0% { transform: scale(1); box-shadow: 0 0 8px rgba(74, 195, 137, 0.3); }
+        50% { transform: scale(1.04); box-shadow: 0 0 18px rgba(74, 195, 137, 0.5); }
+        100% { transform: scale(1); box-shadow: 0 0 8px rgba(74, 195, 137, 0.3); }
     }
     @keyframes wrongShake {
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
         20%, 40%, 60%, 80% { transform: translateX(3px); }
     }
-    .confirm-btn { background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.3)); border: 1px solid #8b5cf6; padding: 15px 30px; border-radius: 6px; color: #c4b5fd; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; margin-top: 20px; width: 100%; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); will-change: transform, background, box-shadow; }
-    .confirm-btn:hover { background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.4)); box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); transform: translateY(-1px); }
+    #quiz-confirm-wrap { height: 32px; flex-shrink: 0; }
+    .confirm-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.18); padding: 0; height: 32px; line-height: 32px; border-radius: 5px; color: #cbd5e1; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: background 0.3s, border-color 0.3s, color 0.3s; font-family: 'Rajdhani', sans-serif; width: 100%; display: block; letter-spacing: 1px; }
+    .confirm-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.4); }
     .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .confirm-btn.confirmed { background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 1px solid #fbbf24; color: #000; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: buttonTransform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-    .confirm-btn.confirmed:hover { background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 0 25px rgba(251, 191, 36, 0.6); }
+    .confirm-btn.confirmed.is-correct { background: rgba(74, 195, 137, 0.15); border-color: #4ac389; color: #7edcb0; }
+    .confirm-btn.confirmed.is-wrong   { background: rgba(205, 80, 70, 0.15);  border-color: #cd5046; color: #e88880; }
+    /* 簡易週期表：18欄自動填滿寬度 */
+    #periodic-table-wrap { overflow-x: hidden !important; }
+    #mini-periodic-table { display: grid; grid-template-columns: repeat(18, 1fr); gap: 1px; width: 100%; }
+    .pt-cell { aspect-ratio: 1; min-width: 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Rajdhani','Segoe UI',sans-serif; cursor: default; background: rgba(15,23,42,0.6); overflow: hidden; }
+    .pt-cell .pt-z { font-size: clamp(0.28rem, 1.6vw, 0.42rem); color: rgba(255,255,255,0.5); line-height: 1; }
+    .pt-cell .pt-s { font-size: clamp(0.38rem, 2.2vw, 0.65rem); font-weight: 700; color: #e2e8f0; line-height: 1; }
+    .pt-cell.pt-s-block { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.35); }
+    .pt-cell.pt-s-block .pt-s { color: #93c5fd; }
+    .pt-cell.pt-p-block { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.35); }
+    .pt-cell.pt-p-block .pt-s { color: #6ee7b7; }
+    .pt-cell.pt-d-block { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
+    .pt-cell.pt-d-block .pt-s { color: #fcd34d; }
+    .pt-cell.pt-f-block { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.3); }
+    .pt-cell.pt-f-block .pt-s { color: #fda4af; }
+    .pt-cell.pt-empty { background: transparent; border-color: transparent; }
     @keyframes buttonTransform {
         0% { transform: scale(0.95); opacity: 0.8; }
         50% { transform: scale(1.02); }
@@ -1425,7 +1441,7 @@
                     <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">返回</div>
                 </div>
             </div>
-            <div style="flex: 1; overflow-y: auto;">
+            <div style="flex: 1; overflow-y: auto; overflow-x: hidden;">
                 <div id="quiz-setup-area">
                     <span class="setup-label">數據通量 (題數)</span>
                     <div class="setup-btns">
@@ -1441,6 +1457,13 @@
                         <div id="quiz-question" class="quiz-question-text">--</div>
                     </div>
                     <div id="quiz-options" class="quiz-options-grid"></div>
+                    <div id="quiz-confirm-wrap"></div>
+                    <div id="periodic-toggle-bar" style="display:none;">
+                        <button onclick="togglePeriodicTable()" id="periodic-toggle-btn" style="width:100%; padding:5px; background:rgba(0,242,255,0.06); border:1px solid rgba(0,242,255,0.25); border-radius:4px; color:var(--hud-cyan); font-family:'Rajdhani',sans-serif; font-size:0.8rem; letter-spacing:1px; cursor:pointer;">📋 週期表 ▼</button>
+                        <div id="periodic-table-wrap" style="display:none; margin-top:6px;">
+                            <div id="mini-periodic-table"></div>
+                        </div>
+                    </div>
                 </div>
                 <div id="quiz-result-area">
                     <div id="quiz-result-card" class="quiz-question-card"></div>
@@ -5765,18 +5788,15 @@ function generateQuestionKey(type, quizData, target) {
             }
             return `type1-${coreQuestion}`;
             
-        case 2: // 位置定位：座標 ↔ 符號 ↔ 原子序
-            // 區分4種方向：座標→符號、符號→座標、原子序→座標、座標→原子序
+        case 2: // 位置定位：座標 ↔ 符號 ↔ 原子序（含 IUPAC / A/B 兩種座標格式）
             if (coreQuestion.includes('位於週期表') && coreQuestion.includes('元素符號')) {
-                return `type2-座標→符號`;
-            } else if (coreQuestion.includes('位於週期表') && !coreQuestion.includes('元素符號')) {
-                return `type2-座標→原子序`;
-            } else if (coreQuestion.includes('第幾週期') && coreQuestion.includes('第幾族')) {
-                if (coreQuestion.includes('原子序為')) {
-                    return `type2-原子序→座標`;
-                } else {
-                    return `type2-符號→座標`;
-                }
+                return quizData.coordMode === 'ab' ? `type2-AB座標→符號` : `type2-IUPAC座標→符號`;
+            } else if (coreQuestion.includes('位於週期表') && coreQuestion.includes('原子序')) {
+                return quizData.coordMode === 'ab' ? `type2-AB座標→原子序` : `type2-IUPAC座標→原子序`;
+            } else if (coreQuestion.includes('幾A') || coreQuestion.includes('幾B') || coreQuestion.includes('A/B')) {
+                return coreQuestion.includes('原子序為') || coreQuestion.includes('原子序') ? `type2-原子序→AB座標` : `type2-符號→AB座標`;
+            } else if (coreQuestion.includes('第幾族')) {
+                return coreQuestion.includes('原子序為') || coreQuestion.includes('原子序') ? `type2-原子序→IUPAC座標` : `type2-符號→IUPAC座標`;
             }
             return `type2-${coreQuestion}`;
             
@@ -5885,12 +5905,19 @@ window.initiateCalibration = function() {
     
     document.getElementById('quiz-setup-area').style.display = 'none';
     document.getElementById('quiz-content-area').style.display = 'flex';
+    // 新一輪開始時重置週期表為收起
+    const wrap = document.getElementById('periodic-table-wrap');
+    const btn  = document.getElementById('periodic-toggle-btn');
+    if (wrap) wrap.style.display = 'none';
+    if (btn) btn.textContent = '📋 週期表 ▼';
+    updatePeriodicToggleVisibility();
     window.renderNextQuestion();
 };
 
 window.renderNextQuestion = function() {
     window.quizState.currentQ++;
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
+    updatePeriodicToggleVisibility();
     
     const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原" };
     const catName = catNames[window.quizState.difficulty] || "未知";
@@ -6005,37 +6032,67 @@ if (type === 0) {
         quizData.displayMode = "symbol";
     }
 } else if (type === 2) {
-    // 多向：座標 ↔ 符號 ↔ 原子序
+    // 多向：座標 ↔ 符號 ↔ 原子序，座標分「IUPAC族號」和「A/B族號」兩種問法
+    const isLanthanide = (target.g === "鑭系" || target.g === "錒系");
+    const iupacCoord = `第 ${target.p} 週期、第 ${target.iupac} 族`;
+    const abCoord    = isLanthanide ? `第 ${target.p} 週期、${target.g}` : `第 ${target.p} 週期、第 ${target.g} 族`;
     const direction = Math.random();
-    if (direction < 0.25) {
-        // 座標 → 符號
-        quizData.type        = "位置定位：座標 > 符號"; 
-        quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素符號是？`;
+    if (direction < 0.125) {
+        // 座標(IUPAC) → 符號
+        quizData.type        = "位置定位：座標(IUPAC) > 符號";
+        quizData.question    = `位於週期表「${iupacCoord}」的元素符號是？`;
         quizData.answer      = target.s;
         quizData.displayMode = "symbol";
-    } else if (direction < 0.5) {
-        // 符號 → 座標
-        quizData.type        = "位置定位：符號 > 座標"; 
-        const coordOptions = [
-            `元素 ${s} 位於週期表的第幾週期、第幾族？`,
-            `元素 ${s} 在週期表中的位置（週期與族）為何？`,
-            `元素 ${s} 屬於第幾週期、第幾族？`
-        ];
-        quizData.question    = coordOptions[Math.floor(Math.random() * coordOptions.length)];
-        quizData.answer      = `第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})`;
-        quizData.displayMode = "raw";
-    } else if (direction < 0.75) {
-        // 原子序 → 座標
-        quizData.type        = "位置定位：原子序 > 座標"; 
-        quizData.question    = [ `原子序為 ${target.z} 的元素位於週期表的第幾週期、第幾族？`, `原子序 ${target.z} 的元素在週期表中的位置為何？` ][Math.floor(Math.random() * 2)];
-        quizData.answer      = `第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})`;
-        quizData.displayMode = "raw";
-    } else {
-        // 座標 → 原子序
-        quizData.type        = "位置定位：座標 > 原子序"; 
-        quizData.question    = `位於週期表「第 ${target.p} 週期、第 ${target.iupac} 族 (${target.g})」的元素，其原子序為何？`;
+        quizData.coordMode   = "iupac";
+    } else if (direction < 0.25) {
+        // 座標(A/B族) → 符號
+        quizData.type        = "位置定位：座標(A/B) > 符號";
+        quizData.question    = `位於週期表「${abCoord}」的元素符號是？`;
+        quizData.answer      = target.s;
+        quizData.displayMode = "symbol";
+        quizData.coordMode   = "ab";
+    } else if (direction < 0.375) {
+        // 座標(IUPAC) → 原子序
+        quizData.type        = "位置定位：座標(IUPAC) > 原子序";
+        quizData.question    = `位於週期表「${iupacCoord}」的元素，其原子序為何？`;
         quizData.answer      = target.z.toString();
         quizData.displayMode = "number";
+        quizData.coordMode   = "iupac";
+    } else if (direction < 0.5) {
+        // 座標(A/B族) → 原子序
+        quizData.type        = "位置定位：座標(A/B) > 原子序";
+        quizData.question    = `位於週期表「${abCoord}」的元素，其原子序為何？`;
+        quizData.answer      = target.z.toString();
+        quizData.displayMode = "number";
+        quizData.coordMode   = "ab";
+    } else if (direction < 0.5625) {
+        // 符號 → 座標(IUPAC)
+        quizData.type        = "位置定位：符號 > 座標(IUPAC)";
+        quizData.question    = [`元素 ${s} 位於週期表的第幾週期、第幾族（IUPAC）？`, `元素 ${s} 屬於第幾週期、第幾族？`][Math.floor(Math.random() * 2)];
+        quizData.answer      = iupacCoord;
+        quizData.displayMode = "raw";
+        quizData.coordMode   = "iupac";
+    } else if (direction < 0.625) {
+        // 符號 → 座標(A/B族)
+        quizData.type        = "位置定位：符號 > 座標(A/B)";
+        quizData.question    = [`元素 ${s} 位於週期表的第幾週期、幾A或幾B族？`, `元素 ${s} 屬於第幾週期、幾A/B族？`][Math.floor(Math.random() * 2)];
+        quizData.answer      = abCoord;
+        quizData.displayMode = "raw";
+        quizData.coordMode   = "ab";
+    } else if (direction < 0.75) {
+        // 原子序 → 座標(IUPAC)
+        quizData.type        = "位置定位：原子序 > 座標(IUPAC)";
+        quizData.question    = [`原子序為 ${target.z} 的元素位於週期表的第幾週期、第幾族？`, `原子序 ${target.z} 的元素在週期表中的位置（週期與族）為何？`][Math.floor(Math.random() * 2)];
+        quizData.answer      = iupacCoord;
+        quizData.displayMode = "raw";
+        quizData.coordMode   = "iupac";
+    } else {
+        // 原子序 → 座標(A/B族)
+        quizData.type        = "位置定位：原子序 > 座標(A/B)";
+        quizData.question    = [`原子序為 ${target.z} 的元素位於第幾週期、幾A或幾B族？`, `原子序 ${target.z} 的元素屬於第幾週期、幾A/B族？`][Math.floor(Math.random() * 2)];
+        quizData.answer      = abCoord;
+        quizData.displayMode = "raw";
+        quizData.coordMode   = "ab";
     }
 } else if (type === 3) {
     quizData.type        = "量子結構：組態辨識"; 
@@ -7198,9 +7255,14 @@ if (type === 0) {
             case "raw":
                 // 根據題型生成對應的選項格式
                 if (type === 2) {
-                    // Type 2: 座標格式 "第 X 週期、第 Y 族 (Z)"
+                    // Type 2: 座標格式，依 coordMode 決定用 IUPAC 或 A/B 族
                     const randomEl = window.quizState.pool[Math.floor(Math.random() * window.quizState.pool.length)];
-                    val = `第 ${randomEl.p} 週期、第 ${randomEl.iupac} 族 (${randomEl.g})`;
+                    const isLanEl = (randomEl.g === "鑭系" || randomEl.g === "錒系");
+                    if (quizData.coordMode === "ab") {
+                        val = isLanEl ? `第 ${randomEl.p} 週期、${randomEl.g}` : `第 ${randomEl.p} 週期、第 ${randomEl.g} 族`;
+                    } else {
+                        val = `第 ${randomEl.p} 週期、第 ${randomEl.iupac} 族`;
+                    }
                 } else if (type === 4) {
                     // Type 4: 元素分類
                     const allTypes = [...new Set(ELECTRON_DATA.map(el => el.type))];
@@ -7247,6 +7309,7 @@ if (type === 0) {
     opts.sort(() => 0.5 - Math.random());
     const container = document.getElementById('quiz-options');
     container.innerHTML = "";
+    document.getElementById('quiz-confirm-wrap').innerHTML = "";
     container.style.gridTemplateColumns = (quizData.displayMode === "noble") ? "1fr" : "";
     let selectedOption = null; // 儲存選中的選項
 
@@ -7281,7 +7344,7 @@ if (type === 0) {
         b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
-            if (container.querySelector('.start-cal-btn')) return;
+            if (document.getElementById('quiz-confirm-wrap').querySelector('.confirm-btn.confirmed')) return;
             
             // 如果選項已被禁用，不允許選擇
             if (b.disabled) return;
@@ -7295,8 +7358,9 @@ if (type === 0) {
             b.classList.add('selected');
             selectedOption = o;
             
-            // 顯示確認按鈕（如果還沒有）
-            let confirmBtn = container.querySelector('.confirm-btn');
+            // 顯示確認按鈕（固定在 quiz-confirm-wrap，與選項數量無關）
+            const confirmWrap = document.getElementById('quiz-confirm-wrap');
+            let confirmBtn = confirmWrap.querySelector('.confirm-btn');
             if (!confirmBtn) {
                 confirmBtn = document.createElement('button');
                 confirmBtn.className = 'confirm-btn';
@@ -7347,7 +7411,8 @@ if (type === 0) {
                             setTimeout(() => {
                                 isCalibrated = true;
                                 confirmBtn.classList.add('confirmed');
-                                confirmBtn.textContent = isCorrect ? "數據正確，點擊繼續 NEXT >" : "校準失敗，繼續程序 NEXT >";
+                                confirmBtn.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+                                confirmBtn.textContent = isCorrect ? "✓ 數據正確  NEXT >" : "✕ 校準失敗  NEXT >";
                             }, 200);
                         });
                     } else {
@@ -7355,7 +7420,7 @@ if (type === 0) {
                         window.renderNextQuestion();
                     }
                 };
-                container.appendChild(confirmBtn);
+                confirmWrap.appendChild(confirmBtn);
             }
         };
         container.appendChild(b);
@@ -7371,6 +7436,95 @@ window.finishCalibration = function() {
     const rptRank = window.quizState.rank ? ` RANK ${window.quizState.rank}` : '';
     document.getElementById('quiz-status-text').textContent = `REPORT:${rptRank}`;
 };
+
+// --- 週期表參考 ---
+window._periodicBuilt = false;
+function buildMiniPeriodicTable() {
+    if (window._periodicBuilt) return;
+    window._periodicBuilt = true;
+    const grid = [];
+    for (let r = 0; r < 7; r++) grid[r] = new Array(18).fill(null);
+    const lan = new Array(15).fill(null);
+    const act = new Array(15).fill(null);
+
+    ELECTRON_DATA.forEach(el => {
+        if (el.g === "鑭系") { lan[el.z - 57] = el; return; }
+        if (el.g === "錒系") { act[el.z - 89] = el; return; }
+        if (el.p >= 1 && el.p <= 7 && el.iupac >= 1 && el.iupac <= 18) {
+            grid[el.p - 1][el.iupac - 1] = el;
+        }
+    });
+
+    function getBlock(el) {
+        if (el.s === 'He') return 'pt-s-block';
+        if (el.iupac <= 2) return 'pt-s-block';
+        if (el.iupac >= 13) return 'pt-p-block';
+        return 'pt-d-block';
+    }
+    function makeCell(el, blockCls) {
+        const d = document.createElement('div');
+        if (!el) { d.className = 'pt-cell pt-empty'; return d; }
+        d.className = `pt-cell ${blockCls || getBlock(el)}`;
+        d.innerHTML = `<span class="pt-z">${el.z}</span><span class="pt-s">${el.s}</span>`;
+        d.title = `${el.z} ${el.s} ${el.cn || ''}`;
+        return d;
+    }
+
+    const container = document.getElementById('mini-periodic-table');
+    // 主表格第6週期(row5)和第7週期(row6)的第3族(col2)放鑭系/錒系佔位格
+    // rows 1-7
+    for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 18; c++) {
+            // 第6週期第3族：鑭系佔位
+            if (r === 5 && c === 2) {
+                const d = document.createElement('div');
+                d.className = 'pt-cell pt-f-block pt-placeholder';
+                d.innerHTML = `<span class="pt-z">57-71</span><span class="pt-s" style="font-size:clamp(0.26rem,1.3vw,0.46rem);">鑭系</span>`;
+                d.title = '鑭系元素 57-71';
+                container.appendChild(d);
+            // 第7週期第3族：錒系佔位
+            } else if (r === 6 && c === 2) {
+                const d = document.createElement('div');
+                d.className = 'pt-cell pt-f-block pt-placeholder';
+                d.innerHTML = `<span class="pt-z">89-103</span><span class="pt-s" style="font-size:clamp(0.26rem,1.3vw,0.46rem);">錒系</span>`;
+                d.title = '錒系元素 89-103';
+                container.appendChild(d);
+            } else {
+                container.appendChild(makeCell(grid[r][c]));
+            }
+        }
+    }
+    // spacer row (縮小高度，只留一點間距)
+    for (let c = 0; c < 18; c++) {
+        const d = document.createElement('div');
+        d.className = 'pt-cell pt-empty';
+        d.style.height = '3px';
+        container.appendChild(d);
+    }
+    // lanthanide row：col0-2 空格，col3-17 放元素
+    [lan, act].forEach(data => {
+        for (let c = 0; c < 3; c++) { const sp = document.createElement('div'); sp.className = 'pt-cell pt-empty'; container.appendChild(sp); }
+        for (let c = 3; c < 18; c++) container.appendChild(makeCell(data[c - 3], 'pt-f-block'));
+    });
+}
+
+window.togglePeriodicTable = function() {
+    buildMiniPeriodicTable();
+    const wrap = document.getElementById('periodic-table-wrap');
+    const btn  = document.getElementById('periodic-toggle-btn');
+    const open = wrap.style.display === 'none';
+    wrap.style.display = open ? 'block' : 'none';
+    btn.textContent = open ? '📋 週期表 ▲' : '📋 週期表 ▼';
+};
+
+// 顯示/隱藏週期表切換按鈕（依類別決定）
+function updatePeriodicToggleVisibility() {
+    const bar = document.getElementById('periodic-toggle-bar');
+    if (!bar) return;
+    const cat = window.calCategory || 'periodic';
+    bar.style.display = (cat === 'periodic') ? 'block' : 'none';
+    // 換題時保持週期表開關狀態，不重置
+}
 
 // 物質檢索功能控制
 function openSubstanceModal() {
