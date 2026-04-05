@@ -817,7 +817,7 @@
     .confirm-btn.confirmed.is-correct { background: rgba(74, 195, 137, 0.15); border-color: #4ac389; color: #7edcb0; }
     .confirm-btn.confirmed.is-wrong   { background: rgba(205, 80, 70, 0.15);  border-color: #cd5046; color: #e88880; }
     /* 簡易週期表：18欄自動填滿寬度 */
-    #periodic-table-wrap { overflow: hidden !important; touch-action: none; }
+    #periodic-table-wrap { overflow: hidden !important; touch-action: none; position: relative; }
     #mini-periodic-table { display: grid; grid-template-columns: repeat(18, 1fr); gap: 1px; width: 100%; transform-origin: top left; will-change: transform; }
     .pt-cell { aspect-ratio: 1; min-width: 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Rajdhani','Segoe UI',sans-serif; cursor: default; background: rgba(15,23,42,0.6); overflow: hidden; }
     .pt-cell .pt-z { font-size: clamp(0.28rem, 1.6vw, 0.42rem); color: rgba(255,255,255,0.5); line-height: 1; }
@@ -7460,6 +7460,14 @@ function initPeriodicTableGesture() {
     if (!wrap || !table || wrap._gestureInited) return;
     wrap._gestureInited = true;
 
+    // 鎖定初始自然高度作為顯示視窗
+    requestAnimationFrame(() => {
+        wrap.style.height = wrap.offsetHeight + 'px';
+        table.style.position = 'absolute';
+        table.style.top = '0';
+        table.style.left = '0';
+    });
+
     let scale = 1, tx = 0, ty = 0;
     let lastDist = 0, lastMidX = 0, lastMidY = 0;
     let isPinching = false, isDragging = false;
@@ -7469,10 +7477,8 @@ function initPeriodicTableGesture() {
         scale = Math.min(Math.max(scale, 1), 4);
         const ww = wrap.clientWidth, wh = wrap.clientHeight;
         const tw = table.offsetWidth * scale, th = table.offsetHeight * scale;
-        if (tw > ww) tx = Math.min(0, Math.max(tx, ww - tw));
-        else tx = 0;
-        if (th > wh) ty = Math.min(0, Math.max(ty, wh - th));
-        else ty = 0;
+        tx = tw > ww ? Math.min(0, Math.max(tx, ww - tw)) : 0;
+        ty = th > wh ? Math.min(0, Math.max(ty, wh - th)) : 0;
         table.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
     }
 
