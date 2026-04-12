@@ -346,6 +346,10 @@
             letter-spacing: 3px;
         }
 
+        #molEn:empty {
+            display: none;
+        }
+
         .test-tube::before {
             content: "";
             position: absolute;
@@ -1178,7 +1182,7 @@
                         <div id="bubble-container"></div>
                     </div>
                     <div class="mol-label-zh" id="molZh">STANDBY</div>
-                    <div class="mol-label-en" id="molEn">(READY FOR LAB)</div>
+                    <div class="mol-label-en" id="molEn"></div>
                 </div>
             </div>
         </main>
@@ -1215,9 +1219,9 @@
                 class="reagent-en">(NaHCO₃ Test)</span><span class="reagent-desc">檢驗酸性較強的羧酸 (產生二氧化碳)</span></button>
 
         <!-- 第三階段：醛酮還原性 -->
-        <button class="reagent-btn" id="btn-tollens" onclick="initExperiment('tollens')">銀鏡反應<span
-                class="reagent-en">(Silver Mirror Test)</span><span class="reagent-desc">檢驗醛類與甲酸之強還原性性質</span></button>
-        <button class="reagent-btn" id="btn-fehling" onclick="initExperiment('fehling')">斐林/本氏液試驗<span
+        <button class="reagent-btn" id="btn-tollens" onclick="initExperiment('tollens')">多侖試劑檢驗<span
+                class="reagent-en">(Tollens' Test)</span><span class="reagent-desc">檢驗醛類與甲酸之強還原性性質</span></button>
+        <button class="reagent-btn" id="btn-fehling" onclick="initExperiment('fehling')">斐林/本氏液檢驗<span
                 class="reagent-en">(Fehling's/Benedict's Test)</span><span
                 class="reagent-desc">檢驗脂肪族醛類與還原糖之性質</span></button>
 
@@ -1293,7 +1297,7 @@
 
         const experimentData = {
             'br2': {
-                reagentColor: 'rgba(185, 85, 15, 0.52)',
+                reagentColor: 'rgba(139, 37, 0, 0.52)',
                 substrates: [
                     {
                         zh: '乙 烷', en: 'Ethane', state: 'gas', react: false, eq: 'CH₃CH₃ + Br₂ → (No Reaction)', text: '紅棕色溶液顏色不消失。原因是因為乙烷為飽和烴，在常溫且無照光下無法與溴發生反應；且乙烷與四氯化碳互溶，溶液保持勻相紅棕色。',
@@ -2936,7 +2940,7 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
                     document.getElementById('equationContent').innerText = '---';
                     document.getElementById('reportContent').innerText = `已切換至 ${alkyneReagent === 'ag' ? '銀氨' : '亞銅氨'} 溶液。請選擇受質。`;
                     document.getElementById('molZh').innerText = 'STANDBY';
-                    document.getElementById('molEn').innerText = '(READY)';
+                    document.getElementById('molEn').innerText = '';
 
                     await resetToStandard(); // 執行包含沉澱清空的重置動畫
                     renderSubstrateBar(); // 重新渲染開關與按鈕狀態
@@ -3443,7 +3447,7 @@ H</text><path stroke="none" fill="white" transform="matrix(0.0833333 0 0 0.08333
             }
 
             document.getElementById('molZh').innerText = 'STANDBY';
-            document.getElementById('molEn').innerText = '(READY)';
+            document.getElementById('molEn').innerText = '';
             document.getElementById('equationContent').innerText = '---';
             document.getElementById('reportContent').innerText = "請選擇待測物質。";
 
