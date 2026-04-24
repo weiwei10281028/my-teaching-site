@@ -3190,8 +3190,21 @@ function loadMolecule(key, variantKey = null) {
         if (cIdx !== -1) {
             if (isOctetMode) {
                 if (type === 'double') {
-                    // 修正判定邏輯：同時檢查 ID 與全名，確保 SO2, SO3 命中以保留一條雙鍵
-                    const isResonance = /SO[23]|二氧化硫|三氧化硫|硫代硫酸/.test(currentKey + (data.fullKey || ""));
+                    // 勿用 /SO[23]/ 配全字串：會從 H2SO3 誤摘「SO3」，導致亞硫酸根／亞硫酸鹽在八隅體模式仍保雙鍵
+                    const vKey = (variantKey || currentVariantKey || "");
+                    const kStr = (currentKey || "");
+                    // 陰離子、酸式根、鈉鹽鈣鹽等：八隅體時不保留 S=O，一律改單鍵
+                    const octetAllSingleForS = vKey.includes("SO3 2-") || vKey.includes("SO4 2-")
+                        || /亞硫酸氫根|硫代硫酸氫根|亞硫酸鈉|亞硫酸鈣|亞硫酸氫鈉|硫代硫酸鈉|大蘇打|海波/.test(vKey)
+                        || (vKey.includes("亞硫酸根") && vKey.includes("2-"));
+                    // MOLECULE_DB 主鍵為 addMol 第一欄，僅有「SO2」「SO3」，不含 | 之後；fullKey 才可能是「SO2|二氧化硫」
+                    const fullK = (data.fullKey || "");
+                    const isNeutralSO2 = kStr === "SO2" || kStr.startsWith("SO2|") || fullK.startsWith("SO2|");
+                    const isNeutralSO3 = kStr === "SO3" || kStr.startsWith("SO3|三氧化硫") || fullK.startsWith("SO3|三氧化硫");
+                    const isThiosulfateIon = vKey.includes("S2O3 2-") && vKey.includes("硫代硫酸根");
+                    const isH2so3Acid = kStr === "H2SO3|亞硫酸系列" && vKey === "H2SO3|亞硫酸";
+                    const isH2S2O3Acid = kStr === "H2S2O3|硫代硫酸系列" && vKey === "H2S2O3|硫代硫酸";
+                    const isResonance = !octetAllSingleForS && (isNeutralSO2 || isNeutralSO3 || isThiosulfateIon || isH2so3Acid || isH2S2O3Acid);
 
                     if (isResonance && keptDoubleBonds === 0) {
                         keptDoubleBonds++;
@@ -4371,7 +4384,7 @@ function setupInteractions() {
 
     const toggleOct = document.getElementById('toggle-octet');
     if (toggleOct) toggleOct.addEventListener('change', () => { 
-        if(currentKey) loadMolecule(currentKey); 
+        if (currentKey) loadMolecule(currentKey, (typeof currentVariantKey !== 'undefined' && currentVariantKey) ? currentVariantKey : null);
     });
 
     const togglePoly = document.getElementById('toggle-polyhedron');
