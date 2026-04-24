@@ -1,1255 +1,7399 @@
-// ==========================================
-// data_molecules.js - 分子結構定義與輔助函式
-// ==========================================
-
-let MOLECULE_DB = {};
-let MOLECULE_INDEX = {};
-
-// 幾何輔助函式
-const di = (e, dist=60) => [{elem:e,x:-dist,y:0,z:0},{elem:e,x:dist,y:0,z:0}];
-const getLinear = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:r,y:0,z:0} ];
-const getTrigPlanar = (c, o, r=70) => [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:r*0.866,y:-r*0.5,z:0}, {elem:o,x:-r*0.866,y:-r*0.5,z:0} ];
-const getTetra = (c, o, d=60) => { const r = d / 1.73205; return [ {elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:-r,z:r}, {elem:o,x:-r,y:r,z:r}, {elem:o,x:-r,y:-r,z:-r}, {elem:o,x:r,y:r,z:-r} ]; };
-const getOcta = (c, o, r=65) => [{elem:c,x:0,y:0,z:0, lpCount:0}, {elem:o,x:r,y:0,z:0}, {elem:o,x:-r,y:0,z:0}, {elem:o,x:0,y:r,z:0}, {elem:o,x:0,y:-r,z:0}, {elem:o,x:0,y:0,z:r}, {elem:o,x:0,y:0,z:-r}];
-const benzBase=[{x:0,y:70,z:0},{x:60,y:35,z:0},{x:60,y:-35,z:0},{x:0,y:-70,z:0},{x:-60,y:-35,z:0},{x:-60,y:35,z:0}];
-function getBenzH(i,s=35){const v=benzBase[i],l=Math.sqrt(v.x**2+v.y**2);return{x:v.x+v.x/l*s,y:v.y+v.y/l*s,z:0};}
-
-// 1. 修改 addMol 定義，確保 variantType 被儲存
-const addMol = (keysStr, center, hybrid, shape, angle, mp, bp, atoms, bonds, variants = null, desc = null, pg = null, variantType = "isomer") => {
-    if (typeof MOLECULE_INDEX === 'undefined') MOLECULE_INDEX = {};
-    if (typeof MOLECULE_DB === 'undefined') MOLECULE_DB = {};
-    const keys = keysStr.split('|');
-    const mainKey = keys[0].trim();
-    const mainKeyUpper = mainKey.toUpperCase();
-    keys.forEach(k => { MOLECULE_INDEX[k.trim().toUpperCase()] = { key: mainKey, variant: null }; });
-
-    const baseData = { 
-        center, hybrid, 
-        shape: Array.isArray(shape) ? `${shape[0]} (${shape[1]})` : shape, 
-        angle, mp, bp, atomsRaw: atoms, bondsRaw: bonds, desc, fullKey: keysStr,
-        isMetal: false, pg: pg,
-        variantType: variantType // 核心修改：存入標籤
-    };
-    
-    if (variants) {
-        baseData.variants = {};
-        for (let vKeyRaw in variants) {
-            const uniqueID = vKeyRaw; 
-            const vObj = variants[vKeyRaw];
-            baseData.variants[uniqueID] = { 
-                ...baseData, // 繼承 variantType
-                atomsRaw: vObj.atoms, bondsRaw: vObj.bonds,
-                pg: vObj.pg || baseData.pg || null,
-                mp: vObj.mp !== undefined ? vObj.mp : baseData.mp,
-                bp: vObj.bp !== undefined ? vObj.bp : baseData.bp,
-                desc: vObj.desc !== undefined ? vObj.desc : baseData.desc,
-                fullKey: vKeyRaw 
-            };
-        }
+const _0x14287e = _0x5d36;
+(function (_0x51fc74, _0x490cb6) {
+  const _0x549425 = _0x5d36,
+    _0x3cebd6 = _0x51fc74();
+  while (!![]) {
+    try {
+      const _0x83f9d6 = -parseInt(_0x549425(0x1b0)) / 0x1 + -parseInt(_0x549425(0x2d3)) / 0x2 + parseInt(_0x549425(0x303)) / 0x3 + (parseInt(_0x549425(0x157)) / 0x4) * (parseInt(_0x549425(0x172)) / 0x5) + (parseInt(_0x549425(0x1c0)) / 0x6) * (-parseInt(_0x549425(0x1c4)) / 0x7) + (parseInt(_0x549425(0x23f)) / 0x8) * (parseInt(_0x549425(0x269)) / 0x9) + parseInt(_0x549425(0x2b1)) / 0xa;
+      if (_0x83f9d6 === _0x490cb6) break;
+      else _0x3cebd6["push"](_0x3cebd6["shift"]());
+    } catch (_0x41e59b) {
+      _0x3cebd6["push"](_0x3cebd6["shift"]());
     }
-    MOLECULE_DB[mainKey] = baseData;
+  }
+})(_0x2fe2, 0xc1411);
+let MOLECULE_DB = {},
+  MOLECULE_INDEX = {};
+function _0x5d36(_0x248ff9, _0x4c7dcf) {
+  _0x248ff9 = _0x248ff9 - 0xe7;
+  const _0x2fe20e = _0x2fe2();
+  let _0x5d3617 = _0x2fe20e[_0x248ff9];
+  if (_0x5d36["ABxaaE"] === undefined) {
+    var _0x5880bc = function (_0x509489) {
+      const _0xf6a3f0 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=";
+      let _0x1fd2d5 = "",
+        _0x5918ee = "";
+      for (let _0x3c9c78 = 0x0, _0x3e9b31, _0x4b7f7b, _0x4a3dd9 = 0x0; (_0x4b7f7b = _0x509489["charAt"](_0x4a3dd9++)); ~_0x4b7f7b && ((_0x3e9b31 = _0x3c9c78 % 0x4 ? _0x3e9b31 * 0x40 + _0x4b7f7b : _0x4b7f7b), _0x3c9c78++ % 0x4) ? (_0x1fd2d5 += String["fromCharCode"](0xff & (_0x3e9b31 >> ((-0x2 * _0x3c9c78) & 0x6)))) : 0x0) {
+        _0x4b7f7b = _0xf6a3f0["indexOf"](_0x4b7f7b);
+      }
+      for (let _0xfb3ea = 0x0, _0x967230 = _0x1fd2d5["length"]; _0xfb3ea < _0x967230; _0xfb3ea++) {
+        _0x5918ee += "%" + ("00" + _0x1fd2d5["charCodeAt"](_0xfb3ea)["toString"](0x10))["slice"](-0x2);
+      }
+      return decodeURIComponent(_0x5918ee);
+    };
+    ((_0x5d36["aTRUmh"] = _0x5880bc), (_0x5d36["rpIVOJ"] = {}), (_0x5d36["ABxaaE"] = !![]));
+  }
+  const _0x3047de = _0x2fe20e[0x0],
+    _0x54d1da = _0x248ff9 + _0x3047de,
+    _0x8ba56b = _0x5d36["rpIVOJ"][_0x54d1da];
+  return (!_0x8ba56b ? ((_0x5d3617 = _0x5d36["aTRUmh"](_0x5d3617)), (_0x5d36["rpIVOJ"][_0x54d1da] = _0x5d3617)) : (_0x5d3617 = _0x8ba56b), _0x5d3617);
+}
+const di = (_0x1fd2d5, _0x5918ee = 0x3c) => [
+    { elem: _0x1fd2d5, x: -_0x5918ee, y: 0x0, z: 0x0 },
+    { elem: _0x1fd2d5, x: _0x5918ee, y: 0x0, z: 0x0 },
+  ],
+  getLinear = (_0x3c9c78, _0x3e9b31, _0x4b7f7b = 0x46) => [
+    { elem: _0x3c9c78, x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+    { elem: _0x3e9b31, x: -_0x4b7f7b, y: 0x0, z: 0x0 },
+    { elem: _0x3e9b31, x: _0x4b7f7b, y: 0x0, z: 0x0 },
+  ],
+  getTrigPlanar = (_0x4a3dd9, _0xfb3ea, _0x967230 = 0x46) => [
+    { elem: _0x4a3dd9, x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+    { elem: _0xfb3ea, x: 0x0, y: _0x967230, z: 0x0 },
+    { elem: _0xfb3ea, x: _0x967230 * 0.866, y: -_0x967230 * 0.5, z: 0x0 },
+    { elem: _0xfb3ea, x: -_0x967230 * 0.866, y: -_0x967230 * 0.5, z: 0x0 },
+  ],
+  getTetra = (_0xca7b05, _0x2565e8, _0xcae81e = 0x3c) => {
+    const _0x4a49bf = _0xcae81e / 1.73205;
+    return [
+      { elem: _0xca7b05, x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: _0x2565e8, x: _0x4a49bf, y: -_0x4a49bf, z: _0x4a49bf },
+      { elem: _0x2565e8, x: -_0x4a49bf, y: _0x4a49bf, z: _0x4a49bf },
+      { elem: _0x2565e8, x: -_0x4a49bf, y: -_0x4a49bf, z: -_0x4a49bf },
+      { elem: _0x2565e8, x: _0x4a49bf, y: _0x4a49bf, z: -_0x4a49bf },
+    ];
+  },
+  getOcta = (_0x427b27, _0x4ebaa1, _0x228c1a = 0x41) => [
+    { elem: _0x427b27, x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+    { elem: _0x4ebaa1, x: _0x228c1a, y: 0x0, z: 0x0 },
+    { elem: _0x4ebaa1, x: -_0x228c1a, y: 0x0, z: 0x0 },
+    { elem: _0x4ebaa1, x: 0x0, y: _0x228c1a, z: 0x0 },
+    { elem: _0x4ebaa1, x: 0x0, y: -_0x228c1a, z: 0x0 },
+    { elem: _0x4ebaa1, x: 0x0, y: 0x0, z: _0x228c1a },
+    { elem: _0x4ebaa1, x: 0x0, y: 0x0, z: -_0x228c1a },
+  ],
+  benzBase = [
+    { x: 0x0, y: 0x46, z: 0x0 },
+    { x: 0x3c, y: 0x23, z: 0x0 },
+    { x: 0x3c, y: -0x23, z: 0x0 },
+    { x: 0x0, y: -0x46, z: 0x0 },
+    { x: -0x3c, y: -0x23, z: 0x0 },
+    { x: -0x3c, y: 0x23, z: 0x0 },
+  ];
+function getBenzH(_0x2efbe2, _0x33bebc = 0x23) {
+  const _0x180db9 = _0x5d36,
+    _0x4ce93c = benzBase[_0x2efbe2],
+    _0x1cfd5e = Math[_0x180db9(0x220)](_0x4ce93c["x"] ** 0x2 + _0x4ce93c["y"] ** 0x2);
+  return { x: _0x4ce93c["x"] + (_0x4ce93c["x"] / _0x1cfd5e) * _0x33bebc, y: _0x4ce93c["y"] + (_0x4ce93c["y"] / _0x1cfd5e) * _0x33bebc, z: 0x0 };
+}
+const addMol = (_0x37a7d1, _0x42f460, _0x1c98f7, _0x2f12d9, _0x16babe, _0x1d7a0a, _0x1f787f, _0xf80ebb, _0x3ccf93, _0x3b7434 = null, _0x42f413 = null, _0x455853 = null, _0x59acea = "isomer") => {
+  const _0x32a9b2 = _0x5d36;
+  if (typeof MOLECULE_INDEX === "undefined") MOLECULE_INDEX = {};
+  if (typeof MOLECULE_DB === _0x32a9b2(0x18b)) MOLECULE_DB = {};
+  const _0xd0ae7f = _0x37a7d1[_0x32a9b2(0x1c5)]("|"),
+    _0x2f42e6 = _0xd0ae7f[0x0][_0x32a9b2(0x280)](),
+    _0x4c574c = _0x2f42e6["toUpperCase"]();
+  _0xd0ae7f[_0x32a9b2(0x31a)]((_0x528e72) => {
+    const _0x563e2d = _0x32a9b2;
+    MOLECULE_INDEX[_0x528e72[_0x563e2d(0x280)]()[_0x563e2d(0x215)]()] = { key: _0x2f42e6, variant: null };
+  });
+  const _0x23156e = { center: _0x42f460, hybrid: _0x1c98f7, shape: Array[_0x32a9b2(0x24b)](_0x2f12d9) ? _0x2f12d9[0x0] + "\x20(" + _0x2f12d9[0x1] + ")" : _0x2f12d9, angle: _0x16babe, mp: _0x1d7a0a, bp: _0x1f787f, atomsRaw: _0xf80ebb, bondsRaw: _0x3ccf93, desc: _0x42f413, fullKey: _0x37a7d1, isMetal: ![], pg: _0x455853, variantType: _0x59acea };
+  if (_0x3b7434) {
+    _0x23156e[_0x32a9b2(0x147)] = {};
+    for (let _0x5137e7 in _0x3b7434) {
+      const _0x102e2b = _0x5137e7,
+        _0xc4672e = _0x3b7434[_0x5137e7];
+      _0x23156e[_0x32a9b2(0x147)][_0x102e2b] = { ..._0x23156e, atomsRaw: _0xc4672e["atoms"], bondsRaw: _0xc4672e[_0x32a9b2(0x1b9)], pg: _0xc4672e["pg"] || _0x23156e["pg"] || null, mp: _0xc4672e["mp"] !== undefined ? _0xc4672e["mp"] : _0x23156e["mp"], bp: _0xc4672e["bp"] !== undefined ? _0xc4672e["bp"] : _0x23156e["bp"], desc: _0xc4672e[_0x32a9b2(0x101)] !== undefined ? _0xc4672e[_0x32a9b2(0x101)] : _0x23156e[_0x32a9b2(0x101)], fullKey: _0x5137e7 };
+    }
+  }
+  MOLECULE_DB[_0x2f42e6] = _0x23156e;
 };
-
-// 2. 修改 updateVariantUI，改為「只看標籤，不抓關鍵字」
-function updateVariantUI(key, activeVariant) {
-    const rootData = MOLECULE_DB[key];
-    variantSelector.innerHTML = ''; 
-    variantSelector.className = ''; 
-    
-    if (rootData.variants) {
-        variantSelector.style.display = 'block';
-        const hdr = document.createElement('div');
-        hdr.className = 'variant-header';
-
-        // 定義標籤對應的樣式與標題
-        const TYPE_CONFIG = {
-            "isomer":    { class: "",                title: "選擇同分異構物 (Isomer):" },
-            "resonance": { class: "resonance-theme", title: "選擇共振結構 (Resonance):" },
-            "structure": { class: "structure-theme", title: "選擇結構層次 (Structure):" },
-            "acid":      { class: "acid-theme",      title: "選擇解離狀態 (Dissociation):" },
-            "allotrope": { class: "allotrope-theme", title: "選擇同素異形體 (Allotrope):" },
-            "polymorph": { class: "polymorph-theme", title: "選擇同質異形體 (Polymorph):" }
-        };
-
-        // 根據 addMol 傳入的 variantType 讀取設定
-        const config = TYPE_CONFIG[rootData.variantType] || TYPE_CONFIG["isomer"];
-        
-        if (config.class) variantSelector.classList.add(config.class);
-        hdr.textContent = config.title; // 套用對應標題
-        variantSelector.appendChild(hdr);
-
-        for (let vKey in rootData.variants) {
-            const div = document.createElement('div');
-            div.className = 'variant-option';
-            const radio = document.createElement('input');
-            radio.type = 'radio'; radio.name = 'v';
-            if (vKey === activeVariant) radio.checked = true;
-            const span = document.createElement('span'); 
-            const variantData = rootData.variants[vKey];
-            const parts = (variantData.fullKey || vKey).split('|');
-            span.innerHTML = parts.length > 1 ? ` ${parts[1].trim()}` : ` ${formatFormula(parts[0].trim())}`;
-            div.appendChild(radio); div.appendChild(span);
-            div.addEventListener('click', () => loadMolecule(key, vKey));
-            variantSelector.appendChild(div);
-        }
-    } else {
-        variantSelector.style.display = 'none';
+function updateVariantUI(_0x5db53e, _0x5e22df) {
+  const _0x20b9b6 = _0x5d36,
+    _0x43fb29 = MOLECULE_DB[_0x5db53e];
+  ((variantSelector[_0x20b9b6(0x335)] = ""), (variantSelector[_0x20b9b6(0xf1)] = ""));
+  if (_0x43fb29[_0x20b9b6(0x147)]) {
+    variantSelector[_0x20b9b6(0x152)][_0x20b9b6(0x23d)] = "block";
+    const _0x34437e = document[_0x20b9b6(0x2c2)](_0x20b9b6(0x262));
+    _0x34437e[_0x20b9b6(0xf1)] = "variant-header";
+    const _0x290077 = { isomer: { class: "", title: _0x20b9b6(0x121) }, resonance: { class: "resonance-theme", title: _0x20b9b6(0x19c) }, structure: { class: _0x20b9b6(0x2d5), title: _0x20b9b6(0x1bc) }, acid: { class: _0x20b9b6(0x241), title: "選擇解離狀態\x20(Dissociation):" }, allotrope: { class: _0x20b9b6(0x211), title: "選擇同素異形體\x20(Allotrope):" }, polymorph: { class: "polymorph-theme", title: _0x20b9b6(0x2cd) } },
+      _0x4e6352 = _0x290077[_0x43fb29[_0x20b9b6(0x33b)]] || _0x290077[_0x20b9b6(0x14e)];
+    if (_0x4e6352[_0x20b9b6(0x12e)]) variantSelector[_0x20b9b6(0x227)]["add"](_0x4e6352["class"]);
+    ((_0x34437e[_0x20b9b6(0x30b)] = _0x4e6352[_0x20b9b6(0x2b4)]), variantSelector[_0x20b9b6(0x257)](_0x34437e));
+    for (let _0x41fee6 in _0x43fb29["variants"]) {
+      const _0x5baf97 = document[_0x20b9b6(0x2c2)](_0x20b9b6(0x262));
+      _0x5baf97[_0x20b9b6(0xf1)] = _0x20b9b6(0x1c6);
+      const _0x3a9d9b = document["createElement"](_0x20b9b6(0x224));
+      ((_0x3a9d9b[_0x20b9b6(0x296)] = _0x20b9b6(0x226)), (_0x3a9d9b[_0x20b9b6(0x2b6)] = "v"));
+      if (_0x41fee6 === _0x5e22df) _0x3a9d9b[_0x20b9b6(0x337)] = !![];
+      const _0x59eac4 = document["createElement"]("span"),
+        _0x112783 = _0x43fb29[_0x20b9b6(0x147)][_0x41fee6],
+        _0x38fb07 = (_0x112783[_0x20b9b6(0x2ef)] || _0x41fee6)["split"]("|");
+      ((_0x59eac4["innerHTML"] = _0x38fb07[_0x20b9b6(0x294)] > 0x1 ? "\x20" + _0x38fb07[0x1][_0x20b9b6(0x280)]() : "\x20" + formatFormula(_0x38fb07[0x0]["trim"]())), _0x5baf97[_0x20b9b6(0x257)](_0x3a9d9b), _0x5baf97["appendChild"](_0x59eac4), _0x5baf97[_0x20b9b6(0x2ca)](_0x20b9b6(0x2a8), () => loadMolecule(_0x5db53e, _0x41fee6)), variantSelector["appendChild"](_0x5baf97));
     }
+  } else variantSelector["style"][_0x20b9b6(0x23d)] = "none";
 }
-
-function markReps(atoms, bonds, cnA, elemA, cnB, elemB) {
-    const counts = new Array(atoms.length).fill(0);
-    bonds.forEach(b => { counts[b[0]]++; counts[b[1]]++; });
-    atoms.forEach((a, i) => {
-        if (a.elem === elemA && counts[i] === cnA) a.isRepresentative = true;
-        else if (a.elem === elemB && counts[i] === cnB) a.isRepresentative = true;
-        else a.isRepresentative = false;
-    });
+function markReps(_0x4a3009, _0x241986, _0x59ce8a, _0x431314, _0x4bd772, _0x885205) {
+  const _0x20f1b2 = _0x5d36,
+    _0x460c0f = new Array(_0x4a3009[_0x20f1b2(0x294)])[_0x20f1b2(0xe8)](0x0);
+  (_0x241986[_0x20f1b2(0x31a)]((_0x24d647) => {
+    (_0x460c0f[_0x24d647[0x0]]++, _0x460c0f[_0x24d647[0x1]]++);
+  }),
+    _0x4a3009[_0x20f1b2(0x31a)]((_0x399aa9, _0x3aa693) => {
+      const _0x84e9f1 = _0x20f1b2;
+      if (_0x399aa9[_0x84e9f1(0x158)] === _0x431314 && _0x460c0f[_0x3aa693] === _0x59ce8a) _0x399aa9["isRepresentative"] = !![];
+      else {
+        if (_0x399aa9[_0x84e9f1(0x158)] === _0x885205 && _0x460c0f[_0x3aa693] === _0x4bd772) _0x399aa9[_0x84e9f1(0x14f)] = !![];
+        else _0x399aa9["isRepresentative"] = ![];
+      }
+    }));
 }
-
-//NaCl晶體
-(function(){
-    const sa=[{elem:"Na",x:-40,y:0,z:0,r:20,lpCount:0},{elem:"Cl",x:40,y:0,z:0,r:35,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], s=120;
-    for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
-        const isNa=(Math.abs(x+y+z)%2!==0);
-        ca.push({elem:isNa?"Na":"Cl",x:x*s,y:y*s,z:z*s,r:isNa?18:34,lpCount:0,gx:x,gy:y,gz:z,isRepresentative:(!x&&!y&&!z)});
+((function () {
+  const _0x2c8c53 = _0x5d36,
+    _0x1c8702 = [
+      { elem: "Na", x: -0x28, y: 0x0, z: 0x0, r: 0x14, lpCount: 0x0 },
+      { elem: "Cl", x: 0x28, y: 0x0, z: 0x0, r: 0x23, lpCount: 0x0 },
+    ],
+    _0x22038a = [[0x0, 0x1, _0x2c8c53(0x214)]],
+    _0x490ae0 = [],
+    _0x4a7ee6 = [],
+    _0x1893c1 = 0x78;
+  for (let _0x3c21dd = -0x1; _0x3c21dd <= 0x1; _0x3c21dd++)
+    for (let _0x5af3fd = -0x1; _0x5af3fd <= 0x1; _0x5af3fd++)
+      for (let _0x2ab84e = -0x1; _0x2ab84e <= 0x1; _0x2ab84e++) {
+        const _0x18d769 = Math[_0x2c8c53(0x222)](_0x3c21dd + _0x5af3fd + _0x2ab84e) % 0x2 !== 0x0;
+        _0x490ae0[_0x2c8c53(0x2c5)]({ elem: _0x18d769 ? "Na" : "Cl", x: _0x3c21dd * _0x1893c1, y: _0x5af3fd * _0x1893c1, z: _0x2ab84e * _0x1893c1, r: _0x18d769 ? 0x12 : 0x22, lpCount: 0x0, gx: _0x3c21dd, gy: _0x5af3fd, gz: _0x2ab84e, isRepresentative: !_0x3c21dd && !_0x5af3fd && !_0x2ab84e });
+      }
+  for (let _0x457ae9 = 0x0; _0x457ae9 < _0x490ae0[_0x2c8c53(0x294)]; _0x457ae9++)
+    for (let _0x193443 = _0x457ae9 + 0x1; _0x193443 < _0x490ae0[_0x2c8c53(0x294)]; _0x193443++) {
+      const _0x5629dc = Math["abs"](_0x490ae0[_0x457ae9]["x"] - _0x490ae0[_0x193443]["x"]) + Math[_0x2c8c53(0x222)](_0x490ae0[_0x457ae9]["y"] - _0x490ae0[_0x193443]["y"]) + Math["abs"](_0x490ae0[_0x457ae9]["z"] - _0x490ae0[_0x193443]["z"]);
+      if (Math[_0x2c8c53(0x222)](_0x5629dc - _0x1893c1) < 0x1) {
+        const _0x31a143 = (Math["abs"](_0x490ae0[_0x457ae9]["gx"]) === 0x1 && _0x490ae0[_0x457ae9]["gx"] === _0x490ae0[_0x193443]["gx"]) || (Math[_0x2c8c53(0x222)](_0x490ae0[_0x457ae9]["gy"]) === 0x1 && _0x490ae0[_0x457ae9]["gy"] === _0x490ae0[_0x193443]["gy"]) || (Math["abs"](_0x490ae0[_0x457ae9]["gz"]) === 0x1 && _0x490ae0[_0x457ae9]["gz"] === _0x490ae0[_0x193443]["gz"]);
+        _0x4a7ee6[_0x2c8c53(0x2c5)]([_0x457ae9, _0x193443, _0x31a143 ? _0x2c8c53(0x2e1) : "ionic_thin"]);
+      }
     }
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        const dist=Math.abs(ca[i].x-ca[j].x)+Math.abs(ca[i].y-ca[j].y)+Math.abs(ca[i].z-ca[j].z);
-        if(Math.abs(dist-s)<1){
-            const onFace=(Math.abs(ca[i].gx)===1&&ca[i].gx===ca[j].gx)||(Math.abs(ca[i].gy)===1&&ca[i].gy===ca[j].gy)||(Math.abs(ca[i].gz)===1&&ca[i].gz===ca[j].gz);
-            cb.push([i,j,onFace?"ionic_thick":"ionic_thin"]);
-        }
-    }
-    addMol("NaCl|氯化鈉|食鹽","Na","-","-","-","801","1465",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🧂 物質簡介</div><div class="info-body"><strong>氯化鈉 (NaCl)</strong><br>俗稱食鹽。純淨時為無色透明晶體。它是生活中最重要的調味品與防腐劑。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"a = 2(r<sub>+</sub> + r<sub>-</sub>)",desc:'<div class="info-section"><div class="info-title">🧊 晶體特性</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>氯化鈉具有高熔點 (801°C)。每個鈉離子周圍都被6個氯離子包圍，配位數為 6。<br><span style="color:#facc15">★ 點擊中心原子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🧂 氯化鈉</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["NaCl"]?.variants){MOLECULE_DB["NaCl"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["NaCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//CsCl晶體
-(function(){
-    const sa=[{elem:"Cs",x:-45,y:0,z:0,r:26,lpCount:0},{elem:"Cl",x:45,y:0,z:0,r:34,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], s=200;
-    ca.push({elem:"Cs",x:0,y:0,z:0,r:26,isRepresentative:true});
-    [-1,1].forEach(x=>[-1,1].forEach(y=>[-1,1].forEach(z=>{ca.push({elem:"Cl",x:x*s*0.5,y:y*s*0.5,z:z*s*0.5,r:34,isCorner:true}); cb.push([0,ca.length-1,"ionic_thin"]);})));
-    for(let i=1;i<ca.length;i++) for(let j=i+1;j<ca.length;j++) if(Math.abs((Math.abs(ca[i].x-ca[j].x)+Math.abs(ca[i].y-ca[j].y)+Math.abs(ca[i].z-ca[j].z))-s)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("CsCl|氯化銫|Cesium Chloride","Cs","-","-","-","645","1290",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">⚛️ 物質簡介</div><div class="info-body"><strong>氯化銫 (CsCl)</strong><br>由銫離子 (Cs⁺) 與氯離子 (Cl⁻) 組成。銫離子半徑較大，形成配位數 8 的結構。</div></div>'},
-        "Crystal|晶體堆積 (SC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"√3 a = 2(r⁺+r⁻)",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>簡單立方堆積 (SC)</strong><br>氯離子構成簡單立方，銫離子填入體心。配位數為 8。<br><span style="color:#facc15">★ 點擊中央 Cs 離子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🧊 氯化銫</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["CsCl"]?.variants){MOLECULE_DB["CsCl"].variants["Crystal|晶體堆積 (SC)"].isIonic=true;MOLECULE_DB["CsCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//ZnS晶體
-(function(){
-    const sa=[{elem:"Zn",x:-45,y:0,z:0,r:18,lpCount:0},{elem:"S",x:45,y:0,z:0,r:30,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], scale=220, bondDist=scale*0.433; 
-    const baseS=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[0.5,1,0.5],[1,0.5,0.5],[0.5,0.5,1]];
-    const baseZn=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    let idx=0;
-    baseS.forEach((p,i)=>ca.push({elem:"S",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:28,isCorner:(i<8),idx:idx++}));
-    baseZn.forEach(p=>ca.push({elem:"Zn",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:12,isRepresentative:true}));
-    for(let i=14;i<ca.length;i++) for(let j=0;j<14;j++) if(Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-bondDist)<20) cb.push([i,j,"ionic_thin"]);
-    for(let i=0;i<14;i++) for(let j=i+1;j<14;j++) if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-scale)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("ZnS|閃鋅礦|硫化鋅|Zinc Blende","Zn","-","-","-","1185","昇華",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">💡 物質性質</div><div class="info-body"><strong>硫化鋅 (ZnS)</strong><br>白色或微黃色粉末。具有螢光特性，摻雜微量金屬後可用於製作夜光塗料、螢光屏以及陰極射線管。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"4(r<sub>+</sub> + r<sub>-</sub>) = √3 a",desc:'<div class="info-section"><div class="info-title">💎 閃鋅礦 (ZnS)</div><div class="info-body">硫離子(S²⁻)構成面心立方堆積，鋅離子(Zn²⁺)位於四面體空隙。<br><span style="color:#facc15">★ 點擊任一內部的 Zn 離子可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">💡 硫化鋅</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["ZnS"]?.variants){MOLECULE_DB["ZnS"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["ZnS"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//CuCl晶體
-(function(){
-    const sa=[{elem:"Cu",x:-45,y:0,z:0,r:13,lpCount:0},{elem:"Cl",x:45,y:0,z:0,r:27,lpCount:0}], sb=[[0,1,"ionic_thin"]];
-    const ca=[], cb=[], scale=220, bondDist=scale*0.433;
-    const baseCl=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[0.5,1,0.5],[1,0.5,0.5],[0.5,0.5,1]];
-    const baseCu=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    let clIdx=0;
-    baseCl.forEach((p,i)=>ca.push({elem:"Cl",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:27,isCorner:(i<8),idx:clIdx++}));
-    baseCu.forEach(p=>ca.push({elem:"Cu",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:13,isRepresentative:true}));
-    for(let i=14;i<ca.length;i++) for(let j=0;j<14;j++) if(Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-bondDist)<20) cb.push([i,j,"ionic_thin"]);
-    for(let i=0;i<14;i++) for(let j=i+1;j<14;j++) if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)-scale)<5) cb.push([i,j,"ionic_thick"]);
-    addMol("CuCl|氯化亞銅|Nantokite","Cu","-","-","-","430","1490",sa,sb,{
-        "Simple|基本單元 (離子對)":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🔸 物質簡介</div><div class="info-body"><strong>氯化亞銅 (CuCl)</strong><br>白色固體，難溶於水。結構與閃鋅礦(ZnS)相同。</div></div>'},
-        "Crystal|晶體堆積 (FCC)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"4(r<sub>+</sub> + r<sub>-</sub>) = √3 a",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>面心立方堆積 (FCC)</strong><br>結構同閃鋅礦。氯離子堆積，亞銅離子填入四面體空隙。<br><span style="color:#facc15">★ 點擊任一內部 Cu⁺ 可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">🔸 氯化亞銅</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["CuCl"]?.variants){MOLECULE_DB["CuCl"].variants["Crystal|晶體堆積 (FCC)"].isIonic=true;MOLECULE_DB["CuCl"].variants["Simple|基本單元 (離子對)"].isIonic=true;}
-})();
-
-//TiO2晶體
-(function(){
-    const sa=[{elem:"Ti",x:0,y:0,z:0,r:11,lpCount:0},{elem:"O",x:50,y:0,z:0,r:21,lpCount:0},{elem:"O",x:-50,y:0,z:0,r:21,lpCount:0}], sb=[[0,1,"ionic_thin"],[0,2,"ionic_thin"]];
-    const ca=[], cb=[], scale=180, c_ratio=0.65, u=0.3;
-    const baseTi=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0.5]];
-    const baseO=[[u,u,0],[1-u,1-u,0],[u,u,1],[1-u,1-u,1],[0.5+u,0.5-u,0.5],[0.5-u,0.5+u,0.5]];
-    let tiIdx=0;
-    baseTi.forEach((p,i)=>ca.push({elem:"Ti",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale*c_ratio,r:11,isCorner:(i<8),idx:tiIdx++,isRepresentative:(i===8)}));
-    baseO.forEach(p=>ca.push({elem:"O",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale*c_ratio,r:21,isCorner:false}));
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        if(ca[i].elem===ca[j].elem) continue;
-        if(Math.sqrt((ca[i].x-ca[j].x)**2+(ca[i].y-ca[j].y)**2+(ca[i].z-ca[j].z)**2)<scale*0.75) cb.push([i,j,"ionic_thin"]);
-    }
-    for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){
-        const dx=Math.abs(ca[i].x-ca[j].x), dy=Math.abs(ca[i].y-ca[j].y), dz=Math.abs(ca[i].z-ca[j].z);
-        if((Math.abs(dx-scale)<5&&dy<5&&dz<5)||(Math.abs(dy-scale)<5&&dx<5&&dz<5)||(Math.abs(dz-scale*c_ratio)<5&&dx<5&&dy<5)) cb.push([i,j,"ionic_thick"]);
-    }
-    addMol("TiO2|金紅石|二氧化鈦|Rutile","Ti","-","-","-","1843","2972",sa,sb,{
-        "Simple|基本單元":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">⬜ 物質簡介</div><div class="info-body"><strong>二氧化鈦 (TiO₂)</strong><br>白色粉末，廣泛用於白色顏料、防曬乳及光觸媒。</div></div>'},
-        "Crystal|晶體堆積 (Tetragonal)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"複雜幾何",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>四方晶系 (金紅石型)</strong><br>鈦離子位於體心與頂點，氧離子位於面上。Ti⁴⁺ 配位數為 6 (八面體)，O²⁻ 配位數為 3 (平面三角)。<br><span style="color:#facc15">★ 點擊體心 Ti⁴⁺ 可查看配位數。</span></div></div>'}
-    },'<div class="info-section"><div class="info-title">⬜ 金紅石</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["TiO2"]?.variants){MOLECULE_DB["TiO2"].variants["Crystal|晶體堆積 (Tetragonal)"].isIonic=true;MOLECULE_DB["TiO2"].variants["Simple|基本單元"].isIonic=true;}
-})();
-
-//Cu2O晶體
-(function(){
-    const scale=180, baseO=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0.5]], baseCu=[[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
-    const ca=[...baseO.map((p,i)=>({elem:"O",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:21,isCorner:i<8,isRepresentative:i===8})),...baseCu.map(p=>({elem:"Cu",x:(p[0]-0.5)*scale,y:(p[1]-0.5)*scale,z:(p[2]-0.5)*scale,r:13,isRepresentative:true}))];
-    const cb=[];
-    for(let i=0;i<ca.length;i++) for(let j=i+1;j<ca.length;j++){
-        const d=Math.hypot(ca[i].x-ca[j].x,ca[i].y-ca[j].y,ca[i].z-ca[j].z);
-        if(ca[i].elem!==ca[j].elem&&Math.abs(d-scale*0.433)<20) cb.push([i,j,"ionic_thin"]);
-        if(ca[i].isCorner&&ca[j].isCorner&&Math.abs(d-scale)<5) cb.push([i,j,"ionic_thick"]);
-    }
-    const sa=[{elem:"O",x:0,y:0,z:0,r:21},{elem:"Cu",x:50,y:0,z:0,r:13},{elem:"Cu",x:-50,y:0,z:0,r:13}], sb=[[0,1,"ionic_thin"],[0,2,"ionic_thin"]];
-    addMol("Cu2O|赤銅礦|氧化亞銅|Cuprite","Cu","-","-","-","1235","1800",sa,sb,{
-        "Simple|基本單元":{atoms:sa,bonds:sb,hybrid:"-",shape:"-",desc:'<div class="info-section"><div class="info-title">🔴 物質簡介</div><div class="info-body"><strong>氧化亞銅 (Cu₂O)</strong><br>紅色固體。Cu⁺ 為直線型配位 (CN=2)，O²⁻ 為四面體型配位 (CN=4)。</div></div>'},
-        "Crystal|晶體堆積 (Cubic)":{atoms:ca,bonds:cb,isIonic:true,edgeRelation:"複雜幾何",desc:'<div class="info-section"><div class="info-title">🧊 晶體結構</div><div class="info-body"><strong>赤銅礦結構</strong><br>氧離子(紅)構成體心立方，銅離子(橘)位於氧離子連線中點。<br>• 點擊<strong>紅色氧離子</strong> (體心) 可見配位數為 4。<br>• 點擊任一<strong>橘色銅離子</strong> 可見配位數為 2。</div></div>'}
-    },'<div class="info-section"><div class="info-title">🔴 赤銅礦</div><div class="info-body">請切換選項檢視。</div></div>', "-", "structure");
-    if(MOLECULE_DB["Cu2O"]?.variants){MOLECULE_DB["Cu2O"].variants["Crystal|晶體堆積 (Cubic)"].isIonic=true;MOLECULE_DB["Cu2O"].variants["Simple|基本單元"].isIonic=true;}
-})();
-
-
-
-
-
-
-
-
-
-
-
-// ==========================================
-// 金屬晶體生成模組 (CN=12 延伸增強版)
-// ==========================================
-
-function ensureElement(elem, defaultColor, defaultR) {
-    if (typeof ELEMENT_PROPS !== 'undefined' && !ELEMENT_PROPS[elem]) {
-        ELEMENT_PROPS[elem] = { ve: 1, c3d: defaultColor, r3d: defaultR, lp: 0, mass: 0, en: 0 };
-    }
+  (addMol(
+    _0x2c8c53(0x20f),
+    "Na",
+    "-",
+    "-",
+    "-",
+    _0x2c8c53(0x21c),
+    _0x2c8c53(0x182),
+    _0x1c8702,
+    _0x22038a,
+    { "Simple|基本單元\x20(離子對)": { atoms: _0x1c8702, bonds: _0x22038a, hybrid: "-", shape: "-", desc: _0x2c8c53(0x249) }, "Crystal|晶體堆積\x20(FCC)": { atoms: _0x490ae0, bonds: _0x4a7ee6, isIonic: !![], edgeRelation: _0x2c8c53(0x2b7), desc: _0x2c8c53(0x327) } },
+    "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>🧂\x20氯化鈉</div><div\x20class=\x22info-body\x22>請切換選項檢視。</div></div>",
+    "-",
+    "structure",
+  ),
+    MOLECULE_DB[_0x2c8c53(0x161)]?.[_0x2c8c53(0x147)] && ((MOLECULE_DB[_0x2c8c53(0x161)][_0x2c8c53(0x147)][_0x2c8c53(0x29f)][_0x2c8c53(0x2f5)] = !![]), (MOLECULE_DB[_0x2c8c53(0x161)][_0x2c8c53(0x147)][_0x2c8c53(0x137)]["isIonic"] = !![])));
+})(),
+  (function () {
+    const _0xc0fbe6 = _0x5d36,
+      _0x485c93 = [
+        { elem: "Cs", x: -0x2d, y: 0x0, z: 0x0, r: 0x1a, lpCount: 0x0 },
+        { elem: "Cl", x: 0x2d, y: 0x0, z: 0x0, r: 0x22, lpCount: 0x0 },
+      ],
+      _0x11b731 = [[0x0, 0x1, _0xc0fbe6(0x214)]],
+      _0x3cc78b = [],
+      _0x1d1ebc = [],
+      _0xbc5a23 = 0xc8;
+    (_0x3cc78b[_0xc0fbe6(0x2c5)]({ elem: "Cs", x: 0x0, y: 0x0, z: 0x0, r: 0x1a, isRepresentative: !![] }),
+      [-0x1, 0x1][_0xc0fbe6(0x31a)]((_0xdd389b) =>
+        [-0x1, 0x1]["forEach"]((_0x365322) =>
+          [-0x1, 0x1][_0xc0fbe6(0x31a)]((_0x292b6f) => {
+            const _0x5ef3c5 = _0xc0fbe6;
+            (_0x3cc78b[_0x5ef3c5(0x2c5)]({ elem: "Cl", x: _0xdd389b * _0xbc5a23 * 0.5, y: _0x365322 * _0xbc5a23 * 0.5, z: _0x292b6f * _0xbc5a23 * 0.5, r: 0x22, isCorner: !![] }), _0x1d1ebc[_0x5ef3c5(0x2c5)]([0x0, _0x3cc78b[_0x5ef3c5(0x294)] - 0x1, "ionic_thin"]));
+          }),
+        ),
+      ));
+    for (let _0x56bd8c = 0x1; _0x56bd8c < _0x3cc78b["length"]; _0x56bd8c++)
+      for (let _0x58391c = _0x56bd8c + 0x1; _0x58391c < _0x3cc78b[_0xc0fbe6(0x294)]; _0x58391c++) if (Math[_0xc0fbe6(0x222)](Math["abs"](_0x3cc78b[_0x56bd8c]["x"] - _0x3cc78b[_0x58391c]["x"]) + Math[_0xc0fbe6(0x222)](_0x3cc78b[_0x56bd8c]["y"] - _0x3cc78b[_0x58391c]["y"]) + Math[_0xc0fbe6(0x222)](_0x3cc78b[_0x56bd8c]["z"] - _0x3cc78b[_0x58391c]["z"]) - _0xbc5a23) < 0x5) _0x1d1ebc[_0xc0fbe6(0x2c5)]([_0x56bd8c, _0x58391c, _0xc0fbe6(0x2e1)]);
+    (addMol(
+      "CsCl|氯化銫|Cesium\x20Chloride",
+      "Cs",
+      "-",
+      "-",
+      "-",
+      _0xc0fbe6(0x33d),
+      "1290",
+      _0x485c93,
+      _0x11b731,
+      {
+        "Simple|基本單元\x20(離子對)": { atoms: _0x485c93, bonds: _0x11b731, hybrid: "-", shape: "-", desc: "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>⚛️\x20物質簡介</div><div\x20class=\x22info-body\x22><strong>氯化銫\x20(CsCl)</strong><br>由銫離子\x20(Cs⁺)\x20與氯離子\x20(Cl⁻)\x20組成。銫離子半徑較大，形成配位數\x208\x20的結構。</div></div>" },
+        "Crystal|晶體堆積\x20(SC)": { atoms: _0x3cc78b, bonds: _0x1d1ebc, isIonic: !![], edgeRelation: _0xc0fbe6(0x2f6), desc: _0xc0fbe6(0xf6) },
+      },
+      _0xc0fbe6(0x251),
+      "-",
+      _0xc0fbe6(0x2bd),
+    ),
+      MOLECULE_DB[_0xc0fbe6(0x2a1)]?.[_0xc0fbe6(0x147)] && ((MOLECULE_DB[_0xc0fbe6(0x2a1)][_0xc0fbe6(0x147)][_0xc0fbe6(0x301)][_0xc0fbe6(0x2f5)] = !![]), (MOLECULE_DB[_0xc0fbe6(0x2a1)][_0xc0fbe6(0x147)][_0xc0fbe6(0x137)][_0xc0fbe6(0x2f5)] = !![])));
+  })(),
+  (function () {
+    const _0xb2b0b9 = _0x5d36,
+      _0x1f18e1 = [
+        { elem: "Zn", x: -0x2d, y: 0x0, z: 0x0, r: 0x12, lpCount: 0x0 },
+        { elem: "S", x: 0x2d, y: 0x0, z: 0x0, r: 0x1e, lpCount: 0x0 },
+      ],
+      _0x485d38 = [[0x0, 0x1, _0xb2b0b9(0x214)]],
+      _0x53779b = [],
+      _0x55ee31 = [],
+      _0x4ac828 = 0xdc,
+      _0x13e43f = _0x4ac828 * 0.433,
+      _0x411eff = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0x0],
+        [0.5, 0x0, 0.5],
+        [0x0, 0.5, 0.5],
+        [0.5, 0x1, 0.5],
+        [0x1, 0.5, 0.5],
+        [0.5, 0.5, 0x1],
+      ],
+      _0x444475 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ];
+    let _0x3b3b8e = 0x0;
+    (_0x411eff["forEach"]((_0x48d4bb, _0x420956) => _0x53779b[_0xb2b0b9(0x2c5)]({ elem: "S", x: (_0x48d4bb[0x0] - 0.5) * _0x4ac828, y: (_0x48d4bb[0x1] - 0.5) * _0x4ac828, z: (_0x48d4bb[0x2] - 0.5) * _0x4ac828, r: 0x1c, isCorner: _0x420956 < 0x8, idx: _0x3b3b8e++ })),
+      _0x444475[_0xb2b0b9(0x31a)]((_0x3177c6) => _0x53779b[_0xb2b0b9(0x2c5)]({ elem: "Zn", x: (_0x3177c6[0x0] - 0.5) * _0x4ac828, y: (_0x3177c6[0x1] - 0.5) * _0x4ac828, z: (_0x3177c6[0x2] - 0.5) * _0x4ac828, r: 0xc, isRepresentative: !![] })));
+    for (let _0x1ac361 = 0xe; _0x1ac361 < _0x53779b["length"]; _0x1ac361++) for (let _0x526977 = 0x0; _0x526977 < 0xe; _0x526977++) if (Math[_0xb2b0b9(0x222)](Math[_0xb2b0b9(0x220)]((_0x53779b[_0x1ac361]["x"] - _0x53779b[_0x526977]["x"]) ** 0x2 + (_0x53779b[_0x1ac361]["y"] - _0x53779b[_0x526977]["y"]) ** 0x2 + (_0x53779b[_0x1ac361]["z"] - _0x53779b[_0x526977]["z"]) ** 0x2) - _0x13e43f) < 0x14) _0x55ee31[_0xb2b0b9(0x2c5)]([_0x1ac361, _0x526977, "ionic_thin"]);
+    for (let _0x22e752 = 0x0; _0x22e752 < 0xe; _0x22e752++)
+      for (let _0x152db9 = _0x22e752 + 0x1; _0x152db9 < 0xe; _0x152db9++) if (_0x53779b[_0x22e752][_0xb2b0b9(0x1be)] && _0x53779b[_0x152db9][_0xb2b0b9(0x1be)] && Math[_0xb2b0b9(0x222)](Math[_0xb2b0b9(0x220)]((_0x53779b[_0x22e752]["x"] - _0x53779b[_0x152db9]["x"]) ** 0x2 + (_0x53779b[_0x22e752]["y"] - _0x53779b[_0x152db9]["y"]) ** 0x2 + (_0x53779b[_0x22e752]["z"] - _0x53779b[_0x152db9]["z"]) ** 0x2) - _0x4ac828) < 0x5) _0x55ee31["push"]([_0x22e752, _0x152db9, _0xb2b0b9(0x2e1)]);
+    (addMol(_0xb2b0b9(0x2bc), "Zn", "-", "-", "-", _0xb2b0b9(0x334), "昇華", _0x1f18e1, _0x485d38, { "Simple|基本單元\x20(離子對)": { atoms: _0x1f18e1, bonds: _0x485d38, hybrid: "-", shape: "-", desc: _0xb2b0b9(0x123) }, "Crystal|晶體堆積\x20(FCC)": { atoms: _0x53779b, bonds: _0x55ee31, isIonic: !![], edgeRelation: "4(r<sub>+</sub>\x20+\x20r<sub>-</sub>)\x20=\x20√3\x20a", desc: _0xb2b0b9(0x19e) } }, _0xb2b0b9(0x146), "-", _0xb2b0b9(0x2bd)),
+      MOLECULE_DB["ZnS"]?.[_0xb2b0b9(0x147)] && ((MOLECULE_DB[_0xb2b0b9(0x25f)][_0xb2b0b9(0x147)]["Crystal|晶體堆積\x20(FCC)"][_0xb2b0b9(0x2f5)] = !![]), (MOLECULE_DB["ZnS"][_0xb2b0b9(0x147)][_0xb2b0b9(0x137)][_0xb2b0b9(0x2f5)] = !![])));
+  })(),
+  (function () {
+    const _0x2d6581 = _0x5d36,
+      _0x442704 = [
+        { elem: "Cu", x: -0x2d, y: 0x0, z: 0x0, r: 0xd, lpCount: 0x0 },
+        { elem: "Cl", x: 0x2d, y: 0x0, z: 0x0, r: 0x1b, lpCount: 0x0 },
+      ],
+      _0x18782e = [[0x0, 0x1, _0x2d6581(0x214)]],
+      _0x275c53 = [],
+      _0xa2c3d8 = [],
+      _0x6359d2 = 0xdc,
+      _0x3886e6 = _0x6359d2 * 0.433,
+      _0x42cf99 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0x0],
+        [0.5, 0x0, 0.5],
+        [0x0, 0.5, 0.5],
+        [0.5, 0x1, 0.5],
+        [0x1, 0.5, 0.5],
+        [0.5, 0.5, 0x1],
+      ],
+      _0x38bbd8 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ];
+    let _0x376d26 = 0x0;
+    (_0x42cf99[_0x2d6581(0x31a)]((_0x58c661, _0x26e7d2) => _0x275c53[_0x2d6581(0x2c5)]({ elem: "Cl", x: (_0x58c661[0x0] - 0.5) * _0x6359d2, y: (_0x58c661[0x1] - 0.5) * _0x6359d2, z: (_0x58c661[0x2] - 0.5) * _0x6359d2, r: 0x1b, isCorner: _0x26e7d2 < 0x8, idx: _0x376d26++ })),
+      _0x38bbd8[_0x2d6581(0x31a)]((_0x3e8b3c) => _0x275c53[_0x2d6581(0x2c5)]({ elem: "Cu", x: (_0x3e8b3c[0x0] - 0.5) * _0x6359d2, y: (_0x3e8b3c[0x1] - 0.5) * _0x6359d2, z: (_0x3e8b3c[0x2] - 0.5) * _0x6359d2, r: 0xd, isRepresentative: !![] })));
+    for (let _0x20dea8 = 0xe; _0x20dea8 < _0x275c53["length"]; _0x20dea8++) for (let _0x4a1060 = 0x0; _0x4a1060 < 0xe; _0x4a1060++) if (Math[_0x2d6581(0x222)](Math[_0x2d6581(0x220)]((_0x275c53[_0x20dea8]["x"] - _0x275c53[_0x4a1060]["x"]) ** 0x2 + (_0x275c53[_0x20dea8]["y"] - _0x275c53[_0x4a1060]["y"]) ** 0x2 + (_0x275c53[_0x20dea8]["z"] - _0x275c53[_0x4a1060]["z"]) ** 0x2) - _0x3886e6) < 0x14) _0xa2c3d8["push"]([_0x20dea8, _0x4a1060, _0x2d6581(0x214)]);
+    for (let _0x278d86 = 0x0; _0x278d86 < 0xe; _0x278d86++)
+      for (let _0x3907ab = _0x278d86 + 0x1; _0x3907ab < 0xe; _0x3907ab++) if (_0x275c53[_0x278d86][_0x2d6581(0x1be)] && _0x275c53[_0x3907ab][_0x2d6581(0x1be)] && Math[_0x2d6581(0x222)](Math[_0x2d6581(0x220)]((_0x275c53[_0x278d86]["x"] - _0x275c53[_0x3907ab]["x"]) ** 0x2 + (_0x275c53[_0x278d86]["y"] - _0x275c53[_0x3907ab]["y"]) ** 0x2 + (_0x275c53[_0x278d86]["z"] - _0x275c53[_0x3907ab]["z"]) ** 0x2) - _0x6359d2) < 0x5) _0xa2c3d8["push"]([_0x278d86, _0x3907ab, _0x2d6581(0x2e1)]);
+    (addMol("CuCl|氯化亞銅|Nantokite", "Cu", "-", "-", "-", _0x2d6581(0x2ac), _0x2d6581(0x176), _0x442704, _0x18782e, { "Simple|基本單元\x20(離子對)": { atoms: _0x442704, bonds: _0x18782e, hybrid: "-", shape: "-", desc: _0x2d6581(0x104) }, "Crystal|晶體堆積\x20(FCC)": { atoms: _0x275c53, bonds: _0xa2c3d8, isIonic: !![], edgeRelation: _0x2d6581(0x125), desc: _0x2d6581(0x273) } }, _0x2d6581(0x250), "-", "structure"),
+      MOLECULE_DB[_0x2d6581(0x1db)]?.[_0x2d6581(0x147)] && ((MOLECULE_DB["CuCl"][_0x2d6581(0x147)]["Crystal|晶體堆積\x20(FCC)"][_0x2d6581(0x2f5)] = !![]), (MOLECULE_DB[_0x2d6581(0x1db)][_0x2d6581(0x147)]["Simple|基本單元\x20(離子對)"][_0x2d6581(0x2f5)] = !![])));
+  })(),
+  (function () {
+    const _0x482c15 = _0x5d36,
+      _0x1ac856 = [
+        { elem: "Ti", x: 0x0, y: 0x0, z: 0x0, r: 0xb, lpCount: 0x0 },
+        { elem: "O", x: 0x32, y: 0x0, z: 0x0, r: 0x15, lpCount: 0x0 },
+        { elem: "O", x: -0x32, y: 0x0, z: 0x0, r: 0x15, lpCount: 0x0 },
+      ],
+      _0x1017fd = [
+        [0x0, 0x1, "ionic_thin"],
+        [0x0, 0x2, _0x482c15(0x214)],
+      ],
+      _0x38ca98 = [],
+      _0x3cd682 = [],
+      _0x5b3cf7 = 0xb4,
+      _0x1b418d = 0.65,
+      _0x9bdf7 = 0.3,
+      _0x1b0d79 = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0.5],
+      ],
+      _0x48e7ba = [
+        [_0x9bdf7, _0x9bdf7, 0x0],
+        [0x1 - _0x9bdf7, 0x1 - _0x9bdf7, 0x0],
+        [_0x9bdf7, _0x9bdf7, 0x1],
+        [0x1 - _0x9bdf7, 0x1 - _0x9bdf7, 0x1],
+        [0.5 + _0x9bdf7, 0.5 - _0x9bdf7, 0.5],
+        [0.5 - _0x9bdf7, 0.5 + _0x9bdf7, 0.5],
+      ];
+    let _0x209711 = 0x0;
+    (_0x1b0d79[_0x482c15(0x31a)]((_0x184124, _0x11d1d5) => _0x38ca98[_0x482c15(0x2c5)]({ elem: "Ti", x: (_0x184124[0x0] - 0.5) * _0x5b3cf7, y: (_0x184124[0x1] - 0.5) * _0x5b3cf7, z: (_0x184124[0x2] - 0.5) * _0x5b3cf7 * _0x1b418d, r: 0xb, isCorner: _0x11d1d5 < 0x8, idx: _0x209711++, isRepresentative: _0x11d1d5 === 0x8 })),
+      _0x48e7ba[_0x482c15(0x31a)]((_0xa76885) => _0x38ca98[_0x482c15(0x2c5)]({ elem: "O", x: (_0xa76885[0x0] - 0.5) * _0x5b3cf7, y: (_0xa76885[0x1] - 0.5) * _0x5b3cf7, z: (_0xa76885[0x2] - 0.5) * _0x5b3cf7 * _0x1b418d, r: 0x15, isCorner: ![] })));
+    for (let _0x59e7b8 = 0x0; _0x59e7b8 < _0x38ca98[_0x482c15(0x294)]; _0x59e7b8++)
+      for (let _0x407ca4 = _0x59e7b8 + 0x1; _0x407ca4 < _0x38ca98["length"]; _0x407ca4++) {
+        if (_0x38ca98[_0x59e7b8][_0x482c15(0x158)] === _0x38ca98[_0x407ca4][_0x482c15(0x158)]) continue;
+        if (Math[_0x482c15(0x220)]((_0x38ca98[_0x59e7b8]["x"] - _0x38ca98[_0x407ca4]["x"]) ** 0x2 + (_0x38ca98[_0x59e7b8]["y"] - _0x38ca98[_0x407ca4]["y"]) ** 0x2 + (_0x38ca98[_0x59e7b8]["z"] - _0x38ca98[_0x407ca4]["z"]) ** 0x2) < _0x5b3cf7 * 0.75) _0x3cd682[_0x482c15(0x2c5)]([_0x59e7b8, _0x407ca4, _0x482c15(0x214)]);
+      }
+    for (let _0x330fb5 = 0x0; _0x330fb5 < 0x8; _0x330fb5++)
+      for (let _0x5602fc = _0x330fb5 + 0x1; _0x5602fc < 0x8; _0x5602fc++) {
+        const _0x52841c = Math[_0x482c15(0x222)](_0x38ca98[_0x330fb5]["x"] - _0x38ca98[_0x5602fc]["x"]),
+          _0x3164a8 = Math["abs"](_0x38ca98[_0x330fb5]["y"] - _0x38ca98[_0x5602fc]["y"]),
+          _0x160d3d = Math["abs"](_0x38ca98[_0x330fb5]["z"] - _0x38ca98[_0x5602fc]["z"]);
+        if ((Math[_0x482c15(0x222)](_0x52841c - _0x5b3cf7) < 0x5 && _0x3164a8 < 0x5 && _0x160d3d < 0x5) || (Math[_0x482c15(0x222)](_0x3164a8 - _0x5b3cf7) < 0x5 && _0x52841c < 0x5 && _0x160d3d < 0x5) || (Math[_0x482c15(0x222)](_0x160d3d - _0x5b3cf7 * _0x1b418d) < 0x5 && _0x52841c < 0x5 && _0x3164a8 < 0x5)) _0x3cd682["push"]([_0x330fb5, _0x5602fc, "ionic_thick"]);
+      }
+    (addMol(
+      _0x482c15(0x277),
+      "Ti",
+      "-",
+      "-",
+      "-",
+      _0x482c15(0x16f),
+      "2972",
+      _0x1ac856,
+      _0x1017fd,
+      {
+        "Simple|基本單元": { atoms: _0x1ac856, bonds: _0x1017fd, hybrid: "-", shape: "-", desc: _0x482c15(0x20d) },
+        "Crystal|晶體堆積\x20(Tetragonal)": {
+          atoms: _0x38ca98,
+          bonds: _0x3cd682,
+          isIonic: !![],
+          edgeRelation: _0x482c15(0x1b7),
+          desc: "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>🧊\x20晶體結構</div><div\x20class=\x22info-body\x22><strong>四方晶系\x20(金紅石型)</strong><br>鈦離子位於體心與頂點，氧離子位於面上。Ti⁴⁺\x20配位數為\x206\x20(八面體)，O²⁻\x20配位數為\x203\x20(平面三角)。<br><span\x20style=\x22color:#facc15\x22>★\x20點擊體心\x20Ti⁴⁺\x20可查看配位數。</span></div></div>",
+        },
+      },
+      _0x482c15(0x1a5),
+      "-",
+      "structure",
+    ),
+      MOLECULE_DB[_0x482c15(0x180)]?.[_0x482c15(0x147)] && ((MOLECULE_DB[_0x482c15(0x180)][_0x482c15(0x147)]["Crystal|晶體堆積\x20(Tetragonal)"][_0x482c15(0x2f5)] = !![]), (MOLECULE_DB[_0x482c15(0x180)]["variants"][_0x482c15(0x26c)][_0x482c15(0x2f5)] = !![])));
+  })(),
+  (function () {
+    const _0x467bba = _0x5d36,
+      _0x54ebc1 = 0xb4,
+      _0x2209ec = [
+        [0x0, 0x0, 0x0],
+        [0x1, 0x0, 0x0],
+        [0x0, 0x1, 0x0],
+        [0x0, 0x0, 0x1],
+        [0x1, 0x1, 0x0],
+        [0x1, 0x0, 0x1],
+        [0x0, 0x1, 0x1],
+        [0x1, 0x1, 0x1],
+        [0.5, 0.5, 0.5],
+      ],
+      _0x4fdcb3 = [
+        [0.25, 0.25, 0.25],
+        [0.75, 0.75, 0.25],
+        [0.75, 0.25, 0.75],
+        [0.25, 0.75, 0.75],
+      ],
+      _0x5cce80 = [..._0x2209ec[_0x467bba(0xfc)]((_0x4a3648, _0x4831b1) => ({ elem: "O", x: (_0x4a3648[0x0] - 0.5) * _0x54ebc1, y: (_0x4a3648[0x1] - 0.5) * _0x54ebc1, z: (_0x4a3648[0x2] - 0.5) * _0x54ebc1, r: 0x15, isCorner: _0x4831b1 < 0x8, isRepresentative: _0x4831b1 === 0x8 })), ..._0x4fdcb3["map"]((_0x51e09a) => ({ elem: "Cu", x: (_0x51e09a[0x0] - 0.5) * _0x54ebc1, y: (_0x51e09a[0x1] - 0.5) * _0x54ebc1, z: (_0x51e09a[0x2] - 0.5) * _0x54ebc1, r: 0xd, isRepresentative: !![] }))],
+      _0x5a908c = [];
+    for (let _0x5a1fb7 = 0x0; _0x5a1fb7 < _0x5cce80[_0x467bba(0x294)]; _0x5a1fb7++)
+      for (let _0xa6e6d7 = _0x5a1fb7 + 0x1; _0xa6e6d7 < _0x5cce80[_0x467bba(0x294)]; _0xa6e6d7++) {
+        const _0x172583 = Math[_0x467bba(0x207)](_0x5cce80[_0x5a1fb7]["x"] - _0x5cce80[_0xa6e6d7]["x"], _0x5cce80[_0x5a1fb7]["y"] - _0x5cce80[_0xa6e6d7]["y"], _0x5cce80[_0x5a1fb7]["z"] - _0x5cce80[_0xa6e6d7]["z"]);
+        if (_0x5cce80[_0x5a1fb7][_0x467bba(0x158)] !== _0x5cce80[_0xa6e6d7][_0x467bba(0x158)] && Math[_0x467bba(0x222)](_0x172583 - _0x54ebc1 * 0.433) < 0x14) _0x5a908c[_0x467bba(0x2c5)]([_0x5a1fb7, _0xa6e6d7, "ionic_thin"]);
+        if (_0x5cce80[_0x5a1fb7][_0x467bba(0x1be)] && _0x5cce80[_0xa6e6d7][_0x467bba(0x1be)] && Math["abs"](_0x172583 - _0x54ebc1) < 0x5) _0x5a908c["push"]([_0x5a1fb7, _0xa6e6d7, _0x467bba(0x2e1)]);
+      }
+    const _0x3316e5 = [
+        { elem: "O", x: 0x0, y: 0x0, z: 0x0, r: 0x15 },
+        { elem: "Cu", x: 0x32, y: 0x0, z: 0x0, r: 0xd },
+        { elem: "Cu", x: -0x32, y: 0x0, z: 0x0, r: 0xd },
+      ],
+      _0x44e2eb = [
+        [0x0, 0x1, _0x467bba(0x214)],
+        [0x0, 0x2, _0x467bba(0x214)],
+      ];
+    (addMol(_0x467bba(0x2ff), "Cu", "-", "-", "-", "1235", _0x467bba(0x1a2), _0x3316e5, _0x44e2eb, { "Simple|基本單元": { atoms: _0x3316e5, bonds: _0x44e2eb, hybrid: "-", shape: "-", desc: _0x467bba(0x187) }, "Crystal|晶體堆積\x20(Cubic)": { atoms: _0x5cce80, bonds: _0x5a908c, isIonic: !![], edgeRelation: _0x467bba(0x1b7), desc: _0x467bba(0x183) } }, _0x467bba(0x1f0), "-", _0x467bba(0x2bd)),
+      MOLECULE_DB[_0x467bba(0x308)]?.["variants"] && ((MOLECULE_DB[_0x467bba(0x308)][_0x467bba(0x147)]["Crystal|晶體堆積\x20(Cubic)"][_0x467bba(0x2f5)] = !![]), (MOLECULE_DB[_0x467bba(0x308)]["variants"]["Simple|基本單元"]["isIonic"] = !![])));
+  })());
+function ensureElement(_0x115b29, _0x3f12d1, _0x194556) {
+  const _0x1b8635 = _0x5d36;
+  typeof ELEMENT_PROPS !== _0x1b8635(0x18b) && !ELEMENT_PROPS[_0x115b29] && (ELEMENT_PROPS[_0x115b29] = { ve: 0x1, c3d: _0x3f12d1, r3d: _0x194556, lp: 0x0, mass: 0x0, en: 0x0 });
 }
-
-// 1. 簡單立方 (SC) 
-function addMetal_SC(elem, name, mp, bp, scale=160) {
-    ensureElement(elem, "#ab5c00", 28);
-    const atoms = []; const bonds = [];
-    for (let x = 0; x <= 1; x++) {
-        for (let y = 0; y <= 1; y++) {
-            for (let z = 0; z <= 1; z++) {
-                atoms.push({ elem: elem, x: (x-0.5)*scale, y: (y-0.5)*scale, z: (z-0.5)*scale, r: 28, isRepresentative: true });
-            }
-        }
-    }
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - scale) < 10) bonds.push([i, j, "ionic_thick"]);
-        }
-    }
-    addMol(`${elem}|${name}`, "Metal", "簡單立方堆積 (SC)", "52.4%", "6", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">📦 簡單立方 (SC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 52.4%。原子僅位於立方體頂點，沿著邊長互相接觸。</div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "a = 2r"; }
+function _0x2fe2() {
+  const _0x4a68cb = [
+    "yxbWzw5Kq2HPBgq",
+    "otGUmSkW",
+    "phn0CM9UzZ7MSlq8l3n0CM9UzZ48yNi+55sF5zg955Qe5z+655+Z77YmvUwEI+E1KoANI++8Jos4REw/G+AWP+woN+wTKoACIEwfQEwWJEwTPowWJEMBU+wTKooaGG",
+    "q2fNzsaOmtiGugvUDgfNB25Zlca4ieHLEgfNB25Zkq",
+    "ltm4lJKGkoAyH+IpRYK",
+    "mtGWlJu",
+    "5BMZ6z2I5lIj6kEs5B2I",
+    "ltC4icJLIiBOP6mP",
+    "wM5t",
+    "tZiGmI0",
+    "zwrNzvjLBgf0Aw9U",
+    "zgL2",
+    "u2L855+9FoEFVEAzTUMRLa",
+    "phn0CM9UzZ7NOAVPHBG8l3n0CM9UzZ48yNi+5BEL5QwT5lMl5Q+n77Ym5yw35BY36isR5Rc05OcN6iIh5RcN5yYw5OcN77Ym55sX5ywP5ycl6ywn5l2n6y21icHt4OAstYKG6iIh5ywP5yclifmTt0GG5QEl5OIq77Ym5yIg5A2q6zU75lIT5OcN44cc",
+    "q2fNzsaOmtiGugvUDgfNB25Zlca0mcbizxHHz29UCYK",
+    "mteYna",
+    "lteZnq",
+    "qZnO",
+    "oda5mvHuyK9YrW",
+    "mJiZma",
+    "u2LinhZNN73NG7C",
+    "u2LTCgXLFowFUUACRowwRUwfGW",
+    "mte0WRa",
+    "mtyWlJu",
+    "mtKZ",
+    "vhjPz29UywWGqMLWExjHBwLKywW",
+    "phn0CM9UzZ7MRkhNO7FPHBG8l3n0CM9UzZ48yNi+5zAU6loQ5A2q6yw477Ym5zcR5ywP5yclifaTscdPJBxOIiFKUidLGiSGuc1psooaGG",
+    "mZi4nW",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioAzTUMRLoE1KoANIZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7PNAlLV4pNQ4VMLRNLOiBNQy0GkezdqYK8l3n0CM9UzZ48yNi+57wq5QEl5zcm6zAd6yUf56sM44cc5RcV6zUI5A2q5Acg56Mn77Ym5lQE6yQf6zUI5A2q5AgR5ywL5zUB6z2I6AUu56M66zQz44ccpgjYpJXZCgfUihn0EwXLpsjJB2XVCJOJzMfJyZe1iJ7IMiuG6BUE5Pok5lU75lIa5ywN6yoOien14Og6iowpR+AFPEECI+MfJEs9JEAvUooaGJWVC3bHBJ48l2rPDJ48l2rPDJ4",
+    "rdnO",
+    "nJaWicJMMiFOJ68P",
+    "lte0nc44",
+    "vgLpmNZPH5hNTixNN7n85lQm5RcN5yYw6yIMFfj1DgLSzq",
+    "phn0CM9UzZ7KUP7NOAVPHBJMSkVPIiK8l3n0CM9UzZ48yNi+5lQE56gR6yw455Qe6yw45BYp6BM977Ym54k655M96iMY57wq5PM257kj5PYR77Ym5PYj5lQm5RcN5yYw56gR55Qe5yI65R+a5RcJ5RcJ5zgZ44cc5BI455sO5PA85RYc55M957Mu54MP44cb6AoF5zob6zIY6iwq5y+k6jMv55cg5BEL5QwT5BUI5Rc044cc",
+    "ltmZlJm",
+    "phn0CM9UzZ7KUP7NOz3PHBJMOlK8l3n0CM9UzZ48yNi+5BI46kAl55Qe6zIY6iwq5yQr5OIq5yIgkos6NUEHNEMfUoM5VsNVViZNTzdMP4VLKyHw5z6l44cc",
+    "mtKYlJq",
+    "lte4mY4W",
+    "y29VCMrPBMf0zq",
+    "tI9b",
+    "phn0CM9UzZ7NORpPHBJMOlK8l3n0CM9UzZ48yNi+5BI2ltlLG7NPM7VOJBFVViZLHBhMJk/NTzdMP4VJGii",
+    "DhjPBq",
+    "6kEs6yYq5B2I",
+    "mJK3mW",
+    "5ywT5PA55PYa5A+g5Acg56MnicHiq1aP",
+    "pc9ZDhjVBMC+44ccpgjYpUEPUUMwK+wiQEEuQoEoHYa3ncxJGilMQkhLNOVLSzxNPlRKUOyGns00ltuTncdNMOtLM5VLSAtLOiBNQy3JGii8yNi+phnWyw4GC3r5Bgu9iMnVBg9YoInMywnJmtuIpUkyHsdPU57MK4RNRkZKUiNLSAtKUk3LV4pLJP/LRzdVViZLJ6/OPOVLHBBPHy3KVy3MLBJNGROGmtiGkowqJowXPdqSios4I+wXPdqSios4IUwXPdqP44ccpc9ZCgfUpJWVzgL2pJWVzgL2pG",
+    "mtaYlJFcSa",
+    "ota3",
+    "uey2ic185ywT5RcF56o36yw45Qc5",
+    "55U057EA5z6l",
+    "t2n0ywHLzhjHBa",
+    "mti4nW",
+    "phn0CM9UzZ7KUP7MSk/PHBJMOlK8l3n0CM9UzZ48yNi+vUwEI+E1KoANI++8Jow4UoEuQoAwVoA8GUEzVEwkKEoaGG",
+    "phn0CM9UzZ7NOAVPHBJPI4CGkoMhJEAzTUEFSYK8l3n0CM9UzZ48yNi+5Qw16zUJ5RQ25PA85Rc06iIh6yw477Ym54sH5Q+s5lIu5A+g5BQM5AsN77Ym6yAR5A245lIk55sO5PA85RAi5yYw6ygtwowfIEAuNEw9SsJPI4FPPjaP44cc",
+    "ltiYmY44",
+    "5zcm6loQ55wW5B2I6AUu",
+    "ltG1lJu",
+    "mtuZoa",
+    "icJLPOlPJOlJGihPI4uPpc9ZDhjVBMC+44ccpgjYpUwiQEEuQoEoHYa3ncxJGilMQkhLNOVLSzxNPlOGqs1clueTqIdLM5VLSAtLOiBNQy3VViZLU7BKVlJLH7RKUidLSAtKUiNOP5lLVAiGqIdLSAtJGii8yNi+phnWyw4GC3r5Bgu9iMnVBg9YoInMywnJmtuIpUkyHsdPU57MK4RNRkZKUiNLSAtKUk3LV4pLJP/LRzdVViZLJ6/OPOVPHy3KVy3MLBJNGROGmtiGkowqJowXPdBVViZKUiVLSAqZ77Ym5lIk5BgKmYNJGii8l3nWyw4+pc9KAxy+pc9KAxy+",
+    "5BgK54Ua57AY54Ua57wq5QEl",
+    "u3f1yxjLifb5CMfTAwrHBa",
+    "BgvUz3rO",
+    "lteWnW",
+    "DhLWzq",
+    "q04Glq",
+    "phn0CM9UzZ7OG7RLN7ROSQdPM6lLRza8l3n0CM9UzZ48yNi+5RcO5AsX5y675lIa5ycl6loQ5A2q5B6m55Qe5BY36BM85OcN6zMW6zUI5A2q77YmvUwEI+E1KoANI++8JoACIEwfQEwWJEwTPowWJEMBU+wTKooaGG",
+    "5RcFFoAWN+AWOW",
+    "mJeW",
+    "DhjPCgXL",
+    "phn0CM9UzZ7MURtPHBJPIOa8l3n0CM9UzZ48yNi+6zUJ5RQ25PA85Rc055Qe55M96iMY5zU66AUu44cc",
+    "sdnqtZj85QYH56o36yw457o75yIx",
+    "lte1ms41",
+    "q3j5C3rHBhZMMBBPQ5tLOiBNQy0GkezdqYK",
+    "yYdIIyGGms42mZmGyq",
+    "q3ndBa",
+    "otyY",
+    "u0y0FowBM+AWN+wmLUEHQW",
+    "se9dtNZMSldPHBG",
+    "ndiUna",
+    "ltu2lJy",
+    "mtaZWRa",
+    "y2XPy2S",
+    "nJCX",
+    "q2Xgm3ZKUiNMSj/LJjBMSk8",
+    "nc44",
+    "ndmW",
+    "nZyUmq",
+    "phn0CM9UzZ7PGy7MSk/PHBJMOlK8l3n0CM9UzZ48yNi+5yYw5A245OcN6loQ56MP5A6A77Ym5zUB5yclienSlu8G6y216zw35zUG5ywX5OYV6icm5z2h562jicGTmEwdUsNJGii",
+    "nc44icJMMiFOJ68P",
+    "stj856ky",
+    "mtqYmdCYotbzDMvfyxC",
+    "5zUB6z2I6AUu",
+    "tZj85RcN5RcJFoAWPW",
+    "DgL0Bgu",
+    "mJuXoq",
+    "BMfTzq",
+    "ysa9idiOCJXZDwi+kZWVC3vIpIaRihi8C3vIpI08l3n1yJ4P",
+    "phn0CM9UzZ7NOz3PHBJPIOu8l3n0CM9UzZ48yNi+6jEn6iMY5PM26AUu44ccq3xcSUkbUIdJGii",
+    "57+557+55P2/5z6l",
+    "sdj85RcR5RcJFoAWQW",
+    "otCUomkW",
+    "wM5tFoMwG+MlHEEKPNZNOAVLJjBPI4v8wMLUyYbcBgvUzgu",
+    "C3rYDwn0DxjL",
+    "rMqZBq",
+    "4OIAmYbHid0Gnhi",
+    "phn0CM9UzZ7MRkhMSk/PHBG8l3n0CM9UzZ48yNi+5BYX6yw477Ym5Q666i+m5yQB5BY377Ym57wq5QElieGTtY1dBooaGG",
+    "mta5lJxcSa",
+    "y3jLyxrLrwXLBwvUDa",
+    "mtaUmW",
+    "mta5icJLIiBOP6mP",
+    "ChvZAa",
+    "tJjpFos4GoAWP+wmLUs6JoAWRNZNRjhMSkm",
+    "rdjO",
+    "mJu1",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IMPFVUi8G54MP6loQ5OcN6loQpc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ48C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4XlIdNQ4VPQ5tNTzdMP4VVVjO8l3nWyw4+56Ul5PA55RcU5yYw56g8icHJlujoksdLHBFMNiNOIiFPH5hLIzVNN7pPOz7KVlZNMOq8C3rYB25NpUMwG+MlHEEKPUE1KoANIZWVC3rYB25NpU+8JowoN+wTKoAoOEwpLIa8C3rYB25NpNnWWRmG5RE35OIq6lUm5z+Fpc9ZDhjVBMC+44cc5Q+p5yclieiG5y6F5A2q6iIhidqG5yclie4G5y6F5A2q5lUL5BY35ywX5yo56y2157wq5zci77Yi5yw25lITideVncdNGRRPHy3KVy3PJBxVViNVViZLVAlMIjdNHkhPMzdLU7BKVlJNMOtNTRlNI4dLM7RPQ5tVViZLHBBNOAZLUQBMPBxPQ5JVViZLNkJOH6RNHlBNLyZKUk3LG4xMRkhMLRZPH5hLIzVNN7pJGii8yNi+phnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+mI4G54MP55cg6iIh5yYw5A245OcN6loQ77YApc9ZCgfUpUwfT+ACIEALTEs9S+EAHdXZDhjVBMC+54AX56MP5A6A5OcNpc9ZDhjVBMC+77Ym5zYOideWmddcSemG5lUL5lIk55Qe6AUy5RQR56M65RcJ5lIT5lUn5lIn5PIt6kkR5RcN5yYw77Ym5lIu5Bcn6zc15PEp6yEr5BgS6kgO54++5yE65Qw16AUy55Qe5yYw5A245OoW5OcN77Ym5ysQ5PA86yEr5yMB55+Z44ccpc9KAxy+pc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiIbZDhLSzt0IBwfYz2LUlxrVCdOGmtjWEdSGyM9YzgvYlxrVCdOGmxb4igrHC2HLzcbYz2jHkdi1nsWYntuSmJu1ldaUmIK7ihbHzgrPBMCTDg9WoIaXmhb4oYi+pgrPDIbJBgfZCZ0IAw5MBY10AxrSzsi+8j+pRsdLT6xMPA3MH4NNLkG8l2rPDJ48zgL2ignSyxnZpsjPBMzVlwjVzhKIpJXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJeUioI2HEEHRowiH+wjIUw3PEwfT++8MJWVC3bHBJ7NLlhMLRZLHBBPQ5JNOAZLUQBOIiFOGjdPQ5JMUQVMGkFVViXJlujoioAyR+wkOow3PEEHRowmLUMlVoIiH+MRMoA6Q+wqIoMhKEACGoEqHUAdS+EAHowiH+wjIUwiGowfT+ADKoAwMEoaGJXICJ48C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4YlIdLJyRLSi7PQ5tLSihOO53VVjO8l3nWyw4+5yw35ykz5ysQ55wW55Qe54AX5Bco546h6iIh57wv57EJ5OcN77Ym5PIV6AUy5OcN6io96zU75A2q57we5lU255cg5OoZ55Qe5z+65P2/5P2q5PAz44ccpc9KAxy+pc9KAxy+",
+    "ywrKrxzLBNrmAxn0zw5LCG",
+    "ltq2",
+    "qxngm3ZKUiNMSj/LJjBNOlC",
+    "6yg45Poh5zcm6loQ55wW5B2I6AUuicHqB2X5Bw9YCgGPoG",
+    "mteW",
+    "ltm0lJy",
+    "mZmUncaO5yIg6kEJkq",
+    "q2LUzNy",
+    "mtq2ma",
+    "mtu5mti0mg5kze9OBG",
+    "lti1mI45",
+    "C3rYDwn0DxjLlxrOzw1L",
+    "sdjttZn85lQE56gR6yw457o75yIx",
+    "phn0CM9UzZ7NOAVPHBJPJOiGkoEaIEM5VsK8l3n0CM9UzZ48yNi+5PIt5RQ25PA85Rc077Ym6yAR55Mc5lIk5l2C54k654cj5yQr5OIw57EP6kEJ5A2q55Mh77Ym55sF5Rs75lIT5BI455sO5PA85RoH5R6H5Rw06BM95Ps+6AYg6ikm6ikj44cc",
+    "mJuGkoEiHUEcUcK",
+    "mtiWicJMMiFOJ68P",
+    "ltiXoc44",
+    "mti5mcaO5PIh6i+Vkq",
+    "nZmUnG",
+    "u2LpmNZKUOZMSkFLJjBNN71855+Z6iUX",
+    "wgvprJr85zUB5RcF5RcN5yYw5RczFfHLt0y0",
+    "phn0CM9UzZ7NOAVPHBJMSkVMOlK8l3n0CM9UzZ48yNi+6yw45BYp6BM96zMW6zUI5A2q77Ym5Rc05RQ25RAY5zgi5BY36yw45OcN77YmuY1p4Og7ioERR+w4TUACIEIYOoMBU+InT+oaGG",
+    "C3dcSIaVihnWWRm",
+    "Aw9UAwnFDgHPy2S",
+    "lteW",
+    "phn0CM9UzZ7NOAVPHBJMOlK8l3n0CM9UzZ48yNi+5Q2J5zUB6z2I6AUu57wq5QEl77Ym5yYw5A245OcN6loQ56MP5A6A77Ym5ywP5yclifmTt+kbUYdNQ6/POA/NPlRNSONNTixPM7VLRzdJGii",
+    "mJu0",
+    "Cg9SEw1VCNbO",
+    "i2u1ztDLyG",
+    "lte5ns44",
+    "54M55Q6kicJLKkVMSkVMQyVPJBuP",
+    "mJeUmG",
+    "mteWlJNcSa",
+    "rgLUzMG",
+    "5lIn56MP5A6A",
+    "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",
+    "ndyUmG",
+    "zNvSBeTLEq",
+    "mtaWlJpcSa",
+    "q2fNzsaOmtiGugvUDgfNB25ZlcaXnsbizxHHz29UCYK",
+    "mtaYWRa",
+    "phn0CM9UzZ7MURtPHBJPIya8l3n0CM9UzZ48yNi+5BY35RcN5yYw5yQr77Yms+kbUIdKVy3MLRZLPjBLGBtJGii",
+    "ueGZFoEJT+wmLUAWQ+EZU+wiLW",
+    "AxnjB25PyW",
+    "4OIAmYbHid0GmIHY4Og6k3lIGBSP",
+    "mtCXmW",
+    "phn0CM9UzZ7NOz3PHBJPIiK8l3n0CM9UzZ48yNi+5l+x56IX5PM65yIP56gD55+Z44cctMhIGBOG5l2n5PA857wq5QEl5lIk5PA544cc",
+    "phn0CM9UzZ7KUlVOPOhLHBhMJk/NTzdMP4S8l3n0CM9UzZ48yNi+5ywP57we6zUz6y2155Qe5A+R5Rov6zUw6io95OQk5B2I5BYp6lkG6zU76i235Ps+5zYO6zU76lkG5BQM6lYd5AsN55Qe5RcU5lIk77Ym5l2g5lUL5PYS5BYp77YitUkjOupILibt77Yj54k65lI75BM55PMc77Ym6lkG6zU76i235zYO56gR44cc56gR5y6F5A2q5y2k5B6r6lYd5AsN44cb5y+V5Qw15yYw5OcN6lYd6AUy77Ym6lYd6io95yIg5PwJ6lkG6zU76i2344cb5RIB6lYv6zU76i236ygo5BQM6zUg5lIT77YB5lIu5RcU6iIh56kZ5lMl6zAt54k65lIj6y2177Ym6y216io96lYd5AsN44cc57AC5zci6zU76i235yIg5PwJ6iIh6y2157wq5BY35BQM562j6icd6yEp77Ym5yo56y216kEa6BUE5BI45lUL5PYS5BYp54k66lYd6yEn6kAb55Qe6lkI542777Yi55wR6lEV5PIt5PAV57wq5QEl5PMc5lQM5AsA5lUL5Q2K5BYp54k65lI777Yj44cc",
+    "mtiWWRaO56UVks85n8kWkoAPIYK",
+    "u2HHCgu",
+    "lte5mI4Y",
+    "mtGWWRa",
+    "ntGGkowiHUINOYK",
+    "q3uYt3ZOTAtPIOxNPkz85RcN5yYw5lQE6yQfFen1ChjPDgu",
+    "nZi3",
+    "q3j5C3rHBhZMMBBPQ5tLOiBNQy0Gkfndkq",
+    "lteYoq",
+    "mJC3nZyYnvvUsLnywG",
+    "mta3WRa",
+    "mJuX",
+    "ltyZlJGGkoAyH+IpRYK",
+    "C3dcSG",
+    "q3uYtW",
+    "lte4nq",
+    "oteUmW",
+    "Dgv4DenVBNrLBNq",
+    "phn0CM9UzZ7NO7FPHBJPIkm8l3n0CM9UzZ48yNi+6zUJ5RQ25PA85Rc077Ym6k6k6yEp5y6F5PAz44cc",
+    "6AUu5B+d56Ul5PA55Acg56MnicHcq0mP",
+    "otFcSa",
+    "phn0CM9UzZ7KUP7MSk/PHBJPIiK8l3n0CM9UzZ48yNi+6AUy5Pwi5RYc55M95yQr77Ym5y+n5OEj5y+V55sF5OIq5lQm5RcN5yYw5RcVicHdBe/IGOiP44cc",
+    "u2vgnNZLHA3MSj/LJjBNOzi",
+    "5Q2J5zUB6z2I6AUu57AY54Ua",
+    "ltyWlJm",
+    "phn0CM9UzZ7NOPJPHBJMOlK8l3n0CM9UzZ48yNi+5lIj6kEs6yYq5B2I57wq5QEl44cc",
+    "seLpm3ZNOPJPHBJNS7VLIjC",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5UriowfREAwUEACGowVHUwGHUEPJsaOsenqktWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6yEr5BgS56+e5l6l77YAphn0CM9UzZ4",
+    "ltm1lJq",
+    "mc4W",
+    "lteXmG",
+    "ltqXlJu",
+    "zM9YrwfJAa",
+    "se5pmNZKUP7NOz3PHBJNS7VLIjC",
+    "ltGZlJy",
+    "mtKX",
+    "ltuWlJG",
+    "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",
+    "ndaWicJLIiBOP6mP",
+    "ntiUncu",
+    "phn0CM9UzZ7NORpPHBG8l3n0CM9UzZ48yNi+5lQm6loQ5A2q5BYX6yw477Ym5A2y5zYO5PA85Rg95Rc05lIT44cc",
+    "mJCX",
+    "nZlcScWGotdcSa",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioAzTUMRLoEjUEAaPZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7PNAlLV4pNQ4VMLRNLOiBNQy0GkezdqYK8l3n0CM9UzZ48yNi+5RcV5yYw6yIj5yw35PYj6AUy54Au6BUEicG4mdhcSemP44cc5Q+p5ycl6yIj6zUI5A2q5zgO5zYn6yo96kkRnUwaI+AWR+MBOUwTKowmHEwCJE+8JoMfJEs9JEAvUoEcUIa244ccpgjYpJXZCgfUihn0EwXLpsjJB2XVCJOJzMfJyZe1iJ7IMiuG6BUE5Pok5lIT5B+d5y6F5A2q5y+V5P+L55Yl6ywn5l2n5Pw444ccpc9ZCgfUpJWVzgL2pJWVzgL2pG",
+    "otBcSa",
+    "mtiWWRa",
+    "mtuWicJLIiBOP6mP",
+    "tK8YicT856gD6y6t6zUI5A2q",
+    "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",
+    "senSt3ZMRkhMSk/PHBJNS7VLIjC",
+    "phn0CM9UzZ7NOPJPHBJPIya8l3n0CM9UzZ48yNi+6AoF6BM95yQG56ky5OIq5yIg77Yms+kbUIdKVy3MLRZLPjBLGBtJGii",
+    "otaGkos4GoAWTowqIcK",
+    "qMvUDa",
+    "phn0CM9UzZ7NORpPHBJPJOi8l3n0CM9UzZ48yNi+twFcSUkbUIdKVy3MLRZNORpPHBJMOlNLUBpPNAlKUiRMLRNJGii",
+    "ltKZlJy",
+    "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",
+    "mte4nq",
+    "Aw5Uzxjive1m",
+    "mta4WRb+mtiWWRa",
+    "y2HLy2TLza",
+    "ltm3lJy",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioMRLow/G+ERI+AwUsaOqKndktWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6yEr5BgS56+e5l6l77YAphn0CM9UzZ4",
+    "phn0CM9UzZ7MSk/PHBJMOlK8l3n0CM9UzZ48yNi+5lIj6kEs6yYq5B2I57wq5QEl77Ym5BI455sO5PA854gR6jEL6iIh54k46jEL44cc",
+    "DMfYAwfUDfr5Cgu",
+    "phn0CM9UzZ7KUP7NOAVPHBJPIiK8l3n0CM9UzZ48yNi+5BI46kAl55Qe5lQE56gR6yw46BM977Ym54k655M96iMY57kj5PYR77Ym5PIt5RQ25PA85Rc044cc5BI455sO5l2C6yke5y6F5yQr44cb6zIY6iwq5yQr5lUL5y+k5PsD5B2X6AgV5B2X5yQr55Qe5l+D6k235yQr44cc",
+    "nJq1",
+    "mtGWWRaVmta1WRa",
+    "mcaO5yIg6kEJkq",
+    "phn0CM9UzZ7MSk/PHBG8l3n0CM9UzZ48yNi+5BY36yw477Ym5yw35PYj5BY35RcN5yYw5OcN77Ym5lIT5B+d5PYj5lIa5Bcn5A2K5Bcn6zU75A2q44cc",
+    "pc9ZDhjVBMC+44ccpgjYpUEPUUMwK+wiQEEuQoEoHYa2ocxJGilLJP/LRzdKVy3MLRZOP5lOKl3OIiFPQ5tKUk3LV4pVViZMSR/OKzFPQ5tLSi3OP5lNT5RKUPlNM7JMJQxOP7JJGii8l2rPDJ48l2rPDJ4",
+    "phn0CM9UzZ7NOPJPHBG8l3n0CM9UzZ48yNi+56MP5A6A55Qe55M96iMY5zU66AUu77Ym5BY36yw444cc",
+    "zMLSBa",
+    "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",
+    "ltC3lJC",
+    "6ykk5Bcn6ykk6zUz5zUB6z2I6AUu",
+    "mJe2mG",
+    "phn0CM9UzZ7KUP7NO7FPHBJMSkVMOlKGkos6NUEJT+MfUoAGUsK8l3n0CM9UzZ48yNi+5BI2ic0YiowdUEMBU+InT++8JfaTscdPJBxPGjRLUlJKUi3OP6pPM6lJGii",
+    "mteWicJLPlhMSlqP",
+    "phn0CM9UzZ7MRkhNO7FPHBJPIiK8l3n0CM9UzZ48yNi+5BY36yke5y6F5yQr44cc",
+    "lteZmY44",
+    "y2XHC3noyw1L",
+    "vgvgnhZLM5VMSj/LJjBNORi",
+    "mteUoa",
+    "zg91yMXL",
+    "nJG4",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioAzTUMRLoE1KoANIZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7NSkhLLQ7NQ4VMLRNLOiBNQy0GkfndktWVC3rYB25NpJXICJ7MSk/PM6lLRzdMP4VMIjdNSkhLLQ7NQ4VMLRNVViZPIQVPM6lLRzdLOAVLHAxPQ5tLV4pJGilPHy3KVy3MLBJNGROGoooaGJXICJ48C3bHBIbZDhLSzt0Iy29SB3i6i2zHy2mXnsi+4PIfioM7NUAtIUs4REwKRIbdCYdPM6lLRzdLJ6/MN6xNNiVPHy3KVy3MLBJJGii8l3nWyw4+pc9KAxy+pc9KAxy+",
+    "ltKX",
+    "u3f1yxjLifbSyw5HCG",
+    "phn0CM9UzZ7NOAVPHBJMSkVPIya8l3n0CM9UzZ48yNi+5PIt5RQ25PA85Rc05zgi5BY36yw45OcN77Ym5yQG54AX5AsX5Rc05y+V6ko95ykz54sM56gR6yw46yMa44cc",
+    "phn0CM9UzZ7NOz3PHBJMOlK8l3n0CM9UzZ48yNi+5yw35PYj6AUy5BQM5Bcn56IX55Qe5BMZ6z2I57wq5QElicJLHBhMJk8P44cc",
+    "ntGUoa",
+    "BwfW",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN42mioE1KoANI+EjUEAaPZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7KUzNNOBZNG7CGkelIGOji4OkgktWVC3rYB25NpJXICJ7LHBFMNiNKUiNKUk3LV4pKUOZPM7VLRzdPJBxJGilMR4/LGiVNOBZLJP/LRzdOIiFLM5VLGiVMSkVLJP/LRzdPGkpNT5RVViZLVAlMIjdPOz7KVlWGC3dcSYdNMOtLUB7KVzxMJPlLIjFJGii8l2rPDJ48l2rPDJ4",
+    "y29VCMrPBMf0zv90CMLWBgu",
+    "lteXnc4Y",
+    "qZeWmhZNORmXmdb85A+m5yUs54oV",
+    "zgvZyW",
+    "otyTmtaWWRa",
+    "nhZLM5S",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5s4ioEjQEIZQUEWOEs7IZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7MSk/LJjBKUP7PIOuGken1q2WPpc9ZDhjVBMC+pgjYpUEzVEIjSUwBUUMRLo+8JoMBO+A6TUAwVoAWTooaGUE1KoANI+IiH+MwG+MlHEEKPIHABLmP55U45zcm44ccpc9KAxy+pc9KAxy+",
+    "ntaGkowiHUINOYK",
+    "57gG54Ua57wq5QElicGXmUwaI+s6LoMcIUw9OIWGoowaI+wfREMcIUw9OIK",
+    "mJq5",
+    "6zUz5lIj6kEs6yYq",
+    "mJaWicJLIiBOP6mP",
+    "ltG4",
+    "phn0CM9UzZ7KUP7NOAVPHBJMOlK8l3n0CM9UzZ48yNi+5lQE56gR6yw455Qe5A6m5ywO6zU76zUI55sI54MP77Ym5lIT5B+d56gR5y6F5A2q5PYj5lIa5Bcn5A2K5Bcn6zU75A2q44cc5yw35PYj5BY36yke5y6F5OcN77Ym5PIt6kkR56M65RcJ5lIT55Qe5RcN5RcN5yYw5OIq56gR6yw45Qc544cc",
+    "ltCW",
+    "C2LUz2XL",
+    "mtm4mG",
+    "qJjinNZKUzNNOBZNG7D8rgLIB3jHBMu",
+    "senStZn85RcV6yw457o75yIx",
+    "i2qXzdvKyG",
+    "tJj85RcU5RcJFoAWRG",
+    "6zUz5y6F5A2q",
+    "lte1mG",
+    "mty3ma",
+    "C3dcSW",
+    "mtaYlJpcSa",
+    "rwrNzs1ZAgfYAw5NiejPDgv0CMfOzwrYB24",
+    "lteYmq",
+    "ltKYlJu",
+    "mJG3lJu",
+    "seL856ky5yYw5RcR",
+    "sdnqtZn85lQE56o36yw457o75yIx",
+    "C3dcS2tcSG",
+    "nZmUna",
+    "u2jdBdn85lIj5RcV5yYw6yQ7",
+    "6yg45Poh5zcm5yIg55wW5QEl54MPicHjC29TzxiPoG",
+    "nJaWicJLIiBOP6mP",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5kHioEjQEIZQUAaP+IZQJWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7NOAVLJjBPI4uGkfPUuYK8l3n0CM9UzZ48yNi+55M96iMY5OIw5B6U6BUd6iMY57kj5PYR44cc5yw35PYj6j6I5ywj54M55OcN77Ym5Pg76zUC5B6U6yEp6yEr5BgS5B6m5y+V55sO5PA86ko95l2C5AsC5ywj5Agx5PAz44cb6j6I5ywj5Bgp5lUL5y+k6zMW5Qw15Bce57EA566H44ccpc9KAxy+pc9KAxy+",
+    "57cH5zAU56Ul5PA55Acg56MnicHtqYK",
+    "ncHYphn1yJ4Rpc9ZDwi+icSGCJXZDwi+ltWVC3vIpIKGpsdIIjOZige",
+    "ltG2lJG",
+    "4OIAmIbHid0Gnhi",
+    "vgv0CMfOzwrYywWGtMv0D29YAW",
+    "5RcUFoAWRUAWOW",
+    "u2LgnIaYlxZLHA3MSj/NN73PHBJMOlK",
+    "pc9ZDhjVBMC+44ccpgjYpUEPUUMwK+wiQEEuQoEoHYa1mI40jEoaGUwoN+wTKowdHEs9JEAwVoERI+AwUEMRLoMGGUM7NU+8JoAYV+IrL+McIUMvT+s6KUEBUoAoPEINUooaGJWVzgL2pJWVzgL2pG",
+    "phn0CM9UzZ7NO7FLJjBMSkS8l3n0CM9UzZ48yNi+5yQh5Q+s5RcJ6AUu77Ym6y216kEs5O6L6l+rotdLUQyOCoI7JowFN+EjUEAaPYNVViZKVyzwu0vquUIMLUEcUNnWWRpJGii",
+    "phn0CM9UzZ7MRkhMSk/PHBJPIkm8l3n0CM9UzZ48yNi+5RYc55M957kj5lI76kAb5OIq5yIg44cc",
+    "y2XHC3m",
+    "rdvO",
+    "mZu1ma",
+    "mJG2mq",
+    "phn0CM9UzZ7MSk/PHBJPIya8l3n0CM9UzZ48yNi+5BY35RcN5yYw5yQr77Ym5y+x54AX5yIg6kEJ55sI55sF5RcN5RcJ44cc",
+    "mti5lJy",
+    "vhjPz29UywWGuhLYyw1PzgfS",
+    "wgvgnhZLM5VMSj/LJjBMSjK",
+    "qwWYq2W2FowfREAWR+wmLUs6JoMlGq",
+    "u2LTCgXLFowFUUACRowwRUwfGYaO6zUI5A2q5Bcnkq",
+    "sdjttZr856gR6yw457o75yIx",
+    "vc1ZAgfWzwq",
+    "mtCWicJLIiBOP6mP",
+    "mtm0mG",
+    "mte3icJMMiFOJ68P",
+    "vgv0CMfOzwrYywW",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7INkGG6z2I5B+d56Ul5PA5icHgq0mPpc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ7PH5hLSAZNR4tKVOVVVjO8C3rYB25NpG",
+    "phn0CM9UzZ7KUP7NOz3PHBJPIiK8l3n0CM9UzZ48yNi+tMhIGBOG5l2n5PA85Asw5yg044cc",
+    "uhLYyw1PzgfS",
+    "qZj2",
+    "mtyUoq",
+    "q0985lIa5RcN5yYw56kZ",
+    "mI4W",
+    "mZu2",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5kHioEHQ+wmLUMlHtWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6kUl5yIh5O+B6yg46Acf5QQI6kAw44ccpc9KAxy+pc9KAxy+",
+    "DMfYAwfUDhm",
+    "phn0CM9UzZ7NO7FPHBJMOlK8l3n0CM9UzZ48yNi+5Q2J5zUB6z2I6AUu57wq5QEl77Ym5zUB5yclifaTtYdPJBxPLBFLNyFNRyNJGii",
+    "ltyXlJm",
+    "wgvgmNZKUOZMSj/LJjBMSjK",
+    "ltm0lJa",
+    "phn0CM9UzZ7PGy7MSk/PHBG8l3n0CM9UzZ48yNi+5PYa5BY354sH5QMF6yw45lMl5lIa77Ym5Q2J5zUB6z2I6AUu57wq5QEl44cc5RcV5y6F5A2q6iIh5lIj5ycl5RcN5B2I5OIq6zUz6y2177Ym6iIh5lIa5ycl576L5z+65B2I5OIq5zAU6y2144cc",
+    "CMvZB25HBMnL",
+    "AxnVBwvY",
+    "AxnszxbYzxnLBNrHDgL2zq",
+    "u0y2FowfREAWN+wmLUEHQW",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ4kicaGicaGica8zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IMPFVUi8G54MP6loQ5OcN6loQpc9KAxy+cIaGicaGicaGpgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+ms4G56Ul6AUu57wq5QEl77YApc9ZCgfUpUs6JoAWP+wmLUEFVsaOu2Lp4OkcksdMMk/LHBJLNOVNMOq8C3rYB25NpUwfSEwdUEE2SUElGowBUUMRLdWVC3rYB25NpUoaGUs4REw/G+EFVEwoN+wTKoAoOEwpLIa8C3rYB25NpNnWWRmG5RE35OIq6lUm5z+Fpc9ZDhjVBMC+77Ym5Q+p5ycl55+95y6F5A2q6iIhidqG5ycl5RcN5y6F5A2q57wq5zci77Ym6icm5Q+p5ycl5RcN5y6F5A2q6iIhidiG5ycl55+95y6F5A2q57wq5zci44cc6ycz56IUifnPlu8Tu2KG55Qe6ycJ57Qm5QMl5O6L57wq5QEl5zcr5lIj57AT56M66zAt54sH6zMq5BU25lY477Ym5B2I5OIq5lQg5Qw15yw256MP5zU655Qe57AY54Ua5P625QEl44ccpgjYpGOGicaGicaGicaGica8C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4YlIdNIANNKiBMGkFOS6RVVjO8l3nWyw4+55sX5PA85y6F5A2q6zAt5A6m5ywO5lUL6AUy5BY35BQM55Qe5ywX5yo56y216ycJ57wq77Ym55+Z6iUX5yw35PYj5Qw16AUy55Qe54Au6BUEicGXnZeZWRbdksdOIiFMPBxKVBpNMOtNOAZLUQBJGilNTjtMT6JNMOtNN7pOI7hMMBBPQ5tPGi/MMi7KUjtNHkhOIBlVViZLSAZMLRZLHkROIA/NMOq8C3rYB25NpUMBU+E1LEE3O+MRLdWVC3rYB25NpUIiH+wfIEwTUoADKoAwMEoaGJXICJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+mY4G5yYw5A2456MP5A6A5OcN77YApc9ZCgfUpUwmLUwTUoAaP+IZQUALTEEcUUEPQEwUMU+8Jos4JEA6TUAwVoAWTo+8Jos5N+s4JEIiH+MzPoAWQ+AWN+MfUcaOseyPiowKLUEAHow4UoIMI+MfUoMHNUwpJEAhIE+8IeHgiowpR+IiH+wfTUwpJEAhIEEuN+AiKcbtAuBIGOqG5RcJ6AUu77Ym5BI455sO5PA86j2v5yI7546755kd77Yj44cccIaGicaGicaGpc9KAxy+cIaGica8l2rPDJ4kicaGidXKAxyGy2XHC3m9iMLUzM8TC2vJDgLVBIiGC3r5Bgu9iM1HCMDPBI10B3a6ideYChG7igjVCMrLCI10B3a6idfWEcbKyxnOzwqGCMDIysGYntuSmJu1ldi1nsWWlJiPoYbWywrKAw5NlxrVCdOGmtbWEdSIpGOGicaGicaGidXKAxyGy2XHC3m9iMLUzM8TDgL0BguIpVcFJ60G5BEL5QwT5OEj55sOpc9KAxy+cIaGicaGicaGpgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+ms4G546755kd6iIh6zM255o35BEL5QwT77YApc9ZCgfUpUs6JoAWP+wmLUEFVEAyR+IJVEMaOoAzRUMaMUEoU+EsG+oaGEEFS+IlSEEoU+EsG+wpIUMzTUEtT+wzQoEAV+EAHoACGos4U+IMGEwoN+AwMEoaGUMaJ+MbJUwkOowfPEs4JEwqJoEAHoMhKEwXRoAWP+wmLUEjQE+8JowpR+IJVEMaOowhUUwqHoEORUwkN+IdVEAaP+EoU+EsG+oaGJXICJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+mI4G5Aot6zU75Pwi5OEj77YApc9ZCgfUpUEFS+IlSEAzTUMRLowfT+ACIEEnQoEjUEEAHdXZDhjVBMC+5Aot6zU75Pwi5OEjpc9ZDhjVBMC+icHqAwv6B2vSzwn0CMLJigvMzMvJDcNVViZLJBpLJ5FLO5pMMylMNipNLklNLj/PM7VOJBFVViZPGjRPM7VMMylMNipNLklNLj/NSR7NORRNMOtPNiFNM6RPOlVNJOFJGilPGjNKVB/LHBBMIjdNGRRPM7VLRzdPJlBJGihPM7VOHABKUlVMQz/MNB/LJ4RLKitPOz7POlVNJOFMJQFLIlBLMAJKU7BNMOtMOlJLV4pNTytKU7BJGii8yNi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJmUiowfIEwTUowcS+I8Uo+8MJWVC3bHBJ7PQ5JNTjtLUQBNMOtNN7pOI7hNJRVNKOpLHBFMNiNMPBxKVy7NMOtLHyNOOBdMUjVNJOFVViZMMk/OO73PGka8C3rYB25NpUwfIEE6LJWVC3rYB25NpUEAHos4U+IMGEADKoAwME+8JoAuR+AsKoIrL+EpVUs7O+wfQoEqG+IZH+IOIUE2SUI3R+EAHoAvUoAtMUwcS+I8UooaGGOGicaGicaGidWVzgL2pGOGicaGpc9KAxy+",
+    "C3r5Bgu",
+    "phn0CM9UzZ7NORpPHBJMSkVMOlK8l3n0CM9UzZ48yNi+5BI2lthLG7NPM7VOJBFVViZLSi/OMiFMIzpNMOtKUlVOPOhMIjdLIiBJGii",
+    "phn0CM9UzZ7MRkhMSk/PHBJPIiKGkoA8GUEzVEAWTcK8l3n0CM9UzZ48yNi+5A6255sO5RYc55M95yQr44cctMhIGBOG6iIhienSt+kbUYdKUyVPLPpNGRRPM6lLRzdPJBxJGii",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ4kicaGicaGica8zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IMPFVUi8G54MP6loQ5OcN6loQpc9KAxy+cIaGicaGicaGpgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+ms4G56Ul6AUu57wq5QEl77YApc9ZCgfUpUs4REw/G+EIS+woN+wTKoAoOEwpLIa8C3rYB25NpNnWWRmG5RE35OIq6lUm5z+Fpc9ZDhjVBMC+44cc55sX5PA85zgO5zYn6ycJ5O6L5zUB5ycl55U45zcm55Qe5RcR5y6F5A2q5lIu54sH5A2K5Bcn6zU75A2q77Ym5zUB5ycliemTscdPJBxKUyVPLPpNMOtPM7VLRzdMLQxLIPVLROZLHAJLNyFNRyNVViZMP4VMIjdKUOBLROZNVO7NMOq8C3rYB25NpUATO+wBM+MDOUMRLdWVC3rYB25NpUE1KoANI++8JoMnTEINKUEcUIa8C3rYB25NpJeWos41WRa8l3n0CM9UzZ7JGii8yNi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJiUioEjQEEqHUAaP+IZQU+8MJWVC3bHBJ7LUlJMUQVLUlJLO5pKUiVNGRRNHkhOIBlJGihNHkhLKBpJGihNHkhMR5lNMOtMSkpPQ5tVViJLRRBNLkJLPkNNHlBMSkpNMOtOH63LKBpMMk/NGRRKUOBLRONLHAJOGiZMT7VLIQdNMOtNOAVPHOFVViNJGilLSAZMLRZLROZLHAJLSi3NQlhNMOq8C3rYB25NpUMDNUALTEAaP+wiHUwTKdWVC3rYB25NpU+8JoMBO+A6TUAwVoAWTooaGUEuSEAwVowiHUwTKoMhJ+wWJ+s4LowiHUwTKoMwK+wdHEACIEw+RUw8SEEAHdXZDhjVBMC+5yEH5B6x55oM5yQBpc9ZDhjVBMC+77Yi5ycR5PwM5yIg5PwJ5yQB77Yj77Ym5zUG5Q2K54Au5Rk46BUE5Qw15l2o44ccpgjYpGOGicaGicaGicaGica8C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4ZlIdLJjBLRBJMGkFOS6RVVjO8l3nWyw4+5yYw5A245OcN6loQ55U455w256MP5A6A77Ym5zYO5lIa6iIS5QkD5lU25lIl5lIn6iIh5BY36yw444cb5BY36BM85OIw5BY35RcN5yYw5yQr5y+n5OEj44cc5yw35PYj5y+V54Ed5OcN77Ym5zYO56M65RcJ5lIT5A6m5ywO54Ed54Es55sF5OIq5lQm5RcN5yYw56kZ6iIh5Rc077YB5zYO57sR5Asw57EA5ywj54wN5lIl77Ym5y+V6iIh6BM157sG77Yi5AAc5RcV5RcJ77Yj55M855sF6ycJ6y6w55Qephn0CM9UzZ7OH6RNLlhLN7RLJ5BKU6pLJ43MH4K8l3n0CM9UzZ7JGiikicaGicaGica8l2rPDJ4kicaGidWVzgL2pGOGicaGpgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiIbZDhLSzt0IBwfYz2LUlxrVCdOGmtjWEdSGyM9YzgvYlxrVCdOGmxb4igrHC2HLzcbYz2jHkdi1nsWYntuSmJu1ldaUmIK7ihbHzgrPBMCTDg9WoIaXmhb4oYi+cIaGicaGicaGpgrPDIbJBgfZCZ0IAw5MBY10AxrSzsi+8j+pRsdNLj/MTlVMH4NNLkG8l2rPDJ4kicaGicaGica8zgL2ignSyxnZpsjPBMzVlwjVzhKIpGOGicaGicaGicaGica8C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4XlIdMVztMT6JOG73MUPaGkowKQEEeTUAWOYNVVjO8l3nWyw4+55sY54o35PIVphn0CM9UzZ7LPkNNHlBMSkm8l3n0CM9UzZ7NMOtKUlVOPOhMIjdLIiyGkowqQ+MhJ+E0Hca5mcuG5lUL5lIkkEoaGUwfTUAWQ+EIS+AVLcaOsc9dihjHDgLVksdMMk/MIydMNiNNG7tPOz7KUk3MNidPQ5JNMOtVViZLM6dMRAtNH4pNH5lMMylNLklNLj/NMOtLLQ7KVy3NHRhLGlZMPBxPQ5JVViZKUjtNORpMJPlMLl7PH4/PGAdKVy7MLRZNHAtNGQ3OIiFNN7pMSRNVViZMMk/NJ77KU6pNMBZPM7VOIiFLRRBLUQ3NG7NPO6RNMOtPH43OPOhNH4pMLPNJGii8yNi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJiUioACQUs+HUIdVEA6KcaO5y+V54Ed5yAWkE+8MJWVC3bHBJ7LNkJMT7hMTBFPQ5JLO5pKVy7MUQVNMOtNKRdLOOpKUiVVViZNLllNG7FLIiBLRzdMNipOOQVMSltLIiBLRzdLJixOPOBVViZLVAlMIjdNSAdNI4dNTzdMMBBNTzdMP4VNMOq8C3rYB25NpUoaJoEuSUEdT+AWTowqIoEjQEoaJtWVC3rYB25NpUoaGUwKLUINGoAzTUErQEwjLoMaJ+wdJ+wgSowHIU+8JownU+wpR+s7PEEBToAoPEM7NUEbQ+EhG+EhKU+8JowfTUIyIUIxJ+MhJ+ALTEwKP++8JoIIQ+IMLUEcUUACQUs+HUACGowfT+A9M+wkM+EAHoAiSoEvPEIdVEA6KooaGJXICJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+mY4G5RQR5A6K5RcJ6AUu5Pwi5OEj77YApc9ZCgfUpUMBLUEeTUwKP+AWO+s4REwqQ+MhJ+MbOos9JUAwVos6JoAWP+wmLUEIS++8Jos9HUEuSUEdT+EAHdXZDhjVBMC+5ywO55cd5PQw5yYw5R2B5yUIicHhv1aPpc9ZDhjVBMC+ioE0HoAyRYbdt+kcGIdNMOqGmJuG5ycn44cc6ycz5PIV5zUG54k65yw25yIg5A2q57wq5QEl5lITiemTscdPJBxNMOtNIBNLRPRPNiFLI5xMQkhLVi/VViZOG73PNz7LUlJMNiNMLyJLNldLKlJMLlBLNldOOAJLJ43LSitNMOtNTixLPjBNT5ROVlVLSitNHRhVViZMMk/PGkdMIjdMSkpLGjNORORPGBFNMOtPL5ZPJBxMSkpPQ5tKUyVKUidJGiikicaGicaGica8l2rPDJ4kicaGidWVzgL2pG",
+    "qMvdBdj85lQm5RcV5yYw6yI5",
+    "mZu2A1Lts0Hb",
+    "zwXLBq",
+    "sunSmIaTFos6JoAWR+EIMoMBOUwTKa",
+    "phn0CM9UzZ7PGy7MSk/PHBJPJOi8l3n0CM9UzZ48yNi+5Qw15BY355Qe6isR5Rc05yQr77Yi5lM+54EL5yQr77Yj44cc",
+    "mtGGkos6LoAWTowqIcK",
+    "qNiY",
+    "nJqGkowKSEAWTcK",
+    "phn0CM9UzZ7NOAVPHBJPIOu8l3n0CM9UzZ48yNi+54sH5Rc054MP54k655M96iMY77Ym5zc45Rc05B6m6k6k6jEn6iMYkos6LoAWTowqIcNVViZLUlJNLkJMLRZMUlJMS7pMSAdMRRROJ4ZJGihMS6lNIl7LPjRMTRlLJP/MLPNOIiFPM7VPJy3JGii",
+    "mta0WRa",
+    "tgf5zxjLza",
+    "tMfdBa",
+    "phn0CM9UzZ7NOAVKU6pNOAVPHBJPIiKGkoA1T+AZOIK8l3n0CM9UzZ48yNi+tMhIGBOG5l2n5PA857wq5QEl5Asw5yg077Ym54sH5A+M6AUu6y216ycJ57EA44cc",
+    "senStZr86ygo5RcV6yw457o75yIx",
+    "mta2na",
+    "sdjdtZn856kZ6yw457o75yIx",
+    "mteZlJC",
+    "mta4WRa",
+    "mJmUnq",
+    "ltG1lJe",
+    "nZyUnW",
+    "lte2ms41",
+    "phn0CM9UzZ7NO7FPHBG8l3n0CM9UzZ48yNi+5lIj6loQ5A2q6yw477Ym5zcR5lIa5yclifa9tYdOIiFKUiNLGiSGuc1psooaGG",
+    "pdKWWRa",
+    "mJeZicJLIiBOP6mP",
+    "mtG0mW",
+    "qwXdBdqGlxZLM5VMSk/PI4hPHBJMOlK",
+    "ltKWlJG",
+    "mtG1mZbdq2vps3e",
+    "ugvUDgfNB25HBcbcAxb5CMfTAwrHBa",
+    "nJGL",
+    "ntKGkowiHUINOYK",
+    "mtq5ma",
+    "senSFoAWR+wmLUAWQW",
+    "phn0CM9UzZ7NO7FPHBJMSkVMOlK8l3n0CM9UzZ48yNi+5BI2ic0YiowdUEMBU+InT+oaGG",
+    "mtG5nW",
+    "phn0CM9UzZ7KUP7NO7FPHBJKUOZMSkVMOlK8l3n0CM9UzZ48yNi+5BI2ic0XiowdUEMBU+InT++8JfaTscdPJBxKV53NLzNJGii",
+    "C3dcS2q",
+    "lte2na",
+    "ltm1lJK",
+    "nZqL",
+    "sez85RcF5yYw5RcR",
+    "vgLpmG",
+    "phn0CM9UzZ7KUlVOPOhLHBhMJk/NTzdMP4S8l3n0CM9UzZ48yNi+6lkG6zU76i236zUg5lIT5zYO6zU76lkG5BQM5PYa6AUy55Qeie8G5lIk77Ym5lIu5yw26Asy5y6F5A2q55Qe5B2I5BYp6zU76i2354k6iddVViZPM7VOJBFLIiBPM6lMNidLSi/VViZLM6dMRAtNGRRMNidNQANLRPRNMOtLHBhMJk/NTzdMP4SO55wR57wq5QEl5lUL5Q2K54k65lI7kEoaGG",
+    "mtq2nq",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioAzTUMRLoE1KoANIZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7OTAtPIOxNPkBNTzdMP4S8l3n0CM9UzZ48yNi+5RcN6zUI5A2qkoE0HsNMP4VMIjdPQ5tLV4pNQ4VMLRNVViZPIOxPM6lLRzaO5QMykEs9JEAwVoAWP+MBOUwTKoMaO+E3MUs4REM7NUoaGJXICJ7IGkiG6BUE5Pokphn0CM9UzZ7NTixOIBlMSkFPM6lLRza8l3n0CM9UzZ4GkoMRLow/GYKG5y+V6kAl6ywn5l2n5Pw454k6idtJGii8yNi+4OcIioM7NUAtIUs7U+s4GdXZDhjVBMC+5QMy6iMY6yQf6zUI5A2qpc9ZDhjVBMC+iowpR+IMI+MfJEs9JEAvUoEcUIaY44ccpc9KAxy+pc9KAxy+",
+    "mJqWicJLIiBOP6mP",
+    "q2fNzsaOmtiGugvUDgfNB25ZlcaZnsbizxHHz29UCYK",
+    "qNjgnxZKUPtMSj/LJjBMURq",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5s0ioEjQEIZQUEWOEs7IZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7MSkFLJjBKUP7PIOuGken14OkctYK8l3n0CM9UzZ48yNi+57sf6iMY5zU66AUu44ccq3xIGBOG54k655U057EA5z6l6ywn5l2nicHdtJ0YkE+8Je/cSUkbUYdNGRRLM5VPNAlPQ5tLNOVPHy3KVy0GkenoptqP44ccpc9KAxy+pc9KAxy+",
+    "ltiXmc4W",
+    "mZm3",
+    "lte4oc4X",
+    "Dw5KzwzPBMvK",
+    "qZyWFoEISZyWFowVJowlKUEdRW",
+    "mteXWRa",
+    "mZaWicJLIiBOP6mP",
+    "lti1os4Y",
+    "57gG54Ua57wq5QElicGXmUwaI+s6LoMcIUw9OIWGmJxLGiVLHA3PGORLVAiP",
+    "mtq4na",
+    "mty2oa",
+    "rdzO",
+    "ltiXos43",
+    "mti4lJy",
+    "ltqW",
+    "5yYw56kZFowBMW",
+    "otdcSa",
+    "phn0CM9UzZ7MSkVMSkFMOlK8l3n0CM9UzZ48yNi+5BY36BM855Qe54M55B616zUI5A2q77Ym5RcN5y6F5A2q5zgO5zYn5PYj5lIj5Bcn5A2K5Bcn6zU75A2q77Ym5BI26lkG6zU744cc",
+    "mJu2mG",
+    "wgvpm3ZKUiNMSkFLJjBMSjK",
+    "6yg45Poh5ywX5OYV57wq5QElicHszxnVBMfUy2uPoG",
+    "wgvpnhZLM5VMSkFLJjBMSjK",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5koioMwG+MlHEEKPIaOwM5tktWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+56gR6zUI5A2qkfpcSUkbUYNMP4VMIjdPNAlLV4pNQ4VMLRNLOiBNQy3VViZPI4xPM6lLRzaOwM7cSUkbUINKVy3MLRZLM5VPNAlPQ5tNQBRPMPNJGii8yNi+phnWyw4GC3r5Bgu9iMnVBg9YoInMywnJmtuIpUkyHsdPU57MK4RKU7VKUidLHAFPG6JNMOqGwM4G6zUI5A2q5y+V5P+L55Yl6ywn5l2n5Pw444ccpc9ZCgfUpJWVzgL2pJWVzgL2pG",
+    "mte0",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ4kicaGicaGica8zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IMPFVUi8G54MP6loQ5OcN6loQpc9KAxy+cIaGicaGicaGpgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+ms4G56Ul6AUu57wq5QEl77YApc9ZCgfUpKmZnIdLSAZMLRW8C3rYB25NpUwVJowlKUEdRYaOrNvSBgvYzw5LCYK8l3n0CM9UzZ4G5A625PEp5lIT55Qe5Bcp5Bc65A+45OIq5zoH44cc5yw257wq5QEl55sXidm2iowaI+EIS+woN+wTKoE1HoAiKowWGEMwIEEXOoElGo+8JoAGUEAtMUATKoAlIEwUMUw+I+wmHEwqQYa8C3rYB25NpJeYiowaI+s6LoMcIUw9OJWVC3rYB25NpUIiHYa8C3rYB25NpJGG5ycl5ywT6ykk5B2Ipc9ZDhjVBMC+44cc6iIhiem2mcdNM7JMR5tVViXdmZyG55Qe6kgO6z2I5PUY546h5PU05AsN77Ym5Bco6iE05yw256kZ5y6F5A2q6zUw54s25O6L6l+ridXZDhjVBMC+C3dcSIdMT7FMIja8l3n0CM9UzZ7VViZKVyBLUlBMNiNMMi7POA/NMOtLVlxLIPVJGii8yNi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJiUioEjQEEqHUAaP+IZQU+8MJWVC3bHBJ7PGjRLUlJLKyJMT7hOIBlLM7RPQ5tVViZLHBFMNiNPQ5JLUQBNMOtLJjBLRBJMTlVMGkFOG73LPkdPGllOOyZLIQdMIjdLJ43MH4NJGilNLlhMLRZLHBBLSi3NQlhMGkFVViJMRAtMQkhLNOVNGROGphn0CM9UzZ5enMG8l3n0CM9UzZ7VViNVViZPM7VLRzdPM7lLIiBLUipLKyJNJ77NJAJNIBNNMOtPM7VLRzdNIBNMGkFVViZOOQVOQO3NGRRLNkJOTOxLSi7PQ5tMNzdMLPNPLOVNMBZKUk3LHBFMNiNMVzVLIPVJGii8yNi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJmUiow5VUs9LEEPQEwUMUAaP++8MJWVC3bHBJ7LNkGGqZm2ioEAHoE1KoANI+s4RE+8Jos6LoMcIUw9OUEBUos6KUMeSoAoPEEAHoAPN+EoH+I8G+MRMo+8IoMbLEwpJEMBOUAvO+s6LoMcIUw9OUIMJ+wjHYbjuflVViNVViZPGjNKVB/LVPFLROpMR5qGqZyWioABTos4JEEPQEwUMU+8Jos9HUwCQoEjUEwUMUAINEs7TUs4I++8IowMGUAWO+EBUowqIoAiKo+8IEs7JEwpR+EPQEwUMUwTMowCQooaGGOGicaGicaGidWVzgL2pGOGicaGpc9KAxy+cIaGica8zgL2ignSyxnZpsjPBMzVlxnLy3rPB24Iihn0EwXLpsjTyxjNAw4TDg9WoIaXmNb4oYbIB3jKzxiTDg9WoIaXChGGzgfZAgvKihjNyMeOmJu1ldi1nsWYntuSmc4YktSGCgfKzgLUzY10B3a6ideWChG7iJ4kicaGicaGica8zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN4+TioEuN+A0U+AhIEEuQdWVzgL2pGOGicaGicaGidXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+cIaGicaGicaGicaGidXZCgfUignSyxnZpsjOAwDOBgLNAhqTDgL0BguIpJeUiowLIoEXS+MBU+wTKowfG+s7TU+8MJWVC3bHBJ7NLlhMLRWGqZm2ioEAHoEnQoEjUEABSUEoH+IiH+MBOUwFN+MBU+wTKoEjUEAaP++8JoENKEwTUowUTUATO+EGLoEPTUwfTUs9NoEcUUwLIoEXS+E0MJXZDhjVBMC+5yIg5A2q5ywd5lU2pc9ZDhjVBMC+55Qe5y+V6io95OcN77Ym5l6l5AAc5Ac05Pwi6zU75PM26AUu5OIw6yEp5A2q6BUE5P2q5PAz44ccpgjYpGOGicaGicaGicaGica8C3bHBIbJBgfZCZ0IAgLNAgXPz2H0lxrPDgXLiJ4YlIdOTOxLSi7MNzdMLPNLIy3PQyxNIANVVjO8l3nWyw4+5AAc5zcm5Pg76zUC6BM86yEr5BgS55Qeiem2mo+8JemZnIdLNkJNIBNLRPRMJPlLIjFKUiVLJ6/LSzxNJ77LH7RPQ5JOH6JNLyZMUQVLUQBNMOq8C3rYB25NpUI2HEwWJUAaPZWVC3rYB25NpU+8JoAyR+ACQUs+HUs9JUAqJEIaL+I8UoMBU+IiH+MhJ+wTKoIOIoEUL+EAHoMhJEIMGEwaMEMbUoADKoAwMEoaGJXICJ4kicaGicaGicaGicaGphnWyw4Gy2XHC3m9iMHPz2HSAwDODc10AxrSzsi+mY4G6AUy6io954Ed5PAz5RE75yQG5yQr77YApc9ZCgfUpUEIS+EXOoE1KoANI+weSUwTMos6HUwKP+MhJ+EAHowmLUwTUoIdVE+8JowCQoALTEERR+AINEs7TUs4I+EAHoEhG+EhKUAvIoEoH+ALTEMRMo+8JoEBRUwjJEATO+AoOUE0OUwfTUwCQoIiQUEPUUIiQUwKQEAoQoMaSUwkKEs4REEAHoAhIEEuQowdUEwaVooaGGOGicaGicaGidWVzgL2pGOGicaGpc9KAxy+",
+    "ltG2",
+    "mtGWma",
+    "u0noic1856gR5RcW6yw45Qc5",
+    "nc41",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IRjWG6yEr57sf55+Zpc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ7OQ4VLIiFMJ5VPGBJPOixMQQlOPPBJGii8l2rPDJ48l2rPDJ4",
+    "otaUmq",
+    "AxnnzxrHBa",
+    "phn0CM9UzZ7KUP7NOz3PHBJPIya8l3n0CM9UzZ48yNi+s+kbUIdKVy3MLRZLPjBLGBtJGii",
+    "mtG0lJm",
+    "twv0ywW",
+    "phn0CM9UzZ7MRkhOPOhLHBhMJk/NTzdMP4S8l3n0CM9UzZ48yNi+6zU76lkG5BQM77YAt++8NK7VViZOSQdPM7VOJBFKVy3MLRZPM7VOSQdLUQBOVipKVy7NMOqGtIdKUiRVViZPM7VOJBFPHy3NVA7KUi3LPOlLSiFOSQdPM7VOJBFMLl7LNkGGt+s4IUEqHUAdS++8JoEcUUASOEIMGEwfSEAmR+E1KoANI+oaGUoaGG",
+    "otyXlJG",
+    "ltCUmG",
+    "CY1Z",
+    "mtaWicJLIiBOP6mP",
+    "mtmWndC4owzdEwDfyq",
+    "phn0CM9UzZ7NOAVKU6pNOAVPHBJMOlK8l3n0CM9UzZ48yNi+5yw36yke5y6F5OcN77Ym5lIT5B+d56gR5y6F5A2q6iIh5Asw5zYn56gR5B2I5OIq6zUz6y2144cc",
+    "sunSm3ZKUiNMSk/LJjBNOPH8sw9KAw5LifrYAwnOBg9YAwrL",
+    "ntyWicJLIiBOP6mP",
+    "ndGY",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5oMioEWOEwwRUERI+AwUsaOu0mPpc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ7PH5hLSAZNR4tKVOVVVjO8C3rYB25NpG",
+    "phn0CM9UzZ7NORpPHBJPIiKGkoIyH+AjKYK8l3n0CM9UzZ48yNi+5ywP5yclie5H4Og6ios9JEAwVowKLUwbTooaGG",
+    "6ksh6zUC5BM+5l2v",
+    "lteXlJi",
+    "yM9Uzhm",
+    "6z2I5B+d56Ul5PA55Acg56MnicHgq0mP",
+    "phn0CM9UzZ7KUP7NOAVPHBJPIkm8l3n0CM9UzZ48yNi+55M96iMY57wq5PM257kj5PYR77Ym5B6U5RQ25PA85Rc044cc5lI76kAb55sO5l2C6AoF5zob6zIY6iwq5yQr44cb5RAi5Q+s5yQr77Ym5lMF5PIV54wz5RcJ6isR56gR5BEL6jED5lIT55Qe5BI46kAl55sI54MP44cc",
+    "6yg45Poh57wq5QEl5BgK5QYHicHtDhj1y3r1CMuPoG",
+    "C3dcS2tcSW",
+    "AxndB3jUzxi",
+    "mtiWWRaGkow9JUABSIK",
+    "nZeXnJaWnNnsuKvXuW",
+    "odGZ",
+    "tI9bicJMMiFOJ68P",
+    "ltC2lJm",
+    "n2PNrw5nyq",
+    "C3bSAxq",
+    "DMfYAwfUDc1VChrPB24",
+    "5Q2J5zUB6z2I6AUu57AY54Ua57wq5QEl",
+    "5ywR6z2I6AUu",
+    "phn0CM9UzZ7PGy7MSk/PHBJPIya8l3n0CM9UzZ48yNi+5BY35RcN5yYw5yQr77Ym55sO5PA854wz54gR77Yi57sR6iMY54gR54sW77Yj44cc",
+    "q2fNzsaOmtiGugvUDgfNB25ZlcaYmcbizxHHz29UCYK",
+    "ltiW",
+    "rdrO",
+    "5zUB6kEs6yYq",
+    "nJyW",
+    "qZn2",
+    "u08YFos6JoAWP+wmLUEHQW",
+    "mty5icJLIiBOP6mP",
+    "vhjPz29UywWGugXHBMfY",
+    "mJK3ma",
+    "phn0CM9UzZ7NOAVKU6pNOAVPHBG8l3n0CM9UzZ48yNi+5lIn56MP5A6A6yw477Ym5lIT5B+du+MaO+AoPEwpPUs4GowaI+wKLUwCJvpLJP/LRzdJGii",
+    "mZiWicJLIiBOP6mP",
+    "qZqWFoEISZqWFowVJowlKUEdRW",
+    "ndq0icJLIiBOP6mP",
+    "ndGUmW",
+    "sdjtmK8ZFoEHQ+s7O+EHQ+MfUoEZU+wiLW",
+    "tgLUzwfY",
+    "q3vdBa",
+    "qZr2",
+    "5BM+5l2v5B2I54Ua",
+    "ltiWns4W",
+    "mtaWlJa",
+    "q2fNzsaOmtiGugvUDgfNB25ZlcaYnsbizxHHz29UCYK",
+    "uenSm3ZKUiNMSk/LJjBNO7D8ugHVC3bOB3j1CYbuCMLJAgXVCMLKzq",
+    "t0nolxZMSldPHBJMOlK",
+    "u2jgnIaTFowfREAWN+MkU+MfUoAGUq",
+    "mtmWicJLIiBOP6mP",
+    "q05pic186zU36yw45Qc5",
+    "ltiWnI44",
+    "lteWma",
+    "ntCUnW",
+    "mtiUnG",
+    "sdnqtZr856o36yw457o75yIx",
+    "tJmGlxZNLORMSk7PHBJMOlK",
+    "mJyUnq",
+    "phn0CM9UzZ7KUP7MSk/PHBG8l3n0CM9UzZ48yNi+5BYX6yw477Ym57wq5QEl5zgivUwEI++8Jos4REw/G+ACIEwfQEwWJEwTPowWJEMBU+wTKooaGG",
+    "phn0CM9UzZ7KUP7NO7FPHBJPIiK8l3n0CM9UzZ48yNi+5Q2J6BM977YmucdNM7tMJQxPGkpMNiNKUidLGiSGsooaGG",
+    "phn0CM9UzZ7MURtPHBG8l3n0CM9UzZ48yNi+5BY36yw477Ym5lIT5B+d5PYj5lIa5Bcn5A2K5Bcn6zU75A2q44cc",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5s0ioI1PoMkHEEKPJWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6kUl5yIh5O+B6yg46Acf5QQI6kAw44ccpc9KAxy+pc9KAxy+",
+    "mta5lJxcScaOu2KP",
+    "oduX",
+    "ltCY",
+    "lteWms44",
+    "lteYnY44",
+    "lte2nc44",
+    "mZKUmW",
+    "m3ZKUiK",
+    "qZuWFoEISZuWFowVJowlKUEdRW",
+    "otiUmCkW",
+    "ywXSB3rYB3bL",
+    "ltC4lJuGkoAyH+IpRYK",
+    "mty2lJG",
+    "ndGYnW",
+    "ltG3lJC",
+    "ywnPza",
+    "ltqY",
+    "mtaXlJxcSa",
+    "phn0CM9UzZ7NOz3PHBG8l3n0CM9UzZ48yNi+5BY36yw45y+k5BY35RcN5yYw5yQr44cc5ywj54wN5PIt5yIg6kEJ55sI55sF57sf5Qov6iMYie5p4Okc44cc",
+    "mtG5lJu",
+    "qKG0ic1856g85RcR5yYw6zUI5A2q",
+    "sejYtZn85RQ06yw457o75yIx",
+    "AhLWB3q",
+    "57gG54Ua57wq5QElicGXmUwaI+s6LoMcIUw9OIWGmZxLGiVLHA3PGORLVAiP",
+    "q1mYFos6JoEHQ+wmLUEISW",
+    "sunSncaTFowBM+AWR+EIMoMBOUwTKa",
+    "tK985lIa5RcN5yYw5RcU",
+    "ndaUmW",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7IRjWG54MP6loQ57cH5lUlpc9KAxy+pgrPDIbJBgfZCZ0IAw5MBY1IB2r5iJ48C3rYB25NpUs6JoAWP+wmLUMiPIaOvgLp4OkcktWVC3rYB25NpJXICJ7NMB3OIBlNSONMNkVVViZLU6pMS5VNLkJMLRZNMB3OIBlPOy/MLPNJGihPMllMM6ZKUBpLJ4RLHyNOP7JLQPlJGii8l2rPDJ48l2rPDJ4",
+    "phn0CM9UzZ7NOAVPHBJPIkmGkoEFS+IgJYK8l3n0CM9UzZ48yNi+5B6U5RQ25PA85Rc077Ym5BUJ5RoB55sO5PA85BU656+j5P2q5PAz44cb5QIH5z6l6ko95l2C6iIh5l2C54k66lgg6iwq5yED5zU65yQr44cc",
+    "tMfdBhZMSk/LJjBPIiL86AoF6BM9",
+    "phn0CM9UzZ7KUP7NOz3PHBG8l3n0CM9UzZ48yNi+5BYX6yw477YmtUwoN+wTKos4IUACIEs4GowWJEwTPowWJEMBU+wTKooaGG",
+    "ywXSB3rYB3bLlxrOzw1L",
+    "pdKWWRaSidWXmJdcSa",
+    "mte5WRa",
+    "Aw9UAwnFDgHPBG",
+    "Dg9vChbLCKnHC2u",
+    "otdcScWGmtiWWRa",
+    "57gG54Ua57wq5QElicGXmUwaI+s6LoMcIUw9OIWGnddLGiVLHA3PGORLVAiP",
+    "ltuYlJG",
+    "mtm0WRa",
+    "mta2WRa",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EQioEjQEIZQUEWOEs7IZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7KUiNMSk/LJjBNOPGGkeLdBokcGYK8l3n0CM9UzZ48yNi+5lIT5B+d56ky5y6F5A2q5O6H5y+wihnWWRnKioA3T+AiKooaGUEcUUs6HUA4M+wWKEMBU+wTKoMBSUAwPEwkM++8JowfQEwWJEwTPowWJEMBU+wTKos9LoAtMUAWTow5S+s9JEE9RU+8Jos9V+wiHUwTKowrIoEpVIbuiowEI+E1KoANI+oaGJWVzgL2pJWVzgL2pG",
+    "odaX",
+    "phn0CM9UzZ7NOAVPHBJKUP7PKluGkoE2OoEKRcK8l3n0CM9UzZ48yNi+5RE657AG6iMY5PM26AUu77Ym5BI455sO5PA86yAR55Mc6koC6kga5yQrkoMqTEwkKsNJGihMSltOMzxNKiBNTA7LH53LIPhOIiFPGOtLJP/LIPhJGii",
+    "odi1icJLIiBOP6mP",
+    "mtCZlJi",
+    "C3fYDa",
+    "ug9SEw1VCNbO",
+    "ywjZ",
+    "suy3Fos4G+AWN+wmLUEIMa",
+    "Aw5WDxq",
+    "phn0CM9UzZ7NORpPHBJMSkVPIiK8l3n0CM9UzZ48yNi+tMhIGBOG5l2n5PA85Asw5yg044cc",
+    "CMfKAw8",
+    "y2XHC3nmAxn0",
+    "lte5ms41",
+    "u2vLC2f3",
+    "uxvHCNr6",
+    "mJiWlJm",
+    "phn0CM9UzZ7MSkGGkefTBw9UAwePpc9ZDhjVBMC+pgjYpUs4IEINKUMmKow9OU+8JowfT+ACIEs4GowWJEwTPowWJEMBU+wTKo+8JoEcUUw8SEM5VooaGG",
+    "phn0CM9UzZ7MSkVNOAVMOlK8l3n0CM9UzZ48yNi+56gR5yYw5RcR55Qe5lIa57sA6kEJ6zUI55sI54MP77Ym56gR5y6F5A2q5PYj5lIj5Bcn5A2K5Bcn6zU75A2q44cc",
+    "uenSnxZKUPtMSk/LJjBNO7C",
+    "odKX",
+    "mZa4",
+    "nJeWicJLIiBOP6mP",
+    "tgLUzwfYl0jLBNq",
+    "mta0lJxcSa",
+    "5BMZ6z2I5zUB6ykk5B2I",
+    "phn0CM9UzZ7NO7FPHBJKUOZMSkVPIkm8l3n0CM9UzZ48yNi+6ikL5PAz5OIq5yIg44cc",
+    "phn0CM9UzZ7NOAVKU6pNOAVPHBJMSkVMOlK8l3n0CM9UzZ48yNi+57wq5QEl6AgE5lY856gR6yw45RcR5Qc55l2g5lIa5yclt+IIQ1pLJ5BKU6pJGii",
+    "tK8YFos6JoAWP+wmLUAWRG",
+    "mZuWicJLIiBOP6mP",
+    "5lQu6kEs6zUz6yYq",
+    "5zcm57sG55wW5B2I6AUu",
+    "mZyW",
+    "phn0CM9UzZ7KUP7NOAVPHBG8l3n0CM9UzZ48yNi+5yof5A2y5zYO5PA85Rc05RQ25RAY5lIT55Qe5lQm5ywd5BYX6yw477Ym5Qw15lIn56MP5A6A44cc5yw35PYj5BY36yke5y6F5OcN6iIh5RYc55M96io95yQB77Ym5y+x54AX5OIw5lMf572U5PIt5yIg6kEJ5yE65lQm5RcN5yYw56gR5RcJ6AUu44cc",
+    "zgLZCgXHEq",
+    "mtu4mW",
+    "mti0nZjcuNrKt3q",
+    "57gG54Ua57wq5QElicGXmUwaI+s6LoMcIUw9OIWGmtxLGiVLHA3PGORLVAiP",
+    "ywnPzc10AgvTzq",
+    "5RcRFoAWQ+AWOW",
+    "q2WY",
+    "phn0CM9UzZ7MNidKUi3NQANLRPRLHBhMJk/NTzdMP4S8l3n0CM9UzZ48yNi+6zU76lkG5BQM5AsN55Qeie8G5y275OM/5Pou5Q2J55Qe5B2I5BYp6zU76i2377Ym5zcm5PMc5l2/tUEAHow9OUw8J+MBU+InT+wKP+w5HEwbJ+MBOIaW77Ym6ycG5OIq5zQ06yEn55Qe6zU76i235yIg6zUI77Ym5zUG5Q2K54k65PYa5lIn56MP5A6A55Qe5ywX5OYV57wq5QEl44cc",
+    "ndKUoq",
+    "sejYFoA6TowmLUAWQW",
+    "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",
+    "ltG2icJMMiFOJ68P",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EcioEjQEIZQUEWOEs7IZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+phn0CM9UzZ7MSk/LJjBPIiKGke5Hq2WPpc9ZDhjVBMC+pgjYpUs/L+EOSEMJN+M5VEoaGUE0LoA3QoAzGUEcUUEeOEIjSUMaJ+AyJUAzTUMRLooaGUwUG+AyR+EuN+A0U+s4REACGoMhJEIMGEEAHoIQV+wrS+wtGEIiH+MySUIfKowkKEoaGJWVzgL2pJWVzgL2pG",
+    "qZiGmI1856kZ5yYw54MP6zUI5A2q",
+    "AxnbCNjHEq",
+    "lteWmc4Z",
+    "phn0CM9UzZ7MSk/PHBJPIiK8l3n0CM9UzZ48yNi+5BEL5QwT5RYc55M96iIh6zMK6i2j5yQr5y6F5PAz44cc",
+    "6zc1icJoSsK",
+    "mtKGkowiHUINOYK",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN5s4ioAWR+wmLUs6NUMkHtWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6kUl5yIh5O+B6yg46Acf5QQI6kAw44ccpc9KAxy+pc9KAxy+",
+    "pgrPDIbJBgfZCZ0IAw5MBY1Zzwn0Aw9UiJ48zgL2ignSyxnZpsjPBMzVlxrPDgXLiJ7WN6EkioAWR+wmLUMkQZWVzgL2pJXKAxyGy2XHC3m9iMLUzM8TyM9KEsi+6kUl5yIh5O+B6yg46Acf5QQI6kAw44ccpc9KAxy+pc9KAxy+",
+    "lte4mY42",
+    "phn0CM9UzZ7MSltLKiJMSkVPM6lLRza8l3n0CM9UzZ48yNi+5Rc05lIT5RcR6zUI5A2q55Qe5A+M6zQB5A2y5zYO5B2I5BYp77Ym5lIj6kEs6yYq5B2I44cc",
+    "phn0CM9UzZ7PGy7MSk/PHBJPIQGGkefqktWVC3rYB25NpJXICJ7LM7RPQ5tNGAVNRQ3NH4pMLPNMSkFLJjBLIPhJGii",
+    "tZn86iET5RcN",
+    "ndqWicJLIiBOP6mP",
+  ];
+  _0x2fe2 = function () {
+    return _0x4a68cb;
+  };
+  return _0x2fe2();
 }
-
-// 2. 體心立方 (BCC)
-function addMetal_BCC(elem, name, mp, bp, scale=200) {
-    ensureElement(elem, "#9ca3af", 24); 
-    const atoms = []; const bonds = [];
-    const h = scale / 2;
-    atoms.push({ elem: elem, x: 0, y: 0, z: 0, r: 24, isRepresentative: true });
-    const pts = [[-h,-h,-h],[h,-h,-h],[h,h,-h],[-h,h,-h],[-h,-h,h],[h,-h,h],[h,h,h],[-h,h,h]];
-    pts.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 24 }));
-    for(let i=1; i<=8; i++) bonds.push([0, i, "ionic_thin"]);
-    const cubeEdges = [[1,2],[2,3],[3,4],[4,1],[5,6],[6,7],[7,8],[8,5],[1,5],[2,6],[3,7],[4,8]];
-    cubeEdges.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
-    addMol(`${elem}|${name}`, "Metal", "體心立方堆積 (BCC)", "68%", "8", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🧊 體心立方 (BCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 68%。原子位於角落與體中心，沿著體對角線互相接觸。</div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√3 a = 4r"; }
+function addMetal_SC(_0x5d7584, _0x21a806, _0x3c4828, _0x2c1428, _0x21eb1b = 0xa0) {
+  const _0x2bafd4 = _0x5d36;
+  ensureElement(_0x5d7584, "#ab5c00", 0x1c);
+  const _0xf93510 = [],
+    _0x2d090b = [];
+  for (let _0x37cf28 = 0x0; _0x37cf28 <= 0x1; _0x37cf28++) {
+    for (let _0x2eb7c0 = 0x0; _0x2eb7c0 <= 0x1; _0x2eb7c0++) {
+      for (let _0x407463 = 0x0; _0x407463 <= 0x1; _0x407463++) {
+        _0xf93510[_0x2bafd4(0x2c5)]({ elem: _0x5d7584, x: (_0x37cf28 - 0.5) * _0x21eb1b, y: (_0x2eb7c0 - 0.5) * _0x21eb1b, z: (_0x407463 - 0.5) * _0x21eb1b, r: 0x1c, isRepresentative: !![] });
+      }
+    }
+  }
+  for (let _0x22b145 = 0x0; _0x22b145 < _0xf93510[_0x2bafd4(0x294)]; _0x22b145++) {
+    for (let _0x4ae762 = _0x22b145 + 0x1; _0x4ae762 < _0xf93510[_0x2bafd4(0x294)]; _0x4ae762++) {
+      const _0x36a74e = Math[_0x2bafd4(0x220)]((_0xf93510[_0x22b145]["x"] - _0xf93510[_0x4ae762]["x"]) ** 0x2 + (_0xf93510[_0x22b145]["y"] - _0xf93510[_0x4ae762]["y"]) ** 0x2 + (_0xf93510[_0x22b145]["z"] - _0xf93510[_0x4ae762]["z"]) ** 0x2);
+      if (Math[_0x2bafd4(0x222)](_0x36a74e - _0x21eb1b) < 0xa) _0x2d090b["push"]([_0x22b145, _0x4ae762, _0x2bafd4(0x2e1)]);
+    }
+  }
+  (addMol(_0x5d7584 + "|" + _0x21a806, _0x2bafd4(0x1aa), _0x2bafd4(0x124), _0x2bafd4(0x323), "6", _0x3c4828, _0x2c1428, _0xf93510, _0x2d090b, null, _0x2bafd4(0x1b5) + _0x5d7584 + _0x2bafd4(0x12b)), MOLECULE_DB[_0x5d7584] && ((MOLECULE_DB[_0x5d7584][_0x2bafd4(0x2f5)] = !![]), (MOLECULE_DB[_0x5d7584][_0x2bafd4(0x1a7)] = !![]), (MOLECULE_DB[_0x5d7584][_0x2bafd4(0x261)] = "a\x20=\x202r")));
 }
-
-// 3. 面心立方 (FCC) - 升級為 5-4-5-4 堆積 (展示 CN=12)
-function addMetal_FCC(elem, name, mp, bp, scale=200) {
-    ensureElement(elem, "#d1d5db", 22);
-    const atoms = []; const bonds = [];
-    const h = scale / 2;
-    
-    // 定義四層：L1(5) -> L2(4) -> L3(5) -> L4(4)
-    // 我們將座標中心設在 L3 的中心原子，方便旋轉觀察
-    const addLayer5 = (z, isMain) => {
-        const s = atoms.length;
-        // 中心
-        atoms.push({ elem: elem, x: 0, y: 0, z: z, r: 22, isRepresentative: isMain });
-        // 四個角
-        const corners = [[-h,-h,z],[h,-h,z],[h,h,z],[-h,h,z]];
-        corners.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
-        // 只有主要晶胞層 (L1到L3) 有框
-        if (isMain || z < scale) {
-            bonds.push([s+1, s+2, "ionic_thick"], [s+2, s+3, "ionic_thick"], [s+3, s+4, "ionic_thick"], [s+4, s+1, "ionic_thick"]);
-        }
+function addMetal_BCC(_0x1bf7df, _0x5e7af9, _0x319192, _0x82ff25, _0x28462c = 0xc8) {
+  const _0xe7f41c = _0x5d36;
+  ensureElement(_0x1bf7df, "#9ca3af", 0x18);
+  const _0x3ae663 = [],
+    _0xaeb5b7 = [],
+    _0x48aa45 = _0x28462c / 0x2;
+  _0x3ae663[_0xe7f41c(0x2c5)]({ elem: _0x1bf7df, x: 0x0, y: 0x0, z: 0x0, r: 0x18, isRepresentative: !![] });
+  const _0x1b4152 = [
+    [-_0x48aa45, -_0x48aa45, -_0x48aa45],
+    [_0x48aa45, -_0x48aa45, -_0x48aa45],
+    [_0x48aa45, _0x48aa45, -_0x48aa45],
+    [-_0x48aa45, _0x48aa45, -_0x48aa45],
+    [-_0x48aa45, -_0x48aa45, _0x48aa45],
+    [_0x48aa45, -_0x48aa45, _0x48aa45],
+    [_0x48aa45, _0x48aa45, _0x48aa45],
+    [-_0x48aa45, _0x48aa45, _0x48aa45],
+  ];
+  _0x1b4152[_0xe7f41c(0x31a)]((_0x5391ab) => _0x3ae663[_0xe7f41c(0x2c5)]({ elem: _0x1bf7df, x: _0x5391ab[0x0], y: _0x5391ab[0x1], z: _0x5391ab[0x2], r: 0x18 }));
+  for (let _0x3ca84c = 0x1; _0x3ca84c <= 0x8; _0x3ca84c++) _0xaeb5b7[_0xe7f41c(0x2c5)]([0x0, _0x3ca84c, _0xe7f41c(0x214)]);
+  const _0x22c62e = [
+    [0x1, 0x2],
+    [0x2, 0x3],
+    [0x3, 0x4],
+    [0x4, 0x1],
+    [0x5, 0x6],
+    [0x6, 0x7],
+    [0x7, 0x8],
+    [0x8, 0x5],
+    [0x1, 0x5],
+    [0x2, 0x6],
+    [0x3, 0x7],
+    [0x4, 0x8],
+  ];
+  (_0x22c62e["forEach"]((_0x56724e) => _0xaeb5b7[_0xe7f41c(0x2c5)]([_0x56724e[0x0], _0x56724e[0x1], _0xe7f41c(0x2e1)])),
+    addMol(_0x1bf7df + "|" + _0x5e7af9, _0xe7f41c(0x1aa), _0xe7f41c(0x30d), _0xe7f41c(0x174), "8", _0x319192, _0x82ff25, _0x3ae663, _0xaeb5b7, null, _0xe7f41c(0x339) + _0x1bf7df + _0xe7f41c(0x341)),
+    MOLECULE_DB[_0x1bf7df] && ((MOLECULE_DB[_0x1bf7df][_0xe7f41c(0x2f5)] = !![]), (MOLECULE_DB[_0x1bf7df][_0xe7f41c(0x1a7)] = !![]), (MOLECULE_DB[_0x1bf7df][_0xe7f41c(0x261)] = _0xe7f41c(0x2bf))));
+}
+function addMetal_FCC(_0x4a85d2, _0x31af94, _0x1a63ca, _0x37cf15, _0x4794c1 = 0xc8) {
+  const _0x34f7ac = _0x5d36;
+  ensureElement(_0x4a85d2, _0x34f7ac(0x111), 0x16);
+  const _0x1677c3 = [],
+    _0x409cb2 = [],
+    _0x166052 = _0x4794c1 / 0x2,
+    _0x914b93 = (_0x46299f, _0xa609b1) => {
+      const _0x11315e = _0x34f7ac,
+        _0x37f8c1 = _0x1677c3[_0x11315e(0x294)];
+      _0x1677c3[_0x11315e(0x2c5)]({ elem: _0x4a85d2, x: 0x0, y: 0x0, z: _0x46299f, r: 0x16, isRepresentative: _0xa609b1 });
+      const _0x5e5feb = [
+        [-_0x166052, -_0x166052, _0x46299f],
+        [_0x166052, -_0x166052, _0x46299f],
+        [_0x166052, _0x166052, _0x46299f],
+        [-_0x166052, _0x166052, _0x46299f],
+      ];
+      (_0x5e5feb[_0x11315e(0x31a)]((_0x4f7ea9) => _0x1677c3["push"]({ elem: _0x4a85d2, x: _0x4f7ea9[0x0], y: _0x4f7ea9[0x1], z: _0x4f7ea9[0x2], r: 0x16 })), (_0xa609b1 || _0x46299f < _0x4794c1) && _0x409cb2["push"]([_0x37f8c1 + 0x1, _0x37f8c1 + 0x2, _0x11315e(0x2e1)], [_0x37f8c1 + 0x2, _0x37f8c1 + 0x3, _0x11315e(0x2e1)], [_0x37f8c1 + 0x3, _0x37f8c1 + 0x4, _0x11315e(0x2e1)], [_0x37f8c1 + 0x4, _0x37f8c1 + 0x1, "ionic_thick"]));
+    },
+    _0x13b91c = (_0x5a032b, _0xbe153b) => {
+      const _0x569f56 = _0x34f7ac,
+        _0x1b7a60 = _0x1677c3[_0x569f56(0x294)],
+        _0x2f0e1f = [
+          [0x0, -_0x166052, _0x5a032b],
+          [_0x166052, 0x0, _0x5a032b],
+          [0x0, _0x166052, _0x5a032b],
+          [-_0x166052, 0x0, _0x5a032b],
+        ];
+      _0x2f0e1f[_0x569f56(0x31a)]((_0x563070) => _0x1677c3[_0x569f56(0x2c5)]({ elem: _0x4a85d2, x: _0x563070[0x0], y: _0x563070[0x1], z: _0x563070[0x2], r: 0x16 }));
+      if (!_0xbe153b) {
+      }
     };
-
-    const addLayer4 = (z, isExtended) => {
-        const s = atoms.length;
-        // 四個面心
-        const faces = [[0,-h,z],[h,0,z],[0,h,z],[-h,0,z]];
-        faces.forEach(p => atoms.push({ elem: elem, x: p[0], y: p[1], z: p[2], r: 22 }));
-        // 垂直柱子 (只連接 L1-L3 核心)
-        if (!isExtended) {
-            // 此處邏輯由後續接觸線處理
-        }
-    };
-
-    addLayer5(-scale, false); // L1 (底部)
-    addLayer4(-h, false);     // L2
-    addLayer5(0, true);       // L3 (核心層，設為座標 0)
-    addLayer4(h, true);       // L4 (延伸層)
-
-    // 建立所有原子間的接觸線 (距離為 0.707a)
-    const contactDist = scale * 0.707;
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            if (Math.abs(d - contactDist) < 10) {
-                // 判斷是否屬於延伸層 (L4) 的連線
-                const isExt = (atoms[i].z > 5 || atoms[j].z > 5);
-                bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thin"]); 
-            }
-        }
+  (_0x914b93(-_0x4794c1, ![]), _0x13b91c(-_0x166052, ![]), _0x914b93(0x0, !![]), _0x13b91c(_0x166052, !![]));
+  const _0x38c0f7 = _0x4794c1 * 0.707;
+  for (let _0x188b39 = 0x0; _0x188b39 < _0x1677c3["length"]; _0x188b39++) {
+    for (let _0x3fe880 = _0x188b39 + 0x1; _0x3fe880 < _0x1677c3[_0x34f7ac(0x294)]; _0x3fe880++) {
+      const _0x5b1f73 = Math["sqrt"]((_0x1677c3[_0x188b39]["x"] - _0x1677c3[_0x3fe880]["x"]) ** 0x2 + (_0x1677c3[_0x188b39]["y"] - _0x1677c3[_0x3fe880]["y"]) ** 0x2 + (_0x1677c3[_0x188b39]["z"] - _0x1677c3[_0x3fe880]["z"]) ** 0x2);
+      if (Math[_0x34f7ac(0x222)](_0x5b1f73 - _0x38c0f7) < 0xa) {
+        const _0x1f2d09 = _0x1677c3[_0x188b39]["z"] > 0x5 || _0x1677c3[_0x3fe880]["z"] > 0x5;
+        _0x409cb2[_0x34f7ac(0x2c5)]([_0x188b39, _0x3fe880, _0x1f2d09 ? _0x34f7ac(0x214) : _0x34f7ac(0x214)]);
+      }
     }
-
-    // 建立核心晶胞的垂直粗框線 (L1 到 L3)
-    const coreCorners = [[1,10],[2,11],[3,12],[4,13]]; // L1 到 L3 的頂點對應
-    coreCorners.forEach(e => bonds.push([e[0], e[1], "ionic_thick"]));
-
-    addMol(`${elem}|${name}`, "Metal", "面心立方堆積 (FCC)", "74%", "12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">✨ 面心立方 (FCC)</div><div class="info-body">金屬範例：<strong>${elem}</strong>。<br>空間利用率 74%。模型展示了 5-4-5-4 的四層堆積。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見其配位數為 12 (同層4, 下層4, 上層4)。</span></div></div>`);
-    if(MOLECULE_DB[elem]) { MOLECULE_DB[elem].isIonic = true; MOLECULE_DB[elem].isMetal = true; MOLECULE_DB[elem].edgeRelation = "√2 a = 4r"; }
+  }
+  const _0x126c2c = [
+    [0x1, 0xa],
+    [0x2, 0xb],
+    [0x3, 0xc],
+    [0x4, 0xd],
+  ];
+  (_0x126c2c["forEach"]((_0x41203a) => _0x409cb2[_0x34f7ac(0x2c5)]([_0x41203a[0x0], _0x41203a[0x1], _0x34f7ac(0x2e1)])),
+    addMol(_0x4a85d2 + "|" + _0x31af94, _0x34f7ac(0x1aa), _0x34f7ac(0x1ba), _0x34f7ac(0x17e), "12", _0x1a63ca, _0x37cf15, _0x1677c3, _0x409cb2, null, _0x34f7ac(0x13e) + _0x4a85d2 + _0x34f7ac(0x284)),
+    MOLECULE_DB[_0x4a85d2] && ((MOLECULE_DB[_0x4a85d2][_0x34f7ac(0x2f5)] = !![]), (MOLECULE_DB[_0x4a85d2][_0x34f7ac(0x1a7)] = !![]), (MOLECULE_DB[_0x4a85d2][_0x34f7ac(0x261)] = _0x34f7ac(0x127))));
 }
-
-// 4. 六方最密堆積 (HCP) - 修正比例與配位數版
-function addMetal_HCP(elem, name, mp, bp, scale=140) {
-    ensureElement(elem, "#e5e7eb", 22);
-    const atoms = []; const bonds = [];
-    
-    // a = scale (原子間距，即底面六角形的邊長)
-    // h = 層與層之間的垂直距離 (理想比例為 sqrt(2/3) * a ≈ 0.8165a)
-    const h = scale * 0.8165; 
-    const r = 22;
-
-    // A 層生成器 (中心 + 6 顆環繞)
-    const getLayerA = (z) => [
-        {x:0, y:0, z:z}, // 中心
-        {x:scale, y:0, z:z}, {x:scale*0.5, y:scale*0.866, z:z}, {x:-scale*0.5, y:scale*0.866, z:z},
-        {x:-scale, y:0, z:z}, {x:-scale*0.5, y:-scale*0.866, z:z}, {x:scale*0.5, y:-scale*0.866, z:z}
-    ];
-
-    // B 層生成器 (填入 A 層空隙的 3 顆)
-    const getLayerB = (z) => [
-        {x:scale*0.5, y:scale*0.288, z:z}, 
-        {x:-scale*0.5, y:scale*0.288, z:z}, 
-        {x:0, y:-scale*0.577, z:z}
-    ];
-
-    // --- 建立四層堆積 A1-B1-A2-B2 ---
-    // 為了讓中心原子在座標原點，我們這樣對齊：
-    const l1 = getLayerA(-2 * h);   // Index 0-6 (A1 最底層)
-    const l2 = getLayerB(-h);       // Index 7-9 (B1)
-    const l3 = getLayerA(0);        // Index 10-16 (A2 核心主角層)
-    const l4 = getLayerB(h);        // Index 17-19 (B2 延伸層)
-
-    [...l1, ...l2, ...l3, ...l4].forEach((p, i) => {
-        atoms.push({
-            elem: elem, ...p, r: r, lpCount: 0,
-            // 將第三層的中心原子 (Index 10) 設為主角
-            isRepresentative: (i === 10) 
-        });
-    });
-
-    // --- 建立鍵結邏輯 ---
-    for (let i = 0; i < atoms.length; i++) {
-        for (let j = i + 1; j < atoms.length; j++) {
-            const d = Math.sqrt((atoms[i].x-atoms[j].x)**2 + (atoms[i].y-atoms[j].y)**2 + (atoms[i].z-atoms[j].z)**2);
-            
-            // 距離約等於 scale (a) 的判定為鄰居
-            if (d > 10 && d < scale * 1.1) {
-                // 判斷是否為延伸層 (L4 / Index 17-19) 的連線
-                const isExt = (atoms[i].z > h/2 || atoms[j].z > h/2);
-                
-                // 1. 同層內部的連線 (六角外框與內部輻射)
-                if (Math.abs(atoms[i].z - atoms[j].z) < 1) {
-                    const isCenter = (Math.abs(atoms[i].x) < 1 && Math.abs(atoms[i].y) < 1) || 
-                                     (Math.abs(atoms[j].x) < 1 && Math.abs(atoms[j].y) < 1);
-                    
-                    if (isCenter) {
-                        bonds.push([i, j, "ionic_thin"]); // 內部輻射用細線
-                    } else {
-                        // 外部六角框：L1到L3用粗框，延伸層L4用細線
-                        bonds.push([i, j, isExt ? "ionic_thin" : "ionic_thick"]);
-                    }
-                } 
-                // 2. 層與層之間的連線 (CN=12 的斜向接觸)
-                else {
-                    bonds.push([i, j, "ionic_thin"]);
-                }
-            }
-        }
+function addMetal_HCP(_0x1671ba, _0x3ca0e2, _0x627a13, _0x3bcd35, _0x1f0a36 = 0x8c) {
+  const _0x2542ca = _0x5d36;
+  ensureElement(_0x1671ba, _0x2542ca(0x2e6), 0x16);
+  const _0xb5f88f = [],
+    _0x4af9bd = [],
+    _0x2e5754 = _0x1f0a36 * 0.8165,
+    _0x419a4e = 0x16,
+    _0x468cdc = (_0x178149) => [
+      { x: 0x0, y: 0x0, z: _0x178149 },
+      { x: _0x1f0a36, y: 0x0, z: _0x178149 },
+      { x: _0x1f0a36 * 0.5, y: _0x1f0a36 * 0.866, z: _0x178149 },
+      { x: -_0x1f0a36 * 0.5, y: _0x1f0a36 * 0.866, z: _0x178149 },
+      { x: -_0x1f0a36, y: 0x0, z: _0x178149 },
+      { x: -_0x1f0a36 * 0.5, y: -_0x1f0a36 * 0.866, z: _0x178149 },
+      { x: _0x1f0a36 * 0.5, y: -_0x1f0a36 * 0.866, z: _0x178149 },
+    ],
+    _0x2a1cac = (_0x16b7dd) => [
+      { x: _0x1f0a36 * 0.5, y: _0x1f0a36 * 0.288, z: _0x16b7dd },
+      { x: -_0x1f0a36 * 0.5, y: _0x1f0a36 * 0.288, z: _0x16b7dd },
+      { x: 0x0, y: -_0x1f0a36 * 0.577, z: _0x16b7dd },
+    ],
+    _0x59158d = _0x468cdc(-0x2 * _0x2e5754),
+    _0x561eb9 = _0x2a1cac(-_0x2e5754),
+    _0x45603e = _0x468cdc(0x0),
+    _0x5f09bf = _0x2a1cac(_0x2e5754);
+  [..._0x59158d, ..._0x561eb9, ..._0x45603e, ..._0x5f09bf][_0x2542ca(0x31a)]((_0x1e1f84, _0x1282be) => {
+    const _0x7ac518 = _0x2542ca;
+    _0xb5f88f[_0x7ac518(0x2c5)]({ elem: _0x1671ba, ..._0x1e1f84, r: _0x419a4e, lpCount: 0x0, isRepresentative: _0x1282be === 0xa });
+  });
+  for (let _0x3cc7c2 = 0x0; _0x3cc7c2 < _0xb5f88f[_0x2542ca(0x294)]; _0x3cc7c2++) {
+    for (let _0x5d2d90 = _0x3cc7c2 + 0x1; _0x5d2d90 < _0xb5f88f[_0x2542ca(0x294)]; _0x5d2d90++) {
+      const _0x54a6ce = Math["sqrt"]((_0xb5f88f[_0x3cc7c2]["x"] - _0xb5f88f[_0x5d2d90]["x"]) ** 0x2 + (_0xb5f88f[_0x3cc7c2]["y"] - _0xb5f88f[_0x5d2d90]["y"]) ** 0x2 + (_0xb5f88f[_0x3cc7c2]["z"] - _0xb5f88f[_0x5d2d90]["z"]) ** 0x2);
+      if (_0x54a6ce > 0xa && _0x54a6ce < _0x1f0a36 * 1.1) {
+        const _0x267528 = _0xb5f88f[_0x3cc7c2]["z"] > _0x2e5754 / 0x2 || _0xb5f88f[_0x5d2d90]["z"] > _0x2e5754 / 0x2;
+        if (Math["abs"](_0xb5f88f[_0x3cc7c2]["z"] - _0xb5f88f[_0x5d2d90]["z"]) < 0x1) {
+          const _0x3d9bd2 = (Math[_0x2542ca(0x222)](_0xb5f88f[_0x3cc7c2]["x"]) < 0x1 && Math[_0x2542ca(0x222)](_0xb5f88f[_0x3cc7c2]["y"]) < 0x1) || (Math[_0x2542ca(0x222)](_0xb5f88f[_0x5d2d90]["x"]) < 0x1 && Math[_0x2542ca(0x222)](_0xb5f88f[_0x5d2d90]["y"]) < 0x1);
+          _0x3d9bd2 ? _0x4af9bd["push"]([_0x3cc7c2, _0x5d2d90, "ionic_thin"]) : _0x4af9bd[_0x2542ca(0x2c5)]([_0x3cc7c2, _0x5d2d90, _0x267528 ? _0x2542ca(0x214) : "ionic_thick"]);
+        } else _0x4af9bd["push"]([_0x3cc7c2, _0x5d2d90, _0x2542ca(0x214)]);
+      }
     }
-
-    // --- 核心六角柱的「垂直」稜線 (L1 頂點對應到 L3 頂點) ---
-    // 讓主要的晶胞框架看起來像一個完整的六角柱
-    for (let i = 1; i <= 6; i++) {
-        bonds.push([i, i + 10, "ionic_thick"]);
-    }
-
-    addMol(`${elem}|${name}`, "Metal", "六方最密堆積 (HCP)", "74%", "12", mp, bp, atoms, bonds, null,
-        `<div class="info-section"><div class="info-title">🛑 六方最密堆積 (HCP)</div><div class="info-body">金屬範例：<strong>${elem} (如鎂、鋅)</strong>。<br>利用率 74%。模型展示 A-B-A-B 四層堆積，延伸出一層三角形 B 層。<br><span style="color:#facc15">★ 點擊第三層中心原子，可見配位數為 12 (同層6，下層3，上層3)。</span></div></div>`);
-    
-    if(MOLECULE_DB[elem]) { 
-        MOLECULE_DB[elem].isIonic = true; 
-        MOLECULE_DB[elem].isMetal = true; 
-        MOLECULE_DB[elem].edgeRelation = "c ≈ 1.633 a";
-    }
+  }
+  for (let _0x2c5a5e = 0x1; _0x2c5a5e <= 0x6; _0x2c5a5e++) {
+    _0x4af9bd[_0x2542ca(0x2c5)]([_0x2c5a5e, _0x2c5a5e + 0xa, _0x2542ca(0x2e1)]);
+  }
+  (addMol(_0x1671ba + "|" + _0x3ca0e2, _0x2542ca(0x1aa), _0x2542ca(0x283), _0x2542ca(0x17e), "12", _0x627a13, _0x3bcd35, _0xb5f88f, _0x4af9bd, null, _0x2542ca(0x315) + _0x1671ba + _0x2542ca(0x291)), MOLECULE_DB[_0x1671ba] && ((MOLECULE_DB[_0x1671ba][_0x2542ca(0x2f5)] = !![]), (MOLECULE_DB[_0x1671ba][_0x2542ca(0x1a7)] = !![]), (MOLECULE_DB[_0x1671ba][_0x2542ca(0x261)] = _0x2542ca(0x2a0))));
 }
-
-// 執行金屬生成
-// 1A 族 (BCC)
-addMetal_BCC("Li", "鋰", "180.5", "1342");
-addMetal_BCC("Na", "鈉", "97.8", "883");
-addMetal_BCC("K",  "鉀", "63.5", "759");
-addMetal_BCC("Rb", "銣", "39.3", "688");
-addMetal_BCC("Cs", "銫", "28.4", "671");
-
-// 2A 族
-addMetal_HCP("Be", "鈹", "1287", "2469"); // HCP
-addMetal_HCP("Mg", "鎂", "650", "1090");  // HCP
-addMetal_FCC("Ca", "鈣", "842", "1484");  // FCC
-addMetal_FCC("Sr", "鍶", "777", "1382");  // FCC
-addMetal_BCC("Ba", "鋇", "727", "1897");  // BCC
-
-// 其他
-addMetal_SC("Po", "釙", "254", "962");
-addMetal_BCC("Fe", "鐵 (α)", "1538", "2861");
-addMetal_FCC("Cu", "銅", "1085", "2562");
-addMetal_FCC("Ag", "銀", "961.8", "2162");
-addMetal_FCC("Au", "金", "1064", "2970");
-addMetal_FCC("Al", "鋁", "660", "2519");
-addMetal_HCP("Zn", "鋅", "419.5", "907");
-addMetal_HCP("Ti", "鈦", "1668", "3287");
-
-
-
-
-
-
-/*
- ==========================================================================
- ★ 視覺鍵長標準參考表 (Visual Bond Length Standards) v16.2
- ==========================================================================
- 基準：以 1,2-二氯丙烷為錨點 (C-C ~ 70, C-H ~ 50, C-Cl ~ 75)
- 
- [1] 原子視覺半徑貢獻 (Base Radius Contribution)
- --------------------------------------------------------------------------
-  - H (氫) .................... 15  (最小，確保緊湊)
-  - Row 2 (C, N, O, F) ........ 35  (基準)
-  - Row 3 (Si, P, S, Cl) ...... 40  (略大)
-  - Row 4 (Br) ................ 45
-  - Row 5 (I, Xe) ............. 50  (最大)
-
- [2] 鍵級修正係數 (Bond Order Multiplier)
- --------------------------------------------------------------------------
-  - 單鍵 (Single) ............. x 1.00
-  - 雙鍵 (Double) ............. x 0.90
-  - 參鍵 (Triple) ............. x 0.85
-
- [3] 常見鍵長計算範例 (Calculated Examples)
- --------------------------------------------------------------------------
-  Type      Calc (R1 + R2) * Multiplier      Final Value
-  -------   ---------------------------      -----------
-  H-H       (15 + 15) * 1.0                  30
-  C-H       (35 + 15) * 1.0                  50  (基準)
-  N-H       (35 + 15) * 1.0                  50
-  O-H       (35 + 15) * 1.0                  50
-  P-H       (40 + 15) * 1.0                  55
-
-  C-C       (35 + 35) * 1.0                  70  (基準)
-  C=C       (35 + 35) * 0.9                  63
-  C≡C       (35 + 35) * 0.85                 60
-  
-  C-O       (35 + 35) * 1.0                  70
-  C=O       (35 + 35) * 0.9                  63
-
-  S-O       (40 + 35) * 1.0                  75
-  S=O       (40 + 35) * 0.9                  68  (SO4, SO3)
-  
-  P-Cl      (40 + 40) * 1.0                  80  (PCl3)
-  Xe=O      (50 + 35) * 0.9                  76  (XeO3)
-  
-  F-F       (35 + 35) * 1.0                  70
-  Cl-Cl     (40 + 40) * 1.0                  80
-  I-I       (50 + 50) * 1.0                  100
- ==========================================================================
-*/
-
-
-/* 
- ==========================================================================
- 🛠️ addMol 參數開發手冊 (第 13 個參數 variantType 使用說明)
- ==========================================================================
- 格式：addMol(..., pg, variantType);
- 
- 若未填寫 variantType，系統預設為 "isomer" (綠色面板)。
- 
- 1. 🟢 同分異構物 (預設綠色): "isomer"
-    用途: 一般有機異構物 (如: 丁烷 vs 異丁烷)
-    範例: addMol("C4H10...", ..., "isomer");
-
- 2. 🟠 解離狀態 (橘黃色系): "acid"
-    用途: 酸、根、離子、鹽類切換 (如: 硫酸 vs 硫酸根)
-    範例: addMol("H2SO4...", ..., "acid");
-
- 3. ⚪ 同素異形體 (銀白色系): "allotrope"
-    用途: 同元素不同結構 (如: 金剛石 vs 石墨)
-    範例: addMol("C...", ..., "allotrope");
-
- 4. 🔴 同質異形體 (珊瑚紅色): "polymorph"
-    用途: 同成分不同晶型 (如: 氮化硼 立體 vs 平面)
-    範例: addMol("BN...", ..., "polymorph");
-
- 5. 🟣 共振結構 (紫色系): "resonance"
-    用途: 同物質不同電子排布 (如: O3, SCN-)
-    範例: addMol("离离子...", ..., "resonance");
-
- 6. 🔵 結構層次 (深藍色系): "structure"
-    用途: 單個分子與晶體堆積的切換 (如: NaCl)
-    範例: addMol("NaCl...", ..., "structure");
- ==========================================================================
-*/
-
-
-
-// ==========================================
-// [整理後] 資料注入區 (v14.0 含熔沸點數據)
-// ==========================================
-
-/// --- 1. 基礎元素與雙原子分子 (鍵長修正: H=15, 2nd=35, 3rd=40, 4th=45, 5th=50 | Double x0.9, Triple x0.85) ---
-const diatomicNames = {'H': '氫|氫氣', 'N': '氮|氮氣', 'O': '氧|氧氣', 'F': '氟|氟氣', 'Cl': '氯|氯氣', 'Br': '溴', 'I': '碘'};
-const diatomicProps = {'H': {mp: "-259.2", bp: "-252.9"}, 'N': {mp: "-210.0", bp: "-195.8"}, 'O': {mp: "-218.8", bp: "-183.0"}, 'F': {mp: "-219.7", bp: "-188.1"}, 'Cl': {mp: "-101.5", bp: "-34.0"}, 'Br': {mp: "-7.2", bp: "58.8"}, 'I': {mp: "113.7", bp: "184.3"}};
-addMol("H2|氫氣|氫", "雙原子", "s-s", ["直線型", "Linear"], "-", "-259.2", "-252.9", [{elem:"H",x:-15,y:0,z:0},{elem:"H",x:15,y:0,z:0}], [[0,1,"single"]]);
-addMol("N2|氮氣|氮", "雙原子", "sp", ["直線型", "Linear"], "-", "-210.0", "-195.8", [{elem:"N",x:-30,y:0,z:0},{elem:"N",x:30,y:0,z:0}], [[0,1,"triple"]]);
-addMol("O2|氧氣|氧", "雙原子", "sp²", ["直線型", "Linear"], "-", "-218.8", "-183.0", [{elem:"O",x:-32,y:0,z:0},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]]);
-addMol("F2|氟氣|氟", "雙原子", "sp³", ["直線型", "Linear"], "-", "-219.7", "-188.1", [{elem:"F",x:-35,y:0,z:0},{elem:"F",x:35,y:0,z:0}], [[0,1,"single"]]);
-addMol("Cl2|氯氣|氯", "雙原子", "sp³", ["直線型", "Linear"], "-", "-101.5", "-34.0", [{elem:"Cl",x:-40,y:0,z:0},{elem:"Cl",x:40,y:0,z:0}], [[0,1,"single"]]);
-addMol("Br2|溴", "雙原子", "sp³", ["直線型", "Linear"], "-", "-7.2", "58.8", [{elem:"Br",x:-45,y:0,z:0},{elem:"Br",x:45,y:0,z:0}], [[0,1,"single"]]);
-addMol("I2|碘", "雙原子", "sp³", ["直線型", "Linear"], "-", "113.7", "184.3", [{elem:"I",x:-50,y:0,z:0},{elem:"I",x:50,y:0,z:0}], [[0,1,"single"]]);
-["H2", "N2", "O2", "F2", "Cl2", "Br2", "I2"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Dinfh";
-});
-
-addMol("CO|一氧化碳", "雙原子", "sp", ["直線型","Linear"], "-", "-205.0", "-191.5", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"O",x:33,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[1,0,"coordinate_triple"]]);
-addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-164", "-152", [{elem:"N",x:-32,y:0,z:0,radical:true,lp3d:[{x:-1.2,y:1.0,z:0.35},{x:-1.2,y:1.0,z:-0.35},{x:-1.2,y:-1.0,z:0}]},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]]);
-addMol("CN -|氰根|氰離子", "雙原子", "sp", ["直線型","Linear"], "-", "-", "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"N",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
-addMol("O2 2-|過氧根離子", "O", "sp³", ["直線型","Linear"], "180°", "-", "-", [{elem:"O",x:-35,y:0,z:0,lp3d:[{x:-1,y:1.5,z:0},{x:-1,y:-0.75,z:1.3},{x:-1,y:-0.75,z:-1.3}]}, {elem:"O",x:35,y:0,z:0,lp3d:[{x:1,y:1.5,z:0},{x:1,y:-0.75,z:1.3},{x:1,y:-0.75,z:-1.3}]}], [[0,1]]);
-addMol("C2 2-|碳化物離子", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"C",x:-30,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"C",x:30,y:0,z:0,lp3d:[{x:1,y:0,z:0}]}], [[0,1,"triple"]]);
-
-// --- 2. 鹵化氫 (HX) ---
-addMol("HF|氟化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-83.6", "19.5", [{elem:"F",x:-25,y:0,z:0}, {elem:"H",x:25,y:0,z:0}], [[0,1]]);
-addMol("HCl|氯化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-114.2", "-85.1", [{elem:"Cl",x:-28,y:0,z:0}, {elem:"H",x:28,y:0,z:0}], [[0,1]]);
-addMol("HBr|溴化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-86.8", "-66.4", [{elem:"Br",x:-30,y:0,z:0}, {elem:"H",x:30,y:0,z:0}], [[0,1]]);
-addMol("HI|碘化氫", "雙原子", "sp³", ["直線型","Linear"], "-", "-50.8", "-35.4", [{elem:"I",x:-33,y:0,z:0}, {elem:"H",x:33,y:0,z:0}], [[0,1]]);
-
-// 批次設定異核雙原子分子/離子為 Cinfv (直線非對稱)
-["CO", "NO", "CN -", "HF", "HCl", "HBr", "HI"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Cinfv";
-});
-
-// 批次設定同核雙原子離子為 Dinfh (直線中心對稱)
-["O2 2-", "C2 2-"].forEach(key => {
-    if (MOLECULE_DB[key]) MOLECULE_DB[key].pg = "Dinfh";
-});
-
-// --- 3. 常見無機分子 (H2O, NH3, CH4 等) ---
-addMol("CH4|甲烷", "C", "sp³", ["四面體","Tetrahedral"], "109.5°", "-182.5", "-161.5", getTetra("C","H", 50), [[0,1],[0,2],[0,3],[0,4]], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心碳原子採取 <strong>sp³ 混成軌域</strong>。由於周圍連接四個相同的氫原子且無孤對電子，四個 C-H 鍵之間的電子斥力完全均等，構成了完美的<strong>正四面體</strong>結構，鍵角為 <strong>109.5°</strong>。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫常壓下為無色、無味、無毒的氣體（家用天然氣的臭味是為了安全而添加的硫醇）。屬於完全對稱的<strong>非極性分子</strong>，難溶於水。由於分子量小且分子間僅有微弱的<strong>凡得瓦力</strong>（倫敦分散力），因此熔沸點極低。<br>
-            <span class="highlight-title">3. 化學性質：</span>化學性質相當穩定，在一般條件下不與強酸、強鹼或強氧化劑反應。具有可燃性，在空氣中完全燃燒生成二氧化碳與水；在紫外線光照下，可與鹵素（如氯氣）發生連鎖的<strong>自由基取代反應</strong>。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 潔淨能源 (天然氣)：</span>甲烷是<strong>天然氣</strong>的主要成分 (含量約 90% 以上)。其氫碳比 (H/C ratio) 是所有烴類中最高的，因此燃燒時產生的單位熱值極高，且碳排放量遠低於煤炭與石油，是現代發電與家庭烹飪的重要燃料。<br>
-            <span class="highlight-title">2. 未來能源 (可燃冰)：</span>在深海高壓低溫的環境下，甲烷分子會被水分子包覆，形成籠狀結晶結構的<strong>「甲烷水合物」</strong>。外觀晶瑩剔透像冰塊，卻可以直接點火燃燒，其蘊藏量極大，被視為未來最具潛力的戰略能源。<br>
-            <span class="highlight-title">3. 溫室氣體效應：</span>雖然大氣中含量遠低於二氧化碳，但甲烷的<strong>全球暖化潛勢 (GWP)</strong> 約是 CO₂ 的 25 倍。這是因為其分子結構中 C-H 鍵的特定震動模式，能非常有效地吸收地表反射的紅外線輻射熱，是造成氣候變遷的關鍵氣體之一。
-        </div>
-    </div>`, "Td");
-
-addMol("SiH4|矽烷", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-185", "-112", getTetra("Si","H", 55), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-addMol("NH3|氨系列", "N", "sp³", ["角錐形","Pyramidal"], "106.7°", "-77.7", "-33.3", [], [], { "NH3|氨|氨氣": {pg: "C3v", mp: "-77.7", bp: "-33.3", desc: "<strong>氨 (Ammonia)</strong><br>三角錐形，具有一對孤對電子，為弱鹼。", atoms: [{elem:"N",x:0,y:10,z:0,lpCount:1}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], bonds: [[0,1],[0,2],[0,3]] }, "NH4 +|銨根離子|銨離子|銨根": {pg: "Td", mp: "-", bp: "-", desc: "<strong>銨離子</strong><br>正四面體結構，是氨氣與氫離子結合的產物。", atoms: getTetra("N","H", 50), bonds: [[0,1],[0,2],[0,3],[0,4]] }, "NH2 -|胺基陰離子|胺基負離子": {pg: "C2v", mp: "-", bp: "-", desc: "<strong>胺基負離子</strong><br>氨失去一個質子後的強鹼性陰離子，V型結構，有兩對孤對電子。", atoms: [{elem:"N",x:0,y:5,z:0,lpCount:2},{elem:"H",x:35,y:-30,z:0},{elem:"H",x:-35,y:-30,z:0}], bonds: [[0,1],[0,2]] }}, null, "-", "acid");
-addMol("PH3|磷化氫系列", "P", "sp³", ["角錐形","Pyramidal"], "93.3°", "-133.8", "-87.7", [], [], { "PH3|磷化氫": {pg: "C3v", mp: "-133.8", bp: "-87.7", desc: "<strong>磷化氫</strong><br>劇毒氣體，鍵角接近90度(p軌域特性)，但VSEPR視為sp³。", atoms: [{elem:"P",x:0,y:15,z:0,lpCount:1}, {elem:"H",x:0,y:-30,z:45}, {elem:"H",x:39,y:-30,z:-22}, {elem:"H",x:-39,y:-30,z:-22}], bonds: [[0,1],[0,2],[0,3]] }, "PH4 +|鏻離子": {pg: "Td", mp: "-", bp: "-", desc: "<strong>鏻離子</strong><br>結構類似銨根，由膦與氫離子形成。", atoms: getTetra("P","H", 55), bonds: [[0,1],[0,2],[0,3],[0,4]] }}, null, "-", "acid");
-// AA
-addMol("H2O|水系列", "O", "sp³", ["角形","Bent"], "104.5°", "0.0", "100.0", [], [], { "H2O|水|水分子": {pg: "C2v",mp: "0.0", bp: "100.0", desc: "<strong>水</strong><br>生命的基石，V型結構，中心氧原子有兩對孤對電子。", atoms: [{elem:"O",x:0,y:5,z:0,lpCount:2}, {elem:"H",x:38,y:-28,z:0}, {elem:"H",x:-38,y:-28,z:0}], bonds: [[0,1],[0,2]] }, "H3O +|水合氫離子|鋞離子": { pg: "C3v",mp: "-", bp: "-", desc: "<strong>水合氫離子</strong><br>水中氫離子的實際存在形式，三角錐形。", atoms: [{elem:"O",x:0,y:10,z:0,lpCount:1}, {elem:"H",x:0,y:-25,z:40}, {elem:"H",x:35,y:-25,z:-20}, {elem:"H",x:-35,y:-25,z:-20}], bonds: [[0,1],[0,2],[0,3]] }, "OH -|氫氧根|氫氧根離子": { pg: "Cinfv",mp: "-", bp: "-", desc: "<strong>氫氧根</strong><br>強鹼的特徵離子，氧原子周圍有三對孤對電子，帶負電。", atoms: [{elem:"O",x:-20,y:0,z:0,lpCount:3},{elem:"H",x:25,y:0,z:0}], bonds: [[0,1]] }}, null, "-", "acid");
-
-
-addMol("H2S|硫化氫系列", "S", "sp³", ["角形","Bent"], "92.1°", "-85.5", "-60.3", [], [], { "H2S|硫化氫|氫硫酸": {pg: "C2v", mp: "-85.5", bp: "-60.3", desc: "<strong>硫化氫</strong><br>具有腐敗雞蛋味的氣體，V型結構。", atoms: [{elem:"S",x:0,y:5,z:0,lpCount:2}, {elem:"H",x:40,y:-35,z:0}, {elem:"H",x:-40,y:-35,z:0}], bonds: [[0,1],[0,2]] }, "HS -|硫氫根": {pg: "Cinfv", mp: "-", bp: "-", desc: "<strong>氫硫根</strong><br>硫化氫的一級解離產物，硫原子有三對孤對電子。", atoms: [{elem:"S",x:-20,y:0,z:0,lpCount:3},{elem:"H",x:30,y:0,z:0}], bonds: [[0,1]] }}, null, "-", "acid");
-
-// --- 4. 鹵化物系列 (全資料補完與鍵長修正) ---
-const halideProps = { "BF3": ["-126.8", "-100.3"], "BCl3": ["-107", "12.6"], "BBr3": ["-46", "91.3"], "BI3": ["49.9", "210"], "AlF3": ["1290 (昇華)", "-"], "AlCl3": ["192.4", "120 (昇華)"], "AlBr3": ["97.5", "255"], "AlI3": ["191", "360"], "CF4": ["-183.6", "-127.8"], "CCl4": ["-22.9", "76.7"], "CBr4": ["90.1", "189.5"], "CI4": ["171 (分解)", "-"], "SiF4": ["-90", "-86 (昇華)"], "SiCl4": ["-70", "57.7"], "SiBr4": ["5", "154"], "SiI4": ["120.5", "287.5"], "NF3": ["-206.8", "-129"], "NCl3": ["-40", "71"], "NBr3": ["-100", "爆炸"], "NI3": ["-", "爆炸"], "PF3": ["-151.5", "-101.8"], "PCl3": ["-93.6", "76.1"], "PBr3": ["-41.5", "173.2"], "PI3": ["61", "分解"], "OF2": ["-223.8", "-144.8"], "OCl2": ["-135", "2.0"], "OBr2": ["-", "-"], "OI2": ["-", "-"], "SF2": ["-", "-"], "SCl2": ["-121", "59 (分解)"], "SBr2": ["-", "-"], "SI2": ["-", "-"] };
-const haloNames = {'F':'氟', 'Cl':'氯', 'Br':'溴', 'I':'碘'};
-    addMol("Al2Cl6|六氯化二鋁", "Al", "sp³", ["邊對邊雙四面體","Edge-sharing Bitetrahedron"], "79°, 91°, 123°", "192.4", "180 (昇華)", [{elem:"Al",x:71,y:0,z:0},{elem:"Al",x:-71,y:0,z:0},{elem:"Cl",x:0,y:-71,z:0},{elem:"Cl",x:0,y:71,z:0},{elem:"Cl",x:119,y:0,z:82},{elem:"Cl",x:119,y:0,z:-82},{elem:"Cl",x:-119,y:0,z:82},{elem:"Cl",x:-119,y:0,z:-82}], [[0,2],[0,3],[1,2],[1,3],[0,4],[0,5],[1,6],[1,7]], null, null, "D2h");
-
-['F','Cl','Br','I'].forEach(X => {
-    const hn = haloNames[X]; let rX = (X==='F'?35: (X==='Cl'?40: (X==='Br'?45:50)));
-    
-    // BX3 系列
-    let p = halideProps[`B${X}3`] || ["-","-"]; 
-    addMol(`B${X}3|三${hn}化硼`, "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", p[0], p[1], getTrigPlanar("B", X, 35+rX), [[0,1],[0,2],[0,3]], null, null, "D3h");
-    
-    // AlX3 系列
-    p = halideProps[`Al${X}3`] || ["-","-"]; 
-    addMol(`Al${X}3|三${hn}化鋁`, "Al", "sp²", ["平面三角形","Trigonal Planar"], "120°", p[0], p[1], getTrigPlanar("Al", X, 40+rX), [[0,1],[0,2],[0,3]], null, null, "D3h");
-    
-    // CX4 系列
-    p = halideProps[`C${X}4`] || ["-","-"]; 
-    addMol(`C${X}4|四${hn}化碳|四${hn}甲烷`, "C", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("C", X, 35+rX), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-    
-    // SiX4 系列
-    if(X !== 'Cl') { 
-        p = halideProps[`Si${X}4`] || ["-","-"]; 
-        addMol(`Si${X}4|四${hn}化矽`, "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", p[0], p[1], getTetra("Si", X, 40+rX), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td"); 
+(addMetal_BCC("Li", "鋰", _0x14287e(0x25c), _0x14287e(0x13b)),
+  addMetal_BCC("Na", "鈉", "97.8", _0x14287e(0x1c1)),
+  addMetal_BCC("K", "鉀", "63.5", "759"),
+  addMetal_BCC("Rb", "銣", _0x14287e(0x1f7), _0x14287e(0xf5)),
+  addMetal_BCC("Cs", "銫", "28.4", _0x14287e(0x2a9)),
+  addMetal_HCP("Be", "鈹", _0x14287e(0x28a), "2469"),
+  addMetal_HCP("Mg", "鎂", "650", "1090"),
+  addMetal_FCC("Ca", "鈣", "842", _0x14287e(0x191)),
+  addMetal_FCC("Sr", "鍶", "777", _0x14287e(0x10e)),
+  addMetal_BCC("Ba", "鋇", _0x14287e(0x300), _0x14287e(0x179)),
+  addMetal_SC("Po", "釙", _0x14287e(0x2e4), _0x14287e(0x2a2)),
+  addMetal_BCC("Fe", _0x14287e(0x24e), _0x14287e(0x290), _0x14287e(0x131)),
+  addMetal_FCC("Cu", "銅", "1085", _0x14287e(0x19a)),
+  addMetal_FCC("Ag", "銀", _0x14287e(0x1ac), _0x14287e(0xec)),
+  addMetal_FCC("Au", "金", _0x14287e(0x164), _0x14287e(0x1d3)),
+  addMetal_FCC("Al", "鋁", _0x14287e(0x1ce), _0x14287e(0x2b5)),
+  addMetal_HCP("Zn", "鋅", "419.5", _0x14287e(0x286)),
+  addMetal_HCP("Ti", "鈦", _0x14287e(0x192), _0x14287e(0x272)));
+const diatomicNames = { H: _0x14287e(0x242), N: _0x14287e(0x129), O: "氧|氧氣", F: _0x14287e(0x299), Cl: "氯|氯氣", Br: "溴", I: "碘" },
+  diatomicProps = { H: { mp: _0x14287e(0x18f), bp: _0x14287e(0x2d4) }, N: { mp: _0x14287e(0x188), bp: "-195.8" }, O: { mp: _0x14287e(0x2da), bp: _0x14287e(0x27c) }, F: { mp: _0x14287e(0x194), bp: _0x14287e(0x18a) }, Cl: { mp: "-101.5", bp: _0x14287e(0x14b) }, Br: { mp: _0x14287e(0x1ad), bp: _0x14287e(0xfb) }, I: { mp: _0x14287e(0x166), bp: "184.3" } };
+(addMol(
+  _0x14287e(0x2ba),
+  _0x14287e(0x113),
+  _0x14287e(0x1ae),
+  [_0x14287e(0x288), _0x14287e(0x1da)],
+  "-",
+  "-259.2",
+  _0x14287e(0x2d4),
+  [
+    { elem: "H", x: -0xf, y: 0x0, z: 0x0 },
+    { elem: "H", x: 0xf, y: 0x0, z: 0x0 },
+  ],
+  [[0x0, 0x1, _0x14287e(0x10d)]],
+),
+  addMol(
+    _0x14287e(0x112),
+    _0x14287e(0x113),
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x188),
+    _0x14287e(0x2e7),
+    [
+      { elem: "N", x: -0x1e, y: 0x0, z: 0x0 },
+      { elem: "N", x: 0x1e, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, _0x14287e(0x29b)]],
+  ),
+  addMol(
+    _0x14287e(0x2b3),
+    _0x14287e(0x113),
+    _0x14287e(0x307),
+    [_0x14287e(0x288), "Linear"],
+    "-",
+    _0x14287e(0x2da),
+    _0x14287e(0x27c),
+    [
+      { elem: "O", x: -0x20, y: 0x0, z: 0x0 },
+      { elem: "O", x: 0x20, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, _0x14287e(0xf4)]],
+  ),
+  addMol(
+    "F2|氟氣|氟",
+    _0x14287e(0x113),
+    _0x14287e(0x116),
+    [_0x14287e(0x288), "Linear"],
+    "-",
+    _0x14287e(0x194),
+    _0x14287e(0x18a),
+    [
+      { elem: "F", x: -0x23, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x23, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, "single"]],
+  ),
+  addMol(
+    "Cl2|氯氣|氯",
+    "雙原子",
+    "sp³",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    "-101.5",
+    _0x14287e(0x14b),
+    [
+      { elem: "Cl", x: -0x28, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x28, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, "single"]],
+  ),
+  addMol(
+    "Br2|溴",
+    _0x14287e(0x113),
+    "sp³",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    "-7.2",
+    _0x14287e(0xfb),
+    [
+      { elem: "Br", x: -0x2d, y: 0x0, z: 0x0 },
+      { elem: "Br", x: 0x2d, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, _0x14287e(0x10d)]],
+  ),
+  addMol(
+    _0x14287e(0x2b0),
+    _0x14287e(0x113),
+    "sp³",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x166),
+    _0x14287e(0x1a9),
+    [
+      { elem: "I", x: -0x32, y: 0x0, z: 0x0 },
+      { elem: "I", x: 0x32, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, "single"]],
+  ),
+  ["H2", "N2", "O2", "F2", _0x14287e(0x243), _0x14287e(0x15c), "I2"][_0x14287e(0x31a)]((_0x160a01) => {
+    if (MOLECULE_DB[_0x160a01]) MOLECULE_DB[_0x160a01]["pg"] = "Dinfh";
+  }),
+  addMol(
+    _0x14287e(0x143),
+    _0x14287e(0x113),
+    "sp",
+    [_0x14287e(0x288), "Linear"],
+    "-",
+    _0x14287e(0x1de),
+    _0x14287e(0x228),
+    [
+      { elem: "C", x: -0x1e, y: 0x0, z: 0x0, lp3d: [{ x: -0x1, y: 0x0, z: 0x0 }] },
+      { elem: "O", x: 0x21, y: 0x0, z: 0x0, lp3d: [{ x: 0x1, y: 0x0, z: 0x0 }] },
+    ],
+    [[0x1, 0x0, _0x14287e(0xfe)]],
+  ),
+  addMol(
+    _0x14287e(0x20b),
+    "雙原子",
+    _0x14287e(0x307),
+    ["直線型", _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x17c),
+    _0x14287e(0x114),
+    [
+      {
+        elem: "N",
+        x: -0x20,
+        y: 0x0,
+        z: 0x0,
+        radical: !![],
+        lp3d: [
+          { x: -1.2, y: 0x1, z: 0.35 },
+          { x: -1.2, y: 0x1, z: -0.35 },
+          { x: -1.2, y: -0x1, z: 0x0 },
+        ],
+      },
+      { elem: "O", x: 0x20, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, _0x14287e(0xf4)]],
+  ),
+  addMol(
+    "CN\x20-|氰根|氰離子",
+    "雙原子",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    "-",
+    "-",
+    [
+      { elem: "C", x: -0x1e, y: 0x0, z: 0x0, lp3d: [{ x: -0x1, y: 0x0, z: 0x0 }] },
+      { elem: "N", x: 0x1e, y: 0x0, z: 0x0, lp3d: [{ x: 0x1, y: 0x0, z: 0x0 }] },
+    ],
+    [[0x0, 0x1, _0x14287e(0x29b)]],
+  ),
+  addMol(
+    "O2\x202-|過氧根離子",
+    "O",
+    _0x14287e(0x116),
+    [_0x14287e(0x288), "Linear"],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [
+      {
+        elem: "O",
+        x: -0x23,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: -0x1, y: 1.5, z: 0x0 },
+          { x: -0x1, y: -0.75, z: 1.3 },
+          { x: -0x1, y: -0.75, z: -1.3 },
+        ],
+      },
+      {
+        elem: "O",
+        x: 0x23,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x1, y: 1.5, z: 0x0 },
+          { x: 0x1, y: -0.75, z: 1.3 },
+          { x: 0x1, y: -0.75, z: -1.3 },
+        ],
+      },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    _0x14287e(0x24a),
+    "C",
+    "sp",
+    ["直線型", _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [
+      { elem: "C", x: -0x1e, y: 0x0, z: 0x0, lp3d: [{ x: -0x1, y: 0x0, z: 0x0 }] },
+      { elem: "C", x: 0x1e, y: 0x0, z: 0x0, lp3d: [{ x: 0x1, y: 0x0, z: 0x0 }] },
+    ],
+    [[0x0, 0x1, _0x14287e(0x29b)]],
+  ),
+  addMol(
+    _0x14287e(0x17f),
+    _0x14287e(0x113),
+    _0x14287e(0x116),
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x31c),
+    "19.5",
+    [
+      { elem: "F", x: -0x19, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x19, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    _0x14287e(0x177),
+    "雙原子",
+    _0x14287e(0x116),
+    [_0x14287e(0x288), "Linear"],
+    "-",
+    _0x14287e(0xff),
+    _0x14287e(0x169),
+    [
+      { elem: "Cl", x: -0x1c, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x1c, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    _0x14287e(0x246),
+    _0x14287e(0x113),
+    _0x14287e(0x116),
+    ["直線型", _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x126),
+    "-66.4",
+    [
+      { elem: "Br", x: -0x1e, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x1e, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  addMol(
+    _0x14287e(0x11c),
+    "雙原子",
+    "sp³",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    "-50.8",
+    _0x14287e(0x316),
+    [
+      { elem: "I", x: -0x21, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x21, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1]],
+  ),
+  ["CO", "NO", _0x14287e(0x297), "HF", "HCl", "HBr", "HI"][_0x14287e(0x31a)]((_0xbad365) => {
+    const _0x394cc7 = _0x14287e;
+    if (MOLECULE_DB[_0xbad365]) MOLECULE_DB[_0xbad365]["pg"] = _0x394cc7(0x2d1);
+  }),
+  [_0x14287e(0x260), "C2\x202-"]["forEach"]((_0x33607b) => {
+    const _0x17c71a = _0x14287e;
+    if (MOLECULE_DB[_0x33607b]) MOLECULE_DB[_0x33607b]["pg"] = _0x17c71a(0x2eb);
+  }),
+  addMol(
+    "CH4|甲烷",
+    "C",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    "-182.5",
+    _0x14287e(0x16b),
+    getTetra("C", "H", 0x32),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    _0x14287e(0x155),
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x26b),
+    "Si",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), "Tetrahedral"],
+    "109.5°",
+    _0x14287e(0x309),
+    _0x14287e(0x318),
+    getTetra("Si", "H", 0x37),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "Td",
+  ),
+  addMol(
+    "NH3|氨系列",
+    "N",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    "106.7°",
+    "-77.7",
+    _0x14287e(0x279),
+    [],
+    [],
+    {
+      "NH3|氨|氨氣": {
+        pg: _0x14287e(0x1cf),
+        mp: _0x14287e(0xea),
+        bp: _0x14287e(0x279),
+        desc: _0x14287e(0x22c),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0xa, z: 0x0, lpCount: 0x1 },
+          { elem: "H", x: 0x0, y: -0x19, z: 0x28 },
+          { elem: "H", x: 0x23, y: -0x19, z: -0x14 },
+          { elem: "H", x: -0x23, y: -0x19, z: -0x14 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "NH4\x20+|銨根離子|銨離子|銨根": {
+        pg: "Td",
+        mp: "-",
+        bp: "-",
+        desc: "<strong>銨離子</strong><br>正四面體結構，是氨氣與氫離子結合的產物。",
+        atoms: getTetra("N", "H", 0x32),
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "NH2\x20-|胺基陰離子|胺基負離子": {
+        pg: _0x14287e(0x141),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x298),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "H", x: 0x23, y: -0x1e, z: 0x0 },
+          { elem: "H", x: -0x23, y: -0x1e, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x2f4),
+    "P",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    "93.3°",
+    _0x14287e(0xf0),
+    _0x14287e(0x1ff),
+    [],
+    [],
+    {
+      "PH3|磷化氫": {
+        pg: _0x14287e(0x1cf),
+        mp: "-133.8",
+        bp: _0x14287e(0x1ff),
+        desc: _0x14287e(0x12c),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "H", x: 0x0, y: -0x1e, z: 0x2d },
+          { elem: "H", x: 0x27, y: -0x1e, z: -0x16 },
+          { elem: "H", x: -0x27, y: -0x1e, z: -0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "PH4\x20+|鏻離子": {
+        pg: "Td",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x320),
+        atoms: getTetra("P", "H", 0x37),
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    "H2O|水系列",
+    "O",
+    _0x14287e(0x116),
+    ["角形", _0x14287e(0x330)],
+    _0x14287e(0x233),
+    "0.0",
+    "100.0",
+    [],
+    [],
+    {
+      "H2O|水|水分子": {
+        pg: _0x14287e(0x141),
+        mp: _0x14287e(0x317),
+        bp: _0x14287e(0x1df),
+        desc: _0x14287e(0x259),
+        atoms: [
+          { elem: "O", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "H", x: 0x26, y: -0x1c, z: 0x0 },
+          { elem: "H", x: -0x26, y: -0x1c, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "H3O\x20+|水合氫離子|鋞離子": {
+        pg: "C3v",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x253),
+        atoms: [
+          { elem: "O", x: 0x0, y: 0xa, z: 0x0, lpCount: 0x1 },
+          { elem: "H", x: 0x0, y: -0x19, z: 0x28 },
+          { elem: "H", x: 0x23, y: -0x19, z: -0x14 },
+          { elem: "H", x: -0x23, y: -0x19, z: -0x14 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "OH\x20-|氫氧根|氫氧根離子": {
+        pg: _0x14287e(0x2d1),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x199),
+        atoms: [
+          { elem: "O", x: -0x14, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "H", x: 0x19, y: 0x0, z: 0x0 },
+        ],
+        bonds: [[0x0, 0x1]],
+      },
+    },
+    null,
+    "-",
+    "acid",
+  ),
+  addMol(
+    "H2S|硫化氫系列",
+    "S",
+    "sp³",
+    ["角形", _0x14287e(0x330)],
+    _0x14287e(0x1fa),
+    _0x14287e(0x28f),
+    _0x14287e(0x312),
+    [],
+    [],
+    {
+      "H2S|硫化氫|氫硫酸": {
+        pg: _0x14287e(0x141),
+        mp: _0x14287e(0x28f),
+        bp: "-60.3",
+        desc: "<strong>硫化氫</strong><br>具有腐敗雞蛋味的氣體，V型結構。",
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "H", x: 0x28, y: -0x23, z: 0x0 },
+          { elem: "H", x: -0x28, y: -0x23, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "HS\x20-|硫氫根": {
+        pg: _0x14287e(0x2d1),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x22d),
+        atoms: [
+          { elem: "S", x: -0x14, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "H", x: 0x1e, y: 0x0, z: 0x0 },
+        ],
+        bonds: [[0x0, 0x1]],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ));
+const halideProps = {
+    BF3: ["-126.8", _0x14287e(0x24c)],
+    BCl3: [_0x14287e(0x295), "12.6"],
+    BBr3: [_0x14287e(0x2cb), _0x14287e(0x30a)],
+    BI3: [_0x14287e(0x245), _0x14287e(0x29a)],
+    AlF3: [_0x14287e(0x2db), "-"],
+    AlCl3: ["192.4", _0x14287e(0x2d9)],
+    AlBr3: ["97.5", _0x14287e(0x2c8)],
+    AlI3: [_0x14287e(0x31d), _0x14287e(0x23b)],
+    CF4: [_0x14287e(0x252), _0x14287e(0x1f5)],
+    CCl4: ["-22.9", _0x14287e(0x16a)],
+    CBr4: [_0x14287e(0x1a6), _0x14287e(0x204)],
+    CI4: ["171\x20(分解)", "-"],
+    SiF4: ["-90", _0x14287e(0x248)],
+    SiCl4: [_0x14287e(0x10c), _0x14287e(0x1e8)],
+    SiBr4: ["5", "154"],
+    SiI4: ["120.5", _0x14287e(0x11b)],
+    NF3: [_0x14287e(0x1e6), _0x14287e(0x302)],
+    NCl3: [_0x14287e(0x196), "71"],
+    NBr3: [_0x14287e(0x1e7), "爆炸"],
+    NI3: ["-", "爆炸"],
+    PF3: [_0x14287e(0x29e), _0x14287e(0x1f4)],
+    PCl3: [_0x14287e(0x332), _0x14287e(0x2ad)],
+    PBr3: [_0x14287e(0x319), _0x14287e(0x21f)],
+    PI3: ["61", "分解"],
+    OF2: [_0x14287e(0x28d), _0x14287e(0x276)],
+    OCl2: [_0x14287e(0x267), _0x14287e(0x144)],
+    OBr2: ["-", "-"],
+    OI2: ["-", "-"],
+    SF2: ["-", "-"],
+    SCl2: [_0x14287e(0x119), _0x14287e(0x175)],
+    SBr2: ["-", "-"],
+    SI2: ["-", "-"],
+  },
+  haloNames = { F: "氟", Cl: "氯", Br: "溴", I: "碘" };
+(addMol(
+  _0x14287e(0x136),
+  "Al",
+  "sp³",
+  [_0x14287e(0xeb), _0x14287e(0x118)],
+  "79°,\x2091°,\x20123°",
+  _0x14287e(0x27b),
+  "180\x20(昇華)",
+  [
+    { elem: "Al", x: 0x47, y: 0x0, z: 0x0 },
+    { elem: "Al", x: -0x47, y: 0x0, z: 0x0 },
+    { elem: "Cl", x: 0x0, y: -0x47, z: 0x0 },
+    { elem: "Cl", x: 0x0, y: 0x47, z: 0x0 },
+    { elem: "Cl", x: 0x77, y: 0x0, z: 0x52 },
+    { elem: "Cl", x: 0x77, y: 0x0, z: -0x52 },
+    { elem: "Cl", x: -0x77, y: 0x0, z: 0x52 },
+    { elem: "Cl", x: -0x77, y: 0x0, z: -0x52 },
+  ],
+  [
+    [0x0, 0x2],
+    [0x0, 0x3],
+    [0x1, 0x2],
+    [0x1, 0x3],
+    [0x0, 0x4],
+    [0x0, 0x5],
+    [0x1, 0x6],
+    [0x1, 0x7],
+  ],
+  null,
+  null,
+  _0x14287e(0x2c7),
+),
+  ["F", "Cl", "Br", "I"][_0x14287e(0x31a)]((_0x5178d9) => {
+    const _0x2fbb39 = _0x14287e,
+      _0x34d154 = haloNames[_0x5178d9];
+    let _0x25867c = _0x5178d9 === "F" ? 0x23 : _0x5178d9 === "Cl" ? 0x28 : _0x5178d9 === "Br" ? 0x2d : 0x32,
+      _0xc01f92 = halideProps["B" + _0x5178d9 + "3"] || ["-", "-"];
+    (addMol(
+      "B" + _0x5178d9 + _0x2fbb39(0x1f8) + _0x34d154 + "化硼",
+      "B",
+      _0x2fbb39(0x307),
+      [_0x2fbb39(0x25d), _0x2fbb39(0x1d2)],
+      _0x2fbb39(0x329),
+      _0xc01f92[0x0],
+      _0xc01f92[0x1],
+      getTrigPlanar("B", _0x5178d9, 0x23 + _0x25867c),
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+        [0x0, 0x3],
+      ],
+      null,
+      null,
+      _0x2fbb39(0x274),
+    ),
+      (_0xc01f92 = halideProps["Al" + _0x5178d9 + "3"] || ["-", "-"]),
+      addMol(
+        "Al" + _0x5178d9 + _0x2fbb39(0x1f8) + _0x34d154 + "化鋁",
+        "Al",
+        _0x2fbb39(0x307),
+        ["平面三角形", _0x2fbb39(0x1d2)],
+        _0x2fbb39(0x329),
+        _0xc01f92[0x0],
+        _0xc01f92[0x1],
+        getTrigPlanar("Al", _0x5178d9, 0x28 + _0x25867c),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+        null,
+        null,
+        _0x2fbb39(0x274),
+      ),
+      (_0xc01f92 = halideProps["C" + _0x5178d9 + "4"] || ["-", "-"]),
+      addMol(
+        "C" + _0x5178d9 + "4|四" + _0x34d154 + _0x2fbb39(0x197) + _0x34d154 + "甲烷",
+        "C",
+        _0x2fbb39(0x116),
+        [_0x2fbb39(0x2b2), _0x2fbb39(0x13d)],
+        _0x2fbb39(0x2c1),
+        _0xc01f92[0x0],
+        _0xc01f92[0x1],
+        getTetra("C", _0x5178d9, 0x23 + _0x25867c),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+        null,
+        null,
+        "Td",
+      ));
+    _0x5178d9 !== "Cl" &&
+      ((_0xc01f92 = halideProps["Si" + _0x5178d9 + "4"] || ["-", "-"]),
+      addMol(
+        "Si" + _0x5178d9 + _0x2fbb39(0x103) + _0x34d154 + "化矽",
+        "Si",
+        _0x2fbb39(0x116),
+        ["四面體", _0x2fbb39(0x13d)],
+        _0x2fbb39(0x2c1),
+        _0xc01f92[0x0],
+        _0xc01f92[0x1],
+        getTetra("Si", _0x5178d9, 0x28 + _0x25867c),
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+        null,
+        null,
+        "Td",
+      ));
+    _0xc01f92 = halideProps["N" + _0x5178d9 + "3"] || ["-", "-"];
+    let _0xac7348 = 0x23 + _0x25867c,
+      _0x541a23 = _0xac7348 * 0.85,
+      _0xe6358b = _0xac7348 * 0.5;
+    addMol(
+      "N" + _0x5178d9 + _0x2fbb39(0x1f8) + _0x34d154 + "化氮",
+      "N",
+      "sp³",
+      [_0x2fbb39(0x281), _0x2fbb39(0x140)],
+      _0x5178d9 === "F" ? _0x2fbb39(0x117) : _0x5178d9 === "Cl" ? "107.1°" : _0x5178d9 === "Br" ? _0x2fbb39(0x167) : "110°",
+      _0xc01f92[0x0],
+      _0xc01f92[0x1],
+      [
+        { elem: "N", x: 0x0, y: 0xf, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+        { elem: _0x5178d9, x: 0x0, y: -0xa, z: _0x541a23 },
+        { elem: _0x5178d9, x: _0x541a23 * 0.866, y: -0xa, z: -_0x541a23 * 0.5 },
+        { elem: _0x5178d9, x: -_0x541a23 * 0.866, y: -0xa, z: -_0x541a23 * 0.5 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+        [0x0, 0x3],
+      ],
+      null,
+      null,
+      _0x2fbb39(0x1cf),
+    );
+    if (_0x5178d9 !== "Cl") {
+      _0xc01f92 = halideProps["P" + _0x5178d9 + "3"] || ["-", "-"];
+      let _0x53bdd4 = 0x28 + _0x25867c,
+        _0x391655 = _0x53bdd4 * 0.85,
+        _0x3adad7 = _0x53bdd4 * 0.5;
+      addMol(
+        "P" + _0x5178d9 + _0x2fbb39(0x1f8) + _0x34d154 + "化磷",
+        "P",
+        _0x2fbb39(0x116),
+        ["角錐形", _0x2fbb39(0x140)],
+        _0x5178d9 === "F" ? _0x2fbb39(0x2bb) : _0x5178d9 === "Cl" ? _0x2fbb39(0x2f0) : _0x5178d9 === "Br" ? _0x2fbb39(0x202) : _0x2fbb39(0x2f2),
+        _0xc01f92[0x0],
+        _0xc01f92[0x1],
+        [
+          { elem: "P", x: 0x0, y: 0x14, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+          { elem: _0x5178d9, x: 0x0, y: -0xf, z: _0x391655 },
+          { elem: _0x5178d9, x: _0x391655 * 0.866, y: -0xf, z: -_0x391655 * 0.5 },
+          { elem: _0x5178d9, x: -_0x391655 * 0.866, y: -0xf, z: -_0x391655 * 0.5 },
+        ],
+        [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+        null,
+        null,
+        "C3v",
+      );
     }
-    
-    // NX3 系列
-    p = halideProps[`N${X}3`] || ["-","-"]; 
-    let dN = 35+rX, hN=dN*0.85, vN=dN*0.5; 
-    addMol(`N${X}3|三${hn}化氮`, "N", "sp³", ["角錐形","Pyramidal"], (X==='F'?"102.3°":(X==='Cl'?"107.1°":(X==='Br'?"108°":"110°"))), p[0], p[1], [{elem:"N",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:X,x:0,y:-10,z:hN},{elem:X,x:hN*0.866,y:-10,z:-hN*0.5},{elem:X,x:-hN*0.866,y:-10,z:-hN*0.5}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-    
-    // PX3 系列
-    if(X !== 'Cl') { 
-        p = halideProps[`P${X}3`] || ["-","-"]; 
-        let dP = 40+rX, hP=dP*0.85, vP=dP*0.5; 
-        addMol(`P${X}3|三${hn}化磷`, "P", "sp³", ["角錐形","Pyramidal"], (X==='F'?"97.8°":(X==='Cl'?"100.3°":(X==='Br'?"101.5°":"102°"))), p[0], p[1], [{elem:"P",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:X,x:0,y:-15,z:hP},{elem:X,x:hP*0.866,y:-15,z:-hP*0.5},{elem:X,x:-hP*0.866,y:-15,z:-hP*0.5}], [[0,1],[0,2],[0,3]], null, null, "C3v"); 
-    }
-    
-    // OX2 系列
-    p = halideProps[`O${X}2`] || ["-","-"]; 
-    let dO = 35+rX; 
-    addMol(`O${X}2|二${hn}化氧`, "O", "sp³", ["角形","Bent"], (X==='F'?"103.3°":(X==='Cl'?"110.9°":"114°")), p[0], p[1], [{elem:"O",x:0,y:0,z:0,lpCount:2},{elem:X,x:dO*0.8,y:-dO*0.6,z:0},{elem:X,x:-dO*0.8,y:-dO*0.6,z:0}], [[0,1],[0,2]], null, null, "C2v");
-    
-    // SX2 系列
-    p = halideProps[`S${X}2`] || ["-","-"]; 
-    let dS = 40+rX; 
-    addMol(`S${X}2|二${hn}化硫`, "S", "sp³", ["角形","Bent"], (X==='F'?"98.2°":(X==='Cl'?"102.7°":"104°")), p[0], p[1], [{elem:"S",x:0,y:0,z:0,lpCount:2},{elem:X,x:dS*0.85,y:-dS*0.55,z:0},{elem:X,x:-dS*0.85,y:-dS*0.55,z:0}], [[0,1],[0,2]], null, null, "C2v");
-});
-
-
-// [保留] SiCl4 詳細資料
-addMol("SiCl4|四氯化矽|Silicon Tetrachloride", "Si", "sp³", ["四面體","Tetrahedral"], "109.5°", "-70", "57.7", getTetra("Si", "Cl", 80), [[0,1],[0,2],[0,3],[0,4]], null,
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心矽原子採取 <strong>sp³ 混成</strong>，與同族的四氯化碳 (CCl₄) 具有相同的<strong>正四面體</strong>幾何結構，鍵角為 <strong>109.5°</strong>。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為無色、易揮發的液體，具有強烈的刺鼻氣味。雖然 Si-Cl 鍵是極性共價鍵，但由於分子對稱性高，偶極矩互相抵銷，整體為<strong>非極性分子</strong>。<br>
-            <span class="highlight-title">3. 化學性質：</span>與化學性質安定的 CCl₄ 不同，SiCl₄ 極易發生<strong>水解反應</strong>。這是因為矽原子的原子半徑較大，且擁有<strong>空 d 軌域</strong>，能接受水分子的氧原子進行親核攻擊，反應後生成矽酸並產生大量的氯化氫 (HCl) 白煙。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 晶片製造 (多晶矽)：</span>它是半導體產業的基石。透過<strong>西門子法 (Siemens process)</strong>，將高純度的 SiCl₄ 與氫氣在 1100°C 高溫下反應還原，可製造出純度高達 99.9999999% (9N) 的<strong>電子級多晶矽</strong>，用於生產電腦晶片與太陽能電池。<br>
-            <span class="highlight-title">2. 光纖通訊核心：</span>在光纖製程中，SiCl₄ 是最關鍵的原料。透過氣相沉積法將其高溫氧化，能生成折射率極高且無雜質的二氧化矽 (SiO₂)，構成光纖內層傳輸訊號的玻璃核心。<br>
-            <span class="highlight-title">3. 軍事煙霧彈：</span>早期軍事上利用其「極易水解」的特性製作煙霧彈。當液態 SiCl₄ 炸開接觸空氣中的水氣時，會瞬間產生極濃密的白色酸霧 (HCl)，能有效遮蔽視線，但因具有毒性與腐蝕性，現代已較少使用。
-        </div>
-    </div>`
-,"Td");
-
-// [保留] PCl3 詳細資料
-addMol("PCl3|三氯化磷|Phosphorus Trichloride", "P", "sp³", ["角錐形","Pyramidal"], "96-100°", "-93.6", "76.1", [{elem:"P",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"Cl",x:0,y:-15,z:68},{elem:"Cl",x:59,y:-15,z:-34},{elem:"Cl",x:-59,y:-15,z:-34}], [[0,1],[0,2],[0,3]], null,
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>中心磷原子採取 <strong>sp³ 混成</strong>。由於具有一對未共用電子對 (Lone Pair)，其對鍵結電子的斥力較大，導致 P-Cl 鍵角被壓縮至約 <strong>100°</strong>，形成<strong>三角錐形</strong>結構。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為無色或微黃色的液體，會發煙。具有較低的沸點與強烈刺鼻味，可溶於苯、氯仿等有機溶劑。<br>
-            <span class="highlight-title">3. 化學性質：</span>P-Cl 鍵極性大且反應性極高，遇水會劇烈<strong>水解</strong>並放熱，生成亞磷酸 (H₃PO₃) 與鹽酸霧。因磷原子上有一對孤對電子，可作為<strong>路易斯鹼</strong>參與配位反應。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 除草劑原料 (嘉磷塞)：</span>工業上最大宗的用途是作為中間體，用於合成廣效性除草劑<strong>嘉磷塞 (Glyphosate)</strong>，這是目前全球農業使用量最大的農藥之一。<br>
-            <span class="highlight-title">2. 有機合成 (氯化劑)：</span>在製藥與有機化學實驗室中，它是不可或缺的試劑。專門用來將有機分子中的<strong>羥基 (-OH)</strong> 取代為氯原子，或是將羧酸轉化為活性極高的醯氯，是合成染料與藥物的重要步驟。<br>
-            <span class="highlight-title">3. 塑膠添加劑：</span>可用於製造含磷的<strong>阻燃劑</strong>與塑化劑。這些添加劑能讓電子產品的塑膠外殼在受熱時不易燃燒，大幅提升產品安全性。
-        </div>
-    </div>`
-,"C3v");
-
-
-
-
-// --- 5. 碳與其他氧化物 (直線型/平面型) ---
-addMol("CO2|二氧化碳|乾冰", "C", "sp", ["直線型","Linear"], "180°", "-78.5 (昇華)", "-56.6", getLinear("C","O", 70), [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("CS2|二硫化碳", "C", "sp", ["直線型","Linear"], "180°", "-111.6", "46.2", getLinear("C","S", 75), [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("BeCl2|二氯化鈹", "Be", "sp", ["直線型","Linear"], "180°", "399", "482", getLinear("Be","Cl", 75), [[0,1], [0,2]], null, null, "Dinfh");
-addMol("BCl3|三氯化硼", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-107", "12.6", getTrigPlanar("B","Cl", 75), [[0,1], [0,2], [0,3]], null, null, "D3h");
-addMol("SO2|二氧化硫", "S", "sp²", ["角形","Bent"], "119°", "-72", "-10", 
+    _0xc01f92 = halideProps["O" + _0x5178d9 + "2"] || ["-", "-"];
+    let _0x222204 = 0x23 + _0x25867c;
+    (addMol(
+      "O" + _0x5178d9 + "2|二" + _0x34d154 + "化氧",
+      "O",
+      "sp³",
+      ["角形", _0x2fbb39(0x330)],
+      _0x5178d9 === "F" ? "103.3°" : _0x5178d9 === "Cl" ? _0x2fbb39(0x2ea) : _0x2fbb39(0x26d),
+      _0xc01f92[0x0],
+      _0xc01f92[0x1],
+      [
+        { elem: "O", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x2 },
+        { elem: _0x5178d9, x: _0x222204 * 0.8, y: -_0x222204 * 0.6, z: 0x0 },
+        { elem: _0x5178d9, x: -_0x222204 * 0.8, y: -_0x222204 * 0.6, z: 0x0 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+      ],
+      null,
+      null,
+      _0x2fbb39(0x141),
+    ),
+      (_0xc01f92 = halideProps["S" + _0x5178d9 + "2"] || ["-", "-"]));
+    let _0x3298c7 = 0x28 + _0x25867c;
+    addMol(
+      "S" + _0x5178d9 + "2|二" + _0x34d154 + "化硫",
+      "S",
+      _0x2fbb39(0x116),
+      ["角形", "Bent"],
+      _0x5178d9 === "F" ? _0x2fbb39(0x258) : _0x5178d9 === "Cl" ? _0x2fbb39(0x285) : _0x2fbb39(0x15f),
+      _0xc01f92[0x0],
+      _0xc01f92[0x1],
+      [
+        { elem: "S", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x2 },
+        { elem: _0x5178d9, x: _0x3298c7 * 0.85, y: -_0x3298c7 * 0.55, z: 0x0 },
+        { elem: _0x5178d9, x: -_0x3298c7 * 0.85, y: -_0x3298c7 * 0.55, z: 0x0 },
+      ],
+      [
+        [0x0, 0x1],
+        [0x0, 0x2],
+      ],
+      null,
+      null,
+      _0x2fbb39(0x141),
+    );
+  }),
+  addMol(
+    "SiCl4|四氯化矽|Silicon\x20Tetrachloride",
+    "Si",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    "109.5°",
+    _0x14287e(0x10c),
+    _0x14287e(0x1e8),
+    getTetra("Si", "Cl", 0x50),
     [
-        {elem:"S", x:0, y:15, z:0, lpCount:1, lp3d:[{x:0,y:1,z:0}]}, 
-        {elem:"O", x:55, y:-30, z:0}, 
-        {elem:"O", x:-55, y:-30, z:0}
-    ], 
-    // 預設給兩個雙鍵 (擴大八隅體狀態)，讓程式去切換
-    [[0,1,"double"], [0,2,"double"]], null, null, "C2v");
-addMol("SO3|三氧化硫", "S", "sp²", ["平面三角形","Trigonal Planar"], "120°", "16.9", "44.8", getTrigPlanar("S","O", 68), [[0,1,"double"],[0,2,"double"],[0,3,"double"]], null, null, "D3h");
-addMol("O3|臭氧", "O", "sp²", ["角形","Bent"], "117°", "-192.2", "-112", [{elem:"O",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0,lpCount:3}], [[0,1,"double"],[0,2,"coordinate"]], null, null, "C2v");
-addMol("NO2|二氧化氮", "N", "sp²", ["角形","Bent"], "134°", "-11.2", "21.2", [{elem:"N",x:0,y:10,z:0,lp3d:[{x:0,y:1,z:0}],radical:true},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0,lpCount:3}], [[0,1,"double"],[0,2,"coordinate"]], null, null, "C2v");
-addMol("N2O|一氧化二氮|笑氣", "N", "sp", ["直線型","Linear"], "180°", "-90.8", "-88.5", [{elem:"N",x:0,y:0,z:0,lpCount:0},{elem:"N",x:-65,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]},{elem:"O",x:65,y:0,z:0}], [[0,1,"triple"],[0,2,"coordinate"]], null, null, "Cinfv");
-addMol("NO|一氧化氮", "雙原子", "sp²", ["直線型","Linear"], "-", "-164", "-152", [{elem:"N",x:-32,y:0,z:0,radical:true,lp3d:[{x:-1,y:1,z:0},{x:-1,y:-1,z:0.4},{x:-1,y:-1,z:-0.4}]},{elem:"O",x:32,y:0,z:0}], [[0,1,"double"]], null, null, "Cinfv");
-
-// --- 6. 離子與特殊無機分子 (含共振結構) ---
-// --- SCN- 共振結構展示：以 N≡C-S 為主要（畫結構／預設以此為主），N=C=S 為次要 ---
-addMol("SCN -|硫氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "SCN -|主要共振結構 (N≡C-S)": {pg: "Cinfv", mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-60, y:0, z:0, lpCount:1}, {elem:"S", x:90, y:0, z:0, lpCount:3}], bonds: [[0,1,"triple"], [0,2,"single"]], desc: "<strong>主要共振結構</strong><br>兩組雙鍵的寫法雖能把形式負電荷放在電負度較大的氮上，但以本式（N≡C─S）為主幹時，負電荷在硫。硫原子半徑較大、可極化性較高，較能分散負電荷、減輕電荷過度集中；且氮與碳之間為三鍵，鍵能較大。綜合電荷分散與鍵結強度等考量，價鍵觀點常以本式為較重要的貢獻（畫路易斯結構時亦多以此式為主）。" },
-    "SCN -|次要共振結構 (N=C=S)": {pg: "Cinfv", mp: "-", bp: "-", atoms: [{elem:"C", x:0, y:0, z:0}, {elem:"N", x:-65, y:0, z:0, lpCount:2},{elem:"S", x:85, y:0, z:0, lpCount:2}], bonds: [[0,1,"double"], [0,2,"double"]] }
-}, null, "-", "resonance");
-addMol("NO +|亞硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:-30,y:0,z:0,lpCount:1}, {elem:"O",x:30,y:0,z:0,lpCount:1}], [[0,1,"triple"]], null, null, "Cinfv");
-addMol("NO2 +|硝鎓離子", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [{elem:"N",x:0,y:0,z:0}, {elem:"O",x:-65,y:0,z:0}, {elem:"O",x:65,y:0,z:0}], [[0,1,"double"],[0,2,"double"]], null, null, "Dinfh");
-addMol("N3 -|疊氮酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "N3 -|主要共振結構 (N=N=N)": {pg: "Dinfh", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"N",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] },
-    "N3 -|主要共振結構 (N≡N-N)": {pg: "Dinfh", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"N",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] }
-}, null, "-", "resonance");
-addMol("OCN-|氰酸根", "C", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "OCN -|主要共振結構 (N≡C-O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]], desc: "<strong>主要共振結構</strong><br>負電荷集中在電負度最高的 O 上，且其餘原子的形式電荷為 0，電荷分離最小，因此為最穩定的共振結構(畫結構以此為主)。" },
-    "OCN -|次要共振結構 (N=C=O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]], desc: "<strong>次要共振結構</strong><br>電負度：O＞N，負電荷位於電負度較低的 N 上，電荷配置不如將負電荷放在 O上理想，為次要共振結構。。" },
-    "OCN -|不穩定共振結構 (N-C≡O)": {pg: "Cinfv", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"N",x:-85,y:0,z:0,lpCount:3},{elem:"O",x:60,y:0,z:0,lpCount:1}], bonds: [[0,1,"single"],[0,2,"triple"]], desc: "<strong>最不穩定共振結構</strong><br>電負度大的 O 卻承擔正的形式電荷，同時使N的形式電荷大幅偏離 0，造成嚴重的電荷分離，因此為最不穩定的共振結構。" }
-}, null, "-", "resonance");
-addMol("CNO -|雷酸根", "N", "sp", ["直線型","Linear"], "180°", "-", "-", [], [], {
-    "CNO -|主要共振結構 (C≡N-O)": {pg: "Cinfv", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-60,y:0,z:0,lpCount:1},{elem:"O",x:85,y:0,z:0,lpCount:3}], bonds: [[0,1,"triple"],[0,2,"single"]] },
-    "CNO -|次要共振結構 (C=N=O)": {pg: "Cinfv", atoms: [{elem:"N",x:0,y:0,z:0},{elem:"C",x:-65,y:0,z:0,lpCount:2},{elem:"O",x:65,y:0,z:0,lpCount:2}], bonds: [[0,1,"double"],[0,2,"double"]] }
-}, null, "-", "resonance");
-
-addMol("N2O|一氧化二氮|氧化亞氮|笑氣", "N", "sp", ["直線型","Linear"], "180°", "-91", "-88", [], [], {
-    "N2O|主要共振結構 (N≡N-O)": {pg: "Cinfv", mp: "-91", bp: "-88", atoms: [{elem:"N", x:0, y:0, z:0, radical: false}, {elem:"N", x:-60, y:0, z:0, lpCount:1}, {elem:"O", x:70, y:0, z:0, lpCount:3, radical: false}], bonds: [[0,1,"triple"], [0,2,"single"]] },
-    "N2O|次要共振結構 (N=N=O)": {pg: "Cinfv", mp: "-91", bp: "-88", atoms: [{elem:"N", x:0, y:0, z:0, radical: false}, {elem:"N", x:-63, y:0, z:0, lpCount:2, radical: false}, {elem:"O", x:63, y:0, z:0, lpCount:2}], bonds: [[0,1,"double"], [0,2,"double"]] }
-}, null, "-", "resonance");
-
-addMol("HOCN|氰酸", "C", "sp", ["直線/角形","Linear/Bent"], "180°/105°", "-86", "23.5", [{elem:"C",x:0,y:0,z:0}, {elem:"N",x:65,y:0,z:0,lpCount:1}, {elem:"O",x:-65,y:0,z:0,lpCount:2}, {elem:"H",x:-95,y:30,z:0}], [[0,1,"triple"], [0,2], [2,3]], null, null, "Cs");
-
-// --- 7. 擴大八隅體與複雜幾何構型 ---
-// P-Cl=80, P-Br=85, S-F=75, S=O=68, Xe=O=76
-addMol("PCl5|五氯化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "160.5", "166.8", [{elem:"P",x:0,y:0,z:0},{elem:"Cl",x:0,y:0,z:85},{elem:"Cl",x:0,y:0,z:-85},{elem:"Cl",x:0,y:80,z:0},{elem:"Cl",x:69,y:-40,z:0},{elem:"Cl",x:-69,y:-40,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("PBr5|五溴化磷", "P", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "100 (分解)", "106 (分解)", [{elem:"P",x:0,y:0,z:0},{elem:"Br",x:0,y:0,z:-90},{elem:"Br",x:0,y:0,z:90},{elem:"Br",x:0,y:85,z:0},{elem:"Br",x:-74,y:-42,z:0},{elem:"Br",x:74,y:-42,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("SF6|六氟化硫", "S", "sp³d²", ["八面體","Octahedral"], "90°", "-50.8", "-63.8 (昇華)", getOcta("S","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("SF4|四氟化硫", "S", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "-121", "-38", [{elem:"S",x:0,y:0,z:0},{elem:"F",x:0,y:0,z:80},{elem:"F",x:0,y:0,z:-80},{elem:"F",x:45,y:65,z:0},{elem:"F",x:-45,y:65,z:0}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
-addMol("ClF3|三氟化氯", "Cl", "sp³d", ["T型","T-shaped"], "<90°", "-76.3", "11.8", [{elem:"Cl",x:0,y:0,z:0,lp3d:[{x:-1,y:0.5,z:0}, {x:-1,y:-0.5,z:0}]}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:70,y:0,z:0}], [[0,1],[0,2],[0,3]], null, null, "C2v");
-addMol("XeF2|二氟化氙", "Xe", "sp³d", ["直線型","Linear"], "180°", "128.6", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0.866,y:-0.5,z:0}, {x:-0.866,y:-0.5,z:0}]}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("XeF4|四氟化氙", "Xe", "sp³d²", ["平面四邊形","Square Planar"], "90°", "117 (昇華)", "-", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:1,y:0,z:0}, {x:-1,y:0,z:0}]}, {elem:"F",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
-
-addMol("BrF5|五氟化溴", "Br", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", "-61.3", "40.3", [{elem:"Br",x:0,y:0,z:0},{elem:"F",x:80,y:0,z:0},{elem:"F",x:0,y:0,z:-70},{elem:"F",x:0,y:0,z:70},{elem:"F",x:0,y:-70,z:0},{elem:"F",x:0,y:70,z:0}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "C4v");
-
-addMol("IF7|七氟化碘", "I", "sp³d³", ["五角雙錐","Pentagonal Bipyramidal"], "72°, 90°", "4.8", "4.8 (昇華)", [{elem:"I",x:0,y:0,z:0,lpCount:0}, {elem:"F",x:0,y:90,z:0}, {elem:"F",x:0,y:-90,z:0}, {elem:"F",x:80,y:0,z:0}, {elem:"F",x:25,y:0,z:76}, {elem:"F",x:25,y:0,z:-76}, {elem:"F",x:-65,y:0,z:47}, {elem:"F",x:-65,y:0,z:-47}], [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]], null, null, "D5h");
-addMol("SeF6|六氟化硒", "Se", "sp³d²", ["八面體","Octahedral"], "90°", "-34.6", "-46.6 (昇華)", getOcta("Se","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("TeF6|六氟化碲", "Te", "sp³d²", ["八面體","Octahedral"], "90°", "-37.6", "-38.9 (昇華)", getOcta("Te","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("AsF5|五氟化砷", "As", "sp³d", ["雙三角錐","Trigonal Bipyramidal"], "90°, 120°", "-79.8", "-52.8", [{elem:"As",x:0,y:0,z:0}, {elem:"F",x:0,y:80,z:0}, {elem:"F",x:0,y:-80,z:0}, {elem:"F",x:70,y:0,z:0}, {elem:"F",x:-35,y:0,z:60}, {elem:"F",x:-35,y:0,z:-60}], [[0,1],[0,2],[0,3],[0,4],[0,5]], null, null, "D3h");
-addMol("TeF4|四氟化碲", "Te", "sp³d", ["翹翹板型","Seesaw"], "<90°, <120°", "129.6", "193", [{elem:"Te",x:0,y:0,z:0,lp3d:[{x:-1,y:0,z:0}]}, {elem:"F",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:70,y:0,z:50}, {elem:"F",x:70,y:0,z:-50}], [[0,1],[0,2],[0,3],[0,4]], null, null, "C2v");
-addMol("XeO3|三氧化氙", "Xe", "sp³", ["角錐形","Trigonal Pyramidal"], "103°", "25 (爆炸)", "-", [{elem:"Xe",x:0,y:20,z:0,lp3d:[{x:0,y:1,z:0}]},{elem:"O",x:0,y:-30,z:57},{elem:"O",x:49,y:-30,z:-28.5},{elem:"O",x:-49,y:-30,z:-28.5}], [[0,1,"double"],[0,2,"double"],[0,3,"double"]], null, null, "C3v");
-addMol("XeO4|四氧化氙", "Xe", "sp³", ["四面體","Tetrahedral"], "109.5°", "-35.9", "0 (分解)", getTetra("Xe","O", 76), [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"double"]], null, null, "Td");
-addMol("XeOF4|四氟氧化氙|XeOF4", "Xe", "sp³d²", ["四角錐","Square Pyramidal"], "<90°", "-46", "101", [{elem:"Xe",x:0,y:0,z:0,lp3d:[{x:0,y:-1,z:0}]}, {elem:"O",x:0,y:80,z:0}, {elem:"F",x:80,y:0,z:0}, {elem:"F",x:-80,y:0,z:0}, {elem:"F",x:0,y:0,z:80}, {elem:"F",x:0,y:0,z:-80}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5]], null, null, "C4v");
-addMol("IOF5|五氟氧化碘", "I", "sp³d²", ["八面體","Octahedral"], "90°", "4.5", "110", [{elem:"I",x:0,y:0,z:0}, {elem:"O",x:0,y:85,z:0}, {elem:"F",x:0,y:-85,z:0}, {elem:"F",x:85,y:0,z:0}, {elem:"F",x:-85,y:0,z:0}, {elem:"F",x:0,y:0,z:85}, {elem:"F",x:0,y:0,z:-85}], [[0,1,"double"],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "C4v");
-addMol("AsF3|三氟化砷", "As", "sp³", ["角錐形","Pyramidal"], "96°", "-6", "57.8", [{elem:"As",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"F",x:0,y:-45,z:55}, {elem:"F",x:48,y:-45,z:-28}, {elem:"F",x:-48,y:-45,z:-28}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-addMol("SbCl3|三氯化銻", "Sb", "sp³", ["角錐形","Pyramidal"], "97°", "73.4", "220.3", [{elem:"Sb",x:0,y:15,z:0,lp3d:[{x:0,y:1,z:0}]}, {elem:"Cl",x:0,y:-55,z:65}, {elem:"Cl",x:55,y:-55,z:-35}, {elem:"Cl",x:-55,y:-55,z:-35}], [[0,1],[0,2],[0,3]], null, null, "C3v");
-addMol("ICl3|三氯化碘|Iodine Trichloride", "I", "sp³d", ["T型","T-shaped"], "<90°", "101 (分解)", "-", [{elem:"I",x:0,y:0,z:0,lpCount:2,lp3d:[{x:-1,y:0.5,z:0},{x:-1,y:-0.5,z:0}]},{elem:"Cl",x:90,y:0,z:0},{elem:"Cl",x:0,y:90,z:0},{elem:"Cl",x:0,y:-90,z:0}], [[0,1],[0,2],[0,3]], null, '<div class="info-section"><div class="info-title">🧪 物質簡介</div><div class="info-body"><strong>三氯化碘 (ICl₃)</strong><br>中心碘原子採取 sp³d 混成。為了減少電子雲斥力，兩對孤對電子佔據水平位置，使分子呈現 T 型結構。</div></div>', "C2v");
-addMol("B2H6|乙硼烷|Diborane", "B", "sp³", ["特殊 (含氫橋鍵)","Banana Bonds"], "120°(端)/97°(橋)", "-164.8", "-92.5", [{elem:"B",x:-40,y:0,z:0,lpCount:0},{elem:"B",x:40,y:0,z:0,lpCount:0},{elem:"H",x:0,y:0,z:50},{elem:"H",x:0,y:0,z:-50},{elem:"H",x:-65,y:43,z:0},{elem:"H",x:-65,y:-43,z:0},{elem:"H",x:65,y:43,z:0},{elem:"H",x:65,y:-43,z:0}], [[0,2],[0,3],[1,2],[1,3],[0,4],[0,5],[1,6],[1,7]], null, '<div class="info-section"><div class="info-title">🍌 結構特性</div><div class="info-body"><strong>乙硼烷 (B₂H₆)</strong><br>具有三中心二電子鍵。每個硼原子與四個氫原子連線，形成類似 sp³ 的幾何排列。</div></div>', "D2h");
-addMol("B(OH)3|硼酸", "B", "sp²", ["平面三角形","Trigonal Planar"], "120°", "169 (分解)", "-", [{elem:"O",x:-58,y:0,z:37},{elem:"B",x:0,y:0,z:0},{elem:"O",x:59,y:0,z:35},{elem:"O",x:-5,y:0,z:-69},{elem:"H",x:-96,y:0,z:8},{elem:"H",x:99,y:0,z:8},{elem:"H",x:37,y:0,z:-93}], [[0,1],[0,4],[1,2],[1,3],[2,5],[3,6]], null, null, "C3h");
-
-
-// --- 8. 陰離子群 (Complex Anions) ---
-addMol("SiF6 2-|六氟矽酸根", "Si", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("Si","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("PF6 -|六氟磷酸根", "P", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("P","F", 75), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("SbF6 -|六氟銻酸根", "Sb", "sp³d²", ["八面體","Octahedral"], "90°", "-", "-", getOcta("Sb","F", 80), [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]], null, null, "Oh");
-addMol("I3 -|三碘陰離子|三碘錯離子", "I", "sp³d", ["直線型","Linear"], "180°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]},{elem:"I",x:-100,y:0,z:0},{elem:"I",x:100,y:0,z:0}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("ICl2 -|二氯碘離子", "I", "sp³d", ["直線型","Linear"], "180°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0},{x:0,y:-0.5,z:0.866},{x:0,y:-0.5,z:-0.866}]}, {elem:"Cl",x:-90,y:0,z:0}, {elem:"Cl",x:90,y:0,z:0}], [[0,1],[0,2]], null, null, "Dinfh");
-addMol("ICl4 -|四氯碘離子", "I", "sp³d²", ["平面四邊形","Square Planar"], "90°", "-", "-", [{elem:"I",x:0,y:0,z:0,lp3d:[{x:0,y:1,z:0}, {x:0,y:-1,z:0}]}, {elem:"Cl",x:90,y:0,z:0}, {elem:"Cl",x:-90,y:0,z:0}, {elem:"Cl",x:0,y:0,z:90}, {elem:"Cl",x:0,y:0,z:-90}], [[0,1],[0,2],[0,3],[0,4]], null, null, "D4h");
-addMol("BF4 -|四氟硼酸根", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("B","F", 70), [[0,1],[0,2],[0,3],[4,0,"coordinate"]], null, null, "Td");
-addMol("AlCl4 -|四氯鋁酸根", "Al", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("Al","Cl", 80), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-addMol("BH4 -|硼氫化離子", "B", "sp³", ["四面體","Tetrahedral"], "109.5°", "-", "-", getTetra("B","H", 50), [[0,1],[0,2],[0,3],[0,4]], null, null, "Td");
-
-// --- 9. 酸根與含氧酸 ---
-// --- 酸根與含氧酸 (修正離子鍵距離與鍵級顯示) ---
-addMol("H2SO4|硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "10.3", "337", [], [], {
-    "H2SO4|硫酸": { pg: "C2", mp: "10.3", bp: "337", desc: "<strong>硫酸</strong><br>工業之母，具強脫水性與氧化性，由兩個配位鍵 (S→O) 與兩個 S-OH 構成，分子電中性。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:2},{elem:"O",x:-60,y:-30,z:35,lpCount:2},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[3,5],[4,6]] },
-    "HSO4 -|硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>硫酸氫根</strong><br>酸式鹽陰離子，水溶液呈強酸性，S-O⁻ 端帶有負電荷。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:2},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "SO4 2-|硫酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>硫酸根</strong><br>正四面體結構，化學性質穩定，兩個 S-O⁻ 端顯示粉紅電子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "NaHSO4|硫酸氫鈉": { pg: "Cs", mp: "58 (分解)", bp: "-", desc: "<strong>硫酸氫鈉</strong><br>溶於水呈強酸性，常用於清潔劑或降低 pH 值。", atoms: [{elem:"S",x:-20,y:0,z:0},{elem:"O",x:-20,y:68,z:0,lpCount:3},{elem:"O",x:-20,y:-25,z:-63,lpCount:3},{elem:"O",x:40,y:-30,z:35,lpCount:3},{elem:"O",x:-80,y:-30,z:35,lpCount:2},{elem:"H",x:-105,y:-5,z:60},{elem:"Na",x:100,y:40,z:0,r:15}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "KHSO4|硫酸氫鉀": { pg: "Cs", mp: "197", bp: "-", desc: "<strong>硫酸氫鉀</strong><br>易溶於水呈強酸性，加熱失水可製備焦硫酸鉀。", atoms: [{elem:"S",x:-20,y:0,z:0},{elem:"O",x:-20,y:68,z:0,lpCount:3},{elem:"O",x:-20,y:-25,z:-63,lpCount:3},{elem:"O",x:40,y:-30,z:35,lpCount:3},{elem:"O",x:-80,y:-30,z:35,lpCount:2},{elem:"H",x:-105,y:-5,z:60},{elem:"K",x:110,y:40,z:0,r:22}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"],[4,5]] },
-    "CaSO4|硫酸鈣|石膏": { pg: "Td", mp: "1460", bp: "-", desc: "<strong>硫酸鈣 (石膏)</strong><br>微溶於水，廣泛用於建築材料、模型製作與作為豆腐凝固劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Ca",x:0,y:0,z:100,r:20,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "BaSO4|硫酸鋇|重晶石": { pg: "Td", mp: "1580", bp: "-", desc: "<strong>硫酸鋇 (重晶石)</strong><br>極難溶於水與酸，無毒且密度大，醫學上用於消化道X光攝影(鋇餐)。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Ba",x:0,y:0,z:110,r:25,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "CuSO4|硫酸銅": { pg: "Td", mp: "110 (失水)", bp: "-", desc: "<strong>硫酸銅</strong><br>無水物為白色，吸水後變藍色(五水合)，常用於游泳池殺菌、波爾多液原料與電鍍。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Cu",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "FeSO4|硫酸亞鐵|綠礬": { pg: "Td", mp: "64 (失水)", bp: "-", desc: "<strong>硫酸亞鐵 (綠礬)</strong><br>淺綠色晶體，常用於醫療補血劑(鐵劑)、水處理絮凝劑與還原劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Fe",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "ZnSO4|硫酸鋅|皓礬": { pg: "Td", mp: "100 (失水)", bp: "500 (分解)", desc: "<strong>硫酸鋅 (皓礬)</strong><br>無色針狀晶體，用於製造人造纖維、木材防腐與農業微量元素肥料。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Zn",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] },
-    "MgSO4|硫酸鎂|瀉鹽": { pg: "Td", mp: "1124", bp: "-", desc: "<strong>硫酸鎂 (瀉鹽)</strong><br>易溶於水，醫療上作為瀉劑或緩解子癇，生活中常用於泡澡浴鹽放鬆肌肉。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:68,z:0,lpCount:3},{elem:"O",x:0,y:-25,z:-63,lpCount:3},{elem:"O",x:60,y:-30,z:35,lpCount:3},{elem:"O",x:-60,y:-30,z:35,lpCount:3},{elem:"Mg",x:0,y:0,z:100,r:18,lpCount:0}], bonds: [[0,1,"coordinate"],[0,2,"coordinate"],[0,3,"single"],[0,4,"single"]] }
-}, null, "-", "acid");
-
-addMol("H2SO3|亞硫酸系列", "S", "sp³", ["角錐形","Pyramidal"], "106°", "-", "不穩定", [], [], {
-"H2SO3|亞硫酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞硫酸</strong><br>僅存在於水溶液中的二元弱酸，極不穩定。具有強還原性與漂白能力，受熱或久置易分解出二氧化硫氣體。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"O",x:0,y:-30,z:61},{elem:"H",x:-90,y:-38,z:-12},{elem:"H",x:90,y:-38,z:-12}], bonds: [[0,1],[0,2],[0,3,"double"],[1,4],[2,5]] },
-"HSO3 -|亞硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>亞硫酸氫根</strong><br>亞硫酸的第一級電離產物，為兩性離子。在酸性環境中不穩定，廣泛存在於亞硫酸氫鹽溶液中，具抗氧化性質。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"H",x:-90,y:-38,z:-12}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4]] },
-"SO3 2-|亞硫酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞硫酸根</strong><br>亞硫酸的完全電離產物，中心硫原子有一對孤對電子。具有強還原性，易被空氣中的氧氧化成硫酸根。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39}], bonds: [[0,1,"double"],[0,2],[0,3]] },
-"Na2SO3|亞硫酸鈉": { pg: "C3v", mp: "33.4 (分解)", bp: "-", desc: "<strong>亞硫酸鈉</strong><br>常見的亞硫酸鹽，為白色粉末，易溶於水。常用作還原劑、防腐劑以及攝影顯影劑的保護劑。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"Na",x:-85,y:-32,z:-82},{elem:"Na",x:85,y:-32,z:-82}], bonds: [[0,1,"double"],[0,2],[0,3],[4,2,"ionic_thin"],[5,3,"ionic_thin"]] },
-"NaHSO3|亞硫酸氫鈉": { pg: "Cs", mp: "150 (分解)", bp: "-", desc: "<strong>亞硫酸氫鈉</strong><br>亞硫酸的酸式鹽，為白色結晶粉末，有二氧化硫的刺激氣氣味。常用於漂白織物、食品防腐及處理工業廢水。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"H",x:-90,y:-38,z:-12},{elem:"Na",x:85,y:-32,z:-82}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[5,3,"ionic_thin"]] },
-"CaSO3|亞硫酸鈣": { pg: "C3v", mp: "600 (分解)", bp: "-", desc: "<strong>亞硫酸鈣</strong><br>白色結晶粉末，微溶於水。主要用作食品防腐劑、消毒劑，也是煙氣脫硫工藝中的常見產物。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"O",x:0,y:-30,z:61},{elem:"O",x:-56,y:-28,z:-39},{elem:"O",x:56,y:-28,z:-39},{elem:"Ca",x:0,y:-32,z:-87}], bonds: [[0,1,"double"],[0,2],[0,3],[4,2,"ionic_thin"],[4,3,"ionic_thin"]] }
-}, null, "-", "acid");
-
-addMol("H2S2O3|硫代硫酸系列", "S", "sp³", ["四面體","Tetrahedral"], "109.5°", "-78 (分解)", "-", [], [], {
-    "H2S2O3|硫代硫酸": { pg: "Cs", mp: "-78", bp: "-", desc: "<strong>硫代硫酸</strong><br>不穩定酸，中心S連接另一個外圍S原子。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60},{elem:"H",x:-85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5],[4,6]] },
-    "HS2O3 -|硫代硫酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>硫代硫酸氫根</strong><br>結構類似硫酸氫根但一個O被S取代。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"H",x:85,y:5,z:60}], bonds: [[0,1,"double"],[0,2,"double"],[0,3],[0,4],[3,5]] },
-    "S2O3 2-|硫代硫酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>硫代硫酸根</strong><br>具還原性，中心硫原子與外圍硫形成雙鍵。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[0,4,"single"]] },
-    "Na2S2O3|硫代硫酸鈉|大蘇打|海波": { pg: "C3v", mp: "48.3", bp: "100 (分解)", desc: "<strong>硫代硫酸鈉 (海波)</strong><br>Na⁺ 位於結構外側，無實體鍵連線。", atoms: [{elem:"S",x:0,y:0,z:0},{elem:"S",x:0,y:80,z:0},{elem:"O",x:0,y:-25,z:-63},{elem:"O",x:60,y:-30,z:35},{elem:"O",x:-60,y:-30,z:35},{elem:"Na",x:100,y:20,z:0,r:15},{elem:"Na",x:-100,y:20,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[0,4,"single"]] }
-}, null, "-", "acid");
-
-addMol("H2CO3|碳酸系列", "C", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-", "不穩定", [], [], {
-    "H2CO3|碳酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>碳酸</strong><br>二質子弱酸，存在於汽水中。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[2,4],[3,5]] },
-    "HCO3 -|碳酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>碳酸氫根</strong><br>帶-1價電荷，小蘇打的主要成分。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] },
-    "CO3 2-|碳酸根": { pg: "D3h", mp: "-", bp: "-", desc: "<strong>碳酸根</strong><br>帶-2價電荷，共振結構。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "CaCO3|碳酸鈣|灰石": { pg: "D3h", mp: "825 (分解)", bp: "-", desc: "<strong>碳酸鈣</strong><br>Ca²⁺ 位於碳酸根平面上方。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Ca",x:0,y:0,z:90,r:20,lpCount:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "MgCO3|碳酸鎂": { pg: "D3h", mp: "350 (分解)", bp: "-", desc: "<strong>碳酸鎂</strong><br>Mg²⁺ 位於碳酸根平面上方。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Mg",x:0,y:0,z:90,r:18,lpCount:0}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "Na2CO3|碳酸鈉|蘇打": { pg: "D3h", mp: "851", bp: "-", desc: "<strong>碳酸鈉 (蘇打)</strong><br>兩個 Na⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"Na",x:100,y:-20,z:0,r:15},{elem:"Na",x:-100,y:-20,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "K2CO3|碳酸鉀|草木灰": { pg: "D3h", mp: "891", bp: "-", desc: "<strong>碳酸鉀</strong><br>兩個 K⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"K",x:100,y:-20,z:0,r:22},{elem:"K",x:-100,y:-20,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"single"],[0,3,"single"]] },
-    "NaHCO3|碳酸氫鈉|小蘇打": { pg: "Cs", mp: "50 (分解)", bp: "-", desc: "<strong>碳酸氫鈉</strong><br>Na⁺ 位於外側。", atoms: [{elem:"C",x:0,y:0,z:0},{elem:"O",x:0,y:70,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"O",x:-60,y:-35,z:0},{elem:"H",x:-90,y:-10,z:0},{elem:"Na",x:100,y:-20,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[3,4]] }
-}, null, "-", "acid");
-
-addMol("HNO3|硝酸系列", "N", "sp²", ["平面三角形","Trigonal Planar"], "120°", "-42", "83", [], [], {
-    "HNO3|硝酸": { pg: "Cs", mp: "-42", bp: "83", desc: "<strong>硝酸</strong><br>強酸及強氧化劑。光照易分解產生紅棕色 NO₂。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0,lpCount:2}, {elem:"H",x:90,y:-15,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3], [3,4]] },
-    "NO3 -|硝酸根": { pg: "D3h", mp: "-", bp: "-", desc: "<strong>硝酸根</strong><br>具有高度對稱的平面結構 (共振)。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "KNO3|硝酸鉀|硝石": { pg: "D3h", mp: "334", bp: "400 (分解)", desc: "<strong>硝酸鉀</strong><br>俗稱硝石。K⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"K",x:0,y:0,z:90,r:22,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "NaNO3|硝酸鈉|智利硝石": { pg: "D3h", mp: "308", bp: "380 (分解)", desc: "<strong>硝酸鈉</strong><br>俗稱智利硝石。Na⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"Na",x:0,y:0,z:85,r:15,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "AgNO3|硝酸銀": { pg: "D3h", mp: "212", bp: "444 (分解)", desc: "<strong>硝酸銀</strong><br>Ag⁺ 位於結構上方。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:0}, {elem:"O",x:0,y:68,z:0}, {elem:"O",x:-59,y:-34,z:0}, {elem:"O",x:59,y:-34,z:0}, {elem:"Ag",x:0,y:0,z:90,r:18,lpCount:0}], bonds: [[0,1,"double"], [0,2,"coordinate"], [0,3]] },
-    "Cu(NO3)2|硝酸銅": { pg: "D3h", mp: "114", bp: "170 (分解)", desc: "<strong>硝酸銅</strong><br>藍色晶體。Cu²⁺ 。", atoms: [{elem:"Cu",x:0,y:0,z:0,r:18,lpCount:0}, {elem:"N",x:-90,y:0,z:0,lpCount:0}, {elem:"O",x:-145,y:0,z:0}, {elem:"O",x:-60,y:45,z:35}, {elem:"O",x:-60,y:-45,z:-35}, {elem:"N",x:90,y:0,z:0,lpCount:0}, {elem:"O",x:145,y:0,z:0}, {elem:"O",x:60,y:45,z:35}, {elem:"O",x:60,y:-45,z:-35}], bonds: [[1,2,"double"],[1,3,"coordinate"],[1,4,"single"], [5,6,"double"],[5,7,"coordinate"],[5,8,"single"]] }
-}, null, "-", "acid");
-
-addMol("HNO2|亞硝酸系列", "N", "sp²", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
-    "HNO2|亞硝酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞硝酸</strong><br>弱酸，N原子上有一對孤對電子。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"H",x:90,y:-10,z:0}], bonds: [[0,1,"double"],[0,2],[2,3]] },
-    "NO2 -|亞硝酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>亞硝酸根</strong><br>常見的防腐劑成分(亞硝酸鹽)，結構呈V型。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0}], bonds: [[0,1,"double"],[0,2]] },
-    "NaNO2|亞硝酸鈉": { pg: "C2v", mp: "271", bp: "320 (分解)", desc: "<strong>亞硝酸鈉</strong><br>Na⁺ 位於外側。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"Na",x:-80,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2]] },
-    "KNO2|亞硝酸鉀": { pg: "C2v", mp: "440 (分解)", bp: "-", desc: "<strong>亞硝酸鉀</strong><br>K⁺ 位於外側。", atoms: [{elem:"N",x:0,y:0,z:0,lpCount:1},{elem:"O",x:0,y:65,z:0},{elem:"O",x:60,y:-35,z:0},{elem:"K",x:-85,y:0,z:0,r:22}], bonds: [[0,1,"double"],[0,2]] }
-}, null, "-", "acid");
-
-addMol("H3PO4|磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "42.4", "213 (分解)", [], [], {
-    "H3PO4|磷酸": { pg: "Cs", mp: "42.4", bp: "213 (分解)", desc: "<strong>磷酸</strong><br>三質子酸，含一個 P=O 與三個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55},{elem:"H",x:0,y:-10,z:-90}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6],[4,7]] },
-    "H2PO4 -|磷酸二氫根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>磷酸二氫根</strong><br>帶 -1 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55},{elem:"H",x:-80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
-    "HPO4 2-|磷酸氫根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>磷酸氫根</strong><br>帶 -2 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:80,y:-10,z:55}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "PO4 3-|磷酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>磷酸根</strong><br>正四面體結構，四個 P-O 鍵長均等。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Ca3(PO4)2|磷酸鈣": { pg: "Td", mp: "1670", bp: "-", desc: "<strong>磷酸鈣</strong><br>難溶於水，變量原料。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"Ca",x:100,y:40,z:0,r:20},{elem:"Ca",x:-100,y:40,z:0,r:20},{elem:"Ca",x:0,y:-100,z:0,r:20}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Na3PO4|磷酸鈉": { pg: "Td", mp: "1583", bp: "-", desc: "<strong>磷酸鈉</strong><br>強鹼性鹽類。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"O",x:0,y:-30,z:-60},{elem:"Na",x:90,y:30,z:0,r:15},{elem:"Na",x:-90,y:30,z:0,r:15},{elem:"Na",x:0,y:-90,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Ca(H2PO4)2|磷酸二氫鈣": { pg: "C2v", mp: "109 (分解)", bp: "-", desc: "<strong>磷酸二氫鈣</strong><br>肥料成分。", atoms: [{elem:"Ca",x:0,y:0,z:0,r:20}, {elem:"P",x:-100,y:0,z:0}, {elem:"O",x:-100,y:65,z:0}, {elem:"O",x:-100,y:-30,z:55}, {elem:"O",x:-145,y:-30,z:-30}, {elem:"O",x:-55,y:-30,z:-30}, {elem:"H",x:-145,y:-60,z:55}, {elem:"H",x:-175,y:-10,z:-30}, {elem:"P",x:100,y:0,z:0}, {elem:"O",x:100,y:65,z:0}, {elem:"O",x:100,y:-30,z:55}, {elem:"O",x:145,y:-30,z:-30}, {elem:"O",x:55,y:-30,z:-30}, {elem:"H",x:145,y:-60,z:55}, {elem:"H",x:175,y:-10,z:-30}], bonds: [[1,2,"double"],[1,3],[1,4],[1,5],[3,6],[4,7], [8,9,"double"],[8,10],[8,11],[8,12],[10,13],[11,14]] }
-}, null, "-", "acid");
-
-addMol("H3PO3|亞磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "73.6", "200 (分解)", [], [], {
-    "H3PO3|亞磷酸": { pg: "Cs", mp: "73.6", bp: "200 (分解)", desc: "<strong>亞磷酸</strong><br>二質子酸，含一個 P-H 鍵 (不解離) 與兩個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60},{elem:"H",x:-90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5],[3,6]] },
-    "H2PO3 -|亞磷酸氫根": { pg: "Cs", mp: "-", bp: "-", desc: "<strong>亞磷酸二氫根</strong><br>帶 -1 價電荷，P-H 鍵保留。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35,lpCount:2},{elem:"O",x:-55,y:-30,z:35,lpCount:2},{elem:"H",x:0,y:-40,z:-60},{elem:"H",x:90,y:-10,z:60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "HPO3 2-|亞磷酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞磷酸氫根 (亞磷酸根)</strong><br>帶 -2 價電荷，P-H 鍵通常不解離。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"H",x:0,y:-40,z:-60}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "Na2HPO3|亞磷酸鈉": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>亞磷酸鈉</strong><br>正鹽，P 直接連有一個 H。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:55,y:-30,z:35},{elem:"O",x:-55,y:-30,z:35},{elem:"H",x:0,y:-40,z:-60},{elem:"Na",x:90,y:20,z:0,r:15},{elem:"Na",x:-90,y:20,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
-}, null, "-", "acid");
-
-addMol("H3PO2|次磷酸系列", "P", "sp³", ["四面體","Tetrahedral"], "109.5°", "26.5", "130 (分解)", [], [], {
-    "H3PO2|次磷酸": { pg: "Cs", mp: "26.5", bp: "130 (分解)", desc: "<strong>次磷酸</strong><br>單質子酸，含兩個 P-H 鍵與一個 P-OH。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60,lpCount:2},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35},{elem:"H",x:0,y:-10,z:-100}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4],[2,5]] },
-    "H2PO2 -|次磷酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>次磷酸根</strong><br>帶 -1 價電荷。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] },
-    "NaH2PO2|次磷酸鈉": { pg: "C2v", mp: "90 (一水合)", bp: "-", desc: "<strong>次磷酸鈉</strong><br>強還原劑。", atoms: [{elem:"P",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:0,y:-30,z:-60},{elem:"H",x:55,y:-35,z:35},{elem:"H",x:-55,y:-35,z:35},{elem:"Na",x:-85,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2],[0,3],[0,4]] }
-}, null, "-", "acid");
-
-addMol("HClO4|過氯酸系列", "Cl", "sp³", ["四面體","Tetrahedral"], "109.5°", "-112", "19 (分解)", [], [], {
-    "HClO4|過氯酸": { pg: "Cs", mp: "-112", bp: "19 (分解)", desc: "<strong>過氯酸</strong><br>最強無機酸之一，正四面體結構。氯原子與三個氧形成雙鍵，與一個羥基形成單鍵。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35,lpCount:2},{elem:"O",x:-58,y:-25,z:35,lpCount:2},{elem:"O",x:0,y:-25,z:-65,lpCount:2},{elem:"H",x:0,y:-5,z:-105}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"],[4,5]] },
-    "ClO4 -|過氯酸根": { pg: "Td", mp: "-", bp: "-", desc: "<strong>過氯酸根</strong><br>化學性質穩定，四個 Cl-O 鍵長因共振而均等 (-1價)。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"]] },
-    "Mg(ClO4)2|過氯酸鎂": { pg: "Td", mp: "251", bp: "-", desc: "<strong>過氯酸鎂</strong><br>極強的脫水劑（乾燥劑）。", atoms: [{elem:"Mg",x:0,y:0,z:0,r:20,lpCount:0}, {elem:"Cl",x:-130,y:0,z:0,lpCount:0},{elem:"O",x:-130,y:68,z:0},{elem:"O",x:-72,y:-25,z:35},{elem:"O",x:-188,y:-25,z:35},{elem:"O",x:-130,y:-25,z:-65}, {elem:"Cl",x:130,y:0,z:0,lpCount:0},{elem:"O",x:130,y:68,z:0},{elem:"O",x:72,y:-25,z:35},{elem:"O",x:188,y:-25,z:35},{elem:"O",x:130,y:-25,z:-65}], bonds: [[1,2,"double"],[1,3,"double"],[1,4,"double"],[1,5,"single"], [6,7,"double"],[6,8,"double"],[6,9,"double"],[6,10,"single"]] },
-    "KClO4|過氯酸鉀": { pg: "Td", mp: "610 (分解)", bp: "-", desc: "<strong>過氯酸鉀</strong><br>強氧化劑，用於煙火（紫色火焰）。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65},{elem:"K",x:0,y:0,z:95,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"]] },
-    "NH4ClO4|過氯酸銨": { pg: "Td", mp: "240 (分解)", bp: "-", desc: "<strong>過氯酸銨 (AP)</strong><br>固體火箭燃料氧化劑。", atoms: [{elem:"Cl",x:0,y:0,z:0,lpCount:0},{elem:"O",x:0,y:68,z:0},{elem:"O",x:58,y:-25,z:35},{elem:"O",x:-58,y:-25,z:35},{elem:"O",x:0,y:-25,z:-65},{elem:"N",x:110,y:0,z:0,r:18},{elem:"H",x:110,y:40,z:0},{elem:"H",x:110,y:-20,z:35},{elem:"H",x:110,y:-20,z:-35},{elem:"H",x:145,y:0,z:0}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"double"],[0,4,"single"],[5,6],[5,7],[5,8],[5,9]] }
-}, null, "-", "acid");
-
-addMol("HClO3|氯酸系列", "Cl", "sp³", ["角錐形","Pyramidal"], "107°", "-20", "分解", [], [], {
-    "HClO3|氯酸": { pg: "Cs", mp: "-20", bp: "分解", desc: "<strong>氯酸</strong><br>強酸，具有強氧化性，中心有一對孤對電子。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "ClO3 -|氯酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>氯酸根</strong><br>三角錐形結構，常用於火藥與炸藥。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KClO3|氯酸鉀": { pg: "C3v", mp: "356", bp: "400 (分解)", desc: "<strong>氯酸鉀</strong><br>強氧化劑，受熱分解產生氧氣。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:0,z:85,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "NaClO3|氯酸鈉": { pg: "C3v", mp: "248", bp: "300 (分解)", desc: "<strong>氯酸鈉</strong><br>工業漂白與除草劑原料。", atoms: [{elem:"Cl",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"Na",x:0,y:0,z:80,r:15}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-addMol("HClO2|亞氯酸系列", "Cl", "sp³", ["角形","Bent"], "111°", "-", "不穩定", [], [], {
-    "HClO2|亞氯酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>亞氯酸</strong><br>弱酸，結構呈V型，中心有兩對孤對電子。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0,lpCount:2},{elem:"H",x:-90,y:-20,z:0}], bonds: [[0,1,"double"],[0,2,"single"],[2,3]] },
-    "ClO2 -|亞氯酸根": { pg: "C2v", mp: "-", bp: "-", desc: "<strong>亞氯酸根</strong><br>V型結構，常用於漂白劑。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0}], bonds: [[0,1,"double"],[0,2,"single"]] },
-    "NaClO2|亞氯酸鈉": { pg: "C2v", mp: "170 (分解)", bp: "-", desc: "<strong>亞氯酸鈉</strong><br>高效漂白劑，反應可生成二氧化氯 (ClO₂)。", atoms: [{elem:"Cl",x:0,y:5,z:0,lpCount:2},{elem:"O",x:55,y:-35,z:0},{elem:"O",x:-55,y:-35,z:0},{elem:"Na",x:-90,y:0,z:0,r:15}], bonds: [[0,1,"double"],[0,2,"single"]] }
-}, null, "-", "acid");
-
-addMol("HClO|次氯酸系列", "O", "sp³", ["角形","Bent"], "104.5°", "-", "不穩定", [], [], {
-    "HClO|次氯酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>次氯酸</strong><br>弱酸，殺菌力強，結構 H-O-Cl。", atoms: [{elem:"O",x:0,y:10,z:0,lpCount:2},{elem:"Cl",x:65,y:-25,z:0},{elem:"H",x:-35,y:-20,z:0}], bonds: [[0,1],[0,2]] },
-    "ClO -|次氯酸根": { pg: "Cinfv", mp: "-", bp: "-", desc: "<strong>次氯酸根</strong><br>漂白水有效成分。", atoms: [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3}], bonds: [[0,1]] },
-    "NaClO|次氯酸鈉|漂白水": { pg: "Cinfv", mp: "18 (五水合)", bp: "分解", desc: "<strong>次氯酸鈉 (漂白水)</strong><br>家用漂白劑。Na⁺ 與 ClO⁻ 之間為離子鍵。", atoms: [{elem:"Cl",x:-35,y:0,z:0,lpCount:3},{elem:"O",x:35,y:0,z:0,lpCount:3},{elem:"Na",x:85,y:0,z:0,r:15}], bonds: [[0,1]] },
-    "Ca(ClO)2|次氯酸鈣|漂白粉": { pg: "Cinfv", mp: "100 (分解)", bp: "-", desc: "<strong>次氯酸鈣</strong><br>漂白粉主要成分。", atoms: [{elem:"Cl",x:-55,y:0,z:0,lpCount:3},{elem:"O",x:15,y:0,z:0,lpCount:3},{elem:"Ca",x:60,y:0,z:0,r:20},{elem:"O",x:105,y:0,z:0,lpCount:3},{elem:"Cl",x:175,y:0,z:0,lpCount:3}], bonds: [[0,1], [3,4]] }
-}, null, "-", "acid");
-
-addMol("HBrO3|溴酸系列", "Br", "sp³", ["角錐形","Pyramidal"], "107°", "-", "不穩定", [], [], {
-    "HBrO3|溴酸": { pg: "Cs", mp: "-", bp: "不穩定", desc: "<strong>溴酸</strong><br>強酸，中心有一對孤對電子。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "BrO3 -|溴酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>溴酸根</strong><br>三角錐形結構。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KBrO3|溴酸鉀": { pg: "C3v", mp: "350 (分解)", bp: "-", desc: "<strong>溴酸鉀</strong><br>強氧化劑，K⁺ 位於外側。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:60,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "AgBrO3|溴酸銀": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>溴酸銀</strong><br>難溶於水的白色固體。", atoms: [{elem:"Br",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"Ag",x:0,y:60,z:0,r:18}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-addMol("HIO3|碘酸系列", "I", "sp³", ["角錐形","Pyramidal"], "107°", "110", "分解", [], [], {
-    "HIO3|碘酸": { pg: "Cs", mp: "110", bp: "分解", desc: "<strong>碘酸</strong><br>穩定的白色固體，強酸。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28,lpCount:2},{elem:"H",x:-90,y:-20,z:-55}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"],[3,4]] },
-    "IO3 -|碘酸根": { pg: "C3v", mp: "-", bp: "-", desc: "<strong>碘酸根</strong><br>三角錐形結構。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] },
-    "KIO3|碘酸鉀": { pg: "C3v", mp: "560 (分解)", bp: "-", desc: "<strong>碘酸鉀</strong><br>食鹽加碘成分，K⁺ 位於外側。", atoms: [{elem:"I",x:0,y:15,z:0,lpCount:1},{elem:"O",x:0,y:-40,z:50},{elem:"O",x:48,y:-40,z:-28},{elem:"O",x:-48,y:-40,z:-28},{elem:"K",x:0,y:60,z:0,r:22}], bonds: [[0,1,"double"],[0,2,"double"],[0,3,"single"]] }
-}, null, "-", "acid");
-
-
-
-//錯合物
-addMol("Fe(C5H5)2|二茂鐵|Ferrocene", "C", "sp³", ["幾何形狀","Shape"], "角度", "172-174", "249", [{elem:"C",x:-51,y:-35,z:-82},{elem:"Fe",x:0,y:0,z:0},{elem:"C",x:-48,y:36,z:-83},{elem:"C",x:16,y:-60,z:-82},{elem:"C",x:60,y:-4,z:-83},{elem:"C",x:21,y:55,z:-84},{elem:"C",x:25,y:57,z:81},{elem:"C",x:-44,y:43,z:82},{elem:"C",x:-52,y:-28,z:84},{elem:"C",x:12,y:-58,z:84},{elem:"C",x:61,y:-5,z:83},{elem:"H",x:-96,y:-65,z:-80,r:0},{elem:"H",x:-91,y:70,z:-84,r:0},{elem:"H",x:30,y:-112,z:-80,r:0},{elem:"H",x:114,y:-7,z:-82,r:0},{elem:"H",x:40,y:106,z:-85,r:0},{elem:"H",x:48,y:106,z:80,r:0},{elem:"H",x:-84,y:79,z:81,r:0},{elem:"H",x:-99,y:-55,z:84,r:0},{elem:"H",x:23,y:-111,z:84,r:0},{elem:"H",x:115,y:-11,z:82,r:0},{elem:"",x:0,y:-2,z:-82,r:0},{elem:"",x:0,y:2,z:83,r:0}], [[1,21],[1,22],[0,2],[2,5],[5,4],[4,3],[3,0],[6,7],[7,8],[8,9],[9,10],[10,6]], null, null, "D5h");
-addMol("MyMol|Co(NH3)4Cl2", "C", "sp³", ["幾何形狀","Shape"], "角度", "-", "-", [{elem:"N",x:-100,y:0,z:0},{elem:"Cl",x:0,y:100,z:0},{elem:"H",x:-117,y:-39,z:18},{elem:"N",x:100,y:0,z:0},{elem:"H",x:116,y:-40,z:17},{elem:"H",x:122,y:35,z:22},{elem:"N",x:0,y:-100,z:0},{elem:"H",x:-120,y:36,z:23},{elem:"H",x:-115,y:2,z:-44},{elem:"H",x:-40,y:-117,z:8},{elem:"Co",x:0,y:0,z:0},{elem:"H",x:35,y:-119,z:7},{elem:"H",x:-3,y:-112,z:-45},{elem:"H",x:115,y:2,z:-45},{elem:"N",x:0,y:0,z:-100},{elem:"Cl",x:0,y:0,z:100},{elem:"H",x:36,y:23,z:-117},{elem:"H",x:-39,y:20,z:-116},{elem:"H",x:2,y:-43,z:-118}], [[0,2],[0,7],[0,8],[0,10],[1,10],[3,4],[3,5],[3,13],[3,10],[6,9],[6,10],[6,11],[6,12],[14,10],[14,16],[14,17],[14,18],[15,10]], null, null, "");
-
-
-
-
-
-
-//共價網狀固體
-addMol("Si|矽|矽晶體", "Si", "sp³", ["正四面體網狀", "Tetrahedral Network"], "109.5°", "1414", "3265", 
-    [{elem:"Si",x:-92.4,y:92.4,z:-92.4,lpCount:0},{elem:"Si",x:-92.4,y:92.4,z:92.4,lpCount:0},{elem:"Si",x:-92.4,y:-92.4,z:-92.4,lpCount:0},{elem:"Si",x:-92.4,y:-92.4,z:92.4,lpCount:0},{elem:"Si",x:92.4,y:92.4,z:-92.4,lpCount:0},{elem:"Si",x:92.4,y:92.4,z:92.4,lpCount:0},{elem:"Si",x:92.4,y:-92.4,z:-92.4,lpCount:0},{elem:"Si",x:92.4,y:-92.4,z:92.4,lpCount:0},{elem:"Si",x:-92.4,y:0,z:0,lpCount:0},{elem:"Si",x:92.4,y:0,z:0,lpCount:0},{elem:"Si",x:0,y:0,z:-92.4,lpCount:0},{elem:"Si",x:0,y:0,z:92.4,lpCount:0},{elem:"Si",x:0,y:92.4,z:0,lpCount:0},{elem:"Si",x:0,y:-92.4,z:0,lpCount:0},{elem:"Si",x:46.2,y:46.2,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:46.2,z:-46.2,lpCount:0},{elem:"Si",x:-46.2,y:-46.2,z:46.2,lpCount:0},{elem:"Si",x:46.2,y:-46.2,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:138.6,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:46.2,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:138.6,z:-138.6,lpCount:0},{elem:"Si",x:-138.6,y:138.6,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:46.2,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:138.6,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:46.2,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:-46.2,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:-138.6,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:-46.2,z:-138.6,lpCount:0},{elem:"Si",x:-46.2,y:-138.6,z:-46.2,lpCount:0},{elem:"Si",x:-138.6,y:-46.2,z:138.6,lpCount:0},{elem:"Si",x:-138.6,y:-138.6,z:46.2,lpCount:0},{elem:"Si",x:-46.2,y:-138.6,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:138.6,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:46.2,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:138.6,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:46.2,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:138.6,z:138.6,lpCount:0},{elem:"Si",x:138.6,y:138.6,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:46.2,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:-138.6,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:-46.2,z:-138.6,lpCount:0},{elem:"Si",x:138.6,y:-138.6,z:-46.2,lpCount:0},{elem:"Si",x:46.2,y:-46.2,z:138.6,lpCount:0},{elem:"Si",x:46.2,y:-138.6,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:-46.2,z:46.2,lpCount:0},{elem:"Si",x:138.6,y:-138.6,z:138.6,lpCount:0}], 
-    [[0,18],[0,19],[0,20],[1,22],[1,23],[1,24],[1,21],[2,27],[2,28],[2,26],[2,25],[3,31],[3,29],[3,30],[4,33],[4,32],[4,34],[4,35],[5,38],[5,37],[5,36],[6,39],[6,40],[6,41],[7,42],[7,43],[7,45],[7,44],[8,22],[8,15],[8,16],[8,25],[9,14],[9,35],[9,17],[9,44],[10,27],[10,15],[10,17],[10,33],[11,42],[11,24],[11,16],[11,14],[12,15],[12,14],[12,23],[12,32],[13,16],[13,28],[13,17],[13,43],[14,5],[15,0],[16,3],[17,6]], null, 
-    `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>屬於<strong>共價網狀固體</strong>。每個矽原子採取 <strong>sp³ 混成軌域</strong>，與鄰近的四個矽原子形成強大的共價鍵，並向三維空間無限延伸，形成連續的<strong>正四面體網狀結構</strong>，鍵角約為 109.5°。<br><span class="highlight-title">2. 物理性質：</span>由於原子間完全以極強的<strong>共價鍵</strong>鍵結，具有極高的熔點 (1414°C) 與硬度。不同於絕緣的金剛石，矽具有特殊的電子能隙結構，屬於重要的<strong>半導體</strong>材料。<br><span class="highlight-title">3. 化學性質：</span>化學性質穩定。在常溫下不與大部分酸鹼反應（極少數如 HF 除外），但在高溫下活性增加，可與氧氣結合形成二氧化矽 (SiO₂)。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 生活應用</div><div class="info-body"><span class="highlight-title">1. 資訊產業的核心：</span>矽是製造微處理器與各類半導體元件的基礎。透過在網狀結構中加入微量的磷 (P) 或硼 (B)，可調整其導電性，製成 N 型或 P 型半導體。<br><span class="highlight-title">2. 能源轉型 (太陽能)：</span>利用矽的<strong>光電效應</strong>，可將光能轉化為電能。純度達 99.9999% 的多晶矽或單晶矽是製造太陽能電池板的核心材料。<br><span class="highlight-title">3. 地殼中的分佈：</span>雖然矽在自然界中不以單質形式存在，但其化合物（如矽酸鹽、石英）是地殼中含量第二豐富的元素，是構成地球岩石圈的重要基石。</div></div>`, "Fd3m");
-addMol("C", "C", "sp³", ["同素異形體", "Allotrope"], "-", "-", "-", [], [], {
-    "C|金剛石|鑽石": {pg: "Fd3m",hybrid: "sp³",shape: "正四面體網狀",angle: "109.5°", mp: "3550",bp: "4827",
-        atoms: [{elem:"C",x:-82,y:82,z:0,lpCount:0},{elem:"C",x:-82,y:-82,z:0,lpCount:0},{elem:"C",x:82,y:82,z:0,lpCount:0},{elem:"C",x:82,y:-82,z:0,lpCount:0},{elem:"C",x:-82,y:0,z:-82,lpCount:0},{elem:"C",x:-82,y:0,z:82,lpCount:0},{elem:"C",x:82,y:0,z:-82,lpCount:0},{elem:"C",x:82,y:0,z:82,lpCount:0},{elem:"C",x:0,y:0,z:0,lpCount:0},{elem:"C",x:0,y:82,z:-82,lpCount:0},{elem:"C",x:0,y:82,z:82,lpCount:0},{elem:"C",x:0,y:-82,z:-82,lpCount:0},{elem:"C",x:0,y:-82,z:82,lpCount:0},{elem:"C",x:41,y:41,z:-41,lpCount:0},{elem:"C",x:-41,y:41,z:41,lpCount:0},{elem:"C",x:-41,y:-41,z:-41,lpCount:0},{elem:"C",x:41,y:-41,z:41,lpCount:0},{elem:"C",x:-122,y:122,z:41,lpCount:0},{elem:"C",x:-122,y:41,z:-41,lpCount:0},{elem:"C",x:-41,y:122,z:-41,lpCount:0},{elem:"C",x:-122,y:-41,z:41,lpCount:0},{elem:"C",x:-122,y:-122,z:-41,lpCount:0},{elem:"C",x:-41,y:-122,z:41,lpCount:0},{elem:"C",x:41,y:122,z:41,lpCount:0},{elem:"C",x:122,y:122,z:-41,lpCount:0},{elem:"C",x:122,y:41,z:41,lpCount:0},{elem:"C",x:41,y:-122,z:-41,lpCount:0},{elem:"C",x:122,y:-41,z:-41,lpCount:0},{elem:"C",x:122,y:-122,z:41,lpCount:0},{elem:"C",x:-122,y:-41,z:-122,lpCount:0},{elem:"C",x:-41,y:41,z:-122,lpCount:0},{elem:"C",x:-122,y:41,z:122,lpCount:0},{elem:"C",x:-41,y:-41,z:122,lpCount:0},{elem:"C",x:41,y:-41,z:-122,lpCount:0},{elem:"C",x:122,y:41,z:-122,lpCount:0},{elem:"C",x:41,y:41,z:122,lpCount:0},{elem:"C",x:122,y:-41,z:122,lpCount:0},{elem:"C",x:41,y:122,z:-122,lpCount:0},{elem:"C",x:-41,y:122,z:122,lpCount:0},{elem:"C",x:-41,y:-122,z:-122,lpCount:0},{elem:"C",x:41,y:-122,z:122,lpCount:0}],
-        bonds: [[0,18],[0,19],[0,14],[0,17],[1,15],[1,22],[1,21],[1,20],[2,23],[2,13],[2,25],[2,24],[3,16],[3,26],[3,27],[3,28],[4,18],[4,15],[4,30],[4,29],[5,32],[5,20],[5,14],[5,31],[6,13],[6,33],[6,34],[6,27],[7,16],[7,36],[7,35],[7,25],[8,14],[8,16],[8,13],[8,15],[9,37],[9,19],[9,30],[9,13],[10,35],[10,14],[10,23],[10,38],[11,33],[11,26],[11,15],[11,39],[12,16],[12,32],[12,40],[12,22]],
-        desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>金剛石是著名的<strong>共價網狀固體</strong>。每個碳原子採取 <strong>sp³ 混成軌域</strong>，與鄰近的四個碳原子以強大的共價鍵結合，形成無限延伸的正四面體網狀結構。<br><span class="highlight-title">2. 物理性質：</span>由於原子間完全以極強的共價鍵連結，金剛石擁有自然界物質中最高的硬度與極高的熔點 (約 3550°C)。此外，它不具備自由電子，因此是良好的<strong>絕緣體</strong>。<br><span class="highlight-title">3. 導熱特性：</span>儘管不導電，但金剛石具備極佳的聲子傳導能力，使其導熱率遠高於一般金屬。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">💎 生活應用</div><div class="info-body"><span class="highlight-title">1. 工業切割：</span>利用其極致硬度，廣泛用於鑽頭、鋸片及玻璃切割工具。<br><span class="highlight-title">2. 珠寶飾品：</span>具備高折射率與色散率，經切割後能展現璀璨光澤。<br><span class="highlight-title">3. 科學研究：</span>用於製造「金剛石壓砧」，在極高壓環境下研究物質特性。</div></div>`},
-        "C|石墨|黑鉛": {pg: "Layered",hybrid: "sp²",shape: "層狀網狀結構",angle: "120°",mp: "3550",bp: "4827",
-        atoms: [{elem:"C",x:-54,y:99,z:-156,lpCount:0},{elem:"C",x:-54,y:99,z:155,lpCount:0},{elem:"C",x:-111,y:1,z:-156,lpCount:0},{elem:"C",x:-111,y:1,z:155,lpCount:0},{elem:"C",x:-167,y:-97,z:-156,lpCount:0},{elem:"C",x:-167,y:-97,z:155,lpCount:0},{elem:"C",x:59,y:99,z:-156,lpCount:0},{elem:"C",x:59,y:99,z:155,lpCount:0},{elem:"C",x:2,y:1,z:-156,lpCount:0},{elem:"C",x:2,y:1,z:155,lpCount:0},{elem:"C",x:-54,y:-97,z:-156,lpCount:0},{elem:"C",x:-54,y:-97,z:155,lpCount:0},{elem:"C",x:172,y:99,z:-156,lpCount:0},{elem:"C",x:172,y:99,z:155,lpCount:0},{elem:"C",x:115,y:1,z:-156,lpCount:0},{elem:"C",x:115,y:1,z:155,lpCount:0},{elem:"C",x:59,y:-97,z:-156,lpCount:0},{elem:"C",x:59,y:-97,z:155,lpCount:0},{elem:"C",x:-54,y:99,z:-1,lpCount:0},{elem:"C",x:-111,y:1,z:-1,lpCount:0},{elem:"C",x:-167,y:-97,z:-1,lpCount:0},{elem:"C",x:59,y:99,z:-1,lpCount:0},{elem:"C",x:2,y:1,z:-1,lpCount:0},{elem:"C",x:-54,y:-97,z:-1,lpCount:0},{elem:"C",x:172,y:99,z:-1,lpCount:0},{elem:"C",x:115,y:1,z:-1,lpCount:0},{elem:"C",x:59,y:-97,z:-1,lpCount:0},{elem:"C",x:-54,y:34,z:-155,lpCount:0},{elem:"C",x:-111,y:-64,z:-155,lpCount:0},{elem:"C",x:59,y:34,z:-155,lpCount:0},{elem:"C",x:2,y:-64,z:-155,lpCount:0},{elem:"C",x:2,y:67,z:1,lpCount:0},{elem:"C",x:-54,y:-31,z:1,lpCount:0},{elem:"C",x:115,y:67,z:1,lpCount:0},{elem:"C",x:59,y:-31,z:1,lpCount:0},{elem:"C",x:-111,y:132,z:-155,lpCount:0},{elem:"C",x:2,y:132,z:-155,lpCount:0},{elem:"C",x:-111,y:132,z:156,lpCount:0},{elem:"C",x:2,y:132,z:156,lpCount:0},{elem:"C",x:-54,y:34,z:156,lpCount:0},{elem:"C",x:-167,y:34,z:-155,lpCount:0},{elem:"C",x:-167,y:34,z:156,lpCount:0},{elem:"C",x:-111,y:-64,z:156,lpCount:0},{elem:"C",x:-224,y:-64,z:-155,lpCount:0},{elem:"C",x:-167,y:-162,z:-155,lpCount:0},{elem:"C",x:-224,y:-64,z:156,lpCount:0},{elem:"C",x:-167,y:-162,z:156,lpCount:0},{elem:"C",x:115,y:132,z:-155,lpCount:0},{elem:"C",x:115,y:132,z:156,lpCount:0},{elem:"C",x:59,y:34,z:156,lpCount:0},{elem:"C",x:2,y:-64,z:156,lpCount:0},{elem:"C",x:-54,y:-162,z:-155,lpCount:0},{elem:"C",x:-54,y:-162,z:156,lpCount:0},{elem:"C",x:229,y:132,z:-155,lpCount:0},{elem:"C",x:172,y:34,z:-155,lpCount:0},{elem:"C",x:229,y:132,z:156,lpCount:0},{elem:"C",x:172,y:34,z:156,lpCount:0},{elem:"C",x:115,y:-64,z:-155,lpCount:0},{elem:"C",x:115,y:-64,z:156,lpCount:0},{elem:"C",x:59,y:-162,z:-155,lpCount:0},{elem:"C",x:59,y:-162,z:156,lpCount:0},{elem:"C",x:-54,y:165,z:1,lpCount:0},{elem:"C",x:-111,y:67,z:1,lpCount:0},{elem:"C",x:-167,y:-31,z:1,lpCount:0},{elem:"C",x:-224,y:-129,z:1,lpCount:0},{elem:"C",x:-111,y:-129,z:1,lpCount:0},{elem:"C",x:59,y:165,z:1,lpCount:0},{elem:"C",x:2,y:-129,z:1,lpCount:0},{elem:"C",x:172,y:165,z:1,lpCount:0},{elem:"C",x:229,y:67,z:1,lpCount:0},{elem:"C",x:172,y:-31,z:1,lpCount:0},{elem:"C",x:115,y:-129,z:1,lpCount:0}],
-        bonds: [[0,36,"double"],[0,35],[0,27],[1,38,"double"],[1,37],[1,39],[2,27,"double"],[2,40],[2,28],[3,41],[3,39,"double"],[3,42],[4,28],[4,43],[4,44],[5,42],[5,45],[5,46],[6,36],[6,47,"double"],[6,29],[7,48,"double"],[7,38],[7,49],[8,27],[8,29,"double"],[8,30],[9,49,"double"],[9,39],[9,50],[10,30],[10,28,"double"],[10,51],[11,50],[11,42,"double"],[11,52],[12,47],[12,53],[12,54,"double"],[13,48],[13,55],[13,56,"double"],[14,54],[14,29],[14,57,"double"],[15,56],[15,49],[15,58,"double"],[16,30,"double"],[16,57],[16,59],[17,50,"double"],[17,58],[17,60],[18,62,"double"],[18,31],[18,61],[19,63,"double"],[19,32],[19,62],[20,64],[20,65,"double"],[20,63],[21,31,"double"],[21,33],[21,66],[22,32,"double"],[22,34],[22,31],[23,65],[23,67,"double"],[23,32],[24,33],[24,69],[24,68],[25,34],[25,70],[25,33,"double"],[26,67],[26,71],[26,34,"double"]],
-        desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>碳原子採 <strong>sp² 混成</strong>，層內成六角蜂巢狀；層間靠微弱<strong>凡得瓦力</strong>結合。<br><span class="highlight-title">2. 導電特性：</span>擁有離域 π 電子，是唯一能導電的非金屬網狀固體。</div></div>`}
-}, null, "-", "allotrope");
-
-
-
-addMol("SiO2|二氧化矽|石英", "Si", "sp³", ["正四面體網狀結構", "Tetrahedral Network"], "109.5° (Si)", "1713", "2230", 
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    _0x14287e(0xe9),
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x1e1),
+    "P",
+    "sp³",
+    [_0x14287e(0x281), "Pyramidal"],
+    _0x14287e(0x102),
+    _0x14287e(0x332),
+    _0x14287e(0x2ad),
     [
-        {elem:"Si",x:-64,y:98,z:-36,lpCount:0},{elem:"Si",x:-176,y:-97,z:-36,lpCount:0},{elem:"Si",x:161,y:98,z:-36,lpCount:0},{elem:"Si",x:49,y:-97,z:-36,lpCount:0},{elem:"Si",x:-221,y:8,z:46,lpCount:0},{elem:"Si",x:4,y:8,z:46,lpCount:0},{elem:"Si",x:229,y:8,z:46,lpCount:0},{elem:"Si",x:-108,y:-6,z:-119,lpCount:0},{elem:"Si",x:-108,y:-6,z:129,lpCount:0},{elem:"Si",x:117,y:-6,z:-119,lpCount:0},{elem:"Si",x:117,y:-6,z:129,lpCount:0},
-        {elem:"O",x:-106,y:44,z:-64,lpCount:2},{elem:"O",x:119,y:44,z:-64,lpCount:2},{elem:"O",x:-21,y:71,z:18,lpCount:2},{elem:"O",x:204,y:71,z:18,lpCount:2},{elem:"O",x:-40,y:-15,z:101,lpCount:2},{elem:"O",x:185,y:-15,z:101,lpCount:2},{elem:"O",x:-153,y:17,z:74,lpCount:2},{elem:"O",x:72,y:17,z:74,lpCount:2},{elem:"O",x:-218,y:-42,z:-9,lpCount:2},{elem:"O",x:7,y:-42,z:-9,lpCount:2},{elem:"O",x:-134,y:-70,z:-91,lpCount:2},{elem:"O",x:91,y:-70,z:-91,lpCount:2},{elem:"O",x:-106,y:152,z:-9,lpCount:2},{elem:"O",x:-21,y:125,z:-91,lpCount:2},{elem:"O",x:-218,y:-151,z:-64,lpCount:2},{elem:"O",x:-134,y:-124,z:18,lpCount:2},{elem:"O",x:119,y:152,z:-9,lpCount:2},{elem:"O",x:204,y:125,z:-91,lpCount:2},{elem:"O",x:7,y:-151,z:-64,lpCount:2},{elem:"O",x:91,y:-124,z:18,lpCount:2},{elem:"O",x:-246,y:71,z:18,lpCount:2},{elem:"O",x:-265,y:-15,z:101,lpCount:2},{elem:"O",x:297,y:17,z:74,lpCount:2},{elem:"O",x:232,y:-42,z:-9,lpCount:2},{elem:"O",x:-153,y:17,z:-174,lpCount:2},{elem:"O",x:-40,y:-15,z:-147,lpCount:2},{elem:"O",x:-106,y:44,z:184,lpCount:2},{elem:"O",x:-134,y:-70,z:156,lpCount:2},{elem:"O",x:72,y:17,z:-174,lpCount:2},{elem:"O",x:185,y:-15,z:-147,lpCount:2},{elem:"O",x:119,y:44,z:184,lpCount:2},{elem:"O",x:91,y:-70,z:156,lpCount:2}],
-    [[0,23],[0,11],[0,13],[0,24],[1,19],[1,25],[1,26],[1,21],[2,27],[2,12],[2,14],[2,28],[3,20],[3,29],[3,30],[3,22],[4,17],[4,31],[4,32],[4,19],[5,18],[5,13],[5,15],[5,20],[6,33],[6,14],[6,16],[6,34],[7,36],[7,21],[7,35],[7,11],[8,15],[8,38],[8,17],[8,37],[9,40],[9,22],[9,39],[9,12],[10,16],[10,42],[10,18],[10,41]], 
-    null, `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>二氧化矽 (SiO₂) 是典型的<strong>共價網狀固體</strong>。中心矽原子採取 <strong>sp³ 混成軌域</strong>，每個矽原子與 4 個氧原子結合，而每個氧原子與 2 個矽原子結合。這種 Si-O-Si 的連續橋接結構向三維空間無限延伸，形成了極其穩固的網狀架構。<br>
-            <span class="highlight-title">2. 物理性質：</span>由於原子間完全以高強度的共價鍵連結，石英具有極高的熔點 (1713°C) 與極佳的硬度。純淨的石英晶體透明且無色，屬於優良的<strong>電絕緣體</strong>與光學材料。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>化學性質極為穩定，不溶於水，也不與除氫氟酸 (HF) 外的常見酸類反應（HF 可與其反應生成 SiF₄ 氣體，常用於蝕刻玻璃）。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 工業應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 玻璃與陶瓷工業：</span>二氧化矽是製造普通玻璃、石英玻璃及陶瓷器皿的最主要原料。透過加入不同的金屬氧化物，可製造出各種功能性玻璃。<br>
-            <span class="highlight-title">2. 壓電效應：</span>石英晶體具有獨特的<strong>壓電效應</strong> (Piezoelectric effect)，即受壓時會產生電荷，通電時會產生精確的震盪頻率。這使其成為電子錶、電腦主機板及各類頻率控制器件的核心組件。<br>
-            <span class="highlight-title">3. 光學傳輸：</span>高純度的石英玻璃具有極低的光衰減率，是製造<strong>光纖</strong>的主要材料，支撐著現代全球資訊網路的數據傳輸。
-        </div>
-    </div>`, "Quartz");
-
-addMol("BN", "B", "sp² / sp³", ["同質異形體", "Polymorph"], "-", "2973", "2973", [], [], {
-    "BN|氮化硼(立體)": { pg: "F-43m", hybrid: "sp³", shape: "正四面體網狀結構", angle: "109.5°", mp: "2973", bp: "2973", isIonic: true,
-    atoms: [{elem:"B",x:-83,y:83,z:-83,lpCount:0},{elem:"B",x:-83,y:83,z:83,lpCount:0},{elem:"B",x:-83,y:-83,z:-83,lpCount:0},{elem:"B",x:-83,y:-83,z:83,lpCount:0},{elem:"B",x:83,y:83,z:-83,lpCount:0},{elem:"B",x:83,y:83,z:83,lpCount:0},{elem:"B",x:83,y:-83,z:-83,lpCount:0},{elem:"B",x:83,y:-83,z:83,lpCount:0},{elem:"B",x:-83,y:0,z:0,lpCount:0},{elem:"B",x:83,y:0,z:0,lpCount:0},{elem:"B",x:0,y:83,z:0,lpCount:0},{elem:"B",x:0,y:-83,z:0,lpCount:0},{elem:"B",x:0,y:0,z:-83,lpCount:0},{elem:"B",x:0,y:0,z:83,lpCount:0},{elem:"N",x:-42,y:42,z:42,lpCount:0},{elem:"N",x:42,y:-42,z:42,lpCount:0},{elem:"N",x:42,y:42,z:-42,lpCount:0},{elem:"N",x:-42,y:-42,z:-42,lpCount:0},{elem:"N",x:-125,y:125,z:-125,lpCount:0},{elem:"N",x:-125,y:42,z:42,lpCount:0},{elem:"N",x:-42,y:125,z:-42,lpCount:0},{elem:"N",x:-42,y:42,z:-125,lpCount:0},{elem:"N",x:-125,y:125,z:42,lpCount:0},{elem:"N",x:-125,y:42,z:125,lpCount:0},{elem:"N",x:-42,y:125,z:125,lpCount:0},{elem:"N",x:-125,y:-42,z:-125,lpCount:0},{elem:"N",x:-125,y:-125,z:-42,lpCount:0},{elem:"N",x:-42,y:-125,z:-125,lpCount:0},{elem:"N",x:-125,y:-42,z:42,lpCount:0},{elem:"N",x:-125,y:-125,z:125,lpCount:0},{elem:"N",x:-42,y:-42,z:125,lpCount:0},{elem:"N",x:-42,y:-125,z:42,lpCount:0},{elem:"N",x:42,y:125,z:-125,lpCount:0},{elem:"N",x:125,y:125,z:-42,lpCount:0},{elem:"N",x:125,y:42,z:-125,lpCount:0},{elem:"N",x:42,y:125,z:42,lpCount:0},{elem:"N",x:42,y:42,z:125,lpCount:0},{elem:"N",x:125,y:125,z:125,lpCount:0},{elem:"N",x:125,y:42,z:42,lpCount:0},{elem:"N",x:42,y:-42,z:-125,lpCount:0},{elem:"N",x:42,y:-125,z:-42,lpCount:0},{elem:"N",x:125,y:-42,z:-42,lpCount:0},{elem:"N",x:125,y:-125,z:-125,lpCount:0},{elem:"N",x:42,y:-125,z:125,lpCount:0},{elem:"N",x:125,y:-42,z:125,lpCount:0},{elem:"N",x:125,y:-125,z:42,lpCount:0}],
-    bonds: [[18,0,"coordinate"],[0,19],[0,21],[0,20],[24,1,"coordinate"],[1,23],[1,22],[27,2,"coordinate"],[2,26],[2,25],[30,3,"coordinate"],[3,31],[3,28],[3,29],[33,4,"coordinate"],[4,34],[4,32],[36,5,"coordinate"],[5,38],[5,37],[5,35],[39,6,"coordinate"],[6,40],[6,41],[6,42],[43,7,"coordinate"],[7,45],[7,44],[14,8,"coordinate"],[8,17],[8,19],[8,28],[16,9,"coordinate"],[9,38],[9,15],[9,41],[14,10,"coordinate"],[10,35],[10,16],[10,20],[31,11,"coordinate"],[11,17],[11,15],[11,40],[17,12,"coordinate"],[12,16],[12,39],[12,21],[30,13,"coordinate"],[13,15],[13,36],[13,14],[14,1],[15,7],[16,4],[17,2]],
-    desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>立方氮化硼 (c-BN) 具有與金剛石類似的<strong>閃鋅礦結構</strong>，原子採取 <strong>sp³ 混成軌域</strong>。每個 B 原子與 4 個 N 原子以強共價鍵結合（其中 1/4 為配位鍵），形成無限延伸的網狀固體，其硬度極高，在自然界中僅次於金剛石。<br><span class="highlight-title">2. 物理與化學性質：</span>具有極佳的<strong>熱穩定性</strong>，在 1000°C 以上的高溫空氣中仍不易被氧化，且對鐵族金屬表現出極高的化學惰性，優於金剛石。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 工業應用</div><div class="info-body"><span class="highlight-title">1. 超硬切削工具：</span>由於其高硬度與耐高溫性，c-BN 是加工硬化鋼與高溫合金最理想的切削刀具材料。<br><span class="highlight-title">2. 半導體封裝：</span>具備優異的熱導率與絕緣性，是高性能電子組件理想的基板材料。</div></div>` },
-    "BN|氮化硼(平面層狀)": { 
-    pg: "Layered", hybrid: "sp²", shape: "層狀網狀結構", angle: "120°", mp: "2973", bp: "2973", isIonic: true,
-    atoms: [{elem:"B",x:-74,y:90,z:-176,lpCount:0},{elem:"B",x:-74,y:90,z:176,lpCount:0},{elem:"B",x:-132,y:-10,z:-176,lpCount:0},{elem:"B",x:-132,y:-10,z:176,lpCount:0},{elem:"B",x:-189,y:-109,z:-176,lpCount:0},{elem:"B",x:-189,y:-109,z:176,lpCount:0},{elem:"B",x:41,y:90,z:-176,lpCount:0},{elem:"B",x:41,y:90,z:176,lpCount:0},{elem:"B",x:-17,y:-10,z:-176,lpCount:0},{elem:"B",x:-17,y:-10,z:176,lpCount:0},{elem:"B",x:-74,y:-109,z:-176,lpCount:0},{elem:"B",x:-74,y:-109,z:176,lpCount:0},{elem:"B",x:156,y:90,z:-176,lpCount:0},{elem:"B",x:156,y:90,z:176,lpCount:0},{elem:"B",x:98,y:-10,z:-176,lpCount:0},{elem:"B",x:98,y:-10,z:176,lpCount:0},{elem:"B",x:41,y:-109,z:-176,lpCount:0},{elem:"B",x:41,y:-109,z:176,lpCount:0},{elem:"B",x:-17,y:123,z:0,lpCount:0},{elem:"B",x:-74,y:24,z:0,lpCount:0},{elem:"B",x:-132,y:-76,z:0,lpCount:0},{elem:"B",x:98,y:123,z:0,lpCount:0},{elem:"B",x:41,y:24,z:0,lpCount:0},{elem:"B",x:-17,y:-76,z:0,lpCount:0},{elem:"B",x:213,y:123,z:0,lpCount:0},{elem:"B",x:156,y:24,z:0,lpCount:0},{elem:"B",x:98,y:-76,z:0,lpCount:0},{elem:"N",x:-74,y:90,z:0,lpCount:0},{elem:"N",x:-132,y:-10,z:0,lpCount:0},{elem:"N",x:-189,y:-109,z:0,lpCount:0},{elem:"N",x:41,y:90,z:0,lpCount:0},{elem:"N",x:-17,y:-10,z:0,lpCount:0},{elem:"N",x:-74,y:-109,z:0,lpCount:0},{elem:"N",x:156,y:90,z:0,lpCount:0},{elem:"N",x:98,y:-10,z:0,lpCount:0},{elem:"N",x:41,y:-109,z:0,lpCount:0},{elem:"N",x:-17,y:123,z:-176,lpCount:0},{elem:"N",x:-17,y:123,z:176,lpCount:0},{elem:"N",x:-74,y:24,z:-176,lpCount:0},{elem:"N",x:-74,y:24,z:176,lpCount:0},{elem:"N",x:-132,y:-76,z:-176,lpCount:0},{elem:"N",x:-132,y:-76,z:176,lpCount:0},{elem:"N",x:98,y:123,z:-176,lpCount:0},{elem:"N",x:98,y:123,z:176,lpCount:0},{elem:"N",x:41,y:24,z:-176,lpCount:0},{elem:"N",x:41,y:24,z:176,lpCount:0},{elem:"N",x:-17,y:-76,z:-176,lpCount:0},{elem:"N",x:-17,y:-76,z:176,lpCount:0},{elem:"N",x:213,y:123,z:-176,lpCount:0},{elem:"N",x:213,y:123,z:176,lpCount:0},{elem:"N",x:156,y:24,z:-176,lpCount:0},{elem:"N",x:156,y:24,z:176,lpCount:0},{elem:"N",x:98,y:-76,z:-176,lpCount:0},{elem:"N",x:98,y:-76,z:176,lpCount:0},{elem:"N",x:-132,y:123,z:-176,lpCount:0},{elem:"N",x:-132,y:123,z:176,lpCount:0},{elem:"N",x:-189,y:24,z:-176,lpCount:0},{elem:"N",x:-189,y:24,z:176,lpCount:0},{elem:"N",x:-247,y:-76,z:-176,lpCount:0},{elem:"N",x:-189,y:-176,z:-176,lpCount:0},{elem:"N",x:-247,y:-76,z:176,lpCount:0},{elem:"N",x:-189,y:-176,z:176,lpCount:0},{elem:"N",x:-74,y:-176,z:-176,lpCount:0},{elem:"N",x:-74,y:-176,z:176,lpCount:0},{elem:"N",x:41,y:-176,z:-176,lpCount:0},{elem:"N",x:41,y:-176,z:176,lpCount:0},{elem:"N",x:-17,y:190,z:0,lpCount:0},{elem:"N",x:98,y:190,z:0,lpCount:0},{elem:"N",x:213,y:190,z:0,lpCount:0},{elem:"N",x:271,y:90,z:0,lpCount:0},{elem:"N",x:213,y:-10,z:0,lpCount:0},{elem:"N",x:156,y:-109,z:0,lpCount:0}],
-    bonds: [[38,0,"coordinate"],[36,0,"double"],[0,54,"single"],[39,1,"coordinate"],[37,1,"double"],[1,55,"single"],[40,2,"coordinate"],[38,2,"double"],[2,56,"single"],[41,3,"coordinate"],[39,3,"double"],[3,57,"single"],[59,4,"double"],[4,40,"coordinate"],[4,58,"single"],[61,5,"double"],[41,5,"coordinate"],[5,60,"single"],[44,6,"double"],[36,6,"coordinate"],[6,42,"single"],[45,7,"double"],[43,7,"coordinate"],[7,37,"single"],[46,8,"double"],[38,8,"coordinate"],[8,44,"single"],[47,9,"double"],[39,9,"coordinate"],[9,45,"single"],[62,10,"double"],[40,10,"coordinate"],[10,46,"single"],[63,11,"double"],[41,11,"coordinate"],[11,47,"single"],[48,12,"double"],[50,12,"coordinate"],[12,42,"single"],[49,13,"double"],[51,13,"coordinate"],[13,43,"single"],[50,14,"double"],[52,14,"coordinate"],[14,44,"single"],[51,15,"double"],[53,15,"coordinate"],[15,45,"single"],[46,16,"double"],[64,16,"coordinate"],[16,52,"single"],[47,17,"double"],[65,17,"coordinate"],[17,53,"single"],[66,18,"coordinate"],[18,27,"double"],[18,30,"single"],[27,19,"coordinate"],[19,28,"double"],[19,31,"single"],[28,20,"coordinate"],[20,29,"double"],[20,32,"single"],[67,21,"coordinate"],[21,30,"double"],[21,33,"single"],[30,22,"coordinate"],[22,31,"double"],[22,34,"single"],[31,23,"coordinate"],[23,32,"double"],[23,35,"single"],[68,24,"coordinate"],[24,33,"double"],[24,69,"single"],[33,25,"coordinate"],[25,34,"double"],[25,70,"single"],[34,26,"coordinate"],[26,35,"double"],[26,71,"single"]],
-    desc: `<div class="info-section"><div class="info-title">⚗️ 物質性質</div><div class="info-body"><span class="highlight-title">1. 立體結構：</span>六方氮化硼 (h-BN) 被稱為<strong>「白石墨」</strong>。層內原子採 <strong>sp² 混成</strong>成六角網狀，層間靠凡得瓦力結合。與石墨不同，B 與 N 的電負度差異導致電子較為定域化。<br><span class="highlight-title">2. 物理特性：</span>與石墨最大的不同在於它是優良的<strong>電絕緣體</strong>。同時具備極佳的耐高溫性、化學穩定性與潤滑性，且外觀呈白色。</div></div><div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;"><div class="info-title">🏭 生活應用</div><div class="info-body"><span class="highlight-title">1. 高溫潤滑劑：</span>在石墨失效的高溫環境下，h-BN 仍能提供穩定的潤滑效果，常用於航太與鑄造業。<br><span class="highlight-title">2. 化妝品添加：</span>由於其細膩的粉末感與安全性，被廣泛用於粉餅與眼影中以增加延展性。</div></div>` }
-}, null, "-", "polymorph");
-
-
-
-
-
-//碳簇
-addMol("C36|碳36|富勒烯", "C", "sp³", ["籠狀結構 (12個五邊形, 8個六邊形)", "Cage (12 Pentagons, 8 Hexagons)"], "120° (彎曲)", "N/A (昇華)", "N/A", 
+      { elem: "P", x: 0x0, y: 0x14, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "Cl", x: 0x0, y: -0xf, z: 0x44 },
+      { elem: "Cl", x: 0x3b, y: -0xf, z: -0x22 },
+      { elem: "Cl", x: -0x3b, y: -0xf, z: -0x22 },
+    ],
     [
-    {elem:"C",x:63,y:50,z:-87},{elem:"C",x:-63,y:50,z:-87},{elem:"C",x:-31,y:96,z:-56},{elem:"C",x:32,y:96,z:-55},{elem:"C",x:114,y:31,z:-54},{elem:"C",x:115,y:-32,z:-55},{elem:"C",x:114,y:-64,z:0},{elem:"C",x:114,y:63,z:0},{elem:"C",x:113,y:31,z:54},{elem:"C",x:113,y:-32,z:54},
-    {elem:"C",x:-32,y:95,z:55},{elem:"C",x:32,y:96,z:56},{elem:"C",x:64,y:101,z:0},{elem:"C",x:-64,y:99,z:-1},{elem:"C",x:32,y:-96,z:56},{elem:"C",x:63,y:-101,z:0},{elem:"C",x:-31,y:-95,z:56},{elem:"C",x:64,y:-50,z:88},{elem:"C",x:32,y:-96,z:-56},{elem:"C",x:64,y:-50,z:-88},
-    {elem:"C",x:-31,y:-95,z:-56},{elem:"C",x:-63,y:-99,z:0},{elem:"C",x:-64,y:-50,z:-87},{elem:"C",x:-32,y:0,z:-112},{elem:"C",x:32,y:0,z:-112},{elem:"C",x:-114,y:-62,z:-1},{elem:"C",x:-115,y:-31,z:-55},{elem:"C",x:-115,y:32,z:-55},{elem:"C",x:-113,y:-32,z:55},{elem:"C",x:32,y:0,z:113},
-    {elem:"C",x:-32,y:0,z:112},{elem:"C",x:-63,y:-50,z:88},{elem:"C",x:63,y:50,z:88},{elem:"C",x:-64,y:50,z:87},{elem:"C",x:-115,y:32,z:54},{elem:"C",x:-116,y:63,z:0}
-],
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    "<div\x20class=\x22info-section\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>⚗️\x20物質性質</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>中心磷原子採取\x20<strong>sp³\x20混成</strong>。由於具有一對未共用電子對\x20(Lone\x20Pair)，其對鍵結電子的斥力較大，導致\x20P-Cl\x20鍵角被壓縮至約\x20<strong>100°</strong>，形成<strong>三角錐形</strong>結構。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20物理性質：</span>常溫下為無色或微黃色的液體，會發煙。具有較低的沸點與強烈刺鼻味，可溶於苯、氯仿等有機溶劑。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20化學性質：</span>P-Cl\x20鍵極性大且反應性極高，遇水會劇烈<strong>水解</strong>並放熱，生成亞磷酸\x20(H₃PO₃)\x20與鹽酸霧。因磷原子上有一對孤對電子，可作為<strong>路易斯鹼</strong>參與配位反應。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20<div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>🏭\x20生活應用</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20除草劑原料\x20(嘉磷塞)：</span>工業上最大宗的用途是作為中間體，用於合成廣效性除草劑<strong>嘉磷塞\x20(Glyphosate)</strong>，這是目前全球農業使用量最大的農藥之一。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20有機合成\x20(氯化劑)：</span>在製藥與有機化學實驗室中，它是不可或缺的試劑。專門用來將有機分子中的<strong>羥基\x20(-OH)</strong>\x20取代為氯原子，或是將羧酸轉化為活性極高的醯氯，是合成染料與藥物的重要步驟。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20塑膠添加劑：</span>可用於製造含磷的<strong>阻燃劑</strong>與塑化劑。這些添加劑能讓電子產品的塑膠外殼在受熱時不易燃燒，大幅提升產品安全性。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>",
+    _0x14287e(0x1cf),
+  ),
+  addMol(
+    "CO2|二氧化碳|乾冰",
+    "C",
+    "sp",
+    ["直線型", _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    _0x14287e(0x1fc),
+    _0x14287e(0x2a6),
+    getLinear("C", "O", 0x46),
     [
-    [0,4],[0,3,"double"],[0,24],[1,27],[1,2,"double"],[1,23],[2,3],[2,13],[3,12],[4,7],[4,5,"double"],[5,6],[5,19],[6,15],[6,9,"double"],[7,12,"double"],[7,8],[8,32,"double"],[8,9],[10,11,"double"],
-    [10,33],[10,13],[11,12],[11,32],[13,35,"double"],[14,16,"double"],[14,17],[14,15],[15,18,"double"],[16,21],[17,9],[17,29],[18,20],[18,19],[19,24,"double"],[20,21,"double"],[20,22],[21,25],[22,26],[22,23,"double"],
-    [23,24],[25,26],[25,28,"double"],[26,27,"double"],[27,35],[28,31],[28,34],[29,30,"double"],[29,32],[30,31],[30,33],[31,16],[33,34,"double"],[34,35]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C36 屬於<strong>富勒烯 (Fullerenes)</strong> 家族中的小尺寸成員。其結構由 36 個碳原子組成封閉籠狀，根據歐拉定律包含 <strong>12 個五邊形</strong>與 <strong>8 個六邊形</strong>。與 C60 相比，C36 的表面曲率更大，導致其碳原子雖然接近 <strong>sp² 混成</strong>，但帶有明顯的張力。<br>
-            <span class="highlight-title">2. 物理性質：</span>通常呈深色固體，具有高度的化學活性能夠進行加成反應。由於其對稱性（此模型為 <strong>D6h</strong>），電子雲分布呈現獨特的電子特性，被認為在超導體材料開發中具有潛力。<br>
-            <span class="highlight-title">3. 幾何穩定性：</span>在 C36 的結構中，五邊形相互鄰接的機率較高（違反離散五邊形規則 IPR），這使得它比 C60 更不穩定，但在特定條件下（如氣相合成）仍可穩定存在。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米電子元件：</span>由於 C36 的獨特曲率與離域電子特性，科學家正研究其作為奈米級<strong>分子元件</strong>的可能性，例如場效電晶體或量子點材料。<br>
-            <span class="highlight-title">2. 超導材料前驅物：</span>如同摻雜鹼金屬的 C60，C36 在特定排列下可展現出高臨界溫度的<strong>超導性</strong>，是未來低損耗輸電與量子計算的重要候選材料。<br>
-            <span class="highlight-title">3. 高能燃料添加劑：</span>碳籠結構儲存了大量的化學能，在極端條件下的燃燒效率極高，目前正探索其在航空航天推進劑中的應用價值。
-        </div>
-    </div>`, "D6h");
-
-addMol("C40|碳40|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 10個六邊形)", "Cage (12 Pentagons, 10 Hexagons)"], "120° (彎曲)", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, "double"],
+      [0x0, 0x2, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    _0x14287e(0x2eb),
+  ),
+  addMol(
+    _0x14287e(0x209),
+    "C",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-111.6",
+    _0x14287e(0x2ee),
+    getLinear("C", "S", 0x4b),
     [
-    {elem:"C",x:114,y:53,z:46},{elem:"C",x:135,y:0,z:24},{elem:"C",x:114,y:-53,z:46},{elem:"C",x:64,y:-55,z:86},{elem:"C",x:33,y:0,z:105},{elem:"C",x:64,y:55,z:86},{elem:"C",x:51,y:-124,z:11},{elem:"C",x:102,y:-91,z:-3},{elem:"C",x:-31,y:-104,z:67},{elem:"C",x:30,y:-104,z:67},
-    {elem:"C",x:-65,y:56,z:86},{elem:"C",x:-35,y:0,z:105},{elem:"C",x:-66,y:-56,z:87},{elem:"C",x:131,y:0,z:-39},{elem:"C",x:107,y:57,z:-56},{elem:"C",x:54,y:57,z:-92},{elem:"C",x:107,y:-57,z:-56},{elem:"C",x:54,y:-57,z:-92},{elem:"C",x:31,y:0,z:-109},{elem:"C",x:0,y:-130,z:-26},
-    {elem:"C",x:0,y:-92,z:-79},{elem:"C",x:52,y:125,z:11},{elem:"C",x:0,y:130,z:-26},{elem:"C",x:102,y:92,z:-3},{elem:"C",x:1,y:92,z:-79},{elem:"C",x:-52,y:57,z:-92},{elem:"C",x:-51,y:125,z:11},{elem:"C",x:-101,y:91,z:-2},{elem:"C",x:-104,y:56,z:-55},{elem:"C",x:-30,y:0,z:-110},
-    {elem:"C",x:-30,y:105,z:67},{elem:"C",x:30,y:105,z:67},{elem:"C",x:-53,y:-57,z:-92},{elem:"C",x:-104,y:-56,z:-54},{elem:"C",x:-129,y:0,z:-36},{elem:"C",x:-51,y:-125,z:11},{elem:"C",x:-102,y:-91,z:-1},{elem:"C",x:-116,y:53,z:47},{elem:"C",x:-138,y:0,z:26},{elem:"C",x:-117,y:-54,z:48}
-],
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    "Dinfh",
+  ),
+  addMol(
+    _0x14287e(0x156),
+    "Be",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "399",
+    _0x14287e(0x1b4),
+    getLinear("Be", "Cl", 0x4b),
     [
-    [0,1],[0,23,"double"],[0,5],[1,2,"double"],[1,13],[2,7],[2,3],[3,9,"double"],[3,4],[4,5,"double"],[4,11],[5,31],[6,7,"double"],[6,9],[6,19],[7,16],[8,9],[8,12,"double"],[8,35],[10,30],
-    [10,37],[10,11,"double"],[11,12],[12,39],[13,14,"double"],[13,16],[14,23],[14,15],[15,18],[15,24,"double"],[16,17,"double"],[17,18],[17,20],[18,29,"double"],[19,35,"double"],[19,20],[20,32,"double"],[21,23],[21,31],[21,22,"double"],
-    [22,24],[24,25],[25,29],[25,28,"double"],[26,22],[26,27],[26,30],[27,37],[27,28],[28,34],[29,32],[30,31,"double"],[32,33],[33,36],[33,34,"double"],[34,38],[35,36],[36,39,"double"],[37,38,"double"],[38,39]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C40 是高度對稱的籠狀碳簇，屬於<strong>富勒烯 (Fullerenes)</strong> 家族。結構包含 <strong>12 個五邊形</strong>與 <strong>10 個六邊形</strong>。其原子採取 <strong>sp² 混成</strong>，但由於籠徑較小，碳架構帶有強烈的張力，使其化學活性高於著名的 C60。<br>
-            <span class="highlight-title">2. 物理性質：</span>在高溫與高壓環境下合成，外觀通常呈暗褐色或黑色固體。具有半導體特性，且電子親和力強。由於其特殊的 <strong>C2v 對稱性</strong>，電子在表面分布具有特定的不均勻性。<br>
-            <span class="highlight-title">3. 分子特性：</span>C40 的穩定性受「離散五邊形規則」(IPR) 限制，雖然較不穩定，但在籠內填充特定原子（如金屬鑭）形成內嵌富勒烯時，穩定性會顯著提升。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 生活應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 光伏材料：</span>由於其優異的電子接受能力，C40 及其衍生物被研究用於<strong>有機太陽能電池</strong>中作為受體材料，提高光電轉換效率。<br>
-            <span class="highlight-title">2. 分子傳感器：</span>其獨特的籠狀開孔與高活性表面，可對特定的氣體分子或離子產生敏感的電訊號變化，適合製作奈米級的精密化學傳感器。<br>
-            <span class="highlight-title">3. 藥物載體：</span>內嵌金屬的 C40 籠結構生物毒性極低，可作為醫療影像（如 MRI）的顯影劑載體，或是作為標靶藥物的微型運輸艙。
-        </div>
-    </div>`, "C2v");
-
-addMol("C50|碳50|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 15個六邊形)", "Cage (12 Pentagons, 15 Hexagons)"], "108°~120° (彎曲)", "N/A (昇華)", "N/A", 
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    _0x14287e(0x2eb),
+  ),
+  addMol(
+    "BCl3|三氯化硼",
+    "B",
+    _0x14287e(0x307),
+    [_0x14287e(0x25d), _0x14287e(0x1d2)],
+    "120°",
+    _0x14287e(0x295),
+    _0x14287e(0x1e9),
+    getTrigPlanar("B", "Cl", 0x4b),
     [
-    {elem:"C",x:112,y:76,z:-55},{elem:"C",x:135,y:17,z:-55},{elem:"C",x:150,y:-9,z:0},{elem:"C",x:60,y:92,z:-89},{elem:"C",x:106,y:-29,z:-89},{elem:"C",x:53,y:-14,z:-121},{elem:"C",x:29,y:46,z:-122},{elem:"C",x:108,y:-84,z:-55},{elem:"C",x:134,y:-68,z:0},{elem:"C",x:58,y:-122,z:-56},
-    {elem:"C",x:5,y:-110,z:-89},{elem:"C",x:2,y:-54,z:-121},{elem:"C",x:38,y:-144,z:0},{elem:"C",x:59,y:-122,z:56},{elem:"C",x:108,y:-83,z:56},{elem:"C",x:107,y:-29,z:89},{elem:"C",x:53,y:-14,z:121},{elem:"C",x:6,y:-110,z:89},{elem:"C",x:3,y:-54,z:121},{elem:"C",x:113,y:76,z:56},
-    {elem:"C",x:60,y:92,z:89},{elem:"C",x:136,y:18,z:56},{elem:"C",x:30,y:46,z:121},{elem:"C",x:-34,y:42,z:122},{elem:"C",x:25,y:134,z:56},{elem:"C",x:-38,y:130,z:56},{elem:"C",x:-69,y:85,z:89},{elem:"C",x:-103,y:-39,z:89},{elem:"C",x:-51,y:-20,z:122},{elem:"C",x:105,y:105,z:0},
-    {elem:"C",x:54,y:140,z:0},{elem:"C",x:-68,y:132,z:0},{elem:"C",x:-38,y:131,z:-56},{elem:"C",x:25,y:135,z:-56},{elem:"C",x:-116,y:94,z:0},{elem:"C",x:-148,y:-23,z:0},{elem:"C",x:-137,y:4,z:56},{elem:"C",x:-121,y:65,z:56},{elem:"C",x:-46,y:-129,z:56},{elem:"C",x:-126,y:-81,z:0},
-    {elem:"C",x:-99,y:-94,z:55},{elem:"C",x:-51,y:-19,z:-122},{elem:"C",x:-103,y:-39,z:-89},{elem:"C",x:-99,y:-94,z:-56},{elem:"C",x:-46,y:-129,z:-56},{elem:"C",x:-24,y:-148,z:0},{elem:"C",x:-120,y:66,z:-56},{elem:"C",x:-69,y:86,z:-90},{elem:"C",x:-35,y:43,z:-123},{elem:"C",x:-136,y:5,z:-56}
-],
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    _0x14287e(0x274),
+  ),
+  addMol(
+    _0x14287e(0x1d0),
+    "S",
+    _0x14287e(0x307),
+    ["角形", _0x14287e(0x330)],
+    _0x14287e(0x213),
+    _0x14287e(0x1f3),
+    _0x14287e(0x2e2),
     [
-    [0,1],[0,29],[0,3,"double"],[1,2,"double"],[1,4],[2,8],[2,21],[3,33],[3,6],[4,7,"double"],[4,5],[5,6,"double"],[5,11],[6,48],[7,9],[7,8],[8,14,"double"],[9,12,"double"],[9,10],[10,44],
-    [10,11,"double"],[11,41],[12,45],[12,13],[13,14],[13,17,"double"],[14,15],[15,21],[15,16,"double"],[16,22],[16,18],[17,38],[17,18],[18,28,"double"],[19,21,"double"],[19,29],[19,20],[20,24,"double"],[20,22],[22,23,"double"],
-    [23,26],[23,28],[24,25],[24,30],[25,31,"double"],[25,26],[26,37,"double"],[27,36,"double"],[27,28],[27,40],[29,30,"double"],[30,33],[31,32],[32,33,"double"],[32,47],[34,31],[34,37],[34,46],[35,39],[35,49],
-    [35,36],[36,37],[38,40,"double"],[38,45],[39,40],[39,43,"double"],[41,48,"double"],[41,42],[42,49,"double"],[42,43],[43,44],[44,45,"double"],[46,49],[46,47,"double"],[47,48]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C50 是<strong>富勒烯 (Fullerenes)</strong> 家族中的中等尺寸成員。其分子結構包含 <strong>12 個五邊形</strong>與 <strong>15 個六邊形</strong>。根據計算，其能量最低的異構物具有 <strong>D5h 對稱性</strong>，外型呈現類似橄欖球的對稱拉伸感。<br>
-            <span class="highlight-title">2. 物理性質：</span>通常存在於碳弧放電產生的炭黑中，具有半導體與非線性的光學特性。由於表面曲率不均勻，其電子親和力分布在不同的碳原子位點上有所差異。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>C50 違反了「離散五邊形規則」(IPR)，因為在 50 個原子的框架下，五邊形不可避免地會相互鄰接。這使得 C50 具有極高的化學反應活性，通常需要透過外接基團或內部嵌入金屬原子（內嵌富勒烯）來使其穩定存在。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 未來應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米超分子化學：</span>C50 高活性的表面使其成為優良的<strong>分子建築基元</strong>，可用於合成具有特殊光電功能的複雜超分子陣列。<br>
-            <span class="highlight-title">2. 電子受體材料：</span>與 C60 類似，C50 具有捕捉電子的能力，目前正探索其在<strong>有機場效電晶體 (OFET)</strong> 與新一代柔性電子元件中的應用潛力。<br>
-            <span class="highlight-title">3. 原子存儲技術：</span>作為<strong>內嵌富勒烯 (Endohedral Fullerenes)</strong> 的優質籠型，C50 內部空間可封裝單個金屬原子或小分子，這在量子計算與單分子磁體研究中具有高度價值。
-        </div>
-    </div>`, "D5h");
-
-addMol("C60|碳60|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 20個六邊形)", "Cage (12 Pentagons, 20 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      { elem: "S", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "O", x: 0x37, y: -0x1e, z: 0x0 },
+      { elem: "O", x: -0x37, y: -0x1e, z: 0x0 },
+    ],
     [
-    {elem:"C",x:99,y:-27,z:119},{elem:"C",x:139,y:-8,z:73},{elem:"C",x:59,y:14,z:145},{elem:"C",x:138,y:53,z:54},{elem:"C",x:142,y:66,z:-8},{elem:"C",x:144,y:-55,z:31},{elem:"C",x:149,y:-42,z:-31},{elem:"C",x:148,y:19,z:-51},{elem:"C",x:-20,y:-62,z:144},{elem:"C",x:20,y:-103,z:117},
-    {elem:"C",x:-1,y:-3,z:158},{elem:"C",x:80,y:-86,z:105},{elem:"C",x:108,y:-104,z:51},{elem:"C",x:-12,y:-138,z:75},{elem:"C",x:16,y:-156,z:20},{elem:"C",x:76,y:-138,z:8},{elem:"C",x:-96,y:38,z:119},{elem:"C",x:-115,y:-21,z:105},{elem:"C",x:-39,y:47,z:146},{elem:"C",x:-77,y:-71,z:117},
-    {elem:"C",x:-72,y:-118,z:75},{elem:"C",x:-148,y:-18,z:51},{elem:"C",x:-143,y:-66,z:8},{elem:"C",x:-105,y:-116,z:21},{elem:"C",x:-22,y:134,z:80},{elem:"C",x:-80,y:124,z:54},{elem:"C",x:-2,y:95,z:126},{elem:"C",x:-117,y:77,z:73},{elem:"C",x:-149,y:42,z:31},{elem:"C",x:-76,y:138,z:-8},
-    {elem:"C",x:-108,y:103,z:-51},{elem:"C",x:-145,y:55,z:-31},{elem:"C",x:98,y:94,z:80},{elem:"C",x:77,y:133,z:34},{elem:"C",x:59,y:75,z:126},{elem:"C",x:17,y:153,z:34},{elem:"C",x:-16,y:156,z:-21},{elem:"C",x:105,y:116,z:-21},{elem:"C",x:72,y:118,z:-76},{elem:"C",x:12,y:138,z:-75},
-    {elem:"C",x:-100,y:27,z:-119},{elem:"C",x:-80,y:86,z:-105},{elem:"C",x:-20,y:103,z:-118},{elem:"C",x:-59,y:-14,z:-145},{elem:"C",x:-99,y:-94,z:-79},{elem:"C",x:-140,y:-53,z:-54},{elem:"C",x:-140,y:8,z:-73},{elem:"C",x:-58,y:-75,z:-125},{elem:"C",x:23,y:-134,z:-79},{elem:"C",x:-17,y:-153,z:-34},
-    {elem:"C",x:-77,y:-133,z:-34},{elem:"C",x:2,y:-95,z:-125},{elem:"C",x:96,y:-38,z:-119},{elem:"C",x:117,y:-77,z:-73},{elem:"C",x:81,y:-125,z:-54},{elem:"C",x:39,y:-46,z:-145},{elem:"C",x:21,y:62,z:-145},{elem:"C",x:78,y:71,z:-118},{elem:"C",x:115,y:21,z:-106},{elem:"C",x:1,y:3,z:-158}
-],
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    "SO3|三氧化硫",
+    "S",
+    _0x14287e(0x307),
+    [_0x14287e(0x25d), "Trigonal\x20Planar"],
+    _0x14287e(0x329),
+    _0x14287e(0x142),
+    "44.8",
+    getTrigPlanar("S", "O", 0x44),
     [
-    [0,1,"double"],[0,11],[0,2],[1,3],[1,5],[2,10,"double"],[2,34],[3,32],[3,4,"double"],[4,37],[4,7],[5,6,"double"],[5,12],[6,7],[6,53],[7,58,"double"],[8,9,"double"],[8,10],[8,19],[9,13],
-    [9,11],[10,18],[11,12,"double"],[12,15],[13,14,"double"],[13,20],[14,49],[14,15],[15,54,"double"],[16,27],[16,18,"double"],[16,17],[17,21],[17,19,"double"],[18,26],[19,20],[20,23,"double"],[21,28,"double"],[21,22],[22,45,"double"],
-    [22,23],[23,50],[24,35,"double"],[24,26],[24,25],[25,29],[25,27,"double"],[26,34,"double"],[27,28],[28,31],[29,30,"double"],[29,36],[30,41],[30,31],[31,46,"double"],[32,34],[32,33,"double"],[33,37],[33,35],[35,36],
-    [36,39,"double"],[37,38,"double"],[38,57],[38,39],[39,42],[40,46],[40,41],[40,43,"double"],[41,42,"double"],[42,56],[43,59],[43,47],[44,45],[44,50,"double"],[44,47],[45,46],[47,51,"double"],[48,54],[48,51],[48,49,"double"],
-    [49,50],[51,55],[52,53,"double"],[52,55],[52,58],[53,54],[55,59,"double"],[56,59],[56,57,"double"],[57,58]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C60（足球烯）是富勒烯家族中最具代表性的成員。其結構由 60 個碳原子組成的封閉籠狀結構，包含 <strong>12個五邊形</strong>與 <strong>20個六邊形</strong>。這種幾何形狀在數學上稱為「截角二十面體」，具有極高的 <strong>Ih 點群</strong>對稱性。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為深紫色或黑色固體。它不溶於水，但可溶於苯、甲苯等有機溶劑。C60 具有離域 π 電子系統，展現出獨特的 3D 芳香性，且每個碳原子雖然外觀呈曲面，但仍保持 <strong>sp² 混成</strong> 特性。<br>
-            <span class="highlight-title">3. 化學穩定性：</span>化學性質相對穩定，但可進行加成反應。在特定條件下（如摻雜鹼金屬），C60 晶體可表現出高臨界溫度的<strong>超導性</strong>。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 科技應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米技術與材料：</span>C60 被廣泛用於製造光伏電池、感光材料及高效能潤滑劑。其籠狀結構可作為「分子滾珠」，減少微觀機械磨損。<br>
-            <span class="highlight-title">2. 生物醫學：</span>由於 C60 具有捕捉自由基的能力，被研究用於抗衰老、抗氧化及防輻射藥物中。此外，籠內可封裝金屬原子，作為醫療影像的<strong>顯影劑載體</strong>。<br>
-            <span class="highlight-title">3. 高端光學：</span>C60 展現出優異的非線性光學特性，可用於製造光限幅器，保護光學感測器免受強力雷射損傷。
-        </div>
-    </div>`, "Ih");
-
-addMol("C70|碳70|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 25個六邊形)", "Cage (12 Pentagons, 25 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, "double"],
+      [0x0, 0x3, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    "D3h",
+  ),
+  addMol(
+    _0x14287e(0x255),
+    "O",
+    _0x14287e(0x307),
+    ["角形", "Bent"],
+    "117°",
+    _0x14287e(0x2fc),
+    _0x14287e(0x318),
     [
-    {elem:"C",x:142,y:102,z:30},{elem:"C",x:108,y:104,z:83},{elem:"C",x:177,y:52,z:14},{elem:"C",x:108,y:55,z:121},{elem:"C",x:54,y:37,z:150},{elem:"C",x:0,y:71,z:144},{elem:"C",x:-54,y:37,z:150},{elem:"C",x:142,y:60,z:-88},{elem:"C",x:108,y:111,z:-74},{elem:"C",x:177,y:30,z:-45},
-    {elem:"C",x:108,y:132,z:-14},{elem:"C",x:54,y:154,z:11},{elem:"C",x:0,y:160,z:-23},{elem:"C",x:-55,y:154,z:11},{elem:"C",x:0,y:123,z:104},{elem:"C",x:54,y:136,z:73},{elem:"C",x:-55,y:136,z:73},{elem:"C",x:143,y:-66,z:-84},{elem:"C",x:108,y:-36,z:-128},{elem:"C",x:178,y:-33,z:-42},
-    {elem:"C",x:108,y:27,z:-130},{elem:"C",x:54,y:58,z:-142},{elem:"C",x:0,y:27,z:-158},{elem:"C",x:-54,y:58,z:-143},{elem:"C",x:0,y:137,z:-85},{elem:"C",x:54,y:112,z:-107},{elem:"C",x:-55,y:112,z:-107},{elem:"C",x:142,y:-100,z:36},{elem:"C",x:108,y:-133,z:-6},{elem:"C",x:178,y:-50,z:18},
-    {elem:"C",x:108,y:-115,z:-66},{elem:"C",x:54,y:-118,z:-99},{elem:"C",x:0,y:-142,z:-76},{elem:"C",x:-54,y:-118,z:-99},{elem:"C",x:0,y:-38,z:-156},{elem:"C",x:55,y:-67,z:-139},{elem:"C",x:-54,y:-67,z:-139},{elem:"C",x:143,y:4,z:107},{elem:"C",x:108,y:-46,z:125},{elem:"C",x:178,y:2,z:54},
-    {elem:"C",x:108,y:-98,z:89},{elem:"C",x:54,y:-131,z:81},{elem:"C",x:0,y:-115,z:112},{elem:"C",x:-54,y:-131,z:81},{elem:"C",x:0,y:-161,z:-12},{elem:"C",x:54,y:-153,z:21},{elem:"C",x:-54,y:-153,z:21},{elem:"C",x:0,y:-61,z:149},{elem:"C",x:54,y:-27,z:152},{elem:"C",x:-54,y:-27,z:152},
-    {elem:"C",x:-141,y:-100,z:36},{elem:"C",x:-108,y:-98,z:90},{elem:"C",x:-108,y:-46,z:125},{elem:"C",x:-176,y:-51,z:18},{elem:"C",x:-142,y:-66,z:-85},{elem:"C",x:-108,y:-116,z:-66},{elem:"C",x:-108,y:-133,z:-6},{elem:"C",x:-177,y:-33,z:-43},{elem:"C",x:-142,y:60,z:-89},{elem:"C",x:-108,y:27,z:-130},
-    {elem:"C",x:-108,y:-36,z:-129},{elem:"C",x:-177,y:30,z:-45},{elem:"C",x:-142,y:103,z:30},{elem:"C",x:-109,y:133,z:-15},{elem:"C",x:-109,y:112,z:-74},{elem:"C",x:-177,y:51,z:15},{elem:"C",x:-143,y:3,z:107},{elem:"C",x:-108,y:55,z:122},{elem:"C",x:-108,y:104,z:83},{elem:"C",x:-177,y:2,z:54}
-],
+      { elem: "O", x: 0x0, y: 0xa, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+      { elem: "O", x: -0x3c, y: -0x23, z: 0x0, lpCount: 0x3 },
+    ],
     [
-    [0,1,"double"],[0,10],[0,2],[1,3],[1,15],[2,9,"double"],[2,39],[3,4,"double"],[3,37],[4,5],[4,48],[5,6,"double"],[5,14],[6,67],[6,49],[7,8,"double"],[7,20],[7,9],[8,10],[8,25],
-    [9,19],[10,11,"double"],[11,12],[11,15],[12,13,"double"],[12,24],[13,63],[13,16],[14,15,"double"],[14,16],[16,68,"double"],[17,30],[17,18],[17,19,"double"],[18,20,"double"],[18,35],[19,29],[20,21],[21,22,"double"],[21,25],
-    [22,23],[22,34],[23,59,"double"],[23,26],[24,25,"double"],[24,26],[26,64,"double"],[27,40],[27,28],[27,29,"double"],[28,30,"double"],[28,45],[29,39],[30,31],[31,32,"double"],[31,35],[32,33],[32,44],[33,55,"double"],[33,36],
-    [34,36],[34,35,"double"],[36,60,"double"],[37,39,"double"],[37,38],[38,40,"double"],[38,48],[40,41],[41,42,"double"],[41,45],[42,43],[42,47],[43,51,"double"],[43,46],[44,45,"double"],[44,46],[46,56,"double"],[47,49],[47,48,"double"],[49,52,"double"],
-    [50,51],[50,56],[50,53,"double"],[51,52],[52,66],[53,57],[53,69],[54,60],[54,55],[54,57,"double"],[55,56],[57,61],[58,64],[58,59],[58,61,"double"],[59,60],[61,65],[62,68],[62,63,"double"],[62,65],
-    [63,64],[65,69,"double"],[66,69],[66,67,"double"],[67,68]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C70 是繼 C60 之後最穩定的富勒烯成員。其分子結構包含 70 個碳原子，構成一個封閉的籠狀系統，包含 <strong>12個五邊形</strong> 與 <strong>25個六邊形</strong>。與球形的 C60 不同，C70 的形狀細長，兩端較尖，中間較寬，外觀極像橄欖球，屬於 <strong>D5h</strong> 點群。<br>
-            <span class="highlight-title">2. 物理性質：</span>常溫下為紅棕色固體。由於其不對稱的電子雲分布，C70 在有機溶劑（如甲苯、二硫化碳）中的溶解度通常高於 C60。雖然整體呈現曲面，但每個碳原子仍維持離域 π 電子特性的 <strong>sp² 混成</strong>。<br>
-            <span class="highlight-title">3. 化學活性：</span>由於 C70 的不同位點曲率不一，其化學反應具有區域選擇性，特別是在極點處的活性最高。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 科技應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 光學特性：</span>C70 具有極強的非線性光學吸收能力，常用於製造光學限幅器以保護雷射設備。<br>
-            <span class="highlight-title">2. 光伏能源：</span>C70 與其衍生物是優良的電子受體材料，廣泛應用於<strong>有機太陽能電池</strong>中，能有效地捕捉並傳輸光生電子。<br>
-            <span class="highlight-title">3. 高端潤滑：</span>其獨特的橢球形結構使其在特定壓力下能作為奈米級的「分子滾珠」，提供極低摩擦係數的潤滑性能。
-        </div>
-    </div>`, "D5h");
-
-addMol("C80|碳80|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 30個六邊形)", "Cage (12 Pentagons, 30 Hexagons)"], "108°~120°", "600 (昇華)", "N/A", 
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, _0x14287e(0x27d)],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x237),
+    "N",
+    "sp²",
+    ["角形", _0x14287e(0x330)],
+    _0x14287e(0x219),
+    _0x14287e(0x1b8),
+    _0x14287e(0x2e9),
     [
-    {elem:"C",x:84,y:-96,z:114},{elem:"C",x:28,y:-104,z:143},{elem:"C",x:4,y:-54,z:173},{elem:"C",x:-13,y:-142,z:113},{elem:"C",x:1,y:-171,z:58},{elem:"C",x:57,y:-163,z:27},{elem:"C",x:98,y:-125,z:59},{elem:"C",x:-76,y:-131,z:113},{elem:"C",x:-100,y:-80,z:144},{elem:"C",x:-59,y:-42,z:174},
-    {elem:"C",x:-150,y:-53,z:116},{elem:"C",x:-53,y:-176,z:-36},{elem:"C",x:-53,y:-177,z:26},{elem:"C",x:-101,y:-152,z:59},{elem:"C",x:-150,y:-124,z:29},{elem:"C",x:-174,y:-74,z:61},{elem:"C",x:98,y:-121,z:-67},{elem:"C",x:57,y:-161,z:-38},{elem:"C",x:0,y:-167,z:-68},{elem:"C",x:-158,y:11,z:118},
-    {elem:"C",x:-116,y:49,z:148},{elem:"C",x:-67,y:21,z:176},{elem:"C",x:-107,y:105,z:120},{elem:"C",x:-198,y:-22,z:-31},{elem:"C",x:-198,y:-24,z:31},{elem:"C",x:-188,y:29,z:64},{elem:"C",x:-177,y:85,z:36},{elem:"C",x:-136,y:123,z:67},{elem:"C",x:-101,y:-148,z:-67},{elem:"C",x:-150,y:-122,z:-36},
-    {elem:"C",x:-175,y:-70,z:-65},{elem:"C",x:-49,y:133,z:121},{elem:"C",x:1,y:104,z:149},{elem:"C",x:-9,y:48,z:177},{elem:"C",x:57,y:113,z:120},{elem:"C",x:-97,y:163,z:-26},{elem:"C",x:-97,y:161,z:36},{elem:"C",x:-43,y:167,z:68},{elem:"C",x:13,y:175,z:38},{elem:"C",x:63,y:147,z:67},
-    {elem:"C",x:-188,y:32,z:-61},{elem:"C",x:-177,y:87,z:-30},{elem:"C",x:-136,y:127,z:-59},{elem:"C",x:101,y:66,z:119},{elem:"C",x:90,y:10,z:146},{elem:"C",x:35,y:2,z:175},{elem:"C",x:115,y:-40,z:115},{elem:"C",x:110,y:124,z:-28},{elem:"C",x:111,y:122,z:34},{elem:"C",x:134,y:72,z:65},
-    {elem:"C",x:158,y:22,z:33},{elem:"C",x:148,y:-34,z:61},{elem:"C",x:-43,y:171,z:-58},{elem:"C",x:13,y:177,z:-28},{elem:"C",x:63,y:151,z:-59},{elem:"C",x:133,y:76,z:-61},{elem:"C",x:158,y:24,z:-33},{elem:"C",x:147,y:-31,z:-65},{elem:"C",x:138,y:-85,z:-34},{elem:"C",x:138,y:-87,z:28},
-    {elem:"C",x:100,y:74,z:-115},{elem:"C",x:33,y:12,z:-174},{elem:"C",x:89,y:18,z:-145},{elem:"C",x:114,y:-34,z:-119},{elem:"C",x:-50,y:140,z:-113},{elem:"C",x:-11,y:58,z:-173},{elem:"C",x:0,y:113,z:-142},{elem:"C",x:56,y:120,z:-114},{elem:"C",x:-159,y:17,z:-116},{elem:"C",x:-68,y:31,z:-173},
-    {elem:"C",x:-118,y:57,z:-144},{elem:"C",x:-108,y:113,z:-114},{elem:"C",x:-77,y:-124,z:-121},{elem:"C",x:-60,y:-32,z:-175},{elem:"C",x:-101,y:-72,z:-148},{elem:"C",x:-151,y:-46,z:-118},{elem:"C",x:83,y:-90,z:-121},{elem:"C",x:3,y:-44,z:-176},{elem:"C",x:27,y:-96,z:-149},{elem:"C",x:-14,y:-136,z:-122}
-],
+      { elem: "N", x: 0x0, y: 0xa, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }], radical: !![] },
+      { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+      { elem: "O", x: -0x3c, y: -0x23, z: 0x0, lpCount: 0x3 },
+    ],
     [
-    [0,1,"double"],[0,6],[0,46],[1,2],[1,3],[2,45,"double"],[2,9],[3,4,"double"],[3,7],[4,12],[4,5],[5,6,"double"],[5,17],[6,59],[7,8,"double"],[7,13],[8,9],[8,10],[9,21,"double"],[10,15,"double"],
-    [10,19],[11,12,"double"],[11,18],[11,28],[12,13],[13,14,"double"],[14,15],[14,29],[15,24],[16,58],[16,76],[16,17,"double"],[17,18],[18,79,"double"],[19,20,"double"],[19,25],[20,21],[20,22],[21,33],[22,27,"double"],
-    [22,31],[23,24,"double"],[23,40],[23,30],[24,25],[25,26,"double"],[26,27],[26,41],[27,36],[28,72,"double"],[28,29],[29,30,"double"],[30,75],[31,32],[31,37,"double"],[32,33,"double"],[32,34],[33,45],[34,39,"double"],[34,43],
-    [35,36,"double"],[35,42],[35,52],[36,37],[37,38],[38,39],[38,53,"double"],[39,48],[40,68,"double"],[40,41],[41,42,"double"],[42,71],[43,44,"double"],[43,49],[44,45],[44,46],[46,51,"double"],[47,48,"double"],[47,55],[47,54],
-    [48,49],[49,50,"double"],[50,51],[50,56],[51,59],[52,64,"double"],[52,53],[53,54],[54,67,"double"],[55,60,"double"],[55,56],[56,57,"double"],[57,58],[57,63],[58,59,"double"],[60,62],[60,67],[61,62,"double"],[61,65],[61,77],
-    [62,63],[63,76,"double"],[64,66],[64,71],[65,66,"double"],[65,69],[66,67],[68,70],[68,75],[69,70],[69,73,"double"],[70,71,"double"],[72,74],[72,79],[73,74],[73,77],[74,75,"double"],[76,78],[77,78,"double"],[78,79]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C80 是富勒烯家族中的重要成員，其封閉籠狀結構由 80 個碳原子組成，包含 <strong>12個五邊形</strong> 與 <strong>30個六邊形</strong>。C80 具有多種異構物，其中以 <strong>Ih</strong> 和 <strong>D5h</strong> 對稱性最受關注。<br>
-            <span class="highlight-title">2. 物理性質：</span>與 C60 類似，C80 具有高度離域的 π 電子系統。在宏觀狀態下通常為暗黑色固體。其分子內部空間較大，非常適合作為金屬原子的封裝載體。<br>
-            <span class="highlight-title">3. 特殊性質：</span>純 C80 的電子結構相對不穩定，但當籠內嵌入特定金屬原子（如鈧 Sc、鑭 La）形成<strong>內嵌富勒烯</strong>時，結構會變得異常穩定，展現出獨特的磁學與電學特性。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 前端應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 內嵌富勒烯研究：</span>C80 是製造金屬內嵌富勒烯（Endohedral Fullerenes）最常用的材料之一。例如 $Sc_3N@C_{80}$ 是目前產量最高且應用最廣的內嵌結構。<br>
-            <span class="highlight-title">2. 量子計算：</span>由於其穩定的內部空間可保護嵌入原子的自旋態，科學家正研究利用內嵌 C80 作為量子計算中的<strong>量子位元 (Qubits)</strong> 載體。<br>
-            <span class="highlight-title">3. 生物醫學造影：</span>封裝了釓 (Gd) 的 C80 衍生物具有極佳的順磁性，被開發為新一代高效且低毒性的 <strong>MRI 對比劑</strong>。
-        </div>
-    </div>`, "D5h");
-
-    addMol("C90|碳90|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 35個六邊形)", "Cage (12 Pentagons, 35 Hexagons)"], "108°~120°", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, "double"],
+      [0x0, 0x2, _0x14287e(0x27d)],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x2c6),
+    "N",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    _0x14287e(0x171),
+    "-88.5",
     [
-    {elem:"C",x:200,y:-24,z:-33},{elem:"C",x:188,y:31,z:-63},{elem:"C",x:155,y:-125,z:30},{elem:"C",x:155,y:-124,z:-32},{elem:"C",x:177,y:-74,z:-63},{elem:"C",x:107,y:-152,z:60},{elem:"C",x:103,y:-118,z:-115},{elem:"C",x:142,y:-69,z:-116},{elem:"C",x:125,y:-14,z:-143},{elem:"C",x:152,y:36,z:-115},
-    {elem:"C",x:49,y:-114,z:-143},{elem:"C",x:0,y:-147,z:120},{elem:"C",x:0,y:-180,z:64},{elem:"C",x:57,y:-181,z:32},{elem:"C",x:57,y:-181,z:-34},{elem:"C",x:108,y:-152,z:-62},{elem:"C",x:0,y:-145,z:-121},{elem:"C",x:0,y:-179,z:-65},{elem:"C",x:31,y:-60,z:-171},{elem:"C",x:66,y:-7,z:-170},
-    {elem:"C",x:34,y:51,z:-169},{elem:"C",x:65,y:101,z:-141},{elem:"C",x:123,y:92,z:-114},{elem:"C",x:32,y:147,z:-113},{elem:"C",x:-31,y:-60,z:-171},{elem:"C",x:-66,y:-7,z:-170},{elem:"C",x:-34,y:50,z:-169},{elem:"C",x:-122,y:92,z:-114},{elem:"C",x:-65,y:101,z:-141},{elem:"C",x:-31,y:147,z:-113},
-    {elem:"C",x:-103,y:-118,z:-114},{elem:"C",x:-49,y:-114,z:-143},{elem:"C",x:-142,y:-69,z:-115},{elem:"C",x:-125,y:-13,z:-142},{elem:"C",x:-152,y:36,z:-114},{elem:"C",x:-108,y:-152,z:-62},{elem:"C",x:-108,y:-152,z:61},{elem:"C",x:-57,y:-181,z:-33},{elem:"C",x:-57,y:-181,z:32},{elem:"C",x:52,y:179,z:-62},
-    {elem:"C",x:106,y:165,z:-32},{elem:"C",x:142,y:123,z:-62},{elem:"C",x:181,y:85,z:-31},{elem:"C",x:181,y:84,z:32},{elem:"C",x:0,y:196,z:-30},{elem:"C",x:0,y:195,z:32},{elem:"C",x:51,y:178,z:63},{elem:"C",x:106,y:165,z:33},{elem:"C",x:142,y:122,z:63},{elem:"C",x:-142,y:124,z:-62},
-    {elem:"C",x:-106,y:166,z:-32},{elem:"C",x:-51,y:179,z:-62},{elem:"C",x:176,y:-75,z:62},{elem:"C",x:200,y:-24,z:32},{elem:"C",x:189,y:31,z:63},{elem:"C",x:152,y:35,z:115},{elem:"C",x:126,y:-15,z:142},{elem:"C",x:141,y:-71,z:114},{elem:"C",x:49,y:-115,z:142},{elem:"C",x:102,y:-119,z:114},
-    {elem:"C",x:31,y:146,z:115},{elem:"C",x:65,y:99,z:142},{elem:"C",x:123,y:91,z:115},{elem:"C",x:34,y:49,z:169},{elem:"C",x:67,y:-9,z:170},{elem:"C",x:31,y:-61,z:171},{elem:"C",x:-31,y:146,z:114},{elem:"C",x:-123,y:91,z:115},{elem:"C",x:-65,y:99,z:141},{elem:"C",x:-34,y:49,z:169},
-    {elem:"C",x:-67,y:-8,z:170},{elem:"C",x:-31,y:-62,z:170},{elem:"C",x:-181,y:85,z:-31},{elem:"C",x:-181,y:85,z:32},{elem:"C",x:-142,y:123,z:63},{elem:"C",x:-105,y:166,z:33},{elem:"C",x:-51,y:179,z:63},{elem:"C",x:-176,y:-74,z:-62},{elem:"C",x:-200,y:-23,z:-32},{elem:"C",x:-188,y:32,z:-62},
-    {elem:"C",x:-176,y:-75,z:62},{elem:"C",x:-155,y:-125,z:30},{elem:"C",x:-155,y:-125,z:-31},{elem:"C",x:-188,y:31,z:63},{elem:"C",x:-200,y:-23,z:33},{elem:"C",x:-50,y:-116,z:142},{elem:"C",x:-152,y:35,z:115},{elem:"C",x:-126,y:-15,z:142},{elem:"C",x:-142,y:-71,z:115},{elem:"C",x:-103,y:-119,z:114}
-],
+      { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "N", x: -0x41, y: 0x0, z: 0x0, lp3d: [{ x: -0x1, y: 0x0, z: 0x0 }] },
+      { elem: "O", x: 0x41, y: 0x0, z: 0x0 },
+    ],
     [
-    [0,4,"double"],[0,1],[0,53],[1,42,"double"],[1,9],[2,3,"double"],[2,5],[2,52],[3,15],[3,4],[4,7],[5,59,"double"],[5,13],[6,10,"double"],[6,7],[6,15],[7,8,"double"],[8,9],[8,19],[9,22,"double"],
-    [10,16],[10,18],[11,58,"double"],[11,85],[11,12],[12,13,"double"],[12,38],[13,14],[14,15,"double"],[14,17],[16,31,"double"],[16,17],[17,37,"double"],[18,24,"double"],[18,19],[19,20,"double"],[20,21],[20,26],[21,23,"double"],[21,22],
-    [22,41],[23,29],[23,39],[24,31],[24,25],[25,33,"double"],[25,26],[26,28,"double"],[27,34,"double"],[27,49],[27,28],[28,29],[29,51,"double"],[30,31],[30,32,"double"],[30,35],[32,77],[32,33],[33,34],[34,79],
-    [35,82,"double"],[35,37],[36,89],[36,81],[36,38,"double"],[37,38],[39,44,"double"],[39,40],[40,41,"double"],[40,47],[41,42],[42,43],[43,54,"double"],[43,48],[44,45],[44,51],[45,76],[45,46,"double"],[46,47],[46,60],
-    [47,48,"double"],[48,62],[49,72],[49,50,"double"],[50,51],[50,75],[52,57],[52,53,"double"],[53,54],[54,55],[55,62,"double"],[55,56],[56,57,"double"],[56,64],[57,59],[58,59],[58,65],[60,66,"double"],[60,61],[61,62],
-    [61,63,"double"],[63,64],[63,69],[64,65,"double"],[65,71],[66,68],[66,76],[67,86,"double"],[67,74],[67,68],[68,69,"double"],[69,70],[70,71,"double"],[70,87],[71,85],[72,73],[72,79,"double"],[73,83],[73,74,"double"],[74,75],
-    [75,76,"double"],[77,82],[77,78,"double"],[78,79],[78,84],[80,88],[80,81,"double"],[80,84],[81,82],[83,84,"double"],[83,86],[85,89,"double"],[86,87],[87,88,"double"],[88,89]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C90 是富勒烯家族中的高階成員。其分子由 90 個碳原子組成封閉籠狀，包含 <strong>12個五邊形</strong> 與 <strong>35個六邊形</strong>。根據結構對稱性，C90 具有多種異構物，其中以 <strong>C2v</strong> 對稱性結構最為常見。<br>
-            <span class="highlight-title">2. 物理性質：</span>在高階富勒烯中，C90 的分子體積較大，內部空間寬廣。它展現出半導體特性，且具有複雜的電子雲分布。由於其高度不飽和的 <strong>sp² 混成</strong> 碳架構，具有良好的電子捕捉能力。<br>
-            <span class="highlight-title">3. 化學活性：</span>較大的表面積與特定的曲率分布，使得 C90 能夠進行多種官能基化反應，其化學性質較 C60 更為多變。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 潛在應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 奈米電子元件：</span>由於其獨特的對稱性與電子結構，C90 被研究用於製造分子級的<strong>場效電晶體 (FET)</strong> 與非線性光學元件。<br>
-            <span class="highlight-title">2. 超分子化學：</span>較大的籠徑使其成為優良的客體分子載體，可與各種環狀分子（如環糊精）形成穩定的包合物，用於藥物傳遞研究。<br>
-            <span class="highlight-title">3. 能源材料：</span>C90 的衍生物在<strong>有機薄膜太陽能電池</strong>中作為受體材料展現出潛力，其較寬的電子吸收光譜有助於提升光電轉換效率。
-        </div>
-    </div>`, "C2v");
-
-addMol("C100|碳100|富勒烯", "C", "sp²", ["籠狀結構 (12個五邊形, 40個六邊形)", "Cage (12 Pentagons, 40 Hexagons)"], "108°~120°", "N/A (昇華)", "N/A", 
+      [0x0, 0x1, _0x14287e(0x29b)],
+      [0x0, 0x2, _0x14287e(0x27d)],
+    ],
+    null,
+    null,
+    _0x14287e(0x2d1),
+  ),
+  addMol(
+    _0x14287e(0x20b),
+    "雙原子",
+    _0x14287e(0x307),
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "-",
+    _0x14287e(0x17c),
+    _0x14287e(0x114),
     [
-    {elem:"C",x:215,y:-57,z:89},{elem:"C",x:172,y:-99,z:103},{elem:"C",x:241,y:-55,z:31},{elem:"C",x:153,y:-140,z:61},{elem:"C",x:95,y:-160,z:59},{elem:"C",x:-85,y:-29,z:165},{elem:"C",x:21,y:-56,z:165},{elem:"C",x:50,y:-144,z:101},{elem:"C",x:67,y:-96,z:143},{elem:"C",x:127,y:-75,z:140},
-    {elem:"C",x:-41,y:-73,z:156},{elem:"C",x:-121,y:-125,z:94},{elem:"C",x:-81,y:-171,z:3},{elem:"C",x:-23,y:-175,z:24},{elem:"C",x:-11,y:-154,z:85},{elem:"C",x:-60,y:-124,z:118},{elem:"C",x:-130,y:-152,z:37},{elem:"C",x:232,y:53,z:34},{elem:"C",x:205,y:50,z:91},{elem:"C",x:249,y:0,z:3},
-    {elem:"C",x:196,y:-5,z:118},{elem:"C",x:143,y:-14,z:149},{elem:"C",x:-9,y:53,z:170},{elem:"C",x:-69,y:32,z:171},{elem:"C",x:38,y:9,z:173},{elem:"C",x:98,y:30,z:160},{elem:"C",x:109,y:89,z:132},{elem:"C",x:162,y:95,z:97},{elem:"C",x:145,y:132,z:-77},{elem:"C",x:195,y:99,z:-58},
-    {elem:"C",x:206,y:101,z:4},{elem:"C",x:164,y:129,z:44},{elem:"C",x:60,y:164,z:61},{elem:"C",x:113,y:161,z:25},{elem:"C",x:106,y:164,z:-38},{elem:"C",x:-50,y:169,z:63},{elem:"C",x:3,y:179,z:32},{elem:"C",x:1,y:112,z:142},{elem:"C",x:58,y:127,z:118},{elem:"C",x:-51,y:139,z:118},
-    {elem:"C",x:208,y:43,z:-90},{elem:"C",x:234,y:-5,z:-58},{elem:"C",x:109,y:116,z:-124},{elem:"C",x:119,y:62,z:-152},{elem:"C",x:166,y:26,z:-134},{elem:"C",x:51,y:137,z:-118},{elem:"C",x:-108,y:87,z:-133},{elem:"C",x:-162,y:93,z:-97},{elem:"C",x:-58,y:126,z:-118},{elem:"C",x:-1,y:109,z:-143},
-    {elem:"C",x:9,y:51,z:-171},{elem:"C",x:69,y:30,z:-171},{elem:"C",x:-3,y:179,z:-34},{elem:"C",x:49,y:169,z:-65},{elem:"C",x:-106,y:164,z:36},{elem:"C",x:-113,y:160,z:-27},{elem:"C",x:-60,y:164,z:-63},{elem:"C",x:-164,y:128,z:-45},{elem:"C",x:144,y:-33,z:-142},{elem:"C",x:166,y:-80,z:-108},
-    {elem:"C",x:214,y:-66,z:-67},{elem:"C",x:220,y:-95,z:-12},{elem:"C",x:177,y:-137,z:3},{elem:"C",x:85,y:-31,z:-165},{elem:"C",x:41,y:-75,z:-156},{elem:"C",x:60,y:-125,z:-117},{elem:"C",x:121,y:-126,z:-93},{elem:"C",x:130,y:-153,z:-36},{elem:"C",x:-50,y:-144,z:-100},{elem:"C",x:11,y:-155,z:-84},
-    {elem:"C",x:23,y:-175,z:-22},{elem:"C",x:81,y:-172,z:-1},{elem:"C",x:-95,y:-160,z:-58},{elem:"C",x:-67,y:-97,z:-143},{elem:"C",x:-21,y:-58,z:-165},{elem:"C",x:-127,y:-77,z:-140},{elem:"C",x:-98,y:28,z:-160},{elem:"C",x:-38,y:7,z:-173},{elem:"C",x:-143,y:-16,z:-149},{elem:"C",x:-215,y:-58,z:-89},
-    {elem:"C",x:-172,y:-100,z:-102},{elem:"C",x:-154,y:-141,z:-59},{elem:"C",x:-240,y:-55,z:-31},{elem:"C",x:-232,y:53,z:-35},{elem:"C",x:-205,y:49,z:-92},{elem:"C",x:-197,y:-6,z:-118},{elem:"C",x:-248,y:0,z:-3},{elem:"C",x:-145,y:133,z:76},{elem:"C",x:-195,y:99,z:58},{elem:"C",x:-206,y:101,z:-5},
-    {elem:"C",x:-166,y:28,z:135},{elem:"C",x:-119,y:65,z:152},{elem:"C",x:-109,y:118,z:124},{elem:"C",x:-234,y:-4,z:58},{elem:"C",x:-208,y:44,z:90},{elem:"C",x:-177,y:-137,z:-2},{elem:"C",x:-219,y:-94,z:13},{elem:"C",x:-214,y:-65,z:68},{elem:"C",x:-166,y:-79,z:108},{elem:"C",x:-145,y:-31,z:143}
-],
+      {
+        elem: "N",
+        x: -0x20,
+        y: 0x0,
+        z: 0x0,
+        radical: !![],
+        lp3d: [
+          { x: -0x1, y: 0x1, z: 0x0 },
+          { x: -0x1, y: -0x1, z: 0.4 },
+          { x: -0x1, y: -0x1, z: -0.4 },
+        ],
+      },
+      { elem: "O", x: 0x20, y: 0x0, z: 0x0 },
+    ],
+    [[0x0, 0x1, _0x14287e(0xf4)]],
+    null,
+    null,
+    _0x14287e(0x2d1),
+  ),
+  addMol(
+    _0x14287e(0x1a3),
+    "C",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [],
+    [],
+    {
+      "SCN\x20-|主要共振結構\x20(N≡C-S)": {
+        pg: _0x14287e(0x2d1),
+        mp: "-",
+        bp: "-",
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "S", x: 0x5a, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x29b)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+        ],
+        desc: _0x14287e(0x2f9),
+      },
+      "SCN\x20-|次要共振結構\x20(N=C=S)": {
+        pg: _0x14287e(0x2d1),
+        mp: "-",
+        bp: "-",
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+          { elem: "S", x: 0x55, y: 0x0, z: 0x0, lpCount: 0x2 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, "double"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x14d),
+  ),
+  addMol(
+    "NO\x20+|亞硝鎓離子",
+    "N",
+    "sp",
+    [_0x14287e(0x288), "Linear"],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
     [
-    [0,1,"double"],[0,20],[0,2],[1,3],[1,9],[2,19,"double"],[2,61],[3,4,"double"],[3,62],[4,71],[4,7],[5,23,"double"],[5,10],[6,8,"double"],[6,10],[6,24],[7,14,"double"],[7,8],[8,9],[9,21,"double"],
-    [10,15,"double"],[11,16,"double"],[11,98],[11,15],[12,13,"double"],[12,16],[12,72],[13,70],[13,14],[14,15],[16,95],[17,30,"double"],[17,18],[17,19],[18,20,"double"],[18,27],[19,41],[20,21],[21,25],[22,23],
-    [22,24,"double"],[22,37],[23,91],[24,25],[25,26,"double"],[26,27],[26,38],[27,31,"double"],[28,42],[28,34],[28,29,"double"],[29,30],[29,40],[30,31],[31,33],[32,33,"double"],[32,36],[32,38],[33,34],[34,53,"double"],
-    [35,36,"double"],[35,39],[35,54],[36,52],[37,39],[37,38,"double"],[39,92,"double"],[40,41,"double"],[40,44],[41,60],[42,43,"double"],[42,45],[43,44],[43,51],[44,58,"double"],[45,53],[45,49,"double"],[46,47],[46,48,"double"],[46,76],
-    [47,84,"double"],[47,57],[48,49],[48,56],[49,50],[50,51,"double"],[50,77],[51,63],[52,53],[52,56,"double"],[54,55,"double"],[54,87],[55,57],[55,56],[57,89,"double"],[58,59],[58,63],[59,60,"double"],[59,66],[60,61],
-    [61,62,"double"],[62,67],[63,64,"double"],[64,74],[64,65],[65,69,"double"],[65,66],[66,67,"double"],[67,71],[68,72,"double"],[68,69],[68,73],[69,70],[70,71,"double"],[72,81],[73,75],[73,74,"double"],[74,77],[75,80,"double"],[75,78],
-    [76,78],[76,77,"double"],[78,85,"double"],[79,80],[79,85],[79,82,"double"],[80,81],[81,95,"double"],[82,96],[82,86],[83,89],[83,84],[83,86,"double"],[84,85],[86,93],[87,92],[87,88,"double"],[88,89],[88,94],[90,91,"double"],
-    [90,94],[91,92],[93,94,"double"],[93,97],[95,96],[96,97,"double"],[97,98]
-], null, 
-    `<div class="info-section">
-        <div class="info-title">⚗️ 物質性質</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 立體結構：</span>C100 是大型富勒烯家族中的重要成員。其分子由 100 個碳原子組成封閉籠狀，包含 <strong>12個五邊形</strong> 與 <strong>40個六邊形</strong>。隨著碳原子數增加，籠體形狀變得更加多樣化，此結構呈現出複雜的低對稱性（<strong>C2 點群</strong>）。<br>
-            <span class="highlight-title">2. 物理性質：</span>大型富勒烯在宏觀狀態下通常為黑色固體。由於分子體積顯著大於 C60，其分子間的凡得瓦力更強，昇華溫度更高。內部巨大的空腔空間使其具有極高的電子容納能力與內嵌潛力。<br>
-            <span class="highlight-title">3. 電子結構：</span>雖然呈現曲面，但碳原子仍保持 <strong>sp² 混成</strong>。由於表面曲率在不同區域差異巨大，其電子雲分布極不均勻，這賦予了 C100 獨特的區域化學反應活性與非線性光學特性。
-        </div>
-    </div>
-    <div class="info-section" style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
-        <div class="info-title">🏭 前端科學應用</div>
-        <div class="info-body">
-            <span class="highlight-title">1. 分子奈米技術：</span>C100 的巨大內腔可同時封裝多個金屬原子或複雜的分子簇（如金屬碳化物或氮化物簇），這類「內嵌富勒烯」被視為<strong>單分子量子磁體</strong>與量子計算的重要載體。<br>
-            <span class="highlight-title">2. 材料改性：</span>因其強大的電負度，C100 被研究作為高性能聚合物的添加劑，能夠顯著提升材料的抗氧化性與熱穩定性。<br>
-            <span class="highlight-title">3. 有機光伏：</span>大型富勒烯具有更寬的電子吸收光譜。其衍生物在<strong>有機薄膜太陽能電池</strong>中可作為高效的受體材料，提升對太陽光能量的轉換效率。
-        </div>
-    </div>`, "C2");
-
-
-
-
-
+      { elem: "N", x: -0x1e, y: 0x0, z: 0x0, lpCount: 0x1 },
+      { elem: "O", x: 0x1e, y: 0x0, z: 0x0, lpCount: 0x1 },
+    ],
+    [[0x0, 0x1, _0x14287e(0x29b)]],
+    null,
+    null,
+    _0x14287e(0x2d1),
+  ),
+  addMol(
+    _0x14287e(0x32b),
+    "N",
+    "sp",
+    [_0x14287e(0x288), "Linear"],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [
+      { elem: "N", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "O", x: -0x41, y: 0x0, z: 0x0 },
+      { elem: "O", x: 0x41, y: 0x0, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    _0x14287e(0x2eb),
+  ),
+  addMol(
+    _0x14287e(0x1eb),
+    "N",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [],
+    [],
+    {
+      "N3\x20-|主要共振結構\x20(N=N=N)": {
+        pg: _0x14287e(0x2eb),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+          { elem: "N", x: 0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+        ],
+      },
+      "N3\x20-|主要共振結構\x20(N≡N-N)": {
+        pg: "Dinfh",
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "N", x: 0x55, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x29b)],
+          [0x0, 0x2, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x14d),
+  ),
+  addMol(
+    _0x14287e(0x1e2),
+    "C",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "180°",
+    "-",
+    "-",
+    [],
+    [],
+    {
+      "OCN\x20-|主要共振結構\x20(N≡C-O)": {
+        pg: _0x14287e(0x2d1),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x55, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x29b)],
+          [0x0, 0x2, "single"],
+        ],
+        desc: _0x14287e(0x181),
+      },
+      "OCN\x20-|次要共振結構\x20(N=C=O)": {
+        pg: "Cinfv",
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+          { elem: "O", x: 0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+        ],
+        desc: _0x14287e(0x1ab),
+      },
+      "OCN\x20-|不穩定共振結構\x20(N-C≡O)": {
+        pg: _0x14287e(0x2d1),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "N", x: -0x55, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+        ],
+        bonds: [
+          [0x0, 0x1, "single"],
+          [0x0, 0x2, "triple"],
+        ],
+        desc: _0x14287e(0x244),
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x14d),
+  ),
+  addMol(
+    _0x14287e(0x1e5),
+    "N",
+    "sp",
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [],
+    [],
+    {
+      "CNO\x20-|主要共振結構\x20(C≡N-O)": {
+        pg: _0x14287e(0x2d1),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "C", x: -0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x55, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x29b)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+        ],
+      },
+      "CNO\x20-|次要共振結構\x20(C=N=O)": {
+        pg: _0x14287e(0x2d1),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "C", x: -0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+          { elem: "O", x: 0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x14d),
+  ),
+  addMol(
+    "N2O|一氧化二氮|氧化亞氮|笑氣",
+    "N",
+    "sp",
+    [_0x14287e(0x288), "Linear"],
+    "180°",
+    _0x14287e(0xf7),
+    _0x14287e(0x10a),
+    [],
+    [],
+    {
+      "N2O|主要共振結構\x20(N≡N-O)": {
+        pg: _0x14287e(0x2d1),
+        mp: "-91",
+        bp: _0x14287e(0x10a),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, radical: ![] },
+          { elem: "N", x: -0x3c, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x46, y: 0x0, z: 0x0, lpCount: 0x3, radical: ![] },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x29b)],
+          [0x0, 0x2, "single"],
+        ],
+      },
+      "N2O|次要共振結構\x20(N=N=O)": {
+        pg: "Cinfv",
+        mp: _0x14287e(0xf7),
+        bp: "-88",
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, radical: ![] },
+          { elem: "N", x: -0x3f, y: 0x0, z: 0x0, lpCount: 0x2, radical: ![] },
+          { elem: "O", x: 0x3f, y: 0x0, z: 0x0, lpCount: 0x2 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x14d),
+  ),
+  addMol(
+    _0x14287e(0x2a4),
+    "C",
+    "sp",
+    ["直線/角形", _0x14287e(0x232)],
+    _0x14287e(0x33e),
+    _0x14287e(0x1a1),
+    _0x14287e(0x168),
+    [
+      { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "N", x: 0x41, y: 0x0, z: 0x0, lpCount: 0x1 },
+      { elem: "O", x: -0x41, y: 0x0, z: 0x0, lpCount: 0x2 },
+      { elem: "H", x: -0x5f, y: 0x1e, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1, _0x14287e(0x29b)],
+      [0x0, 0x2],
+      [0x2, 0x3],
+    ],
+    null,
+    null,
+    "Cs",
+  ),
+  addMol(
+    _0x14287e(0x22e),
+    "P",
+    "sp³d",
+    [_0x14287e(0x108), _0x14287e(0x270)],
+    _0x14287e(0x216),
+    _0x14287e(0x26e),
+    _0x14287e(0x1fd),
+    [
+      { elem: "P", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x0, y: 0x0, z: 0x55 },
+      { elem: "Cl", x: 0x0, y: 0x0, z: -0x55 },
+      { elem: "Cl", x: 0x0, y: 0x50, z: 0x0 },
+      { elem: "Cl", x: 0x45, y: -0x28, z: 0x0 },
+      { elem: "Cl", x: -0x45, y: -0x28, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    _0x14287e(0x274),
+  ),
+  addMol(
+    "PBr5|五溴化磷",
+    "P",
+    _0x14287e(0x17b),
+    [_0x14287e(0x108), _0x14287e(0x270)],
+    "90°,\x20120°",
+    _0x14287e(0x1af),
+    "106\x20(分解)",
+    [
+      { elem: "P", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "Br", x: 0x0, y: 0x0, z: -0x5a },
+      { elem: "Br", x: 0x0, y: 0x0, z: 0x5a },
+      { elem: "Br", x: 0x0, y: 0x55, z: 0x0 },
+      { elem: "Br", x: -0x4a, y: -0x2a, z: 0x0 },
+      { elem: "Br", x: 0x4a, y: -0x2a, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    _0x14287e(0x274),
+  ),
+  addMol(
+    _0x14287e(0x150),
+    "S",
+    _0x14287e(0x11e),
+    ["八面體", _0x14287e(0x289)],
+    _0x14287e(0x198),
+    _0x14287e(0x31e),
+    _0x14287e(0x306),
+    getOcta("S", "F", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    _0x14287e(0x2a3),
+    "S",
+    "sp³d",
+    [_0x14287e(0x2b9), _0x14287e(0x229)],
+    _0x14287e(0x212),
+    _0x14287e(0x119),
+    "-38",
+    [
+      { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x50 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x50 },
+      { elem: "F", x: 0x2d, y: 0x41, z: 0x0 },
+      { elem: "F", x: -0x2d, y: 0x41, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x2aa),
+    "Cl",
+    _0x14287e(0x17b),
+    ["T型", _0x14287e(0x139)],
+    "<90°",
+    _0x14287e(0x1c3),
+    _0x14287e(0xf3),
+    [
+      {
+        elem: "Cl",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: -0.5, y: 0x0, z: 0.85 },
+          { x: -0.5, y: 0x0, z: -0.85 },
+        ],
+      },
+      { elem: "F", x: 0x0, y: 0x50, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x50, z: 0x0 },
+      { elem: "F", x: 0x46, y: 0x0, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x14a),
+    "Xe",
+    "sp³d",
+    [_0x14287e(0x288), "Linear"],
+    "180°",
+    _0x14287e(0x195),
+    "-",
+    [
+      {
+        elem: "Xe",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x0, y: 0x1, z: 0x0 },
+          { x: 0.866, y: -0.5, z: 0x0 },
+          { x: -0.866, y: -0.5, z: 0x0 },
+        ],
+      },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x55 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x55 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    _0x14287e(0x2eb),
+  ),
+  addMol(
+    _0x14287e(0x135),
+    "Xe",
+    _0x14287e(0x11e),
+    [_0x14287e(0x234), _0x14287e(0xf8)],
+    _0x14287e(0x198),
+    _0x14287e(0x13c),
+    "-",
+    [
+      {
+        elem: "Xe",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x1, y: 0x0, z: 0x0 },
+          { x: -0x1, y: 0x0, z: 0x0 },
+        ],
+      },
+      { elem: "F", x: 0x0, y: 0x55, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x55, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x55 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x55 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    _0x14287e(0x1cc),
+  ),
+  addMol(
+    _0x14287e(0x186),
+    "Br",
+    _0x14287e(0x11e),
+    [_0x14287e(0x1cd), _0x14287e(0x293)],
+    "<90°",
+    _0x14287e(0x149),
+    _0x14287e(0x20c),
+    [
+      { elem: "Br", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x50, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x46 },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x46 },
+      { elem: "F", x: 0x0, y: -0x46, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x46, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    _0x14287e(0x1dc),
+  ),
+  addMol(
+    _0x14287e(0x223),
+    "I",
+    _0x14287e(0x1bd),
+    [_0x14287e(0x239), _0x14287e(0x173)],
+    _0x14287e(0x326),
+    _0x14287e(0x2ab),
+    _0x14287e(0x2af),
+    [
+      { elem: "I", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "F", x: 0x0, y: 0x5a, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x5a, z: 0x0 },
+      { elem: "F", x: 0x50, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x19, y: 0x0, z: 0x4c },
+      { elem: "F", x: 0x19, y: 0x0, z: -0x4c },
+      { elem: "F", x: -0x41, y: 0x0, z: 0x2f },
+      { elem: "F", x: -0x41, y: 0x0, z: -0x2f },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+      [0x0, 0x7],
+    ],
+    null,
+    null,
+    _0x14287e(0x12f),
+  ),
+  addMol(
+    _0x14287e(0x310),
+    "Se",
+    _0x14287e(0x11e),
+    [_0x14287e(0x1c8), _0x14287e(0x289)],
+    "90°",
+    _0x14287e(0x2cf),
+    "-46.6\x20(昇華)",
+    getOcta("Se", "F", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    "TeF6|六氟化碲",
+    "Te",
+    _0x14287e(0x11e),
+    [_0x14287e(0x1c8), "Octahedral"],
+    _0x14287e(0x198),
+    _0x14287e(0x338),
+    _0x14287e(0x25b),
+    getOcta("Te", "F", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    "AsF5|五氟化砷",
+    "As",
+    _0x14287e(0x17b),
+    [_0x14287e(0x108), _0x14287e(0x270)],
+    "90°,\x20120°",
+    "-79.8",
+    _0x14287e(0x218),
+    [
+      { elem: "As", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x50, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x50, z: 0x0 },
+      { elem: "F", x: 0x46, y: 0x0, z: 0x0 },
+      { elem: "F", x: -0x23, y: 0x0, z: 0x3c },
+      { elem: "F", x: -0x23, y: 0x0, z: -0x3c },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    _0x14287e(0x274),
+  ),
+  addMol(
+    _0x14287e(0xf2),
+    "Te",
+    "sp³d",
+    ["翹翹板型", "Seesaw"],
+    _0x14287e(0x212),
+    _0x14287e(0x133),
+    _0x14287e(0x26f),
+    [
+      { elem: "Te", x: 0x0, y: 0x0, z: 0x0, lp3d: [{ x: -0x1, y: 0x0, z: 0x0 }] },
+      { elem: "F", x: 0x0, y: 0x55, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x55, z: 0x0 },
+      { elem: "F", x: 0x46, y: 0x0, z: 0x32 },
+      { elem: "F", x: 0x46, y: 0x0, z: -0x32 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x19b),
+    "Xe",
+    "sp³",
+    [_0x14287e(0x281), _0x14287e(0x134)],
+    _0x14287e(0x2a7),
+    _0x14287e(0x2d8),
+    "-",
+    [
+      { elem: "Xe", x: 0x0, y: 0x14, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "O", x: 0x0, y: -0x1e, z: 0x39 },
+      { elem: "O", x: 0x31, y: -0x1e, z: -28.5 },
+      { elem: "O", x: -0x31, y: -0x1e, z: -28.5 },
+    ],
+    [
+      [0x0, 0x1, "double"],
+      [0x0, 0x2, _0x14287e(0xf4)],
+      [0x0, 0x3, "double"],
+    ],
+    null,
+    null,
+    _0x14287e(0x1cf),
+  ),
+  addMol(
+    _0x14287e(0x19d),
+    "Xe",
+    _0x14287e(0x116),
+    ["四面體", _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    _0x14287e(0x17d),
+    _0x14287e(0x33f),
+    getTetra("Xe", "O", 0x4c),
+    [
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2, _0x14287e(0xf4)],
+      [0x0, 0x3, _0x14287e(0xf4)],
+      [0x0, 0x4, _0x14287e(0xf4)],
+    ],
+    null,
+    null,
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x2de),
+    "Xe",
+    _0x14287e(0x11e),
+    [_0x14287e(0x1cd), _0x14287e(0x293)],
+    _0x14287e(0x16d),
+    _0x14287e(0x2cb),
+    "101",
+    [
+      { elem: "Xe", x: 0x0, y: 0x0, z: 0x0, lp3d: [{ x: 0x0, y: -0x1, z: 0x0 }] },
+      { elem: "O", x: 0x0, y: 0x50, z: 0x0 },
+      { elem: "F", x: 0x50, y: 0x0, z: 0x0 },
+      { elem: "F", x: -0x50, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x50 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x50 },
+    ],
+    [
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+    ],
+    null,
+    null,
+    _0x14287e(0x1dc),
+  ),
+  addMol(
+    "IOF5|五氟氧化碘",
+    "I",
+    "sp³d²",
+    [_0x14287e(0x1c8), "Octahedral"],
+    _0x14287e(0x198),
+    _0x14287e(0x1a4),
+    _0x14287e(0x2ce),
+    [
+      { elem: "I", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "O", x: 0x0, y: 0x55, z: 0x0 },
+      { elem: "F", x: 0x0, y: -0x55, z: 0x0 },
+      { elem: "F", x: 0x55, y: 0x0, z: 0x0 },
+      { elem: "F", x: -0x55, y: 0x0, z: 0x0 },
+      { elem: "F", x: 0x0, y: 0x0, z: 0x55 },
+      { elem: "F", x: 0x0, y: 0x0, z: -0x55 },
+    ],
+    [
+      [0x0, 0x1, _0x14287e(0xf4)],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    _0x14287e(0x1dc),
+  ),
+  addMol(
+    _0x14287e(0x2cc),
+    "As",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), "Pyramidal"],
+    _0x14287e(0x328),
+    "-6",
+    "57.8",
+    [
+      { elem: "As", x: 0x0, y: 0xf, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "F", x: 0x0, y: -0x2d, z: 0x37 },
+      { elem: "F", x: 0x30, y: -0x2d, z: -0x1c },
+      { elem: "F", x: -0x30, y: -0x2d, z: -0x1c },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    _0x14287e(0x1cf),
+  ),
+  addMol(
+    _0x14287e(0x120),
+    "Sb",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    _0x14287e(0x30e),
+    _0x14287e(0x11f),
+    _0x14287e(0x22b),
+    [
+      { elem: "Sb", x: 0x0, y: 0xf, z: 0x0, lp3d: [{ x: 0x0, y: 0x1, z: 0x0 }] },
+      { elem: "Cl", x: 0x0, y: -0x37, z: 0x41 },
+      { elem: "Cl", x: 0x37, y: -0x37, z: -0x23 },
+      { elem: "Cl", x: -0x37, y: -0x37, z: -0x23 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    null,
+    "C3v",
+  ),
+  addMol(
+    _0x14287e(0x1b2),
+    "I",
+    _0x14287e(0x17b),
+    ["T型", "T-shaped"],
+    "<90°",
+    "101\x20(分解)",
+    "-",
+    [
+      {
+        elem: "I",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lpCount: 0x2,
+        lp3d: [
+          { x: -0x1, y: 0.5, z: 0x0 },
+          { x: -0x1, y: -0.5, z: 0x0 },
+        ],
+      },
+      { elem: "Cl", x: 0x5a, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x0, y: 0x5a, z: 0x0 },
+      { elem: "Cl", x: 0x0, y: -0x5a, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+    ],
+    null,
+    _0x14287e(0x21b),
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x10f),
+    "B",
+    _0x14287e(0x116),
+    [_0x14287e(0x2e8), "Banana\x20Bonds"],
+    _0x14287e(0x2fa),
+    _0x14287e(0x1f6),
+    _0x14287e(0x11a),
+    [
+      { elem: "B", x: -0x28, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "B", x: 0x28, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "H", x: 0x0, y: 0x0, z: 0x32 },
+      { elem: "H", x: 0x0, y: 0x0, z: -0x32 },
+      { elem: "H", x: -0x41, y: 0x2b, z: 0x0 },
+      { elem: "H", x: -0x41, y: -0x2b, z: 0x0 },
+      { elem: "H", x: 0x41, y: 0x2b, z: 0x0 },
+      { elem: "H", x: 0x41, y: -0x2b, z: 0x0 },
+    ],
+    [
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x1, 0x6],
+      [0x1, 0x7],
+    ],
+    null,
+    _0x14287e(0xfd),
+    _0x14287e(0x2c7),
+  ),
+  addMol(
+    "B(OH)3|硼酸",
+    "B",
+    _0x14287e(0x307),
+    [_0x14287e(0x25d), _0x14287e(0x1d2)],
+    "120°",
+    _0x14287e(0x1d1),
+    "-",
+    [
+      { elem: "O", x: -0x3a, y: 0x0, z: 0x25 },
+      { elem: "B", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "O", x: 0x3b, y: 0x0, z: 0x23 },
+      { elem: "O", x: -0x5, y: 0x0, z: -0x45 },
+      { elem: "H", x: -0x60, y: 0x0, z: 0x8 },
+      { elem: "H", x: 0x63, y: 0x0, z: 0x8 },
+      { elem: "H", x: 0x25, y: 0x0, z: -0x5d },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x4],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x2, 0x5],
+      [0x3, 0x6],
+    ],
+    null,
+    null,
+    _0x14287e(0x268),
+  ),
+  addMol(
+    _0x14287e(0x12a),
+    "Si",
+    "sp³d²",
+    [_0x14287e(0x1c8), "Octahedral"],
+    "90°",
+    "-",
+    "-",
+    getOcta("Si", "F", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    _0x14287e(0x287),
+    "P",
+    _0x14287e(0x11e),
+    [_0x14287e(0x1c8), _0x14287e(0x289)],
+    _0x14287e(0x198),
+    "-",
+    "-",
+    getOcta("P", "F", 0x4b),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    _0x14287e(0x1e3),
+    "Sb",
+    _0x14287e(0x11e),
+    ["八面體", _0x14287e(0x289)],
+    _0x14287e(0x198),
+    "-",
+    "-",
+    getOcta("Sb", "F", 0x50),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+      [0x0, 0x5],
+      [0x0, 0x6],
+    ],
+    null,
+    null,
+    "Oh",
+  ),
+  addMol(
+    "I3\x20-|三碘陰離子|三碘錯離子",
+    "I",
+    _0x14287e(0x17b),
+    [_0x14287e(0x288), _0x14287e(0x1da)],
+    "180°",
+    "-",
+    "-",
+    [
+      {
+        elem: "I",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x0, y: 0x1, z: 0x0 },
+          { x: 0x0, y: -0.5, z: 0.866 },
+          { x: 0x0, y: -0.5, z: -0.866 },
+        ],
+      },
+      { elem: "I", x: -0x64, y: 0x0, z: 0x0 },
+      { elem: "I", x: 0x64, y: 0x0, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    _0x14287e(0x2eb),
+  ),
+  addMol(
+    _0x14287e(0x159),
+    "I",
+    _0x14287e(0x17b),
+    ["直線型", _0x14287e(0x1da)],
+    _0x14287e(0x2fd),
+    "-",
+    "-",
+    [
+      {
+        elem: "I",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x0, y: 0x1, z: 0x0 },
+          { x: 0x0, y: -0.5, z: 0.866 },
+          { x: 0x0, y: -0.5, z: -0.866 },
+        ],
+      },
+      { elem: "Cl", x: -0x5a, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x5a, y: 0x0, z: 0x0 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+    ],
+    null,
+    null,
+    "Dinfh",
+  ),
+  addMol(
+    _0x14287e(0x20a),
+    "I",
+    "sp³d²",
+    ["平面四邊形", _0x14287e(0xf8)],
+    "90°",
+    "-",
+    "-",
+    [
+      {
+        elem: "I",
+        x: 0x0,
+        y: 0x0,
+        z: 0x0,
+        lp3d: [
+          { x: 0x0, y: 0x1, z: 0x0 },
+          { x: 0x0, y: -0x1, z: 0x0 },
+        ],
+      },
+      { elem: "Cl", x: 0x5a, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: -0x5a, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x0, y: 0x0, z: 0x5a },
+      { elem: "Cl", x: 0x0, y: 0x0, z: -0x5a },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    _0x14287e(0x1cc),
+  ),
+  addMol(
+    "BF4\x20-|四氟硼酸根",
+    "B",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    "109.5°",
+    "-",
+    "-",
+    getTetra("B", "F", 0x46),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x4, 0x0, _0x14287e(0x27d)],
+    ],
+    null,
+    null,
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x170),
+    "Al",
+    "sp³",
+    [_0x14287e(0x2b2), "Tetrahedral"],
+    _0x14287e(0x2c1),
+    "-",
+    "-",
+    getTetra("Al", "Cl", 0x50),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x205),
+    "B",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    "109.5°",
+    "-",
+    "-",
+    getTetra("B", "H", 0x32),
+    [
+      [0x0, 0x1],
+      [0x0, 0x2],
+      [0x0, 0x3],
+      [0x0, 0x4],
+    ],
+    null,
+    null,
+    "Td",
+  ),
+  addMol(
+    _0x14287e(0x138),
+    "S",
+    _0x14287e(0x116),
+    ["四面體", _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    _0x14287e(0x2c3),
+    _0x14287e(0x189),
+    [],
+    [],
+    {
+      "H2SO4|硫酸": {
+        pg: "C2",
+        mp: _0x14287e(0x2c3),
+        bp: "337",
+        desc: _0x14287e(0x264),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: 0x55, y: 0x5, z: 0x3c },
+          { elem: "H", x: -0x55, y: 0x5, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, "coordinate"],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+          [0x3, 0x5],
+          [0x4, 0x6],
+        ],
+      },
+      "HSO4\x20-|硫酸氫根": {
+        pg: "Cs",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x2df),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: -0x55, y: 0x5, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, "single"],
+          [0x0, 0x4, "single"],
+          [0x4, 0x5],
+        ],
+      },
+      "SO4\x202-|硫酸根": {
+        pg: "Td",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x2e3),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "NaHSO4|硫酸氫鈉": {
+        pg: "Cs",
+        mp: _0x14287e(0x2fe),
+        bp: "-",
+        desc: "<strong>硫酸氫鈉</strong><br>溶於水呈強酸性，常用於清潔劑或降低\x20pH\x20值。",
+        atoms: [
+          { elem: "S", x: -0x14, y: 0x0, z: 0x0 },
+          { elem: "O", x: -0x14, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: -0x14, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x28, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x50, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: -0x69, y: -0x5, z: 0x3c },
+          { elem: "Na", x: 0x64, y: 0x28, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, "coordinate"],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+          [0x4, 0x5],
+        ],
+      },
+      "KHSO4|硫酸氫鉀": {
+        pg: "Cs",
+        mp: "197",
+        bp: "-",
+        desc: _0x14287e(0xf9),
+        atoms: [
+          { elem: "S", x: -0x14, y: 0x0, z: 0x0 },
+          { elem: "O", x: -0x14, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: -0x14, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x28, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x50, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: -0x69, y: -0x5, z: 0x3c },
+          { elem: "K", x: 0x6e, y: 0x28, z: 0x0, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, "coordinate"],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, "single"],
+          [0x4, 0x5],
+        ],
+      },
+      "CaSO4|硫酸鈣|石膏": {
+        pg: "Td",
+        mp: _0x14287e(0x2d2),
+        bp: "-",
+        desc: _0x14287e(0x20e),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Ca", x: 0x0, y: 0x0, z: 0x64, r: 0x14, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "BaSO4|硫酸鋇|重晶石": {
+        pg: "Td",
+        mp: "1580",
+        bp: "-",
+        desc: _0x14287e(0x28c),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Ba", x: 0x0, y: 0x0, z: 0x6e, r: 0x19, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, "single"],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "CuSO4|硫酸銅": {
+        pg: "Td",
+        mp: _0x14287e(0xee),
+        bp: "-",
+        desc: _0x14287e(0x15e),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Cu", x: 0x0, y: 0x0, z: 0x64, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "FeSO4|硫酸亞鐵|綠礬": {
+        pg: "Td",
+        mp: _0x14287e(0x15d),
+        bp: "-",
+        desc: _0x14287e(0x21d),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Fe", x: 0x0, y: 0x0, z: 0x64, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, "single"],
+        ],
+      },
+      "ZnSO4|硫酸鋅|皓礬": {
+        pg: "Td",
+        mp: "100\x20(失水)",
+        bp: "500\x20(分解)",
+        desc: "<strong>硫酸鋅\x20(皓礬)</strong><br>無色針狀晶體，用於製造人造纖維、木材防腐與農業微量元素肥料。",
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Zn", x: 0x0, y: 0x0, z: 0x64, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, "coordinate"],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "MgSO4|硫酸鎂|瀉鹽": {
+        pg: "Td",
+        mp: _0x14287e(0x266),
+        bp: "-",
+        desc: _0x14287e(0x2d7),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f, lpCount: 0x3 },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23, lpCount: 0x3 },
+          { elem: "Mg", x: 0x0, y: 0x0, z: 0x64, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0x27d)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3, "single"],
+          [0x0, 0x4, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    "acid",
+  ),
+  addMol(
+    _0x14287e(0x2d6),
+    "S",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    _0x14287e(0x21a),
+    "-",
+    _0x14287e(0x2ec),
+    [],
+    [],
+    {
+      "H2SO3|亞硫酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x23c),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "H", x: -0x5a, y: -0x26, z: -0xc },
+          { elem: "H", x: 0x5a, y: -0x26, z: -0xc },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+          [0x0, 0x3, "double"],
+          [0x1, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "HSO3\x20-|亞硫酸氫根": {
+        pg: "Cs",
+        mp: "-",
+        bp: "-",
+        desc: "<strong>亞硫酸氫根</strong><br>亞硫酸的第一級電離產物，為兩性離子。在酸性環境中不穩定，廣泛存在於亞硫酸氫鹽溶液中，具抗氧化性質。",
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+          { elem: "H", x: -0x5a, y: -0x26, z: -0xc },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+        ],
+      },
+      "SO3\x202-|亞硫酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x10b),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+        ],
+      },
+      "Na2SO3|亞硫酸鈉": {
+        pg: _0x14287e(0x1cf),
+        mp: _0x14287e(0x2d0),
+        bp: "-",
+        desc: _0x14287e(0x33c),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+          { elem: "Na", x: -0x55, y: -0x20, z: -0x52 },
+          { elem: "Na", x: 0x55, y: -0x20, z: -0x52 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x4, 0x2, "ionic_thin"],
+          [0x5, 0x3, _0x14287e(0x214)],
+        ],
+      },
+      "NaHSO3|亞硫酸氫鈉": {
+        pg: "Cs",
+        mp: _0x14287e(0x32a),
+        bp: "-",
+        desc: _0x14287e(0x278),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+          { elem: "H", x: -0x5a, y: -0x26, z: -0xc },
+          { elem: "Na", x: 0x55, y: -0x20, z: -0x52 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+          [0x5, 0x3, _0x14287e(0x214)],
+        ],
+      },
+      "CaSO3|亞硫酸鈣": {
+        pg: _0x14287e(0x1cf),
+        mp: _0x14287e(0x122),
+        bp: "-",
+        desc: _0x14287e(0x1bb),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: 0x3d },
+          { elem: "O", x: -0x38, y: -0x1c, z: -0x27 },
+          { elem: "O", x: 0x38, y: -0x1c, z: -0x27 },
+          { elem: "Ca", x: 0x0, y: -0x20, z: -0x57 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x4, 0x2, _0x14287e(0x214)],
+          [0x4, 0x3, _0x14287e(0x214)],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x1d9),
+    "S",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    _0x14287e(0x25e),
+    "-",
+    [],
+    [],
+    {
+      "H2S2O3|硫代硫酸": {
+        pg: "Cs",
+        mp: "-78",
+        bp: "-",
+        desc: _0x14287e(0x1d4),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "S", x: 0x0, y: 0x50, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23 },
+          { elem: "H", x: 0x55, y: 0x5, z: 0x3c },
+          { elem: "H", x: -0x55, y: 0x5, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x3, 0x5],
+          [0x4, 0x6],
+        ],
+      },
+      "HS2O3\x20-|硫代硫酸氫根": {
+        pg: "Cs",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x236),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "S", x: 0x0, y: 0x50, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23 },
+          { elem: "H", x: 0x55, y: 0x5, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, "double"],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x3, 0x5],
+        ],
+      },
+      "S2O3\x202-|硫代硫酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x1b1),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "S", x: 0x0, y: 0x50, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, "single"],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "Na2S2O3|硫代硫酸鈉|大蘇打|海波": {
+        pg: _0x14287e(0x1cf),
+        mp: _0x14287e(0x1d8),
+        bp: _0x14287e(0x1af),
+        desc: _0x14287e(0x162),
+        atoms: [
+          { elem: "S", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "S", x: 0x0, y: 0x50, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x3f },
+          { elem: "O", x: 0x3c, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x3c, y: -0x1e, z: 0x23 },
+          { elem: "Na", x: 0x64, y: 0x14, z: 0x0, r: 0xf },
+          { elem: "Na", x: -0x64, y: 0x14, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x0, 0x4, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x165),
+    "C",
+    _0x14287e(0x307),
+    [_0x14287e(0x25d), _0x14287e(0x1d2)],
+    _0x14287e(0x329),
+    "-",
+    _0x14287e(0x2ec),
+    [],
+    [],
+    {
+      "H2CO3|碳酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x324),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "H", x: 0x5a, y: -0xa, z: 0x0 },
+          { elem: "H", x: -0x5a, y: -0xa, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x2, 0x4],
+          [0x3, 0x5],
+        ],
+      },
+      "HCO3\x20-|碳酸氫根": {
+        pg: "Cs",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x153),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "H", x: -0x5a, y: -0xa, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+      "CO3\x202-|碳酸根": {
+        pg: _0x14287e(0x274),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x27f),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0x10d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "CaCO3|碳酸鈣|灰石": {
+        pg: _0x14287e(0x274),
+        mp: _0x14287e(0x21e),
+        bp: "-",
+        desc: "<strong>碳酸鈣</strong><br>Ca²⁺\x20位於碳酸根平面上方。",
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "Ca", x: 0x0, y: 0x0, z: 0x5a, r: 0x14, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0x10d)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "MgCO3|碳酸鎂": {
+        pg: "D3h",
+        mp: "350\x20(分解)",
+        bp: "-",
+        desc: _0x14287e(0x331),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "Mg", x: 0x0, y: 0x0, z: 0x5a, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+      "Na2CO3|碳酸鈉|蘇打": {
+        pg: "D3h",
+        mp: _0x14287e(0x1f2),
+        bp: "-",
+        desc: _0x14287e(0x1b6),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "Na", x: 0x64, y: -0x14, z: 0x0, r: 0xf },
+          { elem: "Na", x: -0x64, y: -0x14, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+      "K2CO3|碳酸鉀|草木灰": {
+        pg: _0x14287e(0x274),
+        mp: _0x14287e(0x22f),
+        bp: "-",
+        desc: "<strong>碳酸鉀</strong><br>兩個\x20K⁺\x20位於外側。",
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "K", x: 0x64, y: -0x14, z: 0x0, r: 0x16 },
+          { elem: "K", x: -0x64, y: -0x14, z: 0x0, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+      "NaHCO3|碳酸氫鈉|小蘇打": {
+        pg: "Cs",
+        mp: _0x14287e(0x105),
+        bp: "-",
+        desc: _0x14287e(0x225),
+        atoms: [
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x0, y: 0x46, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x3c, y: -0x23, z: 0x0 },
+          { elem: "H", x: -0x5a, y: -0xa, z: 0x0 },
+          { elem: "Na", x: 0x64, y: -0x14, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    "HNO3|硝酸系列",
+    "N",
+    _0x14287e(0x307),
+    ["平面三角形", _0x14287e(0x1d2)],
+    _0x14287e(0x329),
+    _0x14287e(0x201),
+    "83",
+    [],
+    [],
+    {
+      "HNO3|硝酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x201),
+        bp: "83",
+        desc: _0x14287e(0x203),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x3b, y: -0x22, z: 0x0 },
+          { elem: "O", x: 0x3b, y: -0x22, z: 0x0, lpCount: 0x2 },
+          { elem: "H", x: 0x5a, y: -0xf, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, "coordinate"],
+          [0x0, 0x3],
+          [0x3, 0x4],
+        ],
+      },
+      "NO3\x20-|硝酸根": {
+        pg: _0x14287e(0x274),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0xfa),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x3b, y: -0x22, z: 0x0 },
+          { elem: "O", x: 0x3b, y: -0x22, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, "coordinate"],
+          [0x0, 0x3],
+        ],
+      },
+      "KNO3|硝酸鉀|硝石": {
+        pg: "D3h",
+        mp: "334",
+        bp: _0x14287e(0x322),
+        desc: "<strong>硝酸鉀</strong><br>俗稱硝石。K⁺\x20位於結構上方。",
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x3b, y: -0x22, z: 0x0 },
+          { elem: "O", x: 0x3b, y: -0x22, z: 0x0 },
+          { elem: "K", x: 0x0, y: 0x0, z: 0x5a, r: 0x16, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3],
+        ],
+      },
+      "NaNO3|硝酸鈉|智利硝石": {
+        pg: "D3h",
+        mp: _0x14287e(0x230),
+        bp: "380\x20(分解)",
+        desc: _0x14287e(0x2f8),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x3b, y: -0x22, z: 0x0 },
+          { elem: "O", x: 0x3b, y: -0x22, z: 0x0 },
+          { elem: "Na", x: 0x0, y: 0x0, z: 0x55, r: 0xf, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3],
+        ],
+      },
+      "AgNO3|硝酸銀": {
+        pg: _0x14287e(0x274),
+        mp: "212",
+        bp: _0x14287e(0x1d7),
+        desc: "<strong>硝酸銀</strong><br>Ag⁺\x20位於結構上方。",
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x3b, y: -0x22, z: 0x0 },
+          { elem: "O", x: 0x3b, y: -0x22, z: 0x0 },
+          { elem: "Ag", x: 0x0, y: 0x0, z: 0x5a, r: 0x12, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x27d)],
+          [0x0, 0x3],
+        ],
+      },
+      "Cu(NO3)2|硝酸銅": {
+        pg: _0x14287e(0x274),
+        mp: _0x14287e(0x19f),
+        bp: _0x14287e(0x13a),
+        desc: _0x14287e(0x2b8),
+        atoms: [
+          { elem: "Cu", x: 0x0, y: 0x0, z: 0x0, r: 0x12, lpCount: 0x0 },
+          { elem: "N", x: -0x5a, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: -0x91, y: 0x0, z: 0x0 },
+          { elem: "O", x: -0x3c, y: 0x2d, z: 0x23 },
+          { elem: "O", x: -0x3c, y: -0x2d, z: -0x23 },
+          { elem: "N", x: 0x5a, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x91, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x3c, y: 0x2d, z: 0x23 },
+          { elem: "O", x: 0x3c, y: -0x2d, z: -0x23 },
+        ],
+        bonds: [
+          [0x1, 0x2, _0x14287e(0xf4)],
+          [0x1, 0x3, _0x14287e(0x27d)],
+          [0x1, 0x4, "single"],
+          [0x5, 0x6, _0x14287e(0xf4)],
+          [0x5, 0x7, _0x14287e(0x27d)],
+          [0x5, 0x8, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x31b),
+    "N",
+    "sp²",
+    ["角形", "Bent"],
+    _0x14287e(0x18d),
+    "-",
+    "不穩定",
+    [],
+    [],
+    {
+      "HNO2|亞硝酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x210),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: 0x41, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "H", x: 0x5a, y: -0xa, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x2, 0x3],
+        ],
+      },
+      "NO2\x20-|亞硝酸根": {
+        pg: _0x14287e(0x141),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x27a),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: 0x41, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+        ],
+      },
+      "NaNO2|亞硝酸鈉": {
+        pg: _0x14287e(0x141),
+        mp: _0x14287e(0x325),
+        bp: _0x14287e(0x1d5),
+        desc: _0x14287e(0x13f),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: 0x41, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "Na", x: -0x50, y: 0x0, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+        ],
+      },
+      "KNO2|亞硝酸鉀": {
+        pg: "C2v",
+        mp: _0x14287e(0x256),
+        bp: "-",
+        desc: _0x14287e(0x1a8),
+        atoms: [
+          { elem: "N", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: 0x41, z: 0x0 },
+          { elem: "O", x: 0x3c, y: -0x23, z: 0x0 },
+          { elem: "K", x: -0x55, y: 0x0, z: 0x0, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x1ea),
+    "P",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    _0x14287e(0x2a5),
+    _0x14287e(0x16e),
+    [],
+    [],
+    {
+      "H3PO4|磷酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x2a5),
+        bp: _0x14287e(0x16e),
+        desc: _0x14287e(0x16c),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c, lpCount: 0x2 },
+          { elem: "H", x: 0x50, y: -0xa, z: 0x37 },
+          { elem: "H", x: -0x50, y: -0xa, z: 0x37 },
+          { elem: "H", x: 0x0, y: -0xa, z: -0x5a },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+          [0x4, 0x7],
+        ],
+      },
+      "H2PO4\x20-|磷酸二氫根": {
+        pg: _0x14287e(0x141),
+        mp: "-",
+        bp: "-",
+        desc: "<strong>磷酸二氫根</strong><br>帶\x20-1\x20價電荷。",
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "H", x: 0x50, y: -0xa, z: 0x37 },
+          { elem: "H", x: -0x50, y: -0xa, z: 0x37 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+        ],
+      },
+      "HPO4\x202-|磷酸氫根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x178),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "H", x: 0x50, y: -0xa, z: 0x37 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "PO4\x203-|磷酸根": {
+        pg: "Td",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x148),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "Ca3(PO4)2|磷酸鈣": {
+        pg: "Td",
+        mp: _0x14287e(0x115),
+        bp: "-",
+        desc: _0x14287e(0x30c),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "Ca", x: 0x64, y: 0x28, z: 0x0, r: 0x14 },
+          { elem: "Ca", x: -0x64, y: 0x28, z: 0x0, r: 0x14 },
+          { elem: "Ca", x: 0x0, y: -0x64, z: 0x0, r: 0x14 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "Na3PO4|磷酸鈉": {
+        pg: "Td",
+        mp: _0x14287e(0x23e),
+        bp: "-",
+        desc: "<strong>磷酸鈉</strong><br>強鹼性鹽類。",
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "Na", x: 0x5a, y: 0x1e, z: 0x0, r: 0xf },
+          { elem: "Na", x: -0x5a, y: 0x1e, z: 0x0, r: 0xf },
+          { elem: "Na", x: 0x0, y: -0x5a, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "Ca(H2PO4)2|磷酸二氫鈣": {
+        pg: "C2v",
+        mp: _0x14287e(0x2c4),
+        bp: "-",
+        desc: _0x14287e(0x235),
+        atoms: [
+          { elem: "Ca", x: 0x0, y: 0x0, z: 0x0, r: 0x14 },
+          { elem: "P", x: -0x64, y: 0x0, z: 0x0 },
+          { elem: "O", x: -0x64, y: 0x41, z: 0x0 },
+          { elem: "O", x: -0x64, y: -0x1e, z: 0x37 },
+          { elem: "O", x: -0x91, y: -0x1e, z: -0x1e },
+          { elem: "O", x: -0x37, y: -0x1e, z: -0x1e },
+          { elem: "H", x: -0x91, y: -0x3c, z: 0x37 },
+          { elem: "H", x: -0xaf, y: -0xa, z: -0x1e },
+          { elem: "P", x: 0x64, y: 0x0, z: 0x0 },
+          { elem: "O", x: 0x64, y: 0x41, z: 0x0 },
+          { elem: "O", x: 0x64, y: -0x1e, z: 0x37 },
+          { elem: "O", x: 0x91, y: -0x1e, z: -0x1e },
+          { elem: "O", x: 0x37, y: -0x1e, z: -0x1e },
+          { elem: "H", x: 0x91, y: -0x3c, z: 0x37 },
+          { elem: "H", x: 0xaf, y: -0xa, z: -0x1e },
+        ],
+        bonds: [
+          [0x1, 0x2, "double"],
+          [0x1, 0x3],
+          [0x1, 0x4],
+          [0x1, 0x5],
+          [0x3, 0x6],
+          [0x4, 0x7],
+          [0x8, 0x9, "double"],
+          [0x8, 0xa],
+          [0x8, 0xb],
+          [0x8, 0xc],
+          [0xa, 0xd],
+          [0xb, 0xe],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x11d),
+    "P",
+    "sp³",
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    "109.5°",
+    "73.6",
+    _0x14287e(0x109),
+    [],
+    [],
+    {
+      "H3PO3|亞磷酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x2dc),
+        bp: _0x14287e(0x109),
+        desc: "<strong>亞磷酸</strong><br>二質子酸，含一個\x20P-H\x20鍵\x20(不解離)\x20與兩個\x20P-OH。",
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: 0x0, y: -0x28, z: -0x3c },
+          { elem: "H", x: 0x5a, y: -0xa, z: 0x3c },
+          { elem: "H", x: -0x5a, y: -0xa, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+          [0x3, 0x6],
+        ],
+      },
+      "H2PO3\x20-|亞磷酸氫根": {
+        pg: "Cs",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x17a),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23, lpCount: 0x2 },
+          { elem: "H", x: 0x0, y: -0x28, z: -0x3c },
+          { elem: "H", x: 0x5a, y: -0xa, z: 0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "HPO3\x202-|亞磷酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0xed),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "H", x: 0x0, y: -0x28, z: -0x3c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "Na2HPO3|亞磷酸鈉": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x1ee),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x37, y: -0x1e, z: 0x23 },
+          { elem: "O", x: -0x37, y: -0x1e, z: 0x23 },
+          { elem: "H", x: 0x0, y: -0x28, z: -0x3c },
+          { elem: "Na", x: 0x5a, y: 0x14, z: 0x0, r: 0xf },
+          { elem: "Na", x: -0x5a, y: 0x14, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x29d),
+    "P",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    "26.5",
+    _0x14287e(0x1e4),
+    [],
+    [],
+    {
+      "H3PO2|次磷酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x1ec),
+        bp: "130\x20(分解)",
+        desc: _0x14287e(0x271),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c, lpCount: 0x2 },
+          { elem: "H", x: 0x37, y: -0x23, z: 0x23 },
+          { elem: "H", x: -0x37, y: -0x23, z: 0x23 },
+          { elem: "H", x: 0x0, y: -0xa, z: -0x64 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+          [0x2, 0x5],
+        ],
+      },
+      "H2PO2\x20-|次磷酸根": {
+        pg: "C2v",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x31f),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "H", x: 0x37, y: -0x23, z: 0x23 },
+          { elem: "H", x: -0x37, y: -0x23, z: 0x23 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+      "NaH2PO2|次磷酸鈉": {
+        pg: _0x14287e(0x141),
+        mp: _0x14287e(0x32f),
+        bp: "-",
+        desc: _0x14287e(0xef),
+        atoms: [
+          { elem: "P", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x0, y: -0x1e, z: -0x3c },
+          { elem: "H", x: 0x37, y: -0x23, z: 0x23 },
+          { elem: "H", x: -0x37, y: -0x23, z: 0x23 },
+          { elem: "Na", x: -0x55, y: 0x0, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2],
+          [0x0, 0x3],
+          [0x0, 0x4],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x163),
+    "Cl",
+    _0x14287e(0x116),
+    [_0x14287e(0x2b2), _0x14287e(0x13d)],
+    _0x14287e(0x2c1),
+    _0x14287e(0x318),
+    _0x14287e(0x24f),
+    [],
+    [],
+    {
+      "HClO4|過氯酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x318),
+        bp: _0x14287e(0x24f),
+        desc: _0x14287e(0x14c),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x3a, y: -0x19, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: -0x3a, y: -0x19, z: 0x23, lpCount: 0x2 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x41, lpCount: 0x2 },
+          { elem: "H", x: 0x0, y: -0x5, z: -0x69 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0xf4)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+          [0x4, 0x5],
+        ],
+      },
+      "ClO4\x20-|過氯酸根": {
+        pg: "Td",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x2ae),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: -0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x41 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, "double"],
+          [0x0, 0x3, _0x14287e(0xf4)],
+          [0x0, 0x4, "single"],
+        ],
+      },
+      "Mg(ClO4)2|過氯酸鎂": {
+        pg: "Td",
+        mp: _0x14287e(0x305),
+        bp: "-",
+        desc: _0x14287e(0x15a),
+        atoms: [
+          { elem: "Mg", x: 0x0, y: 0x0, z: 0x0, r: 0x14, lpCount: 0x0 },
+          { elem: "Cl", x: -0x82, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: -0x82, y: 0x44, z: 0x0 },
+          { elem: "O", x: -0x48, y: -0x19, z: 0x23 },
+          { elem: "O", x: -0xbc, y: -0x19, z: 0x23 },
+          { elem: "O", x: -0x82, y: -0x19, z: -0x41 },
+          { elem: "Cl", x: 0x82, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x82, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x48, y: -0x19, z: 0x23 },
+          { elem: "O", x: 0xbc, y: -0x19, z: 0x23 },
+          { elem: "O", x: 0x82, y: -0x19, z: -0x41 },
+        ],
+        bonds: [
+          [0x1, 0x2, _0x14287e(0xf4)],
+          [0x1, 0x3, _0x14287e(0xf4)],
+          [0x1, 0x4, _0x14287e(0xf4)],
+          [0x1, 0x5, _0x14287e(0x10d)],
+          [0x6, 0x7, _0x14287e(0xf4)],
+          [0x6, 0x8, _0x14287e(0xf4)],
+          [0x6, 0x9, _0x14287e(0xf4)],
+          [0x6, 0xa, _0x14287e(0x10d)],
+        ],
+      },
+      "KClO4|過氯酸鉀": {
+        pg: "Td",
+        mp: _0x14287e(0x231),
+        bp: "-",
+        desc: _0x14287e(0x1c9),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: -0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x41 },
+          { elem: "K", x: 0x0, y: 0x0, z: 0x5f, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0xf4)],
+          [0x0, 0x4, _0x14287e(0x10d)],
+        ],
+      },
+      "NH4ClO4|過氯酸銨": {
+        pg: "Td",
+        mp: _0x14287e(0x184),
+        bp: "-",
+        desc: _0x14287e(0x254),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "O", x: 0x0, y: 0x44, z: 0x0 },
+          { elem: "O", x: 0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: -0x3a, y: -0x19, z: 0x23 },
+          { elem: "O", x: 0x0, y: -0x19, z: -0x41 },
+          { elem: "N", x: 0x6e, y: 0x0, z: 0x0, r: 0x12 },
+          { elem: "H", x: 0x6e, y: 0x28, z: 0x0 },
+          { elem: "H", x: 0x6e, y: -0x14, z: 0x23 },
+          { elem: "H", x: 0x6e, y: -0x14, z: -0x23 },
+          { elem: "H", x: 0x91, y: 0x0, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, "double"],
+          [0x0, 0x4, _0x14287e(0x10d)],
+          [0x5, 0x6],
+          [0x5, 0x7],
+          [0x5, 0x8],
+          [0x5, 0x9],
+        ],
+      },
+    },
+    null,
+    "-",
+    "acid",
+  ),
+  addMol(
+    _0x14287e(0x110),
+    "Cl",
+    "sp³",
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    "107°",
+    "-20",
+    "分解",
+    [],
+    [],
+    {
+      "HClO3|氯酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x1cb),
+        bp: "分解",
+        desc: _0x14287e(0x340),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c, lpCount: 0x2 },
+          { elem: "H", x: -0x5a, y: -0x14, z: -0x37 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x3, 0x4],
+        ],
+      },
+      "ClO3\x20-|氯酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x33a),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, "double"],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "KClO3|氯酸鉀": {
+        pg: _0x14287e(0x1cf),
+        mp: _0x14287e(0x145),
+        bp: _0x14287e(0x322),
+        desc: _0x14287e(0x132),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+          { elem: "K", x: 0x0, y: 0x0, z: 0x55, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, "double"],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "NaClO3|氯酸鈉": {
+        pg: _0x14287e(0x1cf),
+        mp: "248",
+        bp: _0x14287e(0x18e),
+        desc: _0x14287e(0x24d),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+          { elem: "Na", x: 0x0, y: 0x0, z: 0x50, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    "HClO2|亞氯酸系列",
+    "Cl",
+    _0x14287e(0x116),
+    ["角形", _0x14287e(0x330)],
+    "111°",
+    "-",
+    _0x14287e(0x2ec),
+    [],
+    [],
+    {
+      "HClO2|亞氯酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x1ed),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "O", x: 0x37, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x37, y: -0x23, z: 0x0, lpCount: 0x2 },
+          { elem: "H", x: -0x5a, y: -0x14, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, "single"],
+          [0x2, 0x3],
+        ],
+      },
+      "ClO2\x20-|亞氯酸根": {
+        pg: _0x14287e(0x141),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x28b),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "O", x: 0x37, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x37, y: -0x23, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0x10d)],
+        ],
+      },
+      "NaClO2|亞氯酸鈉": {
+        pg: "C2v",
+        mp: _0x14287e(0x13a),
+        bp: "-",
+        desc: _0x14287e(0x30f),
+        atoms: [
+          { elem: "Cl", x: 0x0, y: 0x5, z: 0x0, lpCount: 0x2 },
+          { elem: "O", x: 0x37, y: -0x23, z: 0x0 },
+          { elem: "O", x: -0x37, y: -0x23, z: 0x0 },
+          { elem: "Na", x: -0x5a, y: 0x0, z: 0x0, r: 0xf },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0x10d)],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x32d),
+    "O",
+    _0x14287e(0x116),
+    ["角形", _0x14287e(0x330)],
+    "104.5°",
+    "-",
+    "不穩定",
+    [],
+    [],
+    {
+      "HClO|次氯酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x2c0),
+        atoms: [
+          { elem: "O", x: 0x0, y: 0xa, z: 0x0, lpCount: 0x2 },
+          { elem: "Cl", x: 0x41, y: -0x19, z: 0x0 },
+          { elem: "H", x: -0x23, y: -0x14, z: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x0, 0x2],
+        ],
+      },
+      "ClO\x20-|次氯酸根": {
+        pg: _0x14287e(0x2d1),
+        mp: "-",
+        bp: "-",
+        desc: "<strong>次氯酸根</strong><br>漂白水有效成分。",
+        atoms: [
+          { elem: "Cl", x: -0x23, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x23, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [[0x0, 0x1]],
+      },
+      "NaClO|次氯酸鈉|漂白水": {
+        pg: _0x14287e(0x2d1),
+        mp: _0x14287e(0x15b),
+        bp: "分解",
+        desc: _0x14287e(0x154),
+        atoms: [
+          { elem: "Cl", x: -0x23, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0x23, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "Na", x: 0x55, y: 0x0, z: 0x0, r: 0xf },
+        ],
+        bonds: [[0x0, 0x1]],
+      },
+      "Ca(ClO)2|次氯酸鈣|漂白粉": {
+        pg: _0x14287e(0x2d1),
+        mp: _0x14287e(0x1af),
+        bp: "-",
+        desc: _0x14287e(0x12d),
+        atoms: [
+          { elem: "Cl", x: -0x37, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "O", x: 0xf, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "Ca", x: 0x3c, y: 0x0, z: 0x0, r: 0x14 },
+          { elem: "O", x: 0x69, y: 0x0, z: 0x0, lpCount: 0x3 },
+          { elem: "Cl", x: 0xaf, y: 0x0, z: 0x0, lpCount: 0x3 },
+        ],
+        bonds: [
+          [0x0, 0x1],
+          [0x3, 0x4],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x206),
+    "Br",
+    _0x14287e(0x116),
+    [_0x14287e(0x281), _0x14287e(0x140)],
+    "107°",
+    "-",
+    "不穩定",
+    [],
+    [],
+    {
+      "HBrO3|溴酸": {
+        pg: "Cs",
+        mp: "-",
+        bp: _0x14287e(0x2ec),
+        desc: _0x14287e(0x1ef),
+        atoms: [
+          { elem: "Br", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c, lpCount: 0x2 },
+          { elem: "H", x: -0x5a, y: -0x14, z: -0x37 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x3, 0x4],
+        ],
+      },
+      "BrO3\x20-|溴酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: "<strong>溴酸根</strong><br>三角錐形結構。",
+        atoms: [
+          { elem: "Br", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+      "KBrO3|溴酸鉀": {
+        pg: "C3v",
+        mp: _0x14287e(0x238),
+        bp: "-",
+        desc: _0x14287e(0x2f3),
+        atoms: [
+          { elem: "Br", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+          { elem: "K", x: 0x0, y: 0x3c, z: 0x0, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "AgBrO3|溴酸銀": {
+        pg: "C3v",
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x29c),
+        atoms: [
+          { elem: "Br", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+          { elem: "Ag", x: 0x0, y: 0x3c, z: 0x0, r: 0x12 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, "single"],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    _0x14287e(0x314),
+    "I",
+    _0x14287e(0x116),
+    ["角錐形", _0x14287e(0x140)],
+    _0x14287e(0x304),
+    "110",
+    "分解",
+    [],
+    [],
+    {
+      "HIO3|碘酸": {
+        pg: "Cs",
+        mp: _0x14287e(0x2ce),
+        bp: "分解",
+        desc: _0x14287e(0xe7),
+        atoms: [
+          { elem: "I", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c, lpCount: 0x2 },
+          { elem: "H", x: -0x5a, y: -0x14, z: -0x37 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+          [0x3, 0x4],
+        ],
+      },
+      "IO3\x20-|碘酸根": {
+        pg: _0x14287e(0x1cf),
+        mp: "-",
+        bp: "-",
+        desc: _0x14287e(0x313),
+        atoms: [
+          { elem: "I", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+        ],
+        bonds: [
+          [0x0, 0x1, "double"],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+      "KIO3|碘酸鉀": {
+        pg: "C3v",
+        mp: _0x14287e(0x1b3),
+        bp: "-",
+        desc: _0x14287e(0x32e),
+        atoms: [
+          { elem: "I", x: 0x0, y: 0xf, z: 0x0, lpCount: 0x1 },
+          { elem: "O", x: 0x0, y: -0x28, z: 0x32 },
+          { elem: "O", x: 0x30, y: -0x28, z: -0x1c },
+          { elem: "O", x: -0x30, y: -0x28, z: -0x1c },
+          { elem: "K", x: 0x0, y: 0x3c, z: 0x0, r: 0x16 },
+        ],
+        bonds: [
+          [0x0, 0x1, _0x14287e(0xf4)],
+          [0x0, 0x2, _0x14287e(0xf4)],
+          [0x0, 0x3, _0x14287e(0x10d)],
+        ],
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x200),
+  ),
+  addMol(
+    "Fe(C5H5)2|二茂鐵|Ferrocene",
+    "C",
+    "sp³",
+    [_0x14287e(0x1dd), "Shape"],
+    "角度",
+    "172-174",
+    _0x14287e(0x107),
+    [
+      { elem: "C", x: -0x33, y: -0x23, z: -0x52 },
+      { elem: "Fe", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "C", x: -0x30, y: 0x24, z: -0x53 },
+      { elem: "C", x: 0x10, y: -0x3c, z: -0x52 },
+      { elem: "C", x: 0x3c, y: -0x4, z: -0x53 },
+      { elem: "C", x: 0x15, y: 0x37, z: -0x54 },
+      { elem: "C", x: 0x19, y: 0x39, z: 0x51 },
+      { elem: "C", x: -0x2c, y: 0x2b, z: 0x52 },
+      { elem: "C", x: -0x34, y: -0x1c, z: 0x54 },
+      { elem: "C", x: 0xc, y: -0x3a, z: 0x54 },
+      { elem: "C", x: 0x3d, y: -0x5, z: 0x53 },
+      { elem: "H", x: -0x60, y: -0x41, z: -0x50, r: 0x0 },
+      { elem: "H", x: -0x5b, y: 0x46, z: -0x54, r: 0x0 },
+      { elem: "H", x: 0x1e, y: -0x70, z: -0x50, r: 0x0 },
+      { elem: "H", x: 0x72, y: -0x7, z: -0x52, r: 0x0 },
+      { elem: "H", x: 0x28, y: 0x6a, z: -0x55, r: 0x0 },
+      { elem: "H", x: 0x30, y: 0x6a, z: 0x50, r: 0x0 },
+      { elem: "H", x: -0x54, y: 0x4f, z: 0x51, r: 0x0 },
+      { elem: "H", x: -0x63, y: -0x37, z: 0x54, r: 0x0 },
+      { elem: "H", x: 0x17, y: -0x6f, z: 0x54, r: 0x0 },
+      { elem: "H", x: 0x73, y: -0xb, z: 0x52, r: 0x0 },
+      { elem: "", x: 0x0, y: -0x2, z: -0x52, r: 0x0 },
+      { elem: "", x: 0x0, y: 0x2, z: 0x53, r: 0x0 },
+    ],
+    [
+      [0x1, 0x15],
+      [0x1, 0x16],
+      [0x0, 0x2],
+      [0x2, 0x5],
+      [0x5, 0x4],
+      [0x4, 0x3],
+      [0x3, 0x0],
+      [0x6, 0x7],
+      [0x7, 0x8],
+      [0x8, 0x9],
+      [0x9, 0xa],
+      [0xa, 0x6],
+    ],
+    null,
+    null,
+    "D5h",
+  ),
+  addMol(
+    "MyMol|Co(NH3)4Cl2",
+    "C",
+    _0x14287e(0x116),
+    ["幾何形狀", _0x14287e(0x2fb)],
+    "角度",
+    "-",
+    "-",
+    [
+      { elem: "N", x: -0x64, y: 0x0, z: 0x0 },
+      { elem: "Cl", x: 0x0, y: 0x64, z: 0x0 },
+      { elem: "H", x: -0x75, y: -0x27, z: 0x12 },
+      { elem: "N", x: 0x64, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x74, y: -0x28, z: 0x11 },
+      { elem: "H", x: 0x7a, y: 0x23, z: 0x16 },
+      { elem: "N", x: 0x0, y: -0x64, z: 0x0 },
+      { elem: "H", x: -0x78, y: 0x24, z: 0x17 },
+      { elem: "H", x: -0x73, y: 0x2, z: -0x2c },
+      { elem: "H", x: -0x28, y: -0x75, z: 0x8 },
+      { elem: "Co", x: 0x0, y: 0x0, z: 0x0 },
+      { elem: "H", x: 0x23, y: -0x77, z: 0x7 },
+      { elem: "H", x: -0x3, y: -0x70, z: -0x2d },
+      { elem: "H", x: 0x73, y: 0x2, z: -0x2d },
+      { elem: "N", x: 0x0, y: 0x0, z: -0x64 },
+      { elem: "Cl", x: 0x0, y: 0x0, z: 0x64 },
+      { elem: "H", x: 0x24, y: 0x17, z: -0x75 },
+      { elem: "H", x: -0x27, y: 0x14, z: -0x74 },
+      { elem: "H", x: 0x2, y: -0x2b, z: -0x76 },
+    ],
+    [
+      [0x0, 0x2],
+      [0x0, 0x7],
+      [0x0, 0x8],
+      [0x0, 0xa],
+      [0x1, 0xa],
+      [0x3, 0x4],
+      [0x3, 0x5],
+      [0x3, 0xd],
+      [0x3, 0xa],
+      [0x6, 0x9],
+      [0x6, 0xa],
+      [0x6, 0xb],
+      [0x6, 0xc],
+      [0xe, 0xa],
+      [0xe, 0x10],
+      [0xe, 0x11],
+      [0xe, 0x12],
+      [0xf, 0xa],
+    ],
+    null,
+    null,
+    "",
+  ),
+  addMol(
+    _0x14287e(0x263),
+    "Si",
+    _0x14287e(0x116),
+    ["正四面體網狀", _0x14287e(0x128)],
+    _0x14287e(0x2c1),
+    "1414",
+    "3265",
+    [
+      { elem: "Si", x: -92.4, y: 92.4, z: -92.4, lpCount: 0x0 },
+      { elem: "Si", x: -92.4, y: 92.4, z: 92.4, lpCount: 0x0 },
+      { elem: "Si", x: -92.4, y: -92.4, z: -92.4, lpCount: 0x0 },
+      { elem: "Si", x: -92.4, y: -92.4, z: 92.4, lpCount: 0x0 },
+      { elem: "Si", x: 92.4, y: 92.4, z: -92.4, lpCount: 0x0 },
+      { elem: "Si", x: 92.4, y: 92.4, z: 92.4, lpCount: 0x0 },
+      { elem: "Si", x: 92.4, y: -92.4, z: -92.4, lpCount: 0x0 },
+      { elem: "Si", x: 92.4, y: -92.4, z: 92.4, lpCount: 0x0 },
+      { elem: "Si", x: -92.4, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "Si", x: 92.4, y: 0x0, z: 0x0, lpCount: 0x0 },
+      { elem: "Si", x: 0x0, y: 0x0, z: -92.4, lpCount: 0x0 },
+      { elem: "Si", x: 0x0, y: 0x0, z: 92.4, lpCount: 0x0 },
+      { elem: "Si", x: 0x0, y: 92.4, z: 0x0, lpCount: 0x0 },
+      { elem: "Si", x: 0x0, y: -92.4, z: 0x0, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: 46.2, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: 46.2, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: -46.2, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: -46.2, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: 138.6, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: 46.2, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: 138.6, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: 138.6, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: 46.2, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: 138.6, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: 46.2, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: -46.2, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: -138.6, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: -46.2, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: -138.6, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: -46.2, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: -138.6, y: -138.6, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: -46.2, y: -138.6, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: 138.6, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: 46.2, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: 138.6, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: 46.2, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: 138.6, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: 138.6, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: 46.2, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: -138.6, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: -46.2, z: -138.6, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: -138.6, z: -46.2, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: -46.2, z: 138.6, lpCount: 0x0 },
+      { elem: "Si", x: 46.2, y: -138.6, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: -46.2, z: 46.2, lpCount: 0x0 },
+      { elem: "Si", x: 138.6, y: -138.6, z: 138.6, lpCount: 0x0 },
+    ],
+    [
+      [0x0, 0x12],
+      [0x0, 0x13],
+      [0x0, 0x14],
+      [0x1, 0x16],
+      [0x1, 0x17],
+      [0x1, 0x18],
+      [0x1, 0x15],
+      [0x2, 0x1b],
+      [0x2, 0x1c],
+      [0x2, 0x1a],
+      [0x2, 0x19],
+      [0x3, 0x1f],
+      [0x3, 0x1d],
+      [0x3, 0x1e],
+      [0x4, 0x21],
+      [0x4, 0x20],
+      [0x4, 0x22],
+      [0x4, 0x23],
+      [0x5, 0x26],
+      [0x5, 0x25],
+      [0x5, 0x24],
+      [0x6, 0x27],
+      [0x6, 0x28],
+      [0x6, 0x29],
+      [0x7, 0x2a],
+      [0x7, 0x2b],
+      [0x7, 0x2d],
+      [0x7, 0x2c],
+      [0x8, 0x16],
+      [0x8, 0xf],
+      [0x8, 0x10],
+      [0x8, 0x19],
+      [0x9, 0xe],
+      [0x9, 0x23],
+      [0x9, 0x11],
+      [0x9, 0x2c],
+      [0xa, 0x1b],
+      [0xa, 0xf],
+      [0xa, 0x11],
+      [0xa, 0x21],
+      [0xb, 0x2a],
+      [0xb, 0x18],
+      [0xb, 0x10],
+      [0xb, 0xe],
+      [0xc, 0xf],
+      [0xc, 0xe],
+      [0xc, 0x17],
+      [0xc, 0x20],
+      [0xd, 0x10],
+      [0xd, 0x1c],
+      [0xd, 0x11],
+      [0xd, 0x2b],
+      [0xe, 0x5],
+      [0xf, 0x0],
+      [0x10, 0x3],
+      [0x11, 0x6],
+    ],
+    null,
+    _0x14287e(0x333),
+    _0x14287e(0x2be),
+  ),
+  addMol(
+    "C",
+    "C",
+    _0x14287e(0x116),
+    [_0x14287e(0x23a), "Allotrope"],
+    "-",
+    "-",
+    "-",
+    [],
+    [],
+    {
+      "C|金剛石|鑽石": {
+        pg: _0x14287e(0x2be),
+        hybrid: _0x14287e(0x116),
+        shape: _0x14287e(0x311),
+        angle: _0x14287e(0x2c1),
+        mp: _0x14287e(0x130),
+        bp: _0x14287e(0x1fe),
+        atoms: [
+          { elem: "C", x: -0x52, y: 0x52, z: 0x0, lpCount: 0x0 },
+          { elem: "C", x: -0x52, y: -0x52, z: 0x0, lpCount: 0x0 },
+          { elem: "C", x: 0x52, y: 0x52, z: 0x0, lpCount: 0x0 },
+          { elem: "C", x: 0x52, y: -0x52, z: 0x0, lpCount: 0x0 },
+          { elem: "C", x: -0x52, y: 0x0, z: -0x52, lpCount: 0x0 },
+          { elem: "C", x: -0x52, y: 0x0, z: 0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x52, y: 0x0, z: -0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x52, y: 0x0, z: 0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x0, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "C", x: 0x0, y: 0x52, z: -0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x0, y: 0x52, z: 0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x0, y: -0x52, z: -0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x0, y: -0x52, z: 0x52, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: 0x29, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: 0x29, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: -0x29, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: -0x29, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: 0x7a, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: 0x29, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: 0x7a, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: -0x29, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: -0x7a, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: -0x7a, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: 0x7a, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: 0x7a, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: 0x29, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: -0x7a, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: -0x29, z: -0x29, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: -0x7a, z: 0x29, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: -0x29, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: 0x29, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: -0x7a, y: 0x29, z: 0x7a, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: -0x29, z: 0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: -0x29, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: 0x29, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: 0x29, z: 0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x7a, y: -0x29, z: 0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: 0x7a, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: 0x7a, z: 0x7a, lpCount: 0x0 },
+          { elem: "C", x: -0x29, y: -0x7a, z: -0x7a, lpCount: 0x0 },
+          { elem: "C", x: 0x29, y: -0x7a, z: 0x7a, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x12],
+          [0x0, 0x13],
+          [0x0, 0xe],
+          [0x0, 0x11],
+          [0x1, 0xf],
+          [0x1, 0x16],
+          [0x1, 0x15],
+          [0x1, 0x14],
+          [0x2, 0x17],
+          [0x2, 0xd],
+          [0x2, 0x19],
+          [0x2, 0x18],
+          [0x3, 0x10],
+          [0x3, 0x1a],
+          [0x3, 0x1b],
+          [0x3, 0x1c],
+          [0x4, 0x12],
+          [0x4, 0xf],
+          [0x4, 0x1e],
+          [0x4, 0x1d],
+          [0x5, 0x20],
+          [0x5, 0x14],
+          [0x5, 0xe],
+          [0x5, 0x1f],
+          [0x6, 0xd],
+          [0x6, 0x21],
+          [0x6, 0x22],
+          [0x6, 0x1b],
+          [0x7, 0x10],
+          [0x7, 0x24],
+          [0x7, 0x23],
+          [0x7, 0x19],
+          [0x8, 0xe],
+          [0x8, 0x10],
+          [0x8, 0xd],
+          [0x8, 0xf],
+          [0x9, 0x25],
+          [0x9, 0x13],
+          [0x9, 0x1e],
+          [0x9, 0xd],
+          [0xa, 0x23],
+          [0xa, 0xe],
+          [0xa, 0x17],
+          [0xa, 0x26],
+          [0xb, 0x21],
+          [0xb, 0x1a],
+          [0xb, 0xf],
+          [0xb, 0x27],
+          [0xc, 0x10],
+          [0xc, 0x20],
+          [0xc, 0x28],
+          [0xc, 0x16],
+        ],
+        desc: "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>⚗️\x20物質性質</div><div\x20class=\x22info-body\x22><span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>金剛石是著名的<strong>共價網狀固體</strong>。每個碳原子採取\x20<strong>sp³\x20混成軌域</strong>，與鄰近的四個碳原子以強大的共價鍵結合，形成無限延伸的正四面體網狀結構。<br><span\x20class=\x22highlight-title\x22>2.\x20物理性質：</span>由於原子間完全以極強的共價鍵連結，金剛石擁有自然界物質中最高的硬度與極高的熔點\x20(約\x203550°C)。此外，它不具備自由電子，因此是良好的<strong>絕緣體</strong>。<br><span\x20class=\x22highlight-title\x22>3.\x20導熱特性：</span>儘管不導電，但金剛石具備極佳的聲子傳導能力，使其導熱率遠高於一般金屬。</div></div><div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22><div\x20class=\x22info-title\x22>💎\x20生活應用</div><div\x20class=\x22info-body\x22><span\x20class=\x22highlight-title\x22>1.\x20工業切割：</span>利用其極致硬度，廣泛用於鑽頭、鋸片及玻璃切割工具。<br><span\x20class=\x22highlight-title\x22>2.\x20珠寶飾品：</span>具備高折射率與色散率，經切割後能展現璀璨光澤。<br><span\x20class=\x22highlight-title\x22>3.\x20科學研究：</span>用於製造「金剛石壓砧」，在極高壓環境下研究物質特性。</div></div>",
+      },
+      "C|石墨|黑鉛": {
+        pg: _0x14287e(0x160),
+        hybrid: _0x14287e(0x307),
+        shape: _0x14287e(0x292),
+        angle: _0x14287e(0x329),
+        mp: _0x14287e(0x130),
+        bp: _0x14287e(0x1fe),
+        atoms: [
+          { elem: "C", x: -0x36, y: 0x63, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: 0x63, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x1, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x1, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0x61, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0x61, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0x63, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0x63, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x1, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x1, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0x61, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0x61, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0x63, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0x63, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x1, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x1, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0x61, z: -0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0x61, z: 0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: 0x63, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x1, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0x61, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0x63, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x1, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0x61, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0x63, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x1, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0x61, z: -0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: 0x22, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: -0x40, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0x22, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: -0x40, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x43, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0x1f, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x43, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0x1f, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x84, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x84, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x84, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: 0x84, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: 0x22, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: 0x22, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: 0x22, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: -0x40, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0xe0, y: -0x40, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0xa2, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0xe0, y: -0x40, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0xa2, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x84, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: 0x84, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0x22, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: -0x40, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0xa2, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: -0xa2, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0xe5, y: 0x84, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0x22, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0xe5, y: 0x84, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0x22, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: -0x40, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: -0x40, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0xa2, z: -0x9b, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: -0xa2, z: 0x9c, lpCount: 0x0 },
+          { elem: "C", x: -0x36, y: 0xa5, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: 0x43, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0xa7, y: -0x1f, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0xe0, y: -0x81, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: -0x6f, y: -0x81, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x3b, y: 0xa5, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x2, y: -0x81, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: 0xa5, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0xe5, y: 0x43, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0xac, y: -0x1f, z: 0x1, lpCount: 0x0 },
+          { elem: "C", x: 0x73, y: -0x81, z: 0x1, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x0, 0x24, _0x14287e(0xf4)],
+          [0x0, 0x23],
+          [0x0, 0x1b],
+          [0x1, 0x26, "double"],
+          [0x1, 0x25],
+          [0x1, 0x27],
+          [0x2, 0x1b, _0x14287e(0xf4)],
+          [0x2, 0x28],
+          [0x2, 0x1c],
+          [0x3, 0x29],
+          [0x3, 0x27, _0x14287e(0xf4)],
+          [0x3, 0x2a],
+          [0x4, 0x1c],
+          [0x4, 0x2b],
+          [0x4, 0x2c],
+          [0x5, 0x2a],
+          [0x5, 0x2d],
+          [0x5, 0x2e],
+          [0x6, 0x24],
+          [0x6, 0x2f, _0x14287e(0xf4)],
+          [0x6, 0x1d],
+          [0x7, 0x30, _0x14287e(0xf4)],
+          [0x7, 0x26],
+          [0x7, 0x31],
+          [0x8, 0x1b],
+          [0x8, 0x1d, "double"],
+          [0x8, 0x1e],
+          [0x9, 0x31, "double"],
+          [0x9, 0x27],
+          [0x9, 0x32],
+          [0xa, 0x1e],
+          [0xa, 0x1c, _0x14287e(0xf4)],
+          [0xa, 0x33],
+          [0xb, 0x32],
+          [0xb, 0x2a, _0x14287e(0xf4)],
+          [0xb, 0x34],
+          [0xc, 0x2f],
+          [0xc, 0x35],
+          [0xc, 0x36, _0x14287e(0xf4)],
+          [0xd, 0x30],
+          [0xd, 0x37],
+          [0xd, 0x38, "double"],
+          [0xe, 0x36],
+          [0xe, 0x1d],
+          [0xe, 0x39, _0x14287e(0xf4)],
+          [0xf, 0x38],
+          [0xf, 0x31],
+          [0xf, 0x3a, _0x14287e(0xf4)],
+          [0x10, 0x1e, "double"],
+          [0x10, 0x39],
+          [0x10, 0x3b],
+          [0x11, 0x32, _0x14287e(0xf4)],
+          [0x11, 0x3a],
+          [0x11, 0x3c],
+          [0x12, 0x3e, "double"],
+          [0x12, 0x1f],
+          [0x12, 0x3d],
+          [0x13, 0x3f, _0x14287e(0xf4)],
+          [0x13, 0x20],
+          [0x13, 0x3e],
+          [0x14, 0x40],
+          [0x14, 0x41, _0x14287e(0xf4)],
+          [0x14, 0x3f],
+          [0x15, 0x1f, "double"],
+          [0x15, 0x21],
+          [0x15, 0x42],
+          [0x16, 0x20, "double"],
+          [0x16, 0x22],
+          [0x16, 0x1f],
+          [0x17, 0x41],
+          [0x17, 0x43, _0x14287e(0xf4)],
+          [0x17, 0x20],
+          [0x18, 0x21],
+          [0x18, 0x45],
+          [0x18, 0x44],
+          [0x19, 0x22],
+          [0x19, 0x46],
+          [0x19, 0x21, _0x14287e(0xf4)],
+          [0x1a, 0x43],
+          [0x1a, 0x47],
+          [0x1a, 0x22, "double"],
+        ],
+        desc: "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>⚗️\x20物質性質</div><div\x20class=\x22info-body\x22><span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>碳原子採\x20<strong>sp²\x20混成</strong>，層內成六角蜂巢狀；層間靠微弱<strong>凡得瓦力</strong>結合。<br><span\x20class=\x22highlight-title\x22>2.\x20導電特性：</span>擁有離域\x20π\x20電子，是唯一能導電的非金屬網狀固體。</div></div>",
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x1fb),
+  ),
+  addMol(
+    _0x14287e(0x2dd),
+    "Si",
+    "sp³",
+    ["正四面體網狀結構", "Tetrahedral\x20Network"],
+    _0x14287e(0x1f1),
+    _0x14287e(0x2f7),
+    _0x14287e(0x26a),
+    [
+      { elem: "Si", x: -0x40, y: 0x62, z: -0x24, lpCount: 0x0 },
+      { elem: "Si", x: -0xb0, y: -0x61, z: -0x24, lpCount: 0x0 },
+      { elem: "Si", x: 0xa1, y: 0x62, z: -0x24, lpCount: 0x0 },
+      { elem: "Si", x: 0x31, y: -0x61, z: -0x24, lpCount: 0x0 },
+      { elem: "Si", x: -0xdd, y: 0x8, z: 0x2e, lpCount: 0x0 },
+      { elem: "Si", x: 0x4, y: 0x8, z: 0x2e, lpCount: 0x0 },
+      { elem: "Si", x: 0xe5, y: 0x8, z: 0x2e, lpCount: 0x0 },
+      { elem: "Si", x: -0x6c, y: -0x6, z: -0x77, lpCount: 0x0 },
+      { elem: "Si", x: -0x6c, y: -0x6, z: 0x81, lpCount: 0x0 },
+      { elem: "Si", x: 0x75, y: -0x6, z: -0x77, lpCount: 0x0 },
+      { elem: "Si", x: 0x75, y: -0x6, z: 0x81, lpCount: 0x0 },
+      { elem: "O", x: -0x6a, y: 0x2c, z: -0x40, lpCount: 0x2 },
+      { elem: "O", x: 0x77, y: 0x2c, z: -0x40, lpCount: 0x2 },
+      { elem: "O", x: -0x15, y: 0x47, z: 0x12, lpCount: 0x2 },
+      { elem: "O", x: 0xcc, y: 0x47, z: 0x12, lpCount: 0x2 },
+      { elem: "O", x: -0x28, y: -0xf, z: 0x65, lpCount: 0x2 },
+      { elem: "O", x: 0xb9, y: -0xf, z: 0x65, lpCount: 0x2 },
+      { elem: "O", x: -0x99, y: 0x11, z: 0x4a, lpCount: 0x2 },
+      { elem: "O", x: 0x48, y: 0x11, z: 0x4a, lpCount: 0x2 },
+      { elem: "O", x: -0xda, y: -0x2a, z: -0x9, lpCount: 0x2 },
+      { elem: "O", x: 0x7, y: -0x2a, z: -0x9, lpCount: 0x2 },
+      { elem: "O", x: -0x86, y: -0x46, z: -0x5b, lpCount: 0x2 },
+      { elem: "O", x: 0x5b, y: -0x46, z: -0x5b, lpCount: 0x2 },
+      { elem: "O", x: -0x6a, y: 0x98, z: -0x9, lpCount: 0x2 },
+      { elem: "O", x: -0x15, y: 0x7d, z: -0x5b, lpCount: 0x2 },
+      { elem: "O", x: -0xda, y: -0x97, z: -0x40, lpCount: 0x2 },
+      { elem: "O", x: -0x86, y: -0x7c, z: 0x12, lpCount: 0x2 },
+      { elem: "O", x: 0x77, y: 0x98, z: -0x9, lpCount: 0x2 },
+      { elem: "O", x: 0xcc, y: 0x7d, z: -0x5b, lpCount: 0x2 },
+      { elem: "O", x: 0x7, y: -0x97, z: -0x40, lpCount: 0x2 },
+      { elem: "O", x: 0x5b, y: -0x7c, z: 0x12, lpCount: 0x2 },
+      { elem: "O", x: -0xf6, y: 0x47, z: 0x12, lpCount: 0x2 },
+      { elem: "O", x: -0x109, y: -0xf, z: 0x65, lpCount: 0x2 },
+      { elem: "O", x: 0x129, y: 0x11, z: 0x4a, lpCount: 0x2 },
+      { elem: "O", x: 0xe8, y: -0x2a, z: -0x9, lpCount: 0x2 },
+      { elem: "O", x: -0x99, y: 0x11, z: -0xae, lpCount: 0x2 },
+      { elem: "O", x: -0x28, y: -0xf, z: -0x93, lpCount: 0x2 },
+      { elem: "O", x: -0x6a, y: 0x2c, z: 0xb8, lpCount: 0x2 },
+      { elem: "O", x: -0x86, y: -0x46, z: 0x9c, lpCount: 0x2 },
+      { elem: "O", x: 0x48, y: 0x11, z: -0xae, lpCount: 0x2 },
+      { elem: "O", x: 0xb9, y: -0xf, z: -0x93, lpCount: 0x2 },
+      { elem: "O", x: 0x77, y: 0x2c, z: 0xb8, lpCount: 0x2 },
+      { elem: "O", x: 0x5b, y: -0x46, z: 0x9c, lpCount: 0x2 },
+    ],
+    [
+      [0x0, 0x17],
+      [0x0, 0xb],
+      [0x0, 0xd],
+      [0x0, 0x18],
+      [0x1, 0x13],
+      [0x1, 0x19],
+      [0x1, 0x1a],
+      [0x1, 0x15],
+      [0x2, 0x1b],
+      [0x2, 0xc],
+      [0x2, 0xe],
+      [0x2, 0x1c],
+      [0x3, 0x14],
+      [0x3, 0x1d],
+      [0x3, 0x1e],
+      [0x3, 0x16],
+      [0x4, 0x11],
+      [0x4, 0x1f],
+      [0x4, 0x20],
+      [0x4, 0x13],
+      [0x5, 0x12],
+      [0x5, 0xd],
+      [0x5, 0xf],
+      [0x5, 0x14],
+      [0x6, 0x21],
+      [0x6, 0xe],
+      [0x6, 0x10],
+      [0x6, 0x22],
+      [0x7, 0x24],
+      [0x7, 0x15],
+      [0x7, 0x23],
+      [0x7, 0xb],
+      [0x8, 0xf],
+      [0x8, 0x26],
+      [0x8, 0x11],
+      [0x8, 0x25],
+      [0x9, 0x28],
+      [0x9, 0x16],
+      [0x9, 0x27],
+      [0x9, 0xc],
+      [0xa, 0x10],
+      [0xa, 0x2a],
+      [0xa, 0x12],
+      [0xa, 0x29],
+    ],
+    null,
+    _0x14287e(0x151),
+    _0x14287e(0x22a),
+  ),
+  addMol(
+    "BN",
+    "B",
+    _0x14287e(0x2e0),
+    [_0x14287e(0x28e), _0x14287e(0x221)],
+    "-",
+    _0x14287e(0x282),
+    _0x14287e(0x282),
+    [],
+    [],
+    {
+      "BN|氮化硼(立體)": {
+        pg: "F-43m",
+        hybrid: "sp³",
+        shape: _0x14287e(0x1c7),
+        angle: "109.5°",
+        mp: "2973",
+        bp: "2973",
+        isIonic: !![],
+        atoms: [
+          { elem: "B", x: -0x53, y: 0x53, z: -0x53, lpCount: 0x0 },
+          { elem: "B", x: -0x53, y: 0x53, z: 0x53, lpCount: 0x0 },
+          { elem: "B", x: -0x53, y: -0x53, z: -0x53, lpCount: 0x0 },
+          { elem: "B", x: -0x53, y: -0x53, z: 0x53, lpCount: 0x0 },
+          { elem: "B", x: 0x53, y: 0x53, z: -0x53, lpCount: 0x0 },
+          { elem: "B", x: 0x53, y: 0x53, z: 0x53, lpCount: 0x0 },
+          { elem: "B", x: 0x53, y: -0x53, z: -0x53, lpCount: 0x0 },
+          { elem: "B", x: 0x53, y: -0x53, z: 0x53, lpCount: 0x0 },
+          { elem: "B", x: -0x53, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x53, y: 0x0, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x0, y: 0x53, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x0, y: -0x53, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x0, y: 0x0, z: -0x53, lpCount: 0x0 },
+          { elem: "B", x: 0x0, y: 0x0, z: 0x53, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: 0x2a, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: -0x2a, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: 0x2a, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: -0x2a, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: 0x7d, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: 0x2a, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: 0x7d, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: 0x2a, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: 0x7d, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: 0x2a, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: 0x7d, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: -0x2a, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: -0x7d, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: -0x7d, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: -0x2a, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: -0x7d, y: -0x7d, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: -0x2a, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: -0x2a, y: -0x7d, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: 0x7d, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: 0x7d, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: 0x2a, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: 0x7d, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: 0x2a, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: 0x7d, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: 0x2a, z: 0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: -0x2a, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: -0x7d, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: -0x2a, z: -0x2a, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: -0x7d, z: -0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x2a, y: -0x7d, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: -0x2a, z: 0x7d, lpCount: 0x0 },
+          { elem: "N", x: 0x7d, y: -0x7d, z: 0x2a, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x12, 0x0, "coordinate"],
+          [0x0, 0x13],
+          [0x0, 0x15],
+          [0x0, 0x14],
+          [0x18, 0x1, _0x14287e(0x27d)],
+          [0x1, 0x17],
+          [0x1, 0x16],
+          [0x1b, 0x2, _0x14287e(0x27d)],
+          [0x2, 0x1a],
+          [0x2, 0x19],
+          [0x1e, 0x3, _0x14287e(0x27d)],
+          [0x3, 0x1f],
+          [0x3, 0x1c],
+          [0x3, 0x1d],
+          [0x21, 0x4, _0x14287e(0x27d)],
+          [0x4, 0x22],
+          [0x4, 0x20],
+          [0x24, 0x5, _0x14287e(0x27d)],
+          [0x5, 0x26],
+          [0x5, 0x25],
+          [0x5, 0x23],
+          [0x27, 0x6, _0x14287e(0x27d)],
+          [0x6, 0x28],
+          [0x6, 0x29],
+          [0x6, 0x2a],
+          [0x2b, 0x7, "coordinate"],
+          [0x7, 0x2d],
+          [0x7, 0x2c],
+          [0xe, 0x8, _0x14287e(0x27d)],
+          [0x8, 0x11],
+          [0x8, 0x13],
+          [0x8, 0x1c],
+          [0x10, 0x9, "coordinate"],
+          [0x9, 0x26],
+          [0x9, 0xf],
+          [0x9, 0x29],
+          [0xe, 0xa, _0x14287e(0x27d)],
+          [0xa, 0x23],
+          [0xa, 0x10],
+          [0xa, 0x14],
+          [0x1f, 0xb, _0x14287e(0x27d)],
+          [0xb, 0x11],
+          [0xb, 0xf],
+          [0xb, 0x28],
+          [0x11, 0xc, _0x14287e(0x27d)],
+          [0xc, 0x10],
+          [0xc, 0x27],
+          [0xc, 0x15],
+          [0x1e, 0xd, "coordinate"],
+          [0xd, 0xf],
+          [0xd, 0x24],
+          [0xd, 0xe],
+          [0xe, 0x1],
+          [0xf, 0x7],
+          [0x10, 0x4],
+          [0x11, 0x2],
+        ],
+        desc: _0x14287e(0x2c9),
+      },
+      "BN|氮化硼(平面層狀)": {
+        pg: "Layered",
+        hybrid: _0x14287e(0x307),
+        shape: "層狀網狀結構",
+        angle: "120°",
+        mp: "2973",
+        bp: _0x14287e(0x282),
+        isIonic: !![],
+        atoms: [
+          { elem: "B", x: -0x4a, y: 0x5a, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x4a, y: 0x5a, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x84, y: -0xa, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x84, y: -0xa, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0xbd, y: -0x6d, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0xbd, y: -0x6d, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x29, y: 0x5a, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x29, y: 0x5a, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x11, y: -0xa, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x11, y: -0xa, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x4a, y: -0x6d, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x4a, y: -0x6d, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x9c, y: 0x5a, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x9c, y: 0x5a, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x62, y: -0xa, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x62, y: -0xa, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x29, y: -0x6d, z: -0xb0, lpCount: 0x0 },
+          { elem: "B", x: 0x29, y: -0x6d, z: 0xb0, lpCount: 0x0 },
+          { elem: "B", x: -0x11, y: 0x7b, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: -0x4a, y: 0x18, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: -0x84, y: -0x4c, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x62, y: 0x7b, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x29, y: 0x18, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: -0x11, y: -0x4c, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0xd5, y: 0x7b, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x9c, y: 0x18, z: 0x0, lpCount: 0x0 },
+          { elem: "B", x: 0x62, y: -0x4c, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: 0x5a, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0x84, y: -0xa, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0xbd, y: -0x6d, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: 0x5a, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: -0xa, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: -0x6d, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x9c, y: 0x5a, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: -0xa, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: -0x6d, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: 0x7b, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: 0x7b, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: 0x18, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: 0x18, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x84, y: -0x4c, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x84, y: -0x4c, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: 0x7b, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: 0x7b, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: 0x18, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: 0x18, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: -0x4c, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: -0x4c, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0xd5, y: 0x7b, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0xd5, y: 0x7b, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x9c, y: 0x18, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x9c, y: 0x18, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: -0x4c, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: -0x4c, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x84, y: 0x7b, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x84, y: 0x7b, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xbd, y: 0x18, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xbd, y: 0x18, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xf7, y: -0x4c, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xbd, y: -0xb0, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xf7, y: -0x4c, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0xbd, y: -0xb0, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: -0xb0, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x4a, y: -0xb0, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: -0xb0, z: -0xb0, lpCount: 0x0 },
+          { elem: "N", x: 0x29, y: -0xb0, z: 0xb0, lpCount: 0x0 },
+          { elem: "N", x: -0x11, y: 0xbe, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x62, y: 0xbe, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0xd5, y: 0xbe, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x10f, y: 0x5a, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0xd5, y: -0xa, z: 0x0, lpCount: 0x0 },
+          { elem: "N", x: 0x9c, y: -0x6d, z: 0x0, lpCount: 0x0 },
+        ],
+        bonds: [
+          [0x26, 0x0, _0x14287e(0x27d)],
+          [0x24, 0x0, _0x14287e(0xf4)],
+          [0x0, 0x36, _0x14287e(0x10d)],
+          [0x27, 0x1, "coordinate"],
+          [0x25, 0x1, _0x14287e(0xf4)],
+          [0x1, 0x37, _0x14287e(0x10d)],
+          [0x28, 0x2, _0x14287e(0x27d)],
+          [0x26, 0x2, "double"],
+          [0x2, 0x38, _0x14287e(0x10d)],
+          [0x29, 0x3, _0x14287e(0x27d)],
+          [0x27, 0x3, _0x14287e(0xf4)],
+          [0x3, 0x39, _0x14287e(0x10d)],
+          [0x3b, 0x4, "double"],
+          [0x4, 0x28, _0x14287e(0x27d)],
+          [0x4, 0x3a, _0x14287e(0x10d)],
+          [0x3d, 0x5, _0x14287e(0xf4)],
+          [0x29, 0x5, _0x14287e(0x27d)],
+          [0x5, 0x3c, _0x14287e(0x10d)],
+          [0x2c, 0x6, _0x14287e(0xf4)],
+          [0x24, 0x6, _0x14287e(0x27d)],
+          [0x6, 0x2a, _0x14287e(0x10d)],
+          [0x2d, 0x7, _0x14287e(0xf4)],
+          [0x2b, 0x7, _0x14287e(0x27d)],
+          [0x7, 0x25, "single"],
+          [0x2e, 0x8, _0x14287e(0xf4)],
+          [0x26, 0x8, _0x14287e(0x27d)],
+          [0x8, 0x2c, "single"],
+          [0x2f, 0x9, _0x14287e(0xf4)],
+          [0x27, 0x9, _0x14287e(0x27d)],
+          [0x9, 0x2d, "single"],
+          [0x3e, 0xa, "double"],
+          [0x28, 0xa, _0x14287e(0x27d)],
+          [0xa, 0x2e, "single"],
+          [0x3f, 0xb, "double"],
+          [0x29, 0xb, _0x14287e(0x27d)],
+          [0xb, 0x2f, _0x14287e(0x10d)],
+          [0x30, 0xc, "double"],
+          [0x32, 0xc, "coordinate"],
+          [0xc, 0x2a, _0x14287e(0x10d)],
+          [0x31, 0xd, _0x14287e(0xf4)],
+          [0x33, 0xd, _0x14287e(0x27d)],
+          [0xd, 0x2b, _0x14287e(0x10d)],
+          [0x32, 0xe, "double"],
+          [0x34, 0xe, _0x14287e(0x27d)],
+          [0xe, 0x2c, "single"],
+          [0x33, 0xf, _0x14287e(0xf4)],
+          [0x35, 0xf, _0x14287e(0x27d)],
+          [0xf, 0x2d, "single"],
+          [0x2e, 0x10, _0x14287e(0xf4)],
+          [0x40, 0x10, _0x14287e(0x27d)],
+          [0x10, 0x34, "single"],
+          [0x2f, 0x11, _0x14287e(0xf4)],
+          [0x41, 0x11, "coordinate"],
+          [0x11, 0x35, _0x14287e(0x10d)],
+          [0x42, 0x12, _0x14287e(0x27d)],
+          [0x12, 0x1b, _0x14287e(0xf4)],
+          [0x12, 0x1e, _0x14287e(0x10d)],
+          [0x1b, 0x13, "coordinate"],
+          [0x13, 0x1c, "double"],
+          [0x13, 0x1f, _0x14287e(0x10d)],
+          [0x1c, 0x14, _0x14287e(0x27d)],
+          [0x14, 0x1d, "double"],
+          [0x14, 0x20, "single"],
+          [0x43, 0x15, _0x14287e(0x27d)],
+          [0x15, 0x1e, "double"],
+          [0x15, 0x21, _0x14287e(0x10d)],
+          [0x1e, 0x16, _0x14287e(0x27d)],
+          [0x16, 0x1f, "double"],
+          [0x16, 0x22, _0x14287e(0x10d)],
+          [0x1f, 0x17, _0x14287e(0x27d)],
+          [0x17, 0x20, _0x14287e(0xf4)],
+          [0x17, 0x23, _0x14287e(0x10d)],
+          [0x44, 0x18, "coordinate"],
+          [0x18, 0x21, _0x14287e(0xf4)],
+          [0x18, 0x45, _0x14287e(0x10d)],
+          [0x21, 0x19, _0x14287e(0x27d)],
+          [0x19, 0x22, _0x14287e(0xf4)],
+          [0x19, 0x46, _0x14287e(0x10d)],
+          [0x22, 0x1a, _0x14287e(0x27d)],
+          [0x1a, 0x23, "double"],
+          [0x1a, 0x47, _0x14287e(0x10d)],
+        ],
+        desc: "<div\x20class=\x22info-section\x22><div\x20class=\x22info-title\x22>⚗️\x20物質性質</div><div\x20class=\x22info-body\x22><span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>六方氮化硼\x20(h-BN)\x20被稱為<strong>「白石墨」</strong>。層內原子採\x20<strong>sp²\x20混成</strong>成六角網狀，層間靠凡得瓦力結合。與石墨不同，B\x20與\x20N\x20的電負度差異導致電子較為定域化。<br><span\x20class=\x22highlight-title\x22>2.\x20物理特性：</span>與石墨最大的不同在於它是優良的<strong>電絕緣體</strong>。同時具備極佳的耐高溫性、化學穩定性與潤滑性，且外觀呈白色。</div></div><div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22><div\x20class=\x22info-title\x22>🏭\x20生活應用</div><div\x20class=\x22info-body\x22><span\x20class=\x22highlight-title\x22>1.\x20高溫潤滑劑：</span>在石墨失效的高溫環境下，h-BN\x20仍能提供穩定的潤滑效果，常用於航太與鑄造業。<br><span\x20class=\x22highlight-title\x22>2.\x20化妝品添加：</span>由於其細膩的粉末感與安全性，被廣泛用於粉餅與眼影中以增加延展性。</div></div>",
+      },
+    },
+    null,
+    "-",
+    _0x14287e(0x2e5),
+  ),
+  addMol(
+    "C36|碳36|富勒烯",
+    "C",
+    "sp³",
+    [_0x14287e(0x106), _0x14287e(0x25a)],
+    _0x14287e(0x1bf),
+    "N/A\x20(昇華)",
+    _0x14287e(0x27e),
+    [
+      { elem: "C", x: 0x3f, y: 0x32, z: -0x57 },
+      { elem: "C", x: -0x3f, y: 0x32, z: -0x57 },
+      { elem: "C", x: -0x1f, y: 0x60, z: -0x38 },
+      { elem: "C", x: 0x20, y: 0x60, z: -0x37 },
+      { elem: "C", x: 0x72, y: 0x1f, z: -0x36 },
+      { elem: "C", x: 0x73, y: -0x20, z: -0x37 },
+      { elem: "C", x: 0x72, y: -0x40, z: 0x0 },
+      { elem: "C", x: 0x72, y: 0x3f, z: 0x0 },
+      { elem: "C", x: 0x71, y: 0x1f, z: 0x36 },
+      { elem: "C", x: 0x71, y: -0x20, z: 0x36 },
+      { elem: "C", x: -0x20, y: 0x5f, z: 0x37 },
+      { elem: "C", x: 0x20, y: 0x60, z: 0x38 },
+      { elem: "C", x: 0x40, y: 0x65, z: 0x0 },
+      { elem: "C", x: -0x40, y: 0x63, z: -0x1 },
+      { elem: "C", x: 0x20, y: -0x60, z: 0x38 },
+      { elem: "C", x: 0x3f, y: -0x65, z: 0x0 },
+      { elem: "C", x: -0x1f, y: -0x5f, z: 0x38 },
+      { elem: "C", x: 0x40, y: -0x32, z: 0x58 },
+      { elem: "C", x: 0x20, y: -0x60, z: -0x38 },
+      { elem: "C", x: 0x40, y: -0x32, z: -0x58 },
+      { elem: "C", x: -0x1f, y: -0x5f, z: -0x38 },
+      { elem: "C", x: -0x3f, y: -0x63, z: 0x0 },
+      { elem: "C", x: -0x40, y: -0x32, z: -0x57 },
+      { elem: "C", x: -0x20, y: 0x0, z: -0x70 },
+      { elem: "C", x: 0x20, y: 0x0, z: -0x70 },
+      { elem: "C", x: -0x72, y: -0x3e, z: -0x1 },
+      { elem: "C", x: -0x73, y: -0x1f, z: -0x37 },
+      { elem: "C", x: -0x73, y: 0x20, z: -0x37 },
+      { elem: "C", x: -0x71, y: -0x20, z: 0x37 },
+      { elem: "C", x: 0x20, y: 0x0, z: 0x71 },
+      { elem: "C", x: -0x20, y: 0x0, z: 0x70 },
+      { elem: "C", x: -0x3f, y: -0x32, z: 0x58 },
+      { elem: "C", x: 0x3f, y: 0x32, z: 0x58 },
+      { elem: "C", x: -0x40, y: 0x32, z: 0x57 },
+      { elem: "C", x: -0x73, y: 0x20, z: 0x36 },
+      { elem: "C", x: -0x74, y: 0x3f, z: 0x0 },
+    ],
+    [
+      [0x0, 0x4],
+      [0x0, 0x3, _0x14287e(0xf4)],
+      [0x0, 0x18],
+      [0x1, 0x1b],
+      [0x1, 0x2, _0x14287e(0xf4)],
+      [0x1, 0x17],
+      [0x2, 0x3],
+      [0x2, 0xd],
+      [0x3, 0xc],
+      [0x4, 0x7],
+      [0x4, 0x5, _0x14287e(0xf4)],
+      [0x5, 0x6],
+      [0x5, 0x13],
+      [0x6, 0xf],
+      [0x6, 0x9, _0x14287e(0xf4)],
+      [0x7, 0xc, _0x14287e(0xf4)],
+      [0x7, 0x8],
+      [0x8, 0x20, "double"],
+      [0x8, 0x9],
+      [0xa, 0xb, "double"],
+      [0xa, 0x21],
+      [0xa, 0xd],
+      [0xb, 0xc],
+      [0xb, 0x20],
+      [0xd, 0x23, "double"],
+      [0xe, 0x10, _0x14287e(0xf4)],
+      [0xe, 0x11],
+      [0xe, 0xf],
+      [0xf, 0x12, _0x14287e(0xf4)],
+      [0x10, 0x15],
+      [0x11, 0x9],
+      [0x11, 0x1d],
+      [0x12, 0x14],
+      [0x12, 0x13],
+      [0x13, 0x18, "double"],
+      [0x14, 0x15, "double"],
+      [0x14, 0x16],
+      [0x15, 0x19],
+      [0x16, 0x1a],
+      [0x16, 0x17, "double"],
+      [0x17, 0x18],
+      [0x19, 0x1a],
+      [0x19, 0x1c, _0x14287e(0xf4)],
+      [0x1a, 0x1b, _0x14287e(0xf4)],
+      [0x1b, 0x23],
+      [0x1c, 0x1f],
+      [0x1c, 0x22],
+      [0x1d, 0x1e, _0x14287e(0xf4)],
+      [0x1d, 0x20],
+      [0x1e, 0x1f],
+      [0x1e, 0x21],
+      [0x1f, 0x10],
+      [0x21, 0x22, "double"],
+      [0x22, 0x23],
+    ],
+    null,
+    _0x14287e(0x1a0),
+    _0x14287e(0x193),
+  ),
+  addMol(
+    _0x14287e(0x1d6),
+    "C",
+    _0x14287e(0x307),
+    ["籠狀結構\x20(12個五邊形,\x2010個六邊形)", "Cage\x20(12\x20Pentagons,\x2010\x20Hexagons)"],
+    "120°\x20(彎曲)",
+    "N/A\x20(昇華)",
+    _0x14287e(0x27e),
+    [
+      { elem: "C", x: 0x72, y: 0x35, z: 0x2e },
+      { elem: "C", x: 0x87, y: 0x0, z: 0x18 },
+      { elem: "C", x: 0x72, y: -0x35, z: 0x2e },
+      { elem: "C", x: 0x40, y: -0x37, z: 0x56 },
+      { elem: "C", x: 0x21, y: 0x0, z: 0x69 },
+      { elem: "C", x: 0x40, y: 0x37, z: 0x56 },
+      { elem: "C", x: 0x33, y: -0x7c, z: 0xb },
+      { elem: "C", x: 0x66, y: -0x5b, z: -0x3 },
+      { elem: "C", x: -0x1f, y: -0x68, z: 0x43 },
+      { elem: "C", x: 0x1e, y: -0x68, z: 0x43 },
+      { elem: "C", x: -0x41, y: 0x38, z: 0x56 },
+      { elem: "C", x: -0x23, y: 0x0, z: 0x69 },
+      { elem: "C", x: -0x42, y: -0x38, z: 0x57 },
+      { elem: "C", x: 0x83, y: 0x0, z: -0x27 },
+      { elem: "C", x: 0x6b, y: 0x39, z: -0x38 },
+      { elem: "C", x: 0x36, y: 0x39, z: -0x5c },
+      { elem: "C", x: 0x6b, y: -0x39, z: -0x38 },
+      { elem: "C", x: 0x36, y: -0x39, z: -0x5c },
+      { elem: "C", x: 0x1f, y: 0x0, z: -0x6d },
+      { elem: "C", x: 0x0, y: -0x82, z: -0x1a },
+      { elem: "C", x: 0x0, y: -0x5c, z: -0x4f },
+      { elem: "C", x: 0x34, y: 0x7d, z: 0xb },
+      { elem: "C", x: 0x0, y: 0x82, z: -0x1a },
+      { elem: "C", x: 0x66, y: 0x5c, z: -0x3 },
+      { elem: "C", x: 0x1, y: 0x5c, z: -0x4f },
+      { elem: "C", x: -0x34, y: 0x39, z: -0x5c },
+      { elem: "C", x: -0x33, y: 0x7d, z: 0xb },
+      { elem: "C", x: -0x65, y: 0x5b, z: -0x2 },
+      { elem: "C", x: -0x68, y: 0x38, z: -0x37 },
+      { elem: "C", x: -0x1e, y: 0x0, z: -0x6e },
+      { elem: "C", x: -0x1e, y: 0x69, z: 0x43 },
+      { elem: "C", x: 0x1e, y: 0x69, z: 0x43 },
+      { elem: "C", x: -0x35, y: -0x39, z: -0x5c },
+      { elem: "C", x: -0x68, y: -0x38, z: -0x36 },
+      { elem: "C", x: -0x81, y: 0x0, z: -0x24 },
+      { elem: "C", x: -0x33, y: -0x7d, z: 0xb },
+      { elem: "C", x: -0x66, y: -0x5b, z: -0x1 },
+      { elem: "C", x: -0x74, y: 0x35, z: 0x2f },
+      { elem: "C", x: -0x8a, y: 0x0, z: 0x1a },
+      { elem: "C", x: -0x75, y: -0x36, z: 0x30 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x17, _0x14287e(0xf4)],
+      [0x0, 0x5],
+      [0x1, 0x2, _0x14287e(0xf4)],
+      [0x1, 0xd],
+      [0x2, 0x7],
+      [0x2, 0x3],
+      [0x3, 0x9, _0x14287e(0xf4)],
+      [0x3, 0x4],
+      [0x4, 0x5, _0x14287e(0xf4)],
+      [0x4, 0xb],
+      [0x5, 0x1f],
+      [0x6, 0x7, "double"],
+      [0x6, 0x9],
+      [0x6, 0x13],
+      [0x7, 0x10],
+      [0x8, 0x9],
+      [0x8, 0xc, "double"],
+      [0x8, 0x23],
+      [0xa, 0x1e],
+      [0xa, 0x25],
+      [0xa, 0xb, _0x14287e(0xf4)],
+      [0xb, 0xc],
+      [0xc, 0x27],
+      [0xd, 0xe, "double"],
+      [0xd, 0x10],
+      [0xe, 0x17],
+      [0xe, 0xf],
+      [0xf, 0x12],
+      [0xf, 0x18, _0x14287e(0xf4)],
+      [0x10, 0x11, "double"],
+      [0x11, 0x12],
+      [0x11, 0x14],
+      [0x12, 0x1d, _0x14287e(0xf4)],
+      [0x13, 0x23, "double"],
+      [0x13, 0x14],
+      [0x14, 0x20, _0x14287e(0xf4)],
+      [0x15, 0x17],
+      [0x15, 0x1f],
+      [0x15, 0x16, _0x14287e(0xf4)],
+      [0x16, 0x18],
+      [0x18, 0x19],
+      [0x19, 0x1d],
+      [0x19, 0x1c, _0x14287e(0xf4)],
+      [0x1a, 0x16],
+      [0x1a, 0x1b],
+      [0x1a, 0x1e],
+      [0x1b, 0x25],
+      [0x1b, 0x1c],
+      [0x1c, 0x22],
+      [0x1d, 0x20],
+      [0x1e, 0x1f, "double"],
+      [0x20, 0x21],
+      [0x21, 0x24],
+      [0x21, 0x22, _0x14287e(0xf4)],
+      [0x22, 0x26],
+      [0x23, 0x24],
+      [0x24, 0x27, "double"],
+      [0x25, 0x26, _0x14287e(0xf4)],
+      [0x26, 0x27],
+    ],
+    null,
+    "<div\x20class=\x22info-section\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>⚗️\x20物質性質</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>C40\x20是高度對稱的籠狀碳簇，屬於<strong>富勒烯\x20(Fullerenes)</strong>\x20家族。結構包含\x20<strong>12\x20個五邊形</strong>與\x20<strong>10\x20個六邊形</strong>。其原子採取\x20<strong>sp²\x20混成</strong>，但由於籠徑較小，碳架構帶有強烈的張力，使其化學活性高於著名的\x20C60。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20物理性質：</span>在高溫與高壓環境下合成，外觀通常呈暗褐色或黑色固體。具有半導體特性，且電子親和力強。由於其特殊的\x20<strong>C2v\x20對稱性</strong>，電子在表面分布具有特定的不均勻性。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20分子特性：</span>C40\x20的穩定性受「離散五邊形規則」(IPR)\x20限制，雖然較不穩定，但在籠內填充特定原子（如金屬鑭）形成內嵌富勒烯時，穩定性會顯著提升。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20<div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>🏭\x20生活應用</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20光伏材料：</span>由於其優異的電子接受能力，C40\x20及其衍生物被研究用於<strong>有機太陽能電池</strong>中作為受體材料，提高光電轉換效率。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20分子傳感器：</span>其獨特的籠狀開孔與高活性表面，可對特定的氣體分子或離子產生敏感的電訊號變化，適合製作奈米級的精密化學傳感器。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20藥物載體：</span>內嵌金屬的\x20C40\x20籠結構生物毒性極低，可作為醫療影像（如\x20MRI）的顯影劑載體，或是作為標靶藥物的微型運輸艙。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>",
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x1f9),
+    "C",
+    _0x14287e(0x307),
+    [_0x14287e(0x240), _0x14287e(0x2f1)],
+    "108°~120°\x20(彎曲)",
+    _0x14287e(0x1c2),
+    "N/A",
+    [
+      { elem: "C", x: 0x70, y: 0x4c, z: -0x37 },
+      { elem: "C", x: 0x87, y: 0x11, z: -0x37 },
+      { elem: "C", x: 0x96, y: -0x9, z: 0x0 },
+      { elem: "C", x: 0x3c, y: 0x5c, z: -0x59 },
+      { elem: "C", x: 0x6a, y: -0x1d, z: -0x59 },
+      { elem: "C", x: 0x35, y: -0xe, z: -0x79 },
+      { elem: "C", x: 0x1d, y: 0x2e, z: -0x7a },
+      { elem: "C", x: 0x6c, y: -0x54, z: -0x37 },
+      { elem: "C", x: 0x86, y: -0x44, z: 0x0 },
+      { elem: "C", x: 0x3a, y: -0x7a, z: -0x38 },
+      { elem: "C", x: 0x5, y: -0x6e, z: -0x59 },
+      { elem: "C", x: 0x2, y: -0x36, z: -0x79 },
+      { elem: "C", x: 0x26, y: -0x90, z: 0x0 },
+      { elem: "C", x: 0x3b, y: -0x7a, z: 0x38 },
+      { elem: "C", x: 0x6c, y: -0x53, z: 0x38 },
+      { elem: "C", x: 0x6b, y: -0x1d, z: 0x59 },
+      { elem: "C", x: 0x35, y: -0xe, z: 0x79 },
+      { elem: "C", x: 0x6, y: -0x6e, z: 0x59 },
+      { elem: "C", x: 0x3, y: -0x36, z: 0x79 },
+      { elem: "C", x: 0x71, y: 0x4c, z: 0x38 },
+      { elem: "C", x: 0x3c, y: 0x5c, z: 0x59 },
+      { elem: "C", x: 0x88, y: 0x12, z: 0x38 },
+      { elem: "C", x: 0x1e, y: 0x2e, z: 0x79 },
+      { elem: "C", x: -0x22, y: 0x2a, z: 0x7a },
+      { elem: "C", x: 0x19, y: 0x86, z: 0x38 },
+      { elem: "C", x: -0x26, y: 0x82, z: 0x38 },
+      { elem: "C", x: -0x45, y: 0x55, z: 0x59 },
+      { elem: "C", x: -0x67, y: -0x27, z: 0x59 },
+      { elem: "C", x: -0x33, y: -0x14, z: 0x7a },
+      { elem: "C", x: 0x69, y: 0x69, z: 0x0 },
+      { elem: "C", x: 0x36, y: 0x8c, z: 0x0 },
+      { elem: "C", x: -0x44, y: 0x84, z: 0x0 },
+      { elem: "C", x: -0x26, y: 0x83, z: -0x38 },
+      { elem: "C", x: 0x19, y: 0x87, z: -0x38 },
+      { elem: "C", x: -0x74, y: 0x5e, z: 0x0 },
+      { elem: "C", x: -0x94, y: -0x17, z: 0x0 },
+      { elem: "C", x: -0x89, y: 0x4, z: 0x38 },
+      { elem: "C", x: -0x79, y: 0x41, z: 0x38 },
+      { elem: "C", x: -0x2e, y: -0x81, z: 0x38 },
+      { elem: "C", x: -0x7e, y: -0x51, z: 0x0 },
+      { elem: "C", x: -0x63, y: -0x5e, z: 0x37 },
+      { elem: "C", x: -0x33, y: -0x13, z: -0x7a },
+      { elem: "C", x: -0x67, y: -0x27, z: -0x59 },
+      { elem: "C", x: -0x63, y: -0x5e, z: -0x38 },
+      { elem: "C", x: -0x2e, y: -0x81, z: -0x38 },
+      { elem: "C", x: -0x18, y: -0x94, z: 0x0 },
+      { elem: "C", x: -0x78, y: 0x42, z: -0x38 },
+      { elem: "C", x: -0x45, y: 0x56, z: -0x5a },
+      { elem: "C", x: -0x23, y: 0x2b, z: -0x7b },
+      { elem: "C", x: -0x88, y: 0x5, z: -0x38 },
+    ],
+    [
+      [0x0, 0x1],
+      [0x0, 0x1d],
+      [0x0, 0x3, _0x14287e(0xf4)],
+      [0x1, 0x2, "double"],
+      [0x1, 0x4],
+      [0x2, 0x8],
+      [0x2, 0x15],
+      [0x3, 0x21],
+      [0x3, 0x6],
+      [0x4, 0x7, _0x14287e(0xf4)],
+      [0x4, 0x5],
+      [0x5, 0x6, _0x14287e(0xf4)],
+      [0x5, 0xb],
+      [0x6, 0x30],
+      [0x7, 0x9],
+      [0x7, 0x8],
+      [0x8, 0xe, _0x14287e(0xf4)],
+      [0x9, 0xc, _0x14287e(0xf4)],
+      [0x9, 0xa],
+      [0xa, 0x2c],
+      [0xa, 0xb, _0x14287e(0xf4)],
+      [0xb, 0x29],
+      [0xc, 0x2d],
+      [0xc, 0xd],
+      [0xd, 0xe],
+      [0xd, 0x11, _0x14287e(0xf4)],
+      [0xe, 0xf],
+      [0xf, 0x15],
+      [0xf, 0x10, _0x14287e(0xf4)],
+      [0x10, 0x16],
+      [0x10, 0x12],
+      [0x11, 0x26],
+      [0x11, 0x12],
+      [0x12, 0x1c, _0x14287e(0xf4)],
+      [0x13, 0x15, "double"],
+      [0x13, 0x1d],
+      [0x13, 0x14],
+      [0x14, 0x18, _0x14287e(0xf4)],
+      [0x14, 0x16],
+      [0x16, 0x17, _0x14287e(0xf4)],
+      [0x17, 0x1a],
+      [0x17, 0x1c],
+      [0x18, 0x19],
+      [0x18, 0x1e],
+      [0x19, 0x1f, _0x14287e(0xf4)],
+      [0x19, 0x1a],
+      [0x1a, 0x25, _0x14287e(0xf4)],
+      [0x1b, 0x24, _0x14287e(0xf4)],
+      [0x1b, 0x1c],
+      [0x1b, 0x28],
+      [0x1d, 0x1e, _0x14287e(0xf4)],
+      [0x1e, 0x21],
+      [0x1f, 0x20],
+      [0x20, 0x21, "double"],
+      [0x20, 0x2f],
+      [0x22, 0x1f],
+      [0x22, 0x25],
+      [0x22, 0x2e],
+      [0x23, 0x27],
+      [0x23, 0x31],
+      [0x23, 0x24],
+      [0x24, 0x25],
+      [0x26, 0x28, "double"],
+      [0x26, 0x2d],
+      [0x27, 0x28],
+      [0x27, 0x2b, "double"],
+      [0x29, 0x30, "double"],
+      [0x29, 0x2a],
+      [0x2a, 0x31, _0x14287e(0xf4)],
+      [0x2a, 0x2b],
+      [0x2b, 0x2c],
+      [0x2c, 0x2d, _0x14287e(0xf4)],
+      [0x2e, 0x31],
+      [0x2e, 0x2f, _0x14287e(0xf4)],
+      [0x2f, 0x30],
+    ],
+    null,
+    "<div\x20class=\x22info-section\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>⚗️\x20物質性質</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>C50\x20是<strong>富勒烯\x20(Fullerenes)</strong>\x20家族中的中等尺寸成員。其分子結構包含\x20<strong>12\x20個五邊形</strong>與\x20<strong>15\x20個六邊形</strong>。根據計算，其能量最低的異構物具有\x20<strong>D5h\x20對稱性</strong>，外型呈現類似橄欖球的對稱拉伸感。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20物理性質：</span>通常存在於碳弧放電產生的炭黑中，具有半導體與非線性的光學特性。由於表面曲率不均勻，其電子親和力分布在不同的碳原子位點上有所差異。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20化學穩定性：</span>C50\x20違反了「離散五邊形規則」(IPR)，因為在\x2050\x20個原子的框架下，五邊形不可避免地會相互鄰接。這使得\x20C50\x20具有極高的化學反應活性，通常需要透過外接基團或內部嵌入金屬原子（內嵌富勒烯）來使其穩定存在。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20<div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>🏭\x20未來應用</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20奈米超分子化學：</span>C50\x20高活性的表面使其成為優良的<strong>分子建築基元</strong>，可用於合成具有特殊光電功能的複雜超分子陣列。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20電子受體材料：</span>與\x20C60\x20類似，C50\x20具有捕捉電子的能力，目前正探索其在<strong>有機場效電晶體\x20(OFET)</strong>\x20與新一代柔性電子元件中的應用潛力。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20原子存儲技術：</span>作為<strong>內嵌富勒烯\x20(Endohedral\x20Fullerenes)</strong>\x20的優質籠型，C50\x20內部空間可封裝單個金屬原子或小分子，這在量子計算與單分子磁體研究中具有高度價值。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>",
+    _0x14287e(0x12f),
+  ),
+  addMol(
+    _0x14287e(0x18c),
+    "C",
+    _0x14287e(0x307),
+    ["籠狀結構\x20(12個五邊形,\x2020個六邊形)", _0x14287e(0x1ca)],
+    "108°~120°",
+    _0x14287e(0x275),
+    "N/A",
+    [
+      { elem: "C", x: 0x63, y: -0x1b, z: 0x77 },
+      { elem: "C", x: 0x8b, y: -0x8, z: 0x49 },
+      { elem: "C", x: 0x3b, y: 0xe, z: 0x91 },
+      { elem: "C", x: 0x8a, y: 0x35, z: 0x36 },
+      { elem: "C", x: 0x8e, y: 0x42, z: -0x8 },
+      { elem: "C", x: 0x90, y: -0x37, z: 0x1f },
+      { elem: "C", x: 0x95, y: -0x2a, z: -0x1f },
+      { elem: "C", x: 0x94, y: 0x13, z: -0x33 },
+      { elem: "C", x: -0x14, y: -0x3e, z: 0x90 },
+      { elem: "C", x: 0x14, y: -0x67, z: 0x75 },
+      { elem: "C", x: -0x1, y: -0x3, z: 0x9e },
+      { elem: "C", x: 0x50, y: -0x56, z: 0x69 },
+      { elem: "C", x: 0x6c, y: -0x68, z: 0x33 },
+      { elem: "C", x: -0xc, y: -0x8a, z: 0x4b },
+      { elem: "C", x: 0x10, y: -0x9c, z: 0x14 },
+      { elem: "C", x: 0x4c, y: -0x8a, z: 0x8 },
+      { elem: "C", x: -0x60, y: 0x26, z: 0x77 },
+      { elem: "C", x: -0x73, y: -0x15, z: 0x69 },
+      { elem: "C", x: -0x27, y: 0x2f, z: 0x92 },
+      { elem: "C", x: -0x4d, y: -0x47, z: 0x75 },
+      { elem: "C", x: -0x48, y: -0x76, z: 0x4b },
+      { elem: "C", x: -0x94, y: -0x12, z: 0x33 },
+      { elem: "C", x: -0x8f, y: -0x42, z: 0x8 },
+      { elem: "C", x: -0x69, y: -0x74, z: 0x15 },
+      { elem: "C", x: -0x16, y: 0x86, z: 0x50 },
+      { elem: "C", x: -0x50, y: 0x7c, z: 0x36 },
+      { elem: "C", x: -0x2, y: 0x5f, z: 0x7e },
+      { elem: "C", x: -0x75, y: 0x4d, z: 0x49 },
+      { elem: "C", x: -0x95, y: 0x2a, z: 0x1f },
+      { elem: "C", x: -0x4c, y: 0x8a, z: -0x8 },
+      { elem: "C", x: -0x6c, y: 0x67, z: -0x33 },
+      { elem: "C", x: -0x91, y: 0x37, z: -0x1f },
+      { elem: "C", x: 0x62, y: 0x5e, z: 0x50 },
+      { elem: "C", x: 0x4d, y: 0x85, z: 0x22 },
+      { elem: "C", x: 0x3b, y: 0x4b, z: 0x7e },
+      { elem: "C", x: 0x11, y: 0x99, z: 0x22 },
+      { elem: "C", x: -0x10, y: 0x9c, z: -0x15 },
+      { elem: "C", x: 0x69, y: 0x74, z: -0x15 },
+      { elem: "C", x: 0x48, y: 0x76, z: -0x4c },
+      { elem: "C", x: 0xc, y: 0x8a, z: -0x4b },
+      { elem: "C", x: -0x64, y: 0x1b, z: -0x77 },
+      { elem: "C", x: -0x50, y: 0x56, z: -0x69 },
+      { elem: "C", x: -0x14, y: 0x67, z: -0x76 },
+      { elem: "C", x: -0x3b, y: -0xe, z: -0x91 },
+      { elem: "C", x: -0x63, y: -0x5e, z: -0x4f },
+      { elem: "C", x: -0x8c, y: -0x35, z: -0x36 },
+      { elem: "C", x: -0x8c, y: 0x8, z: -0x49 },
+      { elem: "C", x: -0x3a, y: -0x4b, z: -0x7d },
+      { elem: "C", x: 0x17, y: -0x86, z: -0x4f },
+      { elem: "C", x: -0x11, y: -0x99, z: -0x22 },
+      { elem: "C", x: -0x4d, y: -0x85, z: -0x22 },
+      { elem: "C", x: 0x2, y: -0x5f, z: -0x7d },
+      { elem: "C", x: 0x60, y: -0x26, z: -0x77 },
+      { elem: "C", x: 0x75, y: -0x4d, z: -0x49 },
+      { elem: "C", x: 0x51, y: -0x7d, z: -0x36 },
+      { elem: "C", x: 0x27, y: -0x2e, z: -0x91 },
+      { elem: "C", x: 0x15, y: 0x3e, z: -0x91 },
+      { elem: "C", x: 0x4e, y: 0x47, z: -0x76 },
+      { elem: "C", x: 0x73, y: 0x15, z: -0x6a },
+      { elem: "C", x: 0x1, y: 0x3, z: -0x9e },
+    ],
+    [
+      [0x0, 0x1, "double"],
+      [0x0, 0xb],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0x5],
+      [0x2, 0xa, _0x14287e(0xf4)],
+      [0x2, 0x22],
+      [0x3, 0x20],
+      [0x3, 0x4, "double"],
+      [0x4, 0x25],
+      [0x4, 0x7],
+      [0x5, 0x6, "double"],
+      [0x5, 0xc],
+      [0x6, 0x7],
+      [0x6, 0x35],
+      [0x7, 0x3a, _0x14287e(0xf4)],
+      [0x8, 0x9, _0x14287e(0xf4)],
+      [0x8, 0xa],
+      [0x8, 0x13],
+      [0x9, 0xd],
+      [0x9, 0xb],
+      [0xa, 0x12],
+      [0xb, 0xc, _0x14287e(0xf4)],
+      [0xc, 0xf],
+      [0xd, 0xe, _0x14287e(0xf4)],
+      [0xd, 0x14],
+      [0xe, 0x31],
+      [0xe, 0xf],
+      [0xf, 0x36, _0x14287e(0xf4)],
+      [0x10, 0x1b],
+      [0x10, 0x12, _0x14287e(0xf4)],
+      [0x10, 0x11],
+      [0x11, 0x15],
+      [0x11, 0x13, _0x14287e(0xf4)],
+      [0x12, 0x1a],
+      [0x13, 0x14],
+      [0x14, 0x17, _0x14287e(0xf4)],
+      [0x15, 0x1c, _0x14287e(0xf4)],
+      [0x15, 0x16],
+      [0x16, 0x2d, _0x14287e(0xf4)],
+      [0x16, 0x17],
+      [0x17, 0x32],
+      [0x18, 0x23, _0x14287e(0xf4)],
+      [0x18, 0x1a],
+      [0x18, 0x19],
+      [0x19, 0x1d],
+      [0x19, 0x1b, _0x14287e(0xf4)],
+      [0x1a, 0x22, _0x14287e(0xf4)],
+      [0x1b, 0x1c],
+      [0x1c, 0x1f],
+      [0x1d, 0x1e, _0x14287e(0xf4)],
+      [0x1d, 0x24],
+      [0x1e, 0x29],
+      [0x1e, 0x1f],
+      [0x1f, 0x2e, _0x14287e(0xf4)],
+      [0x20, 0x22],
+      [0x20, 0x21, "double"],
+      [0x21, 0x25],
+      [0x21, 0x23],
+      [0x23, 0x24],
+      [0x24, 0x27, _0x14287e(0xf4)],
+      [0x25, 0x26, _0x14287e(0xf4)],
+      [0x26, 0x39],
+      [0x26, 0x27],
+      [0x27, 0x2a],
+      [0x28, 0x2e],
+      [0x28, 0x29],
+      [0x28, 0x2b, _0x14287e(0xf4)],
+      [0x29, 0x2a, "double"],
+      [0x2a, 0x38],
+      [0x2b, 0x3b],
+      [0x2b, 0x2f],
+      [0x2c, 0x2d],
+      [0x2c, 0x32, _0x14287e(0xf4)],
+      [0x2c, 0x2f],
+      [0x2d, 0x2e],
+      [0x2f, 0x33, "double"],
+      [0x30, 0x36],
+      [0x30, 0x33],
+      [0x30, 0x31, _0x14287e(0xf4)],
+      [0x31, 0x32],
+      [0x33, 0x37],
+      [0x34, 0x35, "double"],
+      [0x34, 0x37],
+      [0x34, 0x3a],
+      [0x35, 0x36],
+      [0x37, 0x3b, _0x14287e(0xf4)],
+      [0x38, 0x3b],
+      [0x38, 0x39, "double"],
+      [0x39, 0x3a],
+    ],
+    null,
+    _0x14287e(0x321),
+    "Ih",
+  ),
+  addMol(
+    "C70|碳70|富勒烯",
+    "C",
+    _0x14287e(0x307),
+    [_0x14287e(0x190), _0x14287e(0x1e0)],
+    _0x14287e(0x336),
+    _0x14287e(0x275),
+    _0x14287e(0x27e),
+    [
+      { elem: "C", x: 0x8e, y: 0x66, z: 0x1e },
+      { elem: "C", x: 0x6c, y: 0x68, z: 0x53 },
+      { elem: "C", x: 0xb1, y: 0x34, z: 0xe },
+      { elem: "C", x: 0x6c, y: 0x37, z: 0x79 },
+      { elem: "C", x: 0x36, y: 0x25, z: 0x96 },
+      { elem: "C", x: 0x0, y: 0x47, z: 0x90 },
+      { elem: "C", x: -0x36, y: 0x25, z: 0x96 },
+      { elem: "C", x: 0x8e, y: 0x3c, z: -0x58 },
+      { elem: "C", x: 0x6c, y: 0x6f, z: -0x4a },
+      { elem: "C", x: 0xb1, y: 0x1e, z: -0x2d },
+      { elem: "C", x: 0x6c, y: 0x84, z: -0xe },
+      { elem: "C", x: 0x36, y: 0x9a, z: 0xb },
+      { elem: "C", x: 0x0, y: 0xa0, z: -0x17 },
+      { elem: "C", x: -0x37, y: 0x9a, z: 0xb },
+      { elem: "C", x: 0x0, y: 0x7b, z: 0x68 },
+      { elem: "C", x: 0x36, y: 0x88, z: 0x49 },
+      { elem: "C", x: -0x37, y: 0x88, z: 0x49 },
+      { elem: "C", x: 0x8f, y: -0x42, z: -0x54 },
+      { elem: "C", x: 0x6c, y: -0x24, z: -0x80 },
+      { elem: "C", x: 0xb2, y: -0x21, z: -0x2a },
+      { elem: "C", x: 0x6c, y: 0x1b, z: -0x82 },
+      { elem: "C", x: 0x36, y: 0x3a, z: -0x8e },
+      { elem: "C", x: 0x0, y: 0x1b, z: -0x9e },
+      { elem: "C", x: -0x36, y: 0x3a, z: -0x8f },
+      { elem: "C", x: 0x0, y: 0x89, z: -0x55 },
+      { elem: "C", x: 0x36, y: 0x70, z: -0x6b },
+      { elem: "C", x: -0x37, y: 0x70, z: -0x6b },
+      { elem: "C", x: 0x8e, y: -0x64, z: 0x24 },
+      { elem: "C", x: 0x6c, y: -0x85, z: -0x6 },
+      { elem: "C", x: 0xb2, y: -0x32, z: 0x12 },
+      { elem: "C", x: 0x6c, y: -0x73, z: -0x42 },
+      { elem: "C", x: 0x36, y: -0x76, z: -0x63 },
+      { elem: "C", x: 0x0, y: -0x8e, z: -0x4c },
+      { elem: "C", x: -0x36, y: -0x76, z: -0x63 },
+      { elem: "C", x: 0x0, y: -0x26, z: -0x9c },
+      { elem: "C", x: 0x37, y: -0x43, z: -0x8b },
+      { elem: "C", x: -0x36, y: -0x43, z: -0x8b },
+      { elem: "C", x: 0x8f, y: 0x4, z: 0x6b },
+      { elem: "C", x: 0x6c, y: -0x2e, z: 0x7d },
+      { elem: "C", x: 0xb2, y: 0x2, z: 0x36 },
+      { elem: "C", x: 0x6c, y: -0x62, z: 0x59 },
+      { elem: "C", x: 0x36, y: -0x83, z: 0x51 },
+      { elem: "C", x: 0x0, y: -0x73, z: 0x70 },
+      { elem: "C", x: -0x36, y: -0x83, z: 0x51 },
+      { elem: "C", x: 0x0, y: -0xa1, z: -0xc },
+      { elem: "C", x: 0x36, y: -0x99, z: 0x15 },
+      { elem: "C", x: -0x36, y: -0x99, z: 0x15 },
+      { elem: "C", x: 0x0, y: -0x3d, z: 0x95 },
+      { elem: "C", x: 0x36, y: -0x1b, z: 0x98 },
+      { elem: "C", x: -0x36, y: -0x1b, z: 0x98 },
+      { elem: "C", x: -0x8d, y: -0x64, z: 0x24 },
+      { elem: "C", x: -0x6c, y: -0x62, z: 0x5a },
+      { elem: "C", x: -0x6c, y: -0x2e, z: 0x7d },
+      { elem: "C", x: -0xb0, y: -0x33, z: 0x12 },
+      { elem: "C", x: -0x8e, y: -0x42, z: -0x55 },
+      { elem: "C", x: -0x6c, y: -0x74, z: -0x42 },
+      { elem: "C", x: -0x6c, y: -0x85, z: -0x6 },
+      { elem: "C", x: -0xb1, y: -0x21, z: -0x2b },
+      { elem: "C", x: -0x8e, y: 0x3c, z: -0x59 },
+      { elem: "C", x: -0x6c, y: 0x1b, z: -0x82 },
+      { elem: "C", x: -0x6c, y: -0x24, z: -0x81 },
+      { elem: "C", x: -0xb1, y: 0x1e, z: -0x2d },
+      { elem: "C", x: -0x8e, y: 0x67, z: 0x1e },
+      { elem: "C", x: -0x6d, y: 0x85, z: -0xf },
+      { elem: "C", x: -0x6d, y: 0x70, z: -0x4a },
+      { elem: "C", x: -0xb1, y: 0x33, z: 0xf },
+      { elem: "C", x: -0x8f, y: 0x3, z: 0x6b },
+      { elem: "C", x: -0x6c, y: 0x37, z: 0x7a },
+      { elem: "C", x: -0x6c, y: 0x68, z: 0x53 },
+      { elem: "C", x: -0xb1, y: 0x2, z: 0x36 },
+    ],
+    [
+      [0x0, 0x1, "double"],
+      [0x0, 0xa],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0xf],
+      [0x2, 0x9, _0x14287e(0xf4)],
+      [0x2, 0x27],
+      [0x3, 0x4, _0x14287e(0xf4)],
+      [0x3, 0x25],
+      [0x4, 0x5],
+      [0x4, 0x30],
+      [0x5, 0x6, _0x14287e(0xf4)],
+      [0x5, 0xe],
+      [0x6, 0x43],
+      [0x6, 0x31],
+      [0x7, 0x8, "double"],
+      [0x7, 0x14],
+      [0x7, 0x9],
+      [0x8, 0xa],
+      [0x8, 0x19],
+      [0x9, 0x13],
+      [0xa, 0xb, _0x14287e(0xf4)],
+      [0xb, 0xc],
+      [0xb, 0xf],
+      [0xc, 0xd, _0x14287e(0xf4)],
+      [0xc, 0x18],
+      [0xd, 0x3f],
+      [0xd, 0x10],
+      [0xe, 0xf, _0x14287e(0xf4)],
+      [0xe, 0x10],
+      [0x10, 0x44, _0x14287e(0xf4)],
+      [0x11, 0x1e],
+      [0x11, 0x12],
+      [0x11, 0x13, _0x14287e(0xf4)],
+      [0x12, 0x14, _0x14287e(0xf4)],
+      [0x12, 0x23],
+      [0x13, 0x1d],
+      [0x14, 0x15],
+      [0x15, 0x16, "double"],
+      [0x15, 0x19],
+      [0x16, 0x17],
+      [0x16, 0x22],
+      [0x17, 0x3b, _0x14287e(0xf4)],
+      [0x17, 0x1a],
+      [0x18, 0x19, "double"],
+      [0x18, 0x1a],
+      [0x1a, 0x40, _0x14287e(0xf4)],
+      [0x1b, 0x28],
+      [0x1b, 0x1c],
+      [0x1b, 0x1d, _0x14287e(0xf4)],
+      [0x1c, 0x1e, "double"],
+      [0x1c, 0x2d],
+      [0x1d, 0x27],
+      [0x1e, 0x1f],
+      [0x1f, 0x20, _0x14287e(0xf4)],
+      [0x1f, 0x23],
+      [0x20, 0x21],
+      [0x20, 0x2c],
+      [0x21, 0x37, _0x14287e(0xf4)],
+      [0x21, 0x24],
+      [0x22, 0x24],
+      [0x22, 0x23, _0x14287e(0xf4)],
+      [0x24, 0x3c, _0x14287e(0xf4)],
+      [0x25, 0x27, _0x14287e(0xf4)],
+      [0x25, 0x26],
+      [0x26, 0x28, "double"],
+      [0x26, 0x30],
+      [0x28, 0x29],
+      [0x29, 0x2a, _0x14287e(0xf4)],
+      [0x29, 0x2d],
+      [0x2a, 0x2b],
+      [0x2a, 0x2f],
+      [0x2b, 0x33, _0x14287e(0xf4)],
+      [0x2b, 0x2e],
+      [0x2c, 0x2d, _0x14287e(0xf4)],
+      [0x2c, 0x2e],
+      [0x2e, 0x38, "double"],
+      [0x2f, 0x31],
+      [0x2f, 0x30, _0x14287e(0xf4)],
+      [0x31, 0x34, _0x14287e(0xf4)],
+      [0x32, 0x33],
+      [0x32, 0x38],
+      [0x32, 0x35, _0x14287e(0xf4)],
+      [0x33, 0x34],
+      [0x34, 0x42],
+      [0x35, 0x39],
+      [0x35, 0x45],
+      [0x36, 0x3c],
+      [0x36, 0x37],
+      [0x36, 0x39, "double"],
+      [0x37, 0x38],
+      [0x39, 0x3d],
+      [0x3a, 0x40],
+      [0x3a, 0x3b],
+      [0x3a, 0x3d, "double"],
+      [0x3b, 0x3c],
+      [0x3d, 0x41],
+      [0x3e, 0x44],
+      [0x3e, 0x3f, _0x14287e(0xf4)],
+      [0x3e, 0x41],
+      [0x3f, 0x40],
+      [0x41, 0x45, _0x14287e(0xf4)],
+      [0x42, 0x45],
+      [0x42, 0x43, _0x14287e(0xf4)],
+      [0x43, 0x44],
+    ],
+    null,
+    "<div\x20class=\x22info-section\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>⚗️\x20物質性質</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20立體結構：</span>C70\x20是繼\x20C60\x20之後最穩定的富勒烯成員。其分子結構包含\x2070\x20個碳原子，構成一個封閉的籠狀系統，包含\x20<strong>12個五邊形</strong>\x20與\x20<strong>25個六邊形</strong>。與球形的\x20C60\x20不同，C70\x20的形狀細長，兩端較尖，中間較寬，外觀極像橄欖球，屬於\x20<strong>D5h</strong>\x20點群。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20物理性質：</span>常溫下為紅棕色固體。由於其不對稱的電子雲分布，C70\x20在有機溶劑（如甲苯、二硫化碳）中的溶解度通常高於\x20C60。雖然整體呈現曲面，但每個碳原子仍維持離域\x20π\x20電子特性的\x20<strong>sp²\x20混成</strong>。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20化學活性：</span>由於\x20C70\x20的不同位點曲率不一，其化學反應具有區域選擇性，特別是在極點處的活性最高。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20<div\x20class=\x22info-section\x22\x20style=\x22margin-top:\x2012px;\x20border-top:\x201px\x20dashed\x20rgba(255,255,255,0.2);\x20padding-top:\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-title\x22>🏭\x20科技應用</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22info-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>1.\x20光學特性：</span>C70\x20具有極強的非線性光學吸收能力，常用於製造光學限幅器以保護雷射設備。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>2.\x20光伏能源：</span>C70\x20與其衍生物是優良的電子受體材料，廣泛應用於<strong>有機太陽能電池</strong>中，能有效地捕捉並傳輸光生電子。<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-title\x22>3.\x20高端潤滑：</span>其獨特的橢球形結構使其在特定壓力下能作為奈米級的「分子滾珠」，提供極低摩擦係數的潤滑性能。\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>",
+    _0x14287e(0x12f),
+  ),
+  addMol(
+    "C80|碳80|富勒烯",
+    "C",
+    _0x14287e(0x307),
+    ["籠狀結構\x20(12個五邊形,\x2030個六邊形)", "Cage\x20(12\x20Pentagons,\x2030\x20Hexagons)"],
+    _0x14287e(0x336),
+    "600\x20(昇華)",
+    _0x14287e(0x27e),
+    [
+      { elem: "C", x: 0x54, y: -0x60, z: 0x72 },
+      { elem: "C", x: 0x1c, y: -0x68, z: 0x8f },
+      { elem: "C", x: 0x4, y: -0x36, z: 0xad },
+      { elem: "C", x: -0xd, y: -0x8e, z: 0x71 },
+      { elem: "C", x: 0x1, y: -0xab, z: 0x3a },
+      { elem: "C", x: 0x39, y: -0xa3, z: 0x1b },
+      { elem: "C", x: 0x62, y: -0x7d, z: 0x3b },
+      { elem: "C", x: -0x4c, y: -0x83, z: 0x71 },
+      { elem: "C", x: -0x64, y: -0x50, z: 0x90 },
+      { elem: "C", x: -0x3b, y: -0x2a, z: 0xae },
+      { elem: "C", x: -0x96, y: -0x35, z: 0x74 },
+      { elem: "C", x: -0x35, y: -0xb0, z: -0x24 },
+      { elem: "C", x: -0x35, y: -0xb1, z: 0x1a },
+      { elem: "C", x: -0x65, y: -0x98, z: 0x3b },
+      { elem: "C", x: -0x96, y: -0x7c, z: 0x1d },
+      { elem: "C", x: -0xae, y: -0x4a, z: 0x3d },
+      { elem: "C", x: 0x62, y: -0x79, z: -0x43 },
+      { elem: "C", x: 0x39, y: -0xa1, z: -0x26 },
+      { elem: "C", x: 0x0, y: -0xa7, z: -0x44 },
+      { elem: "C", x: -0x9e, y: 0xb, z: 0x76 },
+      { elem: "C", x: -0x74, y: 0x31, z: 0x94 },
+      { elem: "C", x: -0x43, y: 0x15, z: 0xb0 },
+      { elem: "C", x: -0x6b, y: 0x69, z: 0x78 },
+      { elem: "C", x: -0xc6, y: -0x16, z: -0x1f },
+      { elem: "C", x: -0xc6, y: -0x18, z: 0x1f },
+      { elem: "C", x: -0xbc, y: 0x1d, z: 0x40 },
+      { elem: "C", x: -0xb1, y: 0x55, z: 0x24 },
+      { elem: "C", x: -0x88, y: 0x7b, z: 0x43 },
+      { elem: "C", x: -0x65, y: -0x94, z: -0x43 },
+      { elem: "C", x: -0x96, y: -0x7a, z: -0x24 },
+      { elem: "C", x: -0xaf, y: -0x46, z: -0x41 },
+      { elem: "C", x: -0x31, y: 0x85, z: 0x79 },
+      { elem: "C", x: 0x1, y: 0x68, z: 0x95 },
+      { elem: "C", x: -0x9, y: 0x30, z: 0xb1 },
+      { elem: "C", x: 0x39, y: 0x71, z: 0x78 },
+      { elem: "C", x: -0x61, y: 0xa3, z: -0x1a },
+      { elem: "C", x: -0x61, y: 0xa1, z: 0x24 },
+      { elem: "C", x: -0x2b, y: 0xa7, z: 0x44 },
+      { elem: "C", x: 0xd, y: 0xaf, z: 0x26 },
+      { elem: "C", x: 0x3f, y: 0x93, z: 0x43 },
+      { elem: "C", x: -0xbc, y: 0x20, z: -0x3d },
+      { elem: "C", x: -0xb1, y: 0x57, z: -0x1e },
+      { elem: "C", x: -0x88, y: 0x7f, z: -0x3b },
+      { elem: "C", x: 0x65, y: 0x42, z: 0x77 },
+      { elem: "C", x: 0x5a, y: 0xa, z: 0x92 },
+      { elem: "C", x: 0x23, y: 0x2, z: 0xaf },
+      { elem: "C", x: 0x73, y: -0x28, z: 0x73 },
+      { elem: "C", x: 0x6e, y: 0x7c, z: -0x1c },
+      { elem: "C", x: 0x6f, y: 0x7a, z: 0x22 },
+      { elem: "C", x: 0x86, y: 0x48, z: 0x41 },
+      { elem: "C", x: 0x9e, y: 0x16, z: 0x21 },
+      { elem: "C", x: 0x94, y: -0x22, z: 0x3d },
+      { elem: "C", x: -0x2b, y: 0xab, z: -0x3a },
+      { elem: "C", x: 0xd, y: 0xb1, z: -0x1c },
+      { elem: "C", x: 0x3f, y: 0x97, z: -0x3b },
+      { elem: "C", x: 0x85, y: 0x4c, z: -0x3d },
+      { elem: "C", x: 0x9e, y: 0x18, z: -0x21 },
+      { elem: "C", x: 0x93, y: -0x1f, z: -0x41 },
+      { elem: "C", x: 0x8a, y: -0x55, z: -0x22 },
+      { elem: "C", x: 0x8a, y: -0x57, z: 0x1c },
+      { elem: "C", x: 0x64, y: 0x4a, z: -0x73 },
+      { elem: "C", x: 0x21, y: 0xc, z: -0xae },
+      { elem: "C", x: 0x59, y: 0x12, z: -0x91 },
+      { elem: "C", x: 0x72, y: -0x22, z: -0x77 },
+      { elem: "C", x: -0x32, y: 0x8c, z: -0x71 },
+      { elem: "C", x: -0xb, y: 0x3a, z: -0xad },
+      { elem: "C", x: 0x0, y: 0x71, z: -0x8e },
+      { elem: "C", x: 0x38, y: 0x78, z: -0x72 },
+      { elem: "C", x: -0x9f, y: 0x11, z: -0x74 },
+      { elem: "C", x: -0x44, y: 0x1f, z: -0xad },
+      { elem: "C", x: -0x76, y: 0x39, z: -0x90 },
+      { elem: "C", x: -0x6c, y: 0x71, z: -0x72 },
+      { elem: "C", x: -0x4d, y: -0x7c, z: -0x79 },
+      { elem: "C", x: -0x3c, y: -0x20, z: -0xaf },
+      { elem: "C", x: -0x65, y: -0x48, z: -0x94 },
+      { elem: "C", x: -0x97, y: -0x2e, z: -0x76 },
+      { elem: "C", x: 0x53, y: -0x5a, z: -0x79 },
+      { elem: "C", x: 0x3, y: -0x2c, z: -0xb0 },
+      { elem: "C", x: 0x1b, y: -0x60, z: -0x95 },
+      { elem: "C", x: -0xe, y: -0x88, z: -0x7a },
+    ],
+    [
+      [0x0, 0x1, "double"],
+      [0x0, 0x6],
+      [0x0, 0x2e],
+      [0x1, 0x2],
+      [0x1, 0x3],
+      [0x2, 0x2d, _0x14287e(0xf4)],
+      [0x2, 0x9],
+      [0x3, 0x4, _0x14287e(0xf4)],
+      [0x3, 0x7],
+      [0x4, 0xc],
+      [0x4, 0x5],
+      [0x5, 0x6, _0x14287e(0xf4)],
+      [0x5, 0x11],
+      [0x6, 0x3b],
+      [0x7, 0x8, _0x14287e(0xf4)],
+      [0x7, 0xd],
+      [0x8, 0x9],
+      [0x8, 0xa],
+      [0x9, 0x15, "double"],
+      [0xa, 0xf, _0x14287e(0xf4)],
+      [0xa, 0x13],
+      [0xb, 0xc, "double"],
+      [0xb, 0x12],
+      [0xb, 0x1c],
+      [0xc, 0xd],
+      [0xd, 0xe, "double"],
+      [0xe, 0xf],
+      [0xe, 0x1d],
+      [0xf, 0x18],
+      [0x10, 0x3a],
+      [0x10, 0x4c],
+      [0x10, 0x11, _0x14287e(0xf4)],
+      [0x11, 0x12],
+      [0x12, 0x4f, _0x14287e(0xf4)],
+      [0x13, 0x14, _0x14287e(0xf4)],
+      [0x13, 0x19],
+      [0x14, 0x15],
+      [0x14, 0x16],
+      [0x15, 0x21],
+      [0x16, 0x1b, _0x14287e(0xf4)],
+      [0x16, 0x1f],
+      [0x17, 0x18, "double"],
+      [0x17, 0x28],
+      [0x17, 0x1e],
+      [0x18, 0x19],
+      [0x19, 0x1a, _0x14287e(0xf4)],
+      [0x1a, 0x1b],
+      [0x1a, 0x29],
+      [0x1b, 0x24],
+      [0x1c, 0x48, _0x14287e(0xf4)],
+      [0x1c, 0x1d],
+      [0x1d, 0x1e, _0x14287e(0xf4)],
+      [0x1e, 0x4b],
+      [0x1f, 0x20],
+      [0x1f, 0x25, _0x14287e(0xf4)],
+      [0x20, 0x21, _0x14287e(0xf4)],
+      [0x20, 0x22],
+      [0x21, 0x2d],
+      [0x22, 0x27, _0x14287e(0xf4)],
+      [0x22, 0x2b],
+      [0x23, 0x24, _0x14287e(0xf4)],
+      [0x23, 0x2a],
+      [0x23, 0x34],
+      [0x24, 0x25],
+      [0x25, 0x26],
+      [0x26, 0x27],
+      [0x26, 0x35, _0x14287e(0xf4)],
+      [0x27, 0x30],
+      [0x28, 0x44, _0x14287e(0xf4)],
+      [0x28, 0x29],
+      [0x29, 0x2a, _0x14287e(0xf4)],
+      [0x2a, 0x47],
+      [0x2b, 0x2c, _0x14287e(0xf4)],
+      [0x2b, 0x31],
+      [0x2c, 0x2d],
+      [0x2c, 0x2e],
+      [0x2e, 0x33, "double"],
+      [0x2f, 0x30, _0x14287e(0xf4)],
+      [0x2f, 0x37],
+      [0x2f, 0x36],
+      [0x30, 0x31],
+      [0x31, 0x32, _0x14287e(0xf4)],
+      [0x32, 0x33],
+      [0x32, 0x38],
+      [0x33, 0x3b],
+      [0x34, 0x40, "double"],
+      [0x34, 0x35],
+      [0x35, 0x36],
+      [0x36, 0x43, _0x14287e(0xf4)],
+      [0x37, 0x3c, _0x14287e(0xf4)],
+      [0x37, 0x38],
+      [0x38, 0x39, "double"],
+      [0x39, 0x3a],
+      [0x39, 0x3f],
+      [0x3a, 0x3b, _0x14287e(0xf4)],
+      [0x3c, 0x3e],
+      [0x3c, 0x43],
+      [0x3d, 0x3e, _0x14287e(0xf4)],
+      [0x3d, 0x41],
+      [0x3d, 0x4d],
+      [0x3e, 0x3f],
+      [0x3f, 0x4c, "double"],
+      [0x40, 0x42],
+      [0x40, 0x47],
+      [0x41, 0x42, _0x14287e(0xf4)],
+      [0x41, 0x45],
+      [0x42, 0x43],
+      [0x44, 0x46],
+      [0x44, 0x4b],
+      [0x45, 0x46],
+      [0x45, 0x49, _0x14287e(0xf4)],
+      [0x46, 0x47, _0x14287e(0xf4)],
+      [0x48, 0x4a],
+      [0x48, 0x4f],
+      [0x49, 0x4a],
+      [0x49, 0x4d],
+      [0x4a, 0x4b, _0x14287e(0xf4)],
+      [0x4c, 0x4e],
+      [0x4d, 0x4e, _0x14287e(0xf4)],
+      [0x4e, 0x4f],
+    ],
+    null,
+    _0x14287e(0x32c),
+    _0x14287e(0x12f),
+  ),
+  addMol(
+    "C90|碳90|富勒烯",
+    "C",
+    "sp²",
+    [_0x14287e(0x208), _0x14287e(0x185)],
+    _0x14287e(0x336),
+    "N/A\x20(昇華)",
+    "N/A",
+    [
+      { elem: "C", x: 0xc8, y: -0x18, z: -0x21 },
+      { elem: "C", x: 0xbc, y: 0x1f, z: -0x3f },
+      { elem: "C", x: 0x9b, y: -0x7d, z: 0x1e },
+      { elem: "C", x: 0x9b, y: -0x7c, z: -0x20 },
+      { elem: "C", x: 0xb1, y: -0x4a, z: -0x3f },
+      { elem: "C", x: 0x6b, y: -0x98, z: 0x3c },
+      { elem: "C", x: 0x67, y: -0x76, z: -0x73 },
+      { elem: "C", x: 0x8e, y: -0x45, z: -0x74 },
+      { elem: "C", x: 0x7d, y: -0xe, z: -0x8f },
+      { elem: "C", x: 0x98, y: 0x24, z: -0x73 },
+      { elem: "C", x: 0x31, y: -0x72, z: -0x8f },
+      { elem: "C", x: 0x0, y: -0x93, z: 0x78 },
+      { elem: "C", x: 0x0, y: -0xb4, z: 0x40 },
+      { elem: "C", x: 0x39, y: -0xb5, z: 0x20 },
+      { elem: "C", x: 0x39, y: -0xb5, z: -0x22 },
+      { elem: "C", x: 0x6c, y: -0x98, z: -0x3e },
+      { elem: "C", x: 0x0, y: -0x91, z: -0x79 },
+      { elem: "C", x: 0x0, y: -0xb3, z: -0x41 },
+      { elem: "C", x: 0x1f, y: -0x3c, z: -0xab },
+      { elem: "C", x: 0x42, y: -0x7, z: -0xaa },
+      { elem: "C", x: 0x22, y: 0x33, z: -0xa9 },
+      { elem: "C", x: 0x41, y: 0x65, z: -0x8d },
+      { elem: "C", x: 0x7b, y: 0x5c, z: -0x72 },
+      { elem: "C", x: 0x20, y: 0x93, z: -0x71 },
+      { elem: "C", x: -0x1f, y: -0x3c, z: -0xab },
+      { elem: "C", x: -0x42, y: -0x7, z: -0xaa },
+      { elem: "C", x: -0x22, y: 0x32, z: -0xa9 },
+      { elem: "C", x: -0x7a, y: 0x5c, z: -0x72 },
+      { elem: "C", x: -0x41, y: 0x65, z: -0x8d },
+      { elem: "C", x: -0x1f, y: 0x93, z: -0x71 },
+      { elem: "C", x: -0x67, y: -0x76, z: -0x72 },
+      { elem: "C", x: -0x31, y: -0x72, z: -0x8f },
+      { elem: "C", x: -0x8e, y: -0x45, z: -0x73 },
+      { elem: "C", x: -0x7d, y: -0xd, z: -0x8e },
+      { elem: "C", x: -0x98, y: 0x24, z: -0x72 },
+      { elem: "C", x: -0x6c, y: -0x98, z: -0x3e },
+      { elem: "C", x: -0x6c, y: -0x98, z: 0x3d },
+      { elem: "C", x: -0x39, y: -0xb5, z: -0x21 },
+      { elem: "C", x: -0x39, y: -0xb5, z: 0x20 },
+      { elem: "C", x: 0x34, y: 0xb3, z: -0x3e },
+      { elem: "C", x: 0x6a, y: 0xa5, z: -0x20 },
+      { elem: "C", x: 0x8e, y: 0x7b, z: -0x3e },
+      { elem: "C", x: 0xb5, y: 0x55, z: -0x1f },
+      { elem: "C", x: 0xb5, y: 0x54, z: 0x20 },
+      { elem: "C", x: 0x0, y: 0xc4, z: -0x1e },
+      { elem: "C", x: 0x0, y: 0xc3, z: 0x20 },
+      { elem: "C", x: 0x33, y: 0xb2, z: 0x3f },
+      { elem: "C", x: 0x6a, y: 0xa5, z: 0x21 },
+      { elem: "C", x: 0x8e, y: 0x7a, z: 0x3f },
+      { elem: "C", x: -0x8e, y: 0x7c, z: -0x3e },
+      { elem: "C", x: -0x6a, y: 0xa6, z: -0x20 },
+      { elem: "C", x: -0x33, y: 0xb3, z: -0x3e },
+      { elem: "C", x: 0xb0, y: -0x4b, z: 0x3e },
+      { elem: "C", x: 0xc8, y: -0x18, z: 0x20 },
+      { elem: "C", x: 0xbd, y: 0x1f, z: 0x3f },
+      { elem: "C", x: 0x98, y: 0x23, z: 0x73 },
+      { elem: "C", x: 0x7e, y: -0xf, z: 0x8e },
+      { elem: "C", x: 0x8d, y: -0x47, z: 0x72 },
+      { elem: "C", x: 0x31, y: -0x73, z: 0x8e },
+      { elem: "C", x: 0x66, y: -0x77, z: 0x72 },
+      { elem: "C", x: 0x1f, y: 0x92, z: 0x73 },
+      { elem: "C", x: 0x41, y: 0x63, z: 0x8e },
+      { elem: "C", x: 0x7b, y: 0x5b, z: 0x73 },
+      { elem: "C", x: 0x22, y: 0x31, z: 0xa9 },
+      { elem: "C", x: 0x43, y: -0x9, z: 0xaa },
+      { elem: "C", x: 0x1f, y: -0x3d, z: 0xab },
+      { elem: "C", x: -0x1f, y: 0x92, z: 0x72 },
+      { elem: "C", x: -0x7b, y: 0x5b, z: 0x73 },
+      { elem: "C", x: -0x41, y: 0x63, z: 0x8d },
+      { elem: "C", x: -0x22, y: 0x31, z: 0xa9 },
+      { elem: "C", x: -0x43, y: -0x8, z: 0xaa },
+      { elem: "C", x: -0x1f, y: -0x3e, z: 0xaa },
+      { elem: "C", x: -0xb5, y: 0x55, z: -0x1f },
+      { elem: "C", x: -0xb5, y: 0x55, z: 0x20 },
+      { elem: "C", x: -0x8e, y: 0x7b, z: 0x3f },
+      { elem: "C", x: -0x69, y: 0xa6, z: 0x21 },
+      { elem: "C", x: -0x33, y: 0xb3, z: 0x3f },
+      { elem: "C", x: -0xb0, y: -0x4a, z: -0x3e },
+      { elem: "C", x: -0xc8, y: -0x17, z: -0x20 },
+      { elem: "C", x: -0xbc, y: 0x20, z: -0x3e },
+      { elem: "C", x: -0xb0, y: -0x4b, z: 0x3e },
+      { elem: "C", x: -0x9b, y: -0x7d, z: 0x1e },
+      { elem: "C", x: -0x9b, y: -0x7d, z: -0x1f },
+      { elem: "C", x: -0xbc, y: 0x1f, z: 0x3f },
+      { elem: "C", x: -0xc8, y: -0x17, z: 0x21 },
+      { elem: "C", x: -0x32, y: -0x74, z: 0x8e },
+      { elem: "C", x: -0x98, y: 0x23, z: 0x73 },
+      { elem: "C", x: -0x7e, y: -0xf, z: 0x8e },
+      { elem: "C", x: -0x8e, y: -0x47, z: 0x73 },
+      { elem: "C", x: -0x67, y: -0x77, z: 0x72 },
+    ],
+    [
+      [0x0, 0x4, _0x14287e(0xf4)],
+      [0x0, 0x1],
+      [0x0, 0x35],
+      [0x1, 0x2a, _0x14287e(0xf4)],
+      [0x1, 0x9],
+      [0x2, 0x3, _0x14287e(0xf4)],
+      [0x2, 0x5],
+      [0x2, 0x34],
+      [0x3, 0xf],
+      [0x3, 0x4],
+      [0x4, 0x7],
+      [0x5, 0x3b, "double"],
+      [0x5, 0xd],
+      [0x6, 0xa, _0x14287e(0xf4)],
+      [0x6, 0x7],
+      [0x6, 0xf],
+      [0x7, 0x8, _0x14287e(0xf4)],
+      [0x8, 0x9],
+      [0x8, 0x13],
+      [0x9, 0x16, _0x14287e(0xf4)],
+      [0xa, 0x10],
+      [0xa, 0x12],
+      [0xb, 0x3a, _0x14287e(0xf4)],
+      [0xb, 0x55],
+      [0xb, 0xc],
+      [0xc, 0xd, _0x14287e(0xf4)],
+      [0xc, 0x26],
+      [0xd, 0xe],
+      [0xe, 0xf, _0x14287e(0xf4)],
+      [0xe, 0x11],
+      [0x10, 0x1f, "double"],
+      [0x10, 0x11],
+      [0x11, 0x25, _0x14287e(0xf4)],
+      [0x12, 0x18, "double"],
+      [0x12, 0x13],
+      [0x13, 0x14, _0x14287e(0xf4)],
+      [0x14, 0x15],
+      [0x14, 0x1a],
+      [0x15, 0x17, "double"],
+      [0x15, 0x16],
+      [0x16, 0x29],
+      [0x17, 0x1d],
+      [0x17, 0x27],
+      [0x18, 0x1f],
+      [0x18, 0x19],
+      [0x19, 0x21, _0x14287e(0xf4)],
+      [0x19, 0x1a],
+      [0x1a, 0x1c, _0x14287e(0xf4)],
+      [0x1b, 0x22, _0x14287e(0xf4)],
+      [0x1b, 0x31],
+      [0x1b, 0x1c],
+      [0x1c, 0x1d],
+      [0x1d, 0x33, _0x14287e(0xf4)],
+      [0x1e, 0x1f],
+      [0x1e, 0x20, _0x14287e(0xf4)],
+      [0x1e, 0x23],
+      [0x20, 0x4d],
+      [0x20, 0x21],
+      [0x21, 0x22],
+      [0x22, 0x4f],
+      [0x23, 0x52, "double"],
+      [0x23, 0x25],
+      [0x24, 0x59],
+      [0x24, 0x51],
+      [0x24, 0x26, "double"],
+      [0x25, 0x26],
+      [0x27, 0x2c, _0x14287e(0xf4)],
+      [0x27, 0x28],
+      [0x28, 0x29, "double"],
+      [0x28, 0x2f],
+      [0x29, 0x2a],
+      [0x2a, 0x2b],
+      [0x2b, 0x36, "double"],
+      [0x2b, 0x30],
+      [0x2c, 0x2d],
+      [0x2c, 0x33],
+      [0x2d, 0x4c],
+      [0x2d, 0x2e, _0x14287e(0xf4)],
+      [0x2e, 0x2f],
+      [0x2e, 0x3c],
+      [0x2f, 0x30, _0x14287e(0xf4)],
+      [0x30, 0x3e],
+      [0x31, 0x48],
+      [0x31, 0x32, _0x14287e(0xf4)],
+      [0x32, 0x33],
+      [0x32, 0x4b],
+      [0x34, 0x39],
+      [0x34, 0x35, _0x14287e(0xf4)],
+      [0x35, 0x36],
+      [0x36, 0x37],
+      [0x37, 0x3e, _0x14287e(0xf4)],
+      [0x37, 0x38],
+      [0x38, 0x39, _0x14287e(0xf4)],
+      [0x38, 0x40],
+      [0x39, 0x3b],
+      [0x3a, 0x3b],
+      [0x3a, 0x41],
+      [0x3c, 0x42, "double"],
+      [0x3c, 0x3d],
+      [0x3d, 0x3e],
+      [0x3d, 0x3f, "double"],
+      [0x3f, 0x40],
+      [0x3f, 0x45],
+      [0x40, 0x41, "double"],
+      [0x41, 0x47],
+      [0x42, 0x44],
+      [0x42, 0x4c],
+      [0x43, 0x56, _0x14287e(0xf4)],
+      [0x43, 0x4a],
+      [0x43, 0x44],
+      [0x44, 0x45, _0x14287e(0xf4)],
+      [0x45, 0x46],
+      [0x46, 0x47, "double"],
+      [0x46, 0x57],
+      [0x47, 0x55],
+      [0x48, 0x49],
+      [0x48, 0x4f, _0x14287e(0xf4)],
+      [0x49, 0x53],
+      [0x49, 0x4a, _0x14287e(0xf4)],
+      [0x4a, 0x4b],
+      [0x4b, 0x4c, "double"],
+      [0x4d, 0x52],
+      [0x4d, 0x4e, "double"],
+      [0x4e, 0x4f],
+      [0x4e, 0x54],
+      [0x50, 0x58],
+      [0x50, 0x51, "double"],
+      [0x50, 0x54],
+      [0x51, 0x52],
+      [0x53, 0x54, _0x14287e(0xf4)],
+      [0x53, 0x56],
+      [0x55, 0x59, _0x14287e(0xf4)],
+      [0x56, 0x57],
+      [0x57, 0x58, _0x14287e(0xf4)],
+      [0x58, 0x59],
+    ],
+    null,
+    _0x14287e(0x247),
+    _0x14287e(0x141),
+  ),
+  addMol(
+    _0x14287e(0x100),
+    "C",
+    "sp²",
+    [_0x14287e(0x217), _0x14287e(0x265)],
+    "108°~120°",
+    _0x14287e(0x1c2),
+    "N/A",
+    [
+      { elem: "C", x: 0xd7, y: -0x39, z: 0x59 },
+      { elem: "C", x: 0xac, y: -0x63, z: 0x67 },
+      { elem: "C", x: 0xf1, y: -0x37, z: 0x1f },
+      { elem: "C", x: 0x99, y: -0x8c, z: 0x3d },
+      { elem: "C", x: 0x5f, y: -0xa0, z: 0x3b },
+      { elem: "C", x: -0x55, y: -0x1d, z: 0xa5 },
+      { elem: "C", x: 0x15, y: -0x38, z: 0xa5 },
+      { elem: "C", x: 0x32, y: -0x90, z: 0x65 },
+      { elem: "C", x: 0x43, y: -0x60, z: 0x8f },
+      { elem: "C", x: 0x7f, y: -0x4b, z: 0x8c },
+      { elem: "C", x: -0x29, y: -0x49, z: 0x9c },
+      { elem: "C", x: -0x79, y: -0x7d, z: 0x5e },
+      { elem: "C", x: -0x51, y: -0xab, z: 0x3 },
+      { elem: "C", x: -0x17, y: -0xaf, z: 0x18 },
+      { elem: "C", x: -0xb, y: -0x9a, z: 0x55 },
+      { elem: "C", x: -0x3c, y: -0x7c, z: 0x76 },
+      { elem: "C", x: -0x82, y: -0x98, z: 0x25 },
+      { elem: "C", x: 0xe8, y: 0x35, z: 0x22 },
+      { elem: "C", x: 0xcd, y: 0x32, z: 0x5b },
+      { elem: "C", x: 0xf9, y: 0x0, z: 0x3 },
+      { elem: "C", x: 0xc4, y: -0x5, z: 0x76 },
+      { elem: "C", x: 0x8f, y: -0xe, z: 0x95 },
+      { elem: "C", x: -0x9, y: 0x35, z: 0xaa },
+      { elem: "C", x: -0x45, y: 0x20, z: 0xab },
+      { elem: "C", x: 0x26, y: 0x9, z: 0xad },
+      { elem: "C", x: 0x62, y: 0x1e, z: 0xa0 },
+      { elem: "C", x: 0x6d, y: 0x59, z: 0x84 },
+      { elem: "C", x: 0xa2, y: 0x5f, z: 0x61 },
+      { elem: "C", x: 0x91, y: 0x84, z: -0x4d },
+      { elem: "C", x: 0xc3, y: 0x63, z: -0x3a },
+      { elem: "C", x: 0xce, y: 0x65, z: 0x4 },
+      { elem: "C", x: 0xa4, y: 0x81, z: 0x2c },
+      { elem: "C", x: 0x3c, y: 0xa4, z: 0x3d },
+      { elem: "C", x: 0x71, y: 0xa1, z: 0x19 },
+      { elem: "C", x: 0x6a, y: 0xa4, z: -0x26 },
+      { elem: "C", x: -0x32, y: 0xa9, z: 0x3f },
+      { elem: "C", x: 0x3, y: 0xb3, z: 0x20 },
+      { elem: "C", x: 0x1, y: 0x70, z: 0x8e },
+      { elem: "C", x: 0x3a, y: 0x7f, z: 0x76 },
+      { elem: "C", x: -0x33, y: 0x8b, z: 0x76 },
+      { elem: "C", x: 0xd0, y: 0x2b, z: -0x5a },
+      { elem: "C", x: 0xea, y: -0x5, z: -0x3a },
+      { elem: "C", x: 0x6d, y: 0x74, z: -0x7c },
+      { elem: "C", x: 0x77, y: 0x3e, z: -0x98 },
+      { elem: "C", x: 0xa6, y: 0x1a, z: -0x86 },
+      { elem: "C", x: 0x33, y: 0x89, z: -0x76 },
+      { elem: "C", x: -0x6c, y: 0x57, z: -0x85 },
+      { elem: "C", x: -0xa2, y: 0x5d, z: -0x61 },
+      { elem: "C", x: -0x3a, y: 0x7e, z: -0x76 },
+      { elem: "C", x: -0x1, y: 0x6d, z: -0x8f },
+      { elem: "C", x: 0x9, y: 0x33, z: -0xab },
+      { elem: "C", x: 0x45, y: 0x1e, z: -0xab },
+      { elem: "C", x: -0x3, y: 0xb3, z: -0x22 },
+      { elem: "C", x: 0x31, y: 0xa9, z: -0x41 },
+      { elem: "C", x: -0x6a, y: 0xa4, z: 0x24 },
+      { elem: "C", x: -0x71, y: 0xa0, z: -0x1b },
+      { elem: "C", x: -0x3c, y: 0xa4, z: -0x3f },
+      { elem: "C", x: -0xa4, y: 0x80, z: -0x2d },
+      { elem: "C", x: 0x90, y: -0x21, z: -0x8e },
+      { elem: "C", x: 0xa6, y: -0x50, z: -0x6c },
+      { elem: "C", x: 0xd6, y: -0x42, z: -0x43 },
+      { elem: "C", x: 0xdc, y: -0x5f, z: -0xc },
+      { elem: "C", x: 0xb1, y: -0x89, z: 0x3 },
+      { elem: "C", x: 0x55, y: -0x1f, z: -0xa5 },
+      { elem: "C", x: 0x29, y: -0x4b, z: -0x9c },
+      { elem: "C", x: 0x3c, y: -0x7d, z: -0x75 },
+      { elem: "C", x: 0x79, y: -0x7e, z: -0x5d },
+      { elem: "C", x: 0x82, y: -0x99, z: -0x24 },
+      { elem: "C", x: -0x32, y: -0x90, z: -0x64 },
+      { elem: "C", x: 0xb, y: -0x9b, z: -0x54 },
+      { elem: "C", x: 0x17, y: -0xaf, z: -0x16 },
+      { elem: "C", x: 0x51, y: -0xac, z: -0x1 },
+      { elem: "C", x: -0x5f, y: -0xa0, z: -0x3a },
+      { elem: "C", x: -0x43, y: -0x61, z: -0x8f },
+      { elem: "C", x: -0x15, y: -0x3a, z: -0xa5 },
+      { elem: "C", x: -0x7f, y: -0x4d, z: -0x8c },
+      { elem: "C", x: -0x62, y: 0x1c, z: -0xa0 },
+      { elem: "C", x: -0x26, y: 0x7, z: -0xad },
+      { elem: "C", x: -0x8f, y: -0x10, z: -0x95 },
+      { elem: "C", x: -0xd7, y: -0x3a, z: -0x59 },
+      { elem: "C", x: -0xac, y: -0x64, z: -0x66 },
+      { elem: "C", x: -0x9a, y: -0x8d, z: -0x3b },
+      { elem: "C", x: -0xf0, y: -0x37, z: -0x1f },
+      { elem: "C", x: -0xe8, y: 0x35, z: -0x23 },
+      { elem: "C", x: -0xcd, y: 0x31, z: -0x5c },
+      { elem: "C", x: -0xc5, y: -0x6, z: -0x76 },
+      { elem: "C", x: -0xf8, y: 0x0, z: -0x3 },
+      { elem: "C", x: -0x91, y: 0x85, z: 0x4c },
+      { elem: "C", x: -0xc3, y: 0x63, z: 0x3a },
+      { elem: "C", x: -0xce, y: 0x65, z: -0x5 },
+      { elem: "C", x: -0xa6, y: 0x1c, z: 0x87 },
+      { elem: "C", x: -0x77, y: 0x41, z: 0x98 },
+      { elem: "C", x: -0x6d, y: 0x76, z: 0x7c },
+      { elem: "C", x: -0xea, y: -0x4, z: 0x3a },
+      { elem: "C", x: -0xd0, y: 0x2c, z: 0x5a },
+      { elem: "C", x: -0xb1, y: -0x89, z: -0x2 },
+      { elem: "C", x: -0xdb, y: -0x5e, z: 0xd },
+      { elem: "C", x: -0xd6, y: -0x41, z: 0x44 },
+      { elem: "C", x: -0xa6, y: -0x4f, z: 0x6c },
+      { elem: "C", x: -0x91, y: -0x1f, z: 0x8f },
+    ],
+    [
+      [0x0, 0x1, "double"],
+      [0x0, 0x14],
+      [0x0, 0x2],
+      [0x1, 0x3],
+      [0x1, 0x9],
+      [0x2, 0x13, _0x14287e(0xf4)],
+      [0x2, 0x3d],
+      [0x3, 0x4, _0x14287e(0xf4)],
+      [0x3, 0x3e],
+      [0x4, 0x47],
+      [0x4, 0x7],
+      [0x5, 0x17, "double"],
+      [0x5, 0xa],
+      [0x6, 0x8, "double"],
+      [0x6, 0xa],
+      [0x6, 0x18],
+      [0x7, 0xe, "double"],
+      [0x7, 0x8],
+      [0x8, 0x9],
+      [0x9, 0x15, "double"],
+      [0xa, 0xf, _0x14287e(0xf4)],
+      [0xb, 0x10, "double"],
+      [0xb, 0x62],
+      [0xb, 0xf],
+      [0xc, 0xd, _0x14287e(0xf4)],
+      [0xc, 0x10],
+      [0xc, 0x48],
+      [0xd, 0x46],
+      [0xd, 0xe],
+      [0xe, 0xf],
+      [0x10, 0x5f],
+      [0x11, 0x1e, _0x14287e(0xf4)],
+      [0x11, 0x12],
+      [0x11, 0x13],
+      [0x12, 0x14, "double"],
+      [0x12, 0x1b],
+      [0x13, 0x29],
+      [0x14, 0x15],
+      [0x15, 0x19],
+      [0x16, 0x17],
+      [0x16, 0x18, "double"],
+      [0x16, 0x25],
+      [0x17, 0x5b],
+      [0x18, 0x19],
+      [0x19, 0x1a, _0x14287e(0xf4)],
+      [0x1a, 0x1b],
+      [0x1a, 0x26],
+      [0x1b, 0x1f, _0x14287e(0xf4)],
+      [0x1c, 0x2a],
+      [0x1c, 0x22],
+      [0x1c, 0x1d, _0x14287e(0xf4)],
+      [0x1d, 0x1e],
+      [0x1d, 0x28],
+      [0x1e, 0x1f],
+      [0x1f, 0x21],
+      [0x20, 0x21, _0x14287e(0xf4)],
+      [0x20, 0x24],
+      [0x20, 0x26],
+      [0x21, 0x22],
+      [0x22, 0x35, "double"],
+      [0x23, 0x24, _0x14287e(0xf4)],
+      [0x23, 0x27],
+      [0x23, 0x36],
+      [0x24, 0x34],
+      [0x25, 0x27],
+      [0x25, 0x26, _0x14287e(0xf4)],
+      [0x27, 0x5c, _0x14287e(0xf4)],
+      [0x28, 0x29, "double"],
+      [0x28, 0x2c],
+      [0x29, 0x3c],
+      [0x2a, 0x2b, _0x14287e(0xf4)],
+      [0x2a, 0x2d],
+      [0x2b, 0x2c],
+      [0x2b, 0x33],
+      [0x2c, 0x3a, _0x14287e(0xf4)],
+      [0x2d, 0x35],
+      [0x2d, 0x31, _0x14287e(0xf4)],
+      [0x2e, 0x2f],
+      [0x2e, 0x30, _0x14287e(0xf4)],
+      [0x2e, 0x4c],
+      [0x2f, 0x54, _0x14287e(0xf4)],
+      [0x2f, 0x39],
+      [0x30, 0x31],
+      [0x30, 0x38],
+      [0x31, 0x32],
+      [0x32, 0x33, _0x14287e(0xf4)],
+      [0x32, 0x4d],
+      [0x33, 0x3f],
+      [0x34, 0x35],
+      [0x34, 0x38, _0x14287e(0xf4)],
+      [0x36, 0x37, "double"],
+      [0x36, 0x57],
+      [0x37, 0x39],
+      [0x37, 0x38],
+      [0x39, 0x59, _0x14287e(0xf4)],
+      [0x3a, 0x3b],
+      [0x3a, 0x3f],
+      [0x3b, 0x3c, _0x14287e(0xf4)],
+      [0x3b, 0x42],
+      [0x3c, 0x3d],
+      [0x3d, 0x3e, _0x14287e(0xf4)],
+      [0x3e, 0x43],
+      [0x3f, 0x40, _0x14287e(0xf4)],
+      [0x40, 0x4a],
+      [0x40, 0x41],
+      [0x41, 0x45, _0x14287e(0xf4)],
+      [0x41, 0x42],
+      [0x42, 0x43, _0x14287e(0xf4)],
+      [0x43, 0x47],
+      [0x44, 0x48, _0x14287e(0xf4)],
+      [0x44, 0x45],
+      [0x44, 0x49],
+      [0x45, 0x46],
+      [0x46, 0x47, _0x14287e(0xf4)],
+      [0x48, 0x51],
+      [0x49, 0x4b],
+      [0x49, 0x4a, _0x14287e(0xf4)],
+      [0x4a, 0x4d],
+      [0x4b, 0x50, _0x14287e(0xf4)],
+      [0x4b, 0x4e],
+      [0x4c, 0x4e],
+      [0x4c, 0x4d, _0x14287e(0xf4)],
+      [0x4e, 0x55, _0x14287e(0xf4)],
+      [0x4f, 0x50],
+      [0x4f, 0x55],
+      [0x4f, 0x52, _0x14287e(0xf4)],
+      [0x50, 0x51],
+      [0x51, 0x5f, _0x14287e(0xf4)],
+      [0x52, 0x60],
+      [0x52, 0x56],
+      [0x53, 0x59],
+      [0x53, 0x54],
+      [0x53, 0x56, _0x14287e(0xf4)],
+      [0x54, 0x55],
+      [0x56, 0x5d],
+      [0x57, 0x5c],
+      [0x57, 0x58, "double"],
+      [0x58, 0x59],
+      [0x58, 0x5e],
+      [0x5a, 0x5b, _0x14287e(0xf4)],
+      [0x5a, 0x5e],
+      [0x5b, 0x5c],
+      [0x5d, 0x5e, "double"],
+      [0x5d, 0x61],
+      [0x5f, 0x60],
+      [0x60, 0x61, _0x14287e(0xf4)],
+      [0x61, 0x62],
+    ],
+    null,
+    _0x14287e(0x2ed),
+    "C2",
+  ));
