@@ -410,6 +410,7 @@
         gap: 6px;
         overflow-x: auto;
         scrollbar-width: thin;
+        display: none;
     }
     .equation-preview .preview-label {
         color: #94a3b8;
@@ -428,15 +429,23 @@
         font-weight: 500;
     }
     .equation-soft-keyboard {
-        margin-top: 12px;
+        position: fixed;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%);
+        width: min(980px, calc(100vw - 24px));
+        max-height: min(62vh, 520px);
+        overflow-y: auto;
         border-radius: 14px;
-        padding: 10px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        background: linear-gradient(165deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.96) 50%, rgba(2, 6, 23, 0.98) 100%);
-        box-shadow: 0 14px 28px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        padding: 12px;
+        border: 1px solid rgba(125, 211, 252, 0.2);
+        background: linear-gradient(165deg, rgba(15, 23, 42, 0.97) 0%, rgba(17, 24, 39, 0.98) 52%, rgba(3, 7, 18, 0.99) 100%);
+        box-shadow: 0 20px 48px rgba(2, 6, 23, 0.75), inset 0 1px 0 rgba(226, 232, 240, 0.09);
+        backdrop-filter: blur(12px);
         display: none;
         gap: 8px;
         user-select: none;
+        z-index: 220;
     }
     .equation-soft-keyboard.active {
         display: grid;
@@ -447,32 +456,34 @@
         align-items: stretch;
     }
     .equation-soft-key {
-        border: 1px solid rgba(148, 163, 184, 0.28);
+        border: 1px solid rgba(148, 163, 184, 0.16);
         border-radius: 8px;
-        background: linear-gradient(180deg, rgba(51, 65, 85, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%);
-        color: #f8fafc;
-        min-height: 38px;
+        background: linear-gradient(180deg, rgba(55, 65, 81, 0.72) 0%, rgba(31, 41, 55, 0.82) 100%);
+        color: #e2e8f0;
+        min-height: 40px;
         padding: 0 8px;
         cursor: pointer;
-        font-size: 0.96rem;
-        font-weight: 700;
+        font-size: 0.98rem;
+        font-weight: 650;
         letter-spacing: 0.3px;
         transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.2s ease;
     }
     .equation-soft-key:hover {
-        border-color: rgba(56, 189, 248, 0.82);
-        box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.45), 0 0 15px rgba(14, 165, 233, 0.18);
+        border-color: rgba(125, 211, 252, 0.58);
+        box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.18), 0 8px 14px rgba(15, 23, 42, 0.38);
     }
     .equation-soft-key:active {
         transform: translateY(1px) scale(0.98);
     }
     .equation-soft-key.key-accent {
-        background: linear-gradient(180deg, rgba(14, 116, 144, 0.95) 0%, rgba(12, 74, 110, 0.95) 100%);
-        border-color: rgba(56, 189, 248, 0.65);
+        background: linear-gradient(180deg, rgba(14, 165, 233, 0.28) 0%, rgba(30, 64, 175, 0.38) 100%);
+        border-color: rgba(125, 211, 252, 0.58);
+        color: #f0f9ff;
     }
     .equation-soft-key.key-danger {
-        background: linear-gradient(180deg, rgba(153, 27, 27, 0.95) 0%, rgba(127, 29, 29, 0.95) 100%);
-        border-color: rgba(248, 113, 113, 0.65);
+        background: linear-gradient(180deg, rgba(190, 24, 93, 0.28) 0%, rgba(136, 19, 55, 0.42) 100%);
+        border-color: rgba(244, 114, 182, 0.45);
+        color: #ffe4f2;
     }
     .equation-soft-key.key-shift-active {
         border-color: rgba(250, 204, 21, 0.8);
@@ -495,21 +506,40 @@
         grid-template-columns: repeat(10, minmax(0, 1fr));
     }
     .equation-soft-row.row-letters-3 {
-        grid-template-columns: 1.6fr repeat(7, 1fr) 1.25fr;
+        grid-template-columns: 1.35fr repeat(7, 1fr);
+    }
+    .equation-soft-row.row-charges .equation-soft-key,
+    .equation-soft-row.row-subscripts .equation-soft-key {
+        min-height: 33px;
+        font-size: 0.9rem;
+    }
+    .equation-soft-row.row-letters-1 .equation-soft-key,
+    .equation-soft-row.row-letters-2 .equation-soft-key,
+    .equation-soft-row.row-letters-3 .equation-soft-key {
+        min-height: 48px; /* 比原先高約 20% */
+        font-size: 1.05rem;
+    }
+    .equation-soft-row.row-letters-3 .equation-soft-key:first-child {
+        font-size: 0.92rem;
+        letter-spacing: 0.4px;
     }
     .equation-soft-row .key-wide-operator {
-        min-height: 44px;
-        font-size: 1.08rem;
+        min-height: 48px;
+        font-size: 1.14rem;
     }
     .equation-soft-row .key-charge,
     .equation-soft-row .key-subscript {
         font-size: 1rem;
     }
     @media (max-width: 768px) {
-        .equation-soft-keyboard { padding: 8px; gap: 6px; }
+        .equation-preview { display: flex; }
+        .equation-soft-keyboard { width: calc(100vw - 14px); bottom: 8px; padding: 10px; gap: 6px; }
         .equation-soft-row { gap: 4px; }
-        .equation-soft-key { min-height: 34px; font-size: 0.88rem; }
-        .equation-soft-row .key-wide-operator { min-height: 40px; }
+        .equation-soft-key { min-height: 36px; font-size: 0.9rem; }
+        .equation-soft-row.row-letters-1 .equation-soft-key,
+        .equation-soft-row.row-letters-2 .equation-soft-key,
+        .equation-soft-row.row-letters-3 .equation-soft-key,
+        .equation-soft-row .key-wide-operator { min-height: 42px; }
     }
 
     .switch-container { 
@@ -2526,7 +2556,8 @@ function setupEquationSoftKeyboard(input) {
     const lettersRow3 = "zxcvbnm".split("");
     const subscripts = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₀"];
     const subscriptInsertMap = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9" };
-    let isUppercase = false;
+    let isUppercase = true;
+    let interactingWithKeyboard = false;
 
     const escapeHtml = (txt) => txt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const toSub = (num) => String(num).split("").map(ch => subMap[ch] || ch).join("");
@@ -2545,12 +2576,7 @@ function setupEquationSoftKeyboard(input) {
         if (!token) return "";
         if (token === "+") return `<span style="color:#cbd5e1;">+</span>`;
         if (token === "=") return `<span style="color:#22d3ee; font-size:1.1em;">→</span>`;
-        const chargeMatch = token.match(/^(.*?)(\d*[+-])$/);
-        const main = chargeMatch ? chargeMatch[1] : token;
-        const charge = chargeMatch ? chargeMatch[2] : "";
-        const mainFormatted = escapeHtml(main).replace(/\d+/g, (n) => toSub(n));
-        const chargeFormatted = charge ? `<sup style="color:#fcd34d;">${toSup(charge)}</sup>` : "";
-        return `${mainFormatted}${chargeFormatted}`;
+        return formatFormula(token);
     };
 
     const updatePreview = () => {
@@ -2636,7 +2662,6 @@ function setupEquationSoftKeyboard(input) {
             <div class="equation-soft-row row-letters-3">
                 ${makeBtn("切換大小寫", "toggle-case", isUppercase ? "key-shift-active" : "", "切換英文字母大小寫")}
                 ${letters3.map(ch => makeBtn(ch, 'insert-letter')).join("")}
-                ${makeBtn("完成", "done", "key-accent", "收合鍵盤")}
             </div>
         `;
     };
@@ -2654,22 +2679,24 @@ function setupEquationSoftKeyboard(input) {
         else if (action === 'backspace') backspaceAtCursor();
         else if (action === 'clear') { input.value = ""; input.focus(); updatePreview(); }
         else if (action === 'toggle-case') { isUppercase = !isUppercase; renderKeyboard(); }
-        else if (action === 'done') hideKeyboard();
+    });
+    keyboard.addEventListener('pointerdown', () => {
+        interactingWithKeyboard = true;
+    });
+    keyboard.addEventListener('pointerup', () => {
+        setTimeout(() => { interactingWithKeyboard = false; }, 0);
     });
 
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('spellcheck', 'false');
+    input.setAttribute('inputmode', 'none');
+    input.readOnly = true;
     input.addEventListener('focus', showKeyboard);
     input.addEventListener('click', showKeyboard);
     input.addEventListener('input', updatePreview);
-    input.addEventListener('blur', () => {
-        setTimeout(() => {
-            const active = document.activeElement;
-            if (!keyboard.contains(active) && active !== input) hideKeyboard();
-        }, 100);
-    });
     document.addEventListener('pointerdown', (e) => {
+        if (interactingWithKeyboard) return;
         if (!keyboard.contains(e.target) && e.target !== input) hideKeyboard();
     });
 
@@ -2684,7 +2711,13 @@ function setupEquationBalancer() {
     const toolsArea = document.getElementById('balance-tools-area');
     const clearBtn = document.getElementById('balance-clear-btn');
     if (!btn) return;
-    const refreshEquationPreview = setupEquationSoftKeyboard(input);
+    const useSoftKeyboard = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768 || document.body.classList.contains('simulate-mobile');
+    const refreshEquationPreview = useSoftKeyboard ? setupEquationSoftKeyboard(input) : () => {};
+    if (!useSoftKeyboard && input) {
+        input.readOnly = false;
+        input.removeAttribute('inputmode');
+        input.classList.remove('balance-kbd-active');
+    }
 
     // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
     if (input) {
