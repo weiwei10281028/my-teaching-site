@@ -2790,22 +2790,18 @@ function setupEquationEditor() {
     const insertLetter = (ch) => {
         const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
         insertTextToken(value, 'text');
-        if (!state.isUppercase) {
-            state.isUppercase = true;
-            renderKeyboard();
-        }
     };
 
     const resetUppercaseAfterNonLetter = () => {
         if (!state.isUppercase) {
             state.isUppercase = true;
-            renderKeyboard();
+            return true;
         }
+        return false;
     };
 
     const insertSubscriptDigit = (digit) => {
         insertTextToken(digitToSub[digit] || digit, 'sub');
-        resetUppercaseAfterNonLetter();
     };
 
     const insertCharge = (charge) => {
@@ -2822,7 +2818,6 @@ function setupEquationEditor() {
         state.tokens.splice(insertIndex, 0, { type: 'charge', value: charge });
         state.cursor = insertIndex + 1;
         renderEditor();
-        resetUppercaseAfterNonLetter();
     };
 
     const insertOperator = (type) => {
@@ -2908,11 +2903,13 @@ function setupEquationEditor() {
         `;
     };
 
-    keyboard.addEventListener('click', (e) => {
+    keyboard.addEventListener('pointerdown', (e) => {
         const keyEl = e.target.closest('.equation-soft-key');
         if (!keyEl) return;
+        e.preventDefault();
         const action = keyEl.dataset.action;
         const label = keyEl.dataset.label || "";
+        const shouldResetUppercase = (action !== 'toggle-case' && !state.isUppercase);
         if (action === 'insert-letter') insertLetter(label);
         else if (action === 'insert-charge') insertCharge(label);
         else if (action === 'insert-subscript') insertSubscriptDigit(label);
@@ -2921,18 +2918,14 @@ function setupEquationEditor() {
         else if (action === 'backspace') backspace();
         else if (action === 'clear') clearAll();
         else if (action === 'toggle-case') { state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
-        resetUppercaseAfterNonLetter();
+        if (shouldResetUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
         editor.focus({ preventScroll: true });
     });
     keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
-    keyboard.addEventListener('dblclick', (e) => { e.preventDefault(); });
-    let lastKeyboardTouchEnd = 0;
-    keyboard.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastKeyboardTouchEnd < 260) e.preventDefault();
-        lastKeyboardTouchEnd = now;
-    }, { passive: false });
 
     editor.addEventListener('click', (e) => {
         showKeyboard();
@@ -2950,12 +2943,41 @@ function setupEquationEditor() {
     editor.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') { e.preventDefault(); setCursor(state.cursor - 1); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); setCursor(state.cursor + 1); return; }
-        if (e.key === 'Backspace') { e.preventDefault(); backspace(); return; }
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            backspace();
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+            return;
+        }
         if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('balance-btn'); if (btn) btn.click(); return; }
-        if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); insertLetter(e.key); return; }
-        if (/^[0-9]$/.test(e.key)) { e.preventDefault(); insertSubscriptDigit(e.key); return; }
-        if (e.key === '+') { e.preventDefault(); insertOperator('plus'); return; }
-        if (e.key === '=') { e.preventDefault(); insertOperator('arrow'); }
+        if (/^[a-zA-Z]$/.test(e.key)) {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            insertLetter(e.key);
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+            return;
+        }
+        if (/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            insertSubscriptDigit(e.key);
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+            return;
+        }
+        if (e.key === '+') {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            insertOperator('plus');
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+            return;
+        }
+        if (e.key === '=') {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            insertOperator('arrow');
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+        }
     });
 
     document.addEventListener('pointerdown', (e) => {
