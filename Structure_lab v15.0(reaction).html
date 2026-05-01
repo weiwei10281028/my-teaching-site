@@ -506,11 +506,13 @@
         width: 100vw;
         max-height: min(60vh, 450px);
         overflow-y: auto;
+        overflow-x: hidden;
+        touch-action: pan-y;
         border-top: 1px solid rgba(166, 141, 111, 0.4);
         background: linear-gradient(180deg, rgba(252, 248, 241, 0.98) 0%, rgba(244, 236, 223, 0.99) 100%);
         box-shadow: 0 -10px 30px rgba(72, 55, 36, 0.24);
         display: none;
-        padding: 10px 8px 12px;
+        padding: 10px 8px calc(12px + env(safe-area-inset-bottom) * 0.35);
         gap: 5px;
         user-select: none;
         z-index: 9999;
@@ -537,6 +539,7 @@
         font-weight: 800;
         white-space: nowrap;
         transition: transform 0.1s ease, border-color 0.15s ease;
+        touch-action: manipulation;
     }
     .equation-soft-key:hover {
         border-color: rgba(243, 196, 110, 0.8);
@@ -568,9 +571,9 @@
         letter-spacing: 0.08em;
     }
     .equation-soft-row.row-charges .equation-soft-key {
-        background: linear-gradient(180deg, rgba(67, 47, 22, 0.94) 0%, rgba(40, 31, 20, 0.97) 100%);
-        color: #ffe3b8;
-        border-color: rgba(206, 156, 72, 0.58);
+        background: linear-gradient(180deg, rgba(31, 54, 54, 0.96) 0%, rgba(22, 39, 40, 0.98) 100%);
+        color: #d9f7f2;
+        border-color: rgba(120, 184, 176, 0.72);
     }
     .equation-soft-row.row-subscripts .equation-soft-key {
         background: linear-gradient(180deg, rgba(50, 33, 58, 0.94) 0%, rgba(35, 24, 42, 0.97) 100%);
@@ -593,6 +596,11 @@
     .equation-soft-row .key-wide-backspace {
         width: var(--eq-op-key-size);
     }
+    .equation-soft-row.row-charges .equation-soft-key.key-wide-backspace {
+        background: linear-gradient(180deg, rgba(83, 60, 32, 0.97) 0%, rgba(54, 41, 27, 0.99) 100%);
+        color: #ffe7bd;
+        border-color: rgba(241, 191, 103, 0.76);
+    }
     .equation-soft-row.row-letters-3 .equation-soft-key.key-clear {
         background: linear-gradient(180deg, rgba(127, 29, 29, 0.38) 0%, rgba(69, 17, 17, 0.52) 100%);
         border-color: rgba(254, 202, 202, 0.9);
@@ -600,10 +608,10 @@
         text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
     }
     .equation-soft-row.row-letters-3 .equation-soft-key.key-shift {
-        background: linear-gradient(180deg, rgba(30, 64, 175, 0.28) 0%, rgba(30, 58, 138, 0.4) 100%);
-        border-color: rgba(147, 197, 253, 0.7);
-        color: #eef2ff;
-        text-shadow: 0 0 4px rgba(255, 255, 255, 0.22);
+        background: linear-gradient(180deg, rgba(169, 179, 196, 0.92) 0%, rgba(129, 142, 162, 0.96) 100%);
+        border-color: rgba(201, 210, 224, 0.9);
+        color: #f8fafc;
+        text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
     }
     .equation-soft-row .key-clear {
         width: clamp(62px, 15vw, 82px);
@@ -2879,7 +2887,7 @@ function setupEquationEditor() {
         keyboard.innerHTML = `
             <div class="equation-soft-row row-charges">
                 ${chargeLabels.map(c => makeBtn(c, 'insert-charge', 'key-charge')).join("")}
-                ${makeBtn("⬅", "backspace", "key-icon key-wide-backspace", "刪除游標前一個項目")}
+                ${makeBtn("←", "backspace", "key-icon key-wide-backspace", "刪除游標前一個項目")}
             </div>
             <div class="equation-soft-row row-subscripts">
                 ${subscriptLabels.map(s => makeBtn(s, 'insert-subscript', 'key-subscript')).join("")}
@@ -2893,7 +2901,7 @@ function setupEquationEditor() {
                 ${letters2.map(ch => makeBtn(ch, 'insert-letter')).join("")}
             </div>
             <div class="equation-soft-row row-letters-3">
-                ${makeBtn("⬆", "toggle-case", `key-icon key-shift ${state.isUppercase ? "key-shift-active" : ""}`, "切換英文字母大小寫")}
+                ${makeBtn("↑", "toggle-case", `key-icon key-shift ${state.isUppercase ? "key-shift-active" : ""}`, "切換英文字母大小寫")}
                 ${letters3.map(ch => makeBtn(ch, 'insert-letter')).join("")}
                 ${makeBtn("清空", "clear", "key-clear", "清空此輸入框")}
             </div>
@@ -2918,6 +2926,13 @@ function setupEquationEditor() {
     });
     keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
+    keyboard.addEventListener('dblclick', (e) => { e.preventDefault(); });
+    let lastKeyboardTouchEnd = 0;
+    keyboard.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastKeyboardTouchEnd < 260) e.preventDefault();
+        lastKeyboardTouchEnd = now;
+    }, { passive: false });
 
     editor.addEventListener('click', (e) => {
         showKeyboard();
