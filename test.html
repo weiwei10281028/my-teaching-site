@@ -387,26 +387,94 @@
     .input-group button:hover {
         background: var(--hud-cyan); color: #000; box-shadow: 0 0 20px var(--hud-cyan); border-color: #fff;
     }
-    #equation-input {
-        font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', sans-serif;
-        font-weight: 600;
-    }
     .equation-input-wrap {
         position: relative;
         flex: 1;
         min-width: 0;
     }
-    .equation-input-wrap #equation-input {
-        width: 100%;
-    }
     #equation-input {
-        overflow-x: auto;
-        white-space: nowrap;
+        display: none;
     }
-    #equation-input.balance-kbd-active {
+    .equation-editor {
+        width: 100%;
+        min-height: 64px;
+        padding: 12px 14px;
+        border: 1px solid rgba(16, 185, 129, 0.36);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.42);
+        color: var(--hud-cyan);
+        font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        cursor: text;
+        outline: none;
+        touch-action: pan-x;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .equation-editor.balance-kbd-active {
         border-color: #22d3ee !important;
-        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.6), 0 0 20px rgba(34, 211, 238, 0.25);
-        background: linear-gradient(180deg, rgba(8, 47, 73, 0.55) 0%, rgba(3, 7, 18, 0.72) 100%);
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.55), 0 0 18px rgba(34, 211, 238, 0.22);
+        background: linear-gradient(180deg, rgba(8, 47, 73, 0.44) 0%, rgba(3, 7, 18, 0.68) 100%);
+    }
+    .equation-editor-placeholder {
+        color: rgba(148, 163, 184, 0.86);
+        font-weight: 500;
+    }
+    .equation-token {
+        display: inline-flex;
+        align-items: baseline;
+        vertical-align: baseline;
+        user-select: none;
+    }
+    .equation-token.token-text,
+    .equation-token.token-sub {
+        color: var(--hud-cyan);
+    }
+    .equation-token.token-sub sub {
+        font-size: 0.82em;
+        line-height: 1;
+        position: relative;
+        bottom: -0.16em;
+    }
+    .equation-token.token-charge {
+        color: #fef3c7;
+        margin-left: 1px;
+    }
+    .equation-token.token-charge sup {
+        font-size: 0.88em;
+        line-height: 1;
+        font-weight: 900;
+        position: relative;
+        top: -0.48em;
+    }
+    .equation-token.token-plus,
+    .equation-token.token-arrow {
+        color: #f4d39a;
+        font-weight: 900;
+        margin: 0 6px;
+        text-shadow: 0 0 8px rgba(244, 211, 154, 0.18);
+    }
+    .equation-token.token-arrow {
+        color: #ffe6b8;
+    }
+    .equation-editor-caret {
+        display: inline-block;
+        width: 2px;
+        height: 1.25em;
+        vertical-align: middle;
+        background: #f8fafc;
+        margin: 0 1px;
+        border-radius: 1px;
+        animation: equationCaretBlink 1s steps(1) infinite;
+    }
+    @keyframes equationCaretBlink {
+        0%, 50% { opacity: 1; }
+        50.01%, 100% { opacity: 0; }
     }
     .equation-soft-keyboard {
         position: fixed;
@@ -1690,12 +1758,12 @@
                     
                     <!-- 詳細說明彈窗 (維持原樣) -->
                     <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
-                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範 ( _ 表示空格 )</div>
+                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範</div>
                         <div style="margin-bottom: 10px;">
-                            1. 物質間用 <span style="color: #facc15; font-weight: bold;">「 _+_ 」</span> 隔開。<br>
-                            2. 離子如 <span style="color: #f472b6;">MnO<sub>4</sub>_-</span> 或 <span style="color: #f472b6;">S2-</span>。<br>
-                            3. 首字母務必大寫，如 <span style="color: #38bdf8;">NaOH</span>。<br>
-                            4. 支援 <span style="color: #38bdf8;">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></span> 括號。
+                            1. 物質間請用下方鍵盤的 <span style="color: #facc15; font-weight: bold;">「+」</span> 與 <span style="color: #facc15; font-weight: bold;">「→」</span> 建立反應式。<br>
+                            2. 下標請用數字列輸入，例如 <span style="color: #38bdf8;">H<sub>2</sub>O</span>、<span style="color: #38bdf8;">MnO<sub>4</sub></span>。<br>
+                            3. 離子電荷請用上標列輸入，例如 <span style="color: #f472b6;">MnO<sub>4</sub><sup>-</sup></span>、<span style="color: #f472b6;">Mn<sup>2+</sup></span>。<br>
+                            4. 首字母通常使用大寫；切成小寫後輸入一個字母會自動回到大寫。
                         </div>
                         <button onclick="document.getElementById('balance-help-popup').style.display='none'" style="margin-top:10px; width:100%; padding:8px; background:#10b981; border:none; border-radius:8px; color:#fff; cursor:pointer;">關閉說明</button>
                     </div>
@@ -1703,7 +1771,8 @@
 
                 <div class="input-group">
                     <div class="equation-input-wrap" id="equation-input-wrap">
-                        <input type="text" id="equation-input" placeholder="請輸入反應式 (如: H2 + O2 = H2O)" style="border-color: rgba(16, 185, 129, 0.3);">
+                        <input type="hidden" id="equation-input">
+                        <div id="equation-editor" class="equation-editor" tabindex="0" aria-label="平衡反應式輸入區"></div>
                     </div>
                     <button id="balance-btn" style="background: var(--accent-green);">平衡</button>
                 </div>
@@ -2458,162 +2527,85 @@ function getAverageOxidationNumbers(formula, charge) {
     return ox;
 }
 
-function normalizeEquationForSolver(rawInput) {
-    if (!rawInput) return "";
-
-    // Step 1: 把下標字元轉回一般數字
-    const subToNum = {"₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9"};
-    const supDigit = {"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9"};
-
-    let s = rawInput.replace(/→/g,"=").replace(/−/g,"-");
-    s = s.replace(/[₀-₉]/g, m => subToNum[m] || m);
-
-    // Step 2: 把上標序列「⁰¹²...⁺⁻」整組轉換，輸出為 §NUM§SIGN§ 佔位符以避免被後續 + 處理誤判
-    // 例如 Mn²⁺ → Mn§2+§，MnO₄⁻ → MnO4§-§
-    s = s.replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])/g, (_, numPart, signPart) => {
-        const num  = numPart.split("").map(c => supDigit[c] || "").join("");
-        const sign = signPart === "⁺" ? "+" : "-";
-        return "\x01" + num + sign + "\x01";   // 用不可見佔位符包住電荷，避免被誤當物質分隔符
-    });
-
-    // Step 3: 整理物質間的 + 和 =，不碰佔位符內的 +/-
-    // 此時合法的「物質連接 +」一定出現在 \x01 之外且被字母/數字包夾
-    // 先把 = 號標準化
-    s = s.replace(/\s*=\s*/g, " = ");
-
-    // 把「佔位符外」的 + 加上兩側空格（讓 parseSide 能正確以 + 分割）
-    // 思路：非佔位符內的 + 兩側都加空格
-    let out = "";
-    let inPlaceholder = false;
-    for (let i = 0; i < s.length; i++) {
-        const ch = s[i];
-        if (ch === "\x01") { inPlaceholder = !inPlaceholder; continue; }
-        if (!inPlaceholder && ch === "+") {
-            out += " + ";
-        } else {
-            out += ch;
-        }
-    }
-
-    // Step 4: 把佔位符電荷還原為平衡器可讀的 "formula charge" 格式（化學式後空一格加電荷）
-    // 平衡器 parseSide 先以 + 分割，再對每個 token 用 p.split(/\s+/) 分出 formula 和 charge
-    // 所以電荷要緊跟在化學式 token 後面，中間一個空格即可
-    // 此時 out 裡已沒有佔位符，電荷序列緊接著化學式，如 "MnO42+"（沒有空格）
-    // 把 「英數字/括號 + 電荷符號」分開
-    out = out.replace(/([A-Za-z0-9()]+)(\d*[+-]+)/g, "$1 $2");
-
-    out = out.replace(/\s{2,}/g, " ").trim();
-    return out;
-}
-
-function setupEquationSoftKeyboard(input) {
+function setupEquationEditor() {
+    const editor = document.getElementById('equation-editor');
+    const hiddenInput = document.getElementById('equation-input');
     const keyboard = document.getElementById('equation-soft-keyboard');
-    if (!input || !keyboard) return () => {};
-    if (keyboard.parentElement !== document.body) {
-        document.body.appendChild(keyboard);
-    }
+    if (!editor || !hiddenInput || !keyboard) return null;
+    if (keyboard.parentElement !== document.body) document.body.appendChild(keyboard);
 
-    const chargeKeys = ["+", "2+", "3+", "4+", "5+", "-", "2-", "3-", "4-", "5-"];
-    const chargeInsertMap = { "+": "⁺", "2+": "²⁺", "3+": "³⁺", "4+": "⁴⁺", "5+": "⁵⁺", "-": "⁻", "2-": "²⁻", "3-": "³⁻", "4-": "⁴⁻", "5-": "⁵⁻" };
+    const state = {
+        tokens: [],
+        cursor: 0,
+        isUppercase: true
+    };
+    let interactingWithKeyboard = false;
+
+    const digitToSub = { "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉" };
+    const subToDigit = { "₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9" };
+    const digitToSup = { "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹" };
+    const signToSup = { "+":"⁺","-":"⁻" };
+    const chargeKeys = ["+","2+","3+","4+","5+","-","2-","3-","4-","5-"];
+    const subscripts = ["1","2","3","4","5","6","7","8","9","0"];
     const lettersRow1 = "qwertyuiop".split("");
     const lettersRow2 = "asdfghjkl".split("");
     const lettersRow3 = "zxcvbnm".split("");
-    const subscripts = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-    const subscriptInsertMap = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
-    let isUppercase = true;
-    let interactingWithKeyboard = false;
-    const escapeHtml = (txt) => txt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    let savedSelectionStart = 0;
-    let savedSelectionEnd = 0;
+    const isOperator = (token) => token && (token.type === 'plus' || token.type === 'arrow');
 
-    const sanitizeEquationInput = (txt) => txt
-        .replace(/→/g, "=")
-        .replace(/\s*=\s*/g, " = ")
-        .replace(/\s{2,}/g, " ")
-        .trimStart();
-    const getScrollHost = () => input.closest('.controls-content') || input.closest('.controls-area') || document.scrollingElement;
-    const ensureInputVisible = (behavior = 'smooth') => {
+    const escapeHtml = (txt) => txt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const chargeToSup = (charge) => charge.split("").map(ch => digitToSup[ch] || signToSup[ch] || ch).join("");
+
+    const getVisibleText = () => state.tokens.map((token) => {
+        if (token.type === 'text') return token.value;
+        if (token.type === 'sub') return token.value;
+        if (token.type === 'charge') return chargeToSup(token.value);
+        if (token.type === 'plus') return ' + ';
+        if (token.type === 'arrow') return ' = ';
+        return '';
+    }).join("");
+
+    const serializeForSolver = () => {
+        const chunks = [];
+        let main = "";
+        let charge = "";
+        const flushSpecies = () => {
+            if (!main) return;
+            chunks.push(main + (charge ? ` ${charge}` : ""));
+            main = "";
+            charge = "";
+        };
+        state.tokens.forEach((token) => {
+            if (token.type === 'text') main += token.value;
+            else if (token.type === 'sub') main += subToDigit[token.value] || token.value;
+            else if (token.type === 'charge') charge = token.value;
+            else if (token.type === 'plus') { flushSpecies(); chunks.push('+'); }
+            else if (token.type === 'arrow') { flushSpecies(); chunks.push('='); }
+        });
+        flushSpecies();
+        return chunks.join(' ').replace(/\s{2,}/g, ' ').trim();
+    };
+
+    const syncHiddenInput = () => {
+        hiddenInput.value = getVisibleText();
+    };
+
+    const getScrollHost = () => editor.closest('.controls-content') || editor.closest('.controls-area') || document.scrollingElement;
+    const ensureEditorVisible = (behavior = 'smooth') => {
         const host = getScrollHost();
         if (!host) return;
         const hostRect = host.getBoundingClientRect ? host.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-        const inputRect = input.getBoundingClientRect();
+        const editorRect = editor.getBoundingClientRect();
         const keyboardTop = window.innerHeight - (keyboard.offsetHeight || 0);
         const safeBottom = Math.min(hostRect.bottom - 14, keyboardTop - 12);
         const safeTop = hostRect.top + 54;
-        if (inputRect.bottom > safeBottom || inputRect.top < safeTop) {
-            const delta = inputRect.top - safeTop;
+        if (editorRect.bottom > safeBottom || editorRect.top < safeTop) {
+            const delta = editorRect.top - safeTop;
             if (host === document.scrollingElement || host === document.documentElement || host === document.body) {
                 window.scrollBy({ top: delta, behavior });
             } else {
                 host.scrollBy({ top: delta, behavior });
             }
         }
-    };
-
-    // 把游標設回指定位置，用 setTimeout(0) 確保 iOS/Android focus 後不覆蓋
-    const restoreCaret = (pos) => {
-        const p = Math.min(pos, input.value.length);
-        savedSelectionStart = p;
-        savedSelectionEnd = p;
-        input.setSelectionRange(p, p);
-        setTimeout(() => {
-            input.setSelectionRange(p, p);
-        }, 0);
-    };
-
-    const rememberSelection = () => {
-        savedSelectionStart = input.selectionStart ?? savedSelectionStart;
-        savedSelectionEnd = input.selectionEnd ?? savedSelectionEnd;
-    };
-
-    const syncInputText = (preserveCaret) => {
-        const normalized = sanitizeEquationInput(input.value);
-        if (normalized !== input.value) {
-            const pos = preserveCaret != null ? preserveCaret : (input.selectionStart || normalized.length);
-            input.value = normalized;
-            restoreCaret(pos);
-        }
-    };
-
-    const insertAtCursor = (text) => {
-        const start = document.activeElement === input ? (input.selectionStart ?? savedSelectionStart) : savedSelectionStart;
-        const end   = document.activeElement === input ? (input.selectionEnd ?? savedSelectionEnd) : savedSelectionEnd;
-        const before = input.value.slice(0, start);
-        const after  = input.value.slice(end);
-        input.value  = before + text + after;
-        const caret  = start + text.length;
-        syncInputText(caret);
-        // focus 可能讓游標跳末尾，setTimeout 確保在 focus 完成後再還原
-        const alreadyFocused = document.activeElement === input;
-        if (!alreadyFocused) input.focus();
-        restoreCaret(caret);
-    };
-
-    const backspaceAtCursor = () => {
-        const start = document.activeElement === input ? (input.selectionStart ?? savedSelectionStart) : savedSelectionStart;
-        const end   = document.activeElement === input ? (input.selectionEnd ?? savedSelectionEnd) : savedSelectionEnd;
-        const chargeUnits = ["⁵⁺","⁴⁺","³⁺","²⁺","⁵⁻","⁴⁻","³⁻","²⁻","⁺","⁻"];
-        let newCaret;
-        if (start !== end) {
-            input.value = input.value.slice(0, start) + input.value.slice(end);
-            newCaret = start;
-        } else if (start > 0) {
-            const left = input.value.slice(0, start);
-            const matchedCharge = chargeUnits.find(unit => left.endsWith(unit));
-            if (matchedCharge) {
-                newCaret = start - matchedCharge.length;
-                input.value = input.value.slice(0, newCaret) + input.value.slice(start);
-            } else {
-                newCaret = start - 1;
-                input.value = input.value.slice(0, newCaret) + input.value.slice(start);
-            }
-        } else {
-            return;
-        }
-        syncInputText(newCaret);
-        const alreadyFocused = document.activeElement === input;
-        if (!alreadyFocused) input.focus();
-        restoreCaret(newCaret);
     };
 
     const bringPanelUp = () => {
@@ -2628,21 +2620,130 @@ function setupEquationSoftKeyboard(input) {
         panel.style.transform = `translateY(${targetY}px)`;
     };
 
+    const scrollCaretIntoView = () => {
+        const caretEl = document.getElementById('equation-editor-caret');
+        if (caretEl) caretEl.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    };
+
+    const renderToken = (token, index) => {
+        if (token.type === 'text') return `<span class="equation-token token-text" data-index="${index}">${escapeHtml(token.value)}</span>`;
+        if (token.type === 'sub') return `<span class="equation-token token-sub" data-index="${index}"><sub>${escapeHtml(subToDigit[token.value] || token.value)}</sub></span>`;
+        if (token.type === 'charge') return `<span class="equation-token token-charge" data-index="${index}"><sup>${escapeHtml(chargeToSup(token.value))}</sup></span>`;
+        if (token.type === 'plus') return `<span class="equation-token token-plus" data-index="${index}">+</span>`;
+        if (token.type === 'arrow') return `<span class="equation-token token-arrow" data-index="${index}">→</span>`;
+        return '';
+    };
+
+    const renderEditor = () => {
+        let html = "";
+        if (state.tokens.length === 0) {
+            html = state.cursor === 0
+                ? `<span id="equation-editor-caret" class="equation-editor-caret"></span><span class="equation-editor-placeholder">請輸入反應式（例如 H₂ + O₂ → H₂O）</span>`
+                : `<span class="equation-editor-placeholder">請輸入反應式（例如 H₂ + O₂ → H₂O）</span>`;
+        } else {
+            for (let i = 0; i <= state.tokens.length; i++) {
+                if (state.cursor === i) html += `<span id="equation-editor-caret" class="equation-editor-caret"></span>`;
+                if (i < state.tokens.length) html += renderToken(state.tokens[i], i);
+            }
+        }
+        editor.innerHTML = html;
+        syncHiddenInput();
+        requestAnimationFrame(scrollCaretIntoView);
+    };
+
+    const setCursor = (idx) => {
+        state.cursor = Math.max(0, Math.min(idx, state.tokens.length));
+        renderEditor();
+        editor.focus({ preventScroll: true });
+    };
+
+    const hasSpeciesContent = (start, end) => state.tokens.slice(start, end).some(t => t.type === 'text' || t.type === 'sub');
+    const findSpeciesBounds = () => {
+        let start = state.cursor;
+        while (start > 0 && !isOperator(state.tokens[start - 1])) start--;
+        let end = state.cursor;
+        while (end < state.tokens.length && !isOperator(state.tokens[end])) end++;
+        return { start, end };
+    };
+
+    const insertTextToken = (value, type) => {
+        state.tokens.splice(state.cursor, 0, { type, value });
+        state.cursor += 1;
+        renderEditor();
+    };
+
+    const insertLetter = (ch) => {
+        const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
+        insertTextToken(value, 'text');
+        if (!state.isUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
+    };
+
+    const insertSubscriptDigit = (digit) => {
+        insertTextToken(digitToSub[digit] || digit, 'sub');
+    };
+
+    const insertCharge = (charge) => {
+        const { start, end } = findSpeciesBounds();
+        if (!hasSpeciesContent(start, end)) return;
+        for (let i = end - 1; i >= start; i--) {
+            if (state.tokens[i].type === 'charge') {
+                state.tokens.splice(i, 1);
+                if (i < state.cursor) state.cursor -= 1;
+            }
+        }
+        let insertIndex = start;
+        while (insertIndex < state.tokens.length && !isOperator(state.tokens[insertIndex])) insertIndex++;
+        state.tokens.splice(insertIndex, 0, { type: 'charge', value: charge });
+        state.cursor = insertIndex + 1;
+        renderEditor();
+    };
+
+    const insertOperator = (type) => {
+        if (state.tokens.length === 0 || state.cursor === 0) return;
+        if (isOperator(state.tokens[state.cursor - 1])) return;
+        if (isOperator(state.tokens[state.cursor])) {
+            state.tokens[state.cursor] = { type };
+            state.cursor += 1;
+            renderEditor();
+            return;
+        }
+        state.tokens.splice(state.cursor, 0, { type });
+        state.cursor += 1;
+        renderEditor();
+    };
+
+    const backspace = () => {
+        if (state.cursor === 0) return;
+        state.tokens.splice(state.cursor - 1, 1);
+        state.cursor -= 1;
+        renderEditor();
+    };
+
+    const clearAll = () => {
+        state.tokens = [];
+        state.cursor = 0;
+        renderEditor();
+    };
+
     const showKeyboard = () => {
         keyboard.classList.add('active');
         keyboard.setAttribute('aria-hidden', 'false');
-        input.classList.add('balance-kbd-active');
+        editor.classList.add('balance-kbd-active');
         document.body.classList.add('eq-kbd-open');
         bringPanelUp();
         requestAnimationFrame(() => {
             document.documentElement.style.setProperty('--eq-kbd-height', `${Math.ceil(keyboard.offsetHeight)}px`);
-            ensureInputVisible('smooth');
+            ensureEditorVisible('smooth');
         });
     };
+
     const hideKeyboard = () => {
         keyboard.classList.remove('active');
         keyboard.setAttribute('aria-hidden', 'true');
-        input.classList.remove('balance-kbd-active');
+        editor.classList.remove('balance-kbd-active');
         document.body.classList.remove('eq-kbd-open');
     };
 
@@ -2650,12 +2751,12 @@ function setupEquationSoftKeyboard(input) {
         `<button type="button" class="equation-soft-key ${extraClass}" data-action="${action}" data-label="${label}" ${title ? `title="${title}"` : ""}>${label}</button>`;
 
     const renderKeyboard = () => {
-        const letters1 = lettersRow1.map(ch => isUppercase ? ch.toUpperCase() : ch);
-        const letters2 = lettersRow2.map(ch => isUppercase ? ch.toUpperCase() : ch);
-        const letters3 = lettersRow3.map(ch => isUppercase ? ch.toUpperCase() : ch);
+        const letters1 = lettersRow1.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
+        const letters2 = lettersRow2.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
+        const letters3 = lettersRow3.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
         keyboard.innerHTML = `
             <div class="equation-soft-row row-charges">
-                ${chargeKeys.map(c => makeBtn(c, 'insert-charge', 'key-charge')).join("")}${makeBtn("退格", "backspace", "", "刪除游標前一字")}
+                ${chargeKeys.map(c => makeBtn(c, 'insert-charge', 'key-charge')).join("")}${makeBtn("退格", "backspace", "", "刪除游標前一個項目")}
             </div>
             <div class="equation-soft-row row-subscripts">
                 ${subscripts.map(s => makeBtn(s, 'insert-subscript', 'key-subscript')).join("")}${makeBtn("清空", "clear", "", "清空此輸入框")}
@@ -2667,7 +2768,7 @@ function setupEquationSoftKeyboard(input) {
                 ${letters2.map(ch => makeBtn(ch, 'insert-letter')).join("")}${makeBtn("→", "insert-arrow", "key-wide-operator", "插入反應箭頭")}
             </div>
             <div class="equation-soft-row row-letters-3">
-                ${makeBtn("⇧", "toggle-case", isUppercase ? "key-shift-active" : "", "切換英文字母大小寫")}
+                ${makeBtn("⇧", "toggle-case", state.isUppercase ? "key-shift-active" : "", "切換英文字母大小寫")}
                 ${letters3.map(ch => makeBtn(ch, 'insert-letter')).join("")}
             </div>
         `;
@@ -2678,117 +2779,103 @@ function setupEquationSoftKeyboard(input) {
         if (!keyEl) return;
         const action = keyEl.dataset.action;
         const label = keyEl.dataset.label || "";
-        if (action === 'insert-letter') insertAtCursor(label);
-        else if (action === 'insert-charge') insertAtCursor(chargeInsertMap[label] || label);
-        else if (action === 'insert-subscript') insertAtCursor(subscriptInsertMap[label] || label);
-        else if (action === 'insert-plus') insertAtCursor(' + ');
-        else if (action === 'insert-arrow') insertAtCursor(' = ');
-        else if (action === 'backspace') backspaceAtCursor();
-        else if (action === 'clear') { input.value = ""; input.focus(); syncInputText(); }
-        else if (action === 'toggle-case') { isUppercase = !isUppercase; renderKeyboard(); return; }
-        if (!isUppercase && action === 'insert-letter') { isUppercase = true; renderKeyboard(); }
+        if (action === 'insert-letter') insertLetter(label);
+        else if (action === 'insert-charge') insertCharge(label);
+        else if (action === 'insert-subscript') insertSubscriptDigit(label);
+        else if (action === 'insert-plus') insertOperator('plus');
+        else if (action === 'insert-arrow') insertOperator('arrow');
+        else if (action === 'backspace') backspace();
+        else if (action === 'clear') clearAll();
+        else if (action === 'toggle-case') { state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
+        editor.focus({ preventScroll: true });
     });
-    keyboard.addEventListener('pointerdown', () => {
-        interactingWithKeyboard = true;
+    keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
+    keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
+
+    editor.addEventListener('click', (e) => {
+        showKeyboard();
+        const tokenEl = e.target.closest('.equation-token');
+        if (!tokenEl) {
+            setCursor(state.tokens.length);
+            return;
+        }
+        const idx = Number(tokenEl.dataset.index || 0);
+        const rect = tokenEl.getBoundingClientRect();
+        const before = e.clientX < rect.left + rect.width / 2;
+        setCursor(before ? idx : idx + 1);
     });
-    keyboard.addEventListener('pointerup', () => {
-        setTimeout(() => { interactingWithKeyboard = false; }, 0);
+    editor.addEventListener('focus', showKeyboard);
+    editor.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); setCursor(state.cursor - 1); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); setCursor(state.cursor + 1); return; }
+        if (e.key === 'Backspace') { e.preventDefault(); backspace(); return; }
+        if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('balance-btn'); if (btn) btn.click(); return; }
+        if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); insertLetter(e.key); return; }
+        if (/^[0-9]$/.test(e.key)) { e.preventDefault(); insertSubscriptDigit(e.key); return; }
+        if (e.key === '+') { e.preventDefault(); insertOperator('plus'); return; }
+        if (e.key === '=') { e.preventDefault(); insertOperator('arrow'); }
     });
 
-    input.setAttribute('autocomplete', 'off');
-    input.setAttribute('autocapitalize', 'off');
-    input.setAttribute('spellcheck', 'false');
-    input.setAttribute('inputmode', 'none');
-    input.readOnly = false;
-    input.addEventListener('focus', showKeyboard);
-    input.addEventListener('click', showKeyboard);
-    input.addEventListener('input', syncInputText);
-    input.addEventListener('click', rememberSelection);
-    input.addEventListener('keyup', rememberSelection);
-    input.addEventListener('select', rememberSelection);
-    input.addEventListener('touchend', () => setTimeout(rememberSelection, 0));
     document.addEventListener('pointerdown', (e) => {
         if (interactingWithKeyboard) return;
-        if (!keyboard.contains(e.target) && e.target !== input) hideKeyboard();
+        if (!keyboard.contains(e.target) && e.target !== editor && !editor.contains(e.target)) hideKeyboard();
     });
 
-    document.documentElement.style.setProperty('--eq-kbd-height', '330px');
     renderKeyboard();
-    syncInputText();
-    return syncInputText;
+    renderEditor();
+
+    return {
+        clear: clearAll,
+        getRawText: () => getVisibleText().replace(/\s+/g, '').trim(),
+        serializeForSolver,
+        focus: () => editor.focus({ preventScroll: true })
+    };
 }
 
 function setupEquationBalancer() {
-    const btn = document.getElementById('balance-btn'), input = document.getElementById('equation-input');
+    const btn = document.getElementById('balance-btn');
     const resDiv = document.getElementById('balance-result'), stpBtn = document.getElementById('steps-toggle-btn'), stpDiv = document.getElementById('balance-steps');
     const toolsArea = document.getElementById('balance-tools-area');
     const clearBtn = document.getElementById('balance-clear-btn');
     if (!btn) return;
-    const useSoftKeyboard = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768 || document.body.classList.contains('simulate-mobile');
-    const refreshEquationPreview = useSoftKeyboard ? setupEquationSoftKeyboard(input) : () => {};
-    if (!useSoftKeyboard && input) {
-        input.readOnly = false;
-        input.removeAttribute('inputmode');
-        input.classList.remove('balance-kbd-active');
-    }
+    const editorApi = setupEquationEditor();
+    if (!editorApi) return;
 
-    // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                btn.click(); // 模擬點擊平衡按鈕
-            }
-        });
-    }
-    
     btn.addEventListener('click', () => {
-        const rawVal = input.value.trim();
+        const rawVal = editorApi.getRawText();
         if (!rawVal) return;
-        const val = useSoftKeyboard ? normalizeEquationForSolver(rawVal) : rawVal;
+        const val = editorApi.serializeForSolver();
 
-        // [保留] 隱藏彩蛋：輸入 "人次" 顯示計數器
         if (rawVal === "人次") {
             const subEl = document.getElementById("viewport-subtitle");
             if (subEl) {
-                // 清空並顯示副標題區域
                 subEl.style.display = "block";
                 subEl.style.width = "fit-content";
-                // 使用 S96 風格的樣式
-                subEl.style.border = "1px solid #00f2ff"; 
+                subEl.style.border = "1px solid #00f2ff";
                 subEl.style.backgroundColor = "rgba(2, 6, 23, 0.9)";
-                subEl.style.color = "#00f2ff"; 
+                subEl.style.color = "#00f2ff";
                 subEl.style.boxShadow = "0 0 15px rgba(0, 242, 255, 0.3)";
                 subEl.style.padding = "10px 20px";
                 subEl.style.textAlign = "center";
                 subEl.style.borderRadius = "4px";
-                
                 subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold; font-family:'Rajdhani', sans-serif;">👁️ 本站累積瀏覽人次</div>`;
-                
-                // 重新加載圖片以確保更新
                 const newImg = new Image();
                 newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
                 newImg.alt = "載入中...";
                 newImg.style.height = "28px";
                 newImg.style.display = "block";
                 newImg.style.margin = "0 auto";
-
                 newImg.onerror = function() {
                     subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
                 };
                 subEl.appendChild(newImg);
-                
-                // 清空輸入框
-                input.value = "";
-                refreshEquationPreview();
-                
-                // 清除原本的平衡結果顯示 (如果有的話)
+                editorApi.clear();
                 resDiv.style.display = 'none';
                 stpBtn.style.display = 'none';
                 stpDiv.style.display = 'none';
             }
-            return; // 結束函式，不執行化學平衡
+            return;
         }
-        // [結束隱藏彩蛋]
         if (rawVal === "原子構造") {
             resDiv.style.display = 'flex';
             resDiv.innerHTML = `<div style="width:100%; text-align:center; padding:15px; background:rgba(0, 242, 255, 0.05); border:1px solid var(--hud-cyan); border-radius:8px;">
@@ -2796,8 +2883,7 @@ function setupEquationBalancer() {
                     <span style="font-size:1.2rem;">🔍</span> 原子構造心智圖
                 </a>
             </div>`;
-            input.value = "";
-            refreshEquationPreview();
+            editorApi.clear();
             stpBtn.style.display = 'none';
             stpDiv.style.display = 'none';
             return;
@@ -2809,20 +2895,17 @@ function setupEquationBalancer() {
                     <span style="font-size:1.2rem;">📝</span> 分科測驗
                 </a>
             </div>`;
-            input.value = "";
-            refreshEquationPreview();
+            editorApi.clear();
             stpBtn.style.display = 'none';
             stpDiv.style.display = 'none';
             return;
         }
 
-        // --- 以下為原本的化學平衡邏輯 ---
         stpDiv.style.display = 'none';
         try {
             const res = solveChemicalEquationWithSteps(val);
-            // 徹底移除提示文字，將結果包在 inline-flex 中強制撐開寬度
             resDiv.innerHTML = `<div style="display: inline-flex; align-items: center; min-width: 100%;">${res.html}</div>`;
-            resDiv.style.display = 'block'; 
+            resDiv.style.display = 'block';
             const enableDrag = (el) => {
                 let isDown = false, sX, sL;
                 el.onmousedown = (e) => { isDown = true; el.style.cursor = 'grabbing'; sX = e.pageX - el.offsetLeft; sL = el.scrollLeft; };
@@ -2830,13 +2913,11 @@ function setupEquationBalancer() {
                 el.onmouseleave = stop; el.onmouseup = stop;
                 el.onmousemove = (e) => { if(!isDown) return; e.preventDefault(); el.scrollLeft = sL - (e.pageX - el.offsetLeft - sX); };
             };
-            resDiv.style.display = 'block'; 
-            enableDrag(resDiv); // 綁定上方主結果
-
+            enableDrag(resDiv);
             stpDiv.innerHTML = res.stepsHtml;
-            stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag); // 綁定思路內的方程式
+            stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag);
             if(toolsArea) toolsArea.style.display = 'flex';
-            stpBtn.style.display = 'block'; // 成功時顯示解題思路按鈕（避免前次錯誤後被隱藏）
+            stpBtn.style.display = 'block';
             stpBtn.textContent = '解題思路';
         } catch (e) {
             resDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
@@ -2850,10 +2931,10 @@ function setupEquationBalancer() {
         stpDiv.style.display = isH ? 'block' : 'none';
         stpBtn.textContent = isH ? '隱藏思路' : '解題思路';
     };
+
     if (clearBtn) {
         clearBtn.onclick = () => {
-            input.value = "";
-            refreshEquationPreview();
+            editorApi.clear();
             resDiv.style.display = 'none';
             resDiv.innerHTML = "";
             stpDiv.style.display = 'none';
@@ -2863,8 +2944,7 @@ function setupEquationBalancer() {
             if(subEl) { subEl.style.display = "none"; subEl.innerHTML = ""; }
         };
     }
-    
-    // 平衡說明彈窗邏輯
+
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
     if (hBtn && hBox) {
         hBtn.onclick = (e) => { e.stopPropagation(); hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block'; };
