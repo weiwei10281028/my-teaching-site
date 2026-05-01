@@ -20,6 +20,7 @@
         --hud-cyan: #00f2ff;
         --liquid-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 48%, #475569 100%);
         --hud-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        --eq-kbd-height: 330px;
     }
 
     * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -337,8 +338,8 @@
     color: #fff;
     box-shadow: 0 0 15px #f87171;
 }
-    .eqn-op { color: rgba(255,255,255,0.4); font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
-    .reaction-arrow { color: var(--hud-cyan); font-size: 1.8rem; margin: 0 15px; font-weight: bold; text-shadow: 0 0 10px var(--hud-cyan); }
+    .eqn-op { color: #a67c52; font-size: 1.2rem; margin: 0 10px; font-weight: bold; }
+    .reaction-arrow { color: #8b5e34; font-size: 1.8rem; margin: 0 15px; font-weight: bold; text-shadow: 0 0 8px rgba(139, 94, 52, 0.25); }
     #balance-result sup { top: -0.6em; font-size: 0.75em; margin-left: 1px; vertical-align: baseline; position: relative; }
     #balance-result sub { bottom: -0.2em; font-size: 0.75em; vertical-align: baseline; position: relative; }
     .step-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -385,6 +386,242 @@
     }
     .input-group button:hover {
         background: var(--hud-cyan); color: #000; box-shadow: 0 0 20px var(--hud-cyan); border-color: #fff;
+    }
+    .equation-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+    #equation-input {
+        display: none;
+    }
+    .equation-editor {
+        width: 100%;
+        min-height: 50px;
+        padding: 9px 14px;
+        border: 1px solid rgba(16, 185, 129, 0.36);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.42);
+        color: var(--hud-cyan);
+        font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        cursor: text;
+        outline: none;
+        touch-action: pan-x;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .equation-editor.balance-kbd-active {
+        border-color: #22d3ee !important;
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.55), 0 0 18px rgba(34, 211, 238, 0.22);
+        background: linear-gradient(180deg, rgba(8, 47, 73, 0.44) 0%, rgba(3, 7, 18, 0.68) 100%);
+    }
+    .equation-editor-placeholder {
+        color: rgba(148, 163, 184, 0.86);
+        font-weight: 500;
+    }
+    .equation-token {
+        display: inline-flex;
+        align-items: baseline;
+        vertical-align: baseline;
+        user-select: none;
+    }
+    .equation-token.token-text,
+    .equation-token.token-sub {
+        color: var(--hud-cyan);
+    }
+    .equation-token.token-sub {
+        color: #f9a8d4;
+    }
+    .equation-token.token-sub sub {
+        font-size: 0.66em;
+        line-height: 1;
+        position: relative;
+        bottom: -0.22em;
+        font-weight: 800;
+        text-shadow: 0 0 4px rgba(249, 168, 212, 0.14);
+    }
+    .equation-token.token-charge {
+        color: #f8e7c4;
+        margin-left: 1px;
+    }
+    .equation-token.token-charge sup {
+        font-size: 0.66em;
+        line-height: 1;
+        font-weight: 800;
+        position: relative;
+        top: -0.52em;
+        font-family: inherit;
+        letter-spacing: 0;
+        vertical-align: baseline;
+        text-shadow: none;
+    }
+    .equation-token.token-charge .charge-op {
+        display: inline-block;
+        font-size: 1.22em;
+        font-weight: 800;
+        margin-left: 0.02em;
+        transform: translateY(-0.02em);
+        color: inherit;
+    }
+    .equation-token.token-plus {
+        color: #ffffff;
+        font-weight: 900;
+        margin: 0 6px;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
+    .equation-token.token-arrow {
+        color: #e9c27b;
+        font-weight: 900;
+        margin: 0 6px;
+        text-shadow: 0 0 8px rgba(233, 194, 123, 0.18);
+    }
+    .equation-token.token-arrow {
+        color: #f5d9a2;
+    }
+    .equation-editor-caret {
+        display: inline-block;
+        width: 2px;
+        height: 1.25em;
+        vertical-align: middle;
+        background: #f8fafc;
+        margin: 0 1px;
+        border-radius: 1px;
+        animation: equationCaretBlink 1s steps(1) infinite;
+    }
+    @keyframes equationCaretBlink {
+        0%, 50% { opacity: 1; }
+        50.01%, 100% { opacity: 0; }
+    }
+    .equation-soft-keyboard {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        max-height: min(60vh, 450px);
+        overflow-y: auto;
+        border-top: 1px solid rgba(166, 141, 111, 0.4);
+        background: linear-gradient(180deg, rgba(252, 248, 241, 0.98) 0%, rgba(244, 236, 223, 0.99) 100%);
+        box-shadow: 0 -10px 30px rgba(72, 55, 36, 0.24);
+        display: none;
+        padding: 10px 8px 12px;
+        gap: 5px;
+        user-select: none;
+        z-index: 9999;
+    }
+    .equation-soft-keyboard.active { display: grid; }
+    .equation-soft-row {
+        display: flex;
+        gap: 4px;
+        align-items: stretch;
+        justify-content: center;
+        --eq-key-size: clamp(34px, 8.8vw, 46px);
+        --eq-op-key-size: clamp(72px, 18vw, 96px);
+    }
+    .equation-soft-key {
+        border: 1px solid rgba(175, 132, 58, 0.55);
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(44, 30, 16, 0.96) 0%, rgba(26, 20, 14, 0.97) 100%);
+        color: #f8deb2;
+        min-height: 44px;
+        width: var(--eq-key-size);
+        padding: 0 4px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: transform 0.1s ease, border-color 0.15s ease;
+    }
+    .equation-soft-key:hover {
+        border-color: rgba(243, 196, 110, 0.8);
+        box-shadow: 0 0 0 1px rgba(243, 196, 110, 0.25), 0 0 12px rgba(160, 113, 45, 0.25);
+    }
+    .equation-soft-key:active { transform: translateY(1px); }
+    .equation-soft-key.key-shift-active {
+        border-color: rgba(245, 205, 131, 0.9);
+        box-shadow: 0 0 0 1px rgba(245, 205, 131, 0.36);
+    }
+    .equation-soft-row .key-wide-operator {
+        min-height: 44px;
+        font-size: 1.38rem;
+        font-weight: 900;
+        width: var(--eq-op-key-size);
+    }
+    .equation-soft-row .key-link-plus {
+        font-size: 1.62rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        background:
+            linear-gradient(180deg, rgba(22, 86, 117, 0.96) 0%, rgba(14, 52, 77, 0.97) 100%);
+        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.34);
+        color: #dff6ff;
+    }
+    .equation-soft-row .key-charge,
+    .equation-soft-row .key-subscript { font-size: 1.1rem; }
+    .equation-soft-row .key-charge[data-label$="-"] {
+        letter-spacing: 0.08em;
+    }
+    .equation-soft-row.row-charges .equation-soft-key {
+        background: linear-gradient(180deg, rgba(67, 47, 22, 0.94) 0%, rgba(40, 31, 20, 0.97) 100%);
+        color: #ffe3b8;
+        border-color: rgba(206, 156, 72, 0.58);
+    }
+    .equation-soft-row.row-subscripts .equation-soft-key {
+        background: linear-gradient(180deg, rgba(50, 33, 58, 0.94) 0%, rgba(35, 24, 42, 0.97) 100%);
+        color: #f5d0fe;
+        border-color: rgba(192, 132, 252, 0.55);
+    }
+    .equation-soft-row.row-subscripts .equation-soft-key.key-link-plus {
+        background: linear-gradient(180deg, rgba(22, 86, 117, 0.96) 0%, rgba(14, 52, 77, 0.97) 100%);
+        color: #dff6ff;
+        border-color: rgba(125, 211, 252, 0.65);
+        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.34), 0 0 10px rgba(56, 189, 248, 0.18);
+    }
+    .equation-soft-row .key-icon {
+        font-size: 1.72rem;
+        line-height: 1;
+        font-weight: 900;
+        font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Segoe UI', sans-serif;
+        letter-spacing: -0.04em;
+    }
+    .equation-soft-row .key-wide-backspace {
+        width: var(--eq-op-key-size);
+    }
+    .equation-soft-row.row-letters-3 .equation-soft-key.key-clear {
+        background: linear-gradient(180deg, rgba(127, 29, 29, 0.38) 0%, rgba(69, 17, 17, 0.52) 100%);
+        border-color: rgba(254, 202, 202, 0.9);
+        color: #ffffff;
+        text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+    .equation-soft-row.row-letters-3 .equation-soft-key.key-shift {
+        background: linear-gradient(180deg, rgba(30, 64, 175, 0.28) 0%, rgba(30, 58, 138, 0.4) 100%);
+        border-color: rgba(147, 197, 253, 0.7);
+        color: #eef2ff;
+        text-shadow: 0 0 4px rgba(255, 255, 255, 0.22);
+    }
+    .equation-soft-row .key-clear {
+        width: clamp(62px, 15vw, 82px);
+        font-size: 1.04rem;
+        font-weight: 900;
+    }
+    #balance-btn {
+        min-width: 56px;
+        font-size: 0.96rem;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        padding: 8px 10px;
+    }
+    @media (max-width: 768px) {
+        .equation-soft-keyboard { max-height: min(58vh, 420px); }
+    }
+    body.eq-kbd-open .controls-content {
+        padding-bottom: calc(var(--eq-kbd-height) + 14px) !important;
     }
 
     .switch-container { 
@@ -1617,21 +1854,25 @@
                     
                     <!-- 詳細說明彈窗 (維持原樣) -->
                     <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
-                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範 ( _ 表示空格 )</div>
+                        <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範</div>
                         <div style="margin-bottom: 10px;">
-                            1. 物質間用 <span style="color: #facc15; font-weight: bold;">「 _+_ 」</span> 隔開。<br>
-                            2. 離子如 <span style="color: #f472b6;">MnO<sub>4</sub>_-</span> 或 <span style="color: #f472b6;">S2-</span>。<br>
-                            3. 首字母務必大寫，如 <span style="color: #38bdf8;">NaOH</span>。<br>
-                            4. 支援 <span style="color: #38bdf8;">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></span> 括號。
+                            1. 物質間請用下方鍵盤的 <span style="color: #facc15; font-weight: bold;">「+」</span> 與 <span style="color: #facc15; font-weight: bold;">「→」</span> 建立反應式。<br>
+                            2. 下標請用數字列輸入，例如 <span style="color: #38bdf8;">H<sub>2</sub>O</span>、<span style="color: #38bdf8;">MnO<sub>4</sub></span>。<br>
+                            3. 離子電荷請用上標列輸入，例如 <span style="color: #f472b6;">MnO<sub>4</sub><sup>-</sup></span>、<span style="color: #f472b6;">Mn<sup>2+</sup></span>。<br>
+                            4. 首字母通常使用大寫；切成小寫後輸入一個字母會自動回到大寫。
                         </div>
                         <button onclick="document.getElementById('balance-help-popup').style.display='none'" style="margin-top:10px; width:100%; padding:8px; background:#10b981; border:none; border-radius:8px; color:#fff; cursor:pointer;">關閉說明</button>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <input type="text" id="equation-input" placeholder="請輸入反應式 (如: H2 + O2 = H2O)" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="equation-input-wrap" id="equation-input-wrap">
+                        <input type="hidden" id="equation-input">
+                        <div id="equation-editor" class="equation-editor" tabindex="0" aria-label="平衡反應式輸入區"></div>
+                    </div>
                     <button id="balance-btn" style="background: var(--accent-green);">平衡</button>
                 </div>
+                <div id="equation-soft-keyboard" class="equation-soft-keyboard" aria-hidden="true"></div>
                 <div id="balance-result" style="margin-top: 15px; display: none; position: relative;"></div>
                 
                 <div class="balance-tools" id="balance-tools-area">
@@ -2247,6 +2488,9 @@ function formatFormula(str) {
     // 電荷變上標
     let formattedCharge = "";
     if (chargePart) {
+        if (chargePart === "1+" || chargePart === "1-") {
+            chargePart = chargePart[1];
+        }
         // 美化正負號，套用你原本 CSS 裡的 .charge-sign
         let chargeDisplay = chargePart.replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
         formattedCharge = `<sup>${chargeDisplay}</sup>`;
@@ -2382,100 +2626,413 @@ function getAverageOxidationNumbers(formula, charge) {
     return ox;
 }
 
+function setupEquationEditor() {
+    const editor = document.getElementById('equation-editor');
+    const hiddenInput = document.getElementById('equation-input');
+    const keyboard = document.getElementById('equation-soft-keyboard');
+    if (!editor || !hiddenInput || !keyboard) return null;
+    if (keyboard.parentElement !== document.body) document.body.appendChild(keyboard);
+
+    const state = {
+        tokens: [],
+        cursor: 0,
+        isUppercase: true
+    };
+    let interactingWithKeyboard = false;
+
+    const digitToSub = { "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉" };
+    const subToDigit = { "₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9" };
+    const digitToSup = { "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹" };
+    const signToSup = { "+":"⁺","-":"⁻" };
+    const chargeKeys = ["+","2+","3+","4+","5+","-","2-","3-","4-","5-"];
+    const subscripts = ["1","2","3","4","5","6","7","8","9","0"];
+    const lettersRow1 = "qwertyuiop".split("");
+    const lettersRow2 = "asdfghjkl".split("");
+    const lettersRow3 = "zxcvbnm".split("");
+    const isOperator = (token) => token && (token.type === 'plus' || token.type === 'arrow');
+
+    const escapeHtml = (txt) => txt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const chargeToSup = (charge) => charge;
+    const renderChargeSup = (charge) => {
+        const digits = charge.replace(/[+-]/g, "");
+        const sign = charge.includes("-") ? "-" : "+";
+        return `${escapeHtml(digits)}<span class="charge-op">${escapeHtml(sign)}</span>`;
+    };
+
+    const getVisibleText = () => state.tokens.map((token) => {
+        if (token.type === 'text') return token.value;
+        if (token.type === 'sub') return token.value;
+        if (token.type === 'charge') return chargeToSup(token.value);
+        if (token.type === 'plus') return ' + ';
+        if (token.type === 'arrow') return ' = ';
+        return '';
+    }).join("");
+
+    const serializeForSolver = () => {
+        const chunks = [];
+        let main = "";
+        let charge = "";
+        const flushSpecies = () => {
+            if (!main) return;
+            let normalizedCharge = charge;
+            if (charge === '+') normalizedCharge = '1+';
+            else if (charge === '-') normalizedCharge = '1-';
+            chunks.push(main + (normalizedCharge ? ` ${normalizedCharge}` : ""));
+            main = "";
+            charge = "";
+        };
+        state.tokens.forEach((token) => {
+            if (token.type === 'text') main += token.value;
+            else if (token.type === 'sub') main += subToDigit[token.value] || token.value;
+            else if (token.type === 'charge') charge = token.value;
+            else if (token.type === 'plus') { flushSpecies(); chunks.push('+'); }
+            else if (token.type === 'arrow') { flushSpecies(); chunks.push('='); }
+        });
+        flushSpecies();
+        return chunks.join(' ').replace(/\s{2,}/g, ' ').trim();
+    };
+
+    const syncHiddenInput = () => {
+        hiddenInput.value = getVisibleText();
+    };
+
+    const getScrollHost = () => editor.closest('.controls-content') || editor.closest('.controls-area') || document.scrollingElement;
+    const ensureEditorVisible = (behavior = 'smooth') => {
+        const host = getScrollHost();
+        if (!host) return;
+        const hostRect = host.getBoundingClientRect ? host.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+        const editorRect = editor.getBoundingClientRect();
+        const keyboardTop = window.innerHeight - (keyboard.offsetHeight || 0);
+        const safeBottom = Math.min(hostRect.bottom - 14, keyboardTop - 12);
+        const safeTop = hostRect.top + 54;
+        if (editorRect.bottom > safeBottom || editorRect.top < safeTop) {
+            const delta = editorRect.top - safeTop;
+            if (host === document.scrollingElement || host === document.documentElement || host === document.body) {
+                window.scrollBy({ top: delta, behavior });
+            } else {
+                host.scrollBy({ top: delta, behavior });
+            }
+        }
+    };
+
+    const bringPanelUp = () => {
+        const panel = document.querySelector('.controls-area');
+        if (!panel) return;
+        const H = window.innerHeight;
+        let topLimit = 0;
+        const suggestionLabel = document.querySelector('.suggestion-label');
+        if (suggestionLabel) topLimit = suggestionLabel.getBoundingClientRect().bottom;
+        const targetY = Math.max(topLimit, H * 0.22);
+        panel.style.transition = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        panel.style.transform = `translateY(${targetY}px)`;
+    };
+
+    const scrollCaretIntoView = () => {
+        const caretEl = document.getElementById('equation-editor-caret');
+        if (caretEl) caretEl.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    };
+
+    const renderToken = (token, index) => {
+        if (token.type === 'text') return `<span class="equation-token token-text" data-index="${index}">${escapeHtml(token.value)}</span>`;
+        if (token.type === 'sub') return `<span class="equation-token token-sub" data-index="${index}"><sub>${escapeHtml(subToDigit[token.value] || token.value)}</sub></span>`;
+        if (token.type === 'charge') return `<span class="equation-token token-charge" data-index="${index}"><sup>${renderChargeSup(token.value)}</sup></span>`;
+        if (token.type === 'plus') return `<span class="equation-token token-plus" data-index="${index}">+</span>`;
+        if (token.type === 'arrow') return `<span class="equation-token token-arrow" data-index="${index}">→</span>`;
+        return '';
+    };
+
+    const renderEditor = () => {
+        let html = "";
+        if (state.tokens.length === 0) {
+            html = state.cursor === 0
+                ? `<span id="equation-editor-caret" class="equation-editor-caret"></span><span class="equation-editor-placeholder">請輸入反應式（例如 H₂ + O₂ → H₂O）</span>`
+                : `<span class="equation-editor-placeholder">請輸入反應式（例如 H₂ + O₂ → H₂O）</span>`;
+        } else {
+            for (let i = 0; i <= state.tokens.length; i++) {
+                if (state.cursor === i) html += `<span id="equation-editor-caret" class="equation-editor-caret"></span>`;
+                if (i < state.tokens.length) html += renderToken(state.tokens[i], i);
+            }
+        }
+        editor.innerHTML = html;
+        syncHiddenInput();
+        requestAnimationFrame(scrollCaretIntoView);
+    };
+
+    const setCursor = (idx) => {
+        state.cursor = Math.max(0, Math.min(idx, state.tokens.length));
+        renderEditor();
+        editor.focus({ preventScroll: true });
+    };
+
+    const hasSpeciesContent = (start, end) => state.tokens.slice(start, end).some(t => t.type === 'text' || t.type === 'sub');
+    const findSpeciesBounds = () => {
+        let start = state.cursor;
+        while (start > 0 && !isOperator(state.tokens[start - 1])) start--;
+        let end = state.cursor;
+        while (end < state.tokens.length && !isOperator(state.tokens[end])) end++;
+        return { start, end };
+    };
+
+    const insertTextToken = (value, type) => {
+        state.tokens.splice(state.cursor, 0, { type, value });
+        state.cursor += 1;
+        renderEditor();
+    };
+
+    const insertLetter = (ch) => {
+        const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
+        insertTextToken(value, 'text');
+        if (!state.isUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
+    };
+
+    const resetUppercaseAfterNonLetter = () => {
+        if (!state.isUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
+    };
+
+    const insertSubscriptDigit = (digit) => {
+        insertTextToken(digitToSub[digit] || digit, 'sub');
+        resetUppercaseAfterNonLetter();
+    };
+
+    const insertCharge = (charge) => {
+        const { start, end } = findSpeciesBounds();
+        if (!hasSpeciesContent(start, end)) return;
+        for (let i = end - 1; i >= start; i--) {
+            if (state.tokens[i].type === 'charge') {
+                state.tokens.splice(i, 1);
+                if (i < state.cursor) state.cursor -= 1;
+            }
+        }
+        let insertIndex = start;
+        while (insertIndex < state.tokens.length && !isOperator(state.tokens[insertIndex])) insertIndex++;
+        state.tokens.splice(insertIndex, 0, { type: 'charge', value: charge });
+        state.cursor = insertIndex + 1;
+        renderEditor();
+        resetUppercaseAfterNonLetter();
+    };
+
+    const insertOperator = (type) => {
+        if (state.tokens.length === 0 || state.cursor === 0) return;
+        if (isOperator(state.tokens[state.cursor - 1])) return;
+        if (isOperator(state.tokens[state.cursor])) {
+            state.tokens[state.cursor] = { type };
+            state.cursor += 1;
+            renderEditor();
+            return;
+        }
+        state.tokens.splice(state.cursor, 0, { type });
+        state.cursor += 1;
+        renderEditor();
+    };
+
+    const backspace = () => {
+        if (state.cursor === 0) return;
+        state.tokens.splice(state.cursor - 1, 1);
+        state.cursor -= 1;
+        renderEditor();
+    };
+
+    const clearAll = () => {
+        state.tokens = [];
+        state.cursor = 0;
+        renderEditor();
+    };
+
+    const showKeyboard = () => {
+        keyboard.classList.add('active');
+        keyboard.setAttribute('aria-hidden', 'false');
+        editor.classList.add('balance-kbd-active');
+        document.body.classList.add('eq-kbd-open');
+        bringPanelUp();
+        requestAnimationFrame(() => {
+            document.documentElement.style.setProperty('--eq-kbd-height', `${Math.ceil(keyboard.offsetHeight)}px`);
+            ensureEditorVisible('smooth');
+        });
+    };
+
+    const hideKeyboard = () => {
+        keyboard.classList.remove('active');
+        keyboard.setAttribute('aria-hidden', 'true');
+        editor.classList.remove('balance-kbd-active');
+        document.body.classList.remove('eq-kbd-open');
+    };
+
+    const makeBtn = (label, action, extraClass = '', title = '') =>
+        `<button type="button" class="equation-soft-key ${extraClass}" data-action="${action}" data-label="${label}" ${title ? `title="${title}"` : ""}>${label}</button>`;
+
+    const renderKeyboard = () => {
+        const chargeLabels = state.isUppercase
+            ? ["+","2+","3+","4+","-","2-","3-","4-"]
+            : ["5+","6+","7+","8+","5-","6-","7-","8-"];
+        const subscriptLabels = state.isUppercase
+            ? ["1","2","3","4","5"]
+            : ["6","7","8","9","0"];
+        const letters1 = lettersRow1.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
+        const letters2 = lettersRow2.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
+        const letters3 = lettersRow3.map(ch => state.isUppercase ? ch.toUpperCase() : ch);
+        keyboard.innerHTML = `
+            <div class="equation-soft-row row-charges">
+                ${chargeLabels.map(c => makeBtn(c, 'insert-charge', 'key-charge')).join("")}
+                ${makeBtn("⬅", "backspace", "key-icon key-wide-backspace", "刪除游標前一個項目")}
+            </div>
+            <div class="equation-soft-row row-subscripts">
+                ${subscriptLabels.map(s => makeBtn(s, 'insert-subscript', 'key-subscript')).join("")}
+                ${makeBtn("+", "insert-plus", "key-wide-operator key-link-plus", "插入物質連接符號")}
+                ${makeBtn("➜", "insert-arrow", "key-wide-operator key-icon key-link-plus", "插入反應箭頭")}
+            </div>
+            <div class="equation-soft-row row-letters-1">
+                ${letters1.map(ch => makeBtn(ch, 'insert-letter')).join("")}
+            </div>
+            <div class="equation-soft-row row-letters-2">
+                ${letters2.map(ch => makeBtn(ch, 'insert-letter')).join("")}
+            </div>
+            <div class="equation-soft-row row-letters-3">
+                ${makeBtn("⬆", "toggle-case", `key-icon key-shift ${state.isUppercase ? "key-shift-active" : ""}`, "切換英文字母大小寫")}
+                ${letters3.map(ch => makeBtn(ch, 'insert-letter')).join("")}
+                ${makeBtn("清空", "clear", "key-clear", "清空此輸入框")}
+            </div>
+        `;
+    };
+
+    keyboard.addEventListener('click', (e) => {
+        const keyEl = e.target.closest('.equation-soft-key');
+        if (!keyEl) return;
+        const action = keyEl.dataset.action;
+        const label = keyEl.dataset.label || "";
+        if (action === 'insert-letter') insertLetter(label);
+        else if (action === 'insert-charge') insertCharge(label);
+        else if (action === 'insert-subscript') insertSubscriptDigit(label);
+        else if (action === 'insert-plus') insertOperator('plus');
+        else if (action === 'insert-arrow') insertOperator('arrow');
+        else if (action === 'backspace') backspace();
+        else if (action === 'clear') clearAll();
+        else if (action === 'toggle-case') { state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
+        resetUppercaseAfterNonLetter();
+        editor.focus({ preventScroll: true });
+    });
+    keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
+    keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
+
+    editor.addEventListener('click', (e) => {
+        showKeyboard();
+        const tokenEl = e.target.closest('.equation-token');
+        if (!tokenEl) {
+            setCursor(state.tokens.length);
+            return;
+        }
+        const idx = Number(tokenEl.dataset.index || 0);
+        const rect = tokenEl.getBoundingClientRect();
+        const before = e.clientX < rect.left + rect.width / 2;
+        setCursor(before ? idx : idx + 1);
+    });
+    editor.addEventListener('focus', showKeyboard);
+    editor.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); setCursor(state.cursor - 1); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); setCursor(state.cursor + 1); return; }
+        if (e.key === 'Backspace') { e.preventDefault(); backspace(); return; }
+        if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('balance-btn'); if (btn) btn.click(); return; }
+        if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); insertLetter(e.key); return; }
+        if (/^[0-9]$/.test(e.key)) { e.preventDefault(); insertSubscriptDigit(e.key); return; }
+        if (e.key === '+') { e.preventDefault(); insertOperator('plus'); return; }
+        if (e.key === '=') { e.preventDefault(); insertOperator('arrow'); }
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+        if (interactingWithKeyboard) return;
+        if (!keyboard.contains(e.target) && e.target !== editor && !editor.contains(e.target)) hideKeyboard();
+    });
+
+    renderKeyboard();
+    renderEditor();
+
+    return {
+        clear: clearAll,
+        getRawText: () => getVisibleText().replace(/\s+/g, '').trim(),
+        serializeForSolver,
+        focus: () => editor.focus({ preventScroll: true })
+    };
+}
+
 function setupEquationBalancer() {
-    const btn = document.getElementById('balance-btn'), input = document.getElementById('equation-input');
+    const btn = document.getElementById('balance-btn');
     const resDiv = document.getElementById('balance-result'), stpBtn = document.getElementById('steps-toggle-btn'), stpDiv = document.getElementById('balance-steps');
     const toolsArea = document.getElementById('balance-tools-area');
     const clearBtn = document.getElementById('balance-clear-btn');
     if (!btn) return;
+    const editorApi = setupEquationEditor();
+    if (!editorApi) return;
 
-    // [新增] 監聽 Enter 鍵：當在輸入框按下 Enter 時，自動觸發按鈕點擊
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                btn.click(); // 模擬點擊平衡按鈕
-            }
-        });
-    }
-    
     btn.addEventListener('click', () => {
-        const val = input.value.trim();
-        if (!val) return;
+        const rawVal = editorApi.getRawText();
+        if (!rawVal) return;
+        const val = editorApi.serializeForSolver();
 
-        // [保留] 隱藏彩蛋：輸入 "人次" 顯示計數器
-        if (val === "人次") {
+        if (rawVal === "人次") {
             const subEl = document.getElementById("viewport-subtitle");
             if (subEl) {
-                // 清空並顯示副標題區域
                 subEl.style.display = "block";
                 subEl.style.width = "fit-content";
-                // 使用 S96 風格的樣式
-                subEl.style.border = "1px solid #00f2ff"; 
+                subEl.style.border = "1px solid #00f2ff";
                 subEl.style.backgroundColor = "rgba(2, 6, 23, 0.9)";
-                subEl.style.color = "#00f2ff"; 
+                subEl.style.color = "#00f2ff";
                 subEl.style.boxShadow = "0 0 15px rgba(0, 242, 255, 0.3)";
                 subEl.style.padding = "10px 20px";
                 subEl.style.textAlign = "center";
                 subEl.style.borderRadius = "4px";
-                
                 subEl.innerHTML = `<div style="margin-bottom:8px; font-size:0.9rem; color:#ccc; font-weight:bold; font-family:'Rajdhani', sans-serif;">👁️ 本站累積瀏覽人次</div>`;
-                
-                // 重新加載圖片以確保更新
                 const newImg = new Image();
                 newImg.src = `https://hits.sh/weiwei-molecular-lab.app.svg?label=Views&color=10b981&labelColor=2d3748&t=${new Date().getTime()}`;
                 newImg.alt = "載入中...";
                 newImg.style.height = "28px";
                 newImg.style.display = "block";
                 newImg.style.margin = "0 auto";
-
                 newImg.onerror = function() {
                     subEl.innerHTML += `<div style="color:#f87171; font-size:0.8rem;">(連線失敗)</div>`;
                 };
                 subEl.appendChild(newImg);
-                
-                // 清空輸入框
-                input.value = "";
-                
-                // 清除原本的平衡結果顯示 (如果有的話)
+                editorApi.clear();
                 resDiv.style.display = 'none';
                 stpBtn.style.display = 'none';
                 stpDiv.style.display = 'none';
             }
-            return; // 結束函式，不執行化學平衡
+            return;
         }
-        // [結束隱藏彩蛋]
-        if (val === "原子構造") {
+        if (rawVal === "原子構造") {
             resDiv.style.display = 'flex';
             resDiv.innerHTML = `<div style="width:100%; text-align:center; padding:15px; background:rgba(0, 242, 255, 0.05); border:1px solid var(--hud-cyan); border-radius:8px;">
                 <a href="https://gitmind.com/app/docs/msua80li" target="_blank" style="color:var(--hud-cyan); font-weight:bold; text-decoration:none; font-family:'Rajdhani', sans-serif; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px;">
                     <span style="font-size:1.2rem;">🔍</span> 原子構造心智圖
                 </a>
             </div>`;
-            input.value = "";
+            editorApi.clear();
             stpBtn.style.display = 'none';
             stpDiv.style.display = 'none';
             return;
         }
-        if (val === "分科") {
+        if (rawVal === "分科") {
             resDiv.style.display = 'flex';
             resDiv.innerHTML = `<div style="width:100%; text-align:center; padding:15px; background:rgba(0, 242, 255, 0.05); border:1px solid var(--hud-cyan); border-radius:8px;">
                 <a href="https://reurl.cc/4b25lj" target="_blank" style="color:var(--hud-cyan); font-weight:bold; text-decoration:none; font-family:'Rajdhani', sans-serif; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px;">
                     <span style="font-size:1.2rem;">📝</span> 分科測驗
                 </a>
             </div>`;
-            input.value = "";
+            editorApi.clear();
             stpBtn.style.display = 'none';
             stpDiv.style.display = 'none';
             return;
         }
 
-        // --- 以下為原本的化學平衡邏輯 ---
         stpDiv.style.display = 'none';
         try {
             const res = solveChemicalEquationWithSteps(val);
-            // 徹底移除提示文字，將結果包在 inline-flex 中強制撐開寬度
             resDiv.innerHTML = `<div style="display: inline-flex; align-items: center; min-width: 100%;">${res.html}</div>`;
-            resDiv.style.display = 'block'; 
+            resDiv.style.display = 'block';
             const enableDrag = (el) => {
                 let isDown = false, sX, sL;
                 el.onmousedown = (e) => { isDown = true; el.style.cursor = 'grabbing'; sX = e.pageX - el.offsetLeft; sL = el.scrollLeft; };
@@ -2483,13 +3040,11 @@ function setupEquationBalancer() {
                 el.onmouseleave = stop; el.onmouseup = stop;
                 el.onmousemove = (e) => { if(!isDown) return; e.preventDefault(); el.scrollLeft = sL - (e.pageX - el.offsetLeft - sX); };
             };
-            resDiv.style.display = 'block'; 
-            enableDrag(resDiv); // 綁定上方主結果
-
+            enableDrag(resDiv);
             stpDiv.innerHTML = res.stepsHtml;
-            stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag); // 綁定思路內的方程式
+            stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag);
             if(toolsArea) toolsArea.style.display = 'flex';
-            stpBtn.style.display = 'block'; // 成功時顯示解題思路按鈕（避免前次錯誤後被隱藏）
+            stpBtn.style.display = 'block';
             stpBtn.textContent = '解題思路';
         } catch (e) {
             resDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
@@ -2503,9 +3058,10 @@ function setupEquationBalancer() {
         stpDiv.style.display = isH ? 'block' : 'none';
         stpBtn.textContent = isH ? '隱藏思路' : '解題思路';
     };
+
     if (clearBtn) {
         clearBtn.onclick = () => {
-            input.value = "";
+            editorApi.clear();
             resDiv.style.display = 'none';
             resDiv.innerHTML = "";
             stpDiv.style.display = 'none';
@@ -2515,8 +3071,7 @@ function setupEquationBalancer() {
             if(subEl) { subEl.style.display = "none"; subEl.innerHTML = ""; }
         };
     }
-    
-    // 平衡說明彈窗邏輯
+
     const hBtn = document.getElementById('balance-info-trigger'), hBox = document.getElementById('balance-help-popup');
     if (hBtn && hBox) {
         hBtn.onclick = (e) => { e.stopPropagation(); hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block'; };
