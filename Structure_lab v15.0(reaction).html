@@ -580,6 +580,9 @@
         color: #f5d0fe;
         border-color: rgba(192, 132, 252, 0.55);
     }
+    .equation-soft-row.row-subscripts .equation-soft-key.key-wide-operator.key-link-plus {
+        width: calc(var(--eq-op-key-size) * 0.8);
+    }
     .equation-soft-row.row-subscripts .equation-soft-key.key-link-plus {
         background: linear-gradient(180deg, rgba(22, 86, 117, 0.96) 0%, rgba(14, 52, 77, 0.97) 100%);
         color: #dff6ff;
@@ -2886,6 +2889,9 @@ function setupEquationEditor() {
             </div>
             <div class="equation-soft-row row-subscripts">
                 ${subscriptLabels.map(s => makeBtn(s, 'insert-subscript', 'key-subscript')).join("")}
+                ${state.isUppercase
+                    ? makeBtn("(", "insert-bracket", "key-subscript", "插入左括號") + makeBtn(")", "insert-bracket", "key-subscript", "插入右括號")
+                    : makeBtn("[", "insert-bracket", "key-subscript", "插入左方括號") + makeBtn("]", "insert-bracket", "key-subscript", "插入右方括號")}
                 ${makeBtn("+", "insert-plus", "key-wide-operator key-link-plus", "插入物質連接符號")}
                 ${makeBtn("➜", "insert-arrow", "key-wide-operator key-icon key-link-plus", "插入反應箭頭")}
             </div>
@@ -2913,6 +2919,7 @@ function setupEquationEditor() {
         if (action === 'insert-letter') insertLetter(label);
         else if (action === 'insert-charge') insertCharge(label);
         else if (action === 'insert-subscript') insertSubscriptDigit(label);
+        else if (action === 'insert-bracket') insertTextToken(label, 'text');
         else if (action === 'insert-plus') insertOperator('plus');
         else if (action === 'insert-arrow') insertOperator('arrow');
         else if (action === 'backspace') backspace();
