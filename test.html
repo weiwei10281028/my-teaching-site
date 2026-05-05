@@ -634,6 +634,41 @@
     body.eq-kbd-open .controls-content {
         padding-bottom: calc(var(--eq-kbd-height) + 14px) !important;
     }
+    .eq-element-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 12, 20, 0.28);
+        z-index: 10020;
+    }
+    .eq-element-popup {
+        position: fixed;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 8px;
+        border-radius: 14px;
+        border: 1px solid rgba(243, 196, 110, 0.65);
+        background: linear-gradient(180deg, rgba(29, 21, 14, 0.98) 0%, rgba(18, 14, 10, 0.98) 100%);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        z-index: 10021;
+        touch-action: none;
+    }
+    .eq-element-popup-btn {
+        min-width: 46px;
+        height: 42px;
+        border: 1px solid rgba(245, 205, 131, 0.7);
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(52, 37, 21, 0.96) 0%, rgba(28, 22, 15, 0.98) 100%);
+        color: #fde7c0;
+        font-size: 1.05rem;
+        font-weight: 900;
+        padding: 0 10px;
+        cursor: pointer;
+    }
+    .eq-element-popup-btn:hover {
+        border-color: rgba(255, 223, 164, 0.95);
+        box-shadow: 0 0 0 1px rgba(255, 223, 164, 0.24), 0 0 10px rgba(255, 196, 110, 0.2);
+    }
 
     .switch-container { 
         display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
@@ -2656,7 +2691,20 @@ function setupEquationEditor() {
         isUppercase: true
     };
     const DOUBLE_TAP_WINDOW_MS = 280;
+    const C_LONG_PRESS_MS = 380;
+    const cElementCandidates = [
+        { symbol: 'C', atomicNumber: 6 },
+        { symbol: 'Cl', atomicNumber: 17 },
+        { symbol: 'Ca', atomicNumber: 20 },
+        { symbol: 'Cr', atomicNumber: 24 },
+        { symbol: 'Co', atomicNumber: 27 },
+        { symbol: 'Cu', atomicNumber: 29 }
+    ];
     let pendingElementTap = null;
+    let cPressState = null;
+    let cPopupAnchorEl = null;
+    let cPopupOverlay = null;
+    let cPopupPanel = null;
     let interactingWithKeyboard = false;
 
     const digitToSub = { "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉" };
@@ -2807,6 +2855,72 @@ function setupEquationEditor() {
         pendingElementTap = null;
     };
 
+    const closeCPopup = () => {
+        if (cPopupOverlay && cPopupOverlay.parentElement) cPopupOverlay.parentElement.removeChild(cPopupOverlay);
+        if (cPopupPanel && cPopupPanel.parentElement) cPopupPanel.parentElement.removeChild(cPopupPanel);
+        cPopupAnchorEl = null;
+        cPopupOverlay = null;
+        cPopupPanel = null;
+        keyboard.style.pointerEvents = '';
+    };
+
+    const positionCPopup = (anchorEl) => {
+        if (!cPopupPanel || !anchorEl) return;
+        const anchorRect = anchorEl.getBoundingClientRect();
+        const panelRect = cPopupPanel.getBoundingClientRect();
+        const margin = 10;
+        let left = anchorRect.left + (anchorRect.width - panelRect.width) / 2;
+        left = Math.max(margin, Math.min(left, window.innerWidth - panelRect.width - margin));
+        let top = anchorRect.top - panelRect.height - 10;
+        if (top < margin) top = anchorRect.bottom + 10;
+        if (top + panelRect.height > window.innerHeight - margin) top = window.innerHeight - panelRect.height - margin;
+        cPopupPanel.style.left = `${Math.round(left)}px`;
+        cPopupPanel.style.top = `${Math.round(top)}px`;
+    };
+
+    const openCPopup = (anchorEl) => {
+        closeCPopup();
+        cPopupOverlay = document.createElement('div');
+        cPopupOverlay.className = 'eq-element-popup-overlay';
+        cPopupOverlay.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeCPopup();
+            editor.focus({ preventScroll: true });
+        });
+
+        cPopupPanel = document.createElement('div');
+        cPopupPanel.className = 'eq-element-popup';
+        cPopupPanel.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        const sorted = [...cElementCandidates].sort((a, b) => a.atomicNumber - b.atomicNumber);
+        sorted.forEach(({ symbol }) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'eq-element-popup-btn';
+            btn.textContent = symbol;
+            btn.dataset.symbol = symbol;
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearPendingElementTap();
+                insertTextToken(symbol, 'text');
+                closeCPopup();
+                editor.focus({ preventScroll: true });
+            });
+            cPopupPanel.appendChild(btn);
+        });
+
+        document.body.appendChild(cPopupOverlay);
+        document.body.appendChild(cPopupPanel);
+        cPopupAnchorEl = anchorEl;
+        keyboard.style.pointerEvents = 'none';
+        positionCPopup(anchorEl);
+    };
+
     const tryInsertDoubleTapElement = (ch) => {
         const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
         const now = Date.now();
@@ -2903,6 +3017,7 @@ function setupEquationEditor() {
     };
 
     const hideKeyboard = () => {
+        closeCPopup();
         keyboard.classList.remove('active');
         keyboard.setAttribute('aria-hidden', 'true');
         editor.classList.remove('balance-kbd-active');
@@ -2949,13 +3064,37 @@ function setupEquationEditor() {
         `;
     };
 
+    const clearCPressState = () => {
+        if (!cPressState) return;
+        if (cPressState.timerId) clearTimeout(cPressState.timerId);
+        cPressState = null;
+    };
+
     keyboard.addEventListener('pointerdown', (e) => {
         const keyEl = e.target.closest('.equation-soft-key');
         if (!keyEl) return;
         e.preventDefault();
         const action = keyEl.dataset.action;
         const label = keyEl.dataset.label || "";
+        const upperLabel = label.toUpperCase();
         const shouldResetUppercase = (action !== 'toggle-case' && !state.isUppercase);
+        if (action === 'insert-letter' && state.isUppercase && upperLabel === 'C') {
+            clearPendingElementTap();
+            clearCPressState();
+            cPressState = {
+                label,
+                shouldResetUppercase,
+                keyEl,
+                triggeredLongPress: false,
+                timerId: setTimeout(() => {
+                    if (!cPressState) return;
+                    cPressState.triggeredLongPress = true;
+                    openCPopup(keyEl);
+                }, C_LONG_PRESS_MS)
+            };
+            return;
+        }
+        clearCPressState();
         if (action === 'insert-letter') tryInsertDoubleTapElement(label);
         else if (action === 'insert-charge') { clearPendingElementTap(); insertCharge(label); }
         else if (action === 'insert-subscript') { clearPendingElementTap(); insertSubscriptDigit(label); }
@@ -2971,6 +3110,19 @@ function setupEquationEditor() {
         }
         editor.focus({ preventScroll: true });
     });
+    keyboard.addEventListener('pointerup', () => {
+        if (!cPressState) return;
+        const { label, shouldResetUppercase, triggeredLongPress } = cPressState;
+        clearCPressState();
+        if (triggeredLongPress) return;
+        insertLetter(label);
+        if (shouldResetUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
+        editor.focus({ preventScroll: true });
+    });
+    keyboard.addEventListener('pointercancel', clearCPressState);
     keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
 
@@ -3030,6 +3182,9 @@ function setupEquationEditor() {
     document.addEventListener('pointerdown', (e) => {
         if (interactingWithKeyboard) return;
         if (!keyboard.contains(e.target) && e.target !== editor && !editor.contains(e.target)) hideKeyboard();
+    });
+    window.addEventListener('resize', () => {
+        if (cPopupPanel && cPopupAnchorEl) positionCPopup(cPopupAnchorEl);
     });
 
     renderKeyboard();
