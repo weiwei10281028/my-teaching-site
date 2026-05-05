@@ -3521,11 +3521,15 @@ function solveChemicalEquationWithSteps(eqn) {
         const mCopy = m.map(row => row.slice());
         const { rank, pivotCols, reduced } = rrefWithPivots(mCopy);
         nullSpaceDim = species.length - rank;
-        if (nullSpaceDim >= 2) {
-            const basis = getNullSpaceBasis(reduced, m.length, species.length, pivotCols);
-            return findMinimalPositiveIntegerInNullSpace(basis);
+        // 可平衡反應式的係數在齊次系統 Mx=0 的正解錐上；維度 1（最常見）或 >1 都必須從 null space 基底求，不可用底下已廢棄的 gaussElimination 捷徑（會把最後一欄誤當 RHS，導致大量係數為 0）
+        const basis = getNullSpaceBasis(reduced, m.length, species.length, pivotCols);
+        if (basis.length > 0) {
+            const candidate = findMinimalPositiveIntegerInNullSpace(basis);
+            if (candidate && candidate.length === species.length && candidate.some((c) => c > 1e-8)) {
+                return candidate;
+            }
         }
-        return gaussElimination(m);
+        return gaussElimination(m.map((row) => row.slice()));
     })();
 
     const buildModularEq = (coeffs) => {
