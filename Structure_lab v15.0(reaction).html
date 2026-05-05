@@ -515,6 +515,8 @@
         padding: 10px 8px calc(12px + env(safe-area-inset-bottom) * 0.35);
         gap: 5px;
         user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
         z-index: 9999;
     }
     .equation-soft-keyboard.active { display: grid; }
@@ -540,6 +542,9 @@
         white-space: nowrap;
         transition: transform 0.1s ease, border-color 0.15s ease;
         touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
     .equation-soft-key:hover {
         border-color: rgba(243, 196, 110, 0.8);
@@ -633,6 +638,53 @@
     }
     body.eq-kbd-open .controls-content {
         padding-bottom: calc(var(--eq-kbd-height) + 14px) !important;
+    }
+    body.eq-kbd-open,
+    body.eq-kbd-open * {
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+    .eq-element-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 12, 20, 0.28);
+        z-index: 10020;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+    .eq-element-popup {
+        position: fixed;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 8px;
+        border-radius: 14px;
+        border: 1px solid rgba(243, 196, 110, 0.65);
+        background: linear-gradient(180deg, rgba(29, 21, 14, 0.98) 0%, rgba(18, 14, 10, 0.98) 100%);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        z-index: 10021;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+    .eq-element-popup-btn {
+        min-width: 46px;
+        height: 42px;
+        border: 1px solid rgba(245, 205, 131, 0.7);
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(52, 37, 21, 0.96) 0%, rgba(28, 22, 15, 0.98) 100%);
+        color: #fde7c0;
+        font-size: 1.05rem;
+        font-weight: 900;
+        padding: 0 10px;
+        cursor: pointer;
+    }
+    .eq-element-popup-btn:hover {
+        border-color: rgba(255, 223, 164, 0.95);
+        box-shadow: 0 0 0 1px rgba(255, 223, 164, 0.24), 0 0 10px rgba(255, 196, 110, 0.2);
     }
 
     .switch-container { 
@@ -2577,28 +2629,27 @@ function getAverageOxidationNumbers(formula, charge) {
     // 1. 單質／單原子離子：僅一種元素，氧化數 = 0（單質）或離子電荷（離子）
     if (els.length === 1) { ox[els[0]] = charge !== 0 ? charge : 0; return ox; }
     const has = (el) => (atoms[el] || 0) > 0;
-    const onlyO = els.length === 1 && els[0] === 'O';
-    // 2. F 一律 -1
-    if (has('F')) ox['F'] = -1;
-    // 3. O：一般 -2；過氧化物 O=-1；超氧化物 O=-1/2；OF2 中 O=+2
-    if (has('O')) {
-        const f = formula.replace(/\s/g, '');
-        if (f === 'OF2') ox['O'] = 2;
-        else if (/^[A-Za-z0-9]*O2$/.test(f) && (f.startsWith('H2') || f.startsWith('Na2') || f.startsWith('K2') || f.startsWith('Ba'))) ox['O'] = -1;
-        else if (f === 'KO2' || f === 'RbO2' || f === 'CsO2') ox['O'] = -0.5;
-        else ox['O'] = -2;
-    }
-    const alkali = ['Li','Na','K','Rb','Cs'], alkaline = ['Be','Mg','Ca','Sr','Ba'];
-    const isMetalOnly = (list) => els.every(el => list.includes(el));
-    // 4. H：一般 +1；僅鹼/鹼土＋H 時 H=-1
-    if (has('H')) ox['H'] = (els.length === 2 && (alkali.includes(els.find(e=>e!='H')) || alkaline.includes(els.find(e=>e!='H')))) ? -1 : 1;
-    // 5. 鹼金屬 +1
-    alkali.forEach(el => { if (has(el)) ox[el] = 1; });
-    // 6. 鹼土金屬 +2
-    alkaline.forEach(el => { if (has(el)) ox[el] = 2; });
-    // 7. 鹵素：化合物中多為 -1；若含 O 則留給步驟 8 由電荷反推
-    if (!has('O')) { if (has('Cl')) ox['Cl'] = -1; if (has('Br')) ox['Br'] = -1; if (has('I')) ox['I'] = -1; }
-    // 8. 其餘由電荷守恆反推：charge = Σ(n_el × ox_el)
+    const getEN = (el) => (ELEMENT_PROPS[el] && typeof ELEMENT_PROPS[el].en === 'number') ? ELEMENT_PROPS[el].en : -1;
+
+    // 2. 固定氧化數（依指定優先順序）
+    const groupIA = ['Li','Na','K','Rb','Cs'];
+    const groupIIA = ['Be','Mg','Ca','Sr','Ba'];
+    groupIA.forEach(el => { if (has(el)) ox[el] = 1; }); // IA 必 +1
+    if (has('Ag')) ox['Ag'] = 1; // Ag 必 +1
+    groupIIA.forEach(el => { if (has(el)) ox[el] = 2; }); // IIA 必 +2
+    if (has('Zn')) ox['Zn'] = 2; // Zn 必 +2
+    if (has('Al')) ox['Al'] = 3; // Al 必 +3
+    if (has('Sc')) ox['Sc'] = 3; // Sc 必 +3
+    if (has('Si')) ox['Si'] = 4; // Si 必 +4
+    if (has('F')) ox['F'] = -1; // F 必 -1
+
+    // 3. H 為 +1
+    if (has('H')) ox['H'] = 1;
+
+    // 4. O 為 -2
+    if (has('O')) ox['O'] = -2;
+
+    // 5. 其餘由電荷守恆反推：charge = Σ(n_el × ox_el)
     const unknown = els.filter(el => ox[el] === undefined);
     if (unknown.length === 0) return ox;
     let knownSum = 0;
@@ -2626,8 +2677,12 @@ function getAverageOxidationNumbers(formula, charge) {
             const nC = atoms['C'] || 1, nN = atoms['N'] || 1;
             ox['C'] = nC ? (rem - nN * (-3)) / nC : 0;
         } else if (unknown.length === 2) {
-            const [a, b] = unknown, na = atoms[a] || 1, nb = atoms[b] || 1;
-            ox[a] = 0; ox[b] = nb ? (rem - na * 0) / nb : 0;
+            // 依 EN：較小者先設基準 0，較大者由電荷反推（較傾向得到較負氧化數）
+            let [a, b] = unknown;
+            if (getEN(a) > getEN(b)) [a, b] = [b, a];
+            const na = atoms[a] || 1, nb = atoms[b] || 1;
+            ox[a] = 0;
+            ox[b] = nb ? (rem - na * 0) / nb : 0;
         } else {
             unknown.forEach(el => { ox[el] = 0; });
             let sum = knownSum; els.forEach(el => { sum += (atoms[el] || 0) * (ox[el] || 0); });
@@ -2652,6 +2707,48 @@ function setupEquationEditor() {
         cursor: 0,
         isUppercase: true
     };
+    const DOUBLE_TAP_WINDOW_MS = 280;
+    const LETTER_LONG_PRESS_MS = 380;
+    const longPressDisabledLetters = new Set(['D', 'E', 'J', 'Q', 'U', 'V', 'W']);
+    const doubleTapMap = {
+        A: 'Al',
+        B: 'Br',
+        C: 'Cl',
+        F: 'Fe',
+        G: 'Ga',
+        M: 'Mn',
+        N: 'Na',
+        P: 'Pb',
+        S: 'Si',
+        Z: 'Zn'
+    };
+    const elementCandidatesByKey = {
+        A: [{ symbol: 'Al', atomicNumber: 13 }, { symbol: 'Ar', atomicNumber: 18 }, { symbol: 'Ag', atomicNumber: 47 }, { symbol: 'As', atomicNumber: 33 }, { symbol: 'Au', atomicNumber: 79 }],
+        B: [{ symbol: 'B', atomicNumber: 5 }, { symbol: 'Be', atomicNumber: 4 }, { symbol: 'Br', atomicNumber: 35 }, { symbol: 'Ba', atomicNumber: 56 }, { symbol: 'Bi', atomicNumber: 83 }],
+        C: [{ symbol: 'C', atomicNumber: 6 }, { symbol: 'Cl', atomicNumber: 17 }, { symbol: 'Ca', atomicNumber: 20 }, { symbol: 'Cr', atomicNumber: 24 }, { symbol: 'Co', atomicNumber: 27 }, { symbol: 'Cu', atomicNumber: 29 }, { symbol: 'Cd', atomicNumber: 48 }],
+        F: [{ symbol: 'F', atomicNumber: 9 }, { symbol: 'Fe', atomicNumber: 26 }, { symbol: 'Fr', atomicNumber: 87 }],
+        G: [{ symbol: 'Ga', atomicNumber: 31 }, { symbol: 'Ge', atomicNumber: 32 }, { symbol: 'Gd', atomicNumber: 64 }],
+        H: [{ symbol: 'H', atomicNumber: 1 }, { symbol: 'He', atomicNumber: 2 }, { symbol: 'Hf', atomicNumber: 72 }, { symbol: 'Hg', atomicNumber: 80 }],
+        I: [{ symbol: 'I', atomicNumber: 53 }, { symbol: 'In', atomicNumber: 49 }, { symbol: 'Ir', atomicNumber: 77 }],
+        K: [{ symbol: 'K', atomicNumber: 19 }, { symbol: 'Kr', atomicNumber: 36 }],
+        L: [{ symbol: 'Li', atomicNumber: 3 }, { symbol: 'La', atomicNumber: 57 }, { symbol: 'Lu', atomicNumber: 71 }],
+        M: [{ symbol: 'Mg', atomicNumber: 12 }, { symbol: 'Mn', atomicNumber: 25 }, { symbol: 'Mo', atomicNumber: 42 }],
+        N: [{ symbol: 'N', atomicNumber: 7 }, { symbol: 'Na', atomicNumber: 11 }, { symbol: 'Ne', atomicNumber: 10 }, { symbol: 'Ni', atomicNumber: 28 }],
+        O: [{ symbol: 'O', atomicNumber: 8 }, { symbol: 'Os', atomicNumber: 76 }],
+        P: [{ symbol: 'P', atomicNumber: 15 }, { symbol: 'Pb', atomicNumber: 82 }, { symbol: 'Pd', atomicNumber: 46 }, { symbol: 'Pt', atomicNumber: 78 }],
+        R: [{ symbol: 'Rb', atomicNumber: 37 }, { symbol: 'Rn', atomicNumber: 86 }, { symbol: 'Ra', atomicNumber: 88 }, { symbol: 'Re', atomicNumber: 75 }, { symbol: 'Rh', atomicNumber: 45 }, { symbol: 'Ru', atomicNumber: 44 }],
+        S: [{ symbol: 'S', atomicNumber: 16 }, { symbol: 'Si', atomicNumber: 14 }, { symbol: 'Se', atomicNumber: 34 }, { symbol: 'Sr', atomicNumber: 38 }, { symbol: 'Sn', atomicNumber: 50 }, { symbol: 'Sb', atomicNumber: 51 }, { symbol: 'Sc', atomicNumber: 21 }],
+        T: [{ symbol: 'Ti', atomicNumber: 22 }, { symbol: 'Te', atomicNumber: 52 }, { symbol: 'Ta', atomicNumber: 73 }, { symbol: 'Tc', atomicNumber: 43 }, { symbol: 'Th', atomicNumber: 90 }],
+        X: [{ symbol: 'Xe', atomicNumber: 54 }],
+        Y: [{ symbol: 'Y', atomicNumber: 39 }, { symbol: 'Yb', atomicNumber: 70 }],
+        Z: [{ symbol: 'Zn', atomicNumber: 30 }, { symbol: 'Zr', atomicNumber: 40 }]
+    };
+    let pendingElementTap = null;
+    let letterPressState = null;
+    let backspaceHoldState = null;
+    let elementPopupAnchorEl = null;
+    let elementPopupOverlay = null;
+    let elementPopupPanel = null;
     let interactingWithKeyboard = false;
 
     const digitToSub = { "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉" };
@@ -2798,6 +2895,107 @@ function setupEquationEditor() {
         insertTextToken(value, 'text');
     };
 
+    const clearPendingElementTap = () => {
+        pendingElementTap = null;
+    };
+
+    const closeElementPopup = () => {
+        if (elementPopupOverlay && elementPopupOverlay.parentElement) elementPopupOverlay.parentElement.removeChild(elementPopupOverlay);
+        if (elementPopupPanel && elementPopupPanel.parentElement) elementPopupPanel.parentElement.removeChild(elementPopupPanel);
+        elementPopupAnchorEl = null;
+        elementPopupOverlay = null;
+        elementPopupPanel = null;
+        keyboard.style.pointerEvents = '';
+    };
+
+    const positionElementPopup = (anchorEl) => {
+        if (!elementPopupPanel || !anchorEl) return;
+        const anchorRect = anchorEl.getBoundingClientRect();
+        const panelRect = elementPopupPanel.getBoundingClientRect();
+        const margin = 10;
+        let left = anchorRect.left + (anchorRect.width - panelRect.width) / 2;
+        left = Math.max(margin, Math.min(left, window.innerWidth - panelRect.width - margin));
+        let top = anchorRect.top - panelRect.height - 10;
+        if (top < margin) top = anchorRect.bottom + 10;
+        if (top + panelRect.height > window.innerHeight - margin) top = window.innerHeight - panelRect.height - margin;
+        elementPopupPanel.style.left = `${Math.round(left)}px`;
+        elementPopupPanel.style.top = `${Math.round(top)}px`;
+    };
+
+    const openElementPopup = (anchorEl, key) => {
+        const candidates = elementCandidatesByKey[key] || [];
+        if (!candidates.length) return;
+        closeElementPopup();
+        elementPopupOverlay = document.createElement('div');
+        elementPopupOverlay.className = 'eq-element-popup-overlay';
+        elementPopupOverlay.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeElementPopup();
+            editor.focus({ preventScroll: true });
+        });
+
+        elementPopupPanel = document.createElement('div');
+        elementPopupPanel.className = 'eq-element-popup';
+        elementPopupPanel.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        const sorted = [...candidates].sort((a, b) => a.atomicNumber - b.atomicNumber);
+        sorted.forEach(({ symbol }) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'eq-element-popup-btn';
+            btn.textContent = symbol;
+            btn.dataset.symbol = symbol;
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearPendingElementTap();
+                insertTextToken(symbol, 'text');
+                closeElementPopup();
+                editor.focus({ preventScroll: true });
+            });
+            elementPopupPanel.appendChild(btn);
+        });
+
+        document.body.appendChild(elementPopupOverlay);
+        document.body.appendChild(elementPopupPanel);
+        elementPopupAnchorEl = anchorEl;
+        keyboard.style.pointerEvents = 'none';
+        positionElementPopup(anchorEl);
+    };
+
+    const tryInsertDoubleTapElement = (ch) => {
+        const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
+        const doubleTapSymbol = doubleTapMap[value];
+        const now = Date.now();
+        if (
+            doubleTapSymbol &&
+            pendingElementTap &&
+            pendingElementTap.key === value &&
+            (now - pendingElementTap.time) <= DOUBLE_TAP_WINDOW_MS &&
+            state.cursor === pendingElementTap.index + 1 &&
+            state.tokens[pendingElementTap.index] &&
+            state.tokens[pendingElementTap.index].type === 'text' &&
+            state.tokens[pendingElementTap.index].value === value
+        ) {
+            state.tokens[pendingElementTap.index].value = doubleTapSymbol;
+            state.cursor = pendingElementTap.index + 1;
+            clearPendingElementTap();
+            renderEditor();
+            return true;
+        }
+        insertLetter(ch);
+        if (doubleTapSymbol) {
+            pendingElementTap = { key: value, time: now, index: state.cursor - 1 };
+        } else {
+            clearPendingElementTap();
+        }
+        return false;
+    };
+
     const resetUppercaseAfterNonLetter = () => {
         if (!state.isUppercase) {
             state.isUppercase = true;
@@ -2866,6 +3064,7 @@ function setupEquationEditor() {
     };
 
     const hideKeyboard = () => {
+        closeElementPopup();
         keyboard.classList.remove('active');
         keyboard.setAttribute('aria-hidden', 'true');
         editor.classList.remove('balance-kbd-active');
@@ -2912,30 +3111,105 @@ function setupEquationEditor() {
         `;
     };
 
+    const clearLetterPressState = () => {
+        if (!letterPressState) return;
+        if (letterPressState.timerId) clearTimeout(letterPressState.timerId);
+        letterPressState = null;
+    };
+
+    const clearBackspaceHoldState = () => {
+        if (!backspaceHoldState) return;
+        if (backspaceHoldState.startTimer) clearTimeout(backspaceHoldState.startTimer);
+        if (backspaceHoldState.repeatTimer) clearInterval(backspaceHoldState.repeatTimer);
+        backspaceHoldState = null;
+    };
+
+    const startBackspaceHold = (pointerId) => {
+        clearBackspaceHoldState();
+        backspace();
+        backspaceHoldState = {
+            pointerId,
+            startTimer: setTimeout(() => {
+                if (!backspaceHoldState) return;
+                backspace();
+                backspaceHoldState.repeatTimer = setInterval(() => {
+                    backspace();
+                }, 140);
+            }, 360),
+            repeatTimer: null
+        };
+    };
+
     keyboard.addEventListener('pointerdown', (e) => {
         const keyEl = e.target.closest('.equation-soft-key');
         if (!keyEl) return;
         e.preventDefault();
+        if (typeof keyEl.setPointerCapture === 'function') {
+            try { keyEl.setPointerCapture(e.pointerId); } catch (_) {}
+        }
         const action = keyEl.dataset.action;
         const label = keyEl.dataset.label || "";
+        const upperLabel = label.toUpperCase();
         const shouldResetUppercase = (action !== 'toggle-case' && !state.isUppercase);
-        if (action === 'insert-letter') insertLetter(label);
-        else if (action === 'insert-charge') insertCharge(label);
-        else if (action === 'insert-subscript') insertSubscriptDigit(label);
-        else if (action === 'insert-bracket') insertTextToken(label, 'text');
-        else if (action === 'insert-plus') insertOperator('plus');
-        else if (action === 'insert-arrow') insertOperator('arrow');
-        else if (action === 'backspace') backspace();
-        else if (action === 'clear') clearAll();
-        else if (action === 'toggle-case') { state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
+        if (
+            action === 'insert-letter' &&
+            state.isUppercase &&
+            !longPressDisabledLetters.has(upperLabel) &&
+            (elementCandidatesByKey[upperLabel] || []).length > 0
+        ) {
+            clearPendingElementTap();
+            clearLetterPressState();
+            letterPressState = {
+                label,
+                shouldResetUppercase,
+                keyEl,
+                triggeredLongPress: false,
+                timerId: setTimeout(() => {
+                    if (!letterPressState) return;
+                    letterPressState.triggeredLongPress = true;
+                    openElementPopup(keyEl, upperLabel);
+                }, LETTER_LONG_PRESS_MS)
+            };
+            return;
+        }
+        clearLetterPressState();
+        if (action === 'insert-letter') tryInsertDoubleTapElement(label);
+        else if (action === 'insert-charge') { clearPendingElementTap(); insertCharge(label); }
+        else if (action === 'insert-subscript') { clearPendingElementTap(); insertSubscriptDigit(label); }
+        else if (action === 'insert-bracket') { clearPendingElementTap(); insertTextToken(label, 'text'); }
+        else if (action === 'insert-plus') { clearPendingElementTap(); insertOperator('plus'); }
+        else if (action === 'insert-arrow') { clearPendingElementTap(); insertOperator('arrow'); }
+        else if (action === 'backspace') { clearPendingElementTap(); startBackspaceHold(e.pointerId); }
+        else if (action === 'clear') { clearPendingElementTap(); clearAll(); }
+        else if (action === 'toggle-case') { clearPendingElementTap(); state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
         if (shouldResetUppercase) {
             state.isUppercase = true;
             renderKeyboard();
         }
         editor.focus({ preventScroll: true });
     });
+    keyboard.addEventListener('pointerup', () => {
+        clearBackspaceHoldState();
+        if (!letterPressState) return;
+        const { label, shouldResetUppercase, triggeredLongPress } = letterPressState;
+        clearLetterPressState();
+        if (triggeredLongPress) return;
+        tryInsertDoubleTapElement(label);
+        if (shouldResetUppercase) {
+            state.isUppercase = true;
+            renderKeyboard();
+        }
+        editor.focus({ preventScroll: true });
+    });
+    keyboard.addEventListener('pointercancel', () => {
+        clearLetterPressState();
+        clearBackspaceHoldState();
+    });
+    keyboard.addEventListener('contextmenu', (e) => e.preventDefault());
+    keyboard.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
+    window.addEventListener('pointerup', clearBackspaceHoldState);
 
     editor.addEventListener('click', (e) => {
         showKeyboard();
@@ -2993,6 +3267,9 @@ function setupEquationEditor() {
     document.addEventListener('pointerdown', (e) => {
         if (interactingWithKeyboard) return;
         if (!keyboard.contains(e.target) && e.target !== editor && !editor.contains(e.target)) hideKeyboard();
+    });
+    window.addEventListener('resize', () => {
+        if (elementPopupPanel && elementPopupAnchorEl) positionElementPopup(elementPopupAnchorEl);
     });
 
     renderKeyboard();
@@ -3446,22 +3723,44 @@ function solveChemicalEquationWithSteps(eqn) {
 
     // 氧化數判定（僅顯示有變化的元素及其變化，並計算氧化數上升量／下降量，預設摺疊）
     const leftOxByEl = {}, rightOxByEl = {};
-    const leftContrib = {}, rightContrib = {};
+    const leftBucketsByEl = {}, rightBucketsByEl = {};
     species.forEach((s, i) => {
         const ox = getAverageOxidationNumbers(s.formula, s.charge);
         Object.keys(s.atoms).forEach(el => {
             const v = ox[el] ?? 0;
             const set = (i < leftRaw.length) ? leftOxByEl : rightOxByEl;
             if (!set[el]) set[el] = new Set(); set[el].add(v);
-            const n = s.atoms[el] || 0;
-            const contrib = finalCoeffs[i] * n * v;
-            if (i < leftRaw.length) { leftContrib[el] = (leftContrib[el] || 0) + contrib; } else { rightContrib[el] = (rightContrib[el] || 0) + contrib; }
+            const n = (s.atoms[el] || 0) * (finalCoeffs[i] || 0);
+            const buckets = (i < leftRaw.length) ? leftBucketsByEl : rightBucketsByEl;
+            if (!buckets[el]) buckets[el] = {};
+            buckets[el][v] = (buckets[el][v] || 0) + n;
         });
     });
+    // 以「原子數配對」計算氧化數上升/下降量，避免同元素歧化時互相抵消成 0
+    const calcElementOxTotals = (leftMap, rightMap) => {
+        const leftArr = Object.entries(leftMap || {}).map(([ox, count]) => ({ ox: parseFloat(ox), count: Number(count) || 0 })).filter(x => x.count > 1e-10).sort((a,b)=>a.ox-b.ox);
+        const rightArr = Object.entries(rightMap || {}).map(([ox, count]) => ({ ox: parseFloat(ox), count: Number(count) || 0 })).filter(x => x.count > 1e-10).sort((a,b)=>a.ox-b.ox);
+        let iL = 0, iR = 0, up = 0, down = 0;
+        while (iL < leftArr.length && iR < rightArr.length) {
+            const L = leftArr[iL], R = rightArr[iR];
+            const moved = Math.min(L.count, R.count);
+            if (moved > 0) {
+                const d = (R.ox - L.ox) * moved;
+                if (d > 0) up += d;
+                else if (d < 0) down += -d;
+                L.count -= moved;
+                R.count -= moved;
+            }
+            if (L.count <= 1e-10) iL++;
+            if (R.count <= 1e-10) iR++;
+        }
+        return { up, down };
+    };
     let totalOxUp = 0, totalOxDown = 0;
     elements.forEach(el => {
-        const L = leftContrib[el] || 0, R = rightContrib[el] || 0;
-        if (R > L) totalOxUp += (R - L); else if (L > R) totalOxDown += (L - R);
+        const t = calcElementOxTotals(leftBucketsByEl[el], rightBucketsByEl[el]);
+        totalOxUp += t.up;
+        totalOxDown += t.down;
     });
     const fmtSet = (arr) => arr.map(x => (x >= 0 ? '+' : '') + x).join('、');
     let oxChangeParts = [];
