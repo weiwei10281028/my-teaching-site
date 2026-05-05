@@ -3890,14 +3890,20 @@ function findMinimalPositiveIntegerInNullSpace(basis) {
         for (let i = 0; i < d; i++) for (let j = 0; j < cols; j++) v[j] += coeffs[i] * basis[i][j];
         return v;
     };
-    const allPositive = (v) => v.every(x => x > 1e-10);
+    const allPositive = (v) => v.every(x => x > 1e-14);
     const toIntegers = (v) => {
         let denom = 1;
         for (let i = 0; i < v.length; i++) {
             const x = v[i];
-            for (let d = 1; d <= 120; d++) if (Math.abs(x * d - Math.round(x * d)) < 1e-8) { denom = lcm(denom, d); break; }
+            // 係數可能達上千，分量會很小；提高分母搜尋上限避免把小正值 round 成 0
+            for (let d = 1; d <= 5000; d++) if (Math.abs(x * d - Math.round(x * d)) < 1e-8) { denom = lcm(denom, d); break; }
         }
         return v.map(x => Math.round(x * denom));
+    };
+    const toIntegersIfStrictPositive = (v) => {
+        const ints = reduceByGcd(toIntegers(v));
+        if (!ints.every(x => x > 0)) return null; // 防止數值誤差導致極小正比值被 round 成 0
+        return ints;
     };
     const reduceByGcd = (arr) => {
         let g = 0;
@@ -3911,28 +3917,46 @@ function findMinimalPositiveIntegerInNullSpace(basis) {
         const v = tryCombination([1]);
         if (!allPositive(v)) {
             const vn = tryCombination([-1]);
-            if (allPositive(vn)) { best = reduceByGcd(toIntegers(vn)); bestSum = sum(best); }
-        } else { best = reduceByGcd(toIntegers(v)); bestSum = sum(best); }
+            if (allPositive(vn)) {
+                const ints = toIntegersIfStrictPositive(vn);
+                if (ints) { best = ints; bestSum = sum(best); }
+            }
+        } else {
+            const ints = toIntegersIfStrictPositive(v);
+            if (ints) { best = ints; bestSum = sum(best); }
+        }
     } else if (d === 2) {
         for (let c1 = 1; c1 <= maxTry; c1++) for (let c2 = 1; c2 <= maxTry; c2++) {
             const v = tryCombination([c1, c2]);
-            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            if (allPositive(v)) {
+                const w = toIntegersIfStrictPositive(v);
+                if (w) { const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            }
         }
         if (best) return best;
         for (let c1 = 1; c1 <= maxTry; c1++) for (let c2 = -maxTry; c2 <= -1; c2++) {
             const v = tryCombination([c1, c2]);
-            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            if (allPositive(v)) {
+                const w = toIntegersIfStrictPositive(v);
+                if (w) { const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            }
         }
     } else {
         for (let c1 = 1; c1 <= 20; c1++) for (let c2 = 1; c2 <= 20; c2++) for (let c3 = 1; c3 <= 20; c3++) {
             const v = tryCombination([c1, c2, c3]);
-            if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            if (allPositive(v)) {
+                const w = toIntegersIfStrictPositive(v);
+                if (w) { const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+            }
         }
         if (!best) {
             for (let c1 = 1; c1 <= 15; c1++) for (let c2 = -15; c2 <= 15; c2++) for (let c3 = 1; c3 <= 15; c3++) {
                 if (c2 === 0) continue;
                 const v = tryCombination([c1, c2, c3]);
-                if (allPositive(v)) { const w = reduceByGcd(toIntegers(v)); const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+                if (allPositive(v)) {
+                    const w = toIntegersIfStrictPositive(v);
+                    if (w) { const s = sum(w); if (s < bestSum) { best = w; bestSum = s; } }
+                }
             }
         }
     }
