@@ -515,6 +515,8 @@
         padding: 10px 8px calc(12px + env(safe-area-inset-bottom) * 0.35);
         gap: 5px;
         user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
         z-index: 9999;
     }
     .equation-soft-keyboard.active { display: grid; }
@@ -540,6 +542,9 @@
         white-space: nowrap;
         transition: transform 0.1s ease, border-color 0.15s ease;
         touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
     .equation-soft-key:hover {
         border-color: rgba(243, 196, 110, 0.8);
@@ -634,11 +639,20 @@
     body.eq-kbd-open .controls-content {
         padding-bottom: calc(var(--eq-kbd-height) + 14px) !important;
     }
+    body.eq-kbd-open,
+    body.eq-kbd-open * {
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
     .eq-element-popup-overlay {
         position: fixed;
         inset: 0;
         background: rgba(8, 12, 20, 0.28);
         z-index: 10020;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
     .eq-element-popup {
         position: fixed;
@@ -652,6 +666,9 @@
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
         z-index: 10021;
         touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
     .eq-element-popup-btn {
         min-width: 46px;
@@ -2691,20 +2708,47 @@ function setupEquationEditor() {
         isUppercase: true
     };
     const DOUBLE_TAP_WINDOW_MS = 280;
-    const C_LONG_PRESS_MS = 380;
-    const cElementCandidates = [
-        { symbol: 'C', atomicNumber: 6 },
-        { symbol: 'Cl', atomicNumber: 17 },
-        { symbol: 'Ca', atomicNumber: 20 },
-        { symbol: 'Cr', atomicNumber: 24 },
-        { symbol: 'Co', atomicNumber: 27 },
-        { symbol: 'Cu', atomicNumber: 29 }
-    ];
+    const LETTER_LONG_PRESS_MS = 380;
+    const longPressDisabledLetters = new Set(['D', 'E', 'J', 'Q', 'U', 'V', 'W']);
+    const doubleTapMap = {
+        A: 'Al',
+        B: 'Br',
+        C: 'Cl',
+        F: 'Fe',
+        G: 'Ga',
+        M: 'Mn',
+        N: 'Na',
+        P: 'Pb',
+        S: 'Si',
+        Z: 'Zn'
+    };
+    const elementCandidatesByKey = {
+        A: [{ symbol: 'Al', atomicNumber: 13 }, { symbol: 'Ar', atomicNumber: 18 }, { symbol: 'Ag', atomicNumber: 47 }, { symbol: 'As', atomicNumber: 33 }, { symbol: 'Au', atomicNumber: 79 }],
+        B: [{ symbol: 'B', atomicNumber: 5 }, { symbol: 'Be', atomicNumber: 4 }, { symbol: 'Br', atomicNumber: 35 }, { symbol: 'Ba', atomicNumber: 56 }, { symbol: 'Bi', atomicNumber: 83 }],
+        C: [{ symbol: 'C', atomicNumber: 6 }, { symbol: 'Cl', atomicNumber: 17 }, { symbol: 'Ca', atomicNumber: 20 }, { symbol: 'Cr', atomicNumber: 24 }, { symbol: 'Co', atomicNumber: 27 }, { symbol: 'Cu', atomicNumber: 29 }, { symbol: 'Cd', atomicNumber: 48 }],
+        F: [{ symbol: 'F', atomicNumber: 9 }, { symbol: 'Fe', atomicNumber: 26 }, { symbol: 'Fr', atomicNumber: 87 }],
+        G: [{ symbol: 'Ga', atomicNumber: 31 }, { symbol: 'Ge', atomicNumber: 32 }, { symbol: 'Gd', atomicNumber: 64 }],
+        H: [{ symbol: 'H', atomicNumber: 1 }, { symbol: 'He', atomicNumber: 2 }, { symbol: 'Hf', atomicNumber: 72 }, { symbol: 'Hg', atomicNumber: 80 }],
+        I: [{ symbol: 'I', atomicNumber: 53 }, { symbol: 'In', atomicNumber: 49 }, { symbol: 'Ir', atomicNumber: 77 }],
+        K: [{ symbol: 'K', atomicNumber: 19 }, { symbol: 'Kr', atomicNumber: 36 }],
+        L: [{ symbol: 'Li', atomicNumber: 3 }, { symbol: 'La', atomicNumber: 57 }, { symbol: 'Lu', atomicNumber: 71 }],
+        M: [{ symbol: 'Mg', atomicNumber: 12 }, { symbol: 'Mn', atomicNumber: 25 }, { symbol: 'Mo', atomicNumber: 42 }],
+        N: [{ symbol: 'N', atomicNumber: 7 }, { symbol: 'Na', atomicNumber: 11 }, { symbol: 'Ne', atomicNumber: 10 }, { symbol: 'Ni', atomicNumber: 28 }],
+        O: [{ symbol: 'O', atomicNumber: 8 }, { symbol: 'Os', atomicNumber: 76 }],
+        P: [{ symbol: 'P', atomicNumber: 15 }, { symbol: 'Pb', atomicNumber: 82 }, { symbol: 'Pd', atomicNumber: 46 }, { symbol: 'Pt', atomicNumber: 78 }],
+        R: [{ symbol: 'Rb', atomicNumber: 37 }, { symbol: 'Rn', atomicNumber: 86 }, { symbol: 'Ra', atomicNumber: 88 }, { symbol: 'Re', atomicNumber: 75 }, { symbol: 'Rh', atomicNumber: 45 }, { symbol: 'Ru', atomicNumber: 44 }],
+        S: [{ symbol: 'S', atomicNumber: 16 }, { symbol: 'Si', atomicNumber: 14 }, { symbol: 'Se', atomicNumber: 34 }, { symbol: 'Sr', atomicNumber: 38 }, { symbol: 'Sn', atomicNumber: 50 }, { symbol: 'Sb', atomicNumber: 51 }, { symbol: 'Sc', atomicNumber: 21 }],
+        T: [{ symbol: 'Ti', atomicNumber: 22 }, { symbol: 'Te', atomicNumber: 52 }, { symbol: 'Ta', atomicNumber: 73 }, { symbol: 'Tc', atomicNumber: 43 }, { symbol: 'Th', atomicNumber: 90 }],
+        X: [{ symbol: 'Xe', atomicNumber: 54 }],
+        Y: [{ symbol: 'Y', atomicNumber: 39 }, { symbol: 'Yb', atomicNumber: 70 }],
+        Z: [{ symbol: 'Zn', atomicNumber: 30 }, { symbol: 'Zr', atomicNumber: 40 }]
+    };
     let pendingElementTap = null;
-    let cPressState = null;
-    let cPopupAnchorEl = null;
-    let cPopupOverlay = null;
-    let cPopupPanel = null;
+    let letterPressState = null;
+    let backspaceHoldState = null;
+    let elementPopupAnchorEl = null;
+    let elementPopupOverlay = null;
+    let elementPopupPanel = null;
     let interactingWithKeyboard = false;
 
     const digitToSub = { "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉" };
@@ -2855,48 +2899,50 @@ function setupEquationEditor() {
         pendingElementTap = null;
     };
 
-    const closeCPopup = () => {
-        if (cPopupOverlay && cPopupOverlay.parentElement) cPopupOverlay.parentElement.removeChild(cPopupOverlay);
-        if (cPopupPanel && cPopupPanel.parentElement) cPopupPanel.parentElement.removeChild(cPopupPanel);
-        cPopupAnchorEl = null;
-        cPopupOverlay = null;
-        cPopupPanel = null;
+    const closeElementPopup = () => {
+        if (elementPopupOverlay && elementPopupOverlay.parentElement) elementPopupOverlay.parentElement.removeChild(elementPopupOverlay);
+        if (elementPopupPanel && elementPopupPanel.parentElement) elementPopupPanel.parentElement.removeChild(elementPopupPanel);
+        elementPopupAnchorEl = null;
+        elementPopupOverlay = null;
+        elementPopupPanel = null;
         keyboard.style.pointerEvents = '';
     };
 
-    const positionCPopup = (anchorEl) => {
-        if (!cPopupPanel || !anchorEl) return;
+    const positionElementPopup = (anchorEl) => {
+        if (!elementPopupPanel || !anchorEl) return;
         const anchorRect = anchorEl.getBoundingClientRect();
-        const panelRect = cPopupPanel.getBoundingClientRect();
+        const panelRect = elementPopupPanel.getBoundingClientRect();
         const margin = 10;
         let left = anchorRect.left + (anchorRect.width - panelRect.width) / 2;
         left = Math.max(margin, Math.min(left, window.innerWidth - panelRect.width - margin));
         let top = anchorRect.top - panelRect.height - 10;
         if (top < margin) top = anchorRect.bottom + 10;
         if (top + panelRect.height > window.innerHeight - margin) top = window.innerHeight - panelRect.height - margin;
-        cPopupPanel.style.left = `${Math.round(left)}px`;
-        cPopupPanel.style.top = `${Math.round(top)}px`;
+        elementPopupPanel.style.left = `${Math.round(left)}px`;
+        elementPopupPanel.style.top = `${Math.round(top)}px`;
     };
 
-    const openCPopup = (anchorEl) => {
-        closeCPopup();
-        cPopupOverlay = document.createElement('div');
-        cPopupOverlay.className = 'eq-element-popup-overlay';
-        cPopupOverlay.addEventListener('pointerdown', (e) => {
+    const openElementPopup = (anchorEl, key) => {
+        const candidates = elementCandidatesByKey[key] || [];
+        if (!candidates.length) return;
+        closeElementPopup();
+        elementPopupOverlay = document.createElement('div');
+        elementPopupOverlay.className = 'eq-element-popup-overlay';
+        elementPopupOverlay.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeCPopup();
+            closeElementPopup();
             editor.focus({ preventScroll: true });
         });
 
-        cPopupPanel = document.createElement('div');
-        cPopupPanel.className = 'eq-element-popup';
-        cPopupPanel.addEventListener('pointerdown', (e) => {
+        elementPopupPanel = document.createElement('div');
+        elementPopupPanel.className = 'eq-element-popup';
+        elementPopupPanel.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             e.stopPropagation();
         });
 
-        const sorted = [...cElementCandidates].sort((a, b) => a.atomicNumber - b.atomicNumber);
+        const sorted = [...candidates].sort((a, b) => a.atomicNumber - b.atomicNumber);
         sorted.forEach(({ symbol }) => {
             const btn = document.createElement('button');
             btn.type = 'button';
@@ -2908,41 +2954,42 @@ function setupEquationEditor() {
                 e.stopPropagation();
                 clearPendingElementTap();
                 insertTextToken(symbol, 'text');
-                closeCPopup();
+                closeElementPopup();
                 editor.focus({ preventScroll: true });
             });
-            cPopupPanel.appendChild(btn);
+            elementPopupPanel.appendChild(btn);
         });
 
-        document.body.appendChild(cPopupOverlay);
-        document.body.appendChild(cPopupPanel);
-        cPopupAnchorEl = anchorEl;
+        document.body.appendChild(elementPopupOverlay);
+        document.body.appendChild(elementPopupPanel);
+        elementPopupAnchorEl = anchorEl;
         keyboard.style.pointerEvents = 'none';
-        positionCPopup(anchorEl);
+        positionElementPopup(anchorEl);
     };
 
     const tryInsertDoubleTapElement = (ch) => {
         const value = state.isUppercase ? ch.toUpperCase() : ch.toLowerCase();
+        const doubleTapSymbol = doubleTapMap[value];
         const now = Date.now();
         if (
-            value === 'F' &&
+            doubleTapSymbol &&
             pendingElementTap &&
-            pendingElementTap.key === 'F' &&
+            pendingElementTap.key === value &&
             (now - pendingElementTap.time) <= DOUBLE_TAP_WINDOW_MS &&
             state.cursor === pendingElementTap.index + 1 &&
             state.tokens[pendingElementTap.index] &&
             state.tokens[pendingElementTap.index].type === 'text' &&
-            state.tokens[pendingElementTap.index].value === 'F'
+            state.tokens[pendingElementTap.index].value === value
         ) {
-            state.tokens[pendingElementTap.index].value = 'Fe';
+            state.tokens[pendingElementTap.index].value = doubleTapSymbol;
             state.cursor = pendingElementTap.index + 1;
             clearPendingElementTap();
             renderEditor();
             return true;
         }
         insertLetter(ch);
-        if (value === 'F') {
-            pendingElementTap = { key: 'F', time: now, index: state.cursor - 1 };
+        if (doubleTapSymbol) {
+            pendingElementTap = { key: value, time: now, index: state.cursor - 1 };
         } else {
             clearPendingElementTap();
         }
@@ -3017,7 +3064,7 @@ function setupEquationEditor() {
     };
 
     const hideKeyboard = () => {
-        closeCPopup();
+        closeElementPopup();
         keyboard.classList.remove('active');
         keyboard.setAttribute('aria-hidden', 'true');
         editor.classList.remove('balance-kbd-active');
@@ -3064,44 +3111,75 @@ function setupEquationEditor() {
         `;
     };
 
-    const clearCPressState = () => {
-        if (!cPressState) return;
-        if (cPressState.timerId) clearTimeout(cPressState.timerId);
-        cPressState = null;
+    const clearLetterPressState = () => {
+        if (!letterPressState) return;
+        if (letterPressState.timerId) clearTimeout(letterPressState.timerId);
+        letterPressState = null;
+    };
+
+    const clearBackspaceHoldState = () => {
+        if (!backspaceHoldState) return;
+        if (backspaceHoldState.startTimer) clearTimeout(backspaceHoldState.startTimer);
+        if (backspaceHoldState.repeatTimer) clearInterval(backspaceHoldState.repeatTimer);
+        backspaceHoldState = null;
+    };
+
+    const startBackspaceHold = (pointerId) => {
+        clearBackspaceHoldState();
+        backspace();
+        backspaceHoldState = {
+            pointerId,
+            startTimer: setTimeout(() => {
+                if (!backspaceHoldState) return;
+                backspace();
+                backspaceHoldState.repeatTimer = setInterval(() => {
+                    backspace();
+                }, 140);
+            }, 360),
+            repeatTimer: null
+        };
     };
 
     keyboard.addEventListener('pointerdown', (e) => {
         const keyEl = e.target.closest('.equation-soft-key');
         if (!keyEl) return;
         e.preventDefault();
+        if (typeof keyEl.setPointerCapture === 'function') {
+            try { keyEl.setPointerCapture(e.pointerId); } catch (_) {}
+        }
         const action = keyEl.dataset.action;
         const label = keyEl.dataset.label || "";
         const upperLabel = label.toUpperCase();
         const shouldResetUppercase = (action !== 'toggle-case' && !state.isUppercase);
-        if (action === 'insert-letter' && state.isUppercase && upperLabel === 'C') {
+        if (
+            action === 'insert-letter' &&
+            state.isUppercase &&
+            !longPressDisabledLetters.has(upperLabel) &&
+            (elementCandidatesByKey[upperLabel] || []).length > 0
+        ) {
             clearPendingElementTap();
-            clearCPressState();
-            cPressState = {
+            clearLetterPressState();
+            letterPressState = {
                 label,
                 shouldResetUppercase,
                 keyEl,
                 triggeredLongPress: false,
                 timerId: setTimeout(() => {
-                    if (!cPressState) return;
-                    cPressState.triggeredLongPress = true;
-                    openCPopup(keyEl);
-                }, C_LONG_PRESS_MS)
+                    if (!letterPressState) return;
+                    letterPressState.triggeredLongPress = true;
+                    openElementPopup(keyEl, upperLabel);
+                }, LETTER_LONG_PRESS_MS)
             };
             return;
         }
-        clearCPressState();
+        clearLetterPressState();
         if (action === 'insert-letter') tryInsertDoubleTapElement(label);
         else if (action === 'insert-charge') { clearPendingElementTap(); insertCharge(label); }
         else if (action === 'insert-subscript') { clearPendingElementTap(); insertSubscriptDigit(label); }
         else if (action === 'insert-bracket') { clearPendingElementTap(); insertTextToken(label, 'text'); }
         else if (action === 'insert-plus') { clearPendingElementTap(); insertOperator('plus'); }
         else if (action === 'insert-arrow') { clearPendingElementTap(); insertOperator('arrow'); }
-        else if (action === 'backspace') { clearPendingElementTap(); backspace(); }
+        else if (action === 'backspace') { clearPendingElementTap(); startBackspaceHold(e.pointerId); }
         else if (action === 'clear') { clearPendingElementTap(); clearAll(); }
         else if (action === 'toggle-case') { clearPendingElementTap(); state.isUppercase = !state.isUppercase; renderKeyboard(); return; }
         if (shouldResetUppercase) {
@@ -3111,20 +3189,27 @@ function setupEquationEditor() {
         editor.focus({ preventScroll: true });
     });
     keyboard.addEventListener('pointerup', () => {
-        if (!cPressState) return;
-        const { label, shouldResetUppercase, triggeredLongPress } = cPressState;
-        clearCPressState();
+        clearBackspaceHoldState();
+        if (!letterPressState) return;
+        const { label, shouldResetUppercase, triggeredLongPress } = letterPressState;
+        clearLetterPressState();
         if (triggeredLongPress) return;
-        insertLetter(label);
+        tryInsertDoubleTapElement(label);
         if (shouldResetUppercase) {
             state.isUppercase = true;
             renderKeyboard();
         }
         editor.focus({ preventScroll: true });
     });
-    keyboard.addEventListener('pointercancel', clearCPressState);
+    keyboard.addEventListener('pointercancel', () => {
+        clearLetterPressState();
+        clearBackspaceHoldState();
+    });
+    keyboard.addEventListener('contextmenu', (e) => e.preventDefault());
+    keyboard.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     keyboard.addEventListener('pointerdown', () => { interactingWithKeyboard = true; });
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
+    window.addEventListener('pointerup', clearBackspaceHoldState);
 
     editor.addEventListener('click', (e) => {
         showKeyboard();
@@ -3184,7 +3269,7 @@ function setupEquationEditor() {
         if (!keyboard.contains(e.target) && e.target !== editor && !editor.contains(e.target)) hideKeyboard();
     });
     window.addEventListener('resize', () => {
-        if (cPopupPanel && cPopupAnchorEl) positionCPopup(cPopupAnchorEl);
+        if (elementPopupPanel && elementPopupAnchorEl) positionElementPopup(elementPopupAnchorEl);
     });
 
     renderKeyboard();
