@@ -361,6 +361,16 @@
     }
     .step-formula-box::-webkit-scrollbar { display: none; }
     .step-formula-box:active { cursor: grabbing; }
+    .x-scroll-hidden {
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        cursor: grab;
+        user-select: none;
+    }
+    .x-scroll-hidden::-webkit-scrollbar { display: none; }
+    .x-scroll-hidden:active { cursor: grabbing; }
     .highlight-atom { color: var(--hud-cyan); font-weight: bold; border-bottom: 2px solid var(--hud-cyan); padding: 0 2px; }
     
     .input-group { display: flex; gap: 8px; }
@@ -414,8 +424,10 @@
         outline: none;
         touch-action: pan-x;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
+    .equation-editor::-webkit-scrollbar { display: none; }
     .equation-editor.balance-kbd-active {
         border-color: #22d3ee !important;
         box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.55), 0 0 18px rgba(34, 211, 238, 0.22);
@@ -3421,6 +3433,7 @@ function setupEquationBalancer() {
             enableDrag(resDiv);
             stpDiv.innerHTML = res.stepsHtml;
             stpDiv.querySelectorAll('.step-formula-box').forEach(enableDrag);
+            stpDiv.querySelectorAll('.x-scroll-hidden').forEach(enableDrag);
             if(toolsArea) toolsArea.style.display = 'flex';
             stpBtn.style.display = 'block';
             stpBtn.textContent = '解題思路';
@@ -3779,64 +3792,77 @@ function solveChemicalEquationWithSteps(eqn) {
     const resDom = document.getElementById('balance-result');
     if(resDom) { resDom.style.marginBottom = "20px"; }
 
-    // 氧化數判定（僅顯示有變化的元素及其變化，並計算氧化數上升量／下降量，預設摺疊）
-    const leftOxByEl = {}, rightOxByEl = {};
-    const leftBucketsByEl = {}, rightBucketsByEl = {};
+    // 氧化數判定（以 A→B 路徑顯示，並標示 Δ×原子數，例如：(+1×2)）
+    const formatSigned = (n) => {
+        const v = Math.abs(n - Math.round(n)) < 1e-10 ? Math.round(n) : Number(n.toFixed(4));
+        return `${v >= 0 ? '+' : ''}${v}`;
+    };
+    const formatCount = (n) => {
+        if (Math.abs(n - Math.round(n)) < 1e-10) return String(Math.round(n));
+        return Number(n.toFixed(4)).toString();
+    };
+    const speciesOx = species.map(s => getAverageOxidationNumbers(s.formula, s.charge));
+    const leftEntriesByEl = {}, rightEntriesByEl = {};
     species.forEach((s, i) => {
-        const ox = getAverageOxidationNumbers(s.formula, s.charge);
         Object.keys(s.atoms).forEach(el => {
-            const v = ox[el] ?? 0;
-            const set = (i < leftRaw.length) ? leftOxByEl : rightOxByEl;
-            if (!set[el]) set[el] = new Set(); set[el].add(v);
-            const n = (s.atoms[el] || 0) * (finalCoeffs[i] || 0);
-            const buckets = (i < leftRaw.length) ? leftBucketsByEl : rightBucketsByEl;
-            if (!buckets[el]) buckets[el] = {};
-            buckets[el][v] = (buckets[el][v] || 0) + n;
+            const count = (s.atoms[el] || 0) * (finalCoeffs[i] || 0);
+            if (count <= 1e-10) return;
+            const entry = {
+                speciesIdx: i,
+                ox: speciesOx[i][el] ?? 0,
+                remaining: count
+            };
+            if (i < leftRaw.length) {
+                if (!leftEntriesByEl[el]) leftEntriesByEl[el] = [];
+                leftEntriesByEl[el].push(entry);
+            } else {
+                if (!rightEntriesByEl[el]) rightEntriesByEl[el] = [];
+                rightEntriesByEl[el].push(entry);
+            }
         });
     });
-    // 以「原子數配對」計算氧化數上升/下降量，避免同元素歧化時互相抵消成 0
-    const calcElementOxTotals = (leftMap, rightMap) => {
-        const leftArr = Object.entries(leftMap || {}).map(([ox, count]) => ({ ox: parseFloat(ox), count: Number(count) || 0 })).filter(x => x.count > 1e-10).sort((a,b)=>a.ox-b.ox);
-        const rightArr = Object.entries(rightMap || {}).map(([ox, count]) => ({ ox: parseFloat(ox), count: Number(count) || 0 })).filter(x => x.count > 1e-10).sort((a,b)=>a.ox-b.ox);
-        let iL = 0, iR = 0, up = 0, down = 0;
+    const routeMap = {};
+    elements.forEach(el => {
+        const leftArr = (leftEntriesByEl[el] || []).map(x => ({ ...x })).sort((a,b) => a.ox - b.ox);
+        const rightArr = (rightEntriesByEl[el] || []).map(x => ({ ...x })).sort((a,b) => a.ox - b.ox);
+        let iL = 0, iR = 0;
         while (iL < leftArr.length && iR < rightArr.length) {
             const L = leftArr[iL], R = rightArr[iR];
-            const moved = Math.min(L.count, R.count);
-            if (moved > 0) {
-                const d = (R.ox - L.ox) * moved;
-                if (d > 0) up += d;
-                else if (d < 0) down += -d;
-                L.count -= moved;
-                R.count -= moved;
+            const moved = Math.min(L.remaining, R.remaining);
+            if (moved > 1e-10) {
+                const delta = R.ox - L.ox;
+                if (Math.abs(delta) > 1e-10) {
+                    const key = `${L.speciesIdx}->${R.speciesIdx}`;
+                    if (!routeMap[key]) routeMap[key] = { from: L.speciesIdx, to: R.speciesIdx, events: [] };
+                    routeMap[key].events.push({
+                        el,
+                        fromOx: L.ox,
+                        toOx: R.ox,
+                        delta,
+                        moved
+                    });
+                }
+                L.remaining -= moved;
+                R.remaining -= moved;
             }
-            if (L.count <= 1e-10) iL++;
-            if (R.count <= 1e-10) iR++;
+            if (L.remaining <= 1e-10) iL++;
+            if (R.remaining <= 1e-10) iR++;
         }
-        return { up, down };
-    };
-    let totalOxUp = 0, totalOxDown = 0;
-    elements.forEach(el => {
-        const t = calcElementOxTotals(leftBucketsByEl[el], rightBucketsByEl[el]);
-        totalOxUp += t.up;
-        totalOxDown += t.down;
     });
-    const fmtSet = (arr) => arr.map(x => (x >= 0 ? '+' : '') + x).join('、');
-    let oxChangeParts = [];
-    elements.forEach(el => {
-        const left = leftOxByEl[el] ? [...leftOxByEl[el]].sort((a,b)=>a-b) : [];
-        const right = rightOxByEl[el] ? [...rightOxByEl[el]].sort((a,b)=>a-b) : [];
-        if (left.length === 0 || right.length === 0) return;
-        const leftStr = fmtSet(left), rightStr = fmtSet(right);
-        if (leftStr === rightStr) return;
-        let changeStr = '';
-        if (left.length === 1 && right.length === 1) changeStr = `（變化 ${(right[0] - left[0]) >= 0 ? '+' : ''}${right[0] - left[0]}）`;
-        else changeStr = `（氧化數變化）`;
-        oxChangeParts.push(`<span class="highlight-atom">${el}</span>：反應物中 ${leftStr} → 產物中 ${rightStr}${changeStr}`);
+    const routeRows = Object.values(routeMap).map(route => {
+        const fromLabel = formatFormula(species[route.from].raw);
+        const toLabel = formatFormula(species[route.to].raw);
+        const hasOx = route.events.some(ev => ev.delta > 0);
+        const hasRed = route.events.some(ev => ev.delta < 0);
+        const routeRole = hasOx && hasRed ? "氧化還原" : (hasOx ? "氧化" : "還原");
+        const eventRows = route.events.map(ev => {
+            return `<div class="x-scroll-hidden" style="padding:2px 0;">
+                <span style="display:inline-block; min-width:max-content;">• <span class="highlight-atom">${ev.el}</span>：${formatSigned(ev.fromOx)} → ${formatSigned(ev.toOx)}（${formatSigned(ev.delta)}×${formatCount(ev.moved)}）</span>
+            </div>`;
+        }).join('<br>');
+        return `<div style="margin-bottom:10px; padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px;"><div style="margin-bottom:4px;"><span style="color:#fbbf24; font-weight:800; margin-right:8px;">${routeRole}</span><span style="color:#facc15; font-weight:700;">${fromLabel}</span> <span style="color:#38bdf8; font-weight:700;">→</span> <span style="color:#f472b6; font-weight:700;">${toLabel}</span></div><div style="padding-left:4px;">${eventRows}</div></div>`;
     });
-    const oxUpStr = Math.abs(totalOxUp - Math.round(totalOxUp)) < 0.01 ? Math.round(totalOxUp) : totalOxUp.toFixed(2);
-    const oxDownStr = Math.abs(totalOxDown - Math.round(totalOxDown)) < 0.01 ? Math.round(totalOxDown) : totalOxDown.toFixed(2);
-    const oxSummary = `<div style="margin-top:12px; padding:8px 12px; background:rgba(255,255,255,0.04); border-radius:6px;">氧化數上升量 = <span style="color:#f87171; font-weight:bold;">${oxUpStr}</span> &nbsp;；&nbsp; 氧化數下降量 = <span style="color:#60a5fa; font-weight:bold;">${oxDownStr}</span>${Math.abs(totalOxUp - totalOxDown) < 0.01 ? ' <span style="color:#4ade80;">✓ 守恆</span>' : ''}</div>`;
-    const oxBlock = `<details style="margin-top:16px; border:1px solid rgba(250,204,21,0.3); border-radius:8px; overflow:hidden;"><summary style="padding:10px 14px; cursor:pointer; background:rgba(250,204,21,0.08); color:#fbbf24; font-weight:bold;">顯示氧化數判定</summary><div style="padding:14px; font-size:0.95rem; line-height:1.8; color:#e2e8f0;">${oxChangeParts.length > 0 ? oxChangeParts.join('<br>') : '本反應無元素氧化數變化。'}${oxSummary}</div></details>`;
+    const oxBlock = `<details style="margin-top:16px; border:1px solid rgba(250,204,21,0.3); border-radius:8px; overflow:hidden;"><summary style="padding:10px 14px; cursor:pointer; background:rgba(250,204,21,0.08); color:#fbbf24; font-weight:bold;">顯示氧化數判定</summary><div style="padding:14px; font-size:0.95rem; line-height:1.8; color:#e2e8f0;">${routeRows.length > 0 ? routeRows.join('') : '本反應無元素氧化數變化。'}</div></details>`;
     stp += oxBlock;
 
     let html = buildModularEq(finalCoeffs);
