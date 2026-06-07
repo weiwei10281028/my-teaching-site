@@ -2793,15 +2793,15 @@ function setupEquationEditor() {
         return '';
     }).join("");
 
-    /** 軟鍵盤常見輸入順序：先打第一種元素→下標數字→再打第二種元素，序列化會變成「C2O」，但本意多為 CO2。勿用雙字母開頭規則，避免誤改 Na2O、N2O 等 */
+    /** 軟鍵盤常見輸入順序：先打 C/S→下標 2→再打 O，序列化會變成「C2O」，但本意多為 CO₂。僅限下標為 2 且後方無其他下標，避免誤改 C₂O₄ 等 */
     const reorderMisplacedTrailingSubdigits = (s) => {
         if (!s || s.length < 3) return s;
-        const m = s.match(/^([CS])(\d+)([A-Z][a-z]?)$/);
+        const m = s.match(/^([CS])2([A-Z][a-z]?)$/);
         if (!m) return s;
-        return `${m[1]}${m[3]}${m[2]}`;
+        return `${m[1]}${m[2]}2`;
     };
 
-    /** 將「一個物質」區段內的 token 做排序修正：游標若在 C 與下標之間但实际落在下標之後，會變成 [C][下標][O]，應視為 CO₂／SO₂（不可動 [N][下標][O] 之 N₂O） */
+    /** 將「一個物質」區段內的 token 做排序修正：僅修正 CO₂／SO₂ 的錯序輸入 [C][2][O]；C₂O₄、N₂O 等一律不動 */
     const normalizeSpeciesTokensForSolver = (run) => {
         const cut = run.findIndex((t) => t.type === 'charge');
         const formulaEnd = cut === -1 ? run.length : cut;
@@ -2820,8 +2820,12 @@ function setupEquationEditor() {
             const bv = b.value || '';
             if (!/^[A-Z]$/.test(av) || !/^[A-Z]$/.test(bv)) continue;
             if ((av === 'C' || av === 'S') && bv === 'O') {
-                formula.splice(i, 3, a, b, sub);
-                i += 2;
+                const subDigit = subToDigit[sub.value] || sub.value;
+                const nextToken = formula[i + 3];
+                if (subDigit === '2' && (!nextToken || nextToken.type === 'charge')) {
+                    formula.splice(i, 3, a, b, sub);
+                    i += 2;
+                }
             }
         }
         return formula.concat(tail);
