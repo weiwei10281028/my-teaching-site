@@ -7,11 +7,11 @@
     <title>CHEM STUDIO</title>
 <style>
     :root {
-        --bg-radial-inner: #0f172a;
-        --bg-radial-outer: #020617;
-        --panel-glass: rgba(15, 23, 42, 0.7);
-        --panel-border: rgba(0, 242, 255, 0.3);
-        --card-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 242, 255, 0.02) 100%);
+        --bg-radial-inner: #000000;
+        --bg-radial-outer: #000000;
+        --panel-glass: rgba(0, 0, 0, 0.98);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --card-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
         --text-main: #f1f5f9;
         --text-sub: #94a3b8;
         --text-highlight: #22d3ee;
@@ -54,7 +54,7 @@
     body {
         margin: 0;
         font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
-        background: radial-gradient(circle at center, var(--bg-radial-inner) 0%, var(--bg-radial-outer) 100%);
+        background: #000000;
         color: var(--text-main);
         height: 100vh; overflow: hidden; display: flex; flex-direction: column;
         overscroll-behavior: none;
@@ -64,12 +64,7 @@
 
     .viewport-area {
         flex: 1; position: relative;
-        background-image: 
-            linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), 
-            linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
-        background-size: 40px 40px; 
-        background-position: center center;
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        background: #000000;
         overflow: hidden; cursor: grab;
         touch-action: none; 
         -webkit-user-select: none;
@@ -97,9 +92,9 @@
 
     .molecule-display-info {
         margin-top: 5px;
-        background: rgba(2, 6, 23, 0.8);
-        border: 1px solid rgba(0, 242, 255, 0.3);
-        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        background: rgba(5, 5, 5, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(4px);
         padding: 10px 15px;
         border-radius: 4px; 
@@ -208,12 +203,12 @@
         padding: 15px;
         margin-bottom: 20px;
         transition: all 0.3s ease;
-        box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05);
+        box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
     }
     details.control-group[open] { 
-        background: rgba(15, 23, 42, 0.85); 
-        border-color: rgba(0, 242, 255, 0.5);
-        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1), inset 0 0 20px rgba(0, 242, 255, 0.05);
+        background: rgba(12, 12, 12, 0.9); 
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.02);
     }
     details.control-group summary {
         list-style: none; cursor: pointer; 
@@ -520,9 +515,9 @@
         overflow-y: auto;
         overflow-x: hidden;
         touch-action: pan-y;
-        border-top: 1px solid rgba(166, 141, 111, 0.4);
-        background: linear-gradient(180deg, rgba(252, 248, 241, 0.98) 0%, rgba(244, 236, 223, 0.99) 100%);
-        box-shadow: 0 -10px 30px rgba(72, 55, 36, 0.24);
+        border-top: 1px solid rgba(0, 200, 255, 0.35);
+        background: linear-gradient(180deg, rgba(8, 18, 38, 0.97) 0%, rgba(2, 6, 18, 0.99) 100%);
+        box-shadow: 0 -8px 30px rgba(0, 180, 255, 0.12), 0 -2px 0 rgba(0, 242, 255, 0.2);
         display: none;
         padding: 10px 8px calc(14px + env(safe-area-inset-bottom) * 0.55);
         gap: 5px;
@@ -541,10 +536,11 @@
         --eq-op-key-size: clamp(72px, 18vw, 96px);
     }
     .equation-soft-key {
-        border: 1px solid rgba(175, 132, 58, 0.55);
+        border: 1px solid rgba(0, 200, 255, 0.3);
         border-radius: 10px;
-        background: linear-gradient(180deg, rgba(44, 30, 16, 0.96) 0%, rgba(26, 20, 14, 0.97) 100%);
-        color: #f8deb2;
+        background: linear-gradient(180deg, #1a2235 0%, #0d1420 100%);
+        color: #ffffff;
+        text-shadow: none;
         min-height: 44px;
         width: var(--eq-key-size);
         padding: 0 4px;
@@ -552,20 +548,22 @@
         font-size: 1.1rem;
         font-weight: 800;
         white-space: nowrap;
-        transition: transform 0.1s ease, border-color 0.15s ease;
+        transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         touch-action: manipulation;
         user-select: none;
         -webkit-user-select: none;
         -webkit-touch-callout: none;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 0 8px rgba(200, 230, 255, 0.15);
     }
     .equation-soft-key:hover {
-        border-color: rgba(243, 196, 110, 0.8);
-        box-shadow: 0 0 0 1px rgba(243, 196, 110, 0.25), 0 0 12px rgba(160, 113, 45, 0.25);
+        border-color: rgba(100, 200, 255, 0.8);
+        box-shadow: 0 0 0 1px rgba(100, 200, 255, 0.3), 0 0 14px rgba(80, 180, 255, 0.35);
+        background: linear-gradient(180deg, #253048 0%, #162035 100%);
     }
-    .equation-soft-key:active { transform: translateY(1px); }
+    .equation-soft-key:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
     .equation-soft-key.key-shift-active {
-        border-color: rgba(245, 205, 131, 0.9);
-        box-shadow: 0 0 0 1px rgba(245, 205, 131, 0.36);
+        border-color: rgba(100, 200, 255, 0.9);
+        box-shadow: 0 0 0 1px rgba(100, 200, 255, 0.45), 0 0 10px rgba(80, 180, 255, 0.3);
     }
     .equation-soft-row .key-wide-operator {
         min-height: 44px;
@@ -577,10 +575,11 @@
         font-size: 1.62rem;
         font-weight: 900;
         letter-spacing: -0.02em;
-        background:
-            linear-gradient(180deg, rgba(22, 86, 117, 0.96) 0%, rgba(14, 52, 77, 0.97) 100%);
-        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.34);
-        color: #dff6ff;
+        background: linear-gradient(180deg, rgba(30, 120, 180, 0.95) 0%, rgba(14, 60, 100, 0.97) 100%);
+        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.5), 0 0 12px rgba(56, 189, 248, 0.3);
+        border-color: rgba(125, 211, 252, 0.7);
+        color: #ffffff;
+        text-shadow: none;
     }
     .equation-soft-row .key-charge,
     .equation-soft-row .key-subscript { font-size: 1.1rem; }
@@ -588,23 +587,28 @@
         letter-spacing: 0.08em;
     }
     .equation-soft-row.row-charges .equation-soft-key {
-        background: linear-gradient(180deg, rgba(31, 54, 54, 0.96) 0%, rgba(22, 39, 40, 0.98) 100%);
-        color: #d9f7f2;
-        border-color: rgba(120, 184, 176, 0.72);
+        background: linear-gradient(180deg, rgba(14, 110, 105, 0.92) 0%, rgba(8, 70, 68, 0.96) 100%);
+        color: #ffffff;
+        border-color: rgba(80, 220, 200, 0.75);
+        box-shadow: 0 0 8px rgba(80, 220, 200, 0.2);
+        text-shadow: none;
     }
     .equation-soft-row.row-subscripts .equation-soft-key {
-        background: linear-gradient(180deg, rgba(50, 33, 58, 0.94) 0%, rgba(35, 24, 42, 0.97) 100%);
-        color: #f5d0fe;
-        border-color: rgba(192, 132, 252, 0.55);
+        background: linear-gradient(180deg, rgba(100, 50, 160, 0.92) 0%, rgba(60, 28, 100, 0.96) 100%);
+        color: #ffffff;
+        border-color: rgba(200, 140, 255, 0.7);
+        box-shadow: 0 0 8px rgba(180, 100, 255, 0.2);
+        text-shadow: none;
     }
     .equation-soft-row.row-subscripts .equation-soft-key.key-wide-operator.key-link-plus {
         width: calc(var(--eq-op-key-size) * 0.8);
     }
     .equation-soft-row.row-subscripts .equation-soft-key.key-link-plus {
-        background: linear-gradient(180deg, rgba(22, 86, 117, 0.96) 0%, rgba(14, 52, 77, 0.97) 100%);
-        color: #dff6ff;
-        border-color: rgba(125, 211, 252, 0.65);
-        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.34), 0 0 10px rgba(56, 189, 248, 0.18);
+        background: linear-gradient(180deg, rgba(30, 120, 180, 0.95) 0%, rgba(14, 60, 100, 0.97) 100%);
+        color: #ffffff;
+        border-color: rgba(125, 211, 252, 0.75);
+        box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.45), 0 0 14px rgba(56, 189, 248, 0.35);
+        text-shadow: none;
     }
     .equation-soft-row .key-icon {
         font-size: 1.72rem;
@@ -617,21 +621,25 @@
         width: var(--eq-op-key-size);
     }
     .equation-soft-row.row-charges .equation-soft-key.key-wide-backspace {
-        background: linear-gradient(180deg, rgba(83, 60, 32, 0.97) 0%, rgba(54, 41, 27, 0.99) 100%);
-        color: #ffe7bd;
-        border-color: rgba(241, 191, 103, 0.76);
+        background: linear-gradient(180deg, rgba(160, 100, 20, 0.95) 0%, rgba(100, 60, 10, 0.98) 100%);
+        color: #ffffff;
+        border-color: rgba(255, 200, 80, 0.8);
+        box-shadow: 0 0 10px rgba(240, 170, 50, 0.25);
+        text-shadow: none;
     }
     .equation-soft-row.row-letters-3 .equation-soft-key.key-clear {
-        background: linear-gradient(180deg, rgba(127, 29, 29, 0.38) 0%, rgba(69, 17, 17, 0.52) 100%);
-        border-color: rgba(254, 202, 202, 0.9);
+        background: linear-gradient(180deg, rgba(200, 40, 40, 0.85) 0%, rgba(120, 20, 20, 0.95) 100%);
+        border-color: rgba(255, 120, 120, 0.9);
         color: #ffffff;
-        text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+        text-shadow: none;
+        box-shadow: 0 0 12px rgba(220, 60, 60, 0.3);
     }
     .equation-soft-row.row-letters-3 .equation-soft-key.key-shift {
-        background: linear-gradient(180deg, rgba(169, 179, 196, 0.92) 0%, rgba(129, 142, 162, 0.96) 100%);
-        border-color: rgba(201, 210, 224, 0.9);
-        color: #f8fafc;
-        text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+        background: linear-gradient(180deg, rgba(100, 120, 150, 0.92) 0%, rgba(60, 80, 110, 0.96) 100%);
+        border-color: rgba(180, 200, 230, 0.85);
+        color: #ffffff;
+        text-shadow: none;
+        box-shadow: 0 0 8px rgba(150, 180, 220, 0.2);
     }
     .equation-soft-row .key-clear {
         width: clamp(62px, 15vw, 82px);
@@ -673,9 +681,9 @@
         align-items: center;
         padding: 8px;
         border-radius: 14px;
-        border: 1px solid rgba(243, 196, 110, 0.65);
-        background: linear-gradient(180deg, rgba(29, 21, 14, 0.98) 0%, rgba(18, 14, 10, 0.98) 100%);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(0, 200, 255, 0.5);
+        background: linear-gradient(180deg, rgba(8, 18, 38, 0.98) 0%, rgba(2, 6, 18, 0.99) 100%);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 180, 255, 0.15);
         z-index: 10021;
         touch-action: none;
         user-select: none;
@@ -685,18 +693,21 @@
     .eq-element-popup-btn {
         min-width: 46px;
         height: 42px;
-        border: 1px solid rgba(245, 205, 131, 0.7);
+        border: 1px solid rgba(0, 200, 255, 0.3);
         border-radius: 10px;
-        background: linear-gradient(180deg, rgba(52, 37, 21, 0.96) 0%, rgba(28, 22, 15, 0.98) 100%);
-        color: #fde7c0;
+        background: linear-gradient(180deg, #1a2235 0%, #0d1420 100%);
+        color: #ffffff;
+        text-shadow: none;
         font-size: 1.05rem;
         font-weight: 900;
         padding: 0 10px;
         cursor: pointer;
+        box-shadow: 0 0 8px rgba(200, 230, 255, 0.2);
     }
     .eq-element-popup-btn:hover {
-        border-color: rgba(255, 223, 164, 0.95);
-        box-shadow: 0 0 0 1px rgba(255, 223, 164, 0.24), 0 0 10px rgba(255, 196, 110, 0.2);
+        border-color: rgba(100, 200, 255, 0.9);
+        box-shadow: 0 0 0 1px rgba(100, 200, 255, 0.35), 0 0 14px rgba(80, 180, 255, 0.4);
+        background: linear-gradient(180deg, #253048 0%, #162035 100%);
     }
 
     .switch-container { 
@@ -799,10 +810,10 @@
     body.simulate-mobile .controls-area {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; max-height: 100%; max-height: 100dvh;
         border-left: none; 
-        border-top: 1px solid var(--hud-cyan);
-        box-shadow: 0 -5px 20px rgba(0, 242, 255, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.8);
         border-radius: 20px 20px 0 0; 
-        background-color: rgba(15, 23, 42, 0.95); 
+        background-color: rgba(8, 8, 8, 0.97); 
         padding: 0; z-index: 100;
         transform: translateY(0); transition: transform 0.3s; will-change: transform;
     }
@@ -824,8 +835,8 @@
         width: 400px; min-width: 320px;
         background-color: var(--panel-glass);
         backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        border-left: 1px solid rgba(0, 242, 255, 0.3);
-        box-shadow: -5px 0 30px rgba(0,0,0,0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: -5px 0 30px rgba(0,0,0,0.95);
         display: flex; flex-direction: column; 
         padding: 25px; overflow-y: auto; 
         z-index: 20;
@@ -850,11 +861,11 @@
         height: 100dvh;
         max-height: 100%;
         max-height: 100dvh;
-        background-color: rgba(10, 15, 30, 0.98); 
+        background-color: rgba(8, 8, 8, 0.98); 
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         border-radius: 20px 20px 0 0; 
-        border-top: 1px solid var(--hud-cyan);
-        box-shadow: 0 -10px 40px rgba(0, 242, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
         z-index: 100;
         display: flex; flex-direction: column;
         padding: 0;
@@ -1564,40 +1575,40 @@
         justify-content: center; align-items: center;
     }
     .intro-modal {
-        background: #FFFEF9; width: 92%; max-width: 700px; max-height: 82vh;
+        background: #0a0a0a; width: 92%; max-width: 700px; max-height: 82vh;
         border-radius: 28px; position: relative; display: flex; flex-direction: column;
-        box-shadow: 0 25px 50px -12px rgba(93, 64, 55, 0.4); overflow: hidden;
-        border: 1px solid #EADDCA; 
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); overflow: hidden;
+        border: 1px solid rgba(0, 242, 255, 0.2); 
         animation: modalFadeInScale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes modalFadeInScale { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     
     .intro-modal-header {
-        padding: 25px 35px; background: #FDF5E6; border-bottom: 1px solid #EADDCA;
+        padding: 25px 35px; background: #111111; border-bottom: 1px solid rgba(0, 242, 255, 0.15);
         display: flex; justify-content: space-between; align-items: center;
     }
     .intro-modal-title { 
-        color: #5D4037; font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif; font-weight: 800; 
+        color: #e2e8f0; font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif; font-weight: 800; 
         font-size: 1.6rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px;
     }
     .intro-modal-close { 
-        width: 40px; height: 40px; background: #FF9F67; color: white; 
+        width: 40px; height: 40px; background: rgba(0, 242, 255, 0.15); color: var(--hud-cyan); 
         border-radius: 14px; display: flex; justify-content: center; align-items: center;
-        font-size: 1.8rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(255, 159, 103, 0.3);
+        font-size: 1.8rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0, 242, 255, 0.15); border: 1px solid rgba(0, 242, 255, 0.3);
     }
-    .intro-modal-close:hover { background: #F57C00; transform: rotate(90deg) scale(1.1); }
+    .intro-modal-close:hover { background: rgba(0, 242, 255, 0.3); transform: rotate(90deg) scale(1.1); }
     
     .intro-modal-body {
-        padding: 40px; overflow-y: auto; color: #4E342E; font-size: 1.15rem; 
+        padding: 40px; overflow-y: auto; color: #cbd5e1; font-size: 1.15rem; 
         line-height: 2.0; text-align: justify; font-family: 'Microsoft JhengHei', sans-serif;
-        scrollbar-width: thin; scrollbar-color: #D2B48C #FDF5E6;
+        scrollbar-width: thin; scrollbar-color: #334155 #0a0a0a;
     }
     .intro-modal-body::-webkit-scrollbar { width: 8px; }
-    .intro-modal-body::-webkit-scrollbar-track { background: #FDF5E6; }
-    .intro-modal-body::-webkit-scrollbar-thumb { background: #D2B48C; border-radius: 10px; }
+    .intro-modal-body::-webkit-scrollbar-track { background: #0a0a0a; }
+    .intro-modal-body::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     
     /* 強調標題樣式 */
-    .intro-section-title { color: #D87D4A; font-weight: bold; border-left: 4px solid #FF9F67; padding-left: 12px; margin: 25px 0 15px 0; font-size: 1.25rem; }
+    .intro-section-title { color: var(--hud-cyan); font-weight: bold; border-left: 4px solid var(--hud-cyan); padding-left: 12px; margin: 25px 0 15px 0; font-size: 1.25rem; }
     .intro-modal-body p { margin-bottom: 25px; }
     /* --- 效能模式：強制「硬化」視覺感 --- */
     body.perf-mode * {
@@ -3683,7 +3694,7 @@ function solveChemicalEquationWithSteps(eqn) {
                 let target = unk[0]; locked.add(target.index);
                 expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
                 usedConservation.add(el);
-                obsDetails.push(`• 觀察 <span class="highlight-atom">${el}</span> 原子：鎖定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 為 <span class="coeff">${expressions[target.index]}</span>。`);
+                obsDetails.push(`• 觀察 <span class="highlight-atom">${el}</span> 原子，設定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 的係數為 <span class="coeff">${expressions[target.index]}</span>。`);
                 progressed = true; break;
             }
         }
@@ -3694,7 +3705,7 @@ function solveChemicalEquationWithSteps(eqn) {
                 let target = unkC[0]; locked.add(target.index);
                 expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
                 usedConservation.add("charge");
-                obsDetails.push(`• 觀察 <span class="highlight-atom">電荷</span>：鎖定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 為 <span class="coeff">${expressions[target.index]}</span>。`);
+                obsDetails.push(`• 觀察 <span class="highlight-atom">電荷</span>，設定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 的係數為 <span class="coeff">${expressions[target.index]}</span>。`);
                 progressed = true;
             }
         }
@@ -3738,10 +3749,10 @@ function solveChemicalEquationWithSteps(eqn) {
                 let s1 = pair[0], s2 = pair[1], n1 = s1.atoms[linkEl], n2 = s2.atoms[linkEl];
                 expressions[s1.index] = (n2 === 1 ? "" : n2) + v; expressions[s2.index] = (n1 === 1 ? "" : n1) + v;
                 usedConservation.add(linkEl);
-                algebraicSteps.push(`• 關聯 <span class="highlight-atom">${linkEl}</span> 原子：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，則 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
+                algebraicSteps.push(`• 關聯 <span class="highlight-atom">${linkEl}</span> 原子：設定 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 的係數為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，則 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 的係數為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
                 locked.add(s1.index); locked.add(s2.index);
             } else {
-                expressions[next.index] = v; algebraicSteps.push(`• 獨立設元：設 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 為 <span style="color:#f472b6;">${v}</span>。`);
+                expressions[next.index] = v; algebraicSteps.push(`• 設定 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 的係數為 <span style="color:#f472b6;">${v}</span>。`);
                 locked.add(next.index);
             }
             remaining = species.filter(s => !locked.has(s.index));
@@ -3754,7 +3765,7 @@ function solveChemicalEquationWithSteps(eqn) {
             });
             return `${L.join(' + ') || "0"} = ${R.join(' + ') || "0"}`;
         };
-        algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">列出守恆等式：</div>`);
+        algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">利用原子不滅列式：</div>`);
         elements.forEach(el => { if (!usedConservation.has(el)) algebraicSteps.push(`• 根據 <span class="highlight-atom">${el}</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('atom', el)}</span>`); });
         if (!usedConservation.has("charge") && species.some(s => s.charge !== 0)) algebraicSteps.push(`• 根據 <span class="highlight-atom">電荷</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('charge')}</span>`);
 
@@ -3792,7 +3803,7 @@ function solveChemicalEquationWithSteps(eqn) {
 
     const finalBox = buildModularEq(finalCoeffs);
     const ratioStr = finalCoeffs.map(c => toFractionVertical(c/baseV)).join(' <span style="color:#64748b;">:</span> ');
-    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div><div style="margin-bottom:10px;">目前比例：<span style="color:#f472b6; font-family:serif; font-size:1.08rem;">(${ratioStr})</span></div><div style="margin-bottom:10px;">全體乘以 <span style="color:#facc15; font-weight:bold; font-size:1.15em;">${multiplier}</span> 消除分母，得到最終平衡反應式：</div><div class="step-formula-box">${finalBox}</div></div>`;
+    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div><div style="margin-bottom:10px;">目前比例：<span style="color:#f472b6; font-family:serif; font-size:1.08rem;">(${ratioStr})</span></div><div style="margin-bottom:10px;">全體乘以 <span style="color:#facc15; font-weight:bold; font-size:1.15em;">${multiplier}</span>，得到最終平衡反應式：</div><div class="step-formula-box">${finalBox}</div></div>`;
 
     
     const resDom = document.getElementById('balance-result');
@@ -3866,7 +3877,7 @@ function solveChemicalEquationWithSteps(eqn) {
                 <span style="display:inline-block; min-width:max-content;">• <span class="highlight-atom">${ev.el}</span>：${formatSigned(ev.fromOx)} → ${formatSigned(ev.toOx)}（${formatSigned(ev.delta)}×${formatCount(ev.moved)}）</span>
             </div>`;
         }).join('<br>');
-        return `<div style="margin-bottom:10px; padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px;"><div style="margin-bottom:4px;"><span style="color:#fbbf24; font-weight:800; margin-right:8px;">${routeRole}</span><span style="color:#facc15; font-weight:700;">${fromLabel}</span> <span style="color:#38bdf8; font-weight:700;">→</span> <span style="color:#f472b6; font-weight:700;">${toLabel}</span></div><div style="padding-left:4px;">${eventRows}</div></div>`;
+        return `<div style="margin-bottom:10px; padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px;"><div style="margin-bottom:4px;"><span style="color:#fbbf24; font-weight:800; margin-right:8px;">${routeRole}</span><span style="color:#e2e8f0; font-weight:700;">${fromLabel}</span> <span style="color:#e2e8f0; font-weight:700;">→</span> <span style="color:#e2e8f0; font-weight:700;">${toLabel}</span></div><div style="padding-left:4px;">${eventRows}</div></div>`;
     });
     const oxBlock = `<details style="margin-top:16px; border:1px solid rgba(250,204,21,0.3); border-radius:8px; overflow:hidden;"><summary style="padding:10px 14px; cursor:pointer; background:rgba(250,204,21,0.08); color:#fbbf24; font-weight:bold;">顯示氧化數判定</summary><div style="padding:14px; font-size:0.95rem; line-height:1.8; color:#e2e8f0;">${routeRows.length > 0 ? routeRows.join('') : '本反應無元素氧化數變化。'}</div></details>`;
     stp += oxBlock;
