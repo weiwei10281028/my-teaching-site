@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 解題</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f0f2f5; color: #0f172a; min-height: 100vh;
+    }
+    header {
+      background: #1e293b; padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .logo { color: #fff; font-size: 17px; font-weight: 700; }
+    .logo span { color: #60a5fa; }
+    .btn-settings {
+      background: transparent; border: 1px solid rgba(255,255,255,.22);
+      color: rgba(255,255,255,.85); padding: 7px 14px; border-radius: 8px;
+      cursor: pointer; font-size: 13px; font-family: inherit;
+    }
+    .btn-settings:hover { background: rgba(255,255,255,.1); }
+    main {
+      max-width: 860px; margin: 0 auto; padding: 24px 16px 48px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .card {
+      background: #fff; border-radius: 16px; padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 6px 18px rgba(0,0,0,.04);
+    }
+    .field-label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: #64748b; letter-spacing: .5px; margin-bottom: 8px;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e1; border-radius: 12px; padding: 32px 20px;
+      text-align: center; cursor: pointer; position: relative; transition: .2s;
+    }
+    .upload-zone:hover, .upload-zone.over { border-color: #3b82f6; background: #f0f7ff; }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 32px; color: #94a3b8; margin-bottom: 8px; }
+    .upload-hint { color: #64748b; font-size: 14px; }
+    .upload-hint strong { color: #3b82f6; }
+    .preview-wrap { margin-top: 14px; display: none; }
+    .preview-wrap.show { display: block; }
+    .preview-img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid #e2e8f0; display: block; }
+    .preview-name { margin-top: 6px; font-size: 12px; color: #94a3b8; }
+    .question-input {
+      width: 100%; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
+      font-size: 15px; font-family: inherit; color: #0f172a; margin-top: 16px;
+    }
+    .question-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .action-row { display: flex; gap: 10px; margin-top: 14px; }
+    .btn-primary {
+      flex: 1; background: #1e293b; color: #fff; border: none;
+      padding: 13px 20px; border-radius: 10px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-primary:hover:not(:disabled) { background: #334155; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-secondary {
+      background: transparent; color: #64748b; border: 1px solid #e2e8f0;
+      padding: 13px 18px; border-radius: 10px; font-size: 14px; cursor: pointer; font-family: inherit;
+    }
+    .result-card { display: none; }
+    .result-card.show { display: block; }
+    .result-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
+    }
+    .result-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .8px; }
+    .result-badge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: #ecfdf5; color: #059669; }
+    .chat-thread { display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; }
+    .msg { border-radius: 12px; padding: 14px 16px; font-size: 15px; line-height: 1.9; }
+    .msg-user { background: #f1f5f9; color: #334155; align-self: flex-end; max-width: 88%; border-bottom-right-radius: 4px; }
+    .msg-ai { background: #fafbfc; border: 1px solid #f1f5f9; border-bottom-left-radius: 4px; }
+    .msg-role { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    .msg-body { font-size: 15px; line-height: 1.85; }
+    .msg-body .katex { font-size: 1em; }
+    .msg-body .katex-display { margin: 8px 0; overflow-x: auto; font-size: 1.05em; }
+    .answer-box {
+      margin-top: 10px; padding: 10px 14px; background: #eff6ff;
+      border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; font-weight: 700; color: #1d4ed8;
+    }
+
+    /* ── Annotation badges ── */
+    .anno-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin: 4px 0 10px; padding: 0;
+    }
+    .anno-badge {
+      position: relative; display: inline-flex; align-items: center; gap: 4px;
+      background: #f1f5f9; border: 1px solid #cbd5e1;
+      border-radius: 20px; padding: 3px 11px;
+      font-size: 13px; cursor: pointer; user-select: none;
+      transition: background .15s, border-color .15s;
+    }
+    .anno-badge:hover { background: #e2e8f0; border-color: #94a3b8; }
+    .anno-badge.active { background: #1e293b; border-color: #1e293b; color: #fff; }
+    .anno-badge .anno-term { font-weight: 600; font-family: 'Courier New', monospace; font-size: 12px; }
+    .anno-popup {
+      display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b; color: #fff; border-radius: 10px;
+      padding: 8px 13px; font-size: 13px; white-space: nowrap;
+      z-index: 30; pointer-events: none;
+      line-height: 1.5;
+    }
+    .anno-popup::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 6px solid transparent; border-top-color: #1e293b;
+    }
+    .anno-badge.active .anno-popup { display: block; }
+    .anno-hint { font-size: 11px; color: #94a3b8; margin: -4px 0 8px; }
+    .loading-inline { display: none; align-items: center; gap: 10px; padding: 12px 0; color: #94a3b8; font-size: 14px; }
+    .loading-inline.show { display: flex; }
+    .spinner {
+      width: 22px; height: 22px; border: 2px solid #e2e8f0; border-top-color: #3b82f6;
+      border-radius: 50%; animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .chat-input-wrap { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: none; }
+    .chat-input-wrap.show { display: block; }
+    .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    .chat-input {
+      flex: 1; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
+      font-size: 14px; font-family: inherit; resize: none; min-height: 44px; max-height: 120px;
+    }
+    .btn-send {
+      background: #1e293b; color: #fff; border: none; padding: 11px 18px;
+      border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-send:disabled { opacity: .45; cursor: not-allowed; }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 480px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .modal-desc { font-size: 13px; color: #64748b; margin-bottom: 18px; line-height: 1.6; }
+    .free-tip {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      padding: 12px 14px; font-size: 13px; color: #166534; margin-bottom: 18px; line-height: 1.6;
+    }
+    .free-tip a { color: #15803d; font-weight: 600; }
+    .field-input {
+      width: 100%; padding: 11px 13px; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 14px; margin-bottom: 14px; font-family: inherit;
+    }
+    .field-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .key-link { font-size: 12px; color: #3b82f6; margin: -8px 0 14px; display: block; }
+    .modal-row { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { padding: 9px 18px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    .btn-save { padding: 9px 20px; background: #1e293b; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #1e293b; color: #fff; padding: 11px 22px; border-radius: 10px; font-size: 14px;
+      opacity: 0; transition: .3s; z-index: 200;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    @media (max-width: 600px) {
+      header { padding: 12px 16px; }
+      main { padding: 16px 12px 40px; }
+      .card { padding: 18px; }
+      .msg-user { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AI <span>解題</span></div>
+  <button class="btn-settings" onclick="openModal()">API 設定</button>
+</header>
+
+<main>
+  <div class="card">
+    <div class="upload-zone" id="zone">
+      <input type="file" id="fileInput" accept="image/*" onchange="onFile(this.files[0])">
+      <div class="upload-icon">📷</div>
+      <div class="upload-hint"><strong>點擊上傳</strong>或拖放、貼上圖片</div>
+    </div>
+    <div class="preview-wrap" id="prevWrap">
+      <img class="preview-img" id="prevImg" src="" alt="預覽">
+      <div class="preview-name" id="prevName"></div>
+    </div>
+    <label class="field-label" style="margin-top:16px">指定題目</label>
+    <input type="text" class="question-input" id="questionInput" placeholder="例：第4題、第2題組第(1)小題">
+    <div class="action-row">
+      <button class="btn-primary" id="solveBtn" onclick="startSolve()" disabled>解題</button>
+      <button class="btn-secondary" onclick="clearAll()">清除</button>
+    </div>
+  </div>
+
+  <div class="card result-card" id="resultCard">
+    <div class="result-header">
+      <div class="result-label">解題過程</div>
+      <div class="result-badge" id="badge">就緒</div>
+    </div>
+    <div class="chat-thread" id="chatThread"></div>
+    <div class="loading-inline" id="loading"><div class="spinner"></div><span>AI 思考中⋯</span></div>
+    <div class="chat-input-wrap" id="chatInputWrap">
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="追問⋯" onkeydown="chatKeydown(event)"></textarea>
+        <button class="btn-send" id="sendBtn" onclick="sendFollowUp()">送出</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">API 設定</div>
+    <div class="modal-desc">API Key 僅存於本機瀏覽器。</div>
+    <div class="free-tip">
+      <strong>數學／化學計算題</strong>建議用 <strong>Gemini 3 Flash</strong>。<br>
+      若出現「high demand」可改選 2.5 Flash 或 Groq。Gemini 金鑰 → <a id="keyLink" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
+    </div>
+
+    <label class="field-label">AI 服務</label>
+    <select class="field-input" id="providerSel" onchange="onProviderChange()">
+      <option value="gemini">Google Gemini（計算較準）</option>
+      <option value="groq">Groq（較快，數學較弱）</option>
+      <option value="openrouter">OpenRouter（部分免費）</option>
+      <option value="openai">OpenAI（需付費）</option>
+    </select>
+
+    <label class="field-label">API Key</label>
+    <input type="password" class="field-input" id="keyInput" placeholder="AIza...">
+    <a class="key-link" id="keyHelp" href="https://aistudio.google.com/apikey" target="_blank">如何取得 API Key？</a>
+
+    <label class="field-label">模型</label>
+    <select class="field-input" id="modelSel"></select>
+
+    <div class="modal-row">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveSettings()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<script>
+const PROVIDERS = {
+  gemini: {
+    label: 'Google Gemini',
+    keyPlaceholder: 'AIza...',
+    keyUrl: 'https://aistudio.google.com/apikey',
+    models: [
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash（3.0，推薦）' },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro（最強推理）' },
+      { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite（較快）' },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash（備用）' },
+      { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite（備用）' },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro（備用）' }
+    ]
+  },
+  groq: {
+    label: 'Groq',
+    keyPlaceholder: 'gsk_...',
+    keyUrl: 'https://console.groq.com/keys',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    models: [
+      { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout（推薦，可看圖）' },
+      { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick（可看圖）' }
+    ]
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    keyPlaceholder: 'sk-or-...',
+    keyUrl: 'https://openrouter.ai/keys',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    models: [
+      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash 免費' },
+      { id: 'meta-llama/llama-4-scout:free', name: 'Llama 4 Scout 免費' }
+    ]
+  },
+  openai: {
+    label: 'OpenAI',
+    keyPlaceholder: 'sk-...',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o-mini' }
+    ]
+  }
+};
+
+const DEPRECATED = {
+  'llama-3.2-11b-vision-preview': 'meta-llama/llama-4-scout-17b-16e-instruct',
+  'llama-3.2-90b-vision-preview': 'meta-llama/llama-4-scout-17b-16e-instruct',
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-flash-002': 'gemini-2.5-flash',
+  'gemini-2.0-flash': 'gemini-2.5-flash',
+  'gemini-2.0-flash-lite': 'gemini-2.5-flash-lite'
+};
+
+let imgDataURL = null, apiMessages = [], busy = false;
+const savedModel = localStorage.getItem('aim') || 'gemini-3-flash-preview';
+const cfg = {
+  provider: localStorage.getItem('aip') || 'gemini',
+  key:      localStorage.getItem('aik') || '',
+  model:    DEPRECATED[savedModel] || savedModel || 'gemini-3-flash-preview'
+};
+if (cfg.model !== savedModel) localStorage.setItem('aim', cfg.model);
+
+const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書詳解風格」撰寫，適用於所有理化題型。
+
+【鐵律】
+1. 嚴禁開場白、客套話、題幹重述、結論總結。第一行就直接寫公式或前提。
+2. 以「公式代入」為主，中文說明每句 ≤ 15 字，能列式就不寫句子。
+3. 所有分數一律用 $\\dfrac{}{}$（禁用 \\frac），巢狀分數也要完整展開。
+4. 同一邏輯鏈盡量同一行，用 $;$ 或 $\\Rightarrow$ 串接。
+
+【板書骨架（依題目取用，不必全寫）】
+
+■ 前提行（氣體／溶液／壓力題常用）：
+定溫定容，$C_M=\\dfrac{n}{V}$，$C_M\\propto n$，以各成分莫耳數代替濃度計算。
+定溫定壓，$PV=nRT$，$V\\propto n$，以氣體總莫耳數作為體積計算。
+
+■ 反應變化表（涉及莫耳數／分壓／濃度變化時必寫）：
+反應式下方對齊各物種，三行：
+初始：  [數據]  [數據]  [數據]
+變化：  $-ax$   $-bx$   $+cx$
+結果：  [數值]  [數值]  [數值]
+
+■ 選擇題（A）～（E）逐行解析，每行格式：
+(X) [條件或現象，≤12字] $\\Rightarrow$ [完整列式代入] $=$ [結果] $\\Rightarrow$ (對)/(錯)
+
+■ 計算題分步 (1)(2)(3)，每步 2~3 行，直接列式。
+
+【題型手法（依題目選用 1~2 種，勿堆砌）】
+
+・速率比：設初速 $r=a$，各選項寫 $\\dfrac{r}{a}=\\dfrac{[新速率式]}{[舊速率式]}=$ 數值，$r=$ 結果 $a$。
+・惰性氣體：定容→各成分 mol 不變則濃度不變；定壓→濃度 $=\\dfrac{自身\\,mol}{總\\,mol}$，體積隨總 mol 膨脹。
+・氣體 $\\Delta n$：$\\Delta n=$ 產物氣體係數和 $-$ 反應物氣體係數和；$\\Delta n=0$ 則總壓不變，無法測速率。
+・速率級數：假設 $r=k[A]^x[B]^y[C]^z$，固定其餘變數比較兩組實驗：$\\dfrac{R_1}{R_2}=\\dfrac{[A]_1^x[B]_1^y}{[A]_2^x[B]_2^y}\\Rightarrow$ 求 $x,y,z$。
+・濃度變化比：$\\Delta[A]:\\Delta[B]:\\Delta[C]=$ 數值比，化簡得係數比。
+・平均速率法：$\\dfrac{\\Delta P}{\\Delta t}=k\\times\\dfrac{P_{初}+P_{末}}{2}$ 或濃度版。
+・反應級數判斷：等比遞減→一級；半衰期逐次加倍→二級。
+・分壓／濃度表：列 $t$、總壓、各成分分壓，再代入速率式。
+
+【格式範例（速率＋惰性氣體多選）】
+定溫定容，$C_M=\\dfrac{n}{V}$，$C_M\\propto n$，以各成分莫耳數代替濃度計算。
+定溫定壓，$PV=nRT$，$V\\propto n$，以氣體總莫耳數作為體積計算。
+初速 $a=k\\cdot\\dfrac{4}{V}\\cdot\\dfrac{1}{V}$。
+(A) 定溫定容加 Ne：$\\dfrac{r}{a}=\\dfrac{4\\times1}{4\\times1}=1$，$r=a$ (對)
+(B) 定溫定壓加 Ne：$\\dfrac{r}{a}=\\dfrac{\\dfrac{4}{10}\\times\\dfrac{1}{10}}{\\dfrac{4}{5}\\times\\dfrac{1}{5}}=0.25$，$r=0.25a$ (錯)
+(C) 定溫定容加 $N_2$：$\\dfrac{r}{a}=\\dfrac{(4+5)\\times1}{4\\times1}=\\dfrac{9}{4}$，$r=\\dfrac{9}{4}a$ (對)
+**答：(A)(C)**
+
+【結尾】單獨一行「**答：(選項或數值)**」，不加其他文字。
+
+【追問】2~3 行算式，不重述題目。`;
+
+/* ── Settings UI ── */
+function onProviderChange() {
+  const p = PROVIDERS[document.getElementById('providerSel').value];
+  const sel = document.getElementById('modelSel');
+  sel.innerHTML = p.models.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  document.getElementById('keyInput').placeholder = p.keyPlaceholder;
+  document.getElementById('keyHelp').href = p.keyUrl;
+  document.getElementById('keyLink').href = p.keyUrl;
+}
+
+function openModal() {
+  document.getElementById('providerSel').value = cfg.provider;
+  onProviderChange();
+  document.getElementById('modelSel').value = cfg.model;
+  document.getElementById('keyInput').value = cfg.key;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+function overlayClick(e) { if (e.target.id === 'overlay') closeModal(); }
+function saveSettings() {
+  cfg.provider = document.getElementById('providerSel').value;
+  cfg.key = document.getElementById('keyInput').value.trim();
+  cfg.model = document.getElementById('modelSel').value;
+  localStorage.setItem('aip', cfg.provider);
+  localStorage.setItem('aik', cfg.key);
+  localStorage.setItem('aim', cfg.model);
+  closeModal();
+  toast('設定已儲存');
+}
+
+/* ── Upload ── */
+const zone = document.getElementById('zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f?.type.startsWith('image/')) onFile(f);
+});
+document.addEventListener('paste', e => {
+  const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
+  if (item) onFile(item.getAsFile());
+});
+
+function onFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgDataURL = e.target.result;
+    document.getElementById('prevImg').src = imgDataURL;
+    document.getElementById('prevName').textContent = file.name || '貼上的圖片';
+    document.getElementById('prevWrap').classList.add('show');
+    document.getElementById('solveBtn').disabled = false;
+    apiMessages = [];
+    document.getElementById('chatThread').innerHTML = '';
+    document.getElementById('chatInputWrap').classList.remove('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAll() {
+  imgDataURL = null; apiMessages = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('questionInput').value = '';
+  document.getElementById('chatInput').value = '';
+  document.getElementById('prevWrap').classList.remove('show');
+  document.getElementById('solveBtn').disabled = true;
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('chatThread').innerHTML = '';
+  document.getElementById('chatInputWrap').classList.remove('show');
+  setBadge('就緒', '#f1f5f9', '#64748b');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+function setBadge(txt, bg, color) {
+  const b = document.getElementById('badge');
+  b.textContent = txt; b.style.background = bg; b.style.color = color;
+}
+function setBusy(on) {
+  busy = on;
+  document.getElementById('loading').classList.toggle('show', on);
+  document.getElementById('solveBtn').disabled = on || !imgDataURL;
+  document.getElementById('sendBtn').disabled = on;
+}
+
+/* ── Chat UI ── */
+function appendMsg(role, text) {
+  const thread = document.getElementById('chatThread');
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  div.innerHTML = `<div class="msg-role">${role === 'user' ? '你' : '解題'}</div>
+    <div class="msg-body">${role === 'user' ? esc(text) : render(text)}</div>`;
+  thread.appendChild(div);
+  if (role === 'ai') doKaTeX(div.querySelector('.msg-body'));
+  thread.scrollTop = thread.scrollHeight;
+}
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowUp(); }
+}
+
+/* ── API adapters ── */
+function parseDataURL(url) {
+  const [h, data] = url.split(',');
+  return { mime: h.match(/data:([^;]+)/)[1], data };
+}
+
+async function callGemini() {
+  const contents = apiMessages.map(msg => {
+    const role = msg.role === 'assistant' ? 'model' : 'user';
+    const parts = [];
+    if (Array.isArray(msg.content)) {
+      for (const p of msg.content) {
+        if (p.type === 'image_url') {
+          const { mime, data } = parseDataURL(p.image_url.url);
+          parts.push({ inline_data: { mime_type: mime, data } });
+        } else parts.push({ text: p.text });
+      }
+    } else parts.push({ text: msg.content });
+    return { role, parts };
+  });
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent?key=${cfg.key}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM }] },
+      contents,
+      generationConfig: { maxOutputTokens: 4000, temperature: 0.1 }
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '（無回覆）';
+}
+
+async function callOpenAICompat(endpoint) {
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cfg.key}`,
+      ...(cfg.provider === 'openrouter' ? { 'HTTP-Referer': location.href, 'X-Title': 'AI解題' } : {})
+    },
+    body: JSON.stringify({
+      model: cfg.model,
+      max_tokens: 4000,
+      temperature: 0.1,
+      messages: [{ role: 'system', content: SYSTEM }, ...apiMessages]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+  return data.choices[0].message.content;
+}
+
+function formatError(msg) {
+  if (/high demand|spikes in demand|try again later/i.test(msg)) {
+    return '此模型目前請求過多，請稍後再試，或改選「Gemini 2.5 Flash」／「Groq Llama 4 Scout」。';
+  }
+  if (/not found|not supported for generateContent/i.test(msg)) {
+    return '此模型已下架。請：API 設定 → Gemini → 改選「Gemini 2.5 Flash」→ 儲存 → 重新整理';
+  }
+  if (/decommissioned|model_decommissioned/i.test(msg)) {
+    return '此 AI 模型已被官方下架。\n\n請：API 設定 → 改選「Llama 4 Scout」或「Gemini 2.5 Flash」→ 儲存 → 重新整理';
+  }
+  if (/quota|rate.?limit|exceeded|limit:\s*0/i.test(msg)) {
+    return '免費額度已用完。\n\n建議：改選 Groq + Llama 4 Scout，或 Gemini 2.5 Flash';
+  }
+  return msg;
+}
+
+async function callAPI() {
+  if (cfg.provider === 'gemini') return callGemini();
+  return callOpenAICompat(PROVIDERS[cfg.provider].endpoint);
+}
+
+async function startSolve() {
+  if (!cfg.key) { openModal(); toast('請先設定 API Key'); return; }
+  if (!imgDataURL || busy) return;
+  const q = document.getElementById('questionInput').value.trim();
+  if (!q) { toast('請輸入要解的題目'); return; }
+
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('chatInputWrap').classList.add('show');
+  appendMsg('user', q);
+  setBusy(true);
+  setBadge('解題中…', '#fef9c3', '#92400e');
+
+  // 引導 AI 直接切入主題，不再贅述題幹
+  const userText = `請針對圖片中的【${q}】撰寫板書詳解。
+要求：
+1. 嚴格模仿系統提示詞的板書風格（前提行→列式代入→逐選項判斷）。
+2. 所有分數用 $\\dfrac{}{}$，數值代入過程完整展開，巢狀分數也要寫出。
+3. 選擇題逐條列出 (A)(B)(C)(D)(E)，每行結尾標 (對) 或 (錯)。
+4. 禁止重述題幹，禁止廢話，直接開始寫。`;
+  apiMessages = [{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: imgDataURL, detail: 'high' } },
+      { type: 'text', text: userText }
+    ]
+  }];
+
+  try {
+    const reply = await callAPI();
+    apiMessages.push({ role: 'assistant', content: reply });
+    appendMsg('ai', reply);
+    setBadge('完成', '#ecfdf5', '#059669');
+  } catch (err) {
+    appendMsg('ai', `❌ ${formatError(err.message)}`);
+    setBadge('錯誤', '#fef2f2', '#dc2626');
+  } finally { setBusy(false); }
+}
+
+async function sendFollowUp() {
+  if (!cfg.key || busy) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || !apiMessages.length) return;
+  input.value = '';
+  appendMsg('user', text);
+  setBusy(true);
+  setBadge('回覆中…', '#fef9c3', '#92400e');
+  apiMessages.push({ role: 'user', content: text });
+  try {
+    const reply = await callAPI();
+    apiMessages.push({ role: 'assistant', content: reply });
+    appendMsg('ai', reply);
+    setBadge('完成', '#ecfdf5', '#059669');
+  } catch (err) {
+    apiMessages.pop();
+    appendMsg('ai', `❌ ${formatError(err.message)}`);
+    setBadge('錯誤', '#fef2f2', '#dc2626');
+  } finally { setBusy(false); }
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Annotation badge rendering ── */
+let annoCounter = 0;
+function renderAnnoRow(pairsStr) {
+  const pairs = pairsStr.split(',').map(p => p.trim()).filter(Boolean);
+  const id = 'anno-' + (annoCounter++);
+  const badges = pairs.map((pair, i) => {
+    const arrow = pair.indexOf('→');
+    if (arrow === -1) return '';
+    const term = pair.slice(0, arrow).trim();
+    const meaning = pair.slice(arrow + 1).trim();
+    const bid = `${id}-${i}`;
+    return `<span class="anno-badge" id="${bid}" onclick="toggleAnno('${bid}')">
+      <span class="anno-term">${esc(term)}</span>
+      <span class="anno-popup">${esc(meaning)}</span>
+    </span>`;
+  }).join('');
+  return `<div class="anno-row">${badges}</div>`;
+}
+
+function toggleAnno(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const wasActive = el.classList.contains('active');
+  // close all in same row
+  el.closest('.anno-row')?.querySelectorAll('.anno-badge').forEach(b => b.classList.remove('active'));
+  if (!wasActive) el.classList.add('active');
+}
+
+function render(raw) {
+  // Step 1: protect math formulas FIRST.
+  // Crucially, escape < > INSIDE the formula string so it's safe to insert into innerHTML.
+  // The browser decodes &lt;/&gt; back to </>  in text nodes, so KaTeX still processes them correctly.
+  const math = [];
+  let   s = raw.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g, m => {
+    math.push(enhanceMath(m).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+    return `\x00M${math.length-1}\x00`;
+  });
+
+  // Step 2: protect @注 annotation rows
+  const annos = [];
+  let hasAnno = false;
+  s = s.replace(/^@注\[(.+)\][ \t]*$/gm, (_, inner) => {
+    annos.push(renderAnnoRow(inner));
+    hasAnno = true;
+    return `\x00A${annos.length-1}\x00`;
+  });
+
+  // Step 3: escape all remaining (non-math) text — prevents < > in plain text from corrupting HTML
+  s = esc(s);
+
+  // Step 4: markdown bold → <strong>
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Step 5: answer box
+  s = s.replace(/(<strong>答[：:].*?<\/strong>)/g, '<div class="answer-box">$1</div>');
+
+  // Step 6: newlines
+  s = s.replace(/\n/g, '<br>');
+
+  // Step 7: restore math (< > are &lt;/&gt; in HTML but decoded to raw chars in DOM text nodes for KaTeX)
+  math.forEach((m, i) => { s = s.replace(`\x00M${i}\x00`, m); });
+
+  // Step 8: restore annotation HTML
+  annos.forEach((html, i) => { s = s.replace(`\x00A${i}\x00`, html); });
+
+  if (hasAnno) s = '<div class="anno-hint">點擊標籤查看意義</div>' + s;
+
+  return s;
+}
+
+function enhanceMath(tex) {
+  return tex
+    .replace(/\\frac\b/g, '\\dfrac')
+    .replace(/\\tfrac\b/g, '\\dfrac');
+}
+
+function doKaTeX(el) {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(el, {
+      delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+      throwOnError: false,
+      macros: { '\\frac': '\\dfrac', '\\tfrac': '\\dfrac' }
+    });
+  }
+}
+
+// close annotation popups when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.anno-badge')) {
+    document.querySelectorAll('.anno-badge.active').forEach(b => b.classList.remove('active'));
+  }
+});
+
+onProviderChange();
+if (!cfg.key) setTimeout(openModal, 400);
+</script>
+</body>
+</html>
