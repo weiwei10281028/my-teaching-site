@@ -442,7 +442,7 @@ function closeModal() { document.getElementById('overlay').classList.remove('sho
 function overlayClick(e) { if (e.target.id === 'overlay') closeModal(); }
 function saveSettings() {
   cfg.provider = document.getElementById('providerSel').value;
-  cfg.key = document.getElementById('keyInput').value.trim();
+  cfg.key = document.getElementById('keyInput').value.replace(/\s+/g, '');
   cfg.model = document.getElementById('modelSel').value;
   localStorage.setItem('aip', cfg.provider);
   localStorage.setItem('aik', cfg.key);
@@ -532,6 +532,7 @@ function parseDataURL(url) {
 }
 
 async function callGemini() {
+  const apiKey = cfg.key.replace(/\s+/g, '');
   const contents = apiMessages.map(msg => {
     const role = msg.role === 'assistant' ? 'model' : 'user';
     const parts = [];
@@ -546,10 +547,13 @@ async function callGemini() {
     return { role, parts };
   });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent?key=${cfg.key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
+    },
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM }] },
       contents,
@@ -582,6 +586,9 @@ async function callOpenAICompat(endpoint) {
 }
 
 function formatError(msg) {
+  if (/invalid authentication credentials|expected oauth|login cookie|authentication credential|api key not valid|API_KEY_INVALID|PERMISSION_DENIED|forbidden|unauthorized/i.test(msg)) {
+    return 'API Key 驗證失敗。\n\n手機瀏覽器需重新設定 API Key：右上「API 設定」→ 貼上 Gemini API Key → 儲存。\n\n若電腦可用、手機網頁版不可用，請檢查 Google API Key 是否限制了網站來源，需允許目前 GitHub Pages 網址。';
+  }
   if (/high demand|spikes in demand|try again later/i.test(msg)) {
     return '此模型目前請求過多，請稍後再試，或改選「Gemini 2.5 Flash」／「Groq Llama 4 Scout」。';
   }
