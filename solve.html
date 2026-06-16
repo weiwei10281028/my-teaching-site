@@ -80,20 +80,20 @@
     .msg-user { background: #f1f5f9; color: #334155; align-self: flex-end; max-width: 88%; border-bottom-right-radius: 4px; }
     .msg-ai { background: #fafbfc; border: 1px solid #f1f5f9; border-bottom-left-radius: 4px; }
     .msg-role { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-    .msg-body { font-size: 15px; line-height: 1.75; }
-    .msg-body .katex { font-size: 1em; line-height: 1.25; }
+    .msg-body { font-size: 15px; line-height: 1.62; }
+    .msg-body .katex { font-size: 1em; line-height: 1.18; }
     .msg-body .katex-display {
-      margin: 6px 0; overflow: visible; font-size: 1.03em;
+      margin: 4px 0; overflow: visible; font-size: 1.02em;
       white-space: normal;
     }
     .math-block {
       display: block; width: 100%; overflow: visible;
-      margin: 5px 0 8px; padding: 2px 0 3px;
-      line-height: 1.45; min-height: max-content;
+      margin: 3px 0 5px; padding: 1px 0 2px;
+      line-height: 1.32; min-height: max-content;
     }
     .math-block .katex {
       display: inline-block; overflow: visible;
-      line-height: 1.45; max-width: 100%;
+      line-height: 1.32; max-width: 100%;
     }
     .msg-body .katex .mfrac { margin-left: .05em; margin-right: .05em; }
     .math-note {
@@ -118,6 +118,7 @@
       margin-top: 10px; padding: 10px 14px; background: #eff6ff;
       border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; font-weight: 700; color: #1d4ed8;
     }
+    .key-status { font-size: 12px; color: #64748b; margin: -8px 0 14px; line-height: 1.5; }
 
     /* ── Annotation badges ── */
     .anno-row {
@@ -268,6 +269,7 @@
     <label class="field-label">API Key</label>
     <input type="password" class="field-input" id="keyInput" placeholder="AIza...">
     <a class="key-link" id="keyHelp" href="https://aistudio.google.com/apikey" target="_blank">如何取得 API Key？</a>
+    <div class="key-status" id="keyStatus">尚未檢查 Key</div>
 
     <label class="field-label">模型</label>
     <select class="field-input" id="modelSel"></select>
@@ -340,11 +342,23 @@ const DEPRECATED = {
   'gemini-2.0-flash-lite': 'gemini-2.5-flash-lite'
 };
 
+function cleanKey(value) {
+  return String(value || '').replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+}
+function loadSetting(name, fallback = '') {
+  return localStorage.getItem(name) || sessionStorage.getItem(name) || fallback;
+}
+function keySummary(key) {
+  const k = cleanKey(key);
+  if (!k) return '目前未儲存 API Key';
+  return `已儲存 Key：${k.slice(0, 6)}...${k.slice(-4)}（長度 ${k.length}）`;
+}
+
 let imgDataURL = null, apiMessages = [], busy = false;
-const savedModel = localStorage.getItem('aim') || 'gemini-3-flash-preview';
+const savedModel = loadSetting('aim', 'gemini-3-flash-preview');
 const cfg = {
-  provider: localStorage.getItem('aip') || 'gemini',
-  key:      localStorage.getItem('aik') || '',
+  provider: loadSetting('aip', 'gemini'),
+  key:      cleanKey(loadSetting('aik', '')),
   model:    DEPRECATED[savedModel] || savedModel || 'gemini-3-flash-preview'
 };
 if (cfg.model !== savedModel) localStorage.setItem('aim', cfg.model);
@@ -355,7 +369,7 @@ const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書�
 1. 嚴禁開場白、客套話、題幹重述、結論總結。第一行就直接寫公式或前提。
 2. 以「公式代入」為主，中文說明每句 ≤ 15 字，能列式就不寫句子。
 3. 所有分數一律用 $\\dfrac{}{}$（禁用 \\frac），巢狀分數也要完整展開。
-4. 同一邏輯鏈盡量同一行，用 $;$ 或 $\\Rightarrow$ 串接。
+4. 同一邏輯鏈盡量同一行，用 $;$ 或 $\\Rightarrow$ 串接；禁止連續空白行。
 5. 每個數學式中的所有數字都必須能點擊顯示中文解說：用 $\\htmlData{note=繁體中文短註解}{數學內容}$ 包住每個數字、小分式、化學式或小段代入式。註解必須繁體中文、≤14字、不可有空格或英文。
 6. 使用層級註解：內層標單一數字來源，外層標整段意義。例：$\\htmlData{note=溶質莫耳數}{\\htmlData{note=溶液濃度}{3.0\\times10^{-3}}\\times\\htmlData{note=溶液體積}{10.0}\\times\\htmlData{note=毫升轉公升}{10^{-3}}}$。
 7. 每一個數字、指數、係數、時間、體積、壓力、濃度、莫耳數、比例值都要標註；若同一數字重複出現，仍需各自標註其當下意義。
@@ -371,13 +385,13 @@ const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書�
 定溫定壓，$PV=nRT$，$V\\propto n$，以氣體總莫耳數作為體積計算。
 
 ■ 反應變化表（涉及莫耳數／分壓／濃度變化時必寫）：
-不可用空白手動對齊；一律用 LaTeX array，使物種、初始、變化、結果欄位垂直對齊：
-$\\begin{array}{c|ccc}
+不可用空白手動對齊；一律用 LaTeX array，使物種、初始、變化、結果欄位垂直對齊；array 必須用 $$...$$ 獨立包住：
+$$\\begin{array}{c|ccc}
  & \\htmlData{note=反應係數}{2}NO_2 & \\htmlData{note=反應係數}{2}NO & O_2\\\\
 \\text{初始} & P_0 & \\htmlData{note=初始莫耳數}{0} & \\htmlData{note=初始莫耳數}{0}\\\\
 \\text{變化} & -\\htmlData{note=反應係數}{2}x & +\\htmlData{note=反應係數}{2}x & +x\\\\
 \\text{結果} & P_0-\\htmlData{note=消耗量}{2x} & \\htmlData{note=生成量}{2x} & x
-\\end{array}$
+\\end{array}$$
 
 ■ 選擇題先分類，再決定篇幅：
 ・計算型選擇題：若五個選項只是同一數值的不同答案，不要逐項解釋。只列完整計算式，最後寫「故選 (X)」或「故 (X) 正確」。
@@ -436,19 +450,25 @@ function openModal() {
   onProviderChange();
   document.getElementById('modelSel').value = cfg.model;
   document.getElementById('keyInput').value = cfg.key;
+  document.getElementById('keyStatus').textContent = keySummary(cfg.key);
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal() { document.getElementById('overlay').classList.remove('show'); }
 function overlayClick(e) { if (e.target.id === 'overlay') closeModal(); }
 function saveSettings() {
   cfg.provider = document.getElementById('providerSel').value;
-  cfg.key = document.getElementById('keyInput').value.replace(/\s+/g, '');
+  cfg.key = cleanKey(document.getElementById('keyInput').value);
   cfg.model = document.getElementById('modelSel').value;
   localStorage.setItem('aip', cfg.provider);
   localStorage.setItem('aik', cfg.key);
   localStorage.setItem('aim', cfg.model);
+  sessionStorage.setItem('aip', cfg.provider);
+  sessionStorage.setItem('aik', cfg.key);
+  sessionStorage.setItem('aim', cfg.model);
+  document.getElementById('keyInput').value = cfg.key;
+  document.getElementById('keyStatus').textContent = keySummary(cfg.key);
   closeModal();
-  toast('設定已儲存');
+  toast(`設定已儲存：${keySummary(cfg.key)}`);
 }
 
 /* ── Upload ── */
@@ -532,7 +552,8 @@ function parseDataURL(url) {
 }
 
 async function callGemini() {
-  const apiKey = cfg.key.replace(/\s+/g, '');
+  const apiKey = cleanKey(cfg.key);
+  cfg.key = apiKey;
   const contents = apiMessages.map(msg => {
     const role = msg.role === 'assistant' ? 'model' : 'user';
     const parts = [];
@@ -634,10 +655,11 @@ async function startSolve() {
 8. 輸出前先在心中完成變數對應檢查：每個數字要先對應到初始值、後來值、時間、體積、濃度、壓力或係數，再加註解；不確定時寫「代入題給數值」，不可亂寫。
 9. 速率式位置要判斷正確：$P_t$ 是後來分壓，$P_0$ 是初始分壓，$t$ 是時間。
 10. 反應三段式不可用空白對齊；一律用 LaTeX array，讓反應式、初始、變化、結果垂直對齊。
-11. array 裡的每個數字、係數、x 也要加 $\\htmlData{note=...}{...}$ 註解。
+11. array 必須用 $$...$$ 獨立包住，禁止輸出成普通文字；array 裡的每個數字、係數、x 也要加 $\\htmlData{note=...}{...}$ 註解。
 12. 不要把整條公式包成一個註解，不要標等號或分式橫線。
 13. 遇到大型分式或巢狀分式時，拆成較短的兩行；一般短分式維持同一段，不要過度分行。
-14. 禁止重述題幹，禁止廢話，直接開始寫。`;
+14. 分段要清楚但緊湊，禁止連續空白行，禁止大段留白。
+15. 禁止重述題幹，禁止廢話，直接開始寫。`;
   apiMessages = [{
     role: 'user',
     content: [
@@ -714,7 +736,8 @@ function render(raw) {
   // Crucially, escape < > INSIDE the formula string so it's safe to insert into innerHTML.
   // The browser decodes &lt;/&gt; back to </>  in text nodes, so KaTeX still processes them correctly.
   const math = [];
-  let   s = raw.replace(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)([。；，、,.])?/g, (m, formula, punct = '') => {
+  const mathPattern = /(\$\$[\s\S]+?\$\$|\$\\begin\{(?:array|aligned|matrix|pmatrix|bmatrix)\}[\s\S]+?\\end\{(?:array|aligned|matrix|pmatrix|bmatrix)\}\$|\$[^$\n]+?\$)([。；，、,.])?/g;
+  let   s = raw.replace(mathPattern, (m, formula, punct = '') => {
     const mText = formula;
     const enhanced = enhanceMath(mText);
     const safeMath = enhanced.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
