@@ -80,9 +80,40 @@
     .msg-user { background: #f1f5f9; color: #334155; align-self: flex-end; max-width: 88%; border-bottom-right-radius: 4px; }
     .msg-ai { background: #fafbfc; border: 1px solid #f1f5f9; border-bottom-left-radius: 4px; }
     .msg-role { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-    .msg-body { font-size: 15px; line-height: 1.85; }
-    .msg-body .katex { font-size: 1em; }
-    .msg-body .katex-display { margin: 8px 0; overflow-x: auto; font-size: 1.05em; }
+    .msg-body { font-size: 15px; line-height: 1.75; }
+    .msg-body .katex { font-size: 1em; line-height: 1.25; }
+    .msg-body .katex-display {
+      margin: 6px 0; overflow: visible; font-size: 1.03em;
+      white-space: normal;
+    }
+    .math-block {
+      display: block; width: 100%; overflow: visible;
+      margin: 5px 0 8px; padding: 2px 0 3px;
+      line-height: 1.45; min-height: max-content;
+    }
+    .math-block .katex {
+      display: inline-block; overflow: visible;
+      line-height: 1.45; max-width: 100%;
+    }
+    .msg-body .katex .mfrac { margin-left: .05em; margin-right: .05em; }
+    .math-note {
+      cursor: pointer; border-radius: 5px;
+      padding: .16em .32em; margin: -.16em -.12em;
+      display: inline-block; touch-action: manipulation;
+      transition: background .15s, color .15s, box-shadow .15s;
+    }
+    .math-note.active {
+      background: #fef3c7; color: #92400e;
+      box-shadow: 0 0 0 2px #fbbf24 inset;
+    }
+    .math-note-popover {
+      position: fixed; display: none; z-index: 300;
+      max-width: min(280px, calc(100vw - 24px));
+      background: #1e293b; color: #fff; border-radius: 10px;
+      padding: 9px 12px; font-size: 13px; line-height: 1.55;
+      box-shadow: 0 10px 24px rgba(15,23,42,.22);
+    }
+    .math-note-popover.show { display: block; }
     .answer-box {
       margin-top: 10px; padding: 10px 14px; background: #eff6ff;
       border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; font-weight: 700; color: #1d4ed8;
@@ -325,6 +356,13 @@ const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書�
 2. 以「公式代入」為主，中文說明每句 ≤ 15 字，能列式就不寫句子。
 3. 所有分數一律用 $\\dfrac{}{}$（禁用 \\frac），巢狀分數也要完整展開。
 4. 同一邏輯鏈盡量同一行，用 $;$ 或 $\\Rightarrow$ 串接。
+5. 每個數學式中的所有數字都必須能點擊顯示中文解說：用 $\\htmlData{note=繁體中文短註解}{數學內容}$ 包住每個數字、小分式、化學式或小段代入式。註解必須繁體中文、≤14字、不可有空格或英文。
+6. 使用層級註解：內層標單一數字來源，外層標整段意義。例：$\\htmlData{note=溶質莫耳數}{\\htmlData{note=溶液濃度}{3.0\\times10^{-3}}\\times\\htmlData{note=溶液體積}{10.0}\\times\\htmlData{note=毫升轉公升}{10^{-3}}}$。
+7. 每一個數字、指數、係數、時間、體積、壓力、濃度、莫耳數、比例值都要標註；若同一數字重複出現，仍需各自標註其當下意義。
+8. 體積由 mL 轉 L 時，優先寫成 $\\htmlData{note=溶液體積}{10.0}\\times\\htmlData{note=毫升轉公升}{10^{-3}}$，不要寫成 $\\dfrac{10.0}{1000}$。
+9. 加註解前必須先在心中完成「變數對應檢查」：先判斷每個數字代入哪個物理/化學量，再寫 $\\htmlData$；不確定時用「代入題給數值」，不可亂寫。
+10. 速率定律或動力學式特別注意位置意義：若 $\\dfrac{1}{P_t}-\\dfrac{1}{P_0}=kt$，則分母 $P_t$ 是後來分壓、$P_0$ 是初始分壓、$t$ 是時間；例 $\\dfrac{1}{\\htmlData{note=後來分壓}{99}}-\\dfrac{1}{\\htmlData{note=初始分壓}{101}}=k\\times\\htmlData{note=反應時間}{16}$。
+11. 不要整條公式包成一個註解；不要標分式橫線或等號；應標在學生會想問「這個數字哪來」的位置。
 
 【板書骨架（依題目取用，不必全寫）】
 
@@ -333,19 +371,25 @@ const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書�
 定溫定壓，$PV=nRT$，$V\\propto n$，以氣體總莫耳數作為體積計算。
 
 ■ 反應變化表（涉及莫耳數／分壓／濃度變化時必寫）：
-反應式下方對齊各物種，三行：
-初始：  [數據]  [數據]  [數據]
-變化：  $-ax$   $-bx$   $+cx$
-結果：  [數值]  [數值]  [數值]
+不可用空白手動對齊；一律用 LaTeX array，使物種、初始、變化、結果欄位垂直對齊：
+$\\begin{array}{c|ccc}
+ & \\htmlData{note=反應係數}{2}NO_2 & \\htmlData{note=反應係數}{2}NO & O_2\\\\
+\\text{初始} & P_0 & \\htmlData{note=初始莫耳數}{0} & \\htmlData{note=初始莫耳數}{0}\\\\
+\\text{變化} & -\\htmlData{note=反應係數}{2}x & +\\htmlData{note=反應係數}{2}x & +x\\\\
+\\text{結果} & P_0-\\htmlData{note=消耗量}{2x} & \\htmlData{note=生成量}{2x} & x
+\\end{array}$
 
-■ 選擇題（A）～（E）逐行解析，每行格式：
-(X) [條件或現象，≤12字] $\\Rightarrow$ [完整列式代入] $=$ [結果] $\\Rightarrow$ (對)/(錯)
+■ 選擇題先分類，再決定篇幅：
+・計算型選擇題：若五個選項只是同一數值的不同答案，不要逐項解釋。只列完整計算式，最後寫「故選 (X)」或「故 (X) 正確」。
+・多小題計算題：每小題各自列式，分別指出正確選項，不列錯誤選項。
+・概念型選擇題：若各選項考不同觀念、不同條件或不同判斷鏈，才逐項寫 (A)～(E)。
+・混合型多選題：若每個選項都需獨立判斷，逐項列式或短句，行末標 (對)/(錯)。
 
-■ 計算題分步 (1)(2)(3)，每步 2~3 行，直接列式。
+■ 計算題分步 (1)(2)(3)，每步 2~3 行，直接列式；計算完只標正確選項。
 
 【題型手法（依題目選用 1~2 種，勿堆砌）】
 
-・速率比：設初速 $r=a$，各選項寫 $\\dfrac{r}{a}=\\dfrac{[新速率式]}{[舊速率式]}=$ 數值，$r=$ 結果 $a$。
+・速率比：設初速 $r=a$。若各選項為不同條件，逐項寫 $\\dfrac{r}{a}=\\dfrac{[新速率式]}{[舊速率式]}=$ 數值，$r=$ 結果 $a$；若只是問單一數值選項，只算一次並指出選項。
 ・惰性氣體：定容→各成分 mol 不變則濃度不變；定壓→濃度 $=\\dfrac{自身\\,mol}{總\\,mol}$，體積隨總 mol 膨脹。
 ・氣體 $\\Delta n$：$\\Delta n=$ 產物氣體係數和 $-$ 反應物氣體係數和；$\\Delta n=0$ 則總壓不變，無法測速率。
 ・速率級數：假設 $r=k[A]^x[B]^y[C]^z$，固定其餘變數比較兩組實驗：$\\dfrac{R_1}{R_2}=\\dfrac{[A]_1^x[B]_1^y}{[A]_2^x[B]_2^y}\\Rightarrow$ 求 $x,y,z$。
@@ -362,6 +406,16 @@ const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書�
 (B) 定溫定壓加 Ne：$\\dfrac{r}{a}=\\dfrac{\\dfrac{4}{10}\\times\\dfrac{1}{10}}{\\dfrac{4}{5}\\times\\dfrac{1}{5}}=0.25$，$r=0.25a$ (錯)
 (C) 定溫定容加 $N_2$：$\\dfrac{r}{a}=\\dfrac{(4+5)\\times1}{4\\times1}=\\dfrac{9}{4}$，$r=\\dfrac{9}{4}a$ (對)
 **答：(A)(C)**
+
+【格式範例（計算型單選／多小題）】
+(1) $n(NaHSO_3)=2\\times n(Na_2S_2O_5)=2\\times\\htmlData{note=硫代硫酸鈉莫耳數}{0.003}=\\htmlData{note=產生亞硫酸氫鈉莫耳數}{6.0\\times10^{-3}}\\;mol$
+故 (D) 正確。
+
+(2) 混合後 $V=10.0+10.0=20.0\\;mL=0.020\\;L$
+$[HSO_3^-]=\\dfrac{\\htmlData{note=溶質莫耳數}{\\htmlData{note=溶液A濃度}{6.0\\times10^{-3}}\\times\\htmlData{note=溶液體積}{10.0}\\times\\htmlData{note=毫升轉公升}{10^{-3}}}}{\\htmlData{note=混合後總體積}{0.020}}=\\htmlData{note=混合後濃度}{3.0\\times10^{-3}}\\;M$
+$r=\\dfrac{\\Delta[HSO_3^-]}{\\Delta t}=\\dfrac{\\htmlData{note=消耗濃度}{3.0\\times10^{-3}}}{\\htmlData{note=反應時間}{5}}=\\htmlData{note=平均消失速率}{6.0\\times10^{-4}}\\;M\\,s^{-1}$
+故 (D) 正確。
+**答：(1)(D)；(2)(D)**
 
 【結尾】單獨一行「**答：(選項或數值)**」，不加其他文字。
 
@@ -563,10 +617,20 @@ async function startSolve() {
   // 引導 AI 直接切入主題，不再贅述題幹
   const userText = `請針對圖片中的【${q}】撰寫板書詳解。
 要求：
-1. 嚴格模仿系統提示詞的板書風格（前提行→列式代入→逐選項判斷）。
+1. 嚴格模仿系統提示詞的板書風格（前提行→列式代入→指出正確）。
 2. 所有分數用 $\\dfrac{}{}$，數值代入過程完整展開，巢狀分數也要寫出。
-3. 選擇題逐條列出 (A)(B)(C)(D)(E)，每行結尾標 (對) 或 (錯)。
-4. 禁止重述題幹，禁止廢話，直接開始寫。`;
+3. 計算型選擇題只列計算過程並指出正確選項；不要逐一列錯誤選項。
+4. 概念型、混合型或各選項需獨立判斷時，才逐條列出 (A)(B)(C)(D)(E)。
+5. 每個數學式中的所有數字都要有可點擊註解：用 $\\htmlData{note=繁體中文短註解}{數學內容}$ 標在每個數字、化學式、係數、指數或小段代入式上。
+6. 使用層級註解：內層標單一數字來源，外層標整段意義。例如整個分子可標「溶質莫耳數」，其中的 10.0 標「溶液體積」、$10^{-3}$ 標「毫升轉公升」。
+7. 體積由 mL 轉 L 時，優先寫成 $10.0\\times10^{-3}$，不要寫成 $\\dfrac{10.0}{1000}$。
+8. 輸出前先在心中完成變數對應檢查：每個數字要先對應到初始值、後來值、時間、體積、濃度、壓力或係數，再加註解；不確定時寫「代入題給數值」，不可亂寫。
+9. 速率式位置要判斷正確：$P_t$ 是後來分壓，$P_0$ 是初始分壓，$t$ 是時間。
+10. 反應三段式不可用空白對齊；一律用 LaTeX array，讓反應式、初始、變化、結果垂直對齊。
+11. array 裡的每個數字、係數、x 也要加 $\\htmlData{note=...}{...}$ 註解。
+12. 不要把整條公式包成一個註解，不要標等號或分式橫線。
+13. 遇到大型分式或巢狀分式時，拆成較短的兩行；一般短分式維持同一段，不要過度分行。
+14. 禁止重述題幹，禁止廢話，直接開始寫。`;
   apiMessages = [{
     role: 'user',
     content: [
@@ -643,8 +707,18 @@ function render(raw) {
   // Crucially, escape < > INSIDE the formula string so it's safe to insert into innerHTML.
   // The browser decodes &lt;/&gt; back to </>  in text nodes, so KaTeX still processes them correctly.
   const math = [];
-  let   s = raw.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g, m => {
-    math.push(enhanceMath(m).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  let   s = raw.replace(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)([。；，、,.])?/g, (m, formula, punct = '') => {
+    const mText = formula;
+    const enhanced = enhanceMath(mText);
+    const safeMath = enhanced.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const isInline = enhanced.startsWith('$') && !enhanced.startsWith('$$');
+    const fracCount = (enhanced.match(/\\dfrac|\\over/g) || []).length;
+    const needsBlock = isInline && (
+      /\\begin\{array\}|\\begin\{aligned\}/.test(enhanced) ||
+      fracCount >= 2 ||
+      (fracCount >= 1 && enhanced.length > 95)
+    );
+    math.push(needsBlock ? `<div class="math-block">${safeMath}${punct}</div>` : `${safeMath}${punct}`);
     return `\x00M${math.length-1}\x00`;
   });
 
@@ -686,13 +760,71 @@ function enhanceMath(tex) {
     .replace(/\\tfrac\b/g, '\\dfrac');
 }
 
+function ensureMathNotePopover() {
+  let pop = document.getElementById('mathNotePopover');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'mathNotePopover';
+    pop.className = 'math-note-popover';
+    document.body.appendChild(pop);
+  }
+  return pop;
+}
+
+function hideMathNote() {
+  document.querySelectorAll('.math-note.active').forEach(el => el.classList.remove('active'));
+  ensureMathNotePopover().classList.remove('show');
+}
+
+function showMathNote(el) {
+  const pop = ensureMathNotePopover();
+  const note = el.dataset.note;
+  if (!note) return;
+  document.querySelectorAll('.math-note.active').forEach(item => {
+    if (item !== el) item.classList.remove('active');
+  });
+  el.classList.add('active');
+  pop.textContent = note;
+  pop.classList.add('show');
+
+  const rect = el.getBoundingClientRect();
+  const popRect = pop.getBoundingClientRect();
+  let left = rect.left + rect.width / 2 - popRect.width / 2;
+  left = Math.max(12, Math.min(left, window.innerWidth - popRect.width - 12));
+  let top = rect.top - popRect.height - 10;
+  if (top < 12) top = rect.bottom + 10;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
+}
+
+function initMathNotes(root) {
+  root.querySelectorAll('[data-note]').forEach(el => {
+    el.classList.add('math-note');
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const wasActive = el.classList.contains('active');
+      hideMathNote();
+      if (!wasActive) showMathNote(el);
+    });
+    el.addEventListener('dblclick', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const parentNote = el.parentElement?.closest('[data-note]');
+      hideMathNote();
+      showMathNote(parentNote || el);
+    });
+  });
+}
+
 function doKaTeX(el) {
   if (typeof renderMathInElement === 'function') {
     renderMathInElement(el, {
       delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
       throwOnError: false,
+      trust: context => context.command === '\\htmlData',
       macros: { '\\frac': '\\dfrac', '\\tfrac': '\\dfrac' }
     });
+    initMathNotes(el);
   }
 }
 
@@ -700,6 +832,9 @@ function doKaTeX(el) {
 document.addEventListener('click', e => {
   if (!e.target.closest('.anno-badge')) {
     document.querySelectorAll('.anno-badge.active').forEach(b => b.classList.remove('active'));
+  }
+  if (!e.target.closest('.math-note') && !e.target.closest('.math-note-popover')) {
+    hideMathNote();
   }
 });
 
