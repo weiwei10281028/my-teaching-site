@@ -255,21 +255,22 @@
     <div class="modal-desc">API Key 僅存於本機瀏覽器。</div>
     <div class="free-tip">
       <strong>數學／化學計算題</strong>建議用 <strong>Gemini 3 Flash</strong>。<br>
-      若出現「high demand」可改選 2.5 Flash 或 Groq。Gemini 金鑰 → <a id="keyLink" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
+      若手機無法直接使用 Gemini，請改用下方「Gemini 代理網址」。Gemini 金鑰 → <a id="keyLink" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
     </div>
 
     <label class="field-label">AI 服務</label>
     <select class="field-input" id="providerSel" onchange="onProviderChange()">
       <option value="gemini">Google Gemini（計算較準）</option>
-      <option value="groq">Groq（較快，數學較弱）</option>
-      <option value="openrouter">OpenRouter（部分免費）</option>
-      <option value="openai">OpenAI（需付費）</option>
     </select>
 
     <label class="field-label">API Key</label>
     <input type="password" class="field-input" id="keyInput" placeholder="AIza...">
     <a class="key-link" id="keyHelp" href="https://aistudio.google.com/apikey" target="_blank">如何取得 API Key？</a>
     <div class="key-status" id="keyStatus">尚未檢查 Key</div>
+
+    <label class="field-label">Gemini 代理網址（選填）</label>
+    <input type="url" class="field-input" id="proxyInput" placeholder="https://你的-worker.workers.dev">
+    <div class="key-status">手機無法直接連 Gemini 時，填 Cloudflare Worker 代理網址；填了代理後，手機端不需要 API Key。</div>
 
     <label class="field-label">模型</label>
     <select class="field-input" id="modelSel"></select>
@@ -317,6 +318,8 @@ const PROVIDERS = {
     keyUrl: 'https://openrouter.ai/keys',
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
     models: [
+      { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash（推薦）' },
+      { id: 'google/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite（較快）' },
       { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash 免費' },
       { id: 'meta-llama/llama-4-scout:free', name: 'Llama 4 Scout 免費' }
     ]
@@ -332,6 +335,10 @@ const PROVIDERS = {
     ]
   }
 };
+
+// 最簡單手機備援：把 Gemini API Key 填在這裡，手機就不用再貼 Key。
+// 注意：若此檔案上傳到公開 GitHub，這把 Key 會被看見；建議只用低額度或受限制的 Key。
+const BUILTIN_GEMINI_API_KEY = 'AQ.Ab8RN6KTFj5hhedejHNcdu7U8athXIY5ym0FRvi0wWuWyBR4cA';
 
 const DEPRECATED = {
   'llama-3.2-11b-vision-preview': 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -350,6 +357,7 @@ function loadSetting(name, fallback = '') {
 }
 function keySummary(key) {
   const k = cleanKey(key);
+  if (!k && cleanKey(BUILTIN_GEMINI_API_KEY)) return '使用網頁內建 Gemini Key';
   if (!k) return '目前未儲存 API Key';
   return `已儲存 Key：${k.slice(0, 6)}...${k.slice(-4)}（長度 ${k.length}）`;
 }
@@ -357,10 +365,13 @@ function keySummary(key) {
 let imgDataURL = null, apiMessages = [], busy = false;
 const savedModel = loadSetting('aim', 'gemini-3-flash-preview');
 const cfg = {
-  provider: loadSetting('aip', 'gemini'),
+  provider: 'gemini',
   key:      cleanKey(loadSetting('aik', '')),
-  model:    DEPRECATED[savedModel] || savedModel || 'gemini-3-flash-preview'
+  model:    DEPRECATED[savedModel] || savedModel || 'gemini-3-flash-preview',
+  proxy:    loadSetting('aipx', '')
 };
+localStorage.setItem('aip', 'gemini');
+sessionStorage.setItem('aip', 'gemini');
 if (cfg.model !== savedModel) localStorage.setItem('aim', cfg.model);
 
 const SYSTEM = `你是台灣高中理化教師。請完全模仿以下「板書詳解風格」撰寫，適用於所有理化題型。
@@ -450,6 +461,7 @@ function openModal() {
   onProviderChange();
   document.getElementById('modelSel').value = cfg.model;
   document.getElementById('keyInput').value = cfg.key;
+  document.getElementById('proxyInput').value = cfg.proxy;
   document.getElementById('keyStatus').textContent = keySummary(cfg.key);
   document.getElementById('overlay').classList.add('show');
 }
@@ -459,12 +471,15 @@ function saveSettings() {
   cfg.provider = document.getElementById('providerSel').value;
   cfg.key = cleanKey(document.getElementById('keyInput').value);
   cfg.model = document.getElementById('modelSel').value;
+  cfg.proxy = document.getElementById('proxyInput').value.trim().replace(/\/+$/, '');
   localStorage.setItem('aip', cfg.provider);
   localStorage.setItem('aik', cfg.key);
   localStorage.setItem('aim', cfg.model);
+  localStorage.setItem('aipx', cfg.proxy);
   sessionStorage.setItem('aip', cfg.provider);
   sessionStorage.setItem('aik', cfg.key);
   sessionStorage.setItem('aim', cfg.model);
+  sessionStorage.setItem('aipx', cfg.proxy);
   document.getElementById('keyInput').value = cfg.key;
   document.getElementById('keyStatus').textContent = keySummary(cfg.key);
   closeModal();
@@ -552,7 +567,7 @@ function parseDataURL(url) {
 }
 
 async function callGemini() {
-  const apiKey = cleanKey(cfg.key);
+  const apiKey = cleanKey(cfg.key || BUILTIN_GEMINI_API_KEY);
   cfg.key = apiKey;
   const contents = apiMessages.map(msg => {
     const role = msg.role === 'assistant' ? 'model' : 'user';
@@ -568,18 +583,22 @@ async function callGemini() {
     return { role, parts };
   });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent`;
+  const payload = {
+    model: cfg.model,
+    system_instruction: { parts: [{ text: SYSTEM }] },
+    contents,
+    generationConfig: { maxOutputTokens: 4000, temperature: 0.1 }
+  };
+  const useProxy = cfg.proxy && cfg.provider === 'gemini';
+  const url = useProxy
+    ? cfg.proxy
+    : `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': apiKey
-    },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: SYSTEM }] },
-      contents,
-      generationConfig: { maxOutputTokens: 4000, temperature: 0.1 }
-    })
+    headers: useProxy
+      ? { 'Content-Type': 'text/plain;charset=utf-8' }
+      : { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(payload)
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -611,16 +630,16 @@ function formatError(msg) {
     return 'API Key 驗證失敗。\n\n手機瀏覽器需重新設定 API Key：右上「API 設定」→ 貼上 Gemini API Key → 儲存。\n\n若電腦可用、手機網頁版不可用，請檢查 Google API Key 是否限制了網站來源，需允許目前 GitHub Pages 網址。';
   }
   if (/high demand|spikes in demand|try again later/i.test(msg)) {
-    return '此模型目前請求過多，請稍後再試，或改選「Gemini 2.5 Flash」／「Groq Llama 4 Scout」。';
+    return '此 Gemini 模型目前請求過多，請稍後再試，或改選「Gemini 2.5 Flash」。若手機仍失敗，請改用 Gemini 代理網址。';
   }
   if (/not found|not supported for generateContent/i.test(msg)) {
     return '此模型已下架。請：API 設定 → Gemini → 改選「Gemini 2.5 Flash」→ 儲存 → 重新整理';
   }
   if (/decommissioned|model_decommissioned/i.test(msg)) {
-    return '此 AI 模型已被官方下架。\n\n請：API 設定 → 改選「Llama 4 Scout」或「Gemini 2.5 Flash」→ 儲存 → 重新整理';
+    return '此 Gemini 模型已被官方下架。\n\n請：API 設定 → 改選「Gemini 2.5 Flash」→ 儲存 → 重新整理';
   }
   if (/quota|rate.?limit|exceeded|limit:\s*0/i.test(msg)) {
-    return '免費額度已用完。\n\n建議：改選 Groq + Llama 4 Scout，或 Gemini 2.5 Flash';
+    return 'Gemini 額度已用完。\n\n建議：改選 Gemini 2.5 Flash，或更換另一把 Gemini API Key。';
   }
   return msg;
 }
@@ -631,7 +650,7 @@ async function callAPI() {
 }
 
 async function startSolve() {
-  if (!cfg.key) { openModal(); toast('請先設定 API Key'); return; }
+  if (!cfg.key && !cfg.proxy && !cleanKey(BUILTIN_GEMINI_API_KEY)) { openModal(); toast('請先設定 API Key、內建 Key 或 Gemini 代理網址'); return; }
   if (!imgDataURL || busy) return;
   const q = document.getElementById('questionInput').value.trim();
   if (!q) { toast('請輸入要解的題目'); return; }
@@ -869,7 +888,7 @@ document.addEventListener('click', e => {
 });
 
 onProviderChange();
-if (!cfg.key) setTimeout(openModal, 400);
+if (!cfg.key && !cfg.proxy && !cleanKey(BUILTIN_GEMINI_API_KEY)) setTimeout(openModal, 400);
 </script>
 </body>
 </html>
