@@ -43,12 +43,23 @@
     .charge-sign {
         font-size: 1.4em;
         font-weight: bold;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         margin-left: 1px;
         line-height: 1;
         position: relative;
+        vertical-align: middle;
+        top: 0;
+    }
+    .charge-sign.minus {
+        transform: scaleX(1.5);
+        transform-origin: center;
+        margin-left: 2px;
+        top: 0.04em;
+    }
+    .charge-sign.plus {
         top: 0.02em;
-        vertical-align: baseline;
     }
 
     body {
@@ -1122,8 +1133,33 @@
     .quiz-type-label { font-family: 'Rajdhani', sans-serif; color: #94a3b8; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.7; }
     #quiz-type { display: none; }
     .quiz-question-text { font-size: 1.55rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); line-height: 1.3; }
-    .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex-shrink: 0; }
-    .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 0; height: 52px; border-radius: 6px; color: #ffffff; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; will-change: transform, background-color, border-color, box-shadow; display: flex; align-items: center; justify-content: center; }
+    .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-shrink: 0; }
+    .option-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.15); padding: 14px 14px; min-height: 56px; height: auto; border-radius: 6px; color: #ffffff; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Rajdhani', sans-serif; will-change: transform, background-color, border-color, box-shadow; display: block; text-align: center; line-height: 1.35; }
+    .option-btn.ion-opt { font-size: 1.28rem; font-weight: 700; letter-spacing: 0.04em; padding: 12px 16px; min-height: 60px; }
+    .option-btn.formula-opt { font-size: 1.15rem; font-weight: 700; padding: 12px 14px; }
+    .option-btn.chem-opt, .option-btn.ion-opt, .option-btn.formula-opt {
+        font-size: 1.24rem; font-weight: 700; font-family: 'Rajdhani', sans-serif;
+        letter-spacing: 0.02em; padding: 12px 14px; min-height: 60px; line-height: 1.4;
+    }
+    .option-btn.bin-opt { font-size: 1.2rem; font-weight: 700; min-height: 58px; }
+    .chem-sub, .option-btn sub, .quiz-question-text sub {
+        font-size: 0.72em !important; vertical-align: sub !important; line-height: 0;
+        margin: 0 0.06em; font-weight: 700; position: relative; top: 0;
+    }
+    .chem-sup, .option-btn sup, .quiz-question-text sup {
+        font-size: 0.72em !important; vertical-align: super !important; line-height: 1;
+        margin-left: 0.06em; font-weight: 700; position: relative; top: 0;
+        display: inline-flex; align-items: center; gap: 0;
+    }
+    .chem-sup .charge-sign, .option-btn sup .charge-sign, .quiz-question-text sup .charge-sign {
+        font-size: 1em; top: 0;
+    }
+    .chem-sup .charge-sign.minus, .option-btn sup .charge-sign.minus, .quiz-question-text sup .charge-sign.minus {
+        transform: scaleX(1.5); transform-origin: center; top: 0.03em; margin-left: 0.05em;
+    }
+    .chem-sup .charge-sign.plus, .option-btn sup .charge-sign.plus, .quiz-question-text sup .charge-sign.plus {
+        top: 0.01em; margin-left: 0.03em;
+    }
     .option-btn:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
     .option-btn.selected { background: rgba(234, 138, 60, 0.18) !important; border-color: #ea8a3c !important; color: #f5b07a !important; box-shadow: 0 0 8px rgba(234, 138, 60, 0.25) !important; }
     .option-btn.correct { background: rgba(74, 195, 137, 0.18) !important; border-color: #4ac389 !important; color: #7edcb0 !important; animation: correctPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -1310,7 +1346,13 @@
     .diff-b::before { background: #3b82f6 !important; }
     .diff-c::before { background: #f59e0b !important; }
     .diff-d::before { background: #ef4444 !important; }
-    #hybrid-type-select-area, #electron-type-select-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
+    .diff-e::before { background: #a855f7 !important; }
+    #hybrid-type-select-area, #electron-type-select-area, #precip-type-select-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
+    #precip-type-select-area .hybrid-type-card { border-left-color: rgba(168,85,247,0.3); }
+    #precip-type-select-area .hybrid-type-card.selected { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.6); border-left-color: #a855f7; }
+    #precip-type-select-area .hybrid-type-card:hover { background: rgba(168,85,247,0.08); border-left-color: #a855f7; }
+    #precip-type-select-area .hybrid-type-check { border-color: rgba(168,85,247,0.5); }
+    #precip-type-select-area .hybrid-type-card.selected .hybrid-type-check { background: #a855f7; border-color: #a855f7; }
     .hybrid-type-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px; }
     .hybrid-type-card.selected { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.6); border-left-color: #f59e0b; }
     .hybrid-type-card:hover { background: rgba(245,158,11,0.08); border-left-color: #f59e0b; }
@@ -1778,6 +1820,28 @@
                     </div>
                     <button class="start-cal-btn" id="hybrid-confirm-btn" onclick="confirmHybridTypes()">確認題型，繼續 ▸</button>
                 </div>
+                <div id="precip-type-select-area">
+                    <span class="setup-label">選擇題型（可複選，至少一種）</span>
+                    <div id="precip-type-cards" style="display:flex;flex-direction:column;gap:10px;">
+                        <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'A')" data-type="A">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">A｜溶解與沉澱</div><div class="hybrid-type-desc">溶解情形、離子配對、特殊溶解</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'B')" data-type="B">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">B｜顏色辨識</div><div class="hybrid-type-desc">沉澱物顏色、離子水溶液顏色</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'C')" data-type="C">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">C｜沉澱再溶解</div><div class="hybrid-type-desc">強酸/強鹼、氨水、鹵化銀、特殊錯離子</div></div>
+                        </div>
+                        <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'D')" data-type="D">
+                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
+                            <div><div class="hybrid-type-name">D｜焰色反應</div><div class="hybrid-type-desc">金屬離子焰色辨識</div></div>
+                        </div>
+                    </div>
+                    <button class="start-cal-btn" id="precip-confirm-btn" onclick="confirmPrecipTypes()">確認題型，繼續 ▸</button>
+                </div>
                 <div id="cal-category-area" style="display:flex; flex-direction:column; gap:15px; padding:20px 15px;">
                     <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
                         <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
@@ -1827,6 +1891,15 @@
                                         ．依氧化數反向辨識物質
                                     </div>
                                 </div>
+                                <div style="margin-top: 12px;">
+                                    <span style="color:#a855f7; font-weight: bold; display: block; margin-bottom: 6px;">[ 沉澱表 ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #a855f7;">
+                                        ．溶解情形、離子配對、沉澱物辨識<br>
+                                        ．沉澱物與離子溶液顏色<br>
+                                        ．沉澱再溶解（酸鹼、氨水、鹵化銀）<br>
+                                        ．焰色反應
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1856,6 +1929,13 @@
                             <span class="diff-title" style="color:#ef4444;">氧化還原</span>
                             <span class="diff-range">分子中原子氧化數判斷</span>
                             <span class="diff-tag" style="border-color:#ef4444; color:#ef4444;">直接開始 ▸</span>
+                        </div>
+                    </div>
+                    <div class="diff-card diff-e" onclick="selectCalCategory('precipitation')">
+                        <div class="diff-info">
+                            <span class="diff-title" style="color:#a855f7;">沉澱表</span>
+                            <span class="diff-range">溶解規則、沉澱辨識、再溶解、顏色、焰色</span>
+                            <span class="diff-tag" style="border-color:#a855f7; color:#a855f7;">直接開始 ▸</span>
                         </div>
                     </div>
                 </div>
@@ -2574,7 +2654,7 @@ function formatFormula(str) {
     }
 
     // 數字變下標
-    let formattedMain = mainPart.replace(/(\d+)/g, '<sub>$1</sub>');
+    let formattedMain = mainPart.replace(/(\d+)/g, '<sub class="chem-sub">$1</sub>');
 
     // 電荷變上標
     let formattedCharge = "";
@@ -2583,11 +2663,53 @@ function formatFormula(str) {
             chargePart = chargePart[1];
         }
         // 美化正負號，套用你原本 CSS 裡的 .charge-sign
-        let chargeDisplay = chargePart.replace(/([+-]+)/g, '<span class="charge-sign">$1</span>');
-        formattedCharge = `<sup>${chargeDisplay}</sup>`;
+        let chargeDisplay = chargePart.replace(/-/g, '<span class="charge-sign minus">-</span>').replace(/\+/g, '<span class="charge-sign plus">+</span>');
+        formattedCharge = `<sup class="chem-sup">${chargeDisplay}</sup>`;
     }
 
     return formattedMain + formattedCharge;
+}
+
+/** 將 Unicode 上下標化學式轉為較易讀的 HTML（選項/題目用） */
+function formatChemLabel(str) {
+    if (!str) return "";
+    if (str.includes("<sub") || str.includes("<sup")) {
+        return str
+            .replace(/<sub>/gi, '<sub class="chem-sub">')
+            .replace(/<sup>/gi, '<sup class="chem-sup">');
+    }
+    const subMap = "₀₁₂₃₄₅₆₇₈₉";
+    const supDigit = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+    let out = "";
+    let i = 0;
+    while (i < str.length) {
+        const ch = str[i];
+        if (subMap.includes(ch)) {
+            let run = "";
+            while (i < str.length && subMap.includes(str[i])) {
+                run += subMap.indexOf(str[i]);
+                i++;
+            }
+            out += `<sub class="chem-sub">${run}</sub>`;
+            continue;
+        }
+        if (supDigit.includes(ch) || ch === "⁺" || ch === "⁻") {
+            let run = "";
+            while (i < str.length && (supDigit.includes(str[i]) || str[i] === "⁺" || str[i] === "⁻")) {
+                const c = str[i];
+                if (c === "⁺") run += "+";
+                else if (c === "⁻") run += "-";
+                else run += supDigit.indexOf(c);
+                i++;
+            }
+            const chargeHtml = run.replace(/-/g, '<span class="charge-sign minus">-</span>').replace(/\+/g, '<span class="charge-sign plus">+</span>');
+            out += `<sup class="chem-sup">${chargeHtml}</sup>`;
+            continue;
+        }
+        out += ch;
+        i++;
+    }
+    return out;
 }
 
 function toFraction(val) {
@@ -6144,6 +6266,591 @@ function formatConfigHtml(str) {
     return str.replace(/(\[.*?\])/g, '<span class="noble">$1</span>')
               .replace(/([spdf])(\d+)/g, '$1<sup style="font-size: 0.75em !important; vertical-align: baseline !important; position: relative !important; top: -0.25em !important; margin-left: 1px !important; font-weight: normal !important; line-height: 0 !important;">$2</sup>');
 }
+// --- 沉澱表：溶解規則引擎與題庫 ---
+const PRECIP_ENGINE = (function() {
+    const IA = new Set(['Li','Na','K','Rb','Cs']);
+    const IIA = new Set(['Be','Mg','Ca','Sr','Ba']);
+    const STATUS_LABEL = { soluble:'可溶', slightly:'微溶', insoluble:'難溶' };
+    const STATUS_OPTS = ['可溶','微溶','難溶'];
+    const BINARY_SOL_OPTS = ['可溶','難溶'];
+    const NONE_ABOVE = '以上皆非';
+
+    const CATIONS = [
+        {id:'Li+',elem:'Li',ch:1,label:'Li⁺'},{id:'Na+',elem:'Na',ch:1,label:'Na⁺'},{id:'K+',elem:'K',ch:1,label:'K⁺'},
+        {id:'NH4+',elem:'NH4',ch:1,label:'NH₄⁺',poly:true},{id:'H+',elem:'H',ch:1,label:'H⁺'},
+        {id:'Mg2+',elem:'Mg',ch:2,label:'Mg²⁺'},{id:'Ca2+',elem:'Ca',ch:2,label:'Ca²⁺'},{id:'Sr2+',elem:'Sr',ch:2,label:'Sr²⁺'},
+        {id:'Ba2+',elem:'Ba',ch:2,label:'Ba²⁺'},{id:'Be2+',elem:'Be',ch:2,label:'Be²⁺'},
+        {id:'Al3+',elem:'Al',ch:3,label:'Al³⁺'},{id:'Fe2+',elem:'Fe',ch:2,label:'Fe²⁺'},{id:'Fe3+',elem:'Fe',ch:3,label:'Fe³⁺'},
+        {id:'Cu2+',elem:'Cu',ch:2,label:'Cu²⁺'},{id:'Cu+',elem:'Cu',ch:1,label:'Cu⁺'},{id:'Ag+',elem:'Ag',ch:1,label:'Ag⁺'},
+        {id:'Zn2+',elem:'Zn',ch:2,label:'Zn²⁺'},{id:'Cd2+',elem:'Cd',ch:2,label:'Cd²⁺'},{id:'Co2+',elem:'Co',ch:2,label:'Co²⁺'},
+        {id:'Ni2+',elem:'Ni',ch:2,label:'Ni²⁺'},{id:'Mn2+',elem:'Mn',ch:2,label:'Mn²⁺'},{id:'Cr3+',elem:'Cr',ch:3,label:'Cr³⁺'},
+        {id:'Pb2+',elem:'Pb',ch:2,label:'Pb²⁺'},{id:'Hg22+',elem:'Hg2',ch:2,label:'Hg₂²⁺',special:true},
+        {id:'Tl+',elem:'Tl',ch:1,label:'Tl⁺'},{id:'Sn2+',elem:'Sn',ch:2,label:'Sn²⁺'}
+    ];
+    const ANIONS = [
+        {id:'NO3-',elem:'NO3',ch:-1,label:'NO₃⁻',poly:true},{id:'CH3COO-',elem:'CH3COO',ch:-1,label:'CH₃COO⁻',poly:true},
+        {id:'Cl-',elem:'Cl',ch:-1,label:'Cl⁻'},{id:'Br-',elem:'Br',ch:-1,label:'Br⁻'},{id:'I-',elem:'I',ch:-1,label:'I⁻'},
+        {id:'SO42-',elem:'SO4',ch:-2,label:'SO₄²⁻',poly:true},{id:'CrO42-',elem:'CrO4',ch:-2,label:'CrO₄²⁻',poly:true},
+        {id:'S2-',elem:'S',ch:-2,label:'S²⁻'},{id:'OH-',elem:'OH',ch:-1,label:'OH⁻',poly:true},
+        {id:'CO32-',elem:'CO3',ch:-2,label:'CO₃²⁻',poly:true},{id:'PO43-',elem:'PO4',ch:-3,label:'PO₄³⁻',poly:true},
+        {id:'SO32-',elem:'SO3',ch:-2,label:'SO₃²⁻',poly:true},{id:'C2O42-',elem:'C2O4',ch:-2,label:'C₂O₄²⁻',poly:true},
+        {id:'F-',elem:'F',ch:-1,label:'F⁻'}
+    ];
+    const CR_O4_SOL = new Set(['Mg2+','Ca2+','Zn2+','Cu2+','Fe2+','Fe3+','Al3+','Ni2+','Co2+','Mn2+','Cd2+','Sn2+','Cr3+']);
+    const FORMULA_OVERRIDES = {
+        'Ag+|Cl-':'AgCl','Ag+|Br-':'AgBr','Ag+|I-':'AgI','Ag+|CrO42-':'Ag2CrO4','Ag+|C2O42-':'Ag2C2O4','Ag+|S2-':'Ag2S',
+        'Hg22+|Cl-':'Hg2Cl2','Hg22+|Br-':'Hg2Br2','Hg22+|I-':'Hg2I2','Hg22+|SO42-':'Hg2SO4','Hg22+|CrO42-':'Hg2CrO4',
+        'Cu+|Cl-':'CuCl','Pb2+|Cl-':'PbCl2','Pb2+|Br-':'PbBr2','Pb2+|I-':'PbI2','Pb2+|SO42-':'PbSO4','Pb2+|CrO42-':'PbCrO4',
+        'Pb2+|CO32-':'PbCO3','Pb2+|S2-':'PbS','Pb2+|OH-':'Pb(OH)2',
+        'Ba2+|SO42-':'BaSO4','Ba2+|CrO42-':'BaCrO4','Ba2+|CO32-':'BaCO3','Ba2+|C2O42-':'BaC2O4','Ba2+|PO43-':'Ba3(PO4)2','Ba2+|SO32-':'BaSO3','Ba2+|S2-':'BaS',
+        'Sr2+|SO42-':'SrSO4','Sr2+|CrO42-':'SrCrO4','Sr2+|CO32-':'SrCO3','Sr2+|C2O42-':'SrC2O4','Sr2+|PO43-':'Sr3(PO4)2',
+        'Ca2+|SO42-':'CaSO4','Ca2+|CO32-':'CaCO3','Ca2+|C2O42-':'CaC2O4','Ca2+|PO43-':'Ca3(PO4)2','Ca2+|SO32-':'CaSO3','Ca2+|OH-':'Ca(OH)2',
+        'Mg2+|CO32-':'MgCO3','Mg2+|C2O42-':'MgC2O4','Mg2+|PO43-':'Mg3(PO4)2','Mg2+|OH-':'Mg(OH)2',
+        'Fe2+|S2-':'FeS','Fe3+|OH-':'Fe(OH)3','Fe2+|OH-':'Fe(OH)2','Cu2+|S2-':'CuS','Cu2+|OH-':'Cu(OH)2','Zn2+|S2-':'ZnS','Zn2+|OH-':'Zn(OH)2',
+        'Al3+|OH-':'Al(OH)3','Ni2+|S2-':'NiS','Ni2+|OH-':'Ni(OH)2','Co2+|S2-':'CoS','Co2+|OH-':'Co(OH)2','Mn2+|S2-':'MnS','Cd2+|S2-':'CdS',
+        'Ag+|OH-':'Ag2O','Ag+|CH3COO-':'CH3COOAg','Tl+|Cl-':'TlCl','Tl+|I-':'TlI'
+    };
+
+    function gcd(a,b){return b?gcd(b,a%b):Math.abs(a);}
+    function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+    function pick(a){return a[Math.floor(Math.random()*a.length)];}
+    function pickN(arr,n,eq){const s=shuffle(arr);const r=[];for(const x of s){if(r.length>=n)break;if(!r.some(y=>eq?eq(y,x):y===x))r.push(x);}return r;}
+    function fmtF(f){return formatFormula(f);}
+
+    function buildFormula(cat,an){
+        const k=cat.id+'|'+an.id;
+        if(FORMULA_OVERRIDES[k])return FORMULA_OVERRIDES[k];
+        const g=gcd(cat.ch,Math.abs(an.ch)),nC=Math.abs(an.ch)/g,nA=cat.ch/g;
+        const cStr=cat.special?cat.elem:(cat.elem+(nC>1?nC:''));
+        const aE=an.elem;
+        const aStr=an.poly?(nA>1?'('+aE+')'+nA:aE):(aE+(nA>1?nA:''));
+        return cStr+aStr;
+    }
+
+    function getSolubility(cat,an){
+        const ce=cat.elem,aid=an.id;
+        if(aid==='NO3-')return{status:'soluble',formula:buildFormula(cat,an)};
+        if(aid==='CH3COO-'){if(ce==='Ag')return{status:'slightly',formula:'CH3COOAg'};return{status:'soluble',formula:buildFormula(cat,an)};}
+        if(IA.has(ce)||ce==='H'||cat.id==='NH4+')return{status:'soluble',formula:buildFormula(cat,an)};
+        if(['Cl-','Br-','I-'].includes(aid)){
+            if(['Hg22+','Cu+','Pb2+','Ag+','Tl+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
+            return{status:'soluble',formula:buildFormula(cat,an)};
+        }
+        if(aid==='SO42-'){
+            if(cat.id==='Ca2+')return{status:'slightly',formula:'CaSO4'};
+            if(['Sr2+','Ba2+','Pb2+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
+            return{status:'soluble',formula:buildFormula(cat,an)};
+        }
+        if(aid==='CrO42-'){
+            if(cat.id==='Sr2+')return{status:'slightly',formula:'SrCrO4'};
+            if(['Ba2+','Hg22+','Pb2+','Ag+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
+            if(CR_O4_SOL.has(cat.id))return{status:'soluble',formula:buildFormula(cat,an)};
+            return null;
+        }
+        if(aid==='S2-'){
+            if(IA.has(ce)||ce==='H'||cat.id==='NH4+'||IIA.has(ce))return{status:'soluble',formula:buildFormula(cat,an)};
+            return{status:'insoluble',formula:buildFormula(cat,an)};
+        }
+        if(aid==='OH-'){
+            if(IA.has(ce)||cat.id==='NH4+')return{status:'soluble',formula:buildFormula(cat,an)};
+            if(cat.id==='Ca2+')return{status:'slightly',formula:'Ca(OH)2'};
+            if(['Sr2+','Ba2+'].includes(cat.id))return{status:'soluble',formula:buildFormula(cat,an)};
+            return{status:'insoluble',formula:buildFormula(cat,an)};
+        }
+        if(['CO32-','PO43-','SO32-'].includes(aid))return{status:'insoluble',formula:buildFormula(cat,an)};
+        if(aid==='C2O42-'){
+            if(cat.id==='Mg2+')return{status:'slightly',formula:'MgC2O4'};
+            if(['Be2+'].includes(cat.id))return{status:'soluble',formula:buildFormula(cat,an)};
+            return{status:'insoluble',formula:buildFormula(cat,an)};
+        }
+        if(aid==='F-'){
+            if(['Be2+','Tl+','Ag+'].includes(cat.id))return{status:'soluble',formula:buildFormula(cat,an)};
+            return{status:'insoluble',formula:buildFormula(cat,an)};
+        }
+        return null;
+    }
+
+    let ALL_PAIRS=[],PRECIP_PAIRS=[],SOLUBLE_PAIRS=[];
+    function init(){
+        ALL_PAIRS=[];PRECIP_PAIRS=[];SOLUBLE_PAIRS=[];
+        for(const c of CATIONS)for(const a of ANIONS){
+            const r=getSolubility(c,a);if(!r)continue;
+            const item={cat:c,an:a,status:r.status,formula:r.formula,label:STATUS_LABEL[r.status]};
+            ALL_PAIRS.push(item);
+            if(r.status==='insoluble')PRECIP_PAIRS.push(item);
+            else if(r.status==='soluble')SOLUBLE_PAIRS.push(item);
+        }
+    }
+    init();
+
+    const MUST_SOLUBLE_Q = [
+        {q:'NO₃⁻ 與任一陽離子形成的鹽類，溶解情形為何？',a:'可溶',type:'必溶離子'},
+        {q:'CH₃COO⁻ 與 Na⁺ 形成的鹽類，溶解情形為何？',a:'可溶',type:'必溶離子'},
+        {q:'下列何者屬於「一律可溶」的陰離子？',a:'NO₃⁻',opts:['NO₃⁻','Cl⁻','SO₄²⁻','CO₃²⁻']},
+        {q:'下列何者屬於「一律可溶」的陽離子？',a:'Na⁺',opts:['Na⁺','Ag⁺','Ba²⁺','Pb²⁺']},
+        {q:'Na₂SO₄ 在水中的溶解情形為何？',a:'可溶',type:'必溶離子'},
+        {q:'KNO₃ 在水中的溶解情形為何？',a:'可溶',type:'必溶離子'},
+        {q:'下列鹽類何者一定可溶？',a:'NH₄Cl',opts:['NH₄Cl','AgCl','BaSO₄','CaCO₃']},
+        {q:'CH₃COOAg 的溶解情形為何？',a:'微溶',type:'必溶離子例外'}
+    ];
+
+    const PRECIP_COLORS=[
+        {f:'AgCl',c:'白色'},{f:'AgBr',c:'淡黃色'},{f:'AgI',c:'黃色'},{f:'PbCl2',c:'白色'},{f:'PbI2',c:'黃色'},
+        {f:'BaSO4',c:'白色'},{f:'CaSO4',c:'白色'},{f:'BaCrO4',c:'黃色'},{f:'Ag2CrO4',c:'磚紅色'},
+        {f:'CuS',c:'黑色'},{f:'PbS',c:'黑色'},{f:'FeS',c:'黑色'},{f:'ZnS',c:'白色'},{f:'CdS',c:'黃色'},
+        {f:'Cu(OH)2',c:'藍色'},{f:'Fe(OH)3',c:'紅褐色'},{f:'Fe(OH)2',c:'綠色'},{f:'Al(OH)3',c:'白色'},
+        {f:'CaCO3',c:'白色'},{f:'BaCO3',c:'白色'},{f:'Ni(OH)2',c:'綠色'},{f:'Co(OH)2',c:'粉紅色'}
+    ];
+    const SOL_COLORS=[
+        {id:'Cu2+',l:'Cu²⁺',c:'藍色'},{id:'Fe2+',l:'Fe²⁺',c:'淡綠色'},{id:'Fe3+',l:'Fe³⁺',c:'黃褐色'},
+        {id:'MnO4-',l:'MnO₄⁻',c:'紫色'},{id:'CrO42-',l:'CrO₄²⁻',c:'黃色'},{id:'Cr2O72-',l:'Cr₂O₇²⁻',c:'橙色'},
+        {id:'FeSCN2+',l:'FeSCN²⁺',c:'血紅色'},{id:'Cu(NH3)42+',l:'Cu(NH₃)₄²⁺',c:'深藍色'},
+        {id:'Ni2+',l:'Ni²⁺',c:'綠色'},{id:'Co2+',l:'Co²⁺',c:'粉紅色'},{id:'Mn2+',l:'Mn²⁺',c:'淡粉紅色'},
+        {id:'Na+',l:'Na⁺',c:'無色'},{id:'Ag+',l:'Ag⁺',c:'無色'},{id:'Zn2+',l:'Zn²⁺',c:'無色'}
+    ];
+    const FLAME_COLORS=[
+        {id:'Li+',l:'Li⁺',c:'鮮紅色'},{id:'Na+',l:'Na⁺',c:'黃色'},{id:'K+',l:'K⁺',c:'紫色'},
+        {id:'Ca2+',l:'Ca²⁺',c:'橙紅色'},{id:'Sr2+',l:'Sr²⁺',c:'深紅色'},{id:'Ba2+',l:'Ba²⁺',c:'黃綠色'},
+        {id:'Cu2+',l:'Cu²⁺',c:'藍綠色'},{id:'Mg2+',l:'Mg²⁺',c:'無色'},{id:'Be2+',l:'Be²⁺',c:'無色'}
+    ];
+    const COLOR_ION_Q=[
+        {catId:'Ag+',anId:'CrO42-',color:'磚紅色'},
+        {catId:'Ag+',anId:'Cl-',color:'白色'},
+        {catId:'Cu2+',anId:'S2-',color:'黑色'},
+        {catId:'Fe2+',anId:'S2-',color:'黑色'},
+        {catId:'Pb2+',anId:'I-',color:'黃色'},
+        {catId:'Ba2+',anId:'CrO42-',color:'黃色'}
+    ];
+    const NH3_COMPLEX_VARIANTS={
+        'Cu²⁺':{correct:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₄³⁺','Cu(NH₃)₂²⁺']},
+        'Co²⁺':{correct:'Co(NH₃)₆²⁺',wrong:['Co(NH₃)₆³⁺','Co(NH₃)₄²⁺','Co(NH₃)₆⁺']},
+        'Ni²⁺':{correct:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₅²⁺','Ni(NH₃)₄²⁺']},
+        'Zn²⁺':{correct:'Zn(NH₃)₄²⁺',wrong:['Zn(NH₃)₄³⁺','Zn(NH₃)₂²⁺','Zn(NH₃)₆²⁺']},
+        'Ag⁺':{correct:'Ag(NH₃)₂⁺',wrong:['Ag(NH₃)₂²⁺','Ag(NH₃)₄²⁺','Ag(NH₃)₃⁺']},
+        'Cd²⁺':{correct:'Cd(NH₃)₄²⁺',wrong:['Cd(NH₃)₄³⁺','Cd(NH₃)₂²⁺','Cd(NH₃)₆²⁺']}
+    };
+    const SPECIAL_COMPLEX_Q=[
+        {q:'Al³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Al(OH)₄⁻',wrong:['Zn(OH)₄²⁻','Al(OH)₃','Cr(OH)₄⁻']},
+        {q:'Zn²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Zn(OH)₄²⁻',wrong:['Zn(OH)₂','Al(OH)₄⁻','Zn(OH)₃⁻']},
+        {q:'Pb²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Pb(OH)₄²⁻',wrong:['Pb(OH)₂','Sn(OH)₄²⁻','Pb(OH)₃⁻']},
+        {q:'Cr³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Cr(OH)₄⁻',wrong:['Cr(OH)₃','Al(OH)₄⁻','Cr(OH)₅²⁻']},
+        {q:'Cu²⁺ 加入過量氨水後，主要錯離子為何？',a:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₂²⁺','Cu(NH₃)₆²⁺']},
+        {q:'Ni²⁺ 加入過量氨水後，主要錯離子為何？',a:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₄²⁺','Ni(NH₃)₅²⁺']}
+    ];
+    const NH3_AMPHI=[
+        {ion:'Al³⁺',prec:'Al(OH)₃'},{ion:'Mg²⁺',prec:'Mg(OH)₂'},{ion:'Fe³⁺',prec:'Fe(OH)₃'},
+        {ion:'Cr³⁺',prec:'Cr(OH)₃'},{ion:'Pb²⁺',prec:'Pb(OH)₂'}
+    ];
+    const SPECIAL_CASES=[
+        {q:'PbCl₂ 在冷水中的溶解情形為何？',a:'難溶'},
+        {q:'PbCl₂ 在熱水中的溶解情形為何？',a:'可溶'},
+        {q:'CaSO₄ 的溶解情形為何？',a:'微溶'},
+        {q:'Ca(OH)₂ 的溶解情形為何？',a:'微溶'},
+        {q:'SrCrO₄ 的溶解情形為何？',a:'微溶'},
+        {q:'MgC₂O₄ 的溶解情形為何？',a:'微溶'},
+        {q:'CH₃COOAg 的溶解情形為何？',a:'微溶'}
+    ];
+    const ACID_DISSOLVE=[
+        {p:'CaCO₃',a:'溶解並放出 CO₂',cat:'碳酸鹽'},{p:'BaCO₃',a:'溶解並放出 CO₂',cat:'碳酸鹽'},
+        {p:'Fe(OH)₃',a:'溶解',cat:'氫氧化物'},{p:'Al(OH)₃',a:'溶解',cat:'氫氧化物'},
+        {p:'CaSO₃',a:'溶解並放出 SO₂',cat:'亞硫酸鹽'},{p:'BaCrO₄',a:'溶解且溶液變橙色',cat:'鉻酸鹽'},
+        {p:'CaC₂O₄',a:'溶解',cat:'草酸鹽'},{p:'Ca₃(PO₄)₂',a:'溶解',cat:'磷酸鹽'}
+    ];
+    const ACID_NO_DISSOLVE=['BaSO₄','SrSO₄','PbSO₄','CuS'];
+    const ACID_SOLUBLE_EXTRA=['FeS','ZnS','MnS','NiS','PbS','CdS','HgS','Ag₂S','MgCO₃','ZnCO₃','Ca(OH)₂','Mg(OH)₂','BaSO₃'];
+    const BASE_DISSOLVE=[
+        {p:'Al(OH)₃',ion:'Al(OH)₄⁻',c:'無色'},{p:'Zn(OH)₂',ion:'Zn(OH)₄²⁻',c:'無色'},
+        {p:'Pb(OH)₂',ion:'Pb(OH)₄²⁻',c:'無色'},{p:'Cr(OH)₃',ion:'Cr(OH)₄⁻',c:'綠色'},
+        {p:'Be(OH)₂',ion:'Be(OH)₄²⁻',c:'無色'},{p:'Sn(OH)₂',ion:'Sn(OH)₄²⁻',c:'無色'}
+    ];
+    const BASE_NO_DISSOLVE=['Cu(OH)₂','Fe(OH)₃','Mg(OH)₂'];
+    const NH3_DISSOLVE=[
+        {ion:'Cu²⁺',prec:'Cu(OH)₂',complex:'Cu(NH₃)₄²⁺',cc:'深藍色'},
+        {ion:'Ag⁺',prec:'Ag₂O',complex:'Ag(NH₃)₂⁺',cc:'無色'},
+        {ion:'Zn²⁺',prec:'Zn(OH)₂',complex:'Zn(NH₃)₄²⁺',cc:'無色'},
+        {ion:'Ni²⁺',prec:'Ni(OH)₂',complex:'Ni(NH₃)₆²⁺',cc:'藍紫色'},
+        {ion:'Co²⁺',prec:'Co(OH)₂',complex:'Co(NH₃)₆²⁺',cc:'黃褐色'},
+        {ion:'Cd²⁺',prec:'Cd(OH)₂',complex:'Cd(NH₃)₄²⁺',cc:'無色'}
+    ];
+    const NH3_NO=['Al(OH)₃','Mg(OH)₂','Fe(OH)₃'];
+    const AGX_DATA=[
+        {f:'AgF',c:'無色',dilNH3:'可溶',concNH3:'可溶',s2o3:'可溶'},
+        {f:'AgCl',c:'白色',dilNH3:'可溶',concNH3:'可溶',s2o3:'可溶'},
+        {f:'AgBr',c:'淡黃色',dilNH3:'不溶',concNH3:'不溶',s2o3:'可溶'},
+        {f:'AgI',c:'黃色',dilNH3:'不溶',concNH3:'不溶',s2o3:'可溶'}
+    ];
+    const GAS_ACID_Q=[
+        {p:'CaCO₃',g:'CO₂'},{p:'BaCO₃',g:'CO₂'},{p:'MgCO₃',g:'CO₂'},
+        {p:'CaSO₃',g:'SO₂'},{p:'BaSO₃',g:'SO₂'}
+    ];
+
+    function mkOpts(correct,pool,fmt,n){
+        const opts=[correct];const used=new Set([correct]);
+        for(const x of shuffle(pool)){if(opts.length>=n)break;const v=fmt?fmt(x):x;if(v&&!used.has(v)){used.add(v);opts.push(v);}}
+        return shuffle(opts);
+    }
+    function mkOpts4(correct,candidates,extraPool,formulaOnly){
+        const opts=[correct];const used=new Set([correct]);
+        for(const c of shuffle(candidates)){if(opts.length>=4)break;if(c&&c!==correct&&!used.has(c)){used.add(c);opts.push(c);}}
+        if(extraPool)for(const c of shuffle(extraPool)){if(opts.length>=4)break;if(c&&!used.has(c)){used.add(c);opts.push(c);}}
+        if(!formulaOnly){
+            const allLabels=CATIONS.map(c=>c.label).concat(ANIONS.map(a=>a.label));
+            let guard=0;
+            while(opts.length<4&&guard<80){guard++;const f=pick(allLabels);if(!used.has(f)){used.add(f);opts.push(f);}}
+        }
+        return shuffle(opts);
+    }
+    function agxBin(val){return(val==='不溶')?'難溶':'可溶';}
+
+    function gen21(qd){
+        if(Math.random()<0.25){
+            const item=pick(MUST_SOLUBLE_Q);
+            qd.type=item.type||'溶解情形判斷';
+            qd.question=item.q;
+            qd.answer=item.a;
+            qd.displayMode='ion';
+            qd.optionClass='chem-opt';
+            if(item.opts){
+                qd.forcedOpts=item.opts;
+            }else{
+                qd.forcedOpts=mkOpts(item.a,STATUS_OPTS,null,3);
+            }
+            return true;
+        }
+        const rev=Math.random()<0.4;
+        if(rev){
+            const st=pick(['insoluble','slightly','soluble']);
+            const pool=ALL_PAIRS.filter(p=>p.status===st);
+            if(pool.length<2)return false;
+            const correct=pick(pool);
+            qd.type='溶解情形判斷（反向）';
+            qd.question=`下列何者為「${STATUS_LABEL[st]}」？`;
+            qd.answer=fmtF(correct.formula);
+            qd.displayMode='formula';
+            qd.optionClass='chem-opt';
+            const wrong=pickN(ALL_PAIRS.filter(p=>p.status!==st),3,x=>x.formula).map(x=>fmtF(x.formula));
+            qd.forcedOpts=mkOpts4(qd.answer,wrong);
+            return true;
+        }
+        const item=pick(ALL_PAIRS);
+        qd.type='溶解情形判斷';
+        if(Math.random()<0.5){
+            qd.question=`${item.cat.label} 與 ${item.an.label} 混合後，溶解情形為何？`;
+        }else{
+            qd.question=`${fmtF(item.formula)} 在水中的溶解情形為何？`;
+        }
+        qd.answer=item.label;
+        qd.displayMode='text';
+        qd.optionClass='bin-opt';
+        qd.forcedOpts=shuffle(STATUS_OPTS.filter(s=>s!==item.label).concat([item.label]));
+        return true;
+    }
+
+    function gen22(qd){
+        if(Math.random()<0.38){
+            const cq=pick(COLOR_ION_Q);
+            const pair=PRECIP_PAIRS.find(p=>p.cat.id===cq.catId&&p.an.id===cq.anId);
+            if(!pair)return false;
+            const useCat=Math.random()<0.55;
+            if(useCat){
+                qd.type='離子配對沉澱';
+                qd.question=`${pair.cat.label} 與下列何者混合產生<strong>${cq.color}</strong>沉澱？`;
+                qd.answer=pair.an.label;
+                const wrongAns=pickN(ANIONS.filter(a=>a.id!==pair.an.id),3,a=>a.id).map(a=>a.label);
+                qd.displayMode='ion';qd.optionClass='chem-opt';
+                qd.forcedOpts=mkOpts4(pair.an.label,wrongAns);
+            }else{
+                qd.type='離子配對沉澱';
+                qd.question=`下列何種陽離子與 ${pair.an.label} 混合產生<strong>${cq.color}</strong>沉澱？`;
+                qd.answer=pair.cat.label;
+                const wrongCats=pickN(CATIONS.filter(c=>c.id!==pair.cat.id),3,c=>c.id).map(c=>c.label);
+                qd.displayMode='ion';qd.optionClass='chem-opt';
+                qd.forcedOpts=mkOpts4(pair.cat.label,wrongCats);
+            }
+            return true;
+        }
+        const PRECIP_ANIONS=['CO32-','SO42-','S2-','OH-','Cl-','CrO42-','PO43-','F-','C2O42-'];
+        if(Math.random()<0.5){
+            const an=pick(ANIONS.filter(a=>PRECIP_ANIONS.includes(a.id)));
+            const pool=SOLUBLE_PAIRS.filter(p=>p.an.id===an.id);
+            if(pool.length<2)return false;
+            const correct=pick(pool);
+            qd.type='離子配對沉澱（反向）';
+            qd.question=`${an.label} 與下列何種陽離子混合後<strong>不會</strong>產生沉澱？`;
+            qd.answer=correct.cat.label;
+            const wrongPool=PRECIP_PAIRS.filter(p=>p.an.id===an.id).map(p=>p.cat.label);
+            qd.displayMode='ion';qd.optionClass='chem-opt';
+            qd.forcedOpts=mkOpts4(correct.cat.label,wrongPool);
+            return true;
+        }
+        const cats=CATIONS.filter(c=>PRECIP_PAIRS.some(p=>p.cat.id===c.id)&&SOLUBLE_PAIRS.some(p=>p.cat.id===c.id));
+        if(!cats.length)return false;
+        const cat=pick(cats);
+        const pool=SOLUBLE_PAIRS.filter(p=>p.cat.id===cat.id);
+        if(pool.length<2)return false;
+        const correct=pick(pool);
+        qd.type='離子配對沉澱（反向）';
+        qd.question=`${cat.label} 與下列何種陰離子混合後<strong>不會</strong>產生沉澱？`;
+        qd.answer=correct.an.label;
+        const wrongPool=PRECIP_PAIRS.filter(p=>p.cat.id===cat.id).map(p=>p.an.label);
+        qd.displayMode='ion';qd.optionClass='chem-opt';
+        qd.forcedOpts=mkOpts4(correct.an.label,wrongPool);
+        return true;
+    }
+
+    function gen23(qd){
+        const item=pick(SPECIAL_COMPLEX_Q);
+        qd.type='特殊錯離子';
+        qd.question=item.q;
+        qd.answer=item.a;
+        qd.displayMode='ion';
+        qd.optionClass='chem-opt';
+        qd.forcedOpts=mkOpts4(item.a,item.wrong);
+        return true;
+    }
+
+    function gen24(qd){
+        const rev=Math.random()<0.4;
+        const colors=[...new Set(PRECIP_COLORS.map(x=>x.c))];
+        if(rev){
+            const col=pick(colors);
+            const pool=PRECIP_COLORS.filter(x=>x.c===col);
+            const correct=pick(pool);
+            qd.type='沉澱物顏色（反向）';
+            qd.question=`下列何者為「${col}」沉澱？`;
+            qd.answer=fmtF(correct.f);
+            qd.displayMode='formula';
+            qd.optionClass='chem-opt';
+            qd.forcedOpts=mkOpts4(qd.answer,pickN(PRECIP_COLORS.filter(x=>x.c!==col),3,x=>x.f).map(x=>fmtF(x.f)));
+            return true;
+        }
+        const item=pick(PRECIP_COLORS);
+        qd.type='沉澱物顏色';
+        qd.question=`${fmtF(item.f)} 沉澱的顏色為何？`;
+        qd.answer=item.c;
+        qd.displayMode='text';
+        qd.forcedOpts=mkOpts4(item.c,colors.filter(c=>c!==item.c));
+        return true;
+    }
+
+    function gen25(qd){
+        const rev=Math.random()<0.4;
+        const colors=[...new Set(SOL_COLORS.map(x=>x.c))];
+        if(rev){
+            const col=pick(colors);
+            const pool=SOL_COLORS.filter(x=>x.c===col);
+            const correct=pick(pool);
+            qd.type='離子溶液顏色（反向）';
+            qd.question=`下列何者的水溶液為「${col}」？`;
+            qd.answer=correct.l;
+            qd.displayMode='ion';
+            qd.optionClass='chem-opt';
+            qd.forcedOpts=mkOpts4(correct.l,pickN(SOL_COLORS.filter(x=>x.c!==col),3,x=>x.id).map(x=>x.l));
+            return true;
+        }
+        const item=pick(SOL_COLORS);
+        qd.type='離子溶液顏色';
+        qd.question=`${item.l}(aq) 的顏色為何？`;
+        qd.answer=item.c;
+        qd.displayMode='text';
+        qd.forcedOpts=mkOpts4(item.c,colors.filter(c=>c!==item.c));
+        return true;
+    }
+
+    function gen26(qd){
+        const r=Math.random();
+        const sub=r<0.03?'gas':(r<0.52?'acid':(r<0.88?'base':'chromate'));
+        const rev=Math.random()<0.4;
+        const acidSolPool=[...ACID_DISSOLVE.map(x=>x.p),...ACID_SOLUBLE_EXTRA];
+        if(sub==='gas'){
+            const item=pick(GAS_ACID_Q);
+            qd.type='酸溶出氣體';
+            qd.question=`${item.p} 沉澱加入稀強酸後，會放出何種氣體？`;
+            qd.answer=item.g;
+            qd.displayMode='text';
+            qd.forcedOpts=mkOpts4(item.g,['CO₂','SO₂','O₂','H₂'].filter(g=>g!==item.g));
+            return true;
+        }
+        if(sub==='chromate'){
+            qd.type='鉻酸鹽加酸變色';
+            qd.question='BaCrO₄ 黃色沉澱加入稀強酸後，溶液顏色變為何者？';
+            qd.answer='橙色（Cr₂O₇²⁻）';
+            qd.displayMode='text';
+            qd.forcedOpts=mkOpts4(qd.answer,['黃色（CrO₄²⁻）','藍色','無色','綠色']);
+            return true;
+        }
+        if(sub==='acid'){
+            const mode=pick(['hard','sol','sulf','sulfate','bin']);
+            qd.displayMode='formula';
+            qd.optionClass='chem-opt';
+            qd.useChemFormat=true;
+            if(mode==='hard'){
+                const correct=pick(ACID_NO_DISSOLVE);
+                qd.type='強酸溶解（反向）';
+                qd.question='下列何者加入稀強酸後<strong>難溶</strong>（不溶解）？';
+                qd.answer=correct;
+                qd.forcedOpts=mkOpts4(correct,pickN(acidSolPool.filter(p=>!ACID_NO_DISSOLVE.includes(p)),6),null,true);
+            }else if(mode==='sol'){
+                const correct=pick(acidSolPool);
+                qd.type='強酸溶解（反向）';
+                qd.question='下列何者加入稀強酸後<strong>可溶</strong>？';
+                qd.answer=correct;
+                qd.forcedOpts=mkOpts4(correct,[...ACID_NO_DISSOLVE,...pickN(acidSolPool.filter(p=>p!==correct),4)],null,true);
+            }else if(mode==='sulf'){
+                qd.type='強酸溶解（硫化物）';
+                qd.question='下列何種<strong>硫化物</strong>加入稀強酸後<strong>難溶</strong>？';
+                qd.answer='CuS';
+                qd.forcedOpts=mkOpts4('CuS',['FeS','ZnS','MnS','NiS','PbS','CdS','HgS','Ag₂S'],null,true);
+            }else if(mode==='sulfate'){
+                const correct=pick(['BaSO₄','SrSO₄','PbSO₄']);
+                qd.type='強酸溶解（硫酸鹽）';
+                qd.question='下列何種<strong>硫酸鹽</strong>加入稀強酸後<strong>難溶</strong>？';
+                qd.answer=correct;
+                qd.forcedOpts=mkOpts4(correct,['CaSO₄','MgSO₄','FeSO₄','CuSO₄','ZnSO₄','Na₂SO₄'],null,true);
+            }else{
+                const item=pick(ACID_DISSOLVE);
+                qd.type='強酸溶解';
+                qd.question=`${item.p} 沉澱加入稀強酸後，是否可溶？`;
+                qd.answer='可溶';
+                qd.displayMode='text';
+                qd.optionClass='bin-opt';
+                qd.useChemFormat=false;
+                qd.forcedOpts=shuffle(['可溶','難溶']);
+            }
+            return true;
+        }
+        if(rev){
+            const correct=pick(BASE_DISSOLVE);
+            qd.type='強鹼溶解（反向）';
+            qd.question='下列何者加入過量強鹼後可溶？';
+            qd.answer=correct.p;
+            qd.displayMode='text';
+            qd.forcedOpts=mkOpts4(correct.p,BASE_NO_DISSOLVE);
+        }else{
+            const item=pick(BASE_DISSOLVE);
+            qd.type='強鹼溶解';
+            qd.question=`${item.p} 沉澱加入過量 NaOH 後，是否可溶？`;
+            qd.answer='可溶';
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(['可溶','難溶']);
+        }
+        return true;
+    }
+
+    function gen27(qd){
+        const sub=Math.random()<0.5?'nh3':(Math.random()<0.65?'complex':'amphi');
+        if(sub==='complex'){
+            const ions=Object.keys(NH3_COMPLEX_VARIANTS);
+            const ionKey=pick(ions);
+            const v=NH3_COMPLEX_VARIANTS[ionKey];
+            qd.type='氨錯離子';
+            qd.question=`${ionKey} 加入過量氨水再溶解後，主要錯離子為何？`;
+            qd.answer=v.correct;
+            qd.displayMode='ion';qd.optionClass='chem-opt';
+            qd.forcedOpts=mkOpts4(v.correct,v.wrong);
+            return true;
+        }
+        if(sub==='amphi'){
+            const item=pick(NH3_AMPHI);
+            qd.type='過量氨水溶解';
+            qd.question=`${item.ion} 先產生沉澱，加入過量氨水後是否可溶？`;
+            qd.answer='難溶';
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(['可溶','難溶']);
+            return true;
+        }
+        const rev=Math.random()<0.35;
+        if(rev){
+            const noDissolvePool=[...NH3_NO,...NH3_AMPHI.map(x=>x.prec)];
+            const correct=pick(noDissolvePool);
+            qd.type='過量氨水溶解（反向）';
+            qd.question='下列何者加入過量氨水後<strong>難溶</strong>（不會再溶解）？';
+            qd.answer=correct;
+            qd.displayMode='text';
+            qd.forcedOpts=mkOpts4(correct,pickN(NH3_DISSOLVE,3,x=>x.prec).map(x=>x.prec));
+        }else{
+            const item=pick(NH3_DISSOLVE);
+            qd.type='過量氨水溶解';
+            qd.question=`${item.ion} 先產生沉澱，加入過量氨水後是否可溶？`;
+            qd.answer='可溶';
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(['可溶','難溶']);
+        }
+        return true;
+    }
+
+    function gen28(qd){
+        const item=pick(SPECIAL_CASES);
+        qd.type='特殊溶解情形';
+        qd.question=item.q;
+        qd.answer=item.a;
+        qd.displayMode='text';
+        qd.optionClass='bin-opt';
+        const pool=STATUS_OPTS.filter(s=>s!==item.a);
+        qd.forcedOpts=shuffle(pool.concat([item.a]));
+        return true;
+    }
+
+    function gen29(qd){
+        const item=pick(AGX_DATA.filter(x=>x.f!=='AgF'));
+        const mode=pick(['dilNH3','concNH3','s2o3']);
+        qd.type='鹵化銀溶解特性';
+        if(mode==='dilNH3'){
+            qd.question=`${fmtF(item.f)} 能否溶於稀氨水？`;
+            qd.answer=agxBin(item.dilNH3);
+        }else if(mode==='concNH3'){
+            qd.question=`${fmtF(item.f)} 能否溶於濃氨水？`;
+            qd.answer=agxBin(item.concNH3);
+        }else{
+            qd.question=`${fmtF(item.f)} 能否溶於 S₂O₃²⁻ 溶液？`;
+            qd.answer=agxBin(item.s2o3);
+        }
+        qd.displayMode='text';
+        qd.optionClass='bin-opt';
+        qd.forcedOpts=shuffle(['可溶','難溶']);
+        return true;
+    }
+
+    function gen30(qd){
+        const rev=Math.random()<0.4;
+        const colors=[...new Set(FLAME_COLORS.map(x=>x.c))];
+        if(rev){
+            const col=pick(colors.filter(c=>c!=='無色'));
+            const pool=FLAME_COLORS.filter(x=>x.c===col);
+            const correct=pick(pool);
+            qd.type='焰色反應（反向）';
+            qd.question=`焰色反應呈「${col}」的離子為何？`;
+            qd.answer=correct.l;
+            qd.displayMode='ion';
+            qd.optionClass='chem-opt';
+            qd.forcedOpts=mkOpts4(correct.l,pickN(FLAME_COLORS.filter(x=>x.c!==col),3,x=>x.id).map(x=>x.l));
+            return true;
+        }
+        const item=pick(FLAME_COLORS);
+        qd.type='焰色反應';
+        qd.question=`${item.l} 的焰色為何？`;
+        qd.answer=item.c;
+        qd.displayMode='text';
+        qd.forcedOpts=mkOpts4(item.c,colors.filter(c=>c!==item.c));
+        return true;
+    }
+
+    const GEN_MAP={21:gen21,22:gen22,23:gen23,24:gen24,25:gen25,26:gen26,27:gen27,28:gen28,29:gen29,30:gen30};
+
+    return {
+        generate(type,qd){
+            const fn=GEN_MAP[type];
+            if(!fn||!fn(qd))return false;
+            if(type>=21)qd.useChemFormat=true;
+            return true;
+        },
+        STATUS_LABEL,ALL_PAIRS,PRECIP_PAIRS
+    };
+})();
+
 // --- 數據校準：化學邏輯運算引擎 ---
 const QUIZ_HELPER = {
     // 1. 解析電子組態字串
@@ -6332,6 +7039,7 @@ window.resetToDifficultySelection = function() {
     document.getElementById('quiz-content-area').style.display = 'none';
     document.getElementById('hybrid-type-select-area').style.display = 'none';
     document.getElementById('electron-type-select-area').style.display = 'none';
+    document.getElementById('precip-type-select-area').style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
     document.getElementById('cal-category-area').style.display = 'flex';
     document.getElementById('quiz-cancel-btn').style.display = 'none';
@@ -6348,11 +7056,12 @@ window.resetToDifficultySelection = function() {
 window.selectCalCategory = function(cat) {
     window.calCategory = cat;
     document.getElementById('cal-category-area').style.display = 'none';
-    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原' };
+    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原', 'precipitation': '沉澱表' };
     document.getElementById('quiz-cancel-btn').style.display = 'block';
 
-    if (cat === 'hybrid' || cat === 'redox') {
-        const diff = cat === 'hybrid' ? 3 : 4;
+    if (cat === 'hybrid' || cat === 'redox' || cat === 'precipitation') {
+        const diffMap = { 'hybrid': 3, 'redox': 4, 'precipitation': 5 };
+        const diff = diffMap[cat];
         const prevTotal = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
         window.quizState = {
             rank: null, difficulty: diff, totalQ: prevTotal, currentQ: 0, correctCount: 0,
@@ -6362,6 +7071,9 @@ window.selectCalCategory = function(cat) {
         if (cat === 'hybrid') {
             document.getElementById('hybrid-type-select-area').style.display = 'flex';
             document.getElementById('quiz-status-text').textContent = '混成 > 選擇題型';
+        } else if (cat === 'precipitation') {
+            document.getElementById('precip-type-select-area').style.display = 'flex';
+            document.getElementById('quiz-status-text').textContent = '沉澱表 > 選擇題型';
         } else {
             document.getElementById('quiz-setup-area').style.display = 'flex';
             document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇題數`;
@@ -6584,6 +7296,31 @@ window.confirmElectronTypes = function() {
     document.getElementById('quiz-status-text').textContent = '電子組態 > 選擇範圍';
 };
 
+window.togglePrecipType = function(el, typeKey) {
+    el.classList.toggle('selected');
+};
+
+window.confirmPrecipTypes = function() {
+    const cards = document.querySelectorAll('#precip-type-cards .hybrid-type-card');
+    const selected = [];
+    cards.forEach(c => { if (c.classList.contains('selected')) selected.push(c.dataset.type); });
+    if (selected.length === 0) {
+        const btn = document.getElementById('precip-confirm-btn');
+        const orig = btn.textContent;
+        btn.textContent = '請至少選擇一種題型！';
+        btn.style.background = '#ef4444';
+        btn.style.color = '#fff';
+        setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+        return;
+    }
+    window.precipSelectedSubtypes = {};
+    selected.forEach(t => { window.precipSelectedSubtypes[t] = true; });
+    document.getElementById('precip-type-select-area').style.display = 'none';
+    document.getElementById('quiz-setup-area').style.display = 'flex';
+    document.getElementById('quiz-status-text').textContent = '沉澱表 > 選擇題數';
+    setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
+};
+
 window.confirmHybridTypes = function() {
     const cards = document.querySelectorAll('#hybrid-type-cards .hybrid-type-card');
     const selected = [];
@@ -6605,6 +7342,40 @@ window.confirmHybridTypes = function() {
     setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
 };
 
+// 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
+function _generatePrecipTypeDeck(total, sub) {
+    const W = { 21:8, 22:5, 28:3, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
+    const pool = [];
+    if (sub['A']) pool.push(21, 22, 28);
+    if (sub['B']) pool.push(24, 25);
+    if (sub['C']) pool.push(26, 27, 23, 29);
+    if (pool.length === 0) pool.push(21, 22, 26, 27);
+
+    const flameN = sub['D'] ? (total <= 15 ? 1 : Math.min(2, Math.round(total / 10))) : 0;
+    const deck = [];
+    for (let i = 0; i < flameN; i++) deck.push(30);
+
+    const weighted = [];
+    pool.forEach(t => { const w = W[t] || 2; for (let i = 0; i < w; i++) weighted.push(t); });
+
+    const remain = total - deck.length;
+    for (let i = 0; i < remain; i++) {
+        deck.push(weighted[Math.floor(Math.random() * weighted.length)]);
+    }
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    for (let i = 0; i < deck.length - 1; i++) {
+        if (deck[i] === deck[i + 1]) {
+            for (let j = i + 2; j < deck.length; j++) {
+                if (deck[j] !== deck[i]) { [deck[i + 1], deck[j]] = [deck[j], deck[i + 1]]; break; }
+            }
+        }
+    }
+    return deck;
+}
+
 // 獨立的牌組生成函式
 window._generateTypeDeck = function(diff, total) {
     const restrictedTypes = [5, 14];
@@ -6612,9 +7383,13 @@ window._generateTypeDeck = function(diff, total) {
         1: [0, 1, 2, 4, 5, 6, 10, 14],
         2: [3, 6, 7, 8, 9, 10, 11, 14, 15],
         3: [16, 17],
-        4: [18]
+        4: [18],
+        5: [21, 22, 24, 25, 26, 27, 28, 29, 30]
     };
     let types;
+    if (diff === 5 && window.precipSelectedSubtypes) {
+        return _generatePrecipTypeDeck(total, window.precipSelectedSubtypes);
+    }
     if (diff === 2 && window.electronSelectedSubtypes) {
         const sub = window.electronSelectedSubtypes;
         types = [];
@@ -6845,6 +7620,9 @@ function generateQuestionKey(type, quizData, target) {
                 return `type18-${oxMatch[1].trim()}-${oxMatch[2]}`;
             }
             return `type18-${coreQuestion.substring(0, 50)}`;
+
+        case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
+            return `type${type}-${coreQuestion.substring(0, 60)}`;
             
         default:
             // 其他題型：使用題型+問題核心內容
@@ -6883,7 +7661,7 @@ window.renderNextQuestion = function() {
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     updatePeriodicToggleVisibility();
     
-    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原" };
+    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表" };
     const catName = catNames[window.quizState.difficulty] || "未知";
     const rankPfx = window.quizState.rank ? `RANK ${window.quizState.rank} | ` : '';
     document.getElementById('quiz-status-text').textContent = 
@@ -6897,8 +7675,8 @@ window.renderNextQuestion = function() {
     let parsed = null;
     let s = "";
     
-    // 混成軌域/形狀/氧化數/結構圖題型不依賴元素 pool，直接跳過元素選擇
-    if (type !== 16 && type !== 17 && type !== 18 && type !== 19) {
+    // 混成/氧化還原/沉澱表/結構圖題型不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21) {
         // 元素均等分佈演算法
         let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
@@ -6919,7 +7697,7 @@ window.renderNextQuestion = function() {
     while (!questionGenerated && attempts < 20) {
         attempts++;
         // 如果已經嘗試過，重新選擇元素（混成/形狀/結構圖題型跳過）
-        if (attempts > 1 && type !== 16 && type !== 17 && type !== 19) {
+        if (attempts > 1 && type !== 16 && type !== 17 && type !== 19 && type < 21) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -6937,6 +7715,7 @@ window.renderNextQuestion = function() {
         quizData.type = "";
         quizData.displayMode = "symbol";
         quizData.forcedOpts = undefined;
+        quizData.optionClass = undefined;
 
     // 3. 題型詳細定義與隨機敘述模板 (全面中文化與渲染優化)
 if (type === 0) {
@@ -7266,7 +8045,7 @@ if (type === 0) {
         if (charge !== 0) {
             let val = Math.abs(charge);
             let sign = charge > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
             signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
         }
         const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
@@ -7281,7 +8060,7 @@ if (type === 0) {
         if (charge !== 0) {
             let val = Math.abs(charge);
             let sign = charge > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
             signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
         }
         const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
@@ -7317,7 +8096,7 @@ if (type === 0) {
         } else {
             let val = Math.abs(c);
             let sign = c > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign">${sign}</span>`;
+            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
             quizData.answer = `${target.s}<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
         }
         quizData.displayMode = "ion";
@@ -7325,7 +8104,7 @@ if (type === 0) {
         // Type 18: 邏輯判斷：等電子序列
         let c = Math.floor(Math.random() * 7) - 3;
         const eCount = target.z - c;
-        const signHTML = c === 0 ? "" : `<sup>${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign">${c > 0 ? "+" : "-"}</span></sup>`;
+        const signHTML = c === 0 ? "" : `<sup class="chem-sup">${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign ${c > 0 ? 'plus' : 'minus'}">${c > 0 ? "+" : "-"}</span></sup>`;
         const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
         quizData.type = "邏輯判斷：等電子序列";
         const questionTemplates = [
@@ -7336,7 +8115,7 @@ if (type === 0) {
         quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
         if (partner) {
             quizData.answer = partner.replace(/<sup>(\d+)?([\+\-])<\/sup>/, (match, num, sign) => {
-                return `<sup>${(num === "1" || !num) ? "" : num}<span class="charge-sign">${sign}</span></sup>`;
+                return `<sup class="chem-sup">${(num === "1" || !num) ? "" : num}<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span></sup>`;
             });
         } else {
             quizData.answer = "以上皆非";
@@ -8091,6 +8870,10 @@ if (type === 0) {
             quizData.forcedOpts = allOptions;
         }
     }
+} else if (type >= 21 && type <= 30) {
+    if (!PRECIP_ENGINE.generate(type, quizData)) {
+        continue;
+    }
 }
         
         // 生成問題的唯一標識（用於重複檢查）
@@ -8134,7 +8917,9 @@ if (type === 0) {
         }
         return result;
     });
-    
+    if (type >= 21 && type <= 30) {
+        htmlQ = htmlQ.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : formatChemLabel(part)).join("");
+    }
     
     // 停止前一題的 mini viewer
     if (window.quizViewer) {
@@ -8227,7 +9012,7 @@ if (type === 0) {
                     } else {
                         let rVal = Math.abs(rC);
                         let rSign = rC > 0 ? "+" : "-";
-                        val = `${cand.s}<sup>${rVal === 1 ? "" : rVal}<span class="charge-sign">${rSign}</span></sup>`;
+                        val = `${cand.s}<sup class="chem-sup">${rVal === 1 ? "" : rVal}<span class="charge-sign ${rSign === '-' ? 'minus' : 'plus'}">${rSign}</span></sup>`;
                     }
                 } else {
                     val = "";
@@ -8292,12 +9077,16 @@ if (type === 0) {
     const container = document.getElementById('quiz-options');
     container.innerHTML = "";
     document.getElementById('quiz-confirm-wrap').innerHTML = "";
-    container.style.gridTemplateColumns = (quizData.displayMode === "noble") ? "1fr" : "";
+    container.style.gridTemplateColumns = (quizData.displayMode === "noble") ? "1fr" : (opts.length <= 2 ? "1fr 1fr" : "");
     let selectedOption = null; // 儲存選中的選項
 
     opts.forEach(o => {
         const b = document.createElement('button'); 
-        b.className = 'option-btn'; 
+        b.className = 'option-btn';
+        if (quizData.optionClass) b.classList.add(quizData.optionClass);
+        else if (quizData.useChemFormat) b.classList.add('chem-opt');
+        else if (quizData.displayMode === 'formula') b.classList.add('chem-opt');
+        else if (quizData.displayMode === 'ion') b.classList.add('chem-opt');
         // 處理混成軌域選項的上標顯示
         let displayText = o;
         if (quizData.displayMode === "noble") {
@@ -8321,8 +9110,10 @@ if (type === 0) {
             });
             // 處理單獨的 d²（如果存在）
             displayText = displayText.replace(/(d)(²)/g, 'd<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>');
+        } else if (quizData.useChemFormat || quizData.displayMode === 'ion' || quizData.displayMode === 'formula' || /<sub|<sup|[₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/.test(o)) {
+            displayText = formatChemLabel(o);
         }
-        b.innerHTML = displayText; // 支援上標標籤渲染
+        b.innerHTML = displayText;
         b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
