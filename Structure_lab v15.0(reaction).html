@@ -6370,11 +6370,26 @@ const PRECIP_ENGINE = (function() {
         return null;
     }
 
+    /** 高中題庫：排除不常考、不合理或過冷僻的離子組合 */
+    function isHighSchoolPair(cat,an,status){
+        if(cat.id==='H+')return false;
+        if(cat.id==='Cu+')return['Cl-','Br-','I-'].includes(an.id);
+        if(cat.id==='Hg22+')return['Cl-','Br-','I-','SO42-','CrO42-'].includes(an.id);
+        if(an.id==='I-'){
+            if(status==='soluble')return IA.has(cat.elem)||cat.id==='NH4+';
+            return true;
+        }
+        if(cat.id==='Sn2+')return['OH-','S2-','CO32-','SO32-','Cl-','Br-','I-','SO42-'].includes(an.id);
+        if(cat.id==='Tl+')return['Cl-','Br-','I-','F-'].includes(an.id);
+        if(cat.id==='Be2+')return['F-','C2O42-','NO3-','CH3COO-'].includes(an.id);
+        return true;
+    }
+
     let ALL_PAIRS=[],PRECIP_PAIRS=[],SOLUBLE_PAIRS=[];
     function init(){
         ALL_PAIRS=[];PRECIP_PAIRS=[];SOLUBLE_PAIRS=[];
         for(const c of CATIONS)for(const a of ANIONS){
-            const r=getSolubility(c,a);if(!r)continue;
+            const r=getSolubility(c,a);if(!r||!isHighSchoolPair(c,a,r.status))continue;
             const item={cat:c,an:a,status:r.status,formula:r.formula,label:STATUS_LABEL[r.status]};
             ALL_PAIRS.push(item);
             if(r.status==='insoluble')PRECIP_PAIRS.push(item);
@@ -6390,9 +6405,9 @@ const PRECIP_ENGINE = (function() {
         {q:'下列何者屬於「一律可溶」的陽離子？',a:'Na⁺',opts:['Na⁺','Ag⁺','Ba²⁺','Pb²⁺']},
         {q:'Na₂SO₄ 在水中的溶解情形為何？',a:'可溶',type:'必溶離子'},
         {q:'KNO₃ 在水中的溶解情形為何？',a:'可溶',type:'必溶離子'},
-        {q:'下列鹽類何者一定可溶？',a:'NH₄Cl',opts:['NH₄Cl','AgCl','BaSO₄','CaCO₃']},
-        {q:'CH₃COOAg 的溶解情形為何？',a:'微溶',type:'必溶離子例外'}
+        {q:'下列鹽類何者一定可溶？',a:'NH₄Cl',opts:['NH₄Cl','AgCl','BaSO₄','CaCO₃']}
     ];
+    const RARE_SLIGHTLY_Q={q:'CH₃COOAg 的溶解情形為何？',a:'微溶',type:'必溶離子例外'};
 
     const PRECIP_COLORS=[
         {f:'AgCl',c:'白色'},{f:'AgBr',c:'淡黃色'},{f:'AgI',c:'黃色'},{f:'PbCl2',c:'白色'},{f:'PbI2',c:'黃色'},
@@ -6447,8 +6462,7 @@ const PRECIP_ENGINE = (function() {
         {q:'CaSO₄ 的溶解情形為何？',a:'微溶'},
         {q:'Ca(OH)₂ 的溶解情形為何？',a:'微溶'},
         {q:'SrCrO₄ 的溶解情形為何？',a:'微溶'},
-        {q:'MgC₂O₄ 的溶解情形為何？',a:'微溶'},
-        {q:'CH₃COOAg 的溶解情形為何？',a:'微溶'}
+        {q:'MgC₂O₄ 的溶解情形為何？',a:'微溶'}
     ];
     const ACID_DISSOLVE=[
         {p:'CaCO₃',a:'溶解並放出 CO₂',cat:'碳酸鹽'},{p:'BaCO₃',a:'溶解並放出 CO₂',cat:'碳酸鹽'},
@@ -6457,7 +6471,8 @@ const PRECIP_ENGINE = (function() {
         {p:'CaC₂O₄',a:'溶解',cat:'草酸鹽'},{p:'Ca₃(PO₄)₂',a:'溶解',cat:'磷酸鹽'}
     ];
     const ACID_NO_DISSOLVE=['BaSO₄','SrSO₄','PbSO₄','CuS'];
-    const ACID_SOLUBLE_EXTRA=['FeS','ZnS','MnS','NiS','PbS','CdS','HgS','Ag₂S','MgCO₃','ZnCO₃','Ca(OH)₂','Mg(OH)₂','BaSO₃'];
+    const ACID_SOLUBLE_SULFIDES=['FeS','ZnS','MnS','NiS','PbS','CdS','CoS'];
+    const ACID_SOLUBLE_EXTRA=['FeS','ZnS','MnS','NiS','PbS','CdS','MgCO₃','ZnCO₃','Ca(OH)₂','Mg(OH)₂','BaSO₃'];
     const BASE_DISSOLVE=[
         {p:'Al(OH)₃',ion:'Al(OH)₄⁻',c:'無色'},{p:'Zn(OH)₂',ion:'Zn(OH)₄²⁻',c:'無色'},
         {p:'Pb(OH)₂',ion:'Pb(OH)₄²⁻',c:'無色'},{p:'Cr(OH)₃',ion:'Cr(OH)₄⁻',c:'綠色'},
@@ -6503,7 +6518,17 @@ const PRECIP_ENGINE = (function() {
     function agxBin(val){return(val==='不溶')?'難溶':'可溶';}
 
     function gen21(qd){
-        if(Math.random()<0.25){
+        if(Math.random()<0.02){
+            const item=RARE_SLIGHTLY_Q;
+            qd.type=item.type||'溶解情形判斷';
+            qd.question=item.q;
+            qd.answer=item.a;
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(STATUS_OPTS.filter(s=>s!==item.a).concat([item.a]));
+            return true;
+        }
+        if(Math.random()<0.22){
             const item=pick(MUST_SOLUBLE_Q);
             qd.type=item.type||'溶解情形判斷';
             qd.question=item.q;
@@ -6517,11 +6542,13 @@ const PRECIP_ENGINE = (function() {
             }
             return true;
         }
-        const rev=Math.random()<0.4;
+        const rev=Math.random()<0.42;
         if(rev){
-            const st=pick(['insoluble','slightly','soluble']);
-            const pool=ALL_PAIRS.filter(p=>p.status===st);
-            if(pool.length<2)return false;
+            const st=pick(['insoluble','insoluble','insoluble','slightly','soluble']);
+            let pool=ALL_PAIRS.filter(p=>p.status===st);
+            const oppPool=ALL_PAIRS.filter(p=>p.status!==st);
+            if(st==='slightly'&&Math.random()>0.12)pool=pool.filter(p=>p.formula!=='CH3COOAg');
+            if(pool.length<2||oppPool.length<3)return false;
             const correct=pick(pool);
             qd.type='溶解情形判斷（反向）';
             qd.question=`下列何者為「${STATUS_LABEL[st]}」？`;
@@ -6529,11 +6556,19 @@ const PRECIP_ENGINE = (function() {
             qd.displayMode='formula';
             qd.optionClass='chem-opt';
             qd.useChemFormat=true;
-            const wrong=pickN(ALL_PAIRS.filter(p=>p.status!==st),3,x=>x.formula).map(x=>fmtF(x.formula));
-            qd.forcedOpts=mkOpts4(qd.answer,wrong,ALL_PAIRS.map(p=>fmtF(p.formula)),true);
+            const wrong=pickN(oppPool,3,x=>x.formula).map(x=>fmtF(x.formula));
+            qd.forcedOpts=mkOpts4(qd.answer,wrong,oppPool.map(p=>fmtF(p.formula)),true);
             return true;
         }
-        const item=pick(ALL_PAIRS);
+        let item;
+        if(Math.random()<0.58&&PRECIP_PAIRS.length){
+            item=pick(PRECIP_PAIRS);
+        }else{
+            let pool=ALL_PAIRS;
+            if(Math.random()>0.1)pool=pool.filter(p=>p.formula!=='CH3COOAg');
+            if(!pool.length)pool=ALL_PAIRS;
+            item=pick(pool);
+        }
         qd.type='溶解情形判斷';
         if(Math.random()<0.5){
             qd.question=`${item.cat.label} 與 ${item.an.label} 混合後，溶解情形為何？`;
@@ -6548,7 +6583,7 @@ const PRECIP_ENGINE = (function() {
     }
 
     function gen22(qd){
-        if(Math.random()<0.38){
+        if(Math.random()<0.32){
             const cq=pick(COLOR_ION_Q);
             const pair=PRECIP_PAIRS.find(p=>p.cat.id===cq.catId&&p.an.id===cq.anId);
             if(!pair)return false;
@@ -6701,7 +6736,7 @@ const PRECIP_ENGINE = (function() {
                 qd.type='強酸溶解（硫化物）';
                 qd.question='下列何種<strong>硫化物</strong>加入稀強酸後<strong>難溶</strong>？';
                 qd.answer='CuS';
-                qd.forcedOpts=mkOpts4('CuS',['FeS','ZnS','MnS','NiS','PbS','CdS','HgS','Ag₂S'],null,true);
+                qd.forcedOpts=mkOpts4('CuS',ACID_SOLUBLE_SULFIDES,null,true);
             }else if(mode==='sulfate'){
                 const correct=pick(['BaSO₄','SrSO₄','PbSO₄']);
                 qd.type='強酸溶解（硫酸鹽）';
@@ -7349,7 +7384,7 @@ window.confirmHybridTypes = function() {
 
 // 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
 function _generatePrecipTypeDeck(total, sub) {
-    const W = { 21:8, 22:5, 28:3, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
+    const W = { 21:10, 22:15, 28:2, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
     const pool = [];
     if (sub['A']) pool.push(21, 22, 28);
     if (sub['B']) pool.push(24, 25);
