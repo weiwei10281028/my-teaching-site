@@ -6528,8 +6528,9 @@ const PRECIP_ENGINE = (function() {
             qd.answer=fmtF(correct.formula);
             qd.displayMode='formula';
             qd.optionClass='chem-opt';
+            qd.useChemFormat=true;
             const wrong=pickN(ALL_PAIRS.filter(p=>p.status!==st),3,x=>x.formula).map(x=>fmtF(x.formula));
-            qd.forcedOpts=mkOpts4(qd.answer,wrong);
+            qd.forcedOpts=mkOpts4(qd.answer,wrong,ALL_PAIRS.map(p=>fmtF(p.formula)),true);
             return true;
         }
         const item=pick(ALL_PAIRS);
@@ -6621,7 +6622,7 @@ const PRECIP_ENGINE = (function() {
             qd.answer=fmtF(correct.f);
             qd.displayMode='formula';
             qd.optionClass='chem-opt';
-            qd.forcedOpts=mkOpts4(qd.answer,pickN(PRECIP_COLORS.filter(x=>x.c!==col),3,x=>x.f).map(x=>fmtF(x.f)));
+            qd.forcedOpts=mkOpts4(qd.answer,pickN(PRECIP_COLORS.filter(x=>x.c!==col),3,x=>x.f).map(x=>fmtF(x.f)),PRECIP_COLORS.map(x=>fmtF(x.f)),true);
             return true;
         }
         const item=pick(PRECIP_COLORS);
@@ -6659,7 +6660,7 @@ const PRECIP_ENGINE = (function() {
 
     function gen26(qd){
         const r=Math.random();
-        const sub=r<0.03?'gas':(r<0.52?'acid':(r<0.88?'base':'chromate'));
+        const sub=r<0.2?'gas':(r<0.4?'chromate':(r<0.8?'acid':'base'));
         const rev=Math.random()<0.4;
         const acidSolPool=[...ACID_DISSOLVE.map(x=>x.p),...ACID_SOLUBLE_EXTRA];
         if(sub==='gas'){
@@ -6724,8 +6725,10 @@ const PRECIP_ENGINE = (function() {
             qd.type='強鹼溶解（反向）';
             qd.question='下列何者加入過量強鹼後可溶？';
             qd.answer=correct.p;
-            qd.displayMode='text';
-            qd.forcedOpts=mkOpts4(correct.p,BASE_NO_DISSOLVE);
+            qd.displayMode='formula';
+            qd.optionClass='chem-opt';
+            qd.useChemFormat=true;
+            qd.forcedOpts=mkOpts4(correct.p,BASE_NO_DISSOLVE,[...BASE_DISSOLVE.map(x=>x.p),...BASE_NO_DISSOLVE],true);
         }else{
             const item=pick(BASE_DISSOLVE);
             qd.type='強鹼溶解';
@@ -6768,8 +6771,10 @@ const PRECIP_ENGINE = (function() {
             qd.type='過量氨水溶解（反向）';
             qd.question='下列何者加入過量氨水後<strong>難溶</strong>（不會再溶解）？';
             qd.answer=correct;
-            qd.displayMode='text';
-            qd.forcedOpts=mkOpts4(correct,pickN(NH3_DISSOLVE,3,x=>x.prec).map(x=>x.prec));
+            qd.displayMode='formula';
+            qd.optionClass='chem-opt';
+            qd.useChemFormat=true;
+            qd.forcedOpts=mkOpts4(correct,pickN(NH3_DISSOLVE,3,x=>x.prec).map(x=>x.prec),[...NH3_NO,...NH3_AMPHI.map(x=>x.prec),...NH3_DISSOLVE.map(x=>x.prec)],true);
         }else{
             const item=pick(NH3_DISSOLVE);
             qd.type='過量氨水溶解';
