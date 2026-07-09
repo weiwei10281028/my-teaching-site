@@ -1825,7 +1825,7 @@
                     <div id="precip-type-cards" style="display:flex;flex-direction:column;gap:10px;">
                         <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'A')" data-type="A">
                             <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
-                            <div><div class="hybrid-type-name">A｜溶解與沉澱</div><div class="hybrid-type-desc">溶解情形、離子配對、特殊溶解</div></div>
+                            <div><div class="hybrid-type-name">A｜溶解與沉澱</div><div class="hybrid-type-desc">溶解情形、離子配對、碳酸根規則、特殊溶解</div></div>
                         </div>
                         <div class="hybrid-type-card selected" onclick="togglePrecipType(this,'B')" data-type="B">
                             <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
@@ -6314,6 +6314,14 @@ const PRECIP_ENGINE = (function() {
     function gcd(a,b){return b?gcd(b,a%b):Math.abs(a);}
     function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
     function pick(a){return a[Math.floor(Math.random()*a.length)];}
+    function pickWeighted(pool,getW){
+        const wfn=getW||(x=>x.w!=null?x.w:1);
+        let total=0;
+        for(const x of pool)total+=wfn(x);
+        let r=Math.random()*total;
+        for(const x of pool){r-=wfn(x);if(r<=0)return x;}
+        return pool[pool.length-1];
+    }
     function pickN(arr,n,eq){const s=shuffle(arr);const r=[];for(const x of s){if(r.length>=n)break;if(!r.some(y=>eq?eq(y,x):y===x))r.push(x);}return r;}
     function fmtF(f){return formatFormula(f);}
 
@@ -6381,8 +6389,28 @@ const PRECIP_ENGINE = (function() {
         }
         if(cat.id==='Sn2+')return['OH-','S2-','CO32-','SO32-','Cl-','Br-','I-','SO42-'].includes(an.id);
         if(cat.id==='Tl+')return['Cl-','Br-','I-','F-'].includes(an.id);
+        if(an.id==='F-'){
+            if(status==='soluble')return IA.has(cat.elem)||cat.id==='NH4+'||['Be2+','Tl+','Ag+'].includes(cat.id);
+            return false;
+        }
         if(cat.id==='Be2+')return['F-','C2O42-','NO3-','CH3COO-'].includes(an.id);
         return true;
+    }
+
+    function pickPrecipAnion(ids){
+        const main=ids.filter(id=>id!=='F-');
+        if(main.length&&Math.random()>0.07){
+            return pick(ANIONS.filter(a=>main.includes(a.id)));
+        }
+        const f=ANIONS.find(a=>a.id==='F-');
+        return f||pick(ANIONS.filter(a=>ids.includes(a.id)));
+    }
+
+    function pickPair(pool,lowF){
+        if(!lowF||!pool.length)return pick(pool);
+        const noF=pool.filter(p=>p.an.id!=='F-');
+        if(noF.length&&Math.random()>0.08)return pick(noF);
+        return pick(pool);
     }
 
     let ALL_PAIRS=[],PRECIP_PAIRS=[],SOLUBLE_PAIRS=[];
@@ -6437,26 +6465,33 @@ const PRECIP_ENGINE = (function() {
         {catId:'Ba2+',anId:'CrO42-',color:'黃色'}
     ];
     const NH3_COMPLEX_VARIANTS={
-        'Cu²⁺':{correct:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₄³⁺','Cu(NH₃)₂²⁺']},
-        'Co²⁺':{correct:'Co(NH₃)₆²⁺',wrong:['Co(NH₃)₆³⁺','Co(NH₃)₄²⁺','Co(NH₃)₆⁺']},
-        'Ni²⁺':{correct:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₅²⁺','Ni(NH₃)₄²⁺']},
-        'Zn²⁺':{correct:'Zn(NH₃)₄²⁺',wrong:['Zn(NH₃)₄³⁺','Zn(NH₃)₂²⁺','Zn(NH₃)₆²⁺']},
-        'Ag⁺':{correct:'Ag(NH₃)₂⁺',wrong:['Ag(NH₃)₂²⁺','Ag(NH₃)₄²⁺','Ag(NH₃)₃⁺']},
-        'Cd²⁺':{correct:'Cd(NH₃)₄²⁺',wrong:['Cd(NH₃)₄³⁺','Cd(NH₃)₂²⁺','Cd(NH₃)₆²⁺']}
+        'Cu²⁺':{correct:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₄³⁺','Cu(NH₃)₂²⁺'],w:4},
+        'Zn²⁺':{correct:'Zn(NH₃)₄²⁺',wrong:['Zn(NH₃)₄³⁺','Zn(NH₃)₂²⁺','Zn(NH₃)₆²⁺'],w:4},
+        'Ag⁺':{correct:'Ag(NH₃)₂⁺',wrong:['Ag(NH₃)₂²⁺','Ag(NH₃)₄²⁺','Ag(NH₃)₃⁺'],w:4},
+        'Ni²⁺':{correct:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₅²⁺','Ni(NH₃)₄²⁺'],w:1},
+        'Co²⁺':{correct:'Co(NH₃)₆²⁺',wrong:['Co(NH₃)₆³⁺','Co(NH₃)₄²⁺','Co(NH₃)₆⁺'],w:1},
+        'Cd²⁺':{correct:'Cd(NH₃)₄²⁺',wrong:['Cd(NH₃)₄³⁺','Cd(NH₃)₂²⁺','Cd(NH₃)₆²⁺'],w:1}
     };
     const SPECIAL_COMPLEX_Q=[
-        {q:'Al³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Al(OH)₄⁻',wrong:['Zn(OH)₄²⁻','Al(OH)₃','Cr(OH)₄⁻']},
-        {q:'Zn²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Zn(OH)₄²⁻',wrong:['Zn(OH)₂','Al(OH)₄⁻','Zn(OH)₃⁻']},
-        {q:'Pb²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Pb(OH)₄²⁻',wrong:['Pb(OH)₂','Sn(OH)₄²⁻','Pb(OH)₃⁻']},
-        {q:'Cr³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Cr(OH)₄⁻',wrong:['Cr(OH)₃','Al(OH)₄⁻','Cr(OH)₅²⁻']},
-        {q:'Cu²⁺ 加入過量氨水後，主要錯離子為何？',a:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₂²⁺','Cu(NH₃)₆²⁺']},
-        {q:'Ni²⁺ 加入過量氨水後，主要錯離子為何？',a:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₄²⁺','Ni(NH₃)₅²⁺']}
+        {q:'Al³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Al(OH)₄⁻',wrong:['Zn(OH)₄²⁻','Al(OH)₃','Cr(OH)₄⁻'],w:4},
+        {q:'Zn²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Zn(OH)₄²⁻',wrong:['Zn(OH)₂','Al(OH)₄⁻','Zn(OH)₃⁻'],w:4},
+        {q:'Pb²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Pb(OH)₄²⁻',wrong:['Pb(OH)₂','Sn(OH)₄²⁻','Pb(OH)₃⁻'],w:4},
+        {q:'Sn²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Sn(OH)₄²⁻',wrong:['Sn(OH)₂','Pb(OH)₄²⁻','Zn(OH)₄²⁻'],w:4},
+        {q:'Cr³⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Cr(OH)₄⁻',wrong:['Cr(OH)₃','Al(OH)₄⁻','Cr(OH)₄²⁻'],w:1},
+        {q:'Be²⁺ 加入過量 NaOH 後，主要錯離子為何？',a:'Be(OH)₄²⁻',wrong:['Be(OH)₂','Mg(OH)₂','Be(OH)₃⁻'],w:1},
+        {q:'Cu²⁺ 加入過量氨水後，主要錯離子為何？',a:'Cu(NH₃)₄²⁺',wrong:['Cu(NH₃)₄⁺','Cu(NH₃)₂²⁺','Cu(NH₃)₆²⁺'],w:4},
+        {q:'Ag⁺ 加入過量氨水後，主要錯離子為何？',a:'Ag(NH₃)₂⁺',wrong:['Ag(NH₃)₂²⁺','Ag(NH₃)₄²⁺','Ag(NH₃)₃⁺'],w:4},
+        {q:'Zn²⁺ 加入過量氨水後，主要錯離子為何？',a:'Zn(NH₃)₄²⁺',wrong:['Zn(NH₃)₄³⁺','Zn(NH₃)₂²⁺','Zn(NH₃)₆²⁺'],w:4},
+        {q:'Ni²⁺ 加入過量氨水後，主要錯離子為何？',a:'Ni(NH₃)₆²⁺',wrong:['Ni(NH₃)₆³⁺','Ni(NH₃)₅²⁺','Ni(NH₃)₄²⁺'],w:1},
+        {q:'Co²⁺ 加入過量氨水後，主要錯離子為何？',a:'Co(NH₃)₆²⁺',wrong:['Co(NH₃)₆³⁺','Co(NH₃)₄²⁺','Co(NH₃)₆⁺'],w:1},
+        {q:'Cd²⁺ 加入過量氨水後，主要錯離子為何？',a:'Cd(NH₃)₄²⁺',wrong:['Cd(NH₃)₄³⁺','Cd(NH₃)₂²⁺','Cd(NH₃)₆²⁺'],w:1}
     ];
     const NH3_AMPHI=[
         {ion:'Al³⁺',prec:'Al(OH)₃'},{ion:'Mg²⁺',prec:'Mg(OH)₂'},{ion:'Fe³⁺',prec:'Fe(OH)₃'},
         {ion:'Cr³⁺',prec:'Cr(OH)₃'},{ion:'Pb²⁺',prec:'Pb(OH)₂'}
     ];
     const SPECIAL_CASES=[
+        {q:'MgCO₃ 在水中的溶解情形為何？',a:'難溶',key:'MgCO3'},
         {q:'PbCl₂ 在冷水中的溶解情形為何？',a:'難溶'},
         {q:'PbCl₂ 在熱水中的溶解情形為何？',a:'可溶'},
         {q:'CaSO₄ 的溶解情形為何？',a:'微溶'},
@@ -6480,14 +6515,18 @@ const PRECIP_ENGINE = (function() {
     ];
     const BASE_NO_DISSOLVE=['Cu(OH)₂','Fe(OH)₃','Mg(OH)₂'];
     const NH3_DISSOLVE=[
-        {ion:'Cu²⁺',prec:'Cu(OH)₂',complex:'Cu(NH₃)₄²⁺',cc:'深藍色'},
-        {ion:'Ag⁺',prec:'Ag₂O',complex:'Ag(NH₃)₂⁺',cc:'無色'},
-        {ion:'Zn²⁺',prec:'Zn(OH)₂',complex:'Zn(NH₃)₄²⁺',cc:'無色'},
-        {ion:'Ni²⁺',prec:'Ni(OH)₂',complex:'Ni(NH₃)₆²⁺',cc:'藍紫色'},
-        {ion:'Co²⁺',prec:'Co(OH)₂',complex:'Co(NH₃)₆²⁺',cc:'黃褐色'},
-        {ion:'Cd²⁺',prec:'Cd(OH)₂',complex:'Cd(NH₃)₄²⁺',cc:'無色'}
+        {ion:'Cu²⁺',prec:'Cu(OH)₂',complex:'Cu(NH₃)₄²⁺',cc:'深藍色',w:4},
+        {ion:'Ag⁺',prec:'Ag₂O',complex:'Ag(NH₃)₂⁺',cc:'無色',w:4},
+        {ion:'Zn²⁺',prec:'Zn(OH)₂',complex:'Zn(NH₃)₄²⁺',cc:'無色',w:4},
+        {ion:'Ni²⁺',prec:'Ni(OH)₂',complex:'Ni(NH₃)₆²⁺',cc:'藍紫色',w:1},
+        {ion:'Co²⁺',prec:'Co(OH)₂',complex:'Co(NH₃)₆²⁺',cc:'黃褐色',w:1},
+        {ion:'Cd²⁺',prec:'Cd(OH)₂',complex:'Cd(NH₃)₄²⁺',cc:'無色',w:1}
     ];
-    const NH3_NO=['Al(OH)₃','Mg(OH)₂','Fe(OH)₃'];
+    const NH3_NO_DISSOLVE=['Al(OH)₃','Mg(OH)₂','Fe(OH)₃','Cr(OH)₃','Pb(OH)₂'];
+    const NH3_SOL_DISSOLVE=[
+        {p:'Cu(OH)₂',w:4},{p:'Ag₂O',w:4},{p:'Zn(OH)₂',w:4},
+        {p:'Ni(OH)₂',w:1},{p:'Co(OH)₂',w:1},{p:'Cd(OH)₂',w:1}
+    ];
     const AGX_DATA=[
         {f:'AgF',c:'無色',dilNH3:'可溶',concNH3:'可溶',s2o3:'可溶'},
         {f:'AgCl',c:'白色',dilNH3:'可溶',concNH3:'可溶',s2o3:'可溶'},
@@ -6504,14 +6543,24 @@ const PRECIP_ENGINE = (function() {
         for(const x of shuffle(pool)){if(opts.length>=n)break;const v=fmt?fmt(x):x;if(v&&!used.has(v)){used.add(v);opts.push(v);}}
         return shuffle(opts);
     }
-    function mkOpts4(correct,candidates,extraPool,formulaOnly){
+    function mkOpts4(correct,candidates,extraPool,formulaOnly,ionCationBias){
         const opts=[correct];const used=new Set([correct]);
         for(const c of shuffle(candidates)){if(opts.length>=4)break;if(c&&c!==correct&&!used.has(c)){used.add(c);opts.push(c);}}
         if(extraPool)for(const c of shuffle(extraPool)){if(opts.length>=4)break;if(c&&!used.has(c)){used.add(c);opts.push(c);}}
         if(!formulaOnly){
             const allLabels=CATIONS.map(c=>c.label).concat(ANIONS.map(a=>a.label));
             let guard=0;
-            while(opts.length<4&&guard<80){guard++;const f=pick(allLabels);if(!used.has(f)){used.add(f);opts.push(f);}}
+            while(opts.length<4&&guard<80){
+                guard++;
+                let f;
+                if(ionCationBias!=null){
+                    const pool=Math.random()<ionCationBias?CATIONS:ANIONS;
+                    f=pick(pool).label;
+                }else{
+                    f=pick(allLabels);
+                }
+                if(!used.has(f)){used.add(f);opts.push(f);}
+            }
         }
         return shuffle(opts);
     }
@@ -6549,7 +6598,7 @@ const PRECIP_ENGINE = (function() {
             const oppPool=ALL_PAIRS.filter(p=>p.status!==st);
             if(st==='slightly'&&Math.random()>0.12)pool=pool.filter(p=>p.formula!=='CH3COOAg');
             if(pool.length<2||oppPool.length<3)return false;
-            const correct=pick(pool);
+            const correct=pickPair(pool,true);
             qd.type='溶解情形判斷（反向）';
             qd.question=`下列何者為「${STATUS_LABEL[st]}」？`;
             qd.answer=fmtF(correct.formula);
@@ -6562,12 +6611,13 @@ const PRECIP_ENGINE = (function() {
         }
         let item;
         if(Math.random()<0.58&&PRECIP_PAIRS.length){
-            item=pick(PRECIP_PAIRS);
+            item=pickPair(PRECIP_PAIRS,true);
         }else{
-            let pool=ALL_PAIRS;
+            let pool=ALL_PAIRS.filter(p=>p.an.id!=='F-'||Math.random()<0.06);
+            if(!pool.length)pool=ALL_PAIRS;
             if(Math.random()>0.1)pool=pool.filter(p=>p.formula!=='CH3COOAg');
             if(!pool.length)pool=ALL_PAIRS;
-            item=pick(pool);
+            item=pickPair(pool,true);
         }
         qd.type='溶解情形判斷';
         if(Math.random()<0.5){
@@ -6594,20 +6644,20 @@ const PRECIP_ENGINE = (function() {
                 qd.answer=pair.an.label;
                 const wrongAns=pickN(ANIONS.filter(a=>a.id!==pair.an.id),3,a=>a.id).map(a=>a.label);
                 qd.displayMode='ion';qd.optionClass='chem-opt';
-                qd.forcedOpts=mkOpts4(pair.an.label,wrongAns);
+                qd.forcedOpts=mkOpts4(pair.an.label,wrongAns,null,false,0.88);
             }else{
                 qd.type='離子配對沉澱';
                 qd.question=`下列何種陽離子與 ${pair.an.label} 混合產生<strong>${cq.color}</strong>沉澱？`;
                 qd.answer=pair.cat.label;
                 const wrongCats=pickN(CATIONS.filter(c=>c.id!==pair.cat.id),3,c=>c.id).map(c=>c.label);
                 qd.displayMode='ion';qd.optionClass='chem-opt';
-                qd.forcedOpts=mkOpts4(pair.cat.label,wrongCats);
+                qd.forcedOpts=mkOpts4(pair.cat.label,wrongCats,null,false,0.88);
             }
             return true;
         }
-        const PRECIP_ANIONS=['CO32-','SO42-','S2-','OH-','Cl-','CrO42-','PO43-','F-','C2O42-'];
+        const PRECIP_ANIONS=['CO32-','SO42-','S2-','OH-','Cl-','CrO42-','PO43-','C2O42-'];
         if(Math.random()<0.5){
-            const an=pick(ANIONS.filter(a=>PRECIP_ANIONS.includes(a.id)));
+            const an=pickPrecipAnion(PRECIP_ANIONS);
             const pool=SOLUBLE_PAIRS.filter(p=>p.an.id===an.id);
             if(pool.length<2)return false;
             const correct=pick(pool);
@@ -6616,7 +6666,7 @@ const PRECIP_ENGINE = (function() {
             qd.answer=correct.cat.label;
             const wrongPool=PRECIP_PAIRS.filter(p=>p.an.id===an.id).map(p=>p.cat.label);
             qd.displayMode='ion';qd.optionClass='chem-opt';
-            qd.forcedOpts=mkOpts4(correct.cat.label,wrongPool);
+            qd.forcedOpts=mkOpts4(correct.cat.label,wrongPool,null,false,0.88);
             return true;
         }
         const cats=CATIONS.filter(c=>PRECIP_PAIRS.some(p=>p.cat.id===c.id)&&SOLUBLE_PAIRS.some(p=>p.cat.id===c.id));
@@ -6630,12 +6680,12 @@ const PRECIP_ENGINE = (function() {
         qd.answer=correct.an.label;
         const wrongPool=PRECIP_PAIRS.filter(p=>p.cat.id===cat.id).map(p=>p.an.label);
         qd.displayMode='ion';qd.optionClass='chem-opt';
-        qd.forcedOpts=mkOpts4(correct.an.label,wrongPool);
+        qd.forcedOpts=mkOpts4(correct.an.label,wrongPool,null,false,0.88);
         return true;
     }
 
     function gen23(qd){
-        const item=pick(SPECIAL_COMPLEX_Q);
+        const item=pickWeighted(SPECIAL_COMPLEX_Q);
         qd.type='特殊錯離子';
         qd.question=item.q;
         qd.answer=item.a;
@@ -6657,7 +6707,9 @@ const PRECIP_ENGINE = (function() {
             qd.answer=fmtF(correct.f);
             qd.displayMode='formula';
             qd.optionClass='chem-opt';
-            qd.forcedOpts=mkOpts4(qd.answer,pickN(PRECIP_COLORS.filter(x=>x.c!==col),3,x=>x.f).map(x=>fmtF(x.f)),PRECIP_COLORS.map(x=>fmtF(x.f)),true);
+            const wrongF=pickN(PRECIP_COLORS.filter(x=>x.c!==col),3,x=>x.f).map(x=>fmtF(x.f));
+            const extraWrong=PRECIP_COLORS.filter(x=>x.c!==col).map(x=>fmtF(x.f));
+            qd.forcedOpts=mkOpts4(qd.answer,wrongF,extraWrong,true);
             return true;
         }
         const item=pick(PRECIP_COLORS);
@@ -6725,13 +6777,15 @@ const PRECIP_ENGINE = (function() {
                 qd.type='強酸溶解（反向）';
                 qd.question='下列何者加入稀強酸後<strong>難溶</strong>（不溶解）？';
                 qd.answer=correct;
-                qd.forcedOpts=mkOpts4(correct,pickN(acidSolPool.filter(p=>!ACID_NO_DISSOLVE.includes(p)),6),null,true);
+                const acidWrong=acidSolPool.filter(p=>!ACID_NO_DISSOLVE.includes(p));
+                qd.forcedOpts=mkOpts4(correct,pickN(acidWrong,6),acidWrong,true);
             }else if(mode==='sol'){
                 const correct=pick(acidSolPool);
                 qd.type='強酸溶解（反向）';
                 qd.question='下列何者加入稀強酸後<strong>可溶</strong>？';
                 qd.answer=correct;
-                qd.forcedOpts=mkOpts4(correct,[...ACID_NO_DISSOLVE,...pickN(acidSolPool.filter(p=>p!==correct),4)],null,true);
+                const acidWrong=[...ACID_NO_DISSOLVE,...acidSolPool.filter(p=>p!==correct)];
+                qd.forcedOpts=mkOpts4(correct,pickN(acidWrong,6),acidWrong,true);
             }else if(mode==='sulf'){
                 qd.type='強酸溶解（硫化物）';
                 qd.question='下列何種<strong>硫化物</strong>加入稀強酸後<strong>難溶</strong>？';
@@ -6763,7 +6817,7 @@ const PRECIP_ENGINE = (function() {
             qd.displayMode='formula';
             qd.optionClass='chem-opt';
             qd.useChemFormat=true;
-            qd.forcedOpts=mkOpts4(correct.p,BASE_NO_DISSOLVE,[...BASE_DISSOLVE.map(x=>x.p),...BASE_NO_DISSOLVE],true);
+            qd.forcedOpts=mkOpts4(correct.p,pickN(BASE_NO_DISSOLVE,3),BASE_NO_DISSOLVE,true);
         }else{
             const item=pick(BASE_DISSOLVE);
             qd.type='強鹼溶解';
@@ -6779,8 +6833,7 @@ const PRECIP_ENGINE = (function() {
     function gen27(qd){
         const sub=Math.random()<0.5?'nh3':(Math.random()<0.65?'complex':'amphi');
         if(sub==='complex'){
-            const ions=Object.keys(NH3_COMPLEX_VARIANTS);
-            const ionKey=pick(ions);
+            const ionKey=pickWeighted(Object.keys(NH3_COMPLEX_VARIANTS),k=>NH3_COMPLEX_VARIANTS[k].w||1);
             const v=NH3_COMPLEX_VARIANTS[ionKey];
             qd.type='氨錯離子';
             qd.question=`${ionKey} 加入過量氨水再溶解後，主要錯離子為何？`;
@@ -6799,19 +6852,30 @@ const PRECIP_ENGINE = (function() {
             qd.forcedOpts=shuffle(['可溶','難溶']);
             return true;
         }
-        const rev=Math.random()<0.35;
+        const rev=Math.random()<0.4;
         if(rev){
-            const noDissolvePool=[...NH3_NO,...NH3_AMPHI.map(x=>x.prec)];
-            const correct=pick(noDissolvePool);
-            qd.type='過量氨水溶解（反向）';
-            qd.question='下列何者加入過量氨水後<strong>難溶</strong>（不會再溶解）？';
-            qd.answer=correct;
-            qd.displayMode='formula';
-            qd.optionClass='chem-opt';
-            qd.useChemFormat=true;
-            qd.forcedOpts=mkOpts4(correct,pickN(NH3_DISSOLVE,3,x=>x.prec).map(x=>x.prec),[...NH3_NO,...NH3_AMPHI.map(x=>x.prec),...NH3_DISSOLVE.map(x=>x.prec)],true);
+            if(Math.random()<0.5){
+                const correct=pick(NH3_NO_DISSOLVE);
+                qd.type='過量氨水溶解（反向）';
+                qd.question='下列何者加入過量氨水後<strong>難溶</strong>（不會再溶解）？';
+                qd.answer=correct;
+                qd.displayMode='formula';
+                qd.optionClass='chem-opt';
+                qd.useChemFormat=true;
+                qd.forcedOpts=mkOpts4(correct,pickN(NH3_SOL_DISSOLVE,3,x=>x.p).map(x=>x.p),NH3_SOL_DISSOLVE.map(x=>x.p),true);
+            }else{
+                const correctItem=pickWeighted(NH3_SOL_DISSOLVE);
+                const correct=correctItem.p;
+                qd.type='過量氨水溶解（反向）';
+                qd.question='下列何者加入過量氨水後<strong>可溶</strong>（會再溶解）？';
+                qd.answer=correct;
+                qd.displayMode='formula';
+                qd.optionClass='chem-opt';
+                qd.useChemFormat=true;
+                qd.forcedOpts=mkOpts4(correct,pickN(NH3_NO_DISSOLVE,3),NH3_NO_DISSOLVE,true);
+            }
         }else{
-            const item=pick(NH3_DISSOLVE);
+            const item=pickWeighted(NH3_DISSOLVE);
             qd.type='過量氨水溶解';
             qd.question=`${item.ion} 先產生沉澱，加入過量氨水後是否可溶？`;
             qd.answer='可溶';
@@ -6823,7 +6887,18 @@ const PRECIP_ENGINE = (function() {
     }
 
     function gen28(qd){
-        const item=pick(SPECIAL_CASES);
+        let item;
+        if(typeof window._precipSpecialLeft==='number'&&window._precipSpecialLeft>0){
+            if(window._precipSpecialLeft===2){
+                item=SPECIAL_CASES.find(x=>x.key==='MgCO3')||SPECIAL_CASES[0];
+            }else{
+                const pool=SPECIAL_CASES.filter(x=>x.key!=='MgCO3');
+                item=pick(pool.length?pool:SPECIAL_CASES);
+            }
+            window._precipSpecialLeft--;
+        }else{
+            item=pick(SPECIAL_CASES);
+        }
         qd.type='特殊溶解情形';
         qd.question=item.q;
         qd.answer=item.a;
@@ -6878,7 +6953,42 @@ const PRECIP_ENGINE = (function() {
         return true;
     }
 
-    const GEN_MAP={21:gen21,22:gen22,23:gen23,24:gen24,25:gen25,26:gen26,27:gen27,28:gen28,29:gen29,30:gen30};
+    function gen31(qd){
+        const co3=ANIONS.find(a=>a.id==='CO32-');
+        if(!co3)return false;
+        if(Math.random()<0.45){
+            qd.type='碳酸根沉澱規則';
+            qd.question='依沉澱表，CO₃²⁻ 與<strong>多數</strong>金屬陽離子（不含 IA⁺、NH₄⁺）混合後，通常會？';
+            qd.answer='沉澱';
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(['可溶','沉澱']);
+            return true;
+        }
+        const solubleCats=CATIONS.filter(c=>IA.has(c.elem)||c.id==='NH4+'||c.id==='H+');
+        const insolCats=CATIONS.filter(c=>!IA.has(c.elem)&&c.id!=='NH4+'&&c.id!=='H+'&&PRECIP_PAIRS.some(p=>p.an.id==='CO32-'&&p.cat.id===c.id));
+        if(Math.random()<0.5&&insolCats.length){
+            const cat=pick(insolCats);
+            qd.type='碳酸根沉澱判斷';
+            qd.question=`${cat.label} 與 CO₃²⁻ 混合後，生成物在水中的溶解情形通常為？`;
+            qd.answer='沉澱';
+            qd.displayMode='text';
+            qd.optionClass='bin-opt';
+            qd.forcedOpts=shuffle(['可溶','沉澱']);
+            return true;
+        }
+        if(!solubleCats.length)return false;
+        const cat=pick(solubleCats);
+        qd.type='碳酸根沉澱（例外）';
+        qd.question=`${cat.label} 與 CO₃²⁻ 混合後，生成物在水中的溶解情形通常為？`;
+        qd.answer='可溶';
+        qd.displayMode='text';
+        qd.optionClass='bin-opt';
+        qd.forcedOpts=shuffle(['可溶','沉澱']);
+        return true;
+    }
+
+    const GEN_MAP={21:gen21,22:gen22,23:gen23,24:gen24,25:gen25,26:gen26,27:gen27,28:gen28,29:gen29,30:gen30,31:gen31};
 
     return {
         generate(type,qd){
@@ -7384,15 +7494,18 @@ window.confirmHybridTypes = function() {
 
 // 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
 function _generatePrecipTypeDeck(total, sub) {
-    const W = { 21:10, 22:15, 28:2, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
+    window._precipSpecialLeft = 2;
+    const W = { 21:10, 22:15, 28:1, 31:5, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
     const pool = [];
-    if (sub['A']) pool.push(21, 22, 28);
+    if (sub['A']) pool.push(21, 22, 28, 31);
     if (sub['B']) pool.push(24, 25);
     if (sub['C']) pool.push(26, 27, 23, 29);
     if (pool.length === 0) pool.push(21, 22, 26, 27);
 
+    const specialN = 2;
     const flameN = sub['D'] ? (total <= 15 ? 1 : Math.min(2, Math.round(total / 10))) : 0;
     const deck = [];
+    for (let i = 0; i < specialN; i++) deck.push(28);
     for (let i = 0; i < flameN; i++) deck.push(30);
 
     const weighted = [];
@@ -7424,7 +7537,7 @@ window._generateTypeDeck = function(diff, total) {
         2: [3, 6, 7, 8, 9, 10, 11, 14, 15],
         3: [16, 17],
         4: [18],
-        5: [21, 22, 24, 25, 26, 27, 28, 29, 30]
+        5: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31]
     };
     let types;
     if (diff === 5 && window.precipSelectedSubtypes) {
@@ -8910,7 +9023,7 @@ if (type === 0) {
             quizData.forcedOpts = allOptions;
         }
     }
-} else if (type >= 21 && type <= 30) {
+} else if (type >= 21 && type <= 31) {
     if (!PRECIP_ENGINE.generate(type, quizData)) {
         continue;
     }
@@ -8957,7 +9070,7 @@ if (type === 0) {
         }
         return result;
     });
-    if (type >= 21 && type <= 30) {
+    if (type >= 21 && type <= 31) {
         htmlQ = htmlQ.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : formatChemLabel(part)).join("");
     }
     
