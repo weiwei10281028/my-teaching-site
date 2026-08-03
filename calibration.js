@@ -731,6 +731,59 @@ const PRECIP_ENGINE = (function() {
             const fn=GEN_MAP[type];
             if(!fn||!fn(qd))return false;
             if(type>=21)qd.useChemFormat=true;
+            const cleanPrompt = String(qd.question || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            const cleanAnswer = String(qd.answer == null ? '' : qd.answer).replace(/<[^>]+>/g, '').trim();
+            let rule = '';
+            if (/離子配對沉澱/.test(qd.type || '')) {
+                rule = `逐一配對題幹離子與「${cleanAnswer}」；依沉澱表的可溶性與顏色條件，只有符合題幹觀察的配對成立`;
+            } else if (/溶解情形|特殊溶解/.test(qd.type || '')) {
+                rule = `先辨認題幹中的鹽類或離子，再套用硝酸鹽、醋酸鹽、鹼金屬／銨鹽及題目指定例外；本題判定為「${cleanAnswer}」`;
+            } else if (/沉澱物顏色/.test(qd.type || '')) {
+                rule = `由題幹化學式辨識沉澱種類，再核對沉澱顏色資料；本題觀察為「${cleanAnswer}」`;
+            } else if (/離子溶液顏色/.test(qd.type || '')) {
+                rule = `依題幹水溶液中的實際離子辨識顏色；本題離子顏色為「${cleanAnswer}」`;
+            } else if (/酸溶出氣體/.test(qd.type || '')) {
+                rule = /SO₃|亞硫酸/.test(cleanPrompt)
+                    ? `亞硫酸根遇酸先生成 H₂SO₃，再分解放出 ${cleanAnswer}`
+                    : `碳酸根遇酸先生成 H₂CO₃，再分解放出 ${cleanAnswer}`;
+            } else if (/鉻酸鹽加酸變色/.test(qd.type || '')) {
+                rule = '酸化使 2 CrO₄²⁻ ⇌ Cr₂O₇²⁻ 平衡向右，黃色鉻酸根轉為橙色重鉻酸根';
+            } else if (/強酸溶解/.test(qd.type || '')) {
+                rule = /CO₃|碳酸/.test(cleanPrompt)
+                    ? `酸提供 H⁺ 消耗 CO₃²⁻，生成 CO₂↑，故${cleanAnswer}`
+                    : /SO₃|亞硫酸/.test(cleanPrompt)
+                        ? `酸提供 H⁺ 消耗 SO₃²⁻，生成 SO₂↑，故${cleanAnswer}`
+                        : `酸化使沉澱陰離子轉為較易溶物種，依題目條件判定為${cleanAnswer}`;
+            } else if (/強鹼溶解/.test(qd.type || '')) {
+                const complexByPrecip = {
+                    'Al(OH)₃':'Al(OH)₄⁻', 'Zn(OH)₂':'Zn(OH)₄²⁻', 'Pb(OH)₂':'Pb(OH)₄²⁻',
+                    'Cr(OH)₃':'Cr(OH)₄⁻', 'Be(OH)₂':'Be(OH)₄²⁻', 'Sn(OH)₂':'Sn(OH)₄²⁻'
+                };
+                const amphKey = Object.keys(complexByPrecip).find(k => cleanPrompt.includes(k));
+                rule = amphKey
+                    ? `${amphKey} 為兩性氫氧化物，加入過量 OH⁻ 形成 ${complexByPrecip[amphKey]}，故${cleanAnswer}`
+                    : `依氫氧化物兩性與過量 OH⁻ 的錯離子規則，判定為${cleanAnswer}`;
+            } else if (/特殊錯離子|氨錯離子|過量氨水/.test(qd.type || '')) {
+                rule = /特殊錯離子/.test(qd.type || '')
+                    ? `過量 NaOH 或 NH₃ 提供配體，兩性氫氧化物或金屬離子形成題目所列錯離子 ${cleanAnswer}`
+                    : /氨錯離子/.test(qd.type || '')
+                        ? `過量 NH₃ 以配位鍵取代水分子，形成題目所列錯離子 ${cleanAnswer}`
+                        : `比較沉澱與過量 NH₃ 的配位溶解性；依題幹物種判定為${cleanAnswer}`;
+            } else if (/鹵化銀/.test(qd.type || '')) {
+                const halide = cleanPrompt.match(/Ag(?:Cl|Br|I|F)/)?.[0] || '該鹵化銀';
+                rule = `${halide} 的溶解性依鹵化銀例外及題目指定試劑判斷，結果為${cleanAnswer}`;
+            } else if (/焰色反應/.test(qd.type || '')) {
+                rule = `由金屬離子受熱激發的特徵放光辨識；題目離子對應${cleanAnswer}`;
+            } else if (/碳酸根沉澱/.test(qd.type || '')) {
+                rule = /例外/.test(qd.type || '')
+                    ? 'CO₃²⁻ 通常難溶，但 IA⁺ 與 NH₄⁺ 的鹽為可溶例外'
+                    : 'CO₃²⁻ 與多數金屬陽離子形成難溶鹽，先排除 IA⁺ 與 NH₄⁺ 例外';
+            }
+            qd._precipContext = {
+                subtype: qd.type,
+                prompt: cleanPrompt,
+                rule: rule || `依題幹「${cleanPrompt}」所指定的沉澱表條件判定「${cleanAnswer}」`
+            };
             return true;
         },
         STATUS_LABEL,ALL_PAIRS,PRECIP_PAIRS
@@ -927,6 +980,8 @@ window.resetToDifficultySelection = function() {
     document.getElementById('electron-type-select-area').style.display = 'none';
     document.getElementById('precip-type-select-area').style.display = 'none';
     document.getElementById('formula-type-select-area').style.display = 'none';
+    const periodicModeSelect = document.getElementById('periodic-mode-select');
+    if (periodicModeSelect) periodicModeSelect.style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
     document.getElementById('cal-category-area').style.display = 'grid';
     document.getElementById('quiz-cancel-btn').style.display = 'none';
@@ -943,6 +998,155 @@ window.resetToDifficultySelection = function() {
     document.querySelectorAll('#formula-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
     renderCalibrationRuler(0, window.quizState && window.quizState.totalQ ? window.quizState.totalQ : 10);
 };
+
+// --- 週期表粒子模型 ---------------------------------------------------------
+// 週期表題可以使用假想離子，但只允許可讀、可計算且不會產生負電子數的電荷。
+const PERIODIC_PARTICLE_MAX_CHARGE = 4;
+const PERIODIC_PARTICLE_CHARGES = Object.freeze([-4, -3, -2, -1, 0, 1, 2, 3, 4]);
+
+function periodicDataPremise(element) {
+    return element && Number(element.z) >= 104 ? '依本系統週期表資料，' : '';
+}
+
+function periodicChargeText(charge) {
+    const q = Number(charge) || 0;
+    if (!q) return '';
+    const sign = q > 0 ? '+' : '-';
+    const magnitude = Math.abs(q);
+    return `<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}<span class="charge-sign ${q > 0 ? 'plus' : 'minus'}">${sign}</span></sup>`;
+}
+
+function periodicParticleLabel(particle) {
+    if (!particle || !particle.element) return '';
+    return `${particle.element.s}${periodicChargeText(particle.q)}`;
+}
+
+function periodicNuclideLabel(particle) {
+    if (!particle || !particle.element) return '';
+    return `<sup class="nuclide-mass">${particle.a}</sup>${particle.element.s}${periodicChargeText(particle.q)}`;
+}
+
+function periodicMassNumber(element) {
+    if (!element) return null;
+    // data_static.js is loaded before this file; also accept a window property so
+    // the particle generator remains usable when scripts are bundled separately.
+    const massTable = (typeof PERIODIC_MASS_NUMBERS !== 'undefined' && PERIODIC_MASS_NUMBERS)
+        || (typeof window !== 'undefined' && window.PERIODIC_MASS_NUMBERS)
+        || null;
+    const a = Number(massTable && massTable[element.s]);
+    return Number.isInteger(a) && a >= Number(element.z) ? a : null;
+}
+
+function periodicMakeParticle(element, charge, massNumber) {
+    if (!element) return null;
+    const q = Number(charge) || 0;
+    const z = Number(element.z);
+    const a = Number.isInteger(Number(massNumber)) ? Number(massNumber) : periodicMassNumber(element);
+    if (!Number.isInteger(z) || !Number.isInteger(a) || a < z || Math.abs(q) > PERIODIC_PARTICLE_MAX_CHARGE) return null;
+    const electrons = z - q;
+    if (electrons <= 0) return null;
+    return { element, z, a, q, p: z, e: electrons, n: a - z };
+}
+
+function periodicRandomParticle(element, excludeCharge) {
+    const charges = calibrationShuffle(PERIODIC_PARTICLE_CHARGES.filter(q => q !== excludeCharge));
+    for (const q of charges) {
+        const particle = periodicMakeParticle(element, q);
+        if (particle) return particle;
+    }
+    return periodicMakeParticle(element, 0);
+}
+
+function periodicParseParticle(value, pool) {
+    const plain = calibrationPlainElement(value)
+        .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ch => String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(ch)))
+        .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)))
+        .replace(/\s+/g, '');
+    const match = plain.match(/^([A-Z][a-z]?)(?:(\d+)?([+-]))?$/);
+    if (!match) return null;
+    const list = Array.isArray(pool) ? pool : [];
+    const element = list.find(el => el.s === match[1]);
+    if (!element) return null;
+    const magnitude = match[3] ? Number(match[2] || 1) : 0;
+    const q = match[3] ? (match[3] === '+' ? magnitude : -magnitude) : 0;
+    return periodicMakeParticle(element, q);
+}
+
+function periodicParticleReason(particle) {
+    if (!particle) return '粒子表示無法解析';
+    const qText = particle.q === 0 ? '0' : `${particle.q > 0 ? '+' : ''}${particle.q}`;
+    return `${particle.element.s} 的原子序 Z=${particle.z}、電荷 q=${qText}，所以質子 ${particle.p}、電子 ${particle.e}、中子 ${particle.n}`;
+}
+
+function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn) {
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const mode = quizData._periodicParticleMode || 'full';
+    const allCandidates = [];
+    const seen = new Set([periodicParticleLabel(correctParticle)]);
+    for (const element of calibrationShuffle(pool)) {
+        for (const q of calibrationShuffle(PERIODIC_PARTICLE_CHARGES)) {
+            const particle = periodicMakeParticle(element, q);
+            if (!particle || !predicate(particle) || seen.has(periodicParticleLabel(particle))) continue;
+            seen.add(periodicParticleLabel(particle));
+            const pGap = Math.abs(particle.p - correctParticle.p);
+            const nGap = Math.abs(particle.n - correctParticle.n);
+            const eGap = Math.abs(particle.e - correctParticle.e);
+            const zGap = Math.abs(particle.z - correctParticle.z);
+            const changedFields = [pGap, nGap, eGap].filter(gap => gap > 0).length;
+            let score = 0;
+            if (particle.z === correctParticle.z) score += 40; // 忘記電荷或正負號
+            else if (zGap === 1) score += 24;
+            else if (zGap === 2) score += 15;
+            else if (zGap <= 4) score += 7;
+            if (mode === 'isoelectronic') {
+                if (eGap === 1) score += 28;
+                else if (eGap === 2) score += 18;
+                else if (eGap <= 4) score += 8;
+            } else {
+                if (changedFields === 1) score += 24; // 只在最後一個粒子數判斷出錯
+                if (pGap === 1) score += 8;
+                if (nGap === 1) score += 8;
+                if (eGap === 1) score += 8;
+            }
+            allCandidates.push({
+                value: periodicParticleLabel(particle),
+                reason: reasonFn(particle),
+                _particle: particle,
+                score,
+                zGap
+            });
+        }
+    }
+    if (allCandidates.length < 3) return false;
+    const ranked = calibrationShuffle(allCandidates).sort((a, b) => b.score - a.score);
+    const selected = [];
+    const add = entry => {
+        if (entry && !selected.some(item => calibrationOptionKey(item.value) === calibrationOptionKey(entry.value))) {
+            selected.push(entry);
+        }
+    };
+    // 至少保留一個同元素不同電荷的陷阱，再混入鄰近原子序與一般近鄰粒子。
+    add(ranked.find(entry => entry._particle.z === correctParticle.z));
+    add(ranked.find(entry => entry._particle.z !== correctParticle.z && entry.zGap <= 2));
+    add(ranked.find(entry => entry._particle.z !== correctParticle.z && entry.zGap <= 4));
+    for (const entry of ranked) {
+        if (selected.length >= 3) break;
+        add(entry);
+    }
+    const candidates = selected.slice(0, 3);
+    if (candidates.length < 3) return false;
+    quizData.forcedOpts = calibrationShuffle([
+        periodicParticleLabel(correctParticle),
+        ...candidates.map(entry => entry.value)
+    ]);
+    quizData.optionRationales = {};
+    candidates.forEach(entry => { quizData.optionRationales[calibrationOptionKey(entry.value)] = entry.reason; });
+    quizData._periodicOptionParticles = {
+        [calibrationOptionKey(periodicParticleLabel(correctParticle))]: correctParticle,
+        ...Object.fromEntries(candidates.map(entry => [calibrationOptionKey(entry.value), entry._particle]))
+    };
+    return true;
+}
 
 window.restartCalibrationSameSettings = function() {
     if (!window.quizState || typeof window.quizState.generateTypeDeck !== 'function') return;
@@ -1375,6 +1579,21 @@ function _generateFormulaTypeDeck(total, sub) {
     return deck;
 }
 
+const PERIODIC_SIMPLE_CAPABLE_TYPES = Object.freeze([0, 4, 5]);
+
+function generatePeriodicProfileDeck(typeDeck, mode) {
+    const profiles = Array.from({ length: typeDeck.length }, () => mode === 'challenge' ? 'challenge' : 'standard');
+    if (mode !== 'challenge') {
+        const candidates = typeDeck
+            .map((type, index) => PERIODIC_SIMPLE_CAPABLE_TYPES.includes(type) ? index : -1)
+            .filter(index => index >= 0);
+        if (candidates.length) {
+            profiles[candidates[Math.floor(Math.random() * candidates.length)]] = 'simple';
+        }
+    }
+    return profiles;
+}
+
 // 獨立的牌組生成函式
 window._generateTypeDeck = function(diff, total) {
     const restrictedTypes = [5, 14];
@@ -1412,6 +1631,21 @@ window._generateTypeDeck = function(diff, total) {
     } else {
         types = typePools[diff] || typePools[1];
     }
+
+    // 週期表的 RANK 只限制元素池；所有 RANK 使用同一組題型比例。
+    // 題數增加時以輪流方式補題，讓各主題的出現次數最多只差 1。
+    if (diff === 1 && window.calCategory === 'periodic') {
+        const deck = [];
+        while (deck.length < total && types.length) {
+            for (const type of calibrationShuffle(types)) {
+                if (deck.length >= total) break;
+                deck.push(type);
+            }
+        }
+        window.quizState.periodicProfileDeck = generatePeriodicProfileDeck(deck, window.quizState.periodicMode || 'standard');
+        return deck;
+    }
+
     const restrictedInPool = types.filter(t => restrictedTypes.includes(t));
     const normalTypes = types.filter(t => !restrictedTypes.includes(t));
     let deck = [];
@@ -1421,7 +1655,7 @@ window._generateTypeDeck = function(diff, total) {
         const typesPerQuestion = Math.floor(remainingTotal / normalTypes.length);
         const remainder = remainingTotal % normalTypes.length;
         normalTypes.forEach(t => { for (let i = 0; i < typesPerQuestion; i++) deck.push(t); });
-        const shuffledTypes = [...normalTypes].sort(() => 0.5 - Math.random());
+        const shuffledTypes = calibrationShuffle(normalTypes);
         for (let i = 0; i < remainder; i++) deck.push(shuffledTypes[i]);
     }
     for (let i = deck.length - 1; i > 0; i--) {
@@ -1448,9 +1682,14 @@ window.startQuiz = function(level) {
     const diff = diffForCat[cat] || 1;
 
     const previousTotalQ = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
+    const previousPeriodicMode = window.quizState && window.quizState.periodicMode === 'challenge'
+        ? 'challenge'
+        : 'standard';
     window.quizState = {
         rank: level, difficulty: diff, totalQ: previousTotalQ, currentQ: 0, correctCount: 0,
-        pool: [], askedZ: [], typeDeck: [], askedQuestions: []
+        pool: [], askedZ: [], typeDeck: [], askedQuestions: [],
+        periodicMode: cat === 'periodic' ? previousPeriodicMode : null,
+        periodicProfileDeck: []
     };
     window.quizState.generateTypeDeck = window._generateTypeDeck;
 
@@ -1462,7 +1701,16 @@ window.startQuiz = function(level) {
     };
     window.quizState.pool = poolMap[level] || poolMap['A'];
 
-    document.getElementById('quiz-status-text').textContent = `RANK ${level} | ${catNameMap[cat]}`;
+    const periodicModeSelect = document.getElementById('periodic-mode-select');
+    if (periodicModeSelect) periodicModeSelect.style.display = cat === 'periodic' ? 'block' : 'none';
+    if (cat === 'periodic') {
+        document.querySelectorAll('#periodic-mode-select .setup-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${previousPeriodicMode}'`));
+        });
+    }
+
+    const modeLabel = cat === 'periodic' ? `｜${previousPeriodicMode === 'challenge' ? '挑戰模式' : '標準模式'}` : '';
+    document.getElementById('quiz-status-text').textContent = `RANK ${level}${modeLabel}｜${catNameMap[cat]}`;
     setTimeout(() => { if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons(); }, 50);
 };
 
@@ -1471,6 +1719,12 @@ window.setQuizParam = function(type, val, btn) {
     btn.classList.add('active');
     if (type === 'count' && window.quizState) {
         window.quizState.totalQ = parseInt(val);
+    }
+    if (type === 'periodicMode' && window.quizState && window.calCategory === 'periodic') {
+        window.quizState.periodicMode = val === 'challenge' ? 'challenge' : 'standard';
+        const rank = window.quizState.rank ? `RANK ${window.quizState.rank}` : '';
+        const mode = window.quizState.periodicMode === 'challenge' ? '挑戰模式' : '標準模式';
+        document.getElementById('quiz-status-text').textContent = `${rank}｜${mode}｜週期表校準`;
     }
 };
 
@@ -1485,6 +1739,10 @@ window.updateSetupButtons = function() {
             btn.classList.remove('active');
         }
     });
+    const mode = window.quizState.periodicMode === 'challenge' ? 'challenge' : 'standard';
+    document.querySelectorAll('#periodic-mode-select .setup-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${mode}'`));
+    });
 };
 
 // 生成問題的唯一標識（用於重複檢查）
@@ -1492,6 +1750,12 @@ window.updateSetupButtons = function() {
 function generateQuestionKey(type, quizData, target) {
     // 提取問題的核心內容（去除HTML標籤和格式化）
     let coreQuestion = quizData.question.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    // 題目唯一性以「題型＋方向／題幹＋目標物＋答案」為準，
+    // 不再把同一方向的不同元素錯誤合併成同一題。
+    const targetKey = target ? `${target.z || ''}-${target.s || ''}` : '';
+    const answerKey = calibrationOptionKey(quizData.answer);
+    const variantKey = quizData._templateId || quizData.type || '';
+    return `type${type}|${variantKey}|${targetKey}|${answerKey}|${coreQuestion}`;
     
     // 根據題型生成唯一標識
     switch(type) {
@@ -1806,29 +2070,151 @@ function calibrationOptionKey(value) {
     return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
 }
 
+function calibrationShuffle(values) {
+    const out = [...(values || [])];
+    for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+}
+
 function setCalibrationOptions(quizData, correct, entries) {
     const seen = new Set();
     const values = [];
     const reasons = {};
+    const optionMeta = {};
     const add = (entry, isCorrect) => {
         const value = typeof entry === 'object' ? entry.value : entry;
         const reason = typeof entry === 'object' ? entry.reason : '';
+        const misconception = typeof entry === 'object' ? (entry.misconception || '') : '';
+        const semanticKey = typeof entry === 'object' ? (entry.semanticKey || '') : '';
         const key = calibrationOptionKey(value);
         if (!key || seen.has(key)) return;
         seen.add(key);
         values.push(value);
         if (!isCorrect && reason) reasons[key] = reason;
+        optionMeta[key] = { misconception, semanticKey, isCorrect: !!isCorrect };
     };
     add({ value: correct }, true);
     (entries || []).forEach(entry => add(entry, false));
     quizData.forcedOpts = values;
     quizData.optionRationales = reasons;
+    quizData.optionMeta = optionMeta;
     return values;
 }
 
 function setCalibrationReason(quizData, reason) {
     quizData.correctReason = String(reason || '').trim();
     quizData.showExplanation = true;
+}
+
+// 詳解資料與畫面分離：產生器可以保留計算依據，畫面只呈現精簡三段式內容。
+function setCalibrationExplanation(quizData, basis, steps, conclusion) {
+    const clean = value => String(value || '').replace(/\s+/g, ' ').trim();
+    quizData.explanation = {
+        basis: clean(basis),
+        steps: clean(steps),
+        conclusion: clean(conclusion)
+    };
+    setCalibrationReason(quizData, [quizData.explanation.basis, quizData.explanation.steps, quizData.explanation.conclusion]
+        .filter(Boolean).join(' '));
+}
+
+function calibrationPlainElement(value) {
+    return String(value == null ? '' : value).replace(/<[^>]*>/g, '').trim();
+}
+
+function calibrationElementFromValue(value, pool) {
+    const plain = calibrationPlainElement(value);
+    const list = Array.isArray(pool) ? pool : [];
+    return list.find(el => el.s === plain || el.cn === plain || String(el.z) === plain);
+}
+
+function calibrationElementValueForQuestion(value, quizData) {
+    const plain = calibrationPlainElement(value);
+    if (quizData && quizData.displayMode === 'number') return String(plain);
+    return plain;
+}
+
+function calibrationBlockForElement(el) {
+    if (!el) return '';
+    if (el.s === 'He') return 's 區';
+    const group = Number(el.iupac);
+    if (el.g === '鑭系' || el.g === '錒系') return 'f 區';
+    return group <= 2 ? 's 區' : (group >= 13 ? 'p 區' : 'd 區');
+}
+
+function calibrationIonValueForElement(el, charge) {
+    if (!el) return '';
+    const q = Number(charge) || 0;
+    if (!q) return el.s;
+    const sign = q > 0 ? '+' : '-';
+    const magnitude = Math.abs(q);
+    return `${el.s}<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}<span class="charge-sign ${q > 0 ? 'plus' : 'minus'}">${sign}</span></sup>`;
+}
+
+function calibrationSemanticMatch(quizData, value, target, pool) {
+    const label = quizData.type || '';
+    const plain = calibrationPlainElement(value);
+    const answerPlain = calibrationPlainElement(quizData.answer);
+    const element = calibrationElementFromValue(value, pool);
+    if (typeof quizData._periodicSemanticMatcher === 'function') {
+        return !!quizData._periodicSemanticMatcher(value, target, pool);
+    }
+    if (quizData._periodicParticleMode) {
+        const optionParticle = periodicParseParticle(value, pool);
+        const expected = quizData._periodicParticle;
+        if (!optionParticle || !expected) return false;
+        if (quizData._periodicParticleMode === 'electron' || quizData._periodicParticleMode === 'isoelectronic') {
+            return optionParticle.e === expected.e;
+        }
+        if (quizData._periodicParticleMode === 'full') {
+            return optionParticle.p === expected.p && optionParticle.n === expected.n && optionParticle.e === expected.e;
+        }
+    }
+    if (/元素\s*>\s*分類/.test(label)) return plain === String(target && target.type || '');
+    if (/分類\s*>\s*元素/.test(label)) return !!element && element.type === (target && target.type);
+    if (/元素\s*>\s*常溫狀態/.test(label)) {
+        return plain === String(target && typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getCleanState(target.state) : '');
+    }
+    if (/常溫狀態\s*>\s*元素/.test(label)) {
+        return !!element && typeof QUIZ_HELPER !== 'undefined' && QUIZ_HELPER.getCleanState(element.state) === QUIZ_HELPER.getCleanState(target.state);
+    }
+    if (/同族/.test(label)) return !!element && element.z !== target.z && element.iupac === target.iupac;
+    if (/同一週期/.test(label)) return !!element && element.z !== target.z && element.p === target.p;
+    if (/化學性質相似/.test(label)) return !!element && element.z !== target.z && element.iupac === target.iupac;
+    if (/電負度/.test(label)) {
+        const answerEl = calibrationElementFromValue(answerPlain, pool);
+        const optionEl = element;
+        if (!answerEl || !optionEl || typeof QUIZ_HELPER === 'undefined') return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+        return QUIZ_HELPER.getEN(optionEl.s) === QUIZ_HELPER.getEN(answerEl.s);
+    }
+    if (/區塊/.test(label)) return plain === calibrationBlockForElement(target);
+    return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+}
+
+function validateCalibrationQuestion(quizData, type, target) {
+    const opts = Array.isArray(quizData.forcedOpts) ? quizData.forcedOpts : [];
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const keys = opts.map(calibrationOptionKey);
+    if (!quizData.answer || !quizData.question || opts.length < 2) return { ok: false, reason: '缺少題幹、答案或選項' };
+    if (new Set(keys).size !== keys.length) return { ok: false, reason: '選項文字重複' };
+    if (keys.filter(key => key === calibrationOptionKey(quizData.answer)).length !== 1) return { ok: false, reason: '正解字串不唯一' };
+    const semanticCount = opts.filter(value => calibrationSemanticMatch(quizData, value, target, pool)).length;
+    if (semanticCount !== 1) return { ok: false, reason: `化學語意正解數為 ${semanticCount}` };
+    if (!quizData.correctReason || /^依本題所屬化學規則判定/.test(quizData.correctReason)) {
+        return { ok: false, reason: '缺少題目專屬詳解' };
+    }
+    if (window.calCategory === 'periodic') {
+        if (quizData._periodicProfile === 'challenge' && Number(quizData._periodicRequiredSteps) < 2) {
+            return { ok: false, reason: '挑戰題必要推理步驟不足' };
+        }
+        if (quizData._periodicProfile === 'challenge' && quizData._periodicUsesChinese) {
+            return { ok: false, reason: '挑戰題不應使用中文元素名稱' };
+        }
+    }
+    return { ok: true, reason: '' };
 }
 
 function calibrationFormulaPlain(value) {
@@ -1857,63 +2243,129 @@ function formatCalibrationExplanationValue(value, quizData) {
 
 function renderCalibrationExplanation(quizData, selectedOption, isCorrect) {
     const answer = formatCalibrationExplanationValue(quizData.answer, quizData);
-    const reason = quizData.correctReason || '依本題所屬化學規則判定。';
+    const explanation = quizData.explanation || {};
+    const reason = [explanation.basis, explanation.steps, explanation.conclusion]
+        .filter(Boolean).join(' ') || quizData.correctReason || '本題詳解資料尚未建立。';
     const selectedKey = calibrationOptionKey(selectedOption);
     const selectedReason = !isCorrect && quizData.optionRationales
         ? quizData.optionRationales[selectedKey]
         : '';
-    const wrongNote = selectedReason
-        ? ` 你選的 ${formatCalibrationExplanationValue(selectedOption, quizData)} 混淆了${selectedReason}`
-        : '';
-    return `<strong>正確答案：</strong>${answer}；${reason}${wrongNote}`;
+    const selectedReasonText = String(selectedReason || '').replace(/[。；，,;\s]+$/g, '');
+    const wrongNote = selectedReasonText
+        ? `<div class="cal-explanation-line cal-explanation-mistake"><strong>你錯在：</strong>${selectedReasonText}；正確判斷應為 ${answer}。</div>`
+        : (isCorrect
+            ? `<div class="cal-explanation-line cal-explanation-correct"><strong>判斷正確：</strong>${answer} 符合題目條件。</div>`
+            : '');
+    return `<div class="cal-explanation-line"><strong>正確答案：</strong>${answer}</div>`
+        + `<div class="cal-explanation-line"><strong>解題：</strong>${reason}</div>${wrongNote}`;
 }
 
 function attachGenericCalibrationReason(type, quizData, target, parsed) {
-    if (quizData.correctReason) {
+    if (quizData.explanation && quizData.explanation.basis) {
+        quizData.showExplanation = true;
+        return;
+    }
+    if (quizData._periodicCustomExplanation && quizData.correctReason) {
         quizData.showExplanation = true;
         return;
     }
     const label = quizData.type || '';
     const answer = calibrationFormulaPlain(quizData.answer);
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const answerElement = calibrationElementFromValue(answer, pool) || target;
+    const elementText = target ? `${target.cn}（${target.s}）` : '';
     let reason = '';
-    if (/原子序|質子/.test(label)) {
-        reason = `原子序就是原子核中的質子數，因此答案為 ${answer}。`;
-    } else if (/電子總數|電子數逆推/.test(label)) {
-        reason = '中性原子的電子數等於原子序；離子則依電荷增減電子。';
-    } else if (/價電子/.test(label)) {
-        reason = '依電子組態最外層（過渡元素再考慮未填滿的 d 次層）統計價電子。';
-    } else if (/未成對/.test(label)) {
-        reason = '依洪德定則先單獨佔據等能軌域，再計算未成對電子。';
-    } else if (/軌域總數|軌域統計/.test(label)) {
-        reason = '先展開電子組態，再把題目指定次層的電子數逐項相加。';
+    if (/身分識別：簡寫/.test(label)) {
+        reason = `${target.s} 是${target.cn}的元素符號；其原子序為 ${target.z}。`;
+    } else if (/身分識別：中文名/.test(label)) {
+        reason = `題目給的元素是${target.cn}，資料對應的元素符號為 ${target.s}（原子序 ${target.z}）。`;
+    } else if (/識別校準：符號/.test(label)) {
+        reason = `${target.s} 的原子序為 ${target.z}，原子核內因此有 ${target.z} 個質子。`;
+    } else if (/識別校準：原子序|質子數逆推/.test(label)) {
+        reason = `原子序等於質子數；${answer} 對應的元素是${target.cn}（${target.s}）。`;
+    } else if (/位置定位/.test(label)) {
+        const coord = quizData.coordMode === 'ab'
+            ? `第${target.p}週期、${target.g}族`
+            : `第 ${target.p} 週期、第 ${target.iupac} 族`;
+        reason = `${elementText} 位於${coord}，原子序為 ${target.z}；依題目要求取出 ${answer}。`;
+    } else if (/中子總數/.test(label) && quizData._periodicParticle) {
+        const p = quizData._periodicParticle;
+        reason = `質量數 A=${p.a}、原子序 Z=${p.z}，所以中子數 n=A−Z=${p.a}−${p.z}=${p.n}。`;
+    } else if (/計算：電子總數/.test(label) && quizData._periodicParticle) {
+        const p = quizData._periodicParticle;
+        reason = `由電子數 e=Z−q=${p.z}−(${p.q})=${p.e}，所以答案為 ${answer}。`;
+    } else if (/計算：質子總數/.test(label) && quizData._periodicParticle) {
+        reason = `質子數等於原子序；${quizData._periodicParticle.element.s} 的 Z=${quizData._periodicParticle.z}，所以答案為 ${answer}。`;
+    } else if (/質子／中子／電子反推/.test(label) && quizData._periodicParticle) {
+        const p = quizData._periodicParticle;
+        reason = `由 p=${p.p} 判定 Z=${p.z}，由 n=${p.n} 得 A=${p.a}，再由 e=${p.e} 得 q=Z−e=${p.q}；因此為 ${answer}。`;
+    } else if (/電子數逆推/.test(label) && quizData._periodicParticle) {
+        const p = quizData._periodicParticle;
+        reason = `核對每個選項的 e=Z−q；正解 ${answer} 的電子數為 ${p.e}。`;
+    } else if (/等電子/.test(label)) {
+        const p = quizData._periodicParticle;
+        reason = p
+            ? `正解 ${answer} 的電子數為 Z−q=${p.z}−(${p.q})=${p.e}；其他選項的電子數不同。`
+            : `核對每個選項的 Z−q；只有 ${answer} 與題目粒子的電子數相同。`;
     } else if (/組態辨識|組態逆推/.test(label)) {
-        reason = '由電子總數與填入順序比對基態電子組態，得到唯一相符的元素或離子。';
+        reason = `依填入順序核對 ${target ? target.noble : answer} 的末端次層與總電子數，因此對應答案為 ${answer}。`;
+    } else if (/價電子數/.test(label)) {
+        reason = `${target.s} 的價電子來自最外層（過渡元素另核對未填滿 d 次層），逐項統計得到 ${answer} 個。`;
+    } else if (/未成對/.test(label)) {
+        reason = `依 ${target.s} 的基態電子組態，等能軌域先單獨佔據再配對；依洪德定則得到 ${answer} 個未成對電子。`;
+    } else if (/軌域總數統計/.test(label)) {
+        const orb = (label.match(/([SPD]) 軌域/) || [,''])[1].toLowerCase();
+        reason = `展開 ${target.s} 的電子組態後，把所有能階的 ${orb} 軌域電子逐項相加，總數為 ${answer}。`;
+    } else if (/價電子能階統計/.test(label)) {
+        reason = `只統計題目指定價電子能階，${target.s} 在該次層有 ${answer} 顆電子。`;
     } else if (/同族/.test(label)) {
-        reason = '同族元素具有相同的族位置與相似價電子結構。';
+        reason = `${target.s} 位於第 ${target.iupac} 族；正解 ${answer} 也位於第 ${target.iupac} 族。`;
     } else if (/同一週期/.test(label)) {
-        reason = '同一週期的元素具有相同的最高主量子數。';
+        reason = `${target.s} 位於第 ${target.p} 週期；正解 ${answer} 的最高主量子數也為 ${target.p}。`;
     } else if (/區塊/.test(label)) {
-        reason = '元素所屬區塊由最後填入的 s、p、d 或 f 次層決定。';
+        reason = `由 ${target.s} 電子組態最後填入的次層判斷，所屬為 ${calibrationBlockForElement(target)}。`;
     } else if (/電負度/.test(label)) {
-        reason = '在同一週期通常由左至右增加，並受原子半徑與有效核電荷影響。';
-    } else if (/常溫狀態/.test(label)) {
-        reason = '在 25°C、1 atm 下，依元素的熔點與沸點判斷是固態、液態或氣態。';
+        const winnerEN = answerElement && typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getEN(answerElement.s) : null;
+        reason = `依 Pauling 電負度資料，${answerElement ? answerElement.s : answer} 的數值最大${winnerEN == null ? '' : `（${winnerEN}）`}。`;
     } else if (/分類/.test(label)) {
-        reason = '依元素在週期表中的位置與價電子特徵，判斷金屬、非金屬或類金屬分類。';
+        const className = /分類\s*>/.test(label) && answerElement ? answerElement.type : target.type;
+        reason = `${elementText || (answerElement ? answerElement.cn : answer)} 的週期表位置與價電子特徵對應「${className}」分類。`;
+    } else if (/常溫狀態/.test(label)) {
+        const state = typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getCleanState(target.state) : answer;
+        reason = `在 25°C、1 atm 下，${elementText} 的熔點與沸點範圍使其呈${state}；正解為 ${answer}。`;
     } else if (/化學性質相似/.test(label)) {
-        reason = '化學性質相似主要來自相同族的價電子排列。';
+        reason = `${target.s} 與 ${answer} 同屬第 ${target.iupac} 族，價電子排列相近，因此化學性質最相似。`;
     } else if (/混成軌域|混成|結構圖/.test(label)) {
-        reason = '混成由中心原子的電子域數（σ 鍵域加孤電子對）決定。';
+        const d = quizData._hybridDomains;
+        reason = d
+            ? `標示原子有 ${d.sigma} 個 σ 鍵域與 ${d.lonePairs} 對孤電子對，共 ${d.total} 個電子域，故為 ${answer} 混成。`
+            : `依題目分子中標示原子的 σ 鍵域與孤電子對判斷電子域數，與 ${answer} 混成相符。`;
     } else if (/分子形狀/.test(label)) {
-        reason = '先由電子域數判斷電子域幾何，再扣除孤電子對得到分子形狀。';
+        const d = quizData._vseprDomains;
+        reason = d
+            ? `中心原子共有 ${d.total} 個電子域（${d.sigma} 個鍵域、${d.lonePairs} 對孤電子對），依 VSEPR 得到${answer}。`
+            : `依題目分子的電子域總數與孤電子對，先判斷電子域幾何，再得到${answer}。`;
     } else if (/氧化數/.test(label)) {
-        reason = '依氧化數總和等於分子或離子總電荷，再套用 H、O 等常見規則求得。';
+        const ox = quizData._oxidationContext;
+        reason = ox
+            ? `令 ${ox.element} 的氧化數為 x，依「各原子氧化數總和＝${ox.charge === 0 ? '0' : ox.charge}」列式，解得 x=${answer}。`
+            : `依氧化數總和等於分子或離子總電荷，代入題目化學式後得到 ${answer}。`;
     } else if (/沉澱|溶解|顏色|焰色|錯離子|氨水|強酸|強鹼/.test(label)) {
-        reason = '依沉澱表的溶解規則與題目指定的例外條件判定。';
+        const precip = quizData._precipContext;
+        reason = precip
+            ? `本題屬「${precip.subtype}」；${precip.rule}。`
+            : `依題目指定的沉澱表規則與例外，核對題幹物種後判定為 ${answer}。`;
     } else if (/名稱與化學式|化學式判讀|離子與組成/.test(label)) {
-        reason = '由離子電荷、原子守恆與化學式命名規則逐項核對。';
+        const item = formulaItemForQuiz(quizData);
+        reason = item && item.ions
+            ? `先核對 ${calibrationIonNotation(item.ions.cation)} 與 ${calibrationIonNotation(item.ions.anion)} 的電荷比，再展開括號與下標；因此答案為 ${answer}。`
+            : `由題目名稱、離子電荷、原子守恆與下標規則逐項核對，得到 ${answer}。`;
     }
-    setCalibrationReason(quizData, reason || '依本題所屬化學規則判定。');
+    const finalReason = reason || `本題題幹指定的條件與答案 ${answer} 已逐項核對。`;
+    setCalibrationReason(quizData,
+        target && Number(target.z) >= 104 && /分類|常溫狀態|化學性質/.test(label)
+            ? `${periodicDataPremise(target)}${finalReason}`
+            : finalReason);
 }
 
 function formulaItemForQuiz(quizData) {
@@ -1951,6 +2403,68 @@ function formulaNearNeighbors(item, limit) {
         .sort((a, b) => b.score - a.score || String(a.item.f).localeCompare(String(b.item.f)))
         .slice(0, limit || 12)
         .map(entry => entry.item);
+}
+
+// 公式題優先使用「只差最後一步」的近失誤：保留同一陽、陰離子骨架，
+// 只改電荷比、括號、下標或水合數，避免用換一個金屬就能直接猜答案。
+function formulaHighSimilarityDistractors(item) {
+    const entries = [];
+    const seen = new Set();
+    const add = (value, reason) => {
+        const key = calibrationOptionKey(value);
+        if (!key || key === calibrationOptionKey(item && item.f) || seen.has(key)) return;
+        seen.add(key);
+        entries.push({ value, reason });
+    };
+    const ionicPart = (symbol, count) => {
+        const n = Number(count);
+        if (!symbol || !Number.isFinite(n) || n < 1) return '';
+        if (n === 1) return symbol;
+        return /^[A-Z][a-z]?$/.test(symbol) ? `${symbol}${n}` : `(${symbol})${n}`;
+    };
+    const raw = String(item && item.f || '');
+    const hydrate = raw.match(/^(.+?)([·.])(\d+)H2O$/i);
+    if (hydrate) {
+        const main = hydrate[1], separator = hydrate[2], waterCount = Number(hydrate[3]);
+        [waterCount - 1, waterCount + 1, waterCount + 2].filter(n => n > 0).forEach(n => {
+            add(`${main}${separator}${n}H2O`, '保留主鹽骨架，只把結晶水數量判錯一步');
+        });
+        add(`${main}${waterCount}H2O`, '漏寫水合物分隔點，將結晶水誤接在主鹽後方');
+    }
+    if (item && item.ions) {
+        const c = item.ions.cation, a = item.ions.anion;
+        const make = (cc, aa, reason) => {
+            const formula = ionicPart(c.symbol, cc) + ionicPart(a.symbol, aa);
+            if (formula && formula !== raw) add(formula, reason);
+        };
+        make(Number(c.count) + 1, Number(a.count), '保留離子種類，但把陽、陰離子電荷比多算一格');
+        make(Number(c.count), Number(a.count) + 1, '保留離子種類，但把陽、陰離子電荷比少算一格');
+        if (Number(c.count) > 1) make(Number(c.count) - 1, Number(a.count), '忽略陽離子電荷比，少寫一個下標');
+        if (Number(a.count) > 1) make(Number(c.count), Number(a.count) - 1, '忽略陰離子電荷比，少寫一個下標');
+    }
+    if (raw.includes('(')) {
+        const noParentheses = raw.replace(/\(([^()]+)\)(\d*)/g, '$1$2');
+        if (noParentheses !== raw) add(noParentheses, '漏掉多原子離子括號，導致下標只套到最後一個元素');
+    }
+    const normalizeImplicitOne = formula => String(formula || '')
+        .replace(/([A-Z][a-z]?|\))1(?=[A-Z(·.]|$)/g, '$1');
+    const matches = [...raw.matchAll(/\d+/g)];
+    if (matches.length) {
+        const m = matches[matches.length - 1], n = Number(m[0]);
+        const lower = n <= 1 ? 2 : n - 1;
+        const upper = n + 1;
+        add(normalizeImplicitOne(raw.slice(0, m.index) + lower + raw.slice(m.index + m[0].length)), '只把最後一個下標少算一格，其他骨架仍相同');
+        add(normalizeImplicitOne(raw.slice(0, m.index) + upper + raw.slice(m.index + m[0].length)), '只把最後一個下標多算一格，其他骨架仍相同');
+    }
+    // 元素分子題特別容易把雙原子分子誤看成單原子或任意多原子，
+    // 這兩種選項比直接換成另一種元素更能檢查題目概念。
+    const elemental = raw.match(/^([A-Z][a-z]?)(\d+)$/);
+    if (elemental) {
+        const symbol = elemental[1], n = Number(elemental[2]);
+        add(symbol, '忽略元素在常態下以雙原子分子存在的規則');
+        add(`${symbol}${n + 1}`, '保留元素符號，但把分子原子數誤增一個');
+    }
+    return entries;
 }
 
 function calibrationIonNotation(ion) {
@@ -2018,12 +2532,8 @@ function refineFormulaQuestionOptions(quizData) {
         const ionHint = anion ? `含 ${calibrationIonNotation(anion)}${rootName ? `，屬於${rootName}` : ''}` : '依陽、陰離子骨架';
         setCalibrationReason(quizData, `化學式 ${formatCalibrationExplanationValue(item.f, { displayMode: 'formula' })} ${ionHint}，因此中文名稱為「${item.n}」。`);
     } else if (quizData.type.includes('中文名稱 → 化學式') || quizData.type.includes('選出正確化學式')) {
-        near.filter(x => x.f && x.f !== item.f).slice(0, 3).forEach(x => add(x.f, '只在電荷比、括號、下標或相鄰含氧級序上出錯'));
-        if (item.ions) {
-            const c = item.ions.cation, a = item.ions.anion;
-            const ratio = `${c.symbol}${a.symbol}`;
-            if (c.count !== 1 || a.count !== 1) add(ratio, '忽略離子電荷比，未寫出正確下標或括號');
-        }
+        formulaHighSimilarityDistractors(item).forEach(entry => add(entry.value, entry.reason));
+        near.filter(x => x.f && x.f !== item.f).forEach(x => add(x.f, '保留部分化學式骨架，但把離子種類或相鄰氧化態判錯'));
         setCalibrationReason(quizData, `先使陽、陰離子總電荷相抵，再依多原子離子與下標規則寫出「${item.n}」的最簡化學式。`);
     } else if (quizData.type.includes('離子與組成')) {
         near.filter(x => x.f && x.f !== item.f).slice(0, 3).forEach(x => add(x.f, '保留部分正確離子，但電荷比或原子數不符'));
@@ -2058,18 +2568,41 @@ function elementDistractors(target, valueFn, predicate, reason, limit) {
     const pool = (window.quizState && Array.isArray(window.quizState.pool) && window.quizState.pool.length)
         ? window.quizState.pool
         : (typeof ELECTRON_DATA !== 'undefined' && Array.isArray(ELECTRON_DATA) ? ELECTRON_DATA : []);
-    return pool.filter(el => (!predicate || predicate(el)) && el.z !== target.z)
+    const ranked = pool.filter(el => (!predicate || predicate(el)) && el.z !== target.z)
         .map(el => ({ el, score: elementNearScore(target, el) }))
         .sort((a, b) => b.score - a.score || a.el.z - b.el.z)
         .map(entry => ({ value: valueFn(entry.el), reason }))
         .filter(entry => entry.value != null && calibrationOptionKey(entry.value) !== calibrationOptionKey(valueFn(target)))
-        .filter((entry, index, arr) => arr.findIndex(x => calibrationOptionKey(x.value) === calibrationOptionKey(entry.value)) === index)
-        .slice(0, limit || 3);
+        .filter((entry, index, arr) => arr.findIndex(x => calibrationOptionKey(x.value) === calibrationOptionKey(entry.value)) === index);
+    const wanted = limit || 3;
+    if (ranked.length <= wanted) return ranked;
+
+    // 標準題保留一個最接近的迷思選項，其餘從中距離與較寬的元素池抽取，
+    // 避免三個錯項都集中在同一小段原子序而變成排列線索。
+    const near = ranked.slice(0, Math.min(6, ranked.length));
+    const medium = ranked.slice(6, Math.min(18, ranked.length));
+    const wide = ranked.slice(18);
+    const selected = [];
+    const add = entry => {
+        if (!entry) return;
+        const key = calibrationOptionKey(entry.value);
+        if (!selected.some(item => calibrationOptionKey(item.value) === key)) selected.push(entry);
+    };
+    add(calibrationShuffle(near)[0]);
+    add(calibrationShuffle(medium.length ? medium : ranked.slice(near.length))[0]);
+    add(calibrationShuffle(wide.length ? wide : ranked.slice(6))[0]);
+    for (const entry of calibrationShuffle(ranked)) {
+        if (selected.length >= wanted) break;
+        add(entry);
+    }
+    return selected.slice(0, wanted);
 }
 
 function refineElementQuestionOptions(type, quizData, target) {
     if (!target || type >= 16 || type >= 21) return;
     const label = quizData.type || '';
+    // 粒子反推題已由粒子模型建立選項；不可再被元素近鄰選項覆寫。
+    if (quizData._periodicParticleMode || quizData._periodicCompound) return;
     const answer = quizData.answer;
     const pool = (window.quizState && Array.isArray(window.quizState.pool) && window.quizState.pool.length)
         ? window.quizState.pool
@@ -2084,6 +2617,15 @@ function refineElementQuestionOptions(type, quizData, target) {
         if (mode === 'symbol') return el.s;
         if (mode === 'chinese') return el.cn;
         if (mode === 'number') return String(el.z);
+        if (mode === 'ion') {
+            const electronCount = Number(quizData._electronCount);
+            if (Number.isFinite(electronCount)) {
+                const neededCharge = Number(el.z) - electronCount;
+                const mistakenCharge = neededCharge === 3 ? neededCharge - 1 : neededCharge + 1;
+                return calibrationIonValueForElement(el, mistakenCharge);
+            }
+            return el.s;
+        }
         if (mode === 'raw') {
             if (quizData.coordMode === 'ab') {
                 const pCh = ['', '一', '二', '三', '四', '五', '六', '七'][el.p] || el.p;
@@ -2112,23 +2654,46 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/化學性質相似/.test(label)) {
         candidates = elementDistractors(answerElement, valueForOptions, el => el.iupac !== answerElement.iupac, '價電子排列不同；相似化學性質應優先比較族位置。', 3);
     } else if (/電負度/.test(label)) {
-        candidates = elementDistractors(answerElement, valueForOptions, null, '電負度只差一個週期表趨勢判斷；同週期由左至右通常增加。', 3);
+        const winnerEN = answerElement && typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getEN(answerElement.s) : null;
+        candidates = elementDistractors(answerElement, valueForOptions,
+            el => winnerEN != null && typeof QUIZ_HELPER !== 'undefined' && QUIZ_HELPER.getEN(el.s) != null && QUIZ_HELPER.getEN(el.s) < winnerEN,
+            '電負度較低；同週期由左至右通常增加，往右上方的元素通常較大。', 3);
     } else if (/座標/.test(label)) {
         candidates = elementDistractors(target, valueForOptions, null, '週期或族其中一項相近，但不是題目要求的完整座標。', 3);
-    } else if (/電子總數|質子總數/.test(label)) {
-        // 電子／質子計算題的答案不是元素原子序；用相鄰數值與電荷增減形成可檢核的計算迷思。
+    } else if (/電子總數|質子總數|中子總數/.test(label)) {
+        // 粒子計算題保留數值選項，但混入一個最容易犯的「交換粒子／忽略電荷」錯誤，
+        // 另兩個再從鄰近數值補足，避免只有單一元素線索或三個等距數字。
         const numericAnswer = Number(calibrationFormulaPlain(answer).replace(/[^+\-\d.]/g, ''));
         if (Number.isFinite(numericAnswer)) {
-            const offsets = [-1, 1, -2, 2, -3, 3];
-            candidates = offsets
-                .map(offset => ({
-                    value: String(numericAnswer + offset),
-                    reason: /電子總數/.test(label)
-                        ? '把離子電荷造成的電子增減方向或幅度算錯。'
-                        : '把原子序（質子數）誤加減成相鄰數值。'
-                }))
-                .filter(entry => Number(entry.value) >= 0)
-                .slice(0, 3);
+            const particle = quizData._periodicParticle;
+            const countKey = /電子總數/.test(label) ? 'e' : (/中子總數/.test(label) ? 'n' : 'p');
+            const closeDelta = numericAnswer === 0 ? 1 : (Math.random() < 0.5 ? -1 : 1);
+            const used = new Set([String(numericAnswer)]);
+            const addNumeric = (value, entryReason) => {
+                const n = Number(value);
+                const key = String(n);
+                if (!Number.isInteger(n) || n < 0 || used.has(key)) return;
+                used.add(key);
+                candidates.push({ value: key, reason: entryReason });
+            };
+            addNumeric(numericAnswer + closeDelta, '只差 1；通常是把計算中的增減方向或一步進位算錯。');
+            if (particle) {
+                if (countKey === 'e') {
+                    addNumeric(particle.p, '把原子序（質子數）直接當成電子總數，忽略粒子所帶電荷。');
+                    addNumeric(particle.n, '把中子數誤當成電子總數；電子數仍須用 e=Z−q 計算。');
+                } else if (countKey === 'p') {
+                    addNumeric(particle.e, '把電子數誤當成質子數；質子數應等於原子序 Z。');
+                    addNumeric(particle.n, '把中子數誤當成質子數；中子數由 A−Z 求得。');
+                } else {
+                    addNumeric(particle.p, '把原子序（質子數）誤當成中子數；中子數應為 A−Z。');
+                    addNumeric(particle.e, '把電子數誤當成中子數；離子電荷只影響電子數。');
+                }
+            }
+            for (const offset of [2, -2, 3, -3, 4, -4, 5, -5]) {
+                if (candidates.length >= 3) break;
+                addNumeric(numericAnswer + offset, '與正解相近，但在題目指定的粒子計算中多算或少算電子、質子或中子。');
+            }
+            candidates = candidates.slice(0, 3);
         }
     } else if (/等電子/.test(label)) {
         // 等電子題用「只差一顆電子」的粒子作誘答，保持粒子表示形式而非塞入元素符號。
@@ -2164,17 +2729,29 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/元素\s*>\s*分類/.test(label)) {
         // 元素 → 分類要比較「分類標籤」本身，不能把週期表座標當成分類選項。
         const typeValues = [...new Set(pool.map(el => String(el.type || '').trim()).filter(Boolean))];
+        if (!typeValues.includes('以上皆非')) typeValues.push('以上皆非');
         candidates = typeValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素位置可能相近，但金屬／非金屬／類金屬分類不同。' }))
             .slice(0, 3);
+    } else if (/分類\s*>\s*元素/.test(label)) {
+        const className = target && target.type;
+        candidates = elementDistractors(target, valueForOptions,
+            el => el.type !== className,
+            `元素雖可能位於相近週期表位置，但分類不是「${className}」。`, 3);
     } else if (/元素\s*>\s*常溫狀態/.test(label)) {
         // 元素 → 常溫狀態只有固、液、氣三個合理類別，選項要維持同一表示形式。
         const stateValues = [...new Set(pool.map(el => QUIZ_HELPER.getCleanState(el.state)).filter(Boolean))];
+        if (!stateValues.includes('以上皆非')) stateValues.push('以上皆非');
         candidates = stateValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素可能相鄰，但在 25°C、1 atm 下的物態不同。' }))
             .slice(0, 3);
+    } else if (/常溫狀態\s*>\s*元素/.test(label)) {
+        const state = typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getCleanState(target.state) : '';
+        candidates = elementDistractors(target, valueForOptions,
+            el => typeof QUIZ_HELPER === 'undefined' || QUIZ_HELPER.getCleanState(el.state) !== state,
+            `元素的 25°C、1 atm 物態不是「${state}」。`, 3);
     } else if (/分類|常溫狀態/.test(label)) {
         candidates = elementDistractors(target, valueForOptions, null, '元素位置相近，但分類、物態或最後填入次層不同。', 3);
     } else {
@@ -2194,25 +2771,415 @@ function refineElementQuestionOptions(type, quizData, target) {
     }
 }
 
-function attachOptionRationales(quizData) {
+function attachOptionRationales(quizData, target) {
     if (!quizData.forcedOpts || quizData.forcedOpts.length < 2) return;
+    if (quizData._periodicCustomRationales) return;
     if (!quizData.optionRationales) quizData.optionRationales = {};
     const label = quizData.type || '';
-    const reason = /氧化數/.test(label)
-        ? '把氧化數規則或總電荷條件套用錯誤'
-        : /混成|分子形狀/.test(label)
-            ? '混淆電子域數、孤電子對或多重鍵的計算'
-            : /沉澱|溶解|顏色|焰色|錯離子|氨水|強酸|強鹼/.test(label)
-                ? '把相近離子組合的沉澱表規則或例外套錯'
-                : /化學式|名稱|離子/.test(label)
-                    ? '把離子電荷、命名級序、括號或下標判斷錯置'
-                    : '把題目指定的關鍵條件與相近選項混淆';
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const elementFor = value => {
+        const direct = calibrationElementFromValue(value, pool);
+        if (direct) return direct;
+        const raw = String(value == null ? '' : value).trim();
+        if (/^\d+$/.test(raw)) {
+            const z = Number(raw);
+            return pool.find(el => Number(el.z) === z) || null;
+        }
+        return null;
+    };
     quizData.forcedOpts.forEach(value => {
         const key = calibrationOptionKey(value);
-        if (key !== calibrationOptionKey(quizData.answer) && !quizData.optionRationales[key]) {
-            quizData.optionRationales[key] = reason;
+        // 重新依照目前題型產生具體回饋；不要沿用 distractor 產生時的泛用舊理由。
+        if (key !== calibrationOptionKey(quizData.answer)) {
+            const el = elementFor(value);
+            if (/分類\s*>\s*元素/.test(label) && el && target) {
+                quizData.optionRationales[key] = `該元素屬於「${el.type}」，不是題目指定的「${target.type}」分類`;
+            } else if (/元素\s*>\s*分類/.test(label) && target) {
+                quizData.optionRationales[key] = `選項分類為「${key}」，但 ${target.s} 屬於「${target.type}」`;
+            } else if (/元素\s*>\s*常溫狀態/.test(label) && target) {
+                const targetState = typeof QUIZ_HELPER !== 'undefined' ? QUIZ_HELPER.getCleanState(target.state) : target.state;
+                quizData.optionRationales[key] = `選項物態為「${key}」，但 ${target.s} 在 25°C、1 atm 下應為${targetState}`;
+            } else if (/常溫狀態\s*>\s*元素/.test(label) && el && target && typeof QUIZ_HELPER !== 'undefined') {
+                quizData.optionRationales[key] = `該元素在 25°C、1 atm 下為${QUIZ_HELPER.getCleanState(el.state)}，不是題目要求的物態`;
+            } else if (/身分識別：簡寫/.test(label) && el && target) {
+                quizData.optionRationales[key] = `${el.s} 是${el.cn}的元素符號，不是${target.cn}（${target.s}）`;
+            } else if (/身分識別：中文名/.test(label) && el && target) {
+                quizData.optionRationales[key] = `「${el.cn}」對應 ${el.s}（原子序 ${el.z}），不是題目指定的${target.cn}（${target.s}）`;
+            } else if (/識別校準：符號/.test(label) && el && target) {
+                quizData.optionRationales[key] = `${value} 的原子序為 ${el.z}，不是題目所給 ${target.s} 的原子序 ${target.z}`;
+            } else if (/識別校準：原子序/.test(label) && el && target) {
+                quizData.optionRationales[key] = `選項 ${value} 的原子序為 ${el.z}，不是題目指定的 ${target.z}`;
+            } else if (/位置定位/.test(label) && el && target) {
+                quizData.optionRationales[key] = `它位於第 ${el.p} 週期、第 ${el.iupac} 族；題目要求的是第 ${target.p} 週期、第 ${target.iupac} 族的元素`;
+            } else if (/同族/.test(label) && el && target) {
+                quizData.optionRationales[key] = `它位於第 ${el.iupac} 族，與題目元素的第 ${target.iupac} 族不同`;
+            } else if (/同一週期/.test(label) && el && target) {
+                quizData.optionRationales[key] = `它位於第 ${el.p} 週期，與題目元素的第 ${target.p} 週期不同`;
+            } else if (/化學性質相似/.test(label) && el && target) {
+                quizData.optionRationales[key] = `價電子排列不同；該選項位於第 ${el.iupac} 族，而題目元素位於第 ${target.iupac} 族`;
+            } else if (/電負度/.test(label) && el && target && typeof QUIZ_HELPER !== 'undefined') {
+                const optionEN = QUIZ_HELPER.getEN(el.s);
+                const answerElement = calibrationElementFromValue(quizData.answer, pool);
+                const answerEN = answerElement ? QUIZ_HELPER.getEN(answerElement.s) : null;
+                quizData.optionRationales[key] = `其 Pauling 電負度為 ${optionEN}，低於正解 ${answerEN}`;
+            } else {
+                const particle = periodicParseParticle(value);
+                if (particle && quizData._periodicParticle) {
+                    const p = particle;
+                    const t = quizData._periodicParticle;
+                    if (/等電子|電子數逆推/.test(label)) {
+                        quizData.optionRationales[key] = `${periodicParticleLabel(p)} 的電子數 e=Z−q=${p.z}−(${p.q})=${p.e}，與題目要求的 ${t.e} 不同`;
+                    } else if (/質子／中子／電子反推/.test(label)) {
+                        quizData.optionRationales[key] = `${periodicParticleLabel(p)} 的 p=${p.p}、n=${p.n}、e=${p.e}，與題目要求的 p=${t.p}、n=${t.n}、e=${t.e} 不同`;
+                    } else if (/中子總數/.test(label)) {
+                        quizData.optionRationales[key] = `中子數應為 n=A−Z=${t.a}−${t.z}=${t.n}，不是 ${value}`;
+                    } else if (/質子總數/.test(label)) {
+                        quizData.optionRationales[key] = `質子數應為原子序 Z=${t.z}，不是 ${value}`;
+                    } else if (/電子總數/.test(label)) {
+                        quizData.optionRationales[key] = `電子數應為 e=Z−q=${t.z}−(${t.q})=${t.e}，不是 ${value}`;
+                    }
+                }
+                if (!quizData.optionRationales[key]) {
+                    quizData.optionRationales[key] = el && target
+                        ? `選項 ${el.s} 的原子序為 ${el.z}、位於第 ${el.p} 週期第 ${el.iupac} 族；題目要求 ${target.s}（Z=${target.z}）`
+                        : `選項 ${value} 不符合題幹指定的判斷條件`;
+                }
+            }
         }
     });
+}
+
+function periodicChargePlain(charge) {
+    const q = Number(charge) || 0;
+    return q === 0 ? '0' : `${q > 0 ? '+' : ''}${q}`;
+}
+
+function periodicElementValue(element, mode) {
+    return mode === 'number' ? String(element.z) : element.s;
+}
+
+function periodicCompoundElementEntries(correctElement, valueMode, predicate, reasonFn, excludeZ = []) {
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const valueFn = element => periodicElementValue(element, valueMode);
+    const excluded = new Set(excludeZ.map(Number));
+    const wrongPool = pool.filter(element =>
+        element.z !== correctElement.z && !excluded.has(Number(element.z)) && !predicate(element)
+    );
+    const ranked = calibrationShuffle(wrongPool)
+        .map(element => ({ element, score: elementNearScore(correctElement, element) }))
+        .sort((a, b) => b.score - a.score || a.element.z - b.element.z)
+        .map(entry => entry.element);
+    // 複合題需要較多可混淆選項：先取兩個同一鄰域的元素，再保留一個中距離錯項。
+    const near = ranked.filter(element => Math.abs(Number(element.z) - Number(correctElement.z)) <= 4 || element.p === correctElement.p);
+    const selected = [];
+    const add = element => {
+        if (element && !selected.some(item => item.z === element.z)) selected.push(element);
+    };
+    add(calibrationShuffle(near)[0]);
+    add(calibrationShuffle(near.filter(element => !selected.some(item => item.z === element.z)))[0]);
+    add(calibrationShuffle(ranked.filter(element => !selected.some(item => item.z === element.z) && !near.includes(element)))[0]);
+    for (const element of calibrationShuffle(ranked)) {
+        if (selected.length >= 3) break;
+        add(element);
+    }
+    const candidates = selected.slice(0, 3);
+    if (candidates.length < 3) return null;
+    return {
+        valueFn,
+        entries: candidates.map(element => ({
+            value: valueFn(element),
+            reason: reasonFn(element)
+        }))
+    };
+}
+
+function setPeriodicCompoundElementQuestion(quizData, target, correctElement, predicate, config) {
+    const optionData = periodicCompoundElementEntries(
+        correctElement,
+        config.valueMode,
+        predicate,
+        config.reasonFn,
+        config.excludeZ || []
+    );
+    if (!optionData) return false;
+    const valueFn = optionData.valueFn;
+    quizData.type = config.type;
+    quizData.question = config.question;
+    quizData.answer = valueFn(correctElement);
+    quizData.displayMode = config.valueMode === 'number' ? 'number' : 'symbol';
+    quizData._periodicCompound = true;
+    quizData._periodicRequiredSteps = 2;
+    quizData._periodicUsesChinese = false;
+    quizData._periodicCustomExplanation = true;
+    quizData._periodicCustomRationales = true;
+    quizData._periodicSemanticMatcher = value => {
+        const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+        const element = calibrationElementFromValue(value, pool);
+        return !!element && element.z === correctElement.z && predicate(element);
+    };
+    setCalibrationOptions(quizData, quizData.answer, optionData.entries);
+    setCalibrationReason(quizData, config.explanation);
+    return true;
+}
+
+function applyPeriodicSimpleVariant(type, quizData, target) {
+    if (!PERIODIC_SIMPLE_CAPABLE_TYPES.includes(type)) return false;
+    quizData._periodicUsesChinese = true;
+    quizData._periodicRequiredSteps = 1;
+    quizData.forcedOpts = undefined;
+    quizData.optionRationales = {};
+    if (type === 0) {
+        quizData.type = '身分識別：簡寫 > 中文名';
+        quizData.question = `化學符號 ${target.s} 的中文名稱為何？`;
+        quizData.answer = target.cn;
+        quizData.displayMode = 'chinese';
+    } else if (type === 4) {
+        quizData.type = '特性校準：元素 > 分類';
+        quizData.question = `元素「${target.cn}」在化學性質分類上屬於下列何者？`;
+        quizData.answer = target.type;
+        quizData.displayMode = 'raw';
+    } else {
+        const state = QUIZ_HELPER.getCleanState(target.state);
+        quizData.type = '特性校準：元素 > 常溫狀態';
+        quizData.question = `在常溫常壓 (25°C, 1 atm) 下，「${target.cn}」的物理狀態為何？`;
+        quizData.answer = state;
+        quizData.displayMode = 'raw';
+    }
+    return true;
+}
+
+function applyPeriodicStandardVariant(type, quizData, target) {
+    if (!PERIODIC_SIMPLE_CAPABLE_TYPES.includes(type)) return false;
+    quizData._periodicUsesChinese = false;
+    quizData._periodicRequiredSteps = 1;
+    quizData.forcedOpts = undefined;
+    quizData.optionRationales = {};
+    if (type === 0) {
+        if (Math.random() < 0.5) {
+            quizData.type = '識別校準：符號 > 原子序';
+            quizData.question = `${target.s} 的原子序為何？`;
+            quizData.answer = String(target.z);
+            quizData.displayMode = 'number';
+        } else {
+            quizData.type = '識別校準：原子序 > 符號';
+            quizData.question = `原子序為 ${target.z} 的元素符號為何？`;
+            quizData.answer = target.s;
+            quizData.displayMode = 'symbol';
+        }
+    } else if (type === 4) {
+        const useNumber = Math.random() < 0.5;
+        const reference = useNumber ? `原子序為 ${target.z} 的元素` : `[ ${target.s} ]`;
+        quizData.type = '特性校準：元素 > 分類';
+        quizData.question = `元素 ${reference} 在化學性質分類上屬於下列何者？`;
+        quizData.answer = target.type;
+        quizData.displayMode = 'raw';
+    } else {
+        const useNumber = Math.random() < 0.5;
+        const reference = useNumber ? `原子序為 ${target.z} 的元素` : `[ ${target.s} ]`;
+        quizData.type = '特性校準：元素 > 常溫狀態';
+        quizData.question = `在常溫常壓 (25°C, 1 atm) 下，${reference} 的物理狀態為何？`;
+        quizData.answer = QUIZ_HELPER.getCleanState(target.state);
+        quizData.displayMode = 'raw';
+    }
+    return true;
+}
+
+function applyPeriodicChallengeVariant(type, quizData, target) {
+    const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
+    const valueMode = Math.random() < 0.5 ? 'symbol' : 'number';
+    const premise = periodicDataPremise(target);
+
+    if (type === 0 || type === 1) {
+        const particle = periodicRandomParticle(target);
+        if (!particle) return false;
+        const valueModeForQuestion = type === 0 ? 'symbol' : 'number';
+        const valueFn = element => periodicElementValue(element, valueModeForQuestion);
+        const ranked = calibrationShuffle(pool.filter(element => element.z !== target.z))
+            .map(element => ({ element, score: elementNearScore(target, element) }))
+            .sort((a, b) => b.score - a.score || a.element.z - b.element.z)
+            .map(entry => entry.element);
+        const near = ranked.filter(element => Math.abs(Number(element.z) - Number(target.z)) <= 4 || element.p === target.p);
+        const selected = [];
+        const add = element => {
+            if (element && !selected.some(item => item.z === element.z)) selected.push(element);
+        };
+        add(calibrationShuffle(near)[0]);
+        add(calibrationShuffle(near.filter(element => !selected.some(item => item.z === element.z)))[0]);
+        add(calibrationShuffle(ranked.filter(element => !selected.some(item => item.z === element.z) && !near.includes(element)))[0]);
+        for (const element of calibrationShuffle(ranked)) {
+            if (selected.length >= 3) break;
+            add(element);
+        }
+        const entries = selected.slice(0, 3).map(element => ({
+                value: valueFn(element),
+                reason: `${element.s} 若帶電荷 q=${periodicChargePlain(particle.q)}，電子數 e=${element.z}−(${periodicChargePlain(particle.q)})=${element.z - particle.q}，無法得到題目給定的 ${particle.e} 個電子`
+            }));
+        if (entries.length < 3) return false;
+        quizData.type = type === 0
+            ? '複合辨識：電子數／電荷 → 元素符號'
+            : '複合辨識：電子數／電荷 → 原子序';
+        quizData.question = `某粒子帶 ${periodicChargePlain(particle.q)} 電荷且有 ${particle.e} 個電子；${type === 0 ? '其元素符號為何？' : '其原子序為何？'}`;
+        quizData.answer = valueFn(target);
+        quizData.displayMode = valueModeForQuestion === 'number' ? 'number' : 'symbol';
+        quizData._periodicParticle = particle;
+        quizData._periodicCompound = true;
+        quizData._periodicRequiredSteps = 2;
+        quizData._periodicCustomExplanation = true;
+        quizData._periodicCustomRationales = true;
+        quizData._periodicUsesChinese = false;
+        quizData._periodicSemanticMatcher = value => {
+            const element = calibrationElementFromValue(value, pool);
+            return !!element && element.z === target.z;
+        };
+        setCalibrationOptions(quizData, quizData.answer, entries);
+        setCalibrationReason(quizData, `由 e=Z−q 反推 Z=e+q=${particle.e}+(${particle.q})=${particle.z}，再由原子序辨識 ${target.s}。`);
+        return true;
+    }
+
+    if (type === 2) {
+        const block = calibrationBlockForElement(target);
+        const predicate = element => element.z !== target.z && element.p === target.p && calibrationBlockForElement(element) === block;
+        const partner = calibrationShuffle(pool.filter(predicate))[0];
+        if (!partner) return false;
+        return setPeriodicCompoundElementQuestion(quizData, target, partner, predicate, {
+            valueMode,
+            type: '複合定位：同週期／同區塊',
+            question: `下列哪個元素與 ${target.s} 位於同一週期且屬於同一區塊？`,
+            explanation: `${target.s} 位於第 ${target.p} 週期、${block}；正解 ${partner.s} 同時符合這兩項條件。`,
+            excludeZ: [target.z],
+            reasonFn: element => `${element.s} 位於第 ${element.p} 週期、${calibrationBlockForElement(element)}；未同時符合第 ${target.p} 週期與 ${block}。`
+        });
+    }
+
+    if (type === 4) {
+        const predicate = element => element.type === target.type && element.p === target.p;
+        return setPeriodicCompoundElementQuestion(quizData, target, target, predicate, {
+            valueMode,
+            type: '複合分類：週期／金屬性質',
+            question: `${premise}下列哪個選項所代表的元素同時位於第 ${target.p} 週期且屬於「${target.type}」？`,
+            explanation: `${target.s} 位於第 ${target.p} 週期，且資料分類為「${target.type}」；兩項條件同時成立。`,
+            reasonFn: element => `${element.s} 位於第 ${element.p} 週期，分類為「${element.type}」；未同時符合第 ${target.p} 週期與「${target.type}」。`
+        });
+    }
+
+    if (type === 5) {
+        const state = QUIZ_HELPER.getCleanState(target.state);
+        const predicate = element => QUIZ_HELPER.getCleanState(element.state) === state && element.p === target.p;
+        return setPeriodicCompoundElementQuestion(quizData, target, target, predicate, {
+            valueMode,
+            type: '複合物態：週期／常溫狀態',
+            question: `${premise}下列哪個選項所代表的元素同時位於第 ${target.p} 週期，且在 25°C、1 atm 下呈${state}？`,
+            explanation: `${target.s} 位於第 ${target.p} 週期；在 25°C、1 atm 下呈${state}，兩項條件同時成立。`,
+            reasonFn: element => `${element.s} 位於第 ${element.p} 週期，25°C、1 atm 下為${QUIZ_HELPER.getCleanState(element.state)}；未同時符合題目條件。`
+        });
+    }
+
+    if (type === 6) {
+        const particle = periodicRandomParticle(target);
+        if (!particle) return false;
+        if (Math.random() < 0.5) {
+            quizData.type = '識別校準：質子／中子／電子反推';
+            quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
+            quizData.answer = periodicParticleLabel(particle);
+            quizData.displayMode = 'ion';
+            quizData._periodicParticle = particle;
+            quizData._periodicParticleMode = 'full';
+            if (!periodicParticleOptions(quizData, particle,
+                candidate => candidate.p !== particle.p || candidate.n !== particle.n || candidate.e !== particle.e,
+                candidate => `${periodicParticleReason(candidate)}；與題目給定的 p、n、e 不符`
+            )) return false;
+            setCalibrationReason(quizData, `由 p=${particle.p} 判定 Z=${particle.z}，由 n=${particle.n} 得 A=${particle.a}，由 e=${particle.e} 得 q=Z−e=${particle.q}；因此為 ${quizData.answer}。`);
+        } else {
+            const partner = calibrationShuffle(pool.filter(element => element.z !== target.z))
+                .map(element => periodicRandomParticle(element))
+                .find(candidate => candidate && candidate.e === particle.e);
+            if (!partner) return false;
+            quizData.type = '邏輯判斷：等電子序列';
+            quizData.question = `下列哪一個粒子與 [ ${periodicParticleLabel(particle)} ] 具有相同的電子數？`;
+            quizData.answer = periodicParticleLabel(partner);
+            quizData.displayMode = 'ion';
+            quizData._periodicParticle = partner;
+            quizData._periodicParticleMode = 'isoelectronic';
+            if (!periodicParticleOptions(quizData, partner,
+                candidate => candidate.e !== partner.e,
+                candidate => `${periodicParticleReason(candidate)}；與正解不具有 ${partner.e} 個電子`
+            )) return false;
+            setCalibrationReason(quizData, `正解 ${quizData.answer} 的電子數為 Z−q=${partner.z}−(${partner.q})=${partner.e}，與題目粒子等電子。`);
+        }
+        quizData._periodicCompound = true;
+        quizData._periodicRequiredSteps = 2;
+        quizData._periodicCustomExplanation = true;
+        quizData._periodicCustomRationales = true;
+        quizData._periodicUsesChinese = false;
+        return true;
+    }
+
+    if (type === 10) {
+        const groupCandidates = Number.isInteger(Number(target.iupac))
+            ? pool.filter(element => Number(element.iupac) === Number(target.iupac) && element.z > target.z)
+            : [];
+        const useGroup = groupCandidates.length > 0;
+        const predicate = useGroup
+            ? element => Number(element.iupac) === Number(target.iupac) && element.z > target.z
+            : element => element.p === target.p && element.z > target.z;
+        const partner = calibrationShuffle(pool.filter(element => element.z !== target.z && predicate(element)))[0];
+        if (!partner) return false;
+        return setPeriodicCompoundElementQuestion(quizData, target, partner, predicate, {
+            valueMode,
+            type: useGroup ? '複合關係：同族／原子序方向' : '複合關係：同週期／原子序方向',
+            question: useGroup
+                ? `下列哪個元素與 ${target.s} 屬於同一族，且原子序較大？`
+                : `下列哪個元素與 ${target.s} 位於同一週期，且原子序較大？`,
+            explanation: useGroup
+                ? `${partner.s} 與 ${target.s} 同為第 ${target.iupac} 族，且 ${partner.z}>${target.z}。`
+                : `${partner.s} 與 ${target.s} 同為第 ${target.p} 週期，且 ${partner.z}>${target.z}。`,
+            excludeZ: [target.z],
+            reasonFn: element => useGroup
+                ? `${element.s} 的原子序為 ${element.z}；未同時符合第 ${target.iupac} 族且原子序大於 ${target.z}。`
+                : `${element.s} 的原子序為 ${element.z}；未同時符合第 ${target.p} 週期且原子序大於 ${target.z}。`
+        });
+    }
+
+    if (type === 14) {
+        const groups = new Map();
+        pool.forEach(element => {
+            const en = QUIZ_HELPER.getEN(element.s);
+            if (en == null) return;
+            if (!groups.has(element.p)) groups.set(element.p, []);
+            groups.get(element.p).push({ element, en });
+        });
+        const eligibleGroups = [...groups.values()].filter(items => items.length >= 4);
+        if (!eligibleGroups.length) return false;
+        const items = calibrationShuffle(eligibleGroups[Math.floor(Math.random() * eligibleGroups.length)]).slice(0, 4);
+        const maxEN = Math.max(...items.map(item => item.en));
+        const winners = items.filter(item => item.en === maxEN);
+        if (winners.length !== 1) return false;
+        const winner = winners[0];
+        const optionMode = Math.random() < 0.5 ? 'symbol' : 'number';
+        const valueFn = item => periodicElementValue(item.element, optionMode);
+        quizData.type = '複合比較：同週期電負度';
+        quizData.question = `在第 ${winner.element.p} 週期的下列選項中，哪一個原子的電負度最大？`;
+        quizData.answer = valueFn(winner);
+        quizData.displayMode = optionMode === 'number' ? 'number' : 'symbol';
+        quizData.forcedOpts = items.map(valueFn);
+        quizData.optionRationales = {};
+        items.filter(item => item.element.z !== winner.element.z).forEach(item => {
+            quizData.optionRationales[calibrationOptionKey(valueFn(item))] = `${item.element.s} 的 Pauling 電負度為 ${item.en}，低於正解 ${winner.en}。`;
+        });
+        quizData._periodicCompound = true;
+        quizData._periodicRequiredSteps = 2;
+        quizData._periodicCustomExplanation = true;
+        quizData._periodicCustomRationales = true;
+        quizData._periodicUsesChinese = false;
+        quizData._periodicSemanticMatcher = value => {
+            const element = calibrationElementFromValue(value, pool);
+            return !!element && QUIZ_HELPER.getEN(element.s) === maxEN;
+        };
+        setCalibrationReason(quizData, `先定位各選項皆在第 ${winner.element.p} 週期，再比較 Pauling 電負度；最大值為 ${winner.element.s} 的 ${winner.en}。`);
+        return true;
+    }
+
+    return false;
 }
 
 window.renderNextQuestion = function() {
@@ -2222,22 +3189,37 @@ window.renderNextQuestion = function() {
     
     const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表", 6: "化學式" };
     const catName = catNames[window.quizState.difficulty] || "未知";
-    const rankPfx = window.quizState.rank ? `RANK ${window.quizState.rank} | ` : '';
-    document.getElementById('quiz-status-text').textContent = 
-        `${rankPfx}${catName}校準 [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
+    const isPeriodic = window.calCategory === 'periodic';
+    const rankText = window.quizState.rank ? `RANK ${window.quizState.rank}` : '';
+    const modeText = isPeriodic
+        ? (window.quizState.periodicMode === 'challenge' ? '挑戰模式' : '標準模式')
+        : '';
+    const statusPrefix = isPeriodic
+        ? [rankText, modeText, `${catName}校準`].filter(Boolean).join('｜')
+        : `${rankText ? `${rankText} | ` : ''}${catName}校準`;
+    document.getElementById('quiz-status-text').textContent =
+        `${statusPrefix} [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
     
     // 依照預選牌組類型出題
     const type = window.quizState.typeDeck[window.quizState.currentQ - 1];
     
-    const quizData = { question: "", answer: "", type: "", displayMode: "symbol" }; 
+    const periodicProfile = isPeriodic
+        ? (window.quizState.periodicProfileDeck?.[window.quizState.currentQ - 1] || 'standard')
+        : null;
+    const quizData = {
+        question: "", answer: "", type: "", displayMode: "symbol",
+        _periodicProfile: periodicProfile,
+        _periodicRequiredSteps: periodicProfile === 'challenge' ? 2 : (periodicProfile === 'simple' ? 1 : 1)
+    };
     let target = null;
     let parsed = null;
     let s = "";
+    let avail = [];
     
     // 混成/氧化還原/沉澱表/結構圖題型不依賴元素 pool，直接跳過元素選擇
     if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 39)) {
         // 元素均等分佈演算法
-        let avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
+        avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
             window.quizState.askedZ = []; 
             avail = [...window.quizState.pool];
@@ -2248,15 +3230,15 @@ window.renderNextQuestion = function() {
         s = `[ ${target.s} ]`;
     }
     
-    // 重複問題檢查：生成問題後檢查是否已問過，如果重複則重新生成（最多嘗試20次）
+    // 重複問題檢查：生成問題後檢查是否已問過；候選池尚未耗盡前絕不接受重複題。
     let questionKey = "";
     let attempts = 0;
     let questionGenerated = false;
     
-    while (!questionGenerated && attempts < 20) {
+    while (!questionGenerated && attempts < 60) {
         attempts++;
         // 如果已經嘗試過，重新選擇元素（混成/形狀/結構圖題型跳過）
-        if (attempts > 1 && type !== 16 && type !== 17 && type !== 19 && type < 21 && !(type >= 32 && type <= 39)) {
+        if (attempts > 1 && type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 39)) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -2280,6 +3262,19 @@ window.renderNextQuestion = function() {
         quizData.showExplanation = false;
         quizData.correctReason = '';
         quizData.optionRationales = {};
+        quizData._periodicParticle = undefined;
+        quizData._periodicParticleMode = undefined;
+        quizData._periodicOptionParticles = undefined;
+        quizData._particleCharge = undefined;
+        quizData._electronCount = undefined;
+        quizData._protonCount = undefined;
+        quizData._neutronCount = undefined;
+        quizData._periodicUsesChinese = false;
+        quizData._periodicCompound = false;
+        quizData._periodicCustomExplanation = false;
+        quizData._periodicCustomRationales = false;
+        quizData._periodicSemanticMatcher = undefined;
+        quizData._periodicRequiredSteps = periodicProfile === 'challenge' ? 2 : (periodicProfile === 'simple' ? 1 : 1);
 
     // 3. 題型詳細定義與隨機敘述模板 (全面中文化與渲染優化)
 if (type === 0) {
@@ -2313,53 +3308,64 @@ if (type === 0) {
     }
 } else if (type === 2) {
     const periodCh = ["","一","二","三","四","五","六","七"][target.p] || `${target.p}`;
-    const isLanthanide = (target.g === "鑭系" || target.g === "錒系");
+    const isSeries = (target.g === "鑭系" || target.g === "錒系");
     const iupacCoord = `第 ${target.p} 週期、第 ${target.iupac} 族`;
-    const abCoord    = isLanthanide ? `第${periodCh}週期、${target.g}` : `第${periodCh}週期、${target.g}族`;
-    const direction = Math.random();
-    if (direction < 0.125) {
+    const abCoord    = isSeries ? `第${periodCh}週期、${target.g}` : `第${periodCh}週期、${target.g}族`;
+    // 8B 橫跨 Fe/Co/Ni 三欄，鑭系／錒系也不是單一 IUPAC 族；
+    // 這些座標只能用於「元素 → 座標」，不可反向唯一辨識元素。
+    const abIsUnique = !isSeries && target.g !== '8B';
+    const modes = [
+        ...(isSeries ? [] : ['iupacToSymbol', 'iupacToNumber']),
+        ...(abIsUnique ? ['abToSymbol', 'abToNumber'] : []),
+        ...(isSeries ? [] : ['symbolToIupac']),
+        'symbolToAb',
+        ...(isSeries ? [] : ['numberToIupac']),
+        'numberToAb'
+    ];
+    const mode = modes[Math.floor(Math.random() * modes.length)];
+    if (mode === 'iupacToSymbol') {
         // 座標(IUPAC) → 符號
         quizData.type        = "位置定位：座標(IUPAC) > 符號";
         quizData.question    = `位於週期表「${iupacCoord}」的元素符號是？`;
         quizData.answer      = target.s;
         quizData.displayMode = "symbol";
         quizData.coordMode   = "iupac";
-    } else if (direction < 0.25) {
+    } else if (mode === 'abToSymbol') {
         // 座標(A/B族) → 符號
         quizData.type        = "位置定位：座標(A/B) > 符號";
         quizData.question    = `位於週期表「${abCoord}」的元素符號是？`;
         quizData.answer      = target.s;
         quizData.displayMode = "symbol";
         quizData.coordMode   = "ab";
-    } else if (direction < 0.375) {
+    } else if (mode === 'iupacToNumber') {
         // 座標(IUPAC) → 原子序
         quizData.type        = "位置定位：座標(IUPAC) > 原子序";
         quizData.question    = `位於週期表「${iupacCoord}」的元素，其原子序為何？`;
         quizData.answer      = target.z.toString();
         quizData.displayMode = "number";
         quizData.coordMode   = "iupac";
-    } else if (direction < 0.5) {
+    } else if (mode === 'abToNumber') {
         // 座標(A/B族) → 原子序
         quizData.type        = "位置定位：座標(A/B) > 原子序";
         quizData.question    = `位於週期表「${abCoord}」的元素，其原子序為何？`;
         quizData.answer      = target.z.toString();
         quizData.displayMode = "number";
         quizData.coordMode   = "ab";
-    } else if (direction < 0.5625) {
+    } else if (mode === 'symbolToIupac') {
         // 符號 → 座標(IUPAC)
         quizData.type        = "位置定位：符號 > 座標(IUPAC)";
         quizData.question    = [`元素 ${s} 位於週期表的第幾週期、第幾族（IUPAC）？`, `元素 ${s} 屬於第幾週期、第幾族？`][Math.floor(Math.random() * 2)];
         quizData.answer      = iupacCoord;
         quizData.displayMode = "raw";
         quizData.coordMode   = "iupac";
-    } else if (direction < 0.625) {
+    } else if (mode === 'symbolToAb') {
         // 符號 → 座標(A/B族)
         quizData.type        = "位置定位：符號 > 座標(A/B)";
         quizData.question    = [`元素 ${s} 位於週期表的第幾週期、幾A或幾B族？`, `元素 ${s} 屬於第幾週期、幾A/B族？`][Math.floor(Math.random() * 2)];
         quizData.answer      = abCoord;
         quizData.displayMode = "raw";
         quizData.coordMode   = "ab";
-    } else if (direction < 0.75) {
+    } else if (mode === 'numberToIupac') {
         // 原子序 → 座標(IUPAC)
         quizData.type        = "位置定位：原子序 > 座標(IUPAC)";
         quizData.question    = [`原子序為 ${target.z} 的元素位於週期表的第幾週期、第幾族？`, `原子序 ${target.z} 的元素在週期表中的位置（週期與族）為何？`][Math.floor(Math.random() * 2)];
@@ -2400,7 +3406,7 @@ if (type === 0) {
         }
         
         quizData.type        = "特性校準：元素 > 分類"; 
-        quizData.question    = `元素 ${elementText} 在化學性質分類上屬於下列何者？`;
+        quizData.question    = `${periodicDataPremise(target)}元素 ${elementText} 在化學性質分類上屬於下列何者？`;
         quizData.answer      = target.type;
         quizData.displayMode = "raw";
     } else {
@@ -2430,7 +3436,7 @@ if (type === 0) {
         }
         
         // 添加不同類型的元素（3個，確保都是錯誤選項）
-        const shuffledDiff = [...diffTypeElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const shuffledDiff = calibrationShuffle(diffTypeElements).slice(0, 3);
         shuffledDiff.forEach(el => {
             if (answerDisplayMode === "chinese") {
                 forcedOpts.push(el.cn);
@@ -2452,13 +3458,13 @@ if (type === 0) {
         let questionTemplates;
         if (answerDisplayMode === "number") {
             questionTemplates = [
-                `下列哪個原子序的元素屬於「${target.type}」？`,
-                `下列哪個原子序對應的元素，其性質屬於「${target.type}」？`
+                `${periodicDataPremise(target)}下列哪個原子序的元素屬於「${target.type}」？`,
+                `${periodicDataPremise(target)}下列哪個原子序對應的元素，其性質屬於「${target.type}」？`
             ];
         } else {
             questionTemplates = [
-                `下列哪個元素屬於「${target.type}」？`,
-                `「${target.type}」類別中包含下列哪個元素？`
+                `${periodicDataPremise(target)}下列哪個元素屬於「${target.type}」？`,
+                `${periodicDataPremise(target)}「${target.type}」類別中包含下列哪個元素？`
             ];
         }
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
@@ -2486,7 +3492,7 @@ if (type === 0) {
         }
         
         quizData.type        = "特性校準：元素 > 常溫狀態"; 
-        quizData.question    = `在常溫常壓 (25°C, 1atm) 下，${elementText} 的物理狀態為何？`;
+        quizData.question    = `${periodicDataPremise(target)}在常溫常壓 (25°C, 1atm) 下，${elementText} 的物理狀態為何？`;
         quizData.answer      = QUIZ_HELPER.getCleanState(target.state);
         quizData.displayMode = "raw";
     } else {
@@ -2520,7 +3526,7 @@ if (type === 0) {
         }
         
         // 添加不同狀態的元素（3個，確保都是錯誤選項）
-        const shuffledDiff = [...diffStateElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const shuffledDiff = calibrationShuffle(diffStateElements).slice(0, 3);
         shuffledDiff.forEach(el => {
             if (answerDisplayMode === "chinese") {
                 forcedOpts.push(el.cn);
@@ -2540,9 +3546,9 @@ if (type === 0) {
         
         quizData.type        = "特性校準：常溫狀態 > 元素"; 
         const questionTemplates = [
-            `下列哪個元素在常溫常壓 (25°C, 1atm) 下為「${cleanState}」？`,
-            `在常溫常壓下呈「${cleanState}」狀態的元素是？`,
-            `下列何者在常溫常壓下為「${cleanState}」？`
+                `${periodicDataPremise(target)}下列哪個元素在常溫常壓 (25°C, 1atm) 下為「${cleanState}」？`,
+                `${periodicDataPremise(target)}在常溫常壓下呈「${cleanState}」狀態的元素是？`,
+                `${periodicDataPremise(target)}下列何者在常溫常壓下為「${cleanState}」？`
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
         quizData.answer      = answerValue;
@@ -2550,91 +3556,78 @@ if (type === 0) {
         quizData.forcedOpts  = forcedOpts.slice(0, 4); // 確保只有4個選項
     }
 } else if (type === 6) {
-    // 融合計算與逆推題型：電子總數、質子總數、質子數逆推、電子數逆推、等電子序列
-    const subType = Math.random();
-    if (subType < 0.2) {
-        // Type 12: 計算：電子總數
-        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
-        let signHTML = "";
-        if (charge !== 0) {
-            let val = Math.abs(charge);
-            let sign = charge > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
-            signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
-        }
-        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
-        quizData.type     = "計算：電子總數";
-        quizData.question = `${particle} 的「核外電子總數」為何？`;
-        quizData.answer   = (target.z - charge).toString();
+    // 粒子計算與反推：每個選項都以 p=Z、e=Z−q、n=A−Z 重新驗算。
+    const charge = calibrationShuffle(PERIODIC_PARTICLE_CHARGES)[0];
+    const particle = periodicMakeParticle(target, charge);
+    if (!particle) continue;
+    const subType = Math.floor(Math.random() * 6);
+    const particleText = periodicParticleLabel(particle);
+    quizData._periodicParticle = particle;
+    quizData._particleCharge = particle.q;
+    quizData._electronCount = particle.e;
+    quizData._protonCount = particle.p;
+    quizData._neutronCount = particle.n;
+
+    if (subType === 0) {
+        quizData.type = "計算：電子總數";
+        quizData.question = `粒子 [ ${particleText} ] 的核外電子總數為何？`;
+        quizData.answer = String(particle.e);
         quizData.displayMode = "number";
-    } else if (subType < 0.4) {
-        // Type 13: 計算：質子總數
-        let charge = (Math.random() > 0.4) ? (Math.floor(Math.random() * 7) - 3 || 1) : 0;
-        let signHTML = "";
-        if (charge !== 0) {
-            let val = Math.abs(charge);
-            let sign = charge > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
-            signHTML = `<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
-        }
-        const particle = charge === 0 ? `中性原子 ${s}` : `離子 [ ${target.s}${signHTML} ]`;
-        quizData.type     = "計算：質子總數";
-        quizData.question = `${particle} 的「原子核內質子數」為何？`;
-        quizData.answer   = target.z.toString();
+    } else if (subType === 1) {
+        quizData.type = "計算：質子總數";
+        quizData.question = `粒子 [ ${particleText} ] 的原子核內質子總數為何？`;
+        quizData.answer = String(particle.p);
         quizData.displayMode = "number";
-    } else if (subType < 0.6) {
-        // Type 16: 識別校準：質子數逆推
-        quizData.type        = "識別校準：質子數逆推";
-        const questionTemplates = [
-            `原子核內質子總數為 ${target.z} 的元素符號為何？`,
-            `原子核內有 ${target.z} 個質子的元素，其化學符號是？`,
-            `質子數為 ${target.z} 的元素為何？`
-        ];
-        quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        quizData.answer      = target.s;
-        quizData.displayMode = "symbol";
-    } else if (subType < 0.8) {
-        // Type 17: 計算：電子數逆推
-        let c = Math.floor(Math.random() * 5) - 2;
-        const eCount = target.z - c;
-        quizData.type = "計算：電子數逆推";
-        const questionTemplates = [
-            `總電子數為 ${eCount} 的粒子，可能為下列何者？`,
-            `核外電子總數為 ${eCount} 的粒子為何？`,
-            `具有 ${eCount} 個電子的粒子是？`
-        ];
-        quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        
-        if (c === 0) {
-            quizData.answer = target.s;
-        } else {
-            let val = Math.abs(c);
-            let sign = c > 0 ? "+" : "-";
-            let styledSign = `<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span>`;
-            quizData.answer = `${target.s}<sup>${val === 1 ? "" : val}${styledSign}</sup>`;
-        }
+    } else if (subType === 2) {
+        quizData.type = "計算：中子總數";
+        quizData.questionHtml = `核種 ${periodicNuclideLabel(particle)} 的原子核內中子總數為何？`;
+        quizData.question = `核種 ${particle.a}${target.s} 的原子核內中子總數為何？`;
+        quizData.answer = String(particle.n);
+        quizData.displayMode = "number";
+    } else if (subType === 3) {
+        quizData.type = "識別校準：電子數逆推";
+        quizData.question = `核外電子總數為 ${particle.e} 的粒子，可能為下列何者？`;
+        quizData.answer = particleText;
         quizData.displayMode = "ion";
+        quizData._periodicParticleMode = "electron";
+        if (!periodicParticleOptions(
+            quizData,
+            particle,
+            candidate => candidate.e !== particle.e,
+            candidate => `${periodicParticleReason(candidate)}；不是題目要求的 ${particle.e} 個電子`
+        )) continue;
+    } else if (subType === 4) {
+        quizData.type = "識別校準：質子／中子／電子反推";
+        quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
+        quizData.answer = particleText;
+        quizData.displayMode = "ion";
+        quizData._periodicParticleMode = "full";
+        if (!periodicParticleOptions(
+            quizData,
+            particle,
+            candidate => candidate.p !== particle.p || candidate.n !== particle.n || candidate.e !== particle.e,
+            candidate => `${periodicParticleReason(candidate)}；與題目給定的質子、中子、電子數不符`
+        )) continue;
     } else {
-        // Type 18: 邏輯判斷：等電子序列
-        let c = Math.floor(Math.random() * 7) - 3;
-        const eCount = target.z - c;
-        const signHTML = c === 0 ? "" : `<sup class="chem-sup">${Math.abs(c) === 1 ? "" : Math.abs(c)}<span class="charge-sign ${c > 0 ? 'plus' : 'minus'}">${c > 0 ? "+" : "-"}</span></sup>`;
-        const partner = QUIZ_HELPER.getIsoelectronicParticle(eCount, target.z);
         quizData.type = "邏輯判斷：等電子序列";
-        const questionTemplates = [
-            `下列哪一個粒子與 [ ${target.s}${signHTML} ] 具備相同的電子排列？`,
-            `與 [ ${target.s}${signHTML} ] 等電子的粒子是？`,
-            `下列何者與 [ ${target.s}${signHTML} ] 具有相同的電子數？`
-        ];
-        quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
-        if (partner) {
-            quizData.answer = partner.replace(/<sup>(\d+)?([\+\-])<\/sup>/, (match, num, sign) => {
-                return `<sup class="chem-sup">${(num === "1" || !num) ? "" : num}<span class="charge-sign ${sign === '-' ? 'minus' : 'plus'}">${sign}</span></sup>`;
-            });
-        } else {
-            quizData.answer = "以上皆非";
-        }
+        quizData.question = `下列哪一個粒子與 [ ${particleText} ] 具有相同的電子數？`;
+        quizData.answer = particleText;
         quizData.displayMode = "ion";
+        quizData._periodicParticleMode = "isoelectronic";
+        const electronPartner = window.quizState.pool
+            .filter(el => el.z !== particle.z)
+            .map(el => periodicRandomParticle(el))
+            .find(candidate => candidate && candidate.e === particle.e);
+        if (!electronPartner) continue;
+        quizData.answer = periodicParticleLabel(electronPartner);
+        quizData._periodicParticle = electronPartner;
+        quizData._electronCount = electronPartner.e;
+        if (!periodicParticleOptions(
+            quizData,
+            electronPartner,
+            candidate => candidate.e !== electronPartner.e,
+            candidate => `${periodicParticleReason(candidate)}；與正解並非 ${electronPartner.e} 個電子`
+        )) continue;
     }
 } else if (type === 7) {
     quizData.type        = "量子結構：價電子數"; 
@@ -2676,7 +3669,8 @@ if (type === 0) {
     quizData.displayMode = "number";
 } else if (type === 10) {
     // 擴展：同族元素或同一週期
-    const direction = Math.random();
+    const groupPartners = window.quizState.pool.filter(el => Number.isInteger(Number(target.iupac)) && Number.isInteger(Number(el.iupac)) && el.iupac === target.iupac && el.z !== target.z);
+    const direction = groupPartners.length ? Math.random() : 0;
     if (direction > 0.5) {
         // 同族元素
         quizData.type        = "邏輯判斷：同族元素"; 
@@ -2687,7 +3681,7 @@ if (type === 0) {
         ];
         quizData.question    = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
         // 修正：確保正確答案也在pool範圍內（符合RANK限制）
-        const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
+        const partners       = groupPartners;
         quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "以上皆非";
         quizData.displayMode = "symbol";
         
@@ -2696,7 +3690,7 @@ if (type === 0) {
             return el.iupac !== target.iupac && el.z !== target.z; // 只選擇不同族且不是問題中元素的元素作為錯誤選項
         });
         let forcedOpts = [quizData.answer];
-        const shuffledDiff = [...diffGroupElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const shuffledDiff = calibrationShuffle(diffGroupElements).slice(0, 3);
         shuffledDiff.forEach(el => {
             forcedOpts.push(el.s);
         });
@@ -2725,7 +3719,7 @@ if (type === 0) {
             return el.p !== target.p && el.z !== target.z; // 只選擇不同週期且不是問題中元素的元素作為錯誤選項
         });
         let forcedOpts = [quizData.answer];
-        const shuffledDiff = [...diffPeriodElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const shuffledDiff = calibrationShuffle(diffPeriodElements).slice(0, 3);
         shuffledDiff.forEach(el => {
             forcedOpts.push(el.s);
         });
@@ -2746,7 +3740,7 @@ if (type === 0) {
     quizData.displayMode = "raw";
 } else if (type === 14) {
     const enPool         = window.quizState.pool.filter(el => QUIZ_HELPER.getEN(el.s) !== null);
-    let sel              = [...enPool].sort(() => 0.5 - Math.random()).slice(0, 4);
+    let sel              = calibrationShuffle(enPool).slice(0, 4);
     let winner           = sel.reduce((p, c) => (QUIZ_HELPER.getEN(c.s) > QUIZ_HELPER.getEN(p.s)) ? c : p);
     quizData.type        = "性質趨勢：電負度比較";
     quizData.question    = `下列哪一個原子的「電負度」最大？`;
@@ -2755,9 +3749,10 @@ if (type === 0) {
     quizData.displayMode = "symbol";
 } else if (type === 15) {
     quizData.type        = "邏輯判斷：化學性質相似"; 
-    quizData.question    = `根據電子組態特徵，下列哪一個元素與 ${s} 的「化學性質」最相似？`;
+    quizData.question    = `${periodicDataPremise(target)}根據電子組態特徵，下列哪一個元素與 ${s} 的「化學性質」最相似？`;
     // 修正：確保正確答案也在pool範圍內（符合RANK限制）
-    const partners       = window.quizState.pool.filter(el => el.iupac === target.iupac && el.z !== target.z);
+    const partners       = window.quizState.pool.filter(el => Number.isInteger(Number(target.iupac)) && Number.isInteger(Number(el.iupac)) && el.iupac === target.iupac && el.z !== target.z);
+    if (!partners.length) continue;
     quizData.answer      = partners.length > 0 ? partners[Math.floor(Math.random() * partners.length)].s : "以上皆非";
     quizData.displayMode = "symbol";
     
@@ -2766,7 +3761,7 @@ if (type === 0) {
         return el.iupac !== target.iupac && el.z !== target.z; // 只選擇不同 iupac 且不是問題中元素的元素作為錯誤選項
     });
     let forcedOpts = [quizData.answer];
-    const shuffledDiff = [...diffIupacElements].sort(() => 0.5 - Math.random()).slice(0, 3);
+    const shuffledDiff = calibrationShuffle(diffIupacElements).slice(0, 3);
     shuffledDiff.forEach(el => {
         forcedOpts.push(el.s);
     });
@@ -2799,12 +3794,12 @@ if (type === 0) {
     }
     // 三個錯誤選項：從pool中隨機挑不同noble的元素
     const wrongCfgPool = window.quizState.pool.filter(el => el.noble !== correctConfig && el.z !== target.z);
-    const wrongCfgs = [...wrongCfgPool].sort(() => 0.5 - Math.random()).slice(0, 3).map(el => el.noble);
+    const wrongCfgs = calibrationShuffle(wrongCfgPool).slice(0, 3).map(el => el.noble);
     quizData.type = "組態逆推";
     quizData.question = `${questionParticle} 的基態電子組態（縮寫）為何？`;
     quizData.answer = correctConfig;
     quizData.displayMode = "noble";
-    quizData.forcedOpts = [correctConfig, ...wrongCfgs].sort(() => 0.5 - Math.random());
+    quizData.forcedOpts = calibrationShuffle([correctConfig, ...wrongCfgs]);
 } else if (type === 16) {
     // 混成軌域判斷題型（正向＋反向）
     const validMolecules = [];
@@ -2877,7 +3872,7 @@ if (type === 0) {
             const correctDisplay = _getHybridDisplayName(correctMol);
             const wrongOpts = [];
             const usedNames = new Set([correctMol.name]);
-            const shuffledWrong = [...wrongPool].sort(() => 0.5 - Math.random());
+            const shuffledWrong = calibrationShuffle(wrongPool);
             for (const w of shuffledWrong) {
                 if (wrongOpts.length >= 3) break;
                 if (!usedNames.has(w.name)) {
@@ -2904,8 +3899,30 @@ if (type === 0) {
             quizData.type = "混成軌域判斷（反向）";
             quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
             quizData.answer = correctDisplay;
+            const hybridDomainTotal = ({sp:2, 'sp²':3, 'sp³':4, 'sp³d':5, 'sp³d²':6, 'sp³d³':7})[targetHybrid] || 0;
+            let reverseSigma = 0;
+            let reverseLonePairs = 0;
+            const reverseBaseMol = MOLECULE_DB[correctMol.key];
+            const reverseMolData = correctMol.variant && reverseBaseMol && reverseBaseMol.variants
+                ? reverseBaseMol.variants[correctMol.variant]
+                : reverseBaseMol;
+            if (reverseMolData && Array.isArray(reverseMolData.atomsRaw) && Array.isArray(reverseMolData.bondsRaw)) {
+                const centerIdx = reverseMolData.atomsRaw.findIndex(atom => atom.elem === correctMol.center);
+                if (centerIdx >= 0) {
+                    reverseMolData.bondsRaw.forEach(bond => {
+                        if (bond[0] === centerIdx || bond[1] === centerIdx) reverseSigma++;
+                    });
+                    const centerAtomData = reverseMolData.atomsRaw[centerIdx];
+                    reverseLonePairs = Number(centerAtomData.lpCount || (centerAtomData.lp3d && centerAtomData.lp3d.length) || 0);
+                }
+            }
+            if (reverseSigma + reverseLonePairs !== hybridDomainTotal) {
+                reverseSigma = hybridDomainTotal;
+                reverseLonePairs = 0;
+            }
+            quizData._hybridDomains = { sigma: reverseSigma, lonePairs: reverseLonePairs, total: hybridDomainTotal };
             quizData.displayMode = "formula";
-            quizData.forcedOpts = [correctDisplay, ...wrongOpts].sort(() => 0.5 - Math.random());
+            quizData.forcedOpts = calibrationShuffle([correctDisplay, ...wrongOpts]);
         } else {
             // 正向：給分子，問混成
             const selected = filteredMolecules[Math.floor(Math.random() * filteredMolecules.length)];
@@ -2923,15 +3940,25 @@ if (type === 0) {
             let allOptions;
             if (_spOpts.includes(correctHybrid)) {
                 const dPick = _dOpts[Math.floor(Math.random()*_dOpts.length)];
-                allOptions = [..._spOpts, dPick].sort(() => 0.5 - Math.random());
+                allOptions = calibrationShuffle([..._spOpts, dPick]);
             } else {
-                const otherD = _dOpts.filter(h=>h!==correctHybrid).sort(()=>0.5-Math.random()).slice(0,1);
-                const spPick = [..._spOpts].sort(()=>0.5-Math.random()).slice(0,2);
-                allOptions = [correctHybrid, ...otherD, ...spPick].sort(() => 0.5 - Math.random());
+                const otherD = calibrationShuffle(_dOpts.filter(h=>h!==correctHybrid)).slice(0,1);
+                const spPick = calibrationShuffle(_spOpts).slice(0,2);
+                allOptions = calibrationShuffle([correctHybrid, ...otherD, ...spPick]);
             }
 
             let atomDescription = selected.center;
             const molData = selected.variant ? MOLECULE_DB[selected.key].variants[selected.variant] : MOLECULE_DB[selected.key];
+            if (molData && Array.isArray(molData.atomsRaw) && Array.isArray(molData.bondsRaw)) {
+                const centerIdx = molData.atomsRaw.findIndex(atom => atom.elem === selected.center);
+                if (centerIdx >= 0) {
+                    let sigma = 0;
+                    molData.bondsRaw.forEach(bond => { if (bond[0] === centerIdx || bond[1] === centerIdx) sigma++; });
+                    const atom = molData.atomsRaw[centerIdx];
+                    const lonePairs = Number(atom.lpCount || (atom.lp3d && atom.lp3d.length) || 0);
+                    quizData._hybridDomains = { sigma, lonePairs, total: sigma + lonePairs };
+                }
+            }
             if (molData && molData.atomsRaw && molData.bondsRaw) {
                 const sameTypeIndices = [];
                 molData.atomsRaw.forEach((atom, idx) => { if (atom.elem === selected.center) sameTypeIndices.push(idx); });
@@ -3040,7 +4067,7 @@ if (type === 0) {
                             const shapeKey = `${sigmaCount}_${lp}`;
                             const shapeName = VSEPR_SHAPES[shapeKey];
                             if (shapeName) {
-                                shapeItems.push({ name: mainName, chineseName, shape: shapeName, isMultiCenter: false });
+                                shapeItems.push({ name: mainName, chineseName, shape: shapeName, sigma: sigmaCount, lonePairs: lp, isMultiCenter: false });
                             }
                         }
                     }
@@ -3075,7 +4102,7 @@ if (type === 0) {
                 const sk = `${sc}_${lp}`;
                 const sn = VSEPR_SHAPES[sk];
                 if (sn) {
-                    shapeItems.push({ name: vMainName, chineseName: vChineseName, shape: sn, isMultiCenter: false });
+                    shapeItems.push({ name: vMainName, chineseName: vChineseName, shape: sn, sigma: sc, lonePairs: lp, isMultiCenter: false });
                 }
             }
         }
@@ -3159,8 +4186,13 @@ if (type === 0) {
             quizData.type = "分子形狀判斷（反向）";
             quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
             quizData.answer = correctDisplay;
+            quizData._vseprDomains = {
+                total: targetDomain,
+                sigma: Number(correctMol.sigma || 0),
+                lonePairs: Number(correctMol.lonePairs || 0)
+            };
             quizData.displayMode = "formula";
-            quizData.forcedOpts = [correctDisplay, ...wrongOpts].sort(() => 0.5 - Math.random());
+            quizData.forcedOpts = calibrationShuffle([correctDisplay, ...wrongOpts]);
         } else {
             // 正向：給分子，問形狀
             const selected = filteredShapes[Math.floor(Math.random() * filteredShapes.length)];
@@ -3178,7 +4210,7 @@ if (type === 0) {
                 .sort((a, b) => Math.abs(shapeDomainCount(a) - shapeDomainCount(correctShape)) - Math.abs(shapeDomainCount(b) - shapeDomainCount(correctShape)) || a.localeCompare(b))
                 .slice(0, 3);
             const shuffledWrong = wrongShapes;
-            const allOptions = [correctShape, ...shuffledWrong].sort(() => 0.5 - Math.random());
+            const allOptions = calibrationShuffle([correctShape, ...shuffledWrong]);
             const questionTemplates = [
                 `${displayName} 的分子形狀為何？`,
                 `${displayName} 的幾何形狀是？`,
@@ -3187,6 +4219,12 @@ if (type === 0) {
             quizData.type = "分子形狀判斷";
             quizData.question = questionTemplates[Math.floor(Math.random() * questionTemplates.length)];
             quizData.answer = correctShape;
+            const shapeTotal = shapeDomainCount(correctShape);
+            quizData._vseprDomains = {
+                total: shapeTotal,
+                sigma: Number(selected.sigma || shapeTotal),
+                lonePairs: Number(selected.lonePairs || 0)
+            };
             quizData.displayMode = "shape";
             quizData.forcedOpts = allOptions;
         }
@@ -3232,7 +4270,7 @@ if (type === 0) {
                 const hybrid = _calcHybrid19(sigma, lp);
                 if (!hybrid) return;
                 const k = `${name}-${idx}-${hybrid}`;
-                if (!seen.has(k)) { seen.add(k); molPool19.push({ name, chName: cName, atoms, bonds, atomIdx: idx, elem: atom.elem, hybrid, center: center || atom.elem }); }
+                if (!seen.has(k)) { seen.add(k); molPool19.push({ name, chName: cName, atoms, bonds, atomIdx: idx, elem: atom.elem, hybrid, sigma, lonePairs: lp, center: center || atom.elem }); }
             });
         };
         if (mol.atomsRaw && mol.atomsRaw.length > 0) {
@@ -3263,15 +4301,16 @@ if (type === 0) {
         let opts19;
         if (_sp19.includes(sel19.hybrid)) {
             const dPick = _d19[Math.floor(Math.random()*_d19.length)];
-            opts19 = [..._sp19, dPick].sort(() => 0.5 - Math.random());
+            opts19 = calibrationShuffle([..._sp19, dPick]);
         } else {
-            const otherD = _d19.filter(h=>h!==sel19.hybrid).sort(()=>0.5-Math.random()).slice(0,1);
-            const spPick = [..._sp19].sort(()=>0.5-Math.random()).slice(0,2);
-            opts19 = [sel19.hybrid, ...otherD, ...spPick].sort(() => 0.5 - Math.random());
+            const otherD = calibrationShuffle(_d19.filter(h=>h!==sel19.hybrid)).slice(0,1);
+            const spPick = calibrationShuffle(_sp19).slice(0,2);
+            opts19 = calibrationShuffle([sel19.hybrid, ...otherD, ...spPick]);
         }
         quizData.type = "結構圖問混成";
         quizData.question = `圖中標示的 ${sel19.elem} 原子採取何種混成軌域？`;
         quizData.answer = sel19.hybrid;
+        quizData._hybridDomains = { sigma: sel19.sigma, lonePairs: sel19.lonePairs, total: sel19.sigma + sel19.lonePairs };
         quizData.displayMode = "hybrid";
         quizData.forcedOpts = opts19;
         quizData._mol19 = { atoms: sel19.atoms, bonds: sel19.bonds, atomIdx: sel19.atomIdx, elem: sel19.elem, name: sel19.chName || sel19.name, center: sel19.center };
@@ -3305,7 +4344,7 @@ if (type === 0) {
         mol.atomsRaw.forEach((atom, idx) => {
             if (_countElem(mol.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
             const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, mol.atomsRaw, mol.bondsRaw, charge);
-            oxItems.push({ molKey: mKey, name: mainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox });
+                    oxItems.push({ molKey: mKey, name: mainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(mol.atomsRaw, atom.elem), charge });
         });
         if (mol.variants) {
             for (let vKey in mol.variants) {
@@ -3321,7 +4360,7 @@ if (type === 0) {
                 variant.atomsRaw.forEach((atom, idx) => {
                     if (_countElem(variant.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
                     const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, variant.atomsRaw, variant.bondsRaw, vCharge);
-                    oxItems.push({ molKey: vKey, name: vMainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox });
+                    oxItems.push({ molKey: vKey, name: vMainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(variant.atomsRaw, atom.elem), charge: vCharge });
                 });
             }
         }
@@ -3365,8 +4404,9 @@ if (type === 0) {
             quizData.type = "氧化數判斷（反向）";
             quizData.question = `下列何者的氧化數為 ${_formatOx(targetOx)}？`;
             quizData.answer = correctDisplay;
+            quizData._oxidationContext = { element: correctMol.atomElem, charge: correctMol.charge || 0, target: targetOx };
             quizData.displayMode = "formula";
-            quizData.forcedOpts = [correctDisplay, ...wrongOpts].sort(() => 0.5 - Math.random());
+            quizData.forcedOpts = calibrationShuffle([correctDisplay, ...wrongOpts]);
         } else {
             const selected = finalItems[Math.floor(Math.random() * finalItems.length)];
             const displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formatFormula(selected.name)}</span>`;
@@ -3380,10 +4420,11 @@ if (type === 0) {
             });
             for (let i = 0; i < 3 && i < candidates.length; i++) wrongOxSet.add(candidates[i]);
             const wrongOxArr = [...wrongOxSet].map(x => _formatOx(x));
-            const allOptions = [correctOx, ...wrongOxArr].sort(() => 0.5 - Math.random());
+            const allOptions = calibrationShuffle([correctOx, ...wrongOxArr]);
             quizData.type = "氧化數判斷";
             quizData.question = `${displayName} 中的 ${selected.atomElem} 原子，其氧化數為何？`;
             quizData.answer = correctOx;
+            quizData._oxidationContext = { element: selected.atomElem, charge: selected.charge || 0, target: selected.oxidationNumber };
             quizData.displayMode = "text";
             quizData.forcedOpts = allOptions;
         }
@@ -3398,6 +4439,17 @@ if (type === 0) {
     }
 }
 
+        // 週期表模式在共用題型生成後套用本輪的難度變體；RANK 只影響元素池。
+        if (isPeriodic) {
+            if (periodicProfile === 'simple') {
+                if (!applyPeriodicSimpleVariant(type, quizData, target)) continue;
+            } else if (periodicProfile === 'challenge') {
+                if (!applyPeriodicChallengeVariant(type, quizData, target)) continue;
+            } else if (PERIODIC_SIMPLE_CAPABLE_TYPES.includes(type)) {
+                applyPeriodicStandardVariant(type, quizData, target);
+            }
+        }
+
         // 所有可出現題型都在這裡完成選項品質與詳解資料的最後校準。
         // 題型引擎仍可提供專屬選項；若沒有專屬資料，才由同類近鄰池補齊，絕不再抽無關隨機值。
         if (type >= 32 && type <= 39) {
@@ -3406,7 +4458,14 @@ if (type === 0) {
             refineElementQuestionOptions(type, quizData, target);
         }
         attachGenericCalibrationReason(type, quizData, target, parsed);
-        attachOptionRationales(quizData);
+        attachOptionRationales(quizData, target);
+
+        const semanticValidation = validateCalibrationQuestion(quizData, type, target);
+        if (!semanticValidation.ok) {
+            // 內容不合格時重抽，避免把多個化學上正確的選項送到學生面前。
+            quizData._validationFailure = semanticValidation.reason;
+            continue;
+        }
 
         // 若選項池不足、重複或沒有唯一正解，直接重抽本題；不以無關的隨機值補齊選項。
         const optionKeys = Array.isArray(quizData.forcedOpts)
@@ -3416,8 +4475,11 @@ if (type === 0) {
         const answerKey = calibrationOptionKey(quizData.answer);
         const correctCount = optionKeys.filter(key => key === answerKey).length;
         const isStateQuestion = /常溫狀態/.test(quizData.type || '');
+        const isClassificationQuestion = /分類/.test(quizData.type || '');
         const minimumOptions = isStateQuestion
-            ? 3
+            ? 4
+            : isClassificationQuestion
+            ? 4
             : optionKeys.includes('微溶')
             ? 3
             : (optionKeys.includes('是') || optionKeys.includes('否') || optionKeys.includes('可溶') || optionKeys.includes('難溶') || optionKeys.includes('沉澱') ? 2 : 4);
@@ -3439,13 +4501,22 @@ if (type === 0) {
         // 如果重複，繼續循環重新生成
     }
     
-    // 若題庫在本次嘗試沒有產生合格選項，回退本題計數並重新抽取；
-    // 即使遇到重複題，仍保留最後一次已通過選項檢核的題目。
-    if (!questionGenerated && (!Array.isArray(quizData.forcedOpts) || !quizData.answer)) {
+    // 若題庫在本次嘗試沒有產生合格或未重複的題目，回退本題計數並重新抽取；
+    // 不把最後一次重複題偷偷送出，避免「重抽失效」。
+    if (!questionGenerated) {
+        // 不讓題庫在極端亂數或重複題情況下以遞迴重試造成堆疊溢位。
         window.quizState.currentQ--;
+        window.quizState._periodicRenderRetry = (window.quizState._periodicRenderRetry || 0) + 1;
+        if (window.quizState._periodicRenderRetry <= 2) return window.renderNextQuestion();
+        window.quizState._periodicRenderRetry = 0;
+        // 本題無法在有限次嘗試內取得唯一正解時，改抽一般週期表題，仍維持四選一流程。
+        if (Array.isArray(window.quizState.typeDeck)) {
+            const retryIndex = Math.max(0, window.quizState.currentQ);
+            window.quizState.typeDeck[retryIndex] = 0;
+        }
         return window.renderNextQuestion();
     }
-    if (!questionGenerated && questionKey) window.quizState.askedQuestions.push(questionKey);
+    window.quizState._periodicRenderRetry = 0;
 
     // 4. UI 視覺標準化與渲染
     const questionEl = document.getElementById('quiz-question');
@@ -3536,14 +4607,14 @@ if (type === 0) {
         : [quizData.answer];
 
     // 洗牌選項並渲染到按鈕
-    opts.sort(() => 0.5 - Math.random());
+    const shuffledOpts = calibrationShuffle(opts);
     const container = document.getElementById('quiz-options');
     container.innerHTML = "";
     document.getElementById('quiz-confirm-wrap').innerHTML = "";
     container.style.gridTemplateColumns = (quizData.displayMode === "noble") ? "1fr" : (opts.length <= 2 ? "1fr 1fr" : "");
     let selectedOption = null; // 儲存選中的選項
 
-    opts.forEach((o, optionIndex) => {
+    shuffledOpts.forEach((o, optionIndex) => {
         const b = document.createElement('button'); 
         b.type = 'button';
         b.className = 'option-btn';
@@ -3572,6 +4643,7 @@ if (type === 0) {
         b.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + optionIndex)}</span><span class="option-value">${displayText}</span><span class="option-state-mark" aria-hidden="true"></span>`;
         b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.title = String(o).replace(/<[^>]*>/g, '');
+        b.setAttribute('aria-label', `選項 ${String.fromCharCode(65 + optionIndex)}：${b.title}`);
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
             if (document.getElementById('quiz-confirm-wrap').querySelector('.confirm-btn.confirmed')) return;
@@ -3588,6 +4660,7 @@ if (type === 0) {
             // 設置當前選項為選中狀態（黃光）
             b.classList.add('selected');
             b.setAttribute('aria-pressed', 'true');
+            b.setAttribute('aria-label', `已選取：選項 ${String.fromCharCode(65 + optionIndex)}：${b.title}`);
             selectedOption = o;
             
             // 顯示確認按鈕（固定在 quiz-confirm-wrap，與選項數量無關）
@@ -3620,6 +4693,7 @@ if (type === 0) {
                     const selectedBtn = container.querySelector('.option-btn.selected');
                     if (selectedBtn) {
                         selectedBtn.classList.remove('selected');
+                        selectedBtn.setAttribute('aria-label', `${selectedBtn.title}：${isCorrect ? '答對' : '答錯'}`);
                         if (isCorrect) {
                             selectedBtn.classList.add('correct');
                             window.quizState.correctCount++;
@@ -3627,7 +4701,10 @@ if (type === 0) {
                             selectedBtn.classList.add('wrong');
                             container.querySelectorAll('.option-btn').forEach(btn => {
                                 if (btn.dataset.value === quizData.answer) {
-                                    setTimeout(() => btn.classList.add('correct'), 300);
+                                    setTimeout(() => {
+                                        btn.classList.add('correct');
+                                        btn.setAttribute('aria-label', `${btn.title}：正確答案`);
+                                    }, 300);
                                 }
                             });
                         }
@@ -3668,8 +4745,13 @@ window.finishCalibration = function() {
             <span>能力摘要</span>
             <strong>${rankName}</strong>
             <p>${assessment}</p>
+            ${window.calCategory === 'periodic'
+                ? `<p>RANK ${window.quizState.rank || '-'}｜${window.quizState.periodicMode === 'challenge' ? '挑戰模式' : '標準模式'}</p>`
+                : ''}
         </div>`;
-    const rptRank = window.quizState.rank ? ` RANK ${window.quizState.rank}` : '';
+    const rptRank = window.quizState.rank
+        ? ` RANK ${window.quizState.rank}${window.calCategory === 'periodic' ? `｜${window.quizState.periodicMode === 'challenge' ? '挑戰模式' : '標準模式'}` : ''}`
+        : '';
     document.getElementById('quiz-status-text').textContent = `REPORT:${rptRank}`;
     renderCalibrationRuler(window.quizState.totalQ, window.quizState.totalQ);
     const resultCard = document.getElementById('quiz-result-card');

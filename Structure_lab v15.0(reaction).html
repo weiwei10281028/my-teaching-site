@@ -1133,6 +1133,30 @@
     .setup-label { color: var(--hud-cyan); font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 10px; display: block; border-left: 3px solid var(--hud-cyan); padding-left: 8px; }
     .setup-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .setup-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.1); padding: 12px 5px; border-radius: 4px; color: #94a3b8; cursor: pointer; transition: 0.3s; font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; }
+    /* 題數是主要設定，放大數字與文字，讓手機上更容易辨識。 */
+    #calibration-modal.calibration-theme #quiz-setup-area > .setup-btns > .setup-btn {
+        min-height: 58px;
+        padding: 10px 8px;
+        font-size: 20px;
+        line-height: 1.15;
+    }
+    /* 模式改為上下排列，讓模式名稱與說明各自有足夠閱讀空間。 */
+    .periodic-mode-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    #calibration-modal.calibration-theme .periodic-mode-grid .setup-btn {
+        min-height: 58px;
+        padding: 8px 10px;
+        font-size: 21px;
+        line-height: 1.15;
+    }
+    #calibration-modal.calibration-theme .periodic-mode-grid small {
+        font-size: 14px;
+        line-height: 1.3;
+        letter-spacing: 0;
+        opacity: 0.88;
+    }
     .setup-btn.active { background: rgba(0, 242, 255, 0.1); border-color: var(--hud-cyan); color: #fff; }
     .start-cal-btn { margin-top: 10px; padding: 15px; background: #fbbf24; border: none; border-radius: 4px; color: #000; font-weight: 900; cursor: pointer; font-family: 'Rajdhani', sans-serif; letter-spacing: 2px; transition: 0.2s; }
     .start-cal-btn:hover { background: #fff; }
@@ -1175,6 +1199,9 @@
     }
     .chem-sup .charge-sign.plus, .option-btn sup .charge-sign.plus, .quiz-question-text sup .charge-sign.plus {
         top: 0.01em; margin-left: 0.03em;
+    }
+    .nuclide-mass {
+        margin-left: 0 !important; margin-right: 0.02em; font-size: 0.72em !important;
     }
     .option-btn:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
     .option-btn.selected { background: rgba(234, 138, 60, 0.18) !important; border-color: #ea8a3c !important; color: #f5b07a !important; box-shadow: 0 0 8px rgba(234, 138, 60, 0.25) !important; }
@@ -3113,6 +3140,21 @@
         font-style: normal;
     }
 
+    /* 狀態語意：作答前空心、選取後實心圓點、判題後才顯示勾叉。 */
+    #calibration-modal.calibration-theme .option-btn.selected .option-state-mark {
+        color: var(--cal-v1-green) !important;
+        border-color: var(--cal-v1-green) !important;
+    }
+    #calibration-modal.calibration-theme .option-btn.selected .option-state-mark::after {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    #calibration-modal.calibration-theme .option-btn.correct .option-state-mark::after { content: '✓'; }
+    #calibration-modal.calibration-theme .option-btn.wrong .option-state-mark::after { content: '×'; }
+
     #calibration-modal.calibration-theme .option-btn.correct .option-state-mark { color: var(--cal-v1-success) !important; }
     #calibration-modal.calibration-theme .option-btn.wrong .option-state-mark { color: var(--cal-v1-danger) !important; }
 
@@ -3151,6 +3193,16 @@
         font-family: var(--cal-v1-sans);
         font-size: 12px;
         line-height: 1.7;
+    }
+    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line {
+        display: block;
+        margin: 0 0 4px;
+    }
+    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line:last-child {
+        margin-bottom: 0;
+    }
+    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-mistake {
+        color: var(--cal-v1-danger) !important;
     }
 
     #calibration-modal.calibration-theme .cal-answer-note {
@@ -3691,6 +3743,17 @@
                         <button class="setup-btn active" onclick="setQuizParam('count', 10, this)">10 題</button>
                         <button class="setup-btn" onclick="setQuizParam('count', 15, this)">15 題</button>
                         <button class="setup-btn" onclick="setQuizParam('count', 20, this)">20 題</button>
+                    </div>
+                    <div id="periodic-mode-select" style="display:none; margin-top:14px;">
+                        <span class="setup-label">作答模式</span>
+                        <div class="setup-btns periodic-mode-grid">
+                            <button class="setup-btn active" onclick="setQuizParam('periodicMode', 'standard', this)">
+                                標準模式<br><small>含 1 題基礎辨識</small>
+                            </button>
+                            <button class="setup-btn" onclick="setQuizParam('periodicMode', 'challenge', this)">
+                                挑戰模式<br><small>每題需整合條件</small>
+                            </button>
+                        </div>
                     </div>
                     <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
                 </div>
@@ -4297,7 +4360,7 @@
     </div>
 </div>
 
-<script src="data_static.js"></script>
+<script src="data_static.js?v=periodic-20260804b"></script>
 <script src="data_molecules1.js"></script>
 <script src="data_molecules2.js"></script>
 <script src="data_reactions.js"></script>
@@ -4650,8 +4713,17 @@ function formatFormula(str) {
         }
     }
 
-    // 數字變下標
-    let formattedMain = mainPart.replace(/(\d+)/g, '<sub class="chem-sub">$1</sub>');
+    // 一般化學式數字變下標；但水合物的「·nH₂O」中，n 是水分子係數，
+    // 必須維持在基線位置，不能和 H₂O 內的原子下標混在一起。
+    const formatFormulaSegment = segment => String(segment || '')
+        .replace(/(\d+)/g, '<sub class="chem-sub">$1</sub>');
+    const hydrateMatch = mainPart.match(/^(.+?)([·.])(\d+)(H2O.*)$/i);
+    let formattedMain;
+    if (hydrateMatch) {
+        formattedMain = `${formatFormulaSegment(hydrateMatch[1])}${hydrateMatch[2]}${hydrateMatch[3]}${formatFormulaSegment(hydrateMatch[4])}`;
+    } else {
+        formattedMain = formatFormulaSegment(mainPart);
+    }
 
     // 電荷變上標
     let formattedCharge = "";
@@ -9722,6 +9794,6 @@ window.closeElementIntro = function() {
 
 </script>
 <script src="calibration_formula_data.js"></script>
-<script src="calibration.js"></script>
+<script src="calibration.js?v=periodic-20260804b"></script>
 </body>
 </html>
