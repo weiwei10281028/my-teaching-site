@@ -928,7 +928,7 @@ window.resetToDifficultySelection = function() {
     document.getElementById('precip-type-select-area').style.display = 'none';
     document.getElementById('formula-type-select-area').style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
-    document.getElementById('cal-category-area').style.display = 'flex';
+    document.getElementById('cal-category-area').style.display = 'grid';
     document.getElementById('quiz-cancel-btn').style.display = 'none';
     const stText = document.getElementById('quiz-status-text');
     if(stText) stText.textContent = 'Select Category';
@@ -937,9 +937,40 @@ window.resetToDifficultySelection = function() {
         window.quizState.askedQuestions = [];
         window.quizState.currentQ = 0;
         window.quizState.correctCount = 0;
+        window.quizState.typeDeck = [];
     }
     window.formulaSelectedTypes = null;
     document.querySelectorAll('#formula-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
+    renderCalibrationRuler(0, window.quizState && window.quizState.totalQ ? window.quizState.totalQ : 10);
+};
+
+window.restartCalibrationSameSettings = function() {
+    if (!window.quizState || typeof window.quizState.generateTypeDeck !== 'function') return;
+    const resultArea = document.getElementById('quiz-result-area');
+    const contentArea = document.getElementById('quiz-content-area');
+    if (resultArea) resultArea.style.display = 'none';
+    if (contentArea) contentArea.style.display = 'grid';
+    window.quizState.currentQ = 0;
+    window.quizState.correctCount = 0;
+    window.quizState.askedZ = [];
+    window.quizState.askedQuestions = [];
+    window.quizState.typeDeck = [];
+    if (window.quizViewer) {
+        if (window.quizViewer.animFrame) cancelAnimationFrame(window.quizViewer.animFrame);
+        window.removeEventListener('mousemove', window.quizViewer._onMove);
+        window.removeEventListener('mouseup', window.quizViewer._onUp);
+        window.removeEventListener('touchmove', window.quizViewer._onMove);
+        window.removeEventListener('touchend', window.quizViewer._onUp);
+        window.quizViewer = null;
+    }
+    renderCalibrationRuler(0, window.quizState.totalQ);
+    window.initiateCalibration();
+};
+
+window.adjustCalibrationSettings = function() {
+    const category = window.calCategory || 'periodic';
+    window.resetToDifficultySelection();
+    window.selectCalCategory(category);
 };
 
 window.selectCalCategory = function(cat) {
@@ -1605,15 +1636,167 @@ window.initiateCalibration = function() {
     window.quizState.typeDeck = window.quizState.generateTypeDeck(window.quizState.difficulty, window.quizState.totalQ);
     
     document.getElementById('quiz-setup-area').style.display = 'none';
-    document.getElementById('quiz-content-area').style.display = 'flex';
+    document.getElementById('quiz-content-area').style.display = 'grid';
     // 新一輪開始時重置週期表為收起
     const wrap = document.getElementById('periodic-table-wrap');
     const btn  = document.getElementById('periodic-toggle-btn');
     if (wrap) wrap.style.display = 'none';
-    if (btn) btn.textContent = '📋 週期表 ▼';
+    if (btn) {
+        btn.textContent = '開啟週期表';
+        btn.setAttribute('aria-expanded', 'false');
+    }
+    renderCalibrationRuler(0, window.quizState.totalQ);
     updatePeriodicToggleVisibility();
     window.renderNextQuestion();
 };
+
+function getCalibrationTopicLabel(difficulty, type) {
+    if (type === 18) return '氧化數判斷';
+    if (type === 19) return '結構圖混成';
+    if (type === 16) return '混成軌域';
+    if (type === 17) return '分子形狀';
+    if (type >= 21 && type <= 31) return '沉澱表';
+    if (type >= 32 && type <= 39) return '化學式';
+    const topicMap = {
+        1: '週期表',
+        2: '電子組態',
+        3: '混成',
+        4: '氧化還原',
+        5: '沉澱表',
+        6: '化學式'
+    };
+    return topicMap[difficulty] || '校準題型';
+}
+
+function calibrationEscapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function calibrationMathSpan(tex, fallback) {
+    return `<span class="cal-math"><span class="cal-math-fallback">${calibrationEscapeHtml(fallback)}</span><span class="cal-math-source">\\(${tex}\\)</span></span>`;
+}
+
+function orbitalPower(value) {
+    return value === '²' ? '2' : (value === '³' ? '3' : String(value));
+}
+
+function formatHybridNotationHtml(value) {
+    let output = String(value || '');
+    const tokens = [];
+    const protect = (tex, fallback) => {
+        const token = `\uE000${tokens.length}\uE001`;
+        tokens.push(calibrationMathSpan(tex, fallback));
+        return token;
+    };
+    const hybrid = (spPower, dPower, fallback) => {
+        const sp = spPower ? `^{${orbitalPower(spPower)}}` : '';
+        const d = dPower ? `\\mathit{d}^{${orbitalPower(dPower)}}` : '\\mathit{d}';
+        const tex = `\\mathit{sp}${sp}${d}`;
+        return protect(tex, fallback);
+    };
+
+    // 先處理完整的 sp³d²／sp3d3，再處理單一混成符號，避免重複替換。
+    output = output.replace(/sp(?:\^?([23²³]))d(?:\^?([23²³]))/gi, (match, spPower, dPower) => hybrid(spPower, dPower, match));
+    output = output.replace(/sp(?:\^?([23²³]))d/gi, (match, spPower) => hybrid(spPower, '', match));
+    output = output.replace(/sp(?:\^?([23²³]))/gi, (match, spPower) => {
+        const tex = `\\mathit{sp}^{${orbitalPower(spPower)}}`;
+        return protect(tex, match);
+    });
+    return output.replace(/\uE000(\d+)\uE001/g, (_, index) => tokens[Number(index)]);
+}
+
+function formatElectronConfigMath(value) {
+    const raw = String(value || '').replace(/<[^>]+>/g, '');
+    if (!raw) return '';
+    let tex = calibrationEscapeHtml(raw)
+        .replace(/\[([A-Za-z]+)\]/g, '\\left[\\mathrm{$1}\\right]')
+        .replace(/(\d+)([spdf])(\d+)/gi, '$1\\mathit{$2}^{$3}');
+    return calibrationMathSpan(tex, raw);
+}
+
+// 只將化學式中的元素符號交給 Computer Modern 斜體，中文句子維持襯線字體。
+// 以元素符號白名單辨識，避免把 QUESTION、VSEPR 等英文介面文字誤判為化學式。
+const calibrationElementSymbols = [
+    'He', 'Li', 'Be', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'Cl', 'Ar', 'Ca', 'Sc', 'Ti', 'Cr', 'Mn',
+    'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Zr', 'Nb',
+    'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'Xe', 'Cs', 'Ba', 'La',
+    'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf',
+    'Ta', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra',
+    'Ac', 'Th', 'Pa', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf',
+    'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og',
+    'H', 'B', 'C', 'N', 'O', 'F', 'P', 'S', 'K', 'V', 'Y', 'I', 'W', 'U'
+].sort((a, b) => b.length - a.length);
+
+const calibrationElementAtomPattern = calibrationElementSymbols
+    .map(symbol => symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+const calibrationElementFormulaPattern = new RegExp(
+    `(?<![A-Za-z])((?:${calibrationElementAtomPattern})(?:${calibrationElementAtomPattern})*)(?![A-Za-z])`,
+    'g'
+);
+
+function formatCalibrationChemistryText(text) {
+    return String(text || '').replace(
+        calibrationElementFormulaPattern,
+        '<span class="cal-chemistry-math">$1</span>'
+    );
+}
+
+function formatCalibrationChemistryHtml(html) {
+    let output = String(html || '');
+    const protectedSegments = [];
+    const protect = (match) => {
+        const token = `\uE100${protectedSegments.length}\uE101`;
+        protectedSegments.push(match);
+        return token;
+    };
+
+    // MathJax 的 TeX 原始來源不可再被 HTML 包裝，否則會破壞公式解析。
+    output = output.replace(/<span class="cal-math-source">[\s\S]*?<\/span>/g, protect);
+    output = output.split(/(<[^>]+>)/g).map(part => {
+        return part.startsWith('<') ? part : formatCalibrationChemistryText(part);
+    }).join('');
+
+    return output.replace(/\uE100(\d+)\uE101/g, (_, index) => protectedSegments[Number(index)]);
+}
+
+function typesetCalibrationMath(root) {
+    if (!root || !window.MathJax || !window.MathJax.startup) return;
+    Promise.resolve(window.MathJax.startup.promise)
+        .then(() => window.MathJax.typesetPromise([root]))
+        .then(() => {
+            root.querySelectorAll('.cal-math').forEach(node => node.classList.add('is-typeset'));
+        })
+        .catch(() => {
+            // 保留 fallback，不將原始 TeX 暴露給學生。
+        });
+}
+
+function renderCalibrationRuler(current, total) {
+    const track = document.getElementById('calibration-ruler-track');
+    const count = document.getElementById('calibration-ruler-count');
+    const safeTotal = Math.max(1, Number(total) || 10);
+    const safeCurrent = Math.min(Math.max(0, Number(current) || 0), safeTotal);
+    if (track) {
+        track.innerHTML = '';
+        for (let i = 1; i <= 20; i++) {
+            const tick = document.createElement('span');
+            tick.className = 'cal-ruler-tick';
+            const completed = i <= Math.round((safeCurrent / safeTotal) * 20);
+            const isCurrent = safeCurrent > 0 && i === Math.max(1, Math.ceil((safeCurrent / safeTotal) * 20));
+            if (completed) tick.classList.add('is-complete');
+            if (isCurrent) tick.classList.add('is-current');
+            tick.setAttribute('aria-hidden', 'true');
+            track.appendChild(tick);
+        }
+    }
+    if (count) count.textContent = `${String(safeCurrent).padStart(2, '0')} / ${String(safeTotal).padStart(2, '0')}`;
+}
 
 window.renderNextQuestion = function() {
     window.quizState.currentQ++;
@@ -2814,36 +2997,29 @@ if (type === 0) {
     // 4. UI 視覺標準化與渲染
     const questionEl = document.getElementById('quiz-question');
     document.getElementById('quiz-type').textContent = `> TYPE: ${quizData.type}`;
+    const questionCodeEl = document.getElementById('quiz-question-code');
+    const topicBadgeEl = document.getElementById('quiz-topic-badge');
+    if (questionCodeEl) {
+        questionCodeEl.textContent = `QUESTION ${String(window.quizState.currentQ).padStart(2, '0')}`;
+    }
+    if (topicBadgeEl) {
+        topicBadgeEl.textContent = getCalibrationTopicLabel(window.quizState.difficulty, type);
+    }
     const feedbackEl = document.getElementById('quiz-feedback');
     if (feedbackEl) {
         feedbackEl.innerHTML = '';
         feedbackEl.style.display = 'none';
     }
+    renderCalibrationRuler(window.quizState.currentQ, window.quizState.totalQ);
     
-    // 正則渲染：優化 spdf 數字與電荷上標
-    let htmlQ = quizData.questionHtml || quizData.question;
+    // 混成軌域交由 MathJax 排版；其他化學式沿用資料相容的語意上下標。
+    let htmlQ = formatHybridNotationHtml(quizData.questionHtml || quizData.question);
     if (!quizData.questionHtml) {
-        htmlQ = htmlQ.replace(/([spdf])(\d+)/g, 
-        '$1<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">$2</sup>');
-        // 如果是電荷符號 (如 2+ 或 -)，處理其上標內的大小
-        htmlQ = htmlQ.replace(/(\d*[+-])(?=<\/sup>)/g, '<span style="font-size: 0.85em;">$1</span>');
-        // 處理混成軌域的上標（sp², sp³等）- 將Unicode上標字符轉換為HTML上標
-        htmlQ = htmlQ.replace(/(sp)([²³])/g, function(match, p1, p2) {
-            const num = p2 === '²' ? '2' : '3';
-            return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
-        });
-        // 處理 sp³d, sp³d² 的情況
-        htmlQ = htmlQ.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
-            let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
-            if (p4 === '²') {
-                result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
-            }
-            return result;
-        });
         if (type >= 21 && type <= 31) {
             htmlQ = htmlQ.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : formatChemLabel(part)).join("");
         }
     }
+    htmlQ = formatCalibrationChemistryHtml(htmlQ);
     
     // 停止前一題的 mini viewer
     if (window.quizViewer) {
@@ -2871,6 +3047,7 @@ if (type === 0) {
         questionEl.innerHTML = htmlQ;
         questionEl.style.fontSize = "1.7rem";
     }
+    typesetCalibrationMath(questionEl);
 
     // 5. 智慧選項生成 (建立 opts 陣列)
     // 從問題中提取元素符號，確保選項中不包含問題中提到的元素
@@ -3004,9 +3181,11 @@ if (type === 0) {
     container.style.gridTemplateColumns = (quizData.displayMode === "noble") ? "1fr" : (opts.length <= 2 ? "1fr 1fr" : "");
     let selectedOption = null; // 儲存選中的選項
 
-    opts.forEach(o => {
+    opts.forEach((o, optionIndex) => {
         const b = document.createElement('button'); 
+        b.type = 'button';
         b.className = 'option-btn';
+        b.setAttribute('aria-pressed', 'false');
         if (quizData.optionClass) b.classList.add(quizData.optionClass);
         else if (quizData.useChemFormat) b.classList.add('chem-opt');
         else if (quizData.displayMode === 'formula') b.classList.add('chem-opt');
@@ -3014,33 +3193,23 @@ if (type === 0) {
         // 處理混成軌域選項的上標顯示
         let displayText = o;
         if (quizData.displayMode === "noble") {
-            displayText = formatConfigHtml(o);
+            displayText = formatElectronConfigMath(o);
             b.style.fontSize = "0.95rem";
             b.style.letterSpacing = "0.02em";
         } else if (quizData.displayMode === "hybrid") {
-            // 將 Unicode 上標字符（²、³）轉換為 HTML 上標格式，確保正確顯示
-            // 處理 sp², sp³ 的情況
-            displayText = o.replace(/(sp)([²³])/g, function(match, p1, p2) {
-                const num = p2 === '²' ? '2' : '3';
-                return p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">' + num + '</sup>';
-            });
-            // 處理 sp³d, sp³d² 的情況（如果還有未轉換的）
-            displayText = displayText.replace(/(sp)(³)(d)(²?)/g, function(match, p1, p2, p3, p4) {
-                let result = p1 + '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">3</sup>' + p3;
-                if (p4 === '²') {
-                    result += '<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>';
-                }
-                return result;
-            });
-            // 處理單獨的 d²（如果存在）
-            displayText = displayText.replace(/(d)(²)/g, 'd<sup style="font-size: 0.7em; vertical-align: baseline; position: relative; top: -0.5em; font-weight: normal;">2</sup>');
+            displayText = formatHybridNotationHtml(o);
         } else if (type >= 32 && type <= 39 && quizData.displayMode === 'formula') {
             displayText = formatChemLabel(formatFormula(o));
+            displayText = formatCalibrationChemistryHtml(displayText);
         } else if (quizData.useChemFormat || quizData.displayMode === 'ion' || /<sub|<sup|[₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/.test(o)) {
             displayText = formatChemLabel(o);
+            displayText = formatCalibrationChemistryHtml(displayText);
+        } else if (quizData.displayMode === 'symbol') {
+            displayText = formatCalibrationChemistryHtml(displayText);
         }
-        b.innerHTML = displayText;
+        b.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + optionIndex)}</span><span class="option-value">${displayText}</span><span class="option-state-mark" aria-hidden="true"></span>`;
         b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
+        b.title = String(o).replace(/<[^>]*>/g, '');
         b.onclick = () => {
             // 如果已經確認過（有 nextBtn），不再允許選擇
             if (document.getElementById('quiz-confirm-wrap').querySelector('.confirm-btn.confirmed')) return;
@@ -3051,10 +3220,12 @@ if (type === 0) {
             // 移除所有選項的選中狀態
             container.querySelectorAll('.option-btn').forEach(btn => {
                 btn.classList.remove('selected');
+                btn.setAttribute('aria-pressed', 'false');
             });
             
             // 設置當前選項為選中狀態（黃光）
             b.classList.add('selected');
+            b.setAttribute('aria-pressed', 'true');
             selectedOption = o;
             
             // 顯示確認按鈕（固定在 quiz-confirm-wrap，與選項數量無關）
@@ -3128,16 +3299,38 @@ if (type === 0) {
         };
         container.appendChild(b);
     });
+    typesetCalibrationMath(container);
 };
 
 window.finishCalibration = function() {
     document.getElementById('quiz-content-area').style.display = 'none';
-    document.getElementById('quiz-result-area').style.display = 'flex';
+    document.getElementById('quiz-result-area').style.display = 'grid';
     const accuracy = Math.round((window.quizState.correctCount / window.quizState.totalQ) * 100);
     let rankName = accuracy === 100 ? "數據大師 (MASTER)" : (accuracy >= 80 ? "資深分析師 (SENIOR)" : "校準未完成 (FAILED)");
-    document.getElementById('quiz-result-card').innerHTML = `<div class="quiz-type-label">任務完成</div><div class="quiz-question-text" style="color:var(--hud-cyan); font-size:3.5rem;">${accuracy}%</div><div style="margin-top:10px; color:#fff;">評等: ${rankName}</div>`;
+    const assessment = accuracy === 100
+        ? '目前範圍的核心概念已能穩定辨識。'
+        : (accuracy >= 80 ? '主要概念已建立，建議再複習少數錯題。' : '建議回到校準範圍，重新整理關鍵規則後再試一次。');
+    document.getElementById('quiz-result-card').innerHTML = `
+        <div class="cal-result-eyebrow">CALIBRATION REPORT</div>
+        <div class="cal-result-title">校準完成</div>
+        <div class="cal-result-metrics">
+            <div class="cal-result-metric"><span>完成題數</span><strong>${window.quizState.totalQ}</strong></div>
+            <div class="cal-result-metric"><span>答對題數</span><strong>${window.quizState.correctCount}</strong></div>
+            <div class="cal-result-metric"><span>正確率</span><strong>${accuracy}%</strong></div>
+        </div>
+        <div class="cal-result-assessment">
+            <span>能力摘要</span>
+            <strong>${rankName}</strong>
+            <p>${assessment}</p>
+        </div>`;
     const rptRank = window.quizState.rank ? ` RANK ${window.quizState.rank}` : '';
     document.getElementById('quiz-status-text').textContent = `REPORT:${rptRank}`;
+    renderCalibrationRuler(window.quizState.totalQ, window.quizState.totalQ);
+    const resultCard = document.getElementById('quiz-result-card');
+    if (resultCard) {
+        resultCard.setAttribute('tabindex', '-1');
+        requestAnimationFrame(() => resultCard.focus({ preventScroll: true }));
+    }
 };
 
 // --- 週期表參考 ---
@@ -3159,7 +3352,6 @@ function buildMiniPeriodicTable() {
     });
 
     function getBlock(el) {
-        if (el.s === 'He') return 'pt-s-block';
         if (el.iupac <= 2) return 'pt-s-block';
         if (el.iupac >= 13) return 'pt-p-block';
         return 'pt-d-block';
@@ -3217,7 +3409,8 @@ window.togglePeriodicTable = function() {
     const btn  = document.getElementById('periodic-toggle-btn');
     const open = wrap.style.display === 'none';
     wrap.style.display = open ? 'block' : 'none';
-    btn.textContent = open ? '📋 週期表 ▲' : '📋 週期表 ▼';
+    btn.textContent = open ? '收起週期表' : '開啟週期表';
+    btn.setAttribute('aria-expanded', String(open));
     if (open) initPeriodicTableGesture();
 };
 
@@ -3332,6 +3525,10 @@ window.FORMULA_ENGINE = (() => {
         return String(raw || '').replace(/\d/g, d => SUBS[Number(d)]);
     }
 
+    function normalizeFormulaSubscripts(raw) {
+        return String(raw || '').replace(/([A-Z][a-z]?|\))1(?=[A-Z(]|$)/g, '$1');
+    }
+
     function chargeText(charge) {
         const n = Number(charge);
         if (!Number.isFinite(n) || n === 0) return '';
@@ -3341,7 +3538,8 @@ window.FORMULA_ENGINE = (() => {
     }
 
     function formulaHtml(raw) {
-        const formatted = typeof formatFormula === 'function' ? formatFormula(raw) : toUnicodeFormula(raw);
+        const normalized = normalizeFormulaSubscripts(raw);
+        const formatted = typeof formatFormula === 'function' ? formatFormula(normalized) : toUnicodeFormula(normalized);
         return typeof formatChemLabel === 'function' ? formatChemLabel(formatted) : formatted;
     }
 
@@ -3501,7 +3699,10 @@ window.FORMULA_ENGINE = (() => {
         const candidates = related.map(x => x.f);
         candidates.push(unparenthesizedFormula(item.f), alteredFormula(item.f));
         candidates.push(...DATA().map(x => x.f));
-        return fourOptions(item.f, candidates, strong);
+        const normalizedCorrect = normalizeFormulaSubscripts(item.f);
+        const normalizedCandidates = candidates.map(normalizeFormulaSubscripts);
+        const normalizedStrong = strong.map(normalizeFormulaSubscripts);
+        return fourOptions(normalizedCorrect, normalizedCandidates, normalizedStrong);
     }
 
     function numberOptions(answer, candidates) {
@@ -3651,7 +3852,7 @@ window.FORMULA_ENGINE = (() => {
                 quizData.type = '名稱與化學式：中文名稱 → 化學式';
                 quizData.question = `中文名稱「${item.n}」的正確化學式為何？`;
                 quizData.questionHtml = `中文名稱「${item.n}」的正確化學式為何？`;
-                quizData.answer = item.f;
+                quizData.answer = normalizeFormulaSubscripts(item.f);
                 quizData.forcedOpts = formulaOptions(item);
                 quizData.displayMode = 'formula';
                 quizData.optionClass = 'chem-opt';
@@ -3667,7 +3868,7 @@ window.FORMULA_ENGINE = (() => {
                     quizData.type = '離子與組成：中文名稱 → 電中性化學式';
                     quizData.question = `「${item.n}」的化學式單位，應如何寫成電中性化學式？`;
                     quizData.questionHtml = quizData.question;
-                    quizData.answer = item.f;
+                    quizData.answer = normalizeFormulaSubscripts(item.f);
                     quizData.forcedOpts = formulaOptions(item);
                     quizData.displayMode = 'formula';
                     quizData.optionClass = 'chem-opt';
@@ -3709,8 +3910,8 @@ window.FORMULA_ENGINE = (() => {
                         quizData.forcedOpts = numberOptions(c.count, DATA().filter(x => x.ions).map(x => x.ions.cation.count));
                     } else {
                         quizData.type = '離子與組成：陽陰離子最簡個數比';
-                        quizData.question = `「${item.n}」中陽離子與陰離子的最簡個數比為何？`;
-                        quizData.questionHtml = `「${item.n}」中陽離子與陰離子的最簡個數比為何？`;
+                        quizData.question = `「${item.n}」由 ${ionTextRaw(c)} 與 ${ionTextRaw(a)} 組成，陽、陰離子的最簡個數比為何？`;
+                        quizData.questionHtml = `「${item.n}」由 ${ionHtml(c)} 與 ${ionHtml(a)} 組成，陽、陰離子的最簡個數比為何？`;
                         quizData.answer = `${c.count}:${a.count}`;
                         quizData.forcedOpts = ratioOptions(quizData.answer, DATA().filter(x => x.ions).map(x => `${x.ions.cation.count}:${x.ions.anion.count}`));
                     }
@@ -3732,7 +3933,7 @@ window.FORMULA_ENGINE = (() => {
                 quizData.type = '化學式判讀：選出正確化學式';
                 quizData.question = `下列何者是「${item.n}」的正確化學式？`;
                 quizData.questionHtml = `下列何者是「${item.n}」的正確化學式？`;
-                quizData.answer = item.f;
+                quizData.answer = normalizeFormulaSubscripts(item.f);
                 quizData.forcedOpts = formulaOptions(item);
                 quizData.displayMode = 'formula';
                 quizData.optionClass = 'chem-opt';

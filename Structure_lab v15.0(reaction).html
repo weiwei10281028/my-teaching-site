@@ -5,6 +5,18 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CHEM STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        window.MathJax = {
+            loader: { load: ['input/tex', 'output/chtml'] },
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            chtml: { scale: 1, matchFontHeight: true },
+            startup: { typeset: false }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/startup.js"></script>
 <style>
     :root {
         --bg-radial-inner: #000000;
@@ -1676,6 +1688,1897 @@
         stroke-width: 1px !important;
     }
 
+    /* ========== TEST 數據校準：現代數位化學教材主題 ========== */
+    #calibration-modal.calibration-theme {
+        --cal-canvas: #e9e8e3;
+        --cal-canvas-deep: #deddd7;
+        --cal-surface: #f6f3ec;
+        --cal-surface-strong: #fffdf8;
+        --cal-ink: #223450;
+        --cal-ink-soft: #45546a;
+        --cal-muted: #68717a;
+        --cal-line: #d0cfca;
+        --cal-line-strong: #b7b7b1;
+        --cal-blue: #0054a6;
+        --cal-blue-deep: #003e7d;
+        --cal-gold: #d4af37;
+        --cal-gold-deep: #8a6b08;
+        --cal-gold-soft: #f5e9ba;
+        --cal-success: #276548;
+        --cal-success-soft: #e4efe8;
+        --cal-danger: #9a403a;
+        --cal-danger-soft: #f5e7e4;
+        --cal-periodic-s: #b5c4d2;
+        --cal-periodic-p: #b5c9b7;
+        --cal-periodic-d: #d0bf98;
+        --cal-periodic-f: #d0b8b7;
+        --cal-serif: 'Noto Serif TC', 'PMingLiU', serif;
+        --cal-sans: 'Noto Sans TC', 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+        --cal-math: 'Cambria Math', 'STIX Two Text', 'Times New Roman', serif;
+        background: rgba(34, 52, 80, 0.38) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        color: var(--cal-ink);
+    }
+
+    #calibration-modal.calibration-theme .calibration-panel {
+        width: min(760px, calc(100vw - 32px)) !important;
+        height: min(840px, calc(100vh - 28px)) !important;
+        background: var(--cal-surface) !important;
+        border: 1px solid var(--cal-line-strong) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 14px 36px rgba(34, 52, 80, 0.18) !important;
+        animation: none !important;
+        color: var(--cal-ink);
+    }
+
+    #calibration-modal.calibration-theme .config-header {
+        flex-shrink: 0;
+        padding: 12px 16px;
+        background: var(--cal-surface-strong) !important;
+        border-bottom: 1px solid var(--cal-line) !important;
+    }
+
+    #calibration-modal.calibration-theme .config-close {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        color: var(--cal-muted) !important;
+        font-family: var(--cal-sans);
+        font-size: 1.25rem;
+        border-radius: 6px;
+    }
+
+    #calibration-modal.calibration-theme .config-close:hover,
+    #calibration-modal.calibration-theme .config-close:focus-visible {
+        color: var(--cal-blue) !important;
+        background: #edf3f8;
+        text-shadow: none !important;
+        outline: 2px solid var(--cal-blue);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .calibration-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: var(--cal-canvas);
+        scrollbar-color: var(--cal-line-strong) var(--cal-canvas);
+        scrollbar-width: thin;
+    }
+
+    #calibration-modal.calibration-theme .unified-bar {
+        height: auto !important;
+        min-height: 38px;
+        padding: 0 !important;
+        background: transparent !important;
+        border-left: 0 !important;
+    }
+
+    #calibration-modal.calibration-theme .status-tag-hud {
+        margin-right: 12px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: var(--cal-blue) !important;
+        color: #fff !important;
+        font-family: var(--cal-sans);
+        font-size: 0.73rem;
+        letter-spacing: 0.08em;
+    }
+
+    #calibration-modal.calibration-theme .status-text-hud {
+        color: var(--cal-ink-soft) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: none;
+        opacity: 1;
+    }
+
+    #calibration-modal.calibration-theme #quiz-cancel-btn {
+        color: var(--cal-blue) !important;
+        border-color: var(--cal-line-strong) !important;
+        background: var(--cal-surface-strong);
+        padding: 5px 9px;
+        font-family: var(--cal-sans);
+        font-size: 0.82rem;
+    }
+
+    #calibration-modal.calibration-theme #quiz-cancel-btn:hover,
+    #calibration-modal.calibration-theme #quiz-cancel-btn:focus-visible {
+        background: #edf3f8;
+        border-color: var(--cal-blue) !important;
+        outline: 2px solid var(--cal-blue);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area,
+    #calibration-modal.calibration-theme #difficulty-grid,
+    #calibration-modal.calibration-theme #quiz-setup-area,
+    #calibration-modal.calibration-theme #hybrid-type-select-area,
+    #calibration-modal.calibration-theme #electron-type-select-area,
+    #calibration-modal.calibration-theme #precip-type-select-area,
+    #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #quiz-result-area {
+        background: var(--cal-canvas);
+        color: var(--cal-ink);
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area {
+        padding: 22px !important;
+        gap: 12px !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-setup-area,
+    #calibration-modal.calibration-theme #hybrid-type-select-area,
+    #calibration-modal.calibration-theme #electron-type-select-area,
+    #calibration-modal.calibration-theme #precip-type-select-area,
+    #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #quiz-result-area {
+        padding: 22px !important;
+        gap: 12px !important;
+    }
+
+    #calibration-modal.calibration-theme .setup-label {
+        color: var(--cal-blue) !important;
+        border-left-color: var(--cal-blue) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card {
+        background: var(--cal-surface-strong) !important;
+        border: 1px solid var(--cal-line) !important;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(34, 52, 80, 0.05);
+        color: var(--cal-ink-soft) !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card * {
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card [style*="color"],
+    #calibration-modal.calibration-theme .calibration-intro-card [style*="border"] {
+        color: var(--cal-ink-soft) !important;
+        border-color: var(--cal-line) !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card .quiz-status-tag {
+        background: var(--cal-blue) !important;
+        color: #fff !important;
+        border: 0 !important;
+    }
+
+    #calibration-modal.calibration-theme .diff-card {
+        width: 100% !important;
+        min-height: 82px;
+        padding: 16px 18px !important;
+        background: var(--cal-surface-strong) !important;
+        border: 1px solid var(--cal-line) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 1px 2px rgba(34, 52, 80, 0.05);
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    #calibration-modal.calibration-theme .diff-card::before {
+        width: 4px;
+        background: var(--cal-blue) !important;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .diff-card:hover,
+    #calibration-modal.calibration-theme .diff-card:focus-visible {
+        background: #edf3f8 !important;
+        border-color: var(--cal-blue) !important;
+        transform: none;
+        outline: 2px solid rgba(0, 84, 166, 0.24);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .diff-title,
+    #calibration-modal.calibration-theme .diff-title[style],
+    #calibration-modal.calibration-theme .diff-range,
+    #calibration-modal.calibration-theme .diff-tag,
+    #calibration-modal.calibration-theme .diff-tag[style],
+    #calibration-modal.calibration-theme .difficulty-grid .diff-card > div[style] {
+        color: var(--cal-ink) !important;
+        border-color: var(--cal-line-strong) !important;
+        font-family: var(--cal-sans);
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .diff-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    #calibration-modal.calibration-theme .diff-range {
+        color: var(--cal-muted) !important;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    #calibration-modal.calibration-theme .diff-tag {
+        color: var(--cal-blue) !important;
+        border-radius: 999px;
+        padding: 4px 9px;
+        background: #edf3f8;
+        font-size: 0.76rem;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-card,
+    #calibration-modal.calibration-theme .setup-btn {
+        background: var(--cal-surface-strong) !important;
+        border: 1px solid var(--cal-line) !important;
+        border-left: 3px solid var(--cal-line-strong) !important;
+        border-radius: 7px;
+        color: var(--cal-ink) !important;
+        box-shadow: none;
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-card:hover,
+    #calibration-modal.calibration-theme .setup-btn:hover,
+    #calibration-modal.calibration-theme .setup-btn:focus-visible {
+        background: #edf3f8 !important;
+        border-color: var(--cal-blue) !important;
+        border-left-color: var(--cal-blue) !important;
+        outline: 2px solid rgba(0, 84, 166, 0.2);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-card.selected,
+    #calibration-modal.calibration-theme .setup-btn.active {
+        background: #edf3f8 !important;
+        border-color: var(--cal-blue) !important;
+        border-left-color: var(--cal-blue) !important;
+        color: var(--cal-blue-deep) !important;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-check {
+        border-color: var(--cal-line-strong) !important;
+        border-radius: 4px;
+        background: var(--cal-surface);
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-card.selected .hybrid-type-check {
+        background: var(--cal-blue) !important;
+        border-color: var(--cal-blue) !important;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-check-mark {
+        color: #fff !important;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-name,
+    #calibration-modal.calibration-theme .hybrid-type-name[style] {
+        color: var(--cal-ink) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.98rem;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-type-desc {
+        color: var(--cal-muted) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.79rem;
+        line-height: 1.45;
+    }
+
+    #calibration-modal.calibration-theme .setup-btn {
+        border-left: 1px solid var(--cal-line) !important;
+        color: var(--cal-ink-soft) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.95rem;
+    }
+
+    #calibration-modal.calibration-theme .start-cal-btn {
+        min-height: 48px;
+        margin-top: 6px;
+        padding: 12px 16px;
+        background: var(--cal-blue) !important;
+        border: 1px solid var(--cal-blue-deep);
+        border-radius: 6px;
+        color: #fff !important;
+        font-family: var(--cal-sans);
+        font-size: 0.95rem;
+        letter-spacing: 0.04em;
+        box-shadow: none;
+    }
+
+    #calibration-modal.calibration-theme .start-cal-btn:hover,
+    #calibration-modal.calibration-theme .start-cal-btn:focus-visible {
+        background: var(--cal-blue-deep) !important;
+        outline: 2px solid rgba(0, 84, 166, 0.25);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme #quiz-content-area {
+        padding: 18px 22px 32px !important;
+        gap: 10px;
+        background: var(--cal-canvas);
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-card {
+        width: 100%;
+        height: auto !important;
+        min-height: 0;
+        flex-shrink: 0;
+        padding: 18px 24px 22px;
+        overflow: visible;
+        justify-content: flex-start;
+        text-align: left;
+        background: var(--cal-surface) !important;
+        border: 1px solid var(--cal-line) !important;
+        border-left: 4px solid var(--cal-blue) !important;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(34, 52, 80, 0.05);
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid var(--cal-line);
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-code {
+        color: var(--cal-blue) !important;
+        font-family: var(--cal-math);
+        font-size: 1.04rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .quiz-topic-badge {
+        flex-shrink: 0;
+        padding: 6px 11px;
+        border: 1px solid var(--cal-gold);
+        border-radius: 999px;
+        background: var(--cal-gold-soft);
+        color: var(--cal-gold-deep) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.96rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme #quiz-type {
+        display: none !important;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text {
+        color: var(--cal-ink) !important;
+        font-family: var(--cal-serif);
+        font-size: clamp(1.35rem, 2.4vw, 1.7rem) !important;
+        font-weight: 600;
+        line-height: 1.55;
+        text-shadow: none !important;
+        overflow-wrap: anywhere;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text span[style*="color"] {
+        color: var(--cal-ink) !important;
+        font-family: var(--cal-math), var(--cal-serif);
+        font-weight: 600 !important;
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .hybrid-power,
+    #calibration-modal.calibration-theme .quiz-question-text sup.hybrid-power,
+    #calibration-modal.calibration-theme .option-btn sup.hybrid-power {
+        display: inline !important;
+        position: relative;
+        top: -0.22em;
+        margin-left: 0.02em;
+        font-family: var(--cal-math), serif;
+        font-size: 0.62em !important;
+        font-weight: 600 !important;
+        line-height: 0;
+        vertical-align: baseline !important;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-card.mol-mode {
+        padding: 18px 20px 22px;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-card.mol-mode .quiz-question-text {
+        font-size: 1.16rem !important;
+        line-height: 1.55;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-card.mol-mode #quiz-mol-svg {
+        background: #080b0d !important;
+        border-color: #6f6b60 !important;
+        border-radius: 5px !important;
+        margin: 4px auto 12px !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+    }
+
+    #calibration-modal.calibration-theme .option-btn {
+        min-width: 0;
+        min-height: 56px;
+        padding: 10px 13px;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) 22px;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--cal-line) !important;
+        border-radius: 7px;
+        background: var(--cal-surface-strong) !important;
+        color: var(--cal-ink) !important;
+        font-family: var(--cal-math), var(--cal-sans);
+        font-size: 1.22rem;
+        font-weight: 600;
+        line-height: 1.35;
+        text-align: left;
+        box-shadow: none !important;
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.ion-opt,
+    #calibration-modal.calibration-theme .option-btn.formula-opt,
+    #calibration-modal.calibration-theme .option-btn.chem-opt,
+    #calibration-modal.calibration-theme .option-btn.bin-opt {
+        min-height: 56px;
+        font-size: 1.24rem;
+        padding: 10px 13px;
+    }
+
+    #calibration-modal.calibration-theme .option-btn:hover:not(:disabled),
+    #calibration-modal.calibration-theme .option-btn:focus-visible {
+        background: #edf3f8 !important;
+        border-color: var(--cal-blue) !important;
+        outline: 2px solid rgba(0, 84, 166, 0.22);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.selected {
+        background: var(--cal-gold-soft) !important;
+        border-color: var(--cal-gold) !important;
+        color: var(--cal-gold-deep) !important;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.correct {
+        background: var(--cal-success-soft) !important;
+        border-color: var(--cal-success) !important;
+        color: var(--cal-success) !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.wrong {
+        background: var(--cal-danger-soft) !important;
+        border-color: var(--cal-danger) !important;
+        color: var(--cal-danger) !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn:disabled {
+        opacity: 1 !important;
+        color: var(--cal-ink) !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.correct:disabled {
+        color: var(--cal-success) !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.wrong:disabled {
+        color: var(--cal-danger) !important;
+    }
+
+    #calibration-modal.calibration-theme .option-letter {
+        color: var(--cal-blue) !important;
+        font-family: var(--cal-math);
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    #calibration-modal.calibration-theme .option-value {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    #calibration-modal.calibration-theme .option-state-mark {
+        min-width: 20px;
+        text-align: center;
+        font-family: var(--cal-sans);
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.correct .option-state-mark::after { content: '✓'; }
+    #calibration-modal.calibration-theme .option-btn.wrong .option-state-mark::after { content: '×'; }
+
+    #calibration-modal.calibration-theme #quiz-confirm-wrap {
+        height: auto;
+        min-height: 0;
+        flex-shrink: 0;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn {
+        min-height: 48px;
+        height: auto;
+        padding: 10px 14px;
+        border: 1px solid var(--cal-blue) !important;
+        border-radius: 6px;
+        background: var(--cal-blue) !important;
+        color: #fff !important;
+        font-family: var(--cal-sans);
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+        line-height: 1.3;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn:hover:not(:disabled),
+    #calibration-modal.calibration-theme .confirm-btn:focus-visible {
+        background: var(--cal-blue-deep) !important;
+        outline: 2px solid rgba(0, 84, 166, 0.22);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn.confirmed.is-correct {
+        background: var(--cal-success) !important;
+        border-color: var(--cal-success) !important;
+        color: #fff !important;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn.confirmed.is-wrong {
+        background: var(--cal-danger) !important;
+        border-color: var(--cal-danger) !important;
+        color: #fff !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-feedback {
+        padding: 11px 13px;
+        border: 1px solid var(--cal-line) !important;
+        border-radius: 7px;
+        background: var(--cal-surface-strong) !important;
+        color: var(--cal-ink-soft) !important;
+        font-family: var(--cal-sans);
+        font-size: 0.92rem;
+        line-height: 1.6;
+        text-align: left;
+    }
+
+    #calibration-modal.calibration-theme #quiz-feedback strong {
+        color: var(--cal-blue-deep) !important;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-bar {
+        margin-top: 2px;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-btn {
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 12px !important;
+        border: 1px solid var(--cal-line-strong) !important;
+        border-radius: 6px !important;
+        background: var(--cal-surface-strong) !important;
+        color: var(--cal-blue) !important;
+        font-family: var(--cal-sans) !important;
+        font-size: 0.92rem !important;
+        letter-spacing: 0.02em !important;
+        cursor: pointer;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-btn:hover,
+    #calibration-modal.calibration-theme #periodic-toggle-btn:focus-visible {
+        background: #edf3f8 !important;
+        border-color: var(--cal-blue) !important;
+        outline: 2px solid rgba(0, 84, 166, 0.22);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme #periodic-table-wrap {
+        margin-top: 8px !important;
+        padding: 8px;
+        border: 1px solid var(--cal-line) !important;
+        border-radius: 6px;
+        background: var(--cal-canvas-deep);
+        overflow: hidden !important;
+    }
+
+    #calibration-modal.calibration-theme .pt-cell {
+        border: 1px solid rgba(34, 52, 80, 0.18) !important;
+        border-radius: 3px;
+        background: var(--cal-surface) !important;
+        color: var(--cal-ink) !important;
+    }
+
+    #calibration-modal.calibration-theme .pt-cell .pt-z {
+        color: rgba(34, 52, 80, 0.58) !important;
+    }
+
+    #calibration-modal.calibration-theme .pt-cell .pt-s,
+    #calibration-modal.calibration-theme .pt-cell.pt-s-block .pt-s,
+    #calibration-modal.calibration-theme .pt-cell.pt-p-block .pt-s,
+    #calibration-modal.calibration-theme .pt-cell.pt-d-block .pt-s,
+    #calibration-modal.calibration-theme .pt-cell.pt-f-block .pt-s {
+        color: var(--cal-ink) !important;
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .pt-cell.pt-s-block { background: var(--cal-periodic-s) !important; }
+    #calibration-modal.calibration-theme .pt-cell.pt-p-block { background: var(--cal-periodic-p) !important; }
+    #calibration-modal.calibration-theme .pt-cell.pt-d-block { background: var(--cal-periodic-d) !important; }
+    #calibration-modal.calibration-theme .pt-cell.pt-f-block { background: var(--cal-periodic-f) !important; }
+    #calibration-modal.calibration-theme .pt-cell.pt-empty { background: transparent !important; border-color: transparent !important; }
+
+    #calibration-modal.calibration-theme #quiz-result-card {
+        min-height: 0;
+        padding: 24px;
+        gap: 0;
+        text-align: left;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-eyebrow {
+        color: var(--cal-blue);
+        font-family: var(--cal-math);
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-title {
+        margin-top: 5px;
+        color: var(--cal-ink);
+        font-family: var(--cal-serif);
+        font-size: 1.55rem;
+        font-weight: 700;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 18px;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric {
+        padding: 12px 10px;
+        border: 1px solid var(--cal-line);
+        border-radius: 6px;
+        background: var(--cal-surface-strong);
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric span {
+        display: block;
+        color: var(--cal-muted);
+        font-family: var(--cal-sans);
+        font-size: 0.78rem;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--cal-blue-deep);
+        font-family: var(--cal-math);
+        font-size: 1.45rem;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment {
+        margin-top: 14px;
+        padding: 13px 14px;
+        border-left: 3px solid var(--cal-gold);
+        background: var(--cal-gold-soft);
+        color: var(--cal-ink-soft);
+        font-family: var(--cal-sans);
+        line-height: 1.55;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment span {
+        display: block;
+        color: var(--cal-gold-deep);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--cal-ink);
+        font-size: 1.05rem;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment p {
+        margin: 5px 0 0;
+        font-size: 0.88rem;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text sub,
+    #calibration-modal.calibration-theme .option-btn sub {
+        color: inherit;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text sup,
+    #calibration-modal.calibration-theme .option-btn sup {
+        color: inherit;
+    }
+
+    @media (max-width: 600px) {
+        #calibration-modal.calibration-theme .calibration-panel {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: none;
+            border-radius: 0 !important;
+            border: 0 !important;
+        }
+
+        #calibration-modal.calibration-theme .config-header {
+            padding: 10px 12px;
+        }
+
+        #calibration-modal.calibration-theme #cal-category-area,
+        #calibration-modal.calibration-theme #quiz-setup-area,
+        #calibration-modal.calibration-theme #hybrid-type-select-area,
+        #calibration-modal.calibration-theme #electron-type-select-area,
+        #calibration-modal.calibration-theme #precip-type-select-area,
+        #calibration-modal.calibration-theme #formula-type-select-area,
+        #calibration-modal.calibration-theme #quiz-result-area {
+            padding: 16px !important;
+        }
+
+        #calibration-modal.calibration-theme #quiz-content-area {
+            padding: 14px 12px 26px !important;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-card {
+            padding: 16px 16px 18px;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-code {
+            font-size: 0.94rem;
+            letter-spacing: 0.06em;
+        }
+
+        #calibration-modal.calibration-theme .quiz-topic-badge {
+            padding: 5px 8px;
+            font-size: 0.88rem;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-text {
+            font-size: 1.3rem !important;
+            line-height: 1.5;
+        }
+
+        #calibration-modal.calibration-theme #quiz-options {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        #calibration-modal.calibration-theme .option-btn,
+        #calibration-modal.calibration-theme .option-btn.ion-opt,
+        #calibration-modal.calibration-theme .option-btn.formula-opt,
+        #calibration-modal.calibration-theme .option-btn.chem-opt,
+        #calibration-modal.calibration-theme .option-btn.bin-opt {
+            min-height: 56px;
+            font-size: 1.18rem;
+        }
+
+        #calibration-modal.calibration-theme #quiz-confirm-wrap {
+            position: sticky;
+            bottom: 0;
+            z-index: 3;
+            padding: 8px 0 4px;
+            background: var(--cal-canvas);
+        }
+
+        #calibration-modal.calibration-theme #periodic-table-wrap {
+            padding: 6px;
+        }
+
+        #calibration-modal.calibration-theme .cal-result-metrics {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (min-width: 769px) {
+        #calibration-modal.calibration-theme #periodic-table-wrap {
+            padding: 10px 12px;
+        }
+
+        #calibration-modal.calibration-theme #mini-periodic-table {
+            width: min(100%, 860px);
+            margin: 0 auto;
+            gap: 1px;
+        }
+
+        #calibration-modal.calibration-theme .pt-cell .pt-z {
+            color: #52687b !important;
+            font-size: 0.52rem !important;
+            font-weight: 600;
+        }
+
+        #calibration-modal.calibration-theme .pt-cell .pt-s {
+            color: #1f354d !important;
+            font-size: 0.82rem !important;
+            font-weight: 700;
+        }
+
+        #calibration-modal.calibration-theme .pt-cell.pt-placeholder .pt-s {
+            font-size: 0.58rem !important;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #calibration-modal.calibration-theme *,
+        #calibration-modal.calibration-theme *::before,
+        #calibration-modal.calibration-theme *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* ========== V1 研究筆記版：數據校準專用覆蓋層 ========== */
+    #calibration-modal.calibration-theme {
+        --cal-v1-canvas: #e9e7e0;
+        --cal-v1-paper: #f8f7f2;
+        --cal-v1-paper-bright: #fffefa;
+        --cal-v1-paper-soft: #efeee8;
+        --cal-v1-ink: #243746;
+        --cal-v1-ink-soft: #40525d;
+        --cal-v1-muted: #69777c;
+        --cal-v1-faint: #8b9698;
+        --cal-v1-line: #d4d9d5;
+        --cal-v1-line-strong: #b9c5c1;
+        --cal-v1-green: #315c52;
+        --cal-v1-green-deep: #23483f;
+        --cal-v1-green-soft: #e4eee9;
+        --cal-v1-copper: #8b6c44;
+        --cal-v1-copper-soft: #f1eadd;
+        --cal-v1-success: #2e6a4d;
+        --cal-v1-success-soft: #e6f1ea;
+        --cal-v1-danger: #94534d;
+        --cal-v1-danger-soft: #f6e9e6;
+        --cal-v1-serif: 'Noto Serif TC', 'PMingLiU', serif;
+        --cal-v1-sans: 'Noto Sans TC', 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+        --cal-v1-math: 'ComputerModernText', 'STIX Two Text', 'Times New Roman', serif;
+        background: var(--cal-v1-canvas) !important;
+        color: var(--cal-v1-ink) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-panel {
+        width: min(1180px, calc(100vw - 32px)) !important;
+        height: min(920px, calc(100vh - 28px)) !important;
+        max-width: none !important;
+        max-height: none !important;
+        border: 1px solid var(--cal-v1-line-strong) !important;
+        border-radius: 2px !important;
+        background: var(--cal-v1-paper) !important;
+        box-shadow: 0 10px 30px rgba(36, 55, 70, .08) !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .config-header {
+        display: grid;
+        grid-template-columns: auto minmax(170px, 1fr) minmax(280px, 1.8fr) minmax(230px, 1.5fr);
+        align-items: center;
+        gap: 18px;
+        min-height: 88px;
+        padding: 16px 28px 12px !important;
+        background: var(--cal-v1-paper) !important;
+        border-bottom: 1px solid var(--cal-v1-line) !important;
+    }
+
+    #calibration-modal.calibration-theme .config-close {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid var(--cal-v1-line-strong);
+        border-radius: 0;
+        background: transparent !important;
+        color: var(--cal-v1-muted) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 18px;
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .config-close:hover,
+    #calibration-modal.calibration-theme .config-close:focus-visible {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green-soft) !important;
+        color: var(--cal-v1-green-deep) !important;
+        outline: 2px solid rgba(49, 92, 82, .28);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .calibration-brand-lockup {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    #calibration-modal.calibration-theme .calibration-brand-lockup span,
+    #calibration-modal.calibration-theme .cal-ruler-label {
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .13em;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .calibration-brand-lockup strong {
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 18px;
+        line-height: 1.35;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .unified-bar {
+        display: flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    #calibration-modal.calibration-theme .status-tag-hud {
+        display: none !important;
+    }
+
+    #calibration-modal.calibration-theme .status-text-hud {
+        color: var(--cal-v1-muted) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: .02em;
+        opacity: 1 !important;
+        text-transform: none;
+    }
+
+    #calibration-modal.calibration-theme #quiz-cancel-btn {
+        margin-left: auto;
+        padding: 5px 0 5px 14px;
+        border: 0 !important;
+        background: transparent !important;
+        color: var(--cal-v1-green) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 12px;
+    }
+
+    #calibration-modal.calibration-theme #quiz-cancel-btn:hover,
+    #calibration-modal.calibration-theme #quiz-cancel-btn:focus-visible {
+        color: var(--cal-v1-green-deep) !important;
+        outline: 2px solid rgba(49, 92, 82, .28);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .calibration-ruler {
+        display: grid;
+        grid-template-columns: auto minmax(90px, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    #calibration-modal.calibration-theme .cal-ruler-track {
+        display: grid;
+        grid-template-columns: repeat(20, minmax(3px, 1fr));
+        align-items: center;
+        gap: 3px;
+        min-width: 0;
+    }
+
+    #calibration-modal.calibration-theme .cal-ruler-tick {
+        display: block;
+        height: 8px;
+        border-left: 1px solid var(--cal-v1-line-strong);
+    }
+
+    #calibration-modal.calibration-theme .cal-ruler-tick.is-complete {
+        border-color: var(--cal-v1-green);
+        background: var(--cal-v1-green);
+    }
+
+    #calibration-modal.calibration-theme .cal-ruler-tick.is-current {
+        height: 13px;
+        border-color: var(--cal-v1-copper);
+        background: var(--cal-v1-copper);
+    }
+
+    #calibration-modal.calibration-theme .calibration-ruler > strong {
+        color: var(--cal-v1-green-deep) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 16px;
+        font-style: italic;
+        font-weight: 400;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .calibration-scroll {
+        background: var(--cal-v1-canvas) !important;
+        scrollbar-color: var(--cal-v1-line-strong) var(--cal-v1-canvas);
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area,
+    #calibration-modal.calibration-theme #difficulty-grid,
+    #calibration-modal.calibration-theme #quiz-setup-area,
+    #calibration-modal.calibration-theme #hybrid-type-select-area,
+    #calibration-modal.calibration-theme #electron-type-select-area,
+    #calibration-modal.calibration-theme #precip-type-select-area,
+    #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #quiz-result-area {
+        padding: 30px 34px 58px !important;
+        gap: 18px !important;
+        background: var(--cal-v1-canvas) !important;
+        color: var(--cal-v1-ink) !important;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card {
+        grid-column: 1 / -1;
+        min-height: 0;
+        max-height: 190px !important;
+        padding: 24px 26px !important;
+        border: 1px solid var(--cal-v1-line) !important;
+        border-left: 3px solid var(--cal-v1-green) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-paper) !important;
+        color: var(--cal-v1-ink-soft) !important;
+        box-shadow: none !important;
+        overflow-y: auto !important;
+        scrollbar-color: var(--cal-v1-line-strong) var(--cal-v1-paper) !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card * {
+        color: var(--cal-v1-ink-soft) !important;
+        font-family: var(--cal-v1-sans);
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card .quiz-status-tag {
+        color: var(--cal-v1-green-deep) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 18px;
+        background: var(--cal-v1-green-soft) !important;
+        border: 1px solid var(--cal-v1-line-strong) !important;
+        padding: 3px 8px !important;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-card > div:last-child {
+        font-size: 13px !important;
+        line-height: 1.65 !important;
+    }
+
+    #calibration-modal.calibration-theme .diff-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 142px;
+        padding: 22px 23px !important;
+        border: 1px solid var(--cal-v1-line) !important;
+        border-left: 1px solid var(--cal-v1-line) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-paper) !important;
+        color: var(--cal-v1-ink) !important;
+        box-shadow: none !important;
+        transition: border-color 160ms ease, background-color 160ms ease;
+    }
+
+    #calibration-modal.calibration-theme .diff-card:hover,
+    #calibration-modal.calibration-theme .diff-card:focus-visible {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-paper-bright) !important;
+        outline: 2px solid rgba(49, 92, 82, .18);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .diff-info {
+        min-width: 0;
+    }
+
+    #calibration-modal.calibration-theme .diff-title {
+        display: block;
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 21px;
+        line-height: 1.4;
+    }
+
+    #calibration-modal.calibration-theme .diff-range {
+        display: block;
+        margin-top: 8px;
+        color: var(--cal-v1-muted) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 12px;
+        line-height: 1.65;
+    }
+
+    #calibration-modal.calibration-theme .diff-tag {
+        display: inline-block;
+        margin-top: 11px;
+        padding: 0 !important;
+        border: 0 !important;
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 10px;
+        letter-spacing: .07em;
+    }
+
+    #calibration-modal.calibration-theme .setup-label {
+        margin: 0 0 9px;
+        padding: 0;
+        border: 0;
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .09em;
+    }
+
+    #calibration-modal.calibration-theme .setup-btns {
+        gap: 9px;
+    }
+
+    #calibration-modal.calibration-theme .setup-btn,
+    #calibration-modal.calibration-theme .hybrid-type-card {
+        border: 1px solid var(--cal-v1-line) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-paper) !important;
+        color: var(--cal-v1-ink-soft) !important;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .setup-btn {
+        min-height: 54px;
+        padding: 11px 12px;
+        font-family: var(--cal-v1-math);
+        font-size: 16px;
+    }
+
+    #calibration-modal.calibration-theme .setup-btn.active,
+    #calibration-modal.calibration-theme .hybrid-type-card.selected {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green-soft) !important;
+        color: var(--cal-v1-green-deep) !important;
+    }
+
+    #calibration-modal.calibration-theme .start-cal-btn {
+        min-height: 48px;
+        margin-top: 6px;
+        padding: 0 20px;
+        border: 1px solid var(--cal-v1-green) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-green) !important;
+        color: var(--cal-v1-paper-bright) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .start-cal-btn:hover,
+    #calibration-modal.calibration-theme .start-cal-btn:focus-visible {
+        border-color: var(--cal-v1-green-deep) !important;
+        background: var(--cal-v1-green-deep) !important;
+        outline: 2px solid rgba(49, 92, 82, .25);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme #quiz-content-area {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, .75fr);
+        align-items: start;
+        gap: 26px;
+        padding: 30px 34px 60px !important;
+        background: var(--cal-v1-canvas) !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-question-column,
+    #calibration-modal.calibration-theme .cal-answer-column {
+        min-width: 0;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-card {
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 32px clamp(24px, 4vw, 48px) 38px !important;
+        border: 1px solid var(--cal-v1-line-strong) !important;
+        border-left: 1px solid var(--cal-v1-line-strong) !important;
+        border-radius: 0 !important;
+        background-color: var(--cal-v1-paper-bright) !important;
+        background-image: linear-gradient(rgba(93, 117, 119, .09) 1px, transparent 1px), linear-gradient(90deg, rgba(93, 117, 119, .09) 1px, transparent 1px) !important;
+        background-position: -1px -1px !important;
+        background-size: 26px 26px !important;
+        box-shadow: none !important;
+        text-align: left;
+        overflow: visible !important;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 13px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid rgba(99, 116, 116, .24);
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-code {
+        color: var(--cal-v1-green-deep) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 15px;
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: .08em;
+    }
+
+    #calibration-modal.calibration-theme .quiz-topic-badge {
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    #calibration-modal.calibration-theme #quiz-type {
+        display: none !important;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text {
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-math), var(--cal-v1-serif);
+        font-size: clamp(22px, 3vw, 30px) !important;
+        font-weight: 600;
+        line-height: 1.55;
+        text-shadow: none !important;
+        overflow-wrap: anywhere;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text span[style*="color"] {
+        color: inherit !important;
+        font-family: inherit;
+        font-weight: inherit !important;
+        text-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-answer-column {
+        padding: 24px 23px 22px;
+        border: 1px solid var(--cal-v1-line);
+        background: var(--cal-v1-paper);
+    }
+
+    #calibration-modal.calibration-theme .cal-answer-heading {
+        margin: 0 0 17px;
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 21px;
+        line-height: 1.45;
+    }
+
+    #calibration-modal.calibration-theme #quiz-options {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+
+    #calibration-modal.calibration-theme .option-btn {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) 23px;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+        min-height: 56px;
+        padding: 8px 13px 8px 15px;
+        border: 1px solid var(--cal-v1-line) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-paper-bright) !important;
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-math), var(--cal-v1-sans);
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1.4;
+        text-align: left;
+        text-shadow: none !important;
+        box-shadow: none !important;
+        opacity: 1 !important;
+        transition: border-color 160ms ease, background-color 160ms ease;
+    }
+
+    #calibration-modal.calibration-theme .option-btn:hover:not(:disabled),
+    #calibration-modal.calibration-theme .option-btn:focus-visible {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green-soft) !important;
+        color: var(--cal-v1-ink) !important;
+        outline: 2px solid rgba(49, 92, 82, .20);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.selected {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green-soft) !important;
+        color: var(--cal-v1-ink) !important;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.correct {
+        border-color: rgba(46, 106, 77, .62) !important;
+        background: var(--cal-v1-success-soft) !important;
+        color: var(--cal-v1-ink) !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.wrong {
+        border-color: rgba(148, 83, 77, .62) !important;
+        background: var(--cal-v1-danger-soft) !important;
+        color: var(--cal-v1-ink) !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .option-btn:disabled {
+        opacity: 1 !important;
+        color: var(--cal-v1-ink) !important;
+        cursor: default;
+    }
+
+    #calibration-modal.calibration-theme .option-letter {
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+
+    #calibration-modal.calibration-theme .option-value {
+        min-width: 0;
+        color: inherit !important;
+        font-family: var(--cal-v1-math), var(--cal-v1-serif);
+        font-size: 18px;
+        overflow-wrap: anywhere;
+    }
+
+    #calibration-modal.calibration-theme .option-state-mark {
+        display: grid;
+        width: 23px;
+        height: 23px;
+        place-items: center;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        color: var(--cal-v1-muted) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 13px;
+        font-style: normal;
+    }
+
+    #calibration-modal.calibration-theme .option-btn.correct .option-state-mark { color: var(--cal-v1-success) !important; }
+    #calibration-modal.calibration-theme .option-btn.wrong .option-state-mark { color: var(--cal-v1-danger) !important; }
+
+    #calibration-modal.calibration-theme #quiz-confirm-wrap {
+        margin-top: 18px;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn {
+        width: 100%;
+        min-height: 48px;
+        padding: 0 16px;
+        border: 1px solid var(--cal-v1-green) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-green) !important;
+        color: var(--cal-v1-paper-bright) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: none !important;
+        animation: none !important;
+    }
+
+    #calibration-modal.calibration-theme .confirm-btn.is-correct,
+    #calibration-modal.calibration-theme .confirm-btn.is-wrong {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green) !important;
+        color: var(--cal-v1-paper-bright) !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-feedback {
+        margin-top: 17px;
+        padding: 13px 14px;
+        border: 1px solid var(--cal-v1-line);
+        background: var(--cal-v1-paper-soft);
+        color: var(--cal-v1-ink-soft) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    #calibration-modal.calibration-theme .cal-answer-note {
+        margin: 17px 0 0;
+        color: var(--cal-v1-faint) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 11px;
+        line-height: 1.65;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-bar {
+        margin-top: 14px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-btn {
+        min-height: 42px;
+        padding: 0 15px;
+        border: 1px solid var(--cal-v1-line-strong);
+        border-radius: 0;
+        background: var(--cal-v1-paper) !important;
+        color: var(--cal-v1-green-deep) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 13px;
+    }
+
+    #calibration-modal.calibration-theme #periodic-toggle-btn:hover,
+    #calibration-modal.calibration-theme #periodic-toggle-btn:focus-visible {
+        border-color: var(--cal-v1-green);
+        background: var(--cal-v1-green-soft) !important;
+        outline: 2px solid rgba(49, 92, 82, .18);
+        outline-offset: 2px;
+    }
+
+    #calibration-modal.calibration-theme #periodic-table-wrap {
+        padding: 10px 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-content-area.mol-mode .quiz-question-card {
+        padding: 24px !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-content-area.mol-mode #quiz-mol-svg {
+        background: #080b0d !important;
+        border: 1px solid var(--cal-v1-line-strong) !important;
+        border-radius: 0 !important;
+        margin: 0 auto 15px !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-content-area.mol-mode #quiz-question {
+        font-size: 18px !important;
+        line-height: 1.7;
+    }
+
+    #calibration-modal.calibration-theme #quiz-result-area {
+        display: grid;
+        grid-template-columns: minmax(270px, .75fr) minmax(0, 1.25fr);
+        align-items: start;
+        gap: 26px !important;
+    }
+
+    #calibration-modal.calibration-theme #quiz-result-card {
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 30px !important;
+        border: 1px solid var(--cal-v1-line) !important;
+        border-left: 1px solid var(--cal-v1-line) !important;
+        border-radius: 0 !important;
+        background: var(--cal-v1-paper) !important;
+        text-align: left;
+        box-shadow: none !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-eyebrow {
+        color: var(--cal-v1-copper) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .1em;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-title {
+        margin-top: 7px;
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 30px;
+        line-height: 1.35;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric {
+        padding: 14px 12px;
+        border: 1px solid var(--cal-v1-line);
+        border-radius: 0;
+        background: var(--cal-v1-paper-bright);
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric span {
+        display: block;
+        color: var(--cal-v1-muted) !important;
+        font-family: var(--cal-v1-sans);
+        font-size: 12px;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-metric strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--cal-v1-green-deep) !important;
+        font-family: var(--cal-v1-math);
+        font-size: 25px;
+        font-weight: 400;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment {
+        margin-top: 16px;
+        padding: 16px 17px;
+        border-left: 3px solid var(--cal-v1-copper);
+        border-radius: 0;
+        background: var(--cal-v1-copper-soft);
+        color: var(--cal-v1-ink-soft) !important;
+        font-family: var(--cal-v1-sans);
+        line-height: 1.7;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment span {
+        display: block;
+        color: var(--cal-v1-copper) !important;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--cal-v1-ink) !important;
+        font-family: var(--cal-v1-serif);
+        font-size: 18px;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-assessment p {
+        margin: 5px 0 0;
+        font-size: 13px;
+    }
+
+    #calibration-modal.calibration-theme .cal-result-actions {
+        display: grid;
+        gap: 9px;
+        align-self: start;
+        padding: 24px;
+        border: 1px solid var(--cal-v1-line);
+        background: var(--cal-v1-paper-bright);
+    }
+
+    #calibration-modal.calibration-theme .cal-result-actions .start-cal-btn {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    #calibration-modal.calibration-theme .cal-secondary-action {
+        border-color: var(--cal-v1-line-strong) !important;
+        background: var(--cal-v1-paper) !important;
+        color: var(--cal-v1-ink-soft) !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-secondary-action:hover,
+    #calibration-modal.calibration-theme .cal-secondary-action:focus-visible {
+        border-color: var(--cal-v1-green) !important;
+        background: var(--cal-v1-green-soft) !important;
+        color: var(--cal-v1-green-deep) !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-text-action {
+        min-height: 42px;
+        border: 0;
+        background: transparent;
+        color: var(--cal-v1-muted);
+        font-family: var(--cal-v1-sans);
+        font-size: 13px;
+    }
+
+    #calibration-modal.calibration-theme .cal-text-action:hover,
+    #calibration-modal.calibration-theme .cal-text-action:focus-visible {
+        color: var(--cal-v1-green-deep);
+        outline: 2px solid rgba(49, 92, 82, .18);
+        outline-offset: 2px;
+    }
+
+    /* 數學元素由 MathJax 排版；未使用 MathJax 的化學式保留語意上下標。 */
+    #calibration-modal.calibration-theme .quiz-question-text sup,
+    #calibration-modal.calibration-theme .option-value sup,
+    #calibration-modal.calibration-theme .quiz-question-text sub,
+    #calibration-modal.calibration-theme .option-value sub {
+        position: static !important;
+        top: auto !important;
+        bottom: auto !important;
+        vertical-align: super !important;
+        line-height: 0 !important;
+        font-size: .68em !important;
+        margin-left: .04em;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text sub,
+    #calibration-modal.calibration-theme .option-value sub {
+        vertical-align: sub !important;
+    }
+
+    #calibration-modal.calibration-theme mjx-container {
+        color: inherit !important;
+        margin-left: .04em;
+        margin-right: .04em;
+    }
+
+    #calibration-modal.calibration-theme .cal-math {
+        display: inline-block;
+        white-space: nowrap;
+        vertical-align: baseline;
+    }
+
+    #calibration-modal.calibration-theme .cal-math-source {
+        visibility: hidden;
+    }
+
+    #calibration-modal.calibration-theme .cal-math.is-typeset .cal-math-source {
+        visibility: visible;
+    }
+
+    #calibration-modal.calibration-theme .cal-math.is-typeset .cal-math-fallback {
+        display: none;
+    }
+
+    #calibration-modal.calibration-theme .cal-math-fallback {
+        font-family: var(--cal-v1-math);
+        font-style: italic;
+    }
+
+    @font-face {
+        font-family: 'ComputerModernText';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 400;
+        size-adjust: 105%;
+        src: url('https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@4.1.3/chtml/woff2/mjx-ncm-n.woff2') format('woff2');
+    }
+
+    @font-face {
+        font-family: 'ComputerModernText';
+        font-style: italic;
+        font-display: swap;
+        font-weight: 400 700;
+        size-adjust: 105%;
+        src: url('https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@4.1.3/chtml/woff2/mjx-ncm-i.woff2') format('woff2');
+    }
+
+    @media (max-width: 900px) {
+        #calibration-modal.calibration-theme .config-header {
+            grid-template-columns: auto minmax(145px, 1fr) minmax(190px, 1.2fr);
+        }
+
+        #calibration-modal.calibration-theme .calibration-ruler {
+            grid-column: 2 / -1;
+        }
+
+        #calibration-modal.calibration-theme #quiz-content-area,
+        #calibration-modal.calibration-theme #quiz-result-area {
+            grid-template-columns: 1fr;
+        }
+
+        #calibration-modal.calibration-theme #cal-category-area {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-card {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 600px) {
+        #calibration-modal.calibration-theme .calibration-panel {
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+        }
+
+        #calibration-modal.calibration-theme .config-header {
+            grid-template-columns: auto 1fr;
+            gap: 10px 14px;
+            min-height: 98px;
+            padding: 12px 14px 10px !important;
+        }
+
+        #calibration-modal.calibration-theme .calibration-brand-lockup strong {
+            font-size: 16px;
+        }
+
+        #calibration-modal.calibration-theme .unified-bar {
+            grid-column: 2;
+        }
+
+        #calibration-modal.calibration-theme .calibration-ruler {
+            grid-column: 1 / -1;
+            grid-template-columns: auto minmax(60px, 1fr) auto;
+        }
+
+        #calibration-modal.calibration-theme .cal-ruler-label {
+            display: none;
+        }
+
+        #calibration-modal.calibration-theme #cal-category-area,
+        #calibration-modal.calibration-theme #difficulty-grid,
+        #calibration-modal.calibration-theme #quiz-setup-area,
+        #calibration-modal.calibration-theme #hybrid-type-select-area,
+        #calibration-modal.calibration-theme #electron-type-select-area,
+        #calibration-modal.calibration-theme #precip-type-select-area,
+        #calibration-modal.calibration-theme #formula-type-select-area,
+        #calibration-modal.calibration-theme #quiz-result-area,
+        #calibration-modal.calibration-theme #quiz-content-area {
+            padding: 20px 14px 88px !important;
+        }
+
+        #calibration-modal.calibration-theme #cal-category-area {
+            grid-template-columns: 1fr;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-card {
+            padding: 20px !important;
+        }
+
+        #calibration-modal.calibration-theme .diff-card {
+            min-height: 124px;
+            padding: 18px !important;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-card {
+            padding: 22px 18px 27px !important;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-header {
+            margin-bottom: 18px;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-code {
+            font-size: 14px;
+        }
+
+        #calibration-modal.calibration-theme .quiz-topic-badge {
+            font-size: 12px;
+        }
+
+        #calibration-modal.calibration-theme .quiz-question-text {
+            font-size: 22px !important;
+            line-height: 1.55;
+        }
+
+        #calibration-modal.calibration-theme .cal-answer-column {
+            padding: 20px 16px 18px;
+        }
+
+        #calibration-modal.calibration-theme .option-btn {
+            min-height: 56px;
+            font-size: 17px;
+        }
+
+        #calibration-modal.calibration-theme .option-letter {
+            font-size: 12px;
+        }
+
+        #calibration-modal.calibration-theme .cal-result-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        #calibration-modal.calibration-theme #quiz-result-card,
+        #calibration-modal.calibration-theme .cal-result-actions {
+            padding: 22px 18px !important;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #calibration-modal.calibration-theme .diff-card,
+        #calibration-modal.calibration-theme .option-btn,
+        #calibration-modal.calibration-theme button {
+            transition: none !important;
+        }
+    }
+
+    /* 校準內容的字重統一：中文使用同一套 Noto Serif TC，化學式字母另以數學斜體呈現。 */
+    #calibration-modal.calibration-theme .quiz-question-text,
+    #calibration-modal.calibration-theme .quiz-question-text span[style*="color"],
+    #calibration-modal.calibration-theme .option-value,
+    #calibration-modal.calibration-theme .cal-answer-heading,
+    #calibration-modal.calibration-theme .diff-title,
+    #calibration-modal.calibration-theme .cal-result-title,
+    #calibration-modal.calibration-theme .cal-result-assessment strong {
+        font-family: var(--cal-v1-serif) !important;
+        font-synthesis: none;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text,
+    #calibration-modal.calibration-theme .quiz-question-text span[style*="color"],
+    #calibration-modal.calibration-theme .option-value {
+        font-weight: 500 !important;
+    }
+
+    #calibration-modal.calibration-theme .cal-answer-heading,
+    #calibration-modal.calibration-theme .diff-title,
+    #calibration-modal.calibration-theme .cal-result-title,
+    #calibration-modal.calibration-theme .cal-result-assessment strong {
+        font-weight: 600 !important;
+    }
+
+    /* 元素符號與化學式的英文字母採 Computer Modern italic；中文不跟著傾斜。 */
+    #calibration-modal.calibration-theme .cal-chemistry-math {
+        color: inherit;
+        font-family: var(--cal-v1-math) !important;
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: .012em;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .quiz-question-text .chem-sub,
+    #calibration-modal.calibration-theme .quiz-question-text .chem-sup,
+    #calibration-modal.calibration-theme .option-value .chem-sub,
+    #calibration-modal.calibration-theme .option-value .chem-sup {
+        color: inherit;
+        font-family: var(--cal-v1-math) !important;
+        font-style: normal;
+        font-weight: 400;
+    }
+
 </style>
 </head>
 <body>
@@ -1736,18 +3639,27 @@
     </div> <!-- 結束 config-modal -->
 
 <!-- 新增：數據校準專用 Modal（從電子組態視窗拆出） -->
-<div id="calibration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 210; justify-content: center; align-items: center;">
-    <div class="config-panel" style="border: 1px solid rgba(34, 197, 94, 0.35); box-shadow: 0 0 30px rgba(34, 197, 94, 0.18);">
+<div id="calibration-modal" class="calibration-theme" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 210; justify-content: center; align-items: center;">
+    <div class="config-panel calibration-panel">
         <div id="quiz-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="config-header">
                 <button class="config-close" onclick="closeCalibrationModal()">✕</button>
+                <div class="calibration-brand-lockup" aria-label="Chemistry Lab 數據校準">
+                    <span>CHEMISTRY LAB</span>
+                    <strong>數據校準</strong>
+                </div>
                 <div class="unified-bar">
                     <div class="status-tag-hud">READY</div>
                     <span id="quiz-status-text" class="status-text-hud">Select Category</span>
                     <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">返回</div>
                 </div>
+                <div class="calibration-ruler" aria-label="校準進度">
+                    <div class="cal-ruler-label">CALIBRATION RULER</div>
+                    <div id="calibration-ruler-track" class="cal-ruler-track"></div>
+                    <strong id="calibration-ruler-count">00 / 10</strong>
+                </div>
             </div>
-            <div style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+            <div class="calibration-scroll">
                 <div id="quiz-setup-area">
                     <span class="setup-label">數據通量 (題數)</span>
                     <div class="setup-btns">
@@ -1758,23 +3670,37 @@
                     <button class="start-cal-btn" onclick="initiateCalibration()">啟動校準程序 START</button>
                 </div>
                 <div id="quiz-content-area">
-                    <div class="quiz-question-card">
-                        <div id="quiz-type" class="quiz-type-label">> TYPE: UNKNOWN</div>
-                        <div id="quiz-question" class="quiz-question-text">--</div>
-                    </div>
-                    <div id="quiz-options" class="quiz-options-grid"></div>
-                    <div id="quiz-confirm-wrap"></div>
-                    <div id="quiz-feedback" aria-live="polite"></div>
-                    <div id="periodic-toggle-bar" style="display:none;">
-                        <button onclick="togglePeriodicTable()" id="periodic-toggle-btn" style="width:100%; padding:5px; background:rgba(0,242,255,0.06); border:1px solid rgba(0,242,255,0.25); border-radius:4px; color:var(--hud-cyan); font-family:'Rajdhani',sans-serif; font-size:0.8rem; letter-spacing:1px; cursor:pointer;">📋 週期表 ▼</button>
-                        <div id="periodic-table-wrap" style="display:none; margin-top:6px;">
-                            <div id="mini-periodic-table"></div>
+                    <div class="cal-question-column">
+                        <div class="quiz-question-card">
+                            <div class="quiz-question-header">
+                                <span id="quiz-question-code" class="quiz-question-code">QUESTION 01</span>
+                                <span id="quiz-topic-badge" class="quiz-topic-badge">校準題型</span>
+                            </div>
+                            <div id="quiz-type" class="quiz-type-label" aria-hidden="true">&gt; TYPE: UNKNOWN</div>
+                            <div id="quiz-question" class="quiz-question-text">--</div>
                         </div>
+                        <div id="periodic-toggle-bar" style="display:none;">
+                            <button type="button" onclick="togglePeriodicTable()" id="periodic-toggle-btn" aria-controls="periodic-table-wrap" aria-expanded="false">開啟週期表</button>
+                            <div id="periodic-table-wrap" style="display:none; margin-top:6px;">
+                                <div id="mini-periodic-table"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cal-answer-column">
+                        <h2 class="cal-answer-heading">選擇你的判斷</h2>
+                        <div id="quiz-options" class="quiz-options-grid"></div>
+                        <div id="quiz-confirm-wrap"></div>
+                        <div id="quiz-feedback" aria-live="polite"></div>
+                        <p class="cal-answer-note">請先選擇答案，再確認你的判斷。</p>
                     </div>
                 </div>
                 <div id="quiz-result-area">
-                    <div id="quiz-result-card" class="quiz-question-card"></div>
-                    <button class="start-cal-btn" onclick="resetToDifficultySelection()">返回類別選擇</button>
+                    <div id="quiz-result-card" class="quiz-question-card" aria-live="polite" aria-atomic="true"></div>
+                    <div class="cal-result-actions">
+                        <button class="start-cal-btn cal-primary-action" type="button" onclick="restartCalibrationSameSettings()">同條件再來一次</button>
+                        <button class="start-cal-btn cal-secondary-action" type="button" onclick="adjustCalibrationSettings()">調整題型／題數</button>
+                        <button class="cal-text-action" type="button" onclick="resetToDifficultySelection()">返回校準範圍</button>
+                    </div>
                 </div>
                 <div id="electron-type-select-area">
                     <span class="setup-label">選擇題型（可複選，至少一種）</span>
@@ -1873,7 +3799,7 @@
                     <button class="start-cal-btn" id="formula-confirm-btn" onclick="confirmFormulaTypes()">確認題型，繼續 ▸</button>
                 </div>
                 <div id="cal-category-area" style="display:flex; flex-direction:column; gap:15px; padding:20px 15px;">
-                    <div class="card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
+                    <div class="card calibration-intro-card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
                         <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
                             <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
