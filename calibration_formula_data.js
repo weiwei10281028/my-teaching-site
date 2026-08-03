@@ -216,6 +216,9 @@ window.CHEM_FORMULA_DATA = (() => {
         I('(NH4)2Cr2O7', '重鉻酸銨', 'a', 'dichromate', 'NH4', 1, 2, 'Cr2O7', -2, 1),
         I('KMnO4', '過錳酸鉀', 'a', 'permanganate', 'K', 1, 1, 'MnO4', -1, 1),
         I('NaMnO4', '過錳酸鈉', 'a', 'permanganate', 'Na', 1, 1, 'MnO4', -1, 1),
+        // 錳酸根級序的近鄰：MnO₃²⁻ 為亞錳酸根，適合作為「MnO₄²⁻」的高鑑別命名誘答。
+        I('K2MnO3', '亞錳酸鉀', 'a', 'manganite', 'K', 1, 2, 'MnO3', -2, 1),
+        I('Na2MnO3', '亞錳酸鈉', 'a', 'manganite', 'Na', 1, 2, 'MnO3', -2, 1),
         I('K2MnO4', '錳酸鉀', 'a', 'manganate', 'K', 1, 2, 'MnO4', -2, 1),
         I('Na2MnO4', '錳酸鈉', 'a', 'manganate', 'Na', 1, 2, 'MnO4', -2, 1),
 

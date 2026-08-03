@@ -2678,18 +2678,28 @@
     }
 
     #calibration-modal.calibration-theme #quiz-cancel-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         margin-left: auto;
-        padding: 5px 0 5px 14px;
-        border: 0 !important;
-        background: transparent !important;
-        color: var(--cal-v1-green) !important;
+        min-height: 38px;
+        padding: 7px 13px;
+        border: 1px solid var(--cal-v1-green) !important;
+        border-radius: 3px;
+        background: var(--cal-v1-paper-bright) !important;
+        color: var(--cal-v1-green-deep) !important;
         font-family: var(--cal-v1-sans);
-        font-size: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.2;
+        cursor: pointer;
     }
 
     #calibration-modal.calibration-theme #quiz-cancel-btn:hover,
     #calibration-modal.calibration-theme #quiz-cancel-btn:focus-visible {
-        color: var(--cal-v1-green-deep) !important;
+        background: var(--cal-v1-green-soft) !important;
+        border-color: var(--cal-v1-green-deep) !important;
         outline: 2px solid rgba(49, 92, 82, .28);
         outline-offset: 2px;
     }
@@ -2967,8 +2977,9 @@
         background: transparent !important;
         color: var(--cal-v1-copper) !important;
         font-family: var(--cal-v1-sans);
-        font-size: 13px;
+        font-size: 17px;
         font-weight: 600;
+        line-height: 1.25;
     }
 
     #calibration-modal.calibration-theme #quiz-type {
@@ -3020,14 +3031,14 @@
         gap: 8px;
         width: 100%;
         min-width: 0;
-        min-height: 56px;
-        padding: 8px 13px 8px 15px;
+        min-height: 66px;
+        padding: 11px 13px 11px 15px;
         border: 1px solid var(--cal-v1-line) !important;
         border-radius: 0 !important;
         background: var(--cal-v1-paper-bright) !important;
         color: var(--cal-v1-ink) !important;
         font-family: var(--cal-v1-math), var(--cal-v1-sans);
-        font-size: 18px;
+        font-size: 21px;
         font-weight: 400;
         line-height: 1.4;
         text-align: left;
@@ -3076,7 +3087,7 @@
     #calibration-modal.calibration-theme .option-letter {
         color: var(--cal-v1-copper) !important;
         font-family: var(--cal-v1-sans);
-        font-size: 12px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: .04em;
     }
@@ -3085,20 +3096,20 @@
         min-width: 0;
         color: inherit !important;
         font-family: var(--cal-v1-math), var(--cal-v1-serif);
-        font-size: 18px;
+        font-size: 21px;
         overflow-wrap: anywhere;
     }
 
     #calibration-modal.calibration-theme .option-state-mark {
         display: grid;
-        width: 23px;
-        height: 23px;
+        width: 26px;
+        height: 26px;
         place-items: center;
         border: 1px solid currentColor;
         border-radius: 50%;
         color: var(--cal-v1-muted) !important;
         font-family: var(--cal-v1-sans);
-        font-size: 13px;
+        font-size: 14px;
         font-style: normal;
     }
 
@@ -3495,7 +3506,7 @@
         }
 
         #calibration-modal.calibration-theme .quiz-topic-badge {
-            font-size: 12px;
+            font-size: 15px;
         }
 
         #calibration-modal.calibration-theme .quiz-question-text {
@@ -3508,12 +3519,12 @@
         }
 
         #calibration-modal.calibration-theme .option-btn {
-            min-height: 56px;
-            font-size: 17px;
+            min-height: 64px;
+            font-size: 20px;
         }
 
         #calibration-modal.calibration-theme .option-letter {
-            font-size: 12px;
+            font-size: 15px;
         }
 
         #calibration-modal.calibration-theme .cal-result-metrics {
@@ -3577,6 +3588,20 @@
         font-family: var(--cal-v1-math) !important;
         font-style: normal;
         font-weight: 400;
+    }
+
+    /* 週期表原子序：提高字級與對比，避免在手機窄欄位中變成淡色小字。 */
+    #calibration-modal.calibration-theme .pt-cell .pt-z {
+        color: #294863 !important;
+        font-family: var(--cal-v1-sans) !important;
+        font-size: clamp(0.56rem, 2vw, 0.70rem) !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+    }
+
+    #calibration-modal.calibration-theme .pt-cell.pt-placeholder .pt-z {
+        font-size: clamp(0.48rem, 1.7vw, 0.62rem) !important;
     }
 
 </style>
@@ -3651,7 +3676,7 @@
                 <div class="unified-bar">
                     <div class="status-tag-hud">READY</div>
                     <span id="quiz-status-text" class="status-text-hud">Select Category</span>
-                    <div id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;">返回</div>
+                    <button type="button" id="quiz-cancel-btn" onclick="resetToDifficultySelection()" style="display:none;" aria-label="返回類別選擇"><span aria-hidden="true">←</span> 返回類別</button>
                 </div>
                 <div class="calibration-ruler" aria-label="校準進度">
                     <div class="cal-ruler-label">CALIBRATION RULER</div>
@@ -3690,7 +3715,7 @@
                         <h2 class="cal-answer-heading">選擇你的判斷</h2>
                         <div id="quiz-options" class="quiz-options-grid"></div>
                         <div id="quiz-confirm-wrap"></div>
-                        <div id="quiz-feedback" aria-live="polite"></div>
+                        <div id="quiz-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
                         <p class="cal-answer-note">請先選擇答案，再確認你的判斷。</p>
                     </div>
                 </div>
@@ -3804,8 +3829,17 @@
                             <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
                         <div style="font-size: 0.85rem; line-height: 1.6; color: #e2e8f0;">
-                            <div style="margin-bottom: 8px;"><strong style="color:#38bdf8;">1.</strong> 選擇校準類別 → <strong style="color:#38bdf8;">2.</strong> 週期表/電子組態需再選 RANK 範圍 → <strong style="color:#38bdf8;">3.</strong> 設定題數後開始</div>
+                            <div style="margin-bottom: 8px;"><strong style="color:#38bdf8;">1.</strong> 選擇校準類別 → <strong style="color:#38bdf8;">2.</strong> 週期表/電子組態需再選 RANK，化學式需選題型 → <strong style="color:#38bdf8;">3.</strong> 設定題數後開始</div>
                             <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                                <div style="margin-bottom: 12px;">
+                                    <span style="color:#14b8a6; font-weight: bold; display: block; margin-bottom: 6px;">[ 化學式 ]</span>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #14b8a6;">
+                                        ．名稱與化學式互相辨識<br>
+                                        ．離子電荷、最簡比與電中性<br>
+                                        ．括號、下標、含氧級序與水合物<br>
+                                        ．化學式判讀與常見混淆名稱
+                                    </div>
+                                </div>
                                 <div style="margin-bottom: 12px;">
                                     <span style="color:#4ade80; font-weight: bold; display: block; margin-bottom: 6px;">[ 週期表 ]</span>
                                     <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #4ade80;">
@@ -3859,6 +3893,13 @@
                             </div>
                         </div>
                     </div>
+                    <div class="diff-card diff-f" onclick="selectCalCategory('formula')">
+                        <div class="diff-info">
+                            <span class="diff-title" style="color:#14b8a6;">化學式</span>
+                            <span class="diff-range">名稱互譯、離子組成、數量比例、括號、級序與水合物</span>
+                            <span class="diff-tag" style="border-color:#14b8a6; color:#14b8a6;">需選擇題型 ▸</span>
+                        </div>
+                    </div>
                     <div class="diff-card diff-a" onclick="selectCalCategory('periodic')">
                         <div class="diff-info">
                             <span class="diff-title" style="color:#10b981;">週期表</span>
@@ -3892,13 +3933,6 @@
                             <span class="diff-title" style="color:#a855f7;">沉澱表</span>
                             <span class="diff-range">溶解規則、沉澱辨識、再溶解、顏色、焰色</span>
                             <span class="diff-tag" style="border-color:#a855f7; color:#a855f7;">直接開始 ▸</span>
-                        </div>
-                    </div>
-                    <div class="diff-card diff-f" onclick="selectCalCategory('formula')">
-                        <div class="diff-info">
-                            <span class="diff-title" style="color:#14b8a6;">化學式</span>
-                            <span class="diff-range">名稱互譯、離子組成、數量比例、括號、級序與水合物</span>
-                            <span class="diff-tag" style="border-color:#14b8a6; color:#14b8a6;">需選擇題型 ▸</span>
                         </div>
                     </div>
                 </div>
