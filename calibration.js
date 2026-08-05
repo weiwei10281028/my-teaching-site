@@ -1496,7 +1496,7 @@ window.confirmHybridTypes = function() {
 
 // 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
 function _generatePrecipTypeDeck(total, sub) {
-    window._precipSpecialLeft = 2;
+    window._precipSpecialLeft = sub['A'] ? 2 : 0;
     const W = { 21:10, 22:15, 28:1, 31:5, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
     const pool = [];
     if (sub['A']) pool.push(21, 22, 28, 31);
@@ -1504,7 +1504,7 @@ function _generatePrecipTypeDeck(total, sub) {
     if (sub['C']) pool.push(26, 27, 23, 29);
     if (pool.length === 0) pool.push(21, 22, 26, 27);
 
-    const specialN = 2;
+    const specialN = sub['A'] ? 2 : 0;
     const flameN = sub['D'] ? (total <= 15 ? 1 : Math.min(2, Math.round(total / 10))) : 0;
     const deck = [];
     for (let i = 0; i < specialN; i++) deck.push(28);
