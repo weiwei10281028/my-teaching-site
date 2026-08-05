@@ -52,28 +52,6 @@
         top: -0.5em;
         margin-left: 2px;
     }
-    .charge-sign {
-        font-size: 1.4em;
-        font-weight: bold;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: 1px;
-        line-height: 1;
-        position: relative;
-        vertical-align: middle;
-        top: 0;
-    }
-    .charge-sign.minus {
-        transform: scaleX(1.5);
-        transform-origin: center;
-        margin-left: 2px;
-        top: 0.04em;
-    }
-    .charge-sign.plus {
-        top: 0.02em;
-    }
-
     body {
         margin: 0;
         font-family: 'Rajdhani', 'Segoe UI', 'Microsoft JhengHei', 'Arial', sans-serif;
@@ -255,6 +233,9 @@
         padding: 20px; margin-bottom: 20px; 
         position: relative;
         backdrop-filter: blur(10px);
+    }
+    #balance-card {
+        z-index: 120;
     }
     .card-title { 
         font-size: 1rem; font-weight: 700; color: var(--hud-cyan); 
@@ -468,6 +449,12 @@
     .equation-token.token-sub {
         color: #f9a8d4;
     }
+    .equation-token.token-hydrate-dot {
+        color: #a3e635;
+        margin: 0 0.14em;
+        font-weight: 900;
+        text-shadow: 0 0 6px rgba(163, 230, 53, 0.3);
+    }
     .equation-token.token-sub sub {
         font-size: 0.66em;
         line-height: 1;
@@ -485,7 +472,7 @@
         line-height: 1;
         font-weight: 800;
         position: relative;
-        top: -0.52em;
+        top: -0.32em;
         font-family: inherit;
         letter-spacing: 0;
         vertical-align: baseline;
@@ -615,6 +602,15 @@
         border-color: rgba(80, 220, 200, 0.75);
         box-shadow: 0 0 8px rgba(80, 220, 200, 0.2);
         text-shadow: none;
+    }
+    .equation-soft-row.row-charges .equation-soft-key.key-hydrate-dot {
+        background: linear-gradient(180deg, rgba(225, 72, 132, 0.98) 0%, rgba(128, 24, 76, 0.98) 100%);
+        color: #ffffff;
+        border-color: rgba(255, 184, 213, 0.94);
+        box-shadow: 0 0 12px rgba(244, 114, 182, 0.42);
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.22);
+        font-size: 1.38rem;
+        line-height: 1;
     }
     .equation-soft-row.row-subscripts .equation-soft-key {
         background: linear-gradient(180deg, rgba(100, 50, 160, 0.92) 0%, rgba(60, 28, 100, 0.96) 100%);
@@ -1191,14 +1187,25 @@
         margin-left: 0.06em; font-weight: 700; position: relative; top: 0;
         display: inline-flex; align-items: center; gap: 0;
     }
-    .chem-sup .charge-sign, .option-btn sup .charge-sign, .quiz-question-text sup .charge-sign {
-        font-size: 1em; top: 0;
+    /* 平衡結果中的電荷需要可讀、靠近化學式，不能縮成預設上標貼在右上角。 */
+    #balance-result .chem-sup {
+        font-size: 0.88em !important;
+        vertical-align: baseline !important;
+        line-height: 1;
+        margin-left: 0.04em;
+        position: relative;
+        top: -0.40em;
     }
-    .chem-sup .charge-sign.minus, .option-btn sup .charge-sign.minus, .quiz-question-text sup .charge-sign.minus {
-        transform: scaleX(1.5); transform-origin: center; top: 0.03em; margin-left: 0.05em;
+    #balance-help-popup,
+    #balance-help-popup * {
+        text-shadow: none !important;
+        filter: none !important;
     }
-    .chem-sup .charge-sign.plus, .option-btn sup .charge-sign.plus, .quiz-question-text sup .charge-sign.plus {
-        top: 0.01em; margin-left: 0.03em;
+    #balance-result .chem-hydrate-dot {
+        display: inline-block;
+        margin: 0 0.14em;
+        color: inherit;
+        font-weight: inherit;
     }
     .nuclide-mass {
         margin-left: 0 !important; margin-right: 0.02em; font-size: 0.72em !important;
@@ -3448,6 +3455,16 @@
         font-style: italic;
     }
 
+    #calibration-modal.calibration-theme .cal-math-fallback .cal-electron-power {
+        position: relative;
+        top: -0.28em;
+        margin-left: 0.03em;
+        font-size: 0.68em;
+        line-height: 0;
+        font-style: normal;
+        vertical-align: baseline;
+    }
+
     @font-face {
         font-family: 'ComputerModernText';
         font-style: normal;
@@ -4078,19 +4095,21 @@
             </div>
 
             <!-- 2. ⚖️ 平衡化學反應式 -->
-            <div class="card" style="border-color: var(--accent-green); position: relative;">
+            <div id="balance-card" class="card" style="border-color: var(--accent-green); position: relative;">
                 <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; color: var(--accent-green);">
                     <span>⚖️ 平衡化學反應式</span>
                     <div onclick="toggleBalanceInfo(event)" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
                     
                     <!-- 詳細說明彈窗 (維持原樣) -->
-                    <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 110; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
+                    <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 1000; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
                         <div style="font-weight: bold; color: var(--accent-green); margin-bottom: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); font-size: 1rem;">📝 輸入規範</div>
                         <div style="margin-bottom: 10px;">
                             1. 物質間請用下方鍵盤的 <span style="color: #facc15; font-weight: bold;">「+」</span> 與 <span style="color: #facc15; font-weight: bold;">「→」</span> 建立反應式。<br>
-                            2. 下標請用數字列輸入，例如 <span style="color: #38bdf8;">H<sub>2</sub>O</span>、<span style="color: #38bdf8;">MnO<sub>4</sub></span>。<br>
+                            2. 下標請用數字列輸入；數字鍵連點可輸入基線數字，例如水合物的 <span style="color: #38bdf8;">·2H<sub>2</sub>O</span>。<br>
                             3. 離子電荷請用上標列輸入，例如 <span style="color: #f472b6;">MnO<sub>4</sub><sup>-</sup></span>、<span style="color: #f472b6;">Mn<sup>2+</sup></span>。<br>
-                            4. 首字母通常使用大寫；切成小寫後輸入一個字母會自動回到大寫。
+                            4. 字母單點輸入元素首字母；連點可直接輸入常用二字母元素，例如 <span style="color: #38bdf8; font-weight: bold;">F→Fe</span>、<span style="color: #38bdf8; font-weight: bold;">T→Ti</span>；長按可從候選元素中選擇。<br>
+                            5. 首字母通常使用大寫；切成小寫後輸入一個字母會自動回到大寫。<br>
+                            6. 水合物請用專用的 <span style="color: #a3e635; font-weight: bold;">「·」</span>，例如 <span style="color: #38bdf8;">FeC<sub>2</sub>O<sub>4</sub>·2H<sub>2</sub>O</span>。
                         </div>
                         <button onclick="document.getElementById('balance-help-popup').style.display='none'" style="margin-top:10px; width:100%; padding:8px; background:#10b981; border:none; border-radius:8px; color:#fff; cursor:pointer;">關閉說明</button>
                     </div>
@@ -4698,6 +4717,11 @@ function formatFormula(str) {
     if (!str) return "";
     let s = str.trim();
 
+    // 物理狀態是化學式的語意下標，先從電荷解析中分離，避免 (aq) 留在基線或干擾電荷判斷。
+    const stateMatch = s.match(/\s*\((aq|s|l|g)\)\s*$/i);
+    const statePart = stateMatch ? `<sub class="chem-sub">(${stateMatch[1]})</sub>` : "";
+    if (stateMatch) s = s.slice(0, stateMatch.index).trim();
+
     // 優先以「空格」拆分
     let parts = s.split(/\s+/);
     let mainPart = parts[0];
@@ -4715,12 +4739,14 @@ function formatFormula(str) {
 
     // 一般化學式數字變下標；但水合物的「·nH₂O」中，n 是水分子係數，
     // 必須維持在基線位置，不能和 H₂O 內的原子下標混在一起。
+    const formatHydrateDot = dot => `<span class="chem-hydrate-dot">${dot}</span>`;
     const formatFormulaSegment = segment => String(segment || '')
-        .replace(/(\d+)/g, '<sub class="chem-sub">$1</sub>');
+        .replace(/(\d+)/g, '<sub class="chem-sub">$1</sub>')
+        .replace(/[·•.]/g, formatHydrateDot);
     const hydrateMatch = mainPart.match(/^(.+?)([·.])(\d+)(H2O.*)$/i);
     let formattedMain;
     if (hydrateMatch) {
-        formattedMain = `${formatFormulaSegment(hydrateMatch[1])}${hydrateMatch[2]}${hydrateMatch[3]}${formatFormulaSegment(hydrateMatch[4])}`;
+        formattedMain = `${formatFormulaSegment(hydrateMatch[1])}${formatHydrateDot(hydrateMatch[2])}${hydrateMatch[3]}${formatFormulaSegment(hydrateMatch[4])}`;
     } else {
         formattedMain = formatFormulaSegment(mainPart);
     }
@@ -4731,32 +4757,35 @@ function formatFormula(str) {
         if (chargePart === "1+" || chargePart === "1-") {
             chargePart = chargePart[1];
         }
-        // 美化正負號，套用你原本 CSS 裡的 .charge-sign
-        let chargeDisplay = chargePart.replace(/-/g, '<span class="charge-sign minus">-</span>').replace(/\+/g, '<span class="charge-sign plus">+</span>');
-        formattedCharge = `<sup class="chem-sup">${chargeDisplay}</sup>`;
+        // 電荷整段維持同一個上標字級，正負號不另設字體或縮放，與電荷數字自然對齊。
+        formattedCharge = `<sup class="chem-sup">${chargePart}</sup>`;
     }
 
-    return formattedMain + formattedCharge;
+    return formattedMain + formattedCharge + statePart;
 }
 
 /** 將 Unicode 上下標化學式轉為較易讀的 HTML（選項/題目用） */
 function formatChemLabel(str) {
     if (!str) return "";
-    if (str.includes("<sub") || str.includes("<sup")) {
-        return str
+    const source = String(str);
+    const stateMatch = source.match(/\s*\((aq|s|l|g)\)\s*$/i);
+    const statePart = stateMatch ? `<sub class="chem-sub">(${stateMatch[1]})</sub>` : "";
+    const base = stateMatch ? source.slice(0, stateMatch.index) : source;
+    if (base.includes("<sub") || base.includes("<sup")) {
+        return base
             .replace(/<sub>/gi, '<sub class="chem-sub">')
-            .replace(/<sup>/gi, '<sup class="chem-sup">');
+            .replace(/<sup>/gi, '<sup class="chem-sup">') + statePart;
     }
     const subMap = "₀₁₂₃₄₅₆₇₈₉";
     const supDigit = "⁰¹²³⁴⁵⁶⁷⁸⁹";
     let out = "";
     let i = 0;
-    while (i < str.length) {
-        const ch = str[i];
+    while (i < base.length) {
+        const ch = base[i];
         if (subMap.includes(ch)) {
             let run = "";
-            while (i < str.length && subMap.includes(str[i])) {
-                run += subMap.indexOf(str[i]);
+            while (i < base.length && subMap.includes(base[i])) {
+                run += subMap.indexOf(base[i]);
                 i++;
             }
             out += `<sub class="chem-sub">${run}</sub>`;
@@ -4764,21 +4793,20 @@ function formatChemLabel(str) {
         }
         if (supDigit.includes(ch) || ch === "⁺" || ch === "⁻") {
             let run = "";
-            while (i < str.length && (supDigit.includes(str[i]) || str[i] === "⁺" || str[i] === "⁻")) {
-                const c = str[i];
+            while (i < base.length && (supDigit.includes(base[i]) || base[i] === "⁺" || base[i] === "⁻")) {
+                const c = base[i];
                 if (c === "⁺") run += "+";
                 else if (c === "⁻") run += "-";
                 else run += supDigit.indexOf(c);
                 i++;
             }
-            const chargeHtml = run.replace(/-/g, '<span class="charge-sign minus">-</span>').replace(/\+/g, '<span class="charge-sign plus">+</span>');
-            out += `<sup class="chem-sup">${chargeHtml}</sup>`;
+            out += `<sup class="chem-sup">${run}</sup>`;
             continue;
         }
         out += ch;
         i++;
     }
-    return out;
+    return out + statePart;
 }
 
 function toFraction(val) {
@@ -4815,6 +4843,26 @@ function parseCharge(c) {
 
 function parseAtoms(f) {
     let formula = f.replace(/\[/g, '(').replace(/\]/g, ')').replace(/\{/g, '(').replace(/\}/g, ')');
+
+    // 水合物的中點不是元素符號的一部分；「·nH2O」代表 n 個水分子，
+    // 因此要先拆開各段，再把每段的原子數乘上段首係數後合併。
+    const hydrateParts = formula.split(/[·•.]/);
+    if (hydrateParts.length > 1) {
+        const total = {};
+        hydrateParts.forEach((part) => {
+            const segment = part.trim();
+            if (!segment) return;
+            const multiplierMatch = segment.match(/^(\d+)(.*)$/);
+            const multiplier = multiplierMatch ? parseInt(multiplierMatch[1], 10) : 1;
+            const segmentFormula = multiplierMatch ? multiplierMatch[2] : segment;
+            const atoms = parseAtoms(segmentFormula);
+            Object.keys(atoms).forEach((el) => {
+                total[el] = (total[el] || 0) + atoms[el] * multiplier;
+            });
+        });
+        return total;
+    }
+
     const stack = [{}];
     let i = 0;
     while (i < formula.length) {
@@ -4936,6 +4984,7 @@ function setupEquationEditor() {
         N: 'Na',
         P: 'Pb',
         S: 'Si',
+        T: 'Ti',
         Z: 'Zn'
     };
     const elementCandidatesByKey = {
@@ -4960,6 +5009,7 @@ function setupEquationEditor() {
         Z: [{ symbol: 'Zn', atomicNumber: 30 }, { symbol: 'Zr', atomicNumber: 40 }]
     };
     let pendingElementTap = null;
+    let pendingSubscriptTap = null;
     let letterPressState = null;
     let backspaceHoldState = null;
     let elementPopupAnchorEl = null;
@@ -5119,7 +5169,10 @@ function setupEquationEditor() {
     };
 
     const renderToken = (token, index) => {
-        if (token.type === 'text') return `<span class="equation-token token-text" data-index="${index}">${escapeHtml(token.value)}</span>`;
+        if (token.type === 'text') {
+            const tokenClass = /^[·•.]$/.test(token.value) ? 'equation-token token-text token-hydrate-dot' : 'equation-token token-text';
+            return `<span class="${tokenClass}" data-index="${index}">${escapeHtml(token.value)}</span>`;
+        }
         if (token.type === 'sub') return `<span class="equation-token token-sub" data-index="${index}"><sub>${escapeHtml(subToDigit[token.value] || token.value)}</sub></span>`;
         if (token.type === 'charge') return `<span class="equation-token token-charge" data-index="${index}"><sup>${renderChargeSup(token.value)}</sup></span>`;
         if (token.type === 'plus') return `<span class="equation-token token-plus" data-index="${index}">+</span>`;
@@ -5172,6 +5225,10 @@ function setupEquationEditor() {
 
     const clearPendingElementTap = () => {
         pendingElementTap = null;
+    };
+
+    const clearPendingSubscriptTap = () => {
+        pendingSubscriptTap = null;
     };
 
     const closeElementPopup = () => {
@@ -5283,6 +5340,29 @@ function setupEquationEditor() {
         insertTextToken(digitToSub[digit] || digit, 'sub');
     };
 
+    const tryInsertDoubleTapSubscript = (digit) => {
+        const subValue = digitToSub[digit] || digit;
+        const now = Date.now();
+        if (
+            pendingSubscriptTap &&
+            pendingSubscriptTap.digit === digit &&
+            (now - pendingSubscriptTap.time) <= DOUBLE_TAP_WINDOW_MS &&
+            state.cursor === pendingSubscriptTap.index + 1 &&
+            state.tokens[pendingSubscriptTap.index] &&
+            state.tokens[pendingSubscriptTap.index].type === 'sub' &&
+            state.tokens[pendingSubscriptTap.index].value === subValue
+        ) {
+            state.tokens[pendingSubscriptTap.index] = { type: 'text', value: digit };
+            state.cursor = pendingSubscriptTap.index + 1;
+            clearPendingSubscriptTap();
+            renderEditor();
+            return true;
+        }
+        insertSubscriptDigit(digit);
+        pendingSubscriptTap = { digit, time: now, index: state.cursor - 1 };
+        return false;
+    };
+
     const insertCharge = (charge) => {
         const { start, end } = findSpeciesBounds();
         if (!hasSpeciesContent(start, end)) return;
@@ -5362,6 +5442,7 @@ function setupEquationEditor() {
         keyboard.innerHTML = `
             <div class="equation-soft-row row-charges">
                 ${chargeLabels.map(c => makeBtn(c, 'insert-charge', 'key-charge')).join("")}
+                ${makeBtn("·", "insert-hydrate-dot", "key-hydrate-dot", "插入水合物中點，例如 FeC2O4·2H2O")}
                 ${makeBtn("←", "backspace", "key-icon key-wide-backspace", "刪除游標前一個項目")}
             </div>
             <div class="equation-soft-row row-subscripts">
@@ -5426,6 +5507,7 @@ function setupEquationEditor() {
         const label = keyEl.dataset.label || "";
         const upperLabel = label.toUpperCase();
         const shouldResetUppercase = (action !== 'toggle-case' && !state.isUppercase);
+        if (action !== 'insert-subscript') clearPendingSubscriptTap();
         if (
             action === 'insert-letter' &&
             state.isUppercase &&
@@ -5449,8 +5531,9 @@ function setupEquationEditor() {
         clearLetterPressState();
         if (action === 'insert-letter') tryInsertDoubleTapElement(label);
         else if (action === 'insert-charge') { clearPendingElementTap(); insertCharge(label); }
-        else if (action === 'insert-subscript') { clearPendingElementTap(); insertSubscriptDigit(label); }
+        else if (action === 'insert-subscript') { clearPendingElementTap(); tryInsertDoubleTapSubscript(label); }
         else if (action === 'insert-bracket') { clearPendingElementTap(); insertTextToken(label, 'text'); }
+        else if (action === 'insert-hydrate-dot') { clearPendingElementTap(); insertTextToken('·', 'text'); }
         else if (action === 'insert-plus') { clearPendingElementTap(); insertOperator('plus'); }
         else if (action === 'insert-arrow') { clearPendingElementTap(); insertOperator('arrow'); }
         else if (action === 'backspace') { clearPendingElementTap(); startBackspaceHold(e.pointerId); }
@@ -5519,7 +5602,7 @@ function setupEquationEditor() {
         if (/^[0-9]$/.test(e.key)) {
             e.preventDefault();
             const shouldResetUppercase = !state.isUppercase;
-            insertSubscriptDigit(e.key);
+            tryInsertDoubleTapSubscript(e.key);
             if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
             return;
         }
@@ -5527,6 +5610,13 @@ function setupEquationEditor() {
             e.preventDefault();
             const shouldResetUppercase = !state.isUppercase;
             insertOperator('plus');
+            if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
+            return;
+        }
+        if (e.key === '·' || e.key === '•') {
+            e.preventDefault();
+            const shouldResetUppercase = !state.isUppercase;
+            insertTextToken('·', 'text');
             if (shouldResetUppercase) { state.isUppercase = true; renderKeyboard(); }
             return;
         }

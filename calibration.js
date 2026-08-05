@@ -747,7 +747,7 @@ const PRECIP_ENGINE = (function() {
                     ? `亞硫酸根遇酸先生成 H₂SO₃，再分解放出 ${cleanAnswer}`
                     : `碳酸根遇酸先生成 H₂CO₃，再分解放出 ${cleanAnswer}`;
             } else if (/鉻酸鹽加酸變色/.test(qd.type || '')) {
-                rule = '酸化使 2 CrO₄²⁻ ⇌ Cr₂O₇²⁻ 平衡向右，黃色鉻酸根轉為橙色重鉻酸根';
+                rule = '酸化使 2 CrO₄²⁻ ⇌ Cr₂O₇²⁻ 平衡向右，黃色鉻酸根轉為橙色二鉻酸根';
             } else if (/強酸溶解/.test(qd.type || '')) {
                 rule = /CO₃|碳酸/.test(cleanPrompt)
                     ? `酸提供 H⁺ 消耗 CO₃²⁻，生成 CO₂↑，故${cleanAnswer}`
@@ -1013,7 +1013,7 @@ function periodicChargeText(charge) {
     if (!q) return '';
     const sign = q > 0 ? '+' : '-';
     const magnitude = Math.abs(q);
-    return `<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}<span class="charge-sign ${q > 0 ? 'plus' : 'minus'}">${sign}</span></sup>`;
+    return `<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}${sign}</sup>`;
 }
 
 function periodicParticleLabel(particle) {
@@ -1945,6 +1945,10 @@ function calibrationMathSpan(tex, fallback) {
     return `<span class="cal-math"><span class="cal-math-fallback">${calibrationEscapeHtml(fallback)}</span><span class="cal-math-source">\\(${tex}\\)</span></span>`;
 }
 
+function calibrationHtmlMathSpan(tex, fallbackHtml) {
+    return `<span class="cal-math"><span class="cal-math-fallback">${fallbackHtml}</span><span class="cal-math-source">\\(${tex}\\)</span></span>`;
+}
+
 function orbitalPower(value) {
     return value === '²' ? '2' : (value === '³' ? '3' : String(value));
 }
@@ -1977,10 +1981,12 @@ function formatHybridNotationHtml(value) {
 function formatElectronConfigMath(value) {
     const raw = String(value || '').replace(/<[^>]+>/g, '');
     if (!raw) return '';
+    const fallback = calibrationEscapeHtml(raw)
+        .replace(/(\d+)([spdf])(\d+)/gi, '$1<i>$2</i><sup class="cal-electron-power">$3</sup>');
     let tex = calibrationEscapeHtml(raw)
         .replace(/\[([A-Za-z]+)\]/g, '\\left[\\mathrm{$1}\\right]')
         .replace(/(\d+)([spdf])(\d+)/gi, '$1\\mathit{$2}^{$3}');
-    return calibrationMathSpan(tex, raw);
+    return calibrationHtmlMathSpan(tex, fallback);
 }
 
 // 只將化學式中的元素符號交給 Computer Modern 斜體，中文句子維持襯線字體。
@@ -2151,7 +2157,7 @@ function calibrationIonValueForElement(el, charge) {
     if (!q) return el.s;
     const sign = q > 0 ? '+' : '-';
     const magnitude = Math.abs(q);
-    return `${el.s}<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}<span class="charge-sign ${q > 0 ? 'plus' : 'minus'}">${sign}</span></sup>`;
+    return `${el.s}<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}${sign}</sup>`;
 }
 
 function calibrationSemanticMatch(quizData, value, target, pool) {
@@ -2191,6 +2197,24 @@ function calibrationSemanticMatch(quizData, value, target, pool) {
         return QUIZ_HELPER.getEN(optionEl.s) === QUIZ_HELPER.getEN(answerEl.s);
     }
     if (/區塊/.test(label)) return plain === calibrationBlockForElement(target);
+    if (window.calCategory === 'formula' || /名稱與化學式|化學式判讀|離子與組成/.test(label)) {
+        const formulaItem = formulaItemForQuiz(quizData);
+        if (!formulaItem) return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+        if (/名稱配對是非題|化學式判讀：正誤是非題/.test(label)) {
+            return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+        }
+        if (/化學式 → 中文名稱/.test(label)) return plain === formulaItem.n;
+        if (/中文名稱 → (?:電中性)?化學式|選出正確化學式|正確化學式/.test(label)) {
+            return calibrationFormulaPlain(value).replace(/\s+/g, '').replace(/[·.]/g, '·')
+                === String(formulaItem.f).replace(/\s+/g, '').replace(/[·.]/g, '·');
+        }
+        if (/陽陰離子|化學式 → 離子/.test(label)) {
+            return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+        }
+        if (/指定離子數量|指定元素原子數|個數比|變價金屬/.test(label)) {
+            return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
+        }
+    }
     return calibrationOptionKey(value) === calibrationOptionKey(quizData.answer);
 }
 
@@ -2370,11 +2394,412 @@ function attachGenericCalibrationReason(type, quizData, target, parsed) {
 
 function formulaItemForQuiz(quizData) {
     const data = Array.isArray(window.CHEM_FORMULA_DATA) ? window.CHEM_FORMULA_DATA : [];
+    if (quizData && quizData._formulaItem) return quizData._formulaItem;
     const answerPlain = calibrationFormulaPlain(quizData.answer).replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)));
     return data.find(item => item.f === answerPlain)
         || data.find(item => item.n === quizData.answer)
         || data.find(item => quizData.question && quizData.question.includes(`「${item.n}」`))
         || data.find(item => quizData.question && quizData.question.includes(item.n));
+}
+
+function calibrationFormulaAscii(value) {
+    return calibrationFormulaPlain(value).replace(/\s+/g, '').replace(/[·.]/g, '·');
+}
+
+function calibrationParseFormula(value) {
+    const formula = calibrationFormulaAscii(value).replace(/·/g, '.');
+    const total = {};
+    const add = (dest, source, multiplier) => Object.keys(source).forEach(key => {
+        dest[key] = (dest[key] || 0) + source[key] * multiplier;
+    });
+    const parseSegment = segment => {
+        let index = 0;
+        let coefficient = 1;
+        const leading = segment.match(/^\d+/);
+        if (leading) {
+            coefficient = Number(leading[0]);
+            index = leading[0].length;
+        }
+        const parseGroup = stop => {
+            const counts = {};
+            while (index < segment.length) {
+                if (stop && segment[index] === stop) {
+                    index++;
+                    break;
+                }
+                if (segment[index] === '(') {
+                    index++;
+                    const nested = parseGroup(')');
+                    const multiplierMatch = segment.slice(index).match(/^\d+/);
+                    const multiplier = multiplierMatch ? Number(multiplierMatch[0]) : 1;
+                    if (multiplierMatch) index += multiplierMatch[0].length;
+                    add(counts, nested, multiplier);
+                } else if (/[A-Z]/.test(segment[index])) {
+                    let symbol = segment[index++];
+                    if (index < segment.length && /[a-z]/.test(segment[index])) symbol += segment[index++];
+                    const numberMatch = segment.slice(index).match(/^\d+/);
+                    const number = numberMatch ? Number(numberMatch[0]) : 1;
+                    if (numberMatch) index += numberMatch[0].length;
+                    counts[symbol] = (counts[symbol] || 0) + number;
+                } else {
+                    index++;
+                }
+            }
+            return counts;
+        };
+        return { counts: parseGroup(''), coefficient };
+    };
+    formula.split('.').forEach(segment => {
+        if (!segment) return;
+        const parsed = parseSegment(segment);
+        add(total, parsed.counts, parsed.coefficient);
+    });
+    return total;
+}
+
+function calibrationFormulaDisplay(value) {
+    return formatCalibrationExplanationValue(value, { displayMode: 'formula' });
+}
+
+function calibrationFormulaIonName(ion) {
+    if (!ion) return '';
+    const symbol = String(ion.symbol || '');
+    const charge = Number(ion.charge);
+    if (symbol === 'Fe') return charge === 2 ? '亞鐵離子' : '鐵離子';
+    if (symbol === 'Cu') return charge === 1 ? '亞銅離子' : '銅離子';
+    if (symbol === 'Sn') return charge === 2 ? '亞錫離子' : '錫離子';
+    if (symbol === 'MnO4') return charge === -1 ? '過錳酸根' : '錳酸根';
+    const names = {
+        H: '氫離子', Li: '鋰離子', Na: '鈉離子', K: '鉀離子', Mg: '鎂離子', Ca: '鈣離子',
+        Sr: '鍶離子', Ba: '鋇離子', Al: '鋁離子', Zn: '鋅離子', Ag: '銀離子', Cu: '銅離子',
+        Pb: '鉛離子', Cr: '鉻離子', Mn: '錳離子', Co: '鈷離子', Ni: '鎳離子', NH4: '銨根',
+        Cl: '氯離子', Br: '溴離子', I: '碘離子', F: '氟離子', O: '氧離子', O2: '過氧根', OH: '氫氧根',
+        NO3: '硝酸根', NO2: '亞硝酸根', SO4: '硫酸根', SO3: '亞硫酸根', CO3: '碳酸根',
+        HCO3: '碳酸氫根', PO4: '磷酸根', HPO4: '磷酸氫根', H2PO4: '磷酸二氫根',
+        CH3COO: '醋酸根', C2O4: '草酸根', S: '硫離子', S2O3: '硫代硫酸根',
+        CrO4: '鉻酸根', Cr2O7: '二鉻酸根', MnO3: '亞錳酸根', ClO: '次氯酸根',
+        ClO2: '亞氯酸根', ClO3: '氯酸根', ClO4: '過氯酸根', IO3: '碘酸根'
+    };
+    return names[symbol] || `${symbol}離子`;
+}
+
+function calibrationFormulaOxyanionNote(ion) {
+    if (!ion) return '';
+    const key = `${ion.symbol}:${Number(ion.charge)}`;
+    const notes = {
+        'ClO:-1': '氯含氧酸根系列中氧最少，命名為次氯酸根',
+        'ClO2:-1': '氯含氧酸根系列中氧數比次氯酸根多 1，命名為亞氯酸根',
+        'ClO3:-1': '氯含氧酸根系列的基準氧數，命名為氯酸根',
+        'ClO4:-1': '氯含氧酸根系列中氧最多，命名為過氯酸根',
+        'NO2:-1': '氮含氧酸根系列中氧較少，命名為亞硝酸根',
+        'NO3:-1': '氮含氧酸根系列中氧較多，命名為硝酸根',
+        'SO3:-2': '硫含氧酸根系列中氧較少，命名為亞硫酸根',
+        'SO4:-2': '硫含氧酸根系列中氧較多，命名為硫酸根',
+        'MnO3:-2': '錳含氧酸根系列中氧較少且為 2−，命名為亞錳酸根',
+        'MnO4:-2': '錳含氧酸根為 2− 且有 4 個氧，命名為錳酸根',
+        'MnO4:-1': '同樣有 4 個氧但電荷為 1−，因此是過錳酸根，不是錳酸根',
+        'CrO4:-2': 'CrO₄²⁻ 是鉻酸根；Cr₂O₇²⁻ 則是二鉻酸根，兩者不可混名',
+        'Cr2O7:-2': 'Cr₂O₇²⁻ 由二鉻與七氧組成，命名為二鉻酸根'
+    };
+    return notes[key] || '';
+}
+
+function calibrationFormulaOxyacidNote(item) {
+    const raw = calibrationFormulaAscii(item && item.f);
+    const notes = {
+        HClO: 'HClO 含 1 個氧，是氯含氧酸系列的最低級，命名為次氯酸',
+        HClO2: 'HClO₂ 含 2 個氧，比次氯酸多 1 個氧，命名為亞氯酸',
+        HClO3: 'HClO₃ 含 3 個氧，是氯含氧酸系列的基準級，命名為氯酸',
+        HClO4: 'HClO₄ 含 4 個氧，是氯含氧酸系列的最高級，命名為過氯酸',
+        HNO2: 'HNO₂ 的含氧酸根為 NO₂⁻，氧數較少，命名為亞硝酸',
+        HNO3: 'HNO₃ 的含氧酸根為 NO₃⁻，氧數較多，命名為硝酸',
+        H2SO3: 'H₂SO₃ 的含氧酸根為 SO₃²⁻，氧數較少，命名為亞硫酸',
+        H2SO4: 'H₂SO₄ 的含氧酸根為 SO₄²⁻，氧數較多，命名為硫酸'
+    };
+    return notes[raw] || '';
+}
+
+function calibrationFormulaHydrateInfo(item) {
+    const raw = calibrationFormulaAscii(item && item.f);
+    const match = raw.match(/^(.+?)·(\d+)H2O$/i);
+    return match ? { main: match[1], waters: Number(match[2]) } : null;
+}
+
+function calibrationFormulaCountsText(counts) {
+    return Object.keys(counts || {}).map(symbol => `${symbol}=${counts[symbol]}`).join('、');
+}
+
+function calibrationFormulaGcd(a, b) {
+    let x = Math.abs(Number(a) || 0), y = Math.abs(Number(b) || 0);
+    while (y) [x, y] = [y, x % y];
+    return x || 1;
+}
+
+function calibrationFormulaChargeDetails(item) {
+    if (!item || !item.ions) return null;
+    const c = item.ions.cation, a = item.ions.anion;
+    const cCharge = Number(c.charge), aCharge = Number(a.charge);
+    const expectedC = Math.abs(aCharge) / calibrationFormulaGcd(cCharge, aCharge);
+    const expectedA = Math.abs(cCharge) / calibrationFormulaGcd(cCharge, aCharge);
+    return {
+        c, a, cName: calibrationFormulaIonName(c), aName: calibrationFormulaIonName(a),
+        cNotation: calibrationIonNotation(c), aNotation: calibrationIonNotation(a),
+        ratio: `${c.count}:${a.count}`,
+        expectedRatio: `${expectedC}:${expectedA}`,
+        chargeSum: `${c.count}×(${cCharge >= 0 ? '+' : ''}${cCharge}) + ${a.count}×(${aCharge}) = ${c.count * cCharge + a.count * aCharge}`
+    };
+}
+
+function calibrationFormulaAtomDetail(item, atom, count) {
+    const raw = calibrationFormulaAscii(item && item.f);
+    const hydrate = calibrationFormulaHydrateInfo(item);
+    if (hydrate) {
+        const mainCounts = calibrationParseFormula(hydrate.main);
+        const waterContribution = atom === 'H' ? hydrate.waters * 2 : (atom === 'O' ? hydrate.waters : 0);
+        const mainCount = mainCounts[atom] || 0;
+        return `先算主鹽 ${calibrationFormulaDisplay(hydrate.main)} 中的 ${atom}=${mainCount}，再看中點後 ${hydrate.waters}${calibrationFormulaDisplay('H2O')} 只貢獻 ${atom}=${waterContribution}；所以 ${atom} 總數為 ${mainCount}+${waterContribution}=${count}。`;
+    }
+    const group = raw.match(/\(([^()]+)\)(\d+)/);
+    if (group) {
+        const inside = calibrationParseFormula(group[1]);
+        const multiplier = Number(group[2]);
+        if (inside[atom]) return `括號內 ${group[1]} 含 ${atom}=${inside[atom]}，括號外下標 ${multiplier} 使其成為 ${inside[atom]}×${multiplier}=${inside[atom] * multiplier}；再加上式中其他 ${atom}，總數為 ${count}。`;
+    }
+    const escaped = String(atom).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = raw.match(new RegExp(`${escaped}(\\d+)`));
+    return match
+        ? `讀取 ${atom} 後的下標 ${match[1]}，且沒有其他括號或水合物項目，因此 ${atom} 原子數為 ${count}。`
+        : `${atom} 未標下標，表示每個化學式單位只有 1 個 ${atom}；展開整個化學式後得到 ${count} 個。`;
+}
+
+function setFormulaDetailedExplanation(quizData, item) {
+    if (!quizData || !item) return;
+    const label = quizData.type || '';
+    const formula = calibrationFormulaDisplay(item.f);
+    const hydrate = calibrationFormulaHydrateInfo(item);
+    const charges = calibrationFormulaChargeDetails(item);
+    const counts = quizData._formulaAtomCounts || calibrationParseFormula(item.f);
+
+    if (/名稱配對是非題/.test(label)) {
+        const stated = (String(quizData.question || '').match(/中文名稱是「([^」]+)」/) || [,''])[1] || item.n;
+        setCalibrationExplanation(quizData,
+            `先由 ${formula} 讀出元素、離子或分子骨架，再依命名規則核對題幹的中文名稱「${stated}」。`,
+            charges
+                ? `${charges.cNotation} 是${charges.cName}，${charges.aNotation} 是${charges.aName}${calibrationFormulaOxyanionNote(charges.a) ? `；${calibrationFormulaOxyanionNote(charges.a)}` : ''}，所以主鹽名稱應由這兩個離子組合${hydrate ? `；中點後 ${hydrate.waters}${calibrationFormulaDisplay('H2O')} 只表示結晶水` : ''}。`
+                : `此式不以陽、陰離子配對；逐一讀取元素符號、下標與分子前綴後，得到名稱「${item.n}」。`,
+            `正確名稱為「${item.n}」，因此題幹應判為${quizData.answer === '是' ? '是' : '否'}。`);
+        return;
+    }
+    if (/離子數量是非題/.test(label)) {
+        const ratio = charges ? charges.ratio : '';
+        setCalibrationExplanation(quizData,
+            `先辨認「${item.n}」的陽、陰離子及其電荷，再讀取化學式下標所代表的離子個數。`,
+            charges
+                ? `${charges.cNotation} 有 ${charges.c.count} 個、${charges.aNotation} 有 ${charges.a.count} 個；總電荷驗算為 ${charges.chargeSum}。`
+                : `此題須直接展開化學式下標，區分離子個數與元素原子個數。`,
+            `正確的陽、陰離子最簡個數比為 ${ratio}，所以題幹敘述應判為${quizData.answer === '是' ? '是' : '否'}。`);
+        return;
+    }
+    if (/正誤是非題/.test(label)) {
+        const stated = (String(quizData.question || '').match(/正確化學式是\s*(.+?)。/) || [,''])[1] || item.f;
+        const statedDisplay = calibrationFormulaDisplay(stated);
+        setCalibrationExplanation(quizData,
+            `先將題幹提出的化學式 ${statedDisplay} 與「${item.n}」所需的離子或分子組成逐項對照。`,
+            charges
+                ? `${charges.cNotation} 與 ${charges.aNotation} 應以 ${charges.expectedRatio} 配成電中性，且多原子離子下標須正確套用${hydrate ? `；${calibrationFormulaDisplay(hydrate.main)} 後的中點只表示結晶水` : ''}。`
+                : `再核對元素下標、括號與分子前綴；正確式為 ${formula}。`,
+            `「${item.n}」的正確化學式是 ${formula}，所以題幹應判為${quizData.answer === '是' ? '是' : '否'}。`);
+        return;
+    }
+    if (/變價金屬/.test(label) && charges) {
+        const metal = charges.c;
+        setCalibrationExplanation(quizData,
+            `由 ${formula} 讀出陰離子 ${charges.aNotation} 的電荷與數量，再令每個 ${metal.symbol} 金屬離子電荷為 x。`,
+            `${metal.count}x + ${charges.a.count}×(${charges.a.charge}) = 0，解得 x=${metal.charge}；依此氧化態命名為${charges.cName}。`,
+            `因此答案為 ${quizData.answer}，不是另一個氧化態。`);
+        return;
+    }
+    if (/指定離子數量/.test(label) && charges) {
+        const ion = quizData._formulaAskedIon || charges.c;
+        const ionLabel = calibrationIonNotation(ion);
+        setCalibrationExplanation(quizData,
+            `在一個${hydrate ? '主鹽' : '化學式'}單位中，先讀取 ${formula} 的離子下標；中點後的結晶水不會改變主鹽離子個數。`,
+            `${ionLabel} 的化學式下標為 ${ion.count === 1 ? '省略 1' : ion.count}，因此一個化學式單位含 ${ion.count} 個 ${ionLabel}；總電荷仍可由 ${charges.chargeSum} 驗算。`,
+            `答案為 ${quizData.answer} 個 ${ionLabel}。`);
+        return;
+    }
+    if (/個數比/.test(label) && charges) {
+        setCalibrationExplanation(quizData,
+            `先讀取 ${formula} 中陽離子與陰離子的下標，分別得到 ${charges.c.count} 個 ${charges.cNotation} 與 ${charges.a.count} 個 ${charges.aNotation}。`,
+            `兩者的個數比為 ${charges.c.count}:${charges.a.count}；再除以最大公因數後仍是最簡比，且電荷驗算為 ${charges.chargeSum}。`,
+            `所以陽、陰離子的最簡個數比為 ${charges.ratio}。`);
+        return;
+    }
+    if (/指定元素原子數/.test(label)) {
+        const atom = quizData._formulaAskedAtom || Object.keys(counts)[0] || 'O';
+        const count = counts[atom] || 0;
+        setCalibrationExplanation(quizData,
+            `先把 ${formula} 拆成元素、括號與水合物各部分，題目指定的是 ${atom} 原子，不是 ${atom} 所在離子團的個數。`,
+            calibrationFormulaAtomDetail(item, atom, count),
+            `因此一個化學式單位含有 ${count} 個 ${atom} 原子。`);
+        return;
+    }
+    if (/化學式 → 離子|中文名稱 → 陽陰離子/.test(label) && charges) {
+        setCalibrationExplanation(quizData,
+            `先由 ${formula} 或名稱辨認陽離子與陰離子：${charges.cNotation} 是${charges.cName}，${charges.aNotation} 是${charges.aName}。`,
+            `化學式中的數量為 ${charges.c.count}:${charges.a.count}，總電荷驗算為 ${charges.chargeSum}；${calibrationFormulaOxyanionNote(charges.a) || '因此離子種類與電荷均符合題目所給物質。'}`,
+            `答案為 ${charges.cName}、${charges.aName}。`);
+        return;
+    }
+    if (/化學式 → 中文名稱/.test(label) && item.ions) {
+        setCalibrationExplanation(quizData,
+            `從 ${formula} 先讀出 ${charges.cNotation} 與 ${charges.aNotation}，再依金屬氧化態、酸根級序與水合數命名。`,
+            `${charges.cNotation} 是${charges.cName}，${charges.aNotation} 是${charges.aName}${calibrationFormulaOxyanionNote(charges.a) ? `；${calibrationFormulaOxyanionNote(charges.a)}` : ''}${hydrate ? `；中點後 ${hydrate.waters}${calibrationFormulaDisplay('H2O')} 的係數只表示結晶水數量` : ''}。`,
+            `所以中文名稱為「${item.n}」。`);
+        return;
+    }
+    if (/化學式 → 中文名稱/.test(label)) {
+        const oxyacidNote = calibrationFormulaOxyacidNote(item);
+        setCalibrationExplanation(quizData,
+            `先逐一讀取 ${formula} 的元素符號與下標，得到元素組成 ${calibrationFormulaCountsText(counts)}。`,
+            item.kind === 'element'
+                ? `這是元素的常態單質；下標表示分子中有 ${Object.values(counts)[0]} 個原子，但中文名稱仍取元素名。`
+                : oxyacidNote || `此式沒有陽、陰離子配對，依分子前綴或該物質的常用名稱把各元素數量轉成中文。`,
+            `因此中文名稱為「${item.n}」。`);
+        return;
+    }
+    if (/中文名稱 → (?:電中性)?化學式|選出正確化學式/.test(label) && item.ions && charges) {
+        const mainFormula = hydrate ? calibrationFormulaDisplay(hydrate.main) : formula;
+        setCalibrationExplanation(quizData,
+            `先依名稱辨認 ${charges.cName} ${charges.cNotation} 與 ${charges.aName} ${charges.aNotation}，再使用其電荷決定化學式。`,
+            `為使總電荷為 0，陽、陰離子個數比為 |${charges.a.charge}|:${charges.c.charge}，約成最簡比 ${charges.expectedRatio}；${charges.a.count > 1 ? `${charges.aNotation} 出現 ${charges.a.count} 個，必須加括號` : `${charges.aNotation} 只有 1 個，不加括號`}${hydrate ? `；主鹽先寫成 ${mainFormula}，中點後 ${hydrate.waters}${calibrationFormulaDisplay('H2O')} 只作用於結晶水` : ''}。`,
+            `所以正確化學式為 ${formula}。`);
+        return;
+    }
+    if (/中文名稱 → (?:電中性)?化學式|選出正確化學式/.test(label)) {
+        const oxyacidNote = calibrationFormulaOxyacidNote(item);
+        setCalibrationExplanation(quizData,
+            `先判斷「${item.n}」是單質、分子化合物或酸，再依名稱中的元素前綴與下標寫出組成。`,
+            oxyacidNote ? `${oxyacidNote}；由名稱中的「次／亞／正／過」級序回寫氧數，得到 ${calibrationFormulaCountsText(counts)}。` : `元素數量由 ${calibrationFormulaCountsText(counts)} 逐項對應；分子化合物不以離子電荷交叉，而是依分子命名規則保留各元素下標。`,
+            `所以正確化學式為 ${formula}。`);
+    }
+}
+
+function formulaOptionDataEntry(value) {
+    const data = Array.isArray(window.CHEM_FORMULA_DATA) ? window.CHEM_FORMULA_DATA : [];
+    const formulaKey = calibrationFormulaAscii(value);
+    return data.find(item => calibrationFormulaAscii(item.f) === formulaKey)
+        || data.find(item => item.n === calibrationFormulaPlain(value));
+}
+
+function formulaOptionIonEntry(value) {
+    const data = Array.isArray(window.CHEM_FORMULA_DATA) ? window.CHEM_FORMULA_DATA : [];
+    const key = calibrationOptionKey(value);
+    return data.find(item => item.ions && calibrationOptionKey(formulaIonPairForRationale(item)) === key) || null;
+}
+
+function formulaIonPairForRationale(item) {
+    if (!item || !item.ions) return '';
+    return `${calibrationIonNotation(item.ions.cation)}、${calibrationIonNotation(item.ions.anion)}`;
+}
+
+function calibrationFormulaNameRationale(item, other) {
+    if (!item || !other) return `「${other ? other.n : '此名稱'}」沒有對應題目中的完整化學式。`;
+    if (item.ions && other.ions) {
+        if (item.ions.cation.symbol === other.ions.cation.symbol && Number(item.ions.cation.charge) !== Number(other.ions.cation.charge)) {
+            return `把 ${item.ions.cation.symbol} 的氧化態讀錯：題目為 ${calibrationIonNotation(item.ions.cation)}（${calibrationFormulaIonName(item.ions.cation)}），不是 ${calibrationIonNotation(other.ions.cation)}（${calibrationFormulaIonName(other.ions.cation)}）`;
+        }
+        if (item.ions.anion.symbol === other.ions.anion.symbol && Number(item.ions.anion.charge) !== Number(other.ions.anion.charge)) {
+            return `把含氧酸根級序讀錯：題目中的 ${calibrationIonNotation(item.ions.anion)} 應稱${calibrationFormulaIonName(item.ions.anion)}，不是${calibrationFormulaIonName(other.ions.anion)}`;
+        }
+        if (item.ions.cation.symbol === other.ions.cation.symbol && item.ions.anion.symbol !== other.ions.anion.symbol) {
+            return `陽離子雖相同，但陰離子應為 ${calibrationFormulaIonName(item.ions.anion)}；選項改成了${calibrationFormulaIonName(other.ions.anion)}`;
+        }
+    }
+    if (!!calibrationFormulaHydrateInfo(item) !== !!calibrationFormulaHydrateInfo(other)) {
+        return `忽略了${calibrationFormulaHydrateInfo(item) ? '結晶水與水合數' : '無水主鹽與水合條件'}，題目物質應是「${item.n}」`;
+    }
+    return `把 ${calibrationFormulaDisplay(item.f)} 的元素、離子或下標對應成「${other.n}」；逐項核對後正確名稱應為「${item.n}」`;
+}
+
+function calibrationFormulaBinaryRationale(quizData, item) {
+    const answer = quizData.answer;
+    const label = quizData.type || '';
+    if (answer === '是') {
+        if (/名稱配對/.test(label)) return `題幹中的化學式 ${calibrationFormulaDisplay(item.f)} 確實對應「${item.n}」，否選項把正確配對判反`;
+        if (/離子數量/.test(label) && item.ions) {
+            const details = calibrationFormulaChargeDetails(item);
+            return `正確個數比是 ${details.ratio}，且總電荷 ${details.chargeSum}；否選項把符合條件的敘述判反`;
+        }
+        return `正確式應為 ${calibrationFormulaDisplay(item.f)}；否選項把已符合離子比例、括號或下標規則的化學式判反`;
+    }
+    if (/名稱配對/.test(label)) {
+        const stated = (String(quizData.question || '').match(/中文名稱是「([^」]+)」/) || [,''])[1] || '該名稱';
+        return `${calibrationFormulaDisplay(item.f)} 依離子、氧化態或分子前綴判定應為「${item.n}」，題幹卻寫成「${stated}」`;
+    }
+    if (/離子數量/.test(label) && item.ions) {
+        const details = calibrationFormulaChargeDetails(item);
+        return `題幹的個數比不是 ${details.ratio}；應由下標讀出 ${details.c.count}:${details.a.count}，並以 ${details.chargeSum} 驗算`;
+    }
+    const stated = (String(quizData.question || '').match(/正確化學式是\s*(.+?)。/) || [,''])[1] || '';
+    return `題幹提出的 ${calibrationFormulaDisplay(stated)} 不符合「${item.n}」的組成；正確化學式應為 ${calibrationFormulaDisplay(item.f)}`;
+}
+
+function calibrationFormulaOptionRationale(quizData, value, item) {
+    if (!item || calibrationOptionKey(value) === calibrationOptionKey(quizData.answer)) return '';
+    const label = quizData.type || '';
+    if (/是非題/.test(label)) return formulaBinaryRationale(quizData, item);
+    if (/化學式 → 中文名稱/.test(label)) {
+        return calibrationFormulaNameRationale(item, formulaOptionDataEntry(value));
+    }
+    if (/中文名稱 → 陽陰離子|化學式 → 離子/.test(label)) {
+        const candidate = formulaOptionIonEntry(value);
+        if (candidate && candidate.ions && item.ions) {
+            if (candidate.ions.cation.symbol !== item.ions.cation.symbol || Number(candidate.ions.cation.charge) !== Number(item.ions.cation.charge)) {
+                return `陽離子應為 ${calibrationIonNotation(item.ions.cation)}（${calibrationFormulaIonName(item.ions.cation)}），選項列成 ${calibrationIonNotation(candidate.ions.cation)}（${calibrationFormulaIonName(candidate.ions.cation)}）`;
+            }
+            return `陰離子應為 ${calibrationIonNotation(item.ions.anion)}（${calibrationFormulaIonName(item.ions.anion)}），選項列成 ${calibrationIonNotation(candidate.ions.anion)}（${calibrationFormulaIonName(candidate.ions.anion)}）`;
+        }
+        return `選項列出的離子組成與「${item.n}」不一致；正確配對是 ${formulaIonPairForRationale(item)}`;
+    }
+    if (/指定離子數量|個數比|指定元素原子數|變價金屬/.test(label)) {
+        const details = calibrationFormulaChargeDetails(item);
+        if (/指定離子數量/.test(label) && details) {
+            const ion = quizData._formulaAskedIon || details.c;
+            return `由 ${calibrationFormulaDisplay(item.f)} 的下標可知 ${calibrationIonNotation(ion)} 有 ${ion.count} 個，選項卻填 ${value}`;
+        }
+        if (/個數比/.test(label) && details) {
+            const option = String(value).trim();
+            if (option === `${details.a.count}:${details.c.count}` && details.c.count !== details.a.count) return `把陽、陰離子個數順序顛倒；正確順序應是陽離子 ${details.c.count}：陰離子 ${details.a.count}`;
+            return `下標直接給出陽、陰離子個數 ${details.c.count}:${details.a.count}，約成最簡比仍為 ${details.ratio}，不是 ${option}`;
+        }
+        if (/指定元素原子數/.test(label)) {
+            const atom = quizData._formulaAskedAtom || 'O';
+            const counts = quizData._formulaAtomCounts || calibrationParseFormula(item.f);
+            return calibrationFormulaAtomDetail(item, atom, counts[atom] || 0).replace(`為 ${counts[atom] || 0}。`, `為 ${counts[atom] || 0}，不是 ${value}。`);
+        }
+        if (/變價金屬/.test(label) && details) return `由 ${details.chargeSum}=0 反推，${details.c.symbol} 應為 ${details.c.charge} 價，不是選項 ${value}`;
+    }
+    if (/中文名稱 → (?:電中性)?化學式|選出正確化學式/.test(label)) {
+        const option = calibrationFormulaAscii(value);
+        const correct = calibrationFormulaAscii(item.f);
+        const noParentheses = correct.replace(/\(([^()]+)\)(\d*)/g, '$1$2');
+        if (option === noParentheses && option !== correct) return `多原子離子出現不只 1 個卻漏寫括號；正確寫法為 ${calibrationFormulaDisplay(item.f)}`;
+        const hydrate = calibrationFormulaHydrateInfo(item);
+        if (hydrate) {
+            const optionHydrate = option.match(/^(.+?)·(\d+)H2O$/i);
+            if (optionHydrate && optionHydrate[1] === hydrate.main && Number(optionHydrate[2]) !== hydrate.waters) return `中點後的結晶水係數應為 ${hydrate.waters}，選項寫成 ${optionHydrate[2]}；此係數只作用於 H₂O`;
+            if (option === `${hydrate.main}${hydrate.waters}H2O`) return `漏寫水合物中點；應把主鹽 ${calibrationFormulaDisplay(hydrate.main)} 與 ${hydrate.waters}${calibrationFormulaDisplay('H2O')} 分開`;
+        }
+        const expectedCounts = quizData._formulaAtomCounts || calibrationParseFormula(item.f);
+        const actualCounts = calibrationParseFormula(value);
+        const difference = Object.keys(expectedCounts).find(symbol => (actualCounts[symbol] || 0) !== expectedCounts[symbol]);
+        if (difference) return `展開選項後 ${difference} 原子數為 ${actualCounts[difference] || 0}，但正確式應為 ${expectedCounts[difference]}；因此是 ${difference} 的下標或括號作用範圍寫錯`;
+        const candidate = formulaOptionDataEntry(value);
+        if (candidate && candidate.ions && item.ions) return calibrationFormulaNameRationale(item, candidate).replace(/^把 /, '把名稱或離子對應');
+        return `選項 ${calibrationFormulaDisplay(value)} 沒有依「${item.n}」的命名、電荷比例與最簡下標寫成正確化學式 ${calibrationFormulaDisplay(item.f)}`;
+    }
+    return `選項 ${value} 未同時符合「${item.n}」的離子、下標與命名條件；正確答案為 ${quizData.answer}`;
 }
 
 function formulaConfusionScore(item, other) {
@@ -2485,6 +2910,7 @@ function calibrationIonPair(item) {
 function refineFormulaQuestionOptions(quizData) {
     const item = formulaItemForQuiz(quizData);
     if (!item) return;
+    setFormulaDetailedExplanation(quizData, item);
     const near = formulaNearNeighbors(item, 16);
     const distractors = [];
     const add = (value, reason) => {
@@ -2494,13 +2920,9 @@ function refineFormulaQuestionOptions(quizData) {
     };
     // 數量、比例、離子配對與是非題已有正確的顯示型態；只補理由，不把數字換成化學式。
     if (quizData.type.includes('是非題') || quizData.answer === '是' || quizData.answer === '否') {
-        setCalibrationReason(quizData, quizData.type.includes('名稱配對')
-            ? `先辨認化學式與中文名稱的固定對應，再判斷題幹敘述是否正確。`
-            : `先由離子電荷與化學式中的下標計算個數，再判斷題幹敘述是否正確。`);
         return;
     }
     if (quizData.type.includes('指定離子數量') || quizData.type.includes('個數比') || quizData.type.includes('指定元素原子數') || quizData.type.includes('變價金屬')) {
-        setCalibrationReason(quizData, '依化學式的下標、括號展開與電荷守恆計算指定數量或最簡比例。');
         return;
     }
     if (quizData.displayMode === 'ion') {
@@ -2520,24 +2942,15 @@ function refineFormulaQuestionOptions(quizData) {
             });
             if (ionEntries.length >= 3) setCalibrationOptions(quizData, quizData.answer, ionEntries.slice(0, 3));
         }
-        setCalibrationReason(quizData, '由陽、陰離子的種類、電荷與個數逐項核對，必須同時符合題目指定組成與電中性。');
         return;
     }
     if (quizData.type.includes('化學式 → 中文名稱')) {
         near.filter(x => x.n && x.n !== item.n).slice(0, 3).forEach(x => add(x.n, '把相同離子骨架或相鄰氧化態的名稱混在一起'));
-        const anion = item.ions && item.ions.anion;
-        const rootName = anion && anion.symbol === 'MnO4'
-            ? (Number(anion.charge) === -1 ? '過錳酸根' : (Number(anion.charge) === -2 ? '錳酸根' : 'MnO₄ 根'))
-            : '';
-        const ionHint = anion ? `含 ${calibrationIonNotation(anion)}${rootName ? `，屬於${rootName}` : ''}` : '依陽、陰離子骨架';
-        setCalibrationReason(quizData, `化學式 ${formatCalibrationExplanationValue(item.f, { displayMode: 'formula' })} ${ionHint}，因此中文名稱為「${item.n}」。`);
-    } else if (quizData.type.includes('中文名稱 → 化學式') || quizData.type.includes('選出正確化學式')) {
+    } else if (/中文名稱 → (?:電中性)?化學式|選出正確化學式/.test(quizData.type || '')) {
         formulaHighSimilarityDistractors(item).forEach(entry => add(entry.value, entry.reason));
         near.filter(x => x.f && x.f !== item.f).forEach(x => add(x.f, '保留部分化學式骨架，但把離子種類或相鄰氧化態判錯'));
-        setCalibrationReason(quizData, `先使陽、陰離子總電荷相抵，再依多原子離子與下標規則寫出「${item.n}」的最簡化學式。`);
     } else if (quizData.type.includes('離子與組成')) {
         near.filter(x => x.f && x.f !== item.f).slice(0, 3).forEach(x => add(x.f, '保留部分正確離子，但電荷比或原子數不符'));
-        setCalibrationReason(quizData, '由陽、陰離子的電荷與題目指定的個數逐項核對，必須同時符合電中性與最簡比。');
     } else {
         (quizData.forcedOpts || []).filter(x => calibrationOptionKey(x) !== calibrationOptionKey(quizData.answer)).slice(0, 3)
             .forEach(x => add(x, '把題目中的一個關鍵規則判斷錯置'));
@@ -2703,7 +3116,7 @@ function refineElementQuestionOptions(type, quizData, target) {
             if (!charge) return el.s;
             const sign = charge > 0 ? '+' : '-';
             const magnitude = Math.abs(charge);
-            return `${el.s}<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}<span class="charge-sign ${charge > 0 ? 'plus' : 'minus'}">${sign}</span></sup>`;
+            return `${el.s}<sup class="chem-sup">${magnitude === 1 ? '' : magnitude}${sign}</sup>`;
         };
         candidates = pool
             .filter(el => el.z !== target.z)
@@ -2791,6 +3204,14 @@ function attachOptionRationales(quizData, target) {
         const key = calibrationOptionKey(value);
         // 重新依照目前題型產生具體回饋；不要沿用 distractor 產生時的泛用舊理由。
         if (key !== calibrationOptionKey(quizData.answer)) {
+            if (window.calCategory === 'formula' || /名稱與化學式|化學式判讀|離子與組成/.test(label)) {
+                const formulaItem = formulaItemForQuiz(quizData);
+                const formulaReason = calibrationFormulaOptionRationale(quizData, value, formulaItem);
+                if (formulaReason) {
+                    quizData.optionRationales[key] = formulaReason;
+                    return;
+                }
+            }
             const el = elementFor(value);
             if (/分類\s*>\s*元素/.test(label) && el && target) {
                 quizData.optionRationales[key] = `該元素屬於「${el.type}」，不是題目指定的「${target.type}」分類`;
@@ -3383,6 +3804,8 @@ if (type === 0) {
 } else if (type === 3) {
     quizData.type        = "量子結構：組態辨識"; 
     quizData.question    = [ `基態電子組態為 ${target.noble} 的元素為何？`, `下列何種元素具備 ${target.noble} 的電子排列？` ][Math.floor(Math.random() * 2)];
+    const electronConfigHtml = formatElectronConfigMath(target.noble);
+    quizData.questionHtml = quizData.question.replace(target.noble, electronConfigHtml);
     quizData.answer      = target.s;
     quizData.displayMode = "symbol";
 } else if (type === 4) {
@@ -4992,7 +5415,7 @@ window.FORMULA_ENGINE = (() => {
         O: '氧離子', O2: '過氧根', OH: '氫氧根', NO3: '硝酸根', NO2: '亞硝酸根',
         SO4: '硫酸根', SO3: '亞硫酸根', CO3: '碳酸根', HCO3: '碳酸氫根', PO4: '磷酸根',
         HPO4: '磷酸氫根', H2PO4: '磷酸二氫根', CH3COO: '醋酸根', C2O4: '草酸根',
-        S: '硫離子', S2O3: '硫代硫酸根', CrO4: '鉻酸根', Cr2O7: '重鉻酸根',
+        S: '硫離子', S2O3: '硫代硫酸根', CrO4: '鉻酸根', Cr2O7: '二鉻酸根',
         MnO3: '亞錳酸根', MnO4: '錳酸根', ClO: '次氯酸根', ClO2: '亞氯酸根', ClO3: '氯酸根', ClO4: '過氯酸根',
         IO3: '碘酸根'
     };
@@ -5251,6 +5674,8 @@ window.FORMULA_ENGINE = (() => {
     function generateOxidationQuestion(item, quizData) {
         const c = item.ions.cation;
         const answer = oxidationNumberText(c.charge);
+        quizData._formulaTask = 'oxidation';
+        quizData._formulaAskedIon = c;
         quizData.type = '離子與組成：變價金屬電荷反推';
         if (Math.random() < 0.5) {
             quizData.question = `化學式 ${item.f} 中的 ${c.symbol} 金屬離子，其電荷為何？`;
@@ -5334,12 +5759,15 @@ window.FORMULA_ENGINE = (() => {
                     const c = item.ions.cation;
                     const a = item.ions.anion;
                     if (Math.random() < 0.5) {
+                        quizData._formulaTask = 'ion-count';
+                        quizData._formulaAskedIon = c;
                         quizData.type = '離子與組成：指定離子數量';
                         quizData.question = `「${item.n}」的一個化學式單位中，含有幾個 ${ionTextRaw(c)}？`;
                         quizData.questionHtml = `「${item.n}」的一個化學式單位中，含有幾個 ${ionHtml(c)}？`;
                         quizData.answer = String(c.count);
                         quizData.forcedOpts = numberOptions(c.count, DATA().filter(x => x.ions).map(x => x.ions.cation.count));
                     } else {
+                        quizData._formulaTask = 'ion-ratio';
                         quizData.type = '離子與組成：陽陰離子最簡個數比';
                         quizData.question = `「${item.n}」由 ${ionTextRaw(c)} 與 ${ionTextRaw(a)} 組成，陽、陰離子的最簡個數比為何？`;
                         quizData.questionHtml = `「${item.n}」由 ${ionHtml(c)} 與 ${ionHtml(a)} 組成，陽、陰離子的最簡個數比為何？`;
@@ -5349,6 +5777,8 @@ window.FORMULA_ENGINE = (() => {
                 } else {
                     const counts = parseFormula(item.f);
                     const atom = atomForQuestion(counts);
+                    quizData._formulaTask = 'atom-count';
+                    quizData._formulaAskedAtom = atom;
                     quizData.type = '離子與組成：指定元素原子數';
                     quizData.question = `「${item.n}」的一個化學式單位中含有幾個 ${atom} 原子？`;
                     quizData.questionHtml = `「${item.n}」的一個化學式單位中含有幾個 <span class="chem-element">${atom}</span> 原子？`;
@@ -5389,6 +5819,10 @@ window.FORMULA_ENGINE = (() => {
                 break;
             default:
                 return false;
+        }
+        if (item) {
+            quizData._formulaItem = item;
+            quizData._formulaAtomCounts = parseFormula(item.f);
         }
         return Array.isArray(quizData.forcedOpts) && quizData.forcedOpts.length >= 2;
     }

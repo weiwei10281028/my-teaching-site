@@ -205,15 +205,15 @@ window.CHEM_FORMULA_DATA = (() => {
         I('BaO2', '過氧化鋇', 'a', 'peroxide', 'Ba', 2, 1, 'O2', -2, 1),
         I('CaC2', '碳化鈣', 's', 'carbide', 'Ca', 2, 1, 'C2', -2, 1),
 
-        // 鉻酸鹽、重鉻酸鹽、錳酸鹽與過錳酸鹽
+        // 鉻酸鹽、二鉻酸鹽、錳酸鹽與過錳酸鹽
         I('K2CrO4', '鉻酸鉀', 'a', 'chromate', 'K', 1, 2, 'CrO4', -2, 1),
         I('Na2CrO4', '鉻酸鈉', 'a', 'chromate', 'Na', 1, 2, 'CrO4', -2, 1),
         I('BaCrO4', '鉻酸鋇', 'a', 'chromate', 'Ba', 2, 1, 'CrO4', -2, 1),
         I('PbCrO4', '鉻酸鉛', 'a', 'chromate', 'Pb', 2, 1, 'CrO4', -2, 1),
         I('Ag2CrO4', '鉻酸銀', 'a', 'chromate', 'Ag', 1, 2, 'CrO4', -2, 1),
-        I('K2Cr2O7', '重鉻酸鉀', 'a', 'dichromate', 'K', 1, 2, 'Cr2O7', -2, 1),
-        I('Na2Cr2O7', '重鉻酸鈉', 'a', 'dichromate', 'Na', 1, 2, 'Cr2O7', -2, 1),
-        I('(NH4)2Cr2O7', '重鉻酸銨', 'a', 'dichromate', 'NH4', 1, 2, 'Cr2O7', -2, 1),
+        I('K2Cr2O7', '二鉻酸鉀', 'a', 'dichromate', 'K', 1, 2, 'Cr2O7', -2, 1),
+        I('Na2Cr2O7', '二鉻酸鈉', 'a', 'dichromate', 'Na', 1, 2, 'Cr2O7', -2, 1),
+        I('(NH4)2Cr2O7', '二鉻酸銨', 'a', 'dichromate', 'NH4', 1, 2, 'Cr2O7', -2, 1),
         I('KMnO4', '過錳酸鉀', 'a', 'permanganate', 'K', 1, 1, 'MnO4', -1, 1),
         I('NaMnO4', '過錳酸鈉', 'a', 'permanganate', 'Na', 1, 1, 'MnO4', -1, 1),
         // 錳酸根級序的近鄰：MnO₃²⁻ 為亞錳酸根，適合作為「MnO₄²⁻」的高鑑別命名誘答。
