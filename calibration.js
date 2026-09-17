@@ -973,6 +973,7 @@ function closeCalibrationModal() {
 }
 
 window.resetToDifficultySelection = function() {
+    const preserveKnowledge = arguments[0] && arguments[0].preserveKnowledge === true;
     document.getElementById('quiz-result-area').style.display = 'none';
     document.getElementById('quiz-setup-area').style.display = 'none';
     document.getElementById('quiz-content-area').style.display = 'none';
@@ -980,6 +981,12 @@ window.resetToDifficultySelection = function() {
     document.getElementById('electron-type-select-area').style.display = 'none';
     document.getElementById('precip-type-select-area').style.display = 'none';
     document.getElementById('formula-type-select-area').style.display = 'none';
+    const knowledgeCategoryArea = document.getElementById('knowledge-category-area');
+    const knowledgeTypeArea = document.getElementById('knowledge-constant-type-select-area');
+    const knowledgeModeArea = document.getElementById('knowledge-mode-select-area');
+    if (knowledgeCategoryArea) knowledgeCategoryArea.style.display = 'none';
+    if (knowledgeTypeArea) knowledgeTypeArea.style.display = 'none';
+    if (knowledgeModeArea) knowledgeModeArea.style.display = 'none';
     const periodicModeSelect = document.getElementById('periodic-mode-select');
     if (periodicModeSelect) periodicModeSelect.style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
@@ -995,7 +1002,13 @@ window.resetToDifficultySelection = function() {
         window.quizState.typeDeck = [];
     }
     window.formulaSelectedTypes = null;
+    if (!preserveKnowledge) {
+        window.knowledgeSelectedSubtypes = null;
+        window.knowledgeMode = null;
+        window.knowledgeTopic = null;
+    }
     document.querySelectorAll('#formula-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
+    document.querySelectorAll('#knowledge-constant-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
     renderCalibrationRuler(0, window.quizState && window.quizState.totalQ ? window.quizState.totalQ : 10);
 };
 
@@ -1173,15 +1186,113 @@ window.restartCalibrationSameSettings = function() {
 
 window.adjustCalibrationSettings = function() {
     const category = window.calCategory || 'periodic';
+    if (category === 'knowledge') {
+        window.resetToDifficultySelection({ preserveKnowledge: true });
+        window.selectCalCategory(category);
+        window.selectKnowledgeTopic(window.knowledgeTopic || 'constants');
+        return;
+    }
     window.resetToDifficultySelection();
     window.selectCalCategory(category);
+};
+
+window.handleCalibrationBack = function() {
+    if (window.calCategory !== 'knowledge') {
+        window.resetToDifficultySelection();
+        return;
+    }
+    const setup = document.getElementById('quiz-setup-area');
+    const modeArea = document.getElementById('knowledge-mode-select-area');
+    const typeArea = document.getElementById('knowledge-constant-type-select-area');
+    const topicArea = document.getElementById('knowledge-category-area');
+    if (setup && setup.style.display !== 'none') {
+        setup.style.display = 'none';
+        if (modeArea) modeArea.style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '知識校準 > 常數 > 選擇範圍';
+    } else if (modeArea && modeArea.style.display !== 'none') {
+        modeArea.style.display = 'none';
+        if (typeArea) typeArea.style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '知識校準 > 常數 > 選擇題型';
+    } else if (typeArea && typeArea.style.display !== 'none') {
+        typeArea.style.display = 'none';
+        if (topicArea) topicArea.style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '知識校準 > 選擇子項目';
+    } else {
+        window.resetToDifficultySelection();
+    }
+};
+
+window.selectKnowledgeTopic = function(topic) {
+    if (topic !== 'constants') return;
+    window.knowledgeTopic = topic;
+    const topicArea = document.getElementById('knowledge-category-area');
+    const typeArea = document.getElementById('knowledge-constant-type-select-area');
+    if (topicArea) topicArea.style.display = 'none';
+    if (typeArea) typeArea.style.display = 'flex';
+    document.getElementById('quiz-status-text').textContent = '知識校準 > 常數 > 選擇題型';
+    const selected = window.knowledgeSelectedSubtypes || {
+        particles: true, gas: true, phase: true, units: true, acidBase: true, hydrogen: true
+    };
+    window.knowledgeSelectedSubtypes = selected;
+    document.querySelectorAll('#knowledge-constant-type-cards .hybrid-type-card').forEach(card => {
+        card.classList.toggle('selected', selected[card.dataset.type] === true);
+    });
+};
+
+window.toggleKnowledgeSubtype = function(card) {
+    card.classList.toggle('selected');
+};
+
+window.confirmKnowledgeSubtypes = function() {
+    const cards = document.querySelectorAll('#knowledge-constant-type-cards .hybrid-type-card');
+    const selected = {};
+    cards.forEach(card => { if (card.classList.contains('selected')) selected[card.dataset.type] = true; });
+    if (Object.keys(selected).length === 0) {
+        const button = document.getElementById('knowledge-subtype-confirm-btn');
+        if (!button) return;
+        const original = button.textContent;
+        button.textContent = '請至少選擇一項！';
+        button.style.background = '#ef4444';
+        button.style.color = '#fff';
+        setTimeout(() => { button.textContent = original; button.style.background = ''; button.style.color = ''; }, 1800);
+        return;
+    }
+    window.knowledgeSelectedSubtypes = selected;
+    document.getElementById('knowledge-constant-type-select-area').style.display = 'none';
+    document.getElementById('knowledge-mode-select-area').style.display = 'flex';
+    document.getElementById('quiz-status-text').textContent = '知識校準 > 常數 > 選擇範圍';
+};
+
+window.selectKnowledgeMode = function(mode) {
+    window.knowledgeMode = mode === 'deep' ? 'deep' : 'common';
+    const modeArea = document.getElementById('knowledge-mode-select-area');
+    if (modeArea) modeArea.style.display = 'none';
+    document.getElementById('quiz-setup-area').style.display = 'flex';
+    document.getElementById('quiz-status-text').textContent = `常數｜${window.knowledgeMode === 'deep' ? '深度' : '常用'} > 選擇題數`;
+    if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons();
 };
 
 window.selectCalCategory = function(cat) {
     window.calCategory = cat;
     document.getElementById('cal-category-area').style.display = 'none';
-    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原', 'precipitation': '沉澱表', 'formula': '化學式' };
+    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原', 'precipitation': '沉澱表', 'formula': '化學式', 'knowledge': '知識校準' };
     document.getElementById('quiz-cancel-btn').style.display = 'block';
+
+    if (cat === 'knowledge') {
+        const prevTotal = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
+        window.quizState = {
+            rank: null, difficulty: 7, totalQ: prevTotal, currentQ: 0, correctCount: 0,
+            pool: [], askedZ: [], typeDeck: [], askedQuestions: []
+        };
+        window.quizState.generateTypeDeck = window._generateTypeDeck;
+        if (!window.knowledgeSelectedSubtypes) {
+            window.knowledgeSelectedSubtypes = { particles: true, gas: true, phase: true, units: true, acidBase: true, hydrogen: true };
+        }
+        if (!window.knowledgeTopic) window.knowledgeTopic = 'constants';
+        document.getElementById('knowledge-category-area').style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '知識校準 > 選擇子項目';
+        return;
+    }
 
     if (cat === 'hybrid' || cat === 'redox' || cat === 'precipitation' || cat === 'formula') {
         const diffMap = { 'hybrid': 3, 'redox': 4, 'precipitation': 5, 'formula': 6 };
@@ -1496,7 +1607,7 @@ window.confirmHybridTypes = function() {
 
 // 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
 function _generatePrecipTypeDeck(total, sub) {
-    window._precipSpecialLeft = sub['A'] ? 2 : 0;
+    window._precipSpecialLeft = 2;
     const W = { 21:10, 22:15, 28:1, 31:5, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
     const pool = [];
     if (sub['A']) pool.push(21, 22, 28, 31);
@@ -1504,7 +1615,7 @@ function _generatePrecipTypeDeck(total, sub) {
     if (sub['C']) pool.push(26, 27, 23, 29);
     if (pool.length === 0) pool.push(21, 22, 26, 27);
 
-    const specialN = sub['A'] ? 2 : 0;
+    const specialN = 2;
     const flameN = sub['D'] ? (total <= 15 ? 1 : Math.min(2, Math.round(total / 10))) : 0;
     const deck = [];
     for (let i = 0; i < specialN; i++) deck.push(28);
@@ -1602,7 +1713,8 @@ window._generateTypeDeck = function(diff, total) {
         2: [3, 6, 7, 8, 9, 10, 11, 14, 15],
         3: [16, 17],
         4: [18],
-        5: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31]
+        5: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31],
+        7: [40, 41, 42, 43, 44, 45]
     };
     let types;
     if (diff === 6) {
@@ -1610,6 +1722,14 @@ window._generateTypeDeck = function(diff, total) {
     }
     if (diff === 5 && window.precipSelectedSubtypes) {
         return _generatePrecipTypeDeck(total, window.precipSelectedSubtypes);
+    }
+    if (diff === 7 && window.knowledgeSelectedSubtypes) {
+        types = [];
+        const subtypeTypes = { particles: 40, gas: 41, phase: 42, units: 43, acidBase: 44, hydrogen: 45 };
+        Object.keys(subtypeTypes).forEach(key => {
+            if (window.knowledgeSelectedSubtypes[key]) types.push(subtypeTypes[key]);
+        });
+        if (types.length === 0) types = typePools[7];
     }
     if (diff === 2 && window.electronSelectedSubtypes) {
         const sub = window.electronSelectedSubtypes;
@@ -1628,8 +1748,20 @@ window._generateTypeDeck = function(diff, total) {
         if (sub['17f'] || sub['17r']) types.push(17);
         if (sub['19']) types.push(19);
         if (types.length === 0) types = [16, 17];
-    } else {
+    } else if (diff !== 7) {
         types = typePools[diff] || typePools[1];
+    }
+
+    // 知識校準採用所選子題型平均輪流出題，讓單一題型不會壟斷一輪。
+    if (diff === 7) {
+        const deck = [];
+        while (deck.length < total && types.length) {
+            for (const type of calibrationShuffle(types)) {
+                if (deck.length >= total) break;
+                deck.push(type);
+            }
+        }
+        return deck;
     }
 
     // 週期表的 RANK 只限制元素池；所有 RANK 使用同一組題型比例。
@@ -1921,13 +2053,15 @@ function getCalibrationTopicLabel(difficulty, type) {
     if (type === 17) return '分子形狀';
     if (type >= 21 && type <= 31) return '沉澱表';
     if (type >= 32 && type <= 39) return '化學式';
+    if (type >= 40 && type <= 45) return '知識校準';
     const topicMap = {
         1: '週期表',
         2: '電子組態',
         3: '混成',
         4: '氧化還原',
         5: '沉澱表',
-        6: '化學式'
+        6: '化學式',
+        7: '知識校準'
     };
     return topicMap[difficulty] || '校準題型';
 }
@@ -2268,8 +2402,19 @@ function formatCalibrationExplanationValue(value, quizData) {
 function renderCalibrationExplanation(quizData, selectedOption, isCorrect) {
     const answer = formatCalibrationExplanationValue(quizData.answer, quizData);
     const explanation = quizData.explanation || {};
+    const structured = explanation && typeof explanation === 'object'
+        && [explanation.basis, explanation.steps, explanation.conclusion].some(Boolean);
     const reason = [explanation.basis, explanation.steps, explanation.conclusion]
         .filter(Boolean).join(' ') || quizData.correctReason || '本題詳解資料尚未建立。';
+    const reasonHtml = structured
+        ? [
+            ['核心規則', explanation.basis],
+            ['判斷依據', explanation.steps],
+            ['記憶點', explanation.conclusion]
+        ].filter(([, value]) => value)
+            .map(([label, value]) => `<div class="cal-explanation-line"><strong>${label}：</strong>${value}</div>`)
+            .join('')
+        : `<div class="cal-explanation-line"><strong>解題：</strong>${reason}</div>`;
     const selectedKey = calibrationOptionKey(selectedOption);
     const selectedReason = !isCorrect && quizData.optionRationales
         ? quizData.optionRationales[selectedKey]
@@ -2281,11 +2426,15 @@ function renderCalibrationExplanation(quizData, selectedOption, isCorrect) {
             ? `<div class="cal-explanation-line cal-explanation-correct"><strong>判斷正確：</strong>${answer} 符合題目條件。</div>`
             : '');
     return `<div class="cal-explanation-line"><strong>正確答案：</strong>${answer}</div>`
-        + `<div class="cal-explanation-line"><strong>解題：</strong>${reason}</div>${wrongNote}`;
+        + `${reasonHtml}${wrongNote}`;
 }
 
 function attachGenericCalibrationReason(type, quizData, target, parsed) {
     if (quizData.explanation && quizData.explanation.basis) {
+        quizData.showExplanation = true;
+        return;
+    }
+    if (quizData._knowledgeFact && quizData.correctReason) {
         quizData.showExplanation = true;
         return;
     }
@@ -3187,6 +3336,7 @@ function refineElementQuestionOptions(type, quizData, target) {
 function attachOptionRationales(quizData, target) {
     if (!quizData.forcedOpts || quizData.forcedOpts.length < 2) return;
     if (quizData._periodicCustomRationales) return;
+    if (quizData._knowledgeFact) return;
     if (!quizData.optionRationales) quizData.optionRationales = {};
     const label = quizData.type || '';
     const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
@@ -3608,15 +3758,19 @@ window.renderNextQuestion = function() {
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     updatePeriodicToggleVisibility();
     
-    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表", 6: "化學式" };
+    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表", 6: "化學式", 7: "知識校準" };
     const catName = catNames[window.quizState.difficulty] || "未知";
     const isPeriodic = window.calCategory === 'periodic';
     const rankText = window.quizState.rank ? `RANK ${window.quizState.rank}` : '';
     const modeText = isPeriodic
         ? (window.quizState.periodicMode === 'challenge' ? '挑戰模式' : '標準模式')
+        : window.calCategory === 'knowledge'
+        ? (window.knowledgeMode === 'deep' ? '深度' : '常用')
         : '';
     const statusPrefix = isPeriodic
         ? [rankText, modeText, `${catName}校準`].filter(Boolean).join('｜')
+        : window.calCategory === 'knowledge'
+        ? [catName, modeText].filter(Boolean).join('｜')
         : `${rankText ? `${rankText} | ` : ''}${catName}校準`;
     document.getElementById('quiz-status-text').textContent =
         `${statusPrefix} [Q ${window.quizState.currentQ}/${window.quizState.totalQ}]`;
@@ -3637,8 +3791,8 @@ window.renderNextQuestion = function() {
     let s = "";
     let avail = [];
     
-    // 混成/氧化還原/沉澱表/結構圖題型不依賴元素 pool，直接跳過元素選擇
-    if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 39)) {
+    // 混成/氧化還原/沉澱表/化學式/知識校準不依賴元素 pool，直接跳過元素選擇
+    if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 45)) {
         // 元素均等分佈演算法
         avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
@@ -3659,7 +3813,7 @@ window.renderNextQuestion = function() {
     while (!questionGenerated && attempts < 60) {
         attempts++;
         // 如果已經嘗試過，重新選擇元素（混成/形狀/結構圖題型跳過）
-        if (attempts > 1 && type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 39)) {
+        if (attempts > 1 && type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 45)) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = []; 
@@ -4860,6 +5014,10 @@ if (type === 0) {
     if (!PRECIP_ENGINE.generate(type, quizData)) {
         continue;
     }
+} else if (type >= 40 && type <= 45) {
+    if (!window.KNOWLEDGE_ENGINE || !window.KNOWLEDGE_ENGINE.generate(type, quizData)) {
+        continue;
+    }
 }
 
         // 週期表模式在共用題型生成後套用本輪的難度變體；RANK 只影響元素池。
@@ -5828,5 +5986,215 @@ window.FORMULA_ENGINE = (() => {
     }
 
     return { generate };
+})();
+
+// ================================================================
+// 知識校準：常數題目引擎
+// 題型 40-45 對應常數下的六個可複選子子項目。
+// ================================================================
+window.KNOWLEDGE_ENGINE = (() => {
+    const DATA = () => Array.isArray(window.CHEM_KNOWLEDGE_CONSTANT_DATA)
+        ? window.CHEM_KNOWLEDGE_CONSTANT_DATA
+        : [];
+    const GROUP_LABELS = {
+        particles: '粒子與莫耳',
+        gas: '氣體基準',
+        phase: '物性與相變',
+        units: '單位與量綱',
+        acidBase: '酸鹼常數',
+        hydrogen: '氫原子光譜'
+    };
+    const TYPE_GROUP = { 40: 'particles', 41: 'gas', 42: 'phase', 43: 'units', 44: 'acidBase', 45: 'hydrogen' };
+
+    function shuffle(arr) {
+        const out = [...arr];
+        for (let i = out.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+    }
+
+    function distinct(values) {
+        return [...new Set(values.filter(value => value !== undefined && value !== null && String(value).trim() !== ''))];
+    }
+
+    function formatValue(fact, raw) {
+        const value = String(raw == null ? '' : raw);
+        if (!fact.unit) return value;
+        return `${value} ${fact.unit}`;
+    }
+
+    function conditionText(fact) {
+        return fact.condition ? `（${fact.condition}）` : '';
+    }
+
+    function factReason(fact) {
+        const note = String(fact.note || '').trim();
+        const condition = fact.condition ? `適用條件：${fact.condition}。` : '';
+        return `${note}${condition}` || '依題庫所列的化學常數與單位判定。';
+    }
+
+    function applyKnowledgeExplanation(fact, mode, answer, quizData) {
+        const supplied = fact.explanation && typeof fact.explanation === 'object' ? fact.explanation : {};
+        const condition = fact.condition ? `適用條件：${fact.condition}。` : '';
+        const note = String(fact.note || '').trim();
+        const value = String(answer || formatValue(fact, fact.value));
+        let explanation;
+        if (mode === 'unit' || mode === 'unit-context') {
+            explanation = {
+                basis: `「${fact.title}」的正確表示為 ${value}。`,
+                steps: fact.id === 'u-cal-j'
+                    ? 'cal 和 J 都是能量單位；先確認兩邊是否屬於同一物理量，再使用換算關係。'
+                    : '先辨認題目所問的物理量，再核對單位與量綱。',
+                conclusion: note
+            };
+        } else if (mode === 'meaning') {
+            explanation = {
+                basis: `數值 ${value} 對應「${fact.title}」。`,
+                steps: `先核對單位${fact.unit ? `（${fact.unit}）` : ''}與數量級，再配對物理量名稱。${condition}`,
+                conclusion: note
+            };
+        } else if (mode === 'custom') {
+            explanation = {
+                basis: `正確關係為 ${value}。`,
+                steps: `先確認關係式兩側的物理量、單位與方向。${condition}`,
+                conclusion: note
+            };
+        } else {
+            explanation = {
+                basis: `「${fact.title}」${conditionText(fact)}的教學近似值為 ${value}。`,
+                steps: fact.unit ? `答案單位為 ${fact.unit}；先核對數值、單位與條件。` : '先核對數值的數量級與適用條件。',
+                conclusion: note
+            };
+        }
+        quizData.explanation = { ...explanation, ...supplied };
+        quizData.correctReason = [quizData.explanation.basis, quizData.explanation.steps, quizData.explanation.conclusion]
+            .filter(Boolean).join(' ');
+        quizData.showExplanation = true;
+    }
+
+    function setKnowledgeOptionRationales(fact, mode, answer, options, quizData) {
+        const answerKey = String(answer);
+        quizData.optionRationales = {};
+        options.forEach(option => {
+            if (String(option) === answerKey) return;
+            let reason;
+            if (mode === 'unit' || mode === 'unit-context') {
+                reason = `此選項不是「${fact.title}」的正確單位或表示；請重新核對單位與量綱`;
+            } else if (mode === 'meaning') {
+                reason = `「${option}」不對應題目給定的數值、單位或條件`;
+            } else if (mode === 'custom') {
+                reason = '此關係不符合題目要求的常數關係；請核對公式兩側的物理量與方向';
+            } else {
+                reason = `此選項的數值或單位不符合「${fact.title}」的要求；請重新核對數量級與適用條件`;
+            }
+            quizData.optionRationales[calibrationOptionKey(option)] = reason;
+        });
+    }
+
+    function meaningOptions(fact, pool) {
+        const eligible = pool.filter(item => item.kind !== 'custom' && item.id !== fact.id);
+        const sameSemanticGroup = eligible.filter(item => item.semanticGroup && item.semanticGroup === fact.semanticGroup);
+        const source = sameSemanticGroup.length >= 3
+            ? sameSemanticGroup
+            : [...sameSemanticGroup, ...eligible.filter(item => !sameSemanticGroup.includes(item))];
+        const titles = distinct(source
+            .map(item => item.reverseTitle || item.title));
+        return shuffle(distinct([fact.reverseTitle || fact.title, ...titles])).slice(0, 4);
+    }
+
+    function buildValueQuestion(fact, quizData) {
+        const answer = formatValue(fact, fact.value);
+        const opts = distinct((fact.options || []).map(option => formatValue(fact, option)));
+        if (opts.length < 4 || !opts.includes(answer)) return false;
+        quizData.type = `常數：${GROUP_LABELS[fact.group]}｜數值辨識`;
+        quizData.question = `${fact.title}${conditionText(fact)}的數值約為何？`;
+        quizData.answer = answer;
+        quizData.forcedOpts = shuffle(opts);
+        quizData.displayMode = 'text';
+        applyKnowledgeExplanation(fact, 'value', answer, quizData);
+        setKnowledgeOptionRationales(fact, 'value', answer, quizData.forcedOpts, quizData);
+        quizData._knowledgeFact = fact;
+        quizData._knowledgeQuestionMode = 'value';
+        return true;
+    }
+
+    function buildMeaningQuestion(fact, pool, quizData) {
+        const opts = meaningOptions(fact, pool);
+        const answer = fact.reverseTitle || fact.title;
+        const value = formatValue(fact, fact.value);
+        if (opts.length < 4 || !opts.includes(answer)) return false;
+        quizData.type = `常數：${GROUP_LABELS[fact.group]}｜意義辨識`;
+        quizData.question = `數值「${value}」${fact.condition ? `（${fact.condition}）` : ''}對應下列哪一項？`;
+        quizData.answer = answer;
+        quizData.forcedOpts = opts;
+        quizData.displayMode = 'text';
+        applyKnowledgeExplanation(fact, 'meaning', value, quizData);
+        setKnowledgeOptionRationales(fact, 'meaning', answer, quizData.forcedOpts, quizData);
+        quizData._knowledgeFact = fact;
+        quizData._knowledgeQuestionMode = 'meaning';
+        return true;
+    }
+
+    function buildUnitQuestion(fact, quizData, variant) {
+        const opts = distinct(fact.options || []);
+        if (opts.length < 4 || !opts.includes(fact.value)) return false;
+        quizData.type = `常數：${GROUP_LABELS[fact.group]}｜單位辨識`;
+        quizData.question = variant === 'context'
+            ? `在化學計算中，「${fact.title}」應採用下列哪一項表示？`
+            : `下列何者是「${fact.title}」的正確表示？`;
+        quizData.answer = fact.value;
+        quizData.forcedOpts = shuffle(opts);
+        quizData.displayMode = 'text';
+        const mode = variant === 'context' ? 'unit-context' : 'unit';
+        applyKnowledgeExplanation(fact, mode, fact.value, quizData);
+        setKnowledgeOptionRationales(fact, mode, fact.value, quizData.forcedOpts, quizData);
+        quizData._knowledgeFact = fact;
+        quizData._knowledgeQuestionMode = mode;
+        return true;
+    }
+
+    function buildCustomQuestion(fact, quizData) {
+        const opts = distinct(fact.options || []);
+        if (opts.length < 4 || !opts.includes(fact.answer)) return false;
+        quizData.type = `常數：${GROUP_LABELS[fact.group]}｜關係辨識`;
+        quizData.question = fact.question;
+        quizData.answer = fact.answer;
+        quizData.forcedOpts = shuffle(opts);
+        quizData.displayMode = 'text';
+        applyKnowledgeExplanation(fact, 'custom', fact.answer, quizData);
+        setKnowledgeOptionRationales(fact, 'custom', fact.answer, quizData.forcedOpts, quizData);
+        quizData._knowledgeFact = fact;
+        quizData._knowledgeQuestionMode = 'custom';
+        return true;
+    }
+
+    function generate(type, quizData) {
+        const group = TYPE_GROUP[type];
+        if (!group) return false;
+        const selected = window.knowledgeSelectedSubtypes || {};
+        if (selected[group] !== true) return false;
+        const tier = window.knowledgeMode === 'deep' ? 'deep' : 'common';
+        const pool = DATA().filter(item => item.group === group && item.tier === tier);
+        if (!pool.length) return false;
+        const fact = pool[Math.floor(Math.random() * pool.length)];
+        const candidates = fact.kind === 'custom'
+            ? ['custom']
+            : fact.kind === 'unit'
+            ? ['unit', 'unit-context']
+            : (fact.modes || ['value', 'meaning']).filter(mode => mode !== 'unit');
+        const mode = candidates[Math.floor(Math.random() * candidates.length)];
+        if (mode === 'custom') return buildCustomQuestion(fact, quizData);
+        if (mode === 'meaning') {
+            const meaningPool = DATA().filter(item => item.group === group && item.tier === tier && item.kind !== 'custom');
+            return buildMeaningQuestion(fact, meaningPool, quizData);
+        }
+        if (mode === 'unit') return buildUnitQuestion(fact, quizData, 'direct');
+        if (mode === 'unit-context') return buildUnitQuestion(fact, quizData, 'context');
+        return buildValueQuestion(fact, quizData);
+    }
+
+    return { generate, groupLabels: GROUP_LABELS, typeGroup: TYPE_GROUP };
 })();
 
