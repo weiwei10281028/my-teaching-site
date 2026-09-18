@@ -6148,8 +6148,9 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         return sum + (m ? (parseAtoms(m[1])[el] || 0) : 0);
     }, 0);
     const hasWater = hasFormula(leftRaw, 'H2O') || hasFormula(rightRaw, 'H2O');
-    const inputHasHPlus = hasFormula(leftRaw, 'H+') || hasFormula(rightRaw, 'H');
-    const inputHasOHMinus = hasFormula(leftRaw, 'OH-') || hasFormula(rightRaw, 'OH');
+    // 兩側都要檢查完整帶電物種，避免已有的 H⁺／OH⁻ 被誤判為缺少而重複新增。
+    const inputHasHPlus = hasFormula(leftRaw, 'H+') || hasFormula(rightRaw, 'H+');
+    const inputHasOHMinus = hasFormula(leftRaw, 'OH-') || hasFormula(rightRaw, 'OH-');
     const leftO = sideAtomTotal(leftRaw, 'O'), rightO = sideAtomTotal(rightRaw, 'O');
     const leftH = sideAtomTotal(leftRaw, 'H'), rightH = sideAtomTotal(rightRaw, 'H');
     const sideChargeTotal = (list) => list.reduce((sum, raw) => {
@@ -6579,8 +6580,26 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         return out;
     };
     const leftTotals = formulaTotals(0, leftRaw.length), rightTotals = formulaTotals(leftRaw.length, species.length);
-    const leftCharge = species.slice(0, leftRaw.length).reduce((sum, s, i) => sum + s.charge * (finalCoeffs[i] || 0), 0);
-    const rightCharge = species.slice(leftRaw.length).reduce((sum, s, i) => sum + s.charge * (finalCoeffs[leftRaw.length + i] || 0), 0);
+    const isMediumIon = (s) => (s.formula === 'H' && s.charge === 1) || (s.formula === 'OH' && s.charge === -1);
+    const chargeCalculation = (start, end) => {
+        const terms = [];
+        let total = 0;
+        for (let i = start; i < end; i++) {
+            const s = species[i], coefficient = finalCoeffs[i] || 0;
+            if (!coefficient || s.charge === 0 || isMediumIon(s)) continue;
+            const contribution = coefficient * s.charge;
+            total += contribution;
+            terms.push(`${formatCount(coefficient)} × (${formatSigned(s.charge)})`);
+        }
+        return {
+            total,
+            text: terms.length ? `${terms.join(' + ')} = ${formatSigned(total)}` : '0（無其他帶電物種）'
+        };
+    };
+    // 電荷教學先排除 H⁺／OH⁻，再由核心離子電荷差決定補入位置與數量。
+    const leftChargeInfo = chargeCalculation(0, leftRaw.length);
+    const rightChargeInfo = chargeCalculation(leftRaw.length, species.length);
+    const leftCharge = leftChargeInfo.total, rightCharge = rightChargeInfo.total;
     const waterIndices = species.map((s, i) => ({ i, side: i < leftRaw.length ? '左側' : '右側', coeff: finalCoeffs[i] || 0 }))
         .filter(x => species[x.i].formula === 'H2O' && x.coeff > 0);
     const hasHPlus = species.some(s => s.formula === 'H' && s.charge === 1);
@@ -6641,13 +6660,18 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         })
     ];
     const chargeDiff = rightCharge - leftCharge;
-    let chargeLine = `兩側總電荷：左側 ${formatSigned(leftCharge)}、右側 ${formatSigned(rightCharge)}。`;
-    if (Math.abs(chargeDiff) < 1e-10) chargeLine += ' 電荷已平衡，無須補入。';
-    else if (medium === 'neutral') chargeLine += ' 尚未指定酸鹼介質，請選擇酸性或鹼性後再補 H⁺／OH⁻。';
-    else {
+    const chargeCalculationHtml = `<div class="oxidation-note">先排除 H⁺／OH⁻，只計算其餘帶電物種：</div><div>反應物電荷：${leftChargeInfo.text}</div><div>生成物電荷：${rightChargeInfo.text}</div>`;
+    let chargeLine = '';
+    if (Math.abs(chargeDiff) < 1e-10) {
+        chargeLine = medium === 'neutral'
+            ? '排除 H⁺／OH⁻ 後電荷已平衡；中性介質不補 H⁺／OH⁻。若需補水，最後放在右側。'
+            : '排除 H⁺／OH⁻ 後電荷已平衡，無須補入 H⁺／OH⁻。';
+    } else if (medium === 'neutral') {
+        chargeLine = '中性介質不補 H⁺／OH⁻；若需補水，最後放在右側。核心電荷仍不相等時，請確認介質或補齊必要離子。';
+    } else {
         const ion = medium === 'acidic' ? 'H⁺' : 'OH⁻';
         const side = medium === 'acidic' ? (chargeDiff < 0 ? '右側' : '左側') : (chargeDiff < 0 ? '左側' : '右側');
-        chargeLine += `依${mediumLabel}應在${side}補 ${ion}（${formatCount(Math.abs(chargeDiff))} 個），再以守恆核對。`;
+        chargeLine = `依${mediumLabel}應在${side}補 ${ion}（${formatCount(Math.abs(chargeDiff))} 個），再以守恆核對。`;
     }
     let waterLine = 'H₂O 不需補入。';
     if (waterIndices.length) waterLine = `最後補 H₂O：${waterIndices.map(x => `${x.side} ${formatCount(x.coeff)}H₂O`).join('；')}，其係數由 H、O 守恆確定。`;
@@ -6662,7 +6686,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 3：全反應電子守恆</div><div class="oxidation-note">括號內先算一個物質單位的變價量與參與變價的原子數，括號外再乘該支線係數。</div><div>所有失電子：<b style="color:#fb7185;">${formatCount(totalLoss)} e⁻</b>；所有得電子：<b style="color:#60a5fa;">${formatCount(totalGain)} e⁻</b>。</div>${unitLedgerLines.length ? `<div class="oxidation-note" style="margin-top:6px;">${unitLedgerLines.join('；')}。</div>` : ''}${oxidationAvailable && Math.abs(totalLoss - totalGain) < 1e-8 ? '<div style="color:#86efac; margin-top:4px;">電子得失相等，比例通過檢核。</div>' : ''}</div>
         ${selfRedoxHtml}
         <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 4：平衡其餘元素</div><div>依最終係數核對非 H、O 元素：${elements.filter(el => el !== 'H' && el !== 'O').map(el => `${el} ${formatCount(leftTotals[el] || 0)}`).join('、') || '無'}；兩側原子數相等。</div>${ratioWarningHtml}</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 5：平衡電荷（${mediumLabel}）</div><div>${chargeLine}</div>${mediumWarnings.length ? `<div style="color:#fbbf24; margin-top:6px;">${mediumWarnings.join('<br>')}</div>` : ''}</div>
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 5：平衡電荷（${mediumLabel}）</div>${chargeCalculationHtml}<div style="margin-top:6px;">${chargeLine}</div>${mediumWarnings.length ? `<div style="color:#fbbf24; margin-top:6px;">${mediumWarnings.join('<br>')}</div>` : ''}</div>
         <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 6：最後補 H₂O</div><div>${waterLine}</div></div>
         <div class="oxidation-note" style="margin-top:12px;">最後檢查：原子守恆、總電荷守恆、失電子＝得電子；若價態只能求平均值，詳解會以平均氧化數表示。</div></div>`;
 
