@@ -237,12 +237,81 @@
     #balance-card {
         z-index: 120;
     }
-    .card-title { 
-        font-size: 1rem; font-weight: 700; color: var(--hud-cyan); 
-        margin-bottom: 15px; display: flex; align-items: center; gap: 10px; 
+    .card-title {
+        font-size: 1rem; font-weight: 700; color: var(--hud-cyan);
+        margin-bottom: 15px; display: flex; align-items: center; gap: 10px;
         text-transform: uppercase; letter-spacing: 2px;
         border-left: 3px solid var(--hud-cyan); padding-left: 10px;
         text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
+    }
+    .balance-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-width: 0;
+        margin-bottom: 15px;
+        color: var(--accent-green);
+    }
+    .balance-card-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .balance-card-heading > span {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .balance-card-info {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 1.5px solid var(--accent-green);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: var(--accent-green);
+        cursor: pointer;
+        font-family: 'Times New Roman', serif;
+        font-style: italic;
+        font-weight: bold;
+        background: rgba(16, 185, 129, 0.1);
+        transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+    .balance-card-info:hover {
+        background: rgba(16, 185, 129, 0.24);
+        box-shadow: 0 0 12px rgba(52, 211, 153, 0.28);
+        transform: translateY(-1px);
+    }
+    .balance-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+    }
+    .balance-card-actions button {
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .balance-card-actions button:hover { transform: translateY(-1px); }
+    .balance-card-actions button:active { transform: translateY(0); }
+    .balance-card-actions button:focus-visible,
+    .balance-card-info:focus-visible {
+        outline: 2px solid #f8fafc;
+        outline-offset: 2px;
+    }
+    .equation-input-row {
+        display: block;
+        width: 100%;
     }
 .data-row {
     display: flex;
@@ -487,14 +556,21 @@
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
-        cursor: text;
+        cursor: grab;
         outline: none;
         touch-action: pan-x;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
+    .equation-editor[contenteditable="true"] {
+        caret-color: transparent;
+    }
     .equation-editor::-webkit-scrollbar { display: none; }
+    .equation-editor.is-dragging {
+        cursor: grabbing;
+        user-select: none;
+    }
     .equation-editor.balance-kbd-active {
         border-color: #22d3ee !important;
         box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.55), 0 0 18px rgba(34, 211, 238, 0.22);
@@ -740,12 +816,66 @@
         font-weight: 900;
     }
     #balance-btn {
-        min-width: 56px;
+        min-width: 64px;
+        height: 36px;
         font-size: 0.96rem;
         font-weight: 900;
         letter-spacing: 0.02em;
-        padding: 8px 10px;
+        padding: 7px 13px;
+        color: #ecfdf5;
+        border: 1px solid rgba(110, 231, 183, 0.78);
+        background: linear-gradient(180deg, #18b981 0%, #087f5b 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 12px rgba(16, 185, 129, 0.24), 0 3px 8px rgba(0,0,0,0.28);
     }
+    #balance-btn:hover {
+        color: #ffffff;
+        border-color: #a7f3d0;
+        background: linear-gradient(180deg, #2bd89a 0%, #0b966b 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 0 18px rgba(52, 211, 153, 0.42), 0 4px 10px rgba(0,0,0,0.3);
+    }
+    #equation-copy-btn {
+        width: 36px;
+        min-width: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, rgba(20, 48, 68, 0.96) 0%, rgba(11, 25, 43, 0.98) 100%);
+        color: var(--hud-cyan);
+        border: 1px solid rgba(103, 232, 249, 0.62);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 10px rgba(34, 211, 238, 0.16), 0 3px 8px rgba(0,0,0,0.24);
+    }
+    #equation-copy-btn:hover {
+        background: linear-gradient(180deg, rgba(28, 83, 105, 0.98) 0%, rgba(9, 45, 68, 0.98) 100%);
+        color: #ffffff;
+        border-color: var(--hud-cyan);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 18px rgba(34, 211, 238, 0.34), 0 4px 10px rgba(0,0,0,0.28);
+    }
+    #equation-copy-btn.is-copied {
+        background: linear-gradient(180deg, rgba(24, 185, 129, 0.82) 0%, rgba(7, 106, 76, 0.96) 100%);
+        color: #86efac;
+        border-color: #34d399;
+        box-shadow: 0 0 14px rgba(52, 211, 153, 0.28);
+    }
+    #equation-copy-btn.is-copy-error {
+        color: #fecaca;
+        border-color: #fb7185;
+        background: linear-gradient(180deg, rgba(127, 29, 29, 0.86) 0%, rgba(69, 10, 10, 0.96) 100%);
+        box-shadow: 0 0 14px rgba(251, 113, 133, 0.25);
+    }
+    .copy-icon {
+        width: 19px;
+        height: 19px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+    }
+    .copy-icon-success { display: none; }
+    #equation-copy-btn.is-copied .copy-icon-default { display: none; }
+    #equation-copy-btn.is-copied .copy-icon-success { display: block; }
     @media (max-width: 768px) {
         .equation-soft-keyboard { max-height: min(58vh, 420px); }
     }
@@ -4256,9 +4386,23 @@
 
             <!-- 2. ⚖️ 平衡化學反應式 -->
             <div id="balance-card" class="card" style="border-color: var(--accent-green); position: relative;">
-                <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; color: var(--accent-green);">
-                    <span>⚖️ 平衡化學反應式</span>
-                    <div onclick="toggleBalanceInfo(event)" style="width: 24px; height: 24px; border: 1.5px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; background: rgba(16, 185, 129, 0.1);">i</div>
+                <div class="balance-card-header">
+                    <div class="balance-card-heading">
+                        <span class="card-title" style="margin-bottom: 0; color: var(--accent-green);">平衡反應式</span>
+                        <button type="button" class="balance-card-info" onclick="toggleBalanceInfo(event)" aria-label="查看平衡輸入規範">i</button>
+                    </div>
+                    <div class="balance-card-actions" aria-label="方程式操作">
+                        <button id="equation-copy-btn" type="button" title="複製方程式" aria-label="複製方程式">
+                            <svg class="copy-icon copy-icon-default" viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4.5" y="4.5" width="11" height="11" rx="1.5"></rect>
+                                <rect x="8.5" y="8.5" width="11" height="11" rx="1.5"></rect>
+                            </svg>
+                            <svg class="copy-icon copy-icon-success" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="m5 12.5 4.2 4.2L19 7"></path>
+                            </svg>
+                        </button>
+                        <button id="balance-btn" type="button">平衡</button>
+                    </div>
                     
                     <!-- 詳細說明彈窗 (維持原樣) -->
                     <div id="balance-help-popup" style="display: none; position: absolute; top: 50px; right: 10px; left: 10px; background: rgba(10, 15, 30, 0.98); border: 1px solid var(--accent-green); padding: 18px; border-radius: 12px; z-index: 1000; box-shadow: 0 15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(15px); color: #f1f5f9; font-size: 0.9rem; line-height: 1.7; text-transform: none;">
@@ -4275,12 +4419,11 @@
                     </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group equation-input-row">
                     <div class="equation-input-wrap" id="equation-input-wrap">
                         <input type="hidden" id="equation-input">
-                        <div id="equation-editor" class="equation-editor" tabindex="0" aria-label="平衡反應式輸入區"></div>
+                        <div id="equation-editor" class="equation-editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="false" tabindex="0" aria-label="平衡反應式輸入區"></div>
                     </div>
-                    <button id="balance-btn" style="background: var(--accent-green);">平衡</button>
                 </div>
                 <div class="redox-medium-row" aria-label="氧化還原介質設定">
                     <label for="redox-medium">氧化還原介質</label>
@@ -5064,10 +5207,14 @@ function getAverageOxidationNumbers(formula, charge) {
     const hasElement = (el) => (atoms[el] || 0) > 0;
     // 1. 單質／單原子離子：僅一種元素，氧化數 = 0（單質）或離子電荷（離子）
     if (els.length === 1) { ox[els[0]] = charge !== 0 ? charge : 0; return ox; }
-    // 先處理常見的特殊價態與多原子離子，避免將平均氧化數誤當成每個原子的價態。
+    // 先處理完整的多原子酸根／特殊結構，避免把酸根總電荷誤當成其中元素的氧化數。
+    // 例如 SO4^2- 的 -2 是整個酸根電荷，而 S 在 SO4^2- 中為 +6；
+    // 含氧酸與其金屬鹽中的同一酸根，應沿用相同的 S 氧化數。
     const knownGroups = [
         [['NO3'], { N: 5 }], [['NO2'], { N: 3 }], [['SO4'], { S: 6 }],
-        [['SO3'], { S: 4 }], [['SO2'], { S: 4 }], [['CO3'], { C: 4 }],
+        // 不要把所有 SO3 都視為亞硫酸根：中性 SO3 的 S 為 +6，SO3^2− 的 S 才是 +4。
+        // 這兩者交由電荷守恆判斷，避免在氧化數法中漏算 SO3 的失電子數。
+        [['SO2'], { S: 4 }], [['CO3'], { C: 4 }],
         [['CO2'], { C: 4 }], [['PO4'], { P: 5 }], [['PO3'], { P: 3 }],
         [['MnO4'], { Mn: 7 }], [['MnO4'], { Mn: 7 }], [['Cr2O7'], { Cr: 6 }],
         [['ClO3'], { Cl: 5 }], [['ClO4'], { Cl: 7 }], [['IO3'], { I: 5 }],
@@ -5075,9 +5222,21 @@ function getAverageOxidationNumbers(formula, charge) {
         [['H2S'], { S: -2 }], [['NH3'], { N: -3 }], [['NH4'], { N: -3 }],
         [['CN'], { C: 2, N: -3 }]
     ];
+    // 多個規則可能同時命中同一化學式（例如 H2S 是 H2SO4 的前綴）。
+    // 先採用最長、最具體的結構規則，避免短片段覆蓋完整酸根／含氧酸規則。
+    const matchedGroups = [];
     knownGroups.forEach(([patterns, values]) => {
-        if (patterns.some(p => compact.includes(p))) Object.keys(values).forEach(el => set(el, values[el]));
+        patterns.forEach(pattern => {
+            if (compact.includes(pattern)) matchedGroups.push({ pattern, values });
+        });
     });
+    matchedGroups
+        .sort((a, b) => b.pattern.length - a.pattern.length)
+        .forEach(({ values }) => {
+            Object.keys(values).forEach(el => {
+                if (ox[el] === undefined) set(el, values[el]);
+            });
+        });
     // FeS2 以二硫化物 S2^2- 處理；此項是教學配平最常見的雙元素氧化案例。
     if (compact === 'FeS2' || compact === 'CoS2' || compact === 'NiS2') {
         if (hasElement('S')) ox.S = -1;
@@ -5237,6 +5396,11 @@ function setupEquationEditor() {
 
     const escapeHtml = (txt) => txt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const chargeToSup = (charge) => charge;
+    const copyChargeToSup = (charge) => {
+        const digits = charge.replace(/[+-]/g, "");
+        const sign = charge.includes("-") ? "-" : "+";
+        return `${digits.split("").map(digit => digitToSup[digit] || digit).join("")}${signToSup[sign] || sign}`;
+    };
     const renderChargeSup = (charge) => {
         const digits = charge.replace(/[+-]/g, "");
         const sign = charge.includes("-") ? "-" : "+";
@@ -5251,6 +5415,106 @@ function setupEquationEditor() {
         if (token.type === 'arrow') return ' = ';
         return '';
     }).join("");
+    const getCopyText = () => state.tokens.map((token) => {
+        if (token.type === 'text') return token.value;
+        if (token.type === 'sub') return token.value;
+        if (token.type === 'charge') return copyChargeToSup(token.value);
+        if (token.type === 'plus') return ' + ';
+        if (token.type === 'arrow') return ' → ';
+        return '';
+    }).join('').replace(/\s+/g, ' ').trim();
+
+    const superscriptToDigit = { "⁰":"0", "¹":"1", "²":"2", "³":"3", "⁴":"4", "⁵":"5", "⁶":"6", "⁷":"7", "⁸":"8", "⁹":"9" };
+    const superscriptSigns = { "⁺":"+", "⁻":"-" };
+    const isPastedArrow = (char) => char === '→' || char === '⇌' || char === '⟶' || char === '⟹' || char === '=';
+    const parsePastedEquation = (rawText) => {
+        const source = String(rawText || '').replace(/\r?\n/g, ' ').replace(/−/g, '-').trim();
+        const tokens = [];
+        const lastToken = () => tokens[tokens.length - 1];
+        const hasSpeciesContent = () => tokens.some(token => token.type === 'text' || token.type === 'sub' || token.type === 'charge');
+        const pushText = (value) => { if (value) tokens.push({ type: 'text', value }); };
+        const pushSubscript = (digit) => tokens.push({ type: 'sub', value: digitToSub[digit] || digit });
+        const pushArrow = () => {
+            if (tokens.length && lastToken().type !== 'arrow') tokens.push({ type: 'arrow' });
+        };
+        const pushPlus = () => {
+            if (hasSpeciesContent() && (!lastToken() || !isOperator(lastToken()))) tokens.push({ type: 'plus' });
+        };
+
+        let i = 0;
+        while (i < source.length) {
+            const char = source[i];
+            if (/\s/.test(char)) { i += 1; continue; }
+            if (isPastedArrow(char)) { pushArrow(); i += 1; continue; }
+            if (char === '+') { pushPlus(); i += 1; continue; }
+
+            if (char === '^') {
+                let j = i + 1;
+                let digits = '';
+                while (j < source.length && /[0-9]/.test(source[j])) { digits += source[j]; j += 1; }
+                const sign = source[j] === '+' || source[j] === '-' ? source[j] : '';
+                if (sign && hasSpeciesContent()) {
+                    tokens.push({ type: 'charge', value: `${digits}${sign}` });
+                    i = j + 1;
+                    continue;
+                }
+                i += 1;
+                continue;
+            }
+
+            if (superscriptToDigit[char] || superscriptSigns[char]) {
+                let j = i;
+                let digits = '';
+                while (j < source.length && superscriptToDigit[source[j]]) {
+                    digits += superscriptToDigit[source[j]];
+                    j += 1;
+                }
+                const sign = superscriptSigns[source[j]] || superscriptSigns[char] || '';
+                if (sign) {
+                    if (j === i) j += 1;
+                    tokens.push({ type: 'charge', value: `${digits}${sign}` });
+                    i = j;
+                    continue;
+                }
+                while (digits) {
+                    pushSubscript(digits[0]);
+                    digits = digits.slice(1);
+                }
+                i = j;
+                continue;
+            }
+
+            if (subToDigit[char]) { pushSubscript(subToDigit[char]); i += 1; continue; }
+            if (/[0-9]/.test(char)) {
+                let j = i;
+                while (j < source.length && /[0-9]/.test(source[j])) {
+                    pushSubscript(source[j]);
+                    j += 1;
+                }
+                i = j;
+                continue;
+            }
+
+            if (char === '-' && hasSpeciesContent()) {
+                tokens.push({ type: 'charge', value: '-' });
+                i += 1;
+                continue;
+            }
+            if (/[A-Z]/.test(char) && /[a-z]/.test(source[i + 1] || '')) {
+                pushText(char + source[i + 1]);
+                i += 2;
+                continue;
+            }
+            if (/[A-Za-z()[\]{}·.]/.test(char)) {
+                pushText(char === '.' ? '·' : char);
+            }
+            i += 1;
+        }
+        return tokens.filter((token, index) => {
+            if (token.type !== 'arrow' && token.type !== 'plus') return true;
+            return index > 0 && index < tokens.length - 1 && !isOperator(tokens[index - 1]) && !isOperator(tokens[index + 1]);
+        });
+    };
 
     /** 軟鍵盤常見輸入順序：先打 C/S→下標 2→再打 O，序列化會變成「C2O」，但本意多為 CO₂。僅限下標為 2 且後方無其他下標，避免誤改 C₂O₄ 等 */
     const reorderMisplacedTrailingSubdigits = (s) => {
@@ -5775,7 +6039,83 @@ function setupEquationEditor() {
     keyboard.addEventListener('pointerup', () => { setTimeout(() => { interactingWithKeyboard = false; }, 0); });
     window.addEventListener('pointerup', clearBackspaceHoldState);
 
+    let editorPointer = null;
+    let suppressEditorClick = false;
+    let suppressEditorClickTimer = null;
+    editor.addEventListener('pointerdown', (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
+        editorPointer = {
+            id: e.pointerId,
+            startX: e.clientX,
+            startScrollLeft: editor.scrollLeft,
+            moved: false
+        };
+    });
+    editor.addEventListener('pointermove', (e) => {
+        if (!editorPointer || editorPointer.id !== e.pointerId) return;
+        const deltaX = e.clientX - editorPointer.startX;
+        if (!editorPointer.moved && Math.abs(deltaX) < 6) return;
+        editorPointer.moved = true;
+        if (typeof editor.setPointerCapture === 'function') editor.setPointerCapture(e.pointerId);
+        editor.classList.add('is-dragging');
+        editor.scrollLeft = editorPointer.startScrollLeft - deltaX;
+        e.preventDefault();
+    });
+    const finishEditorPointer = (e) => {
+        if (!editorPointer || (e && editorPointer.id !== e.pointerId)) return;
+        if (editorPointer.moved) {
+            suppressEditorClick = true;
+            if (suppressEditorClickTimer) clearTimeout(suppressEditorClickTimer);
+            suppressEditorClickTimer = setTimeout(() => {
+                suppressEditorClick = false;
+                suppressEditorClickTimer = null;
+            }, 0);
+        }
+        editor.classList.remove('is-dragging');
+        if (e && typeof editor.releasePointerCapture === 'function') {
+            try { editor.releasePointerCapture(e.pointerId); } catch (_) { /* 已失去 capture */ }
+        }
+        editorPointer = null;
+    };
+    editor.addEventListener('pointerup', finishEditorPointer);
+    editor.addEventListener('pointercancel', finishEditorPointer);
+    const insertPastedEquation = (text) => {
+        const pastedTokens = parsePastedEquation(text);
+        if (!pastedTokens.length) return false;
+        clearPendingElementTap();
+        clearPendingSubscriptTap();
+        state.tokens.splice(state.cursor, 0, ...pastedTokens);
+        state.cursor += pastedTokens.length;
+        renderEditor();
+        showKeyboard();
+        return true;
+    };
+    const pasteFromClipboard = async () => {
+        if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') return;
+        try {
+            const text = await navigator.clipboard.readText();
+            insertPastedEquation(text);
+        } catch (_) {
+            // 瀏覽器拒絕讀取剪貼簿時，不把 Ctrl+V 的 V 當成元素輸入。
+        }
+    };
+    editor.addEventListener('paste', (e) => {
+        const text = e.clipboardData && e.clipboardData.getData('text/plain');
+        if (!text) {
+            e.preventDefault();
+            pasteFromClipboard();
+            return;
+        }
+        e.preventDefault();
+        insertPastedEquation(text);
+    });
     editor.addEventListener('click', (e) => {
+        if (suppressEditorClick) {
+            suppressEditorClick = false;
+            if (suppressEditorClickTimer) clearTimeout(suppressEditorClickTimer);
+            suppressEditorClickTimer = null;
+            return;
+        }
         showKeyboard();
         const tokenEl = e.target.closest('.equation-token');
         if (!tokenEl) {
@@ -5789,6 +6129,10 @@ function setupEquationEditor() {
     });
     editor.addEventListener('focus', showKeyboard);
     editor.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            // 交給 contenteditable 的原生貼上流程，讓桌面版 Ctrl+V／右鍵貼上都能觸發 paste 事件。
+            return;
+        }
         if (e.key === 'ArrowLeft') { e.preventDefault(); setCursor(state.cursor - 1); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); setCursor(state.cursor + 1); return; }
         if (e.key === 'Backspace') {
@@ -5849,6 +6193,7 @@ function setupEquationEditor() {
     return {
         clear: clearAll,
         getRawText: () => getVisibleText().replace(/\s+/g, '').trim(),
+        getCopyText,
         serializeForSolver,
         focus: () => editor.focus({ preventScroll: true })
     };
@@ -5955,6 +6300,7 @@ function setupEquationBalancer() {
     const mediumSelect = document.getElementById('redox-medium');
     const toolsArea = document.getElementById('balance-tools-area');
     const clearBtn = document.getElementById('balance-clear-btn');
+    const copyBtn = document.getElementById('equation-copy-btn');
     if (!btn) return;
     const editorApi = setupEquationEditor();
     if (!editorApi) return;
@@ -5997,6 +6343,58 @@ function setupEquationBalancer() {
         if (oxBtn) oxBtn.classList.remove('mode-active');
         activeMode = 'observation';
     };
+
+    let copyFeedbackTimer = null;
+    const showCopyFeedback = (label, success = false) => {
+        if (!copyBtn) return;
+        if (copyFeedbackTimer) clearTimeout(copyFeedbackTimer);
+        copyBtn.title = label;
+        copyBtn.setAttribute('aria-label', label);
+        copyBtn.classList.toggle('is-copied', success);
+        copyBtn.classList.toggle('is-copy-error', !success && label !== '複製方程式');
+        copyFeedbackTimer = setTimeout(() => {
+            copyBtn.title = '複製方程式';
+            copyBtn.setAttribute('aria-label', '複製方程式');
+            copyBtn.classList.remove('is-copied', 'is-copy-error');
+        }, 1400);
+    };
+    const writeClipboardText = async (text) => {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch (_) {
+                // 非安全來源或瀏覽器權限拒絕時，改用下方的相容性 fallback。
+            }
+        }
+        const helper = document.createElement('textarea');
+        helper.value = text;
+        helper.setAttribute('readonly', '');
+        helper.style.position = 'fixed';
+        helper.style.left = '-9999px';
+        helper.style.top = '0';
+        document.body.appendChild(helper);
+        helper.focus();
+        helper.select();
+        const copied = typeof document.execCommand === 'function' && document.execCommand('copy');
+        helper.remove();
+        if (!copied) throw new Error('瀏覽器拒絕複製');
+    };
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+            const text = editorApi.getCopyText();
+            if (!text) {
+                showCopyFeedback('請先輸入');
+                return;
+            }
+            try {
+                await writeClipboardText(text);
+                showCopyFeedback('已複製', true);
+            } catch (e) {
+                showCopyFeedback('複製失敗');
+            }
+        });
+    }
 
     btn.addEventListener('click', () => {
         const rawVal = editorApi.getRawText();
@@ -6074,10 +6472,21 @@ function setupEquationBalancer() {
             const res = solveChemicalEquationWithSteps(val, mediumSelect ? mediumSelect.value : 'neutral');
             renderSolvedResult(res);
         } catch (e) {
+            latestResult = null;
+            lastEquation = '';
+            activeMode = 'observation';
             resDiv.innerHTML = `<span style="color:#f87171;">❌ 錯誤: ${e.message}</span>`;
             resDiv.style.display = 'flex';
             stpBtn.style.display = 'none';
             if (oxBtn) oxBtn.style.display = 'none';
+            stpDiv.style.display = 'none';
+            stpDiv.innerHTML = '';
+            stpBtn.classList.add('mode-active');
+            if (oxBtn) oxBtn.classList.remove('mode-active');
+            if (toolsArea) {
+                toolsArea.classList.remove('is-visible');
+                toolsArea.style.removeProperty('display');
+            }
         }
     });
 
@@ -6130,7 +6539,14 @@ function setupEquationBalancer() {
 function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
     const sides = eqn.split('=');
     if (sides.length !== 2) throw new Error("缺少 '=' 號");
-    const parseSide = (s) => s.split(/\s+\+\s+/).map(x => x.trim()).filter(x => x);
+    const parseSide = (s) => {
+        const text = String(s || '').trim();
+        if (!text) throw new Error('反應式兩側都需至少有一個物種');
+        if (/^\s*\+|\+\s*$/.test(text)) throw new Error('反應式中有遺漏的物種，請補齊後再平衡');
+        const parts = text.split(/\s+\+\s+/).map(x => x.trim());
+        if (parts.some(x => !x)) throw new Error('反應式中有空白物種，請補齊後再平衡');
+        return parts;
+    };
     let leftRaw = parseSide(sides[0]), rightRaw = parseSide(sides[1]);
 
     // 酸／鹼介質下，骨架式也能進入同一個配平器：只在輸入尚未提供
@@ -6245,9 +6661,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         if (repaired) return repaired;
         const fallback = gaussElimination(m.map((row) => row.slice()));
         if (validateBalancedCoefficients(fallback, species, leftRaw.length, elements)) return fallback;
-        return Array.isArray(fallback) && fallback.length === species.length
-            ? fallback.map(c => Math.max(1, Number.isFinite(c) ? c : 1))
-            : species.map(() => 1);
+        throw new Error('目前輸入的物種無法形成正整數配平；請確認是否漏打物質，或反應式兩側是否正確');
     })();
 
     const buildModularEq = (coeffs) => {
@@ -6263,101 +6677,41 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
 
     let stp = `<div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:20px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px; letter-spacing:2px;">🧪 觀察法 + 代數法解題</div>`;
 
-    let startIdx = -1;
-    
-    // Priority 0: 優先尋找單元素物質 (Element) 且原子數 >= 3 的 (如 P4, S8, O3)
-    let maxElemCount = 0;
-    species.forEach((s, i) => {
-        const atoms = Object.keys(s.atoms);
-        // 判斷是否為單一種原子 (length === 1)
-        if (atoms.length === 1) {
-            const count = s.atoms[atoms[0]];
-            // 規則：原子數 >= 3 且是目前找到最大的
-            if (count >= 3 && count > maxElemCount) {
-                maxElemCount = count;
-                startIdx = i;
-            }
-        }
-    });
-
-    // 如果 Priority 0 沒找到 (startIdx 仍為 -1)，進入 Priority 1 (獨家原子 LCM 法)
-    if (startIdx === -1) {
-        let bestLCM = 0;
-        const gcdCalc = (a, b) => b === 0 ? a : gcdCalc(b, a % b);
-        const lcmCalc = (a, b) => (a * b) / gcdCalc(a, b);
-
-        let atomMap = {}; 
-        const rList = species.filter((s, i) => i < leftRaw.length);
-        const pList = species.filter((s, i) => i >= leftRaw.length);
-
-        if (rList.length > 0 && pList.length > 0) {
-            const scan = (list, sideName, offset) => {
-                list.forEach((s, i) => {
-                    const globalIdx = offset + i; 
-                    Object.entries(s.atoms).forEach(([el, count]) => {
-                        if (!atomMap[el]) atomMap[el] = { reactant: [], product: [] };
-                        atomMap[el][sideName].push({ idx: globalIdx, count });
-                    });
-                });
-            };
-            scan(rList, 'reactant', 0);
-            scan(pList, 'product', rList.length);
-
-            Object.keys(atomMap).forEach(el => {
-                let data = atomMap[el];
-                // 獨家原子 (1對1)
-                if (data.reactant.length === 1 && data.product.length === 1) {
-                    let leftCount = data.reactant[0].count;
-                    let rightCount = data.product[0].count;
-                    let currentLCM = lcmCalc(leftCount, rightCount);
-
-                    if (currentLCM > bestLCM) {
-                        bestLCM = currentLCM;
-                        // 選原子數多的那邊設為 1
-                        if (leftCount >= rightCount) {
-                            startIdx = data.reactant[0].idx;
-                        } else {
-                            startIdx = data.product[0].idx;
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // Priority 2: 如果以上都沒結果，回退到複雜度權重法
-    if (startIdx === -1) {
-        let maxScore = 0;
-        startIdx = 0;
-        species.forEach((s, i) => { 
-            const atomCounts = Object.values(s.atoms);
-            const maxSub = atomCounts.length > 0 ? Math.max(...atomCounts) : 1;
-            let score = atomCounts.reduce((a,b)=>a+b,0) + (maxSub * 50);
-            if (score > maxScore) { maxScore = score; startIdx = i; } 
+    // 教學基準只影響比例呈現，不改變主配平結果。
+    // 依已驗證的最簡正整數解選擇基準：優先使用能讓「獨有元素」呈現整數比例的物種，
+    // 再以獨有元素數量、係數大小與物種複雜度決定，避免用單一反應的固定物質或數字。
+    const nearlyInteger = (value) => Math.abs(value - Math.round(value)) < 1e-8;
+    const referenceScore = (s, i) => {
+        let exclusiveIntegerRatios = 0, coreExclusiveElements = 0, exclusiveElements = 0;
+        Object.keys(s.atoms).forEach((el) => {
+            const relatives = species.filter((other) => other.atoms[el] > 0);
+            if (relatives.length !== 2) return;
+            const other = relatives.find((other) => other.index !== i);
+            if (!other) return;
+            exclusiveElements++;
+            if (el !== 'H' && el !== 'O') coreExclusiveElements++;
+            if (nearlyInteger(finalCoeffs[other.index] / finalCoeffs[i])) exclusiveIntegerRatios++;
         });
-    }
-    // 檢查原定的基準物質 startIdx，是否會因為「獨家原子」腳標較小而導致下一個物質變成分數
-    let finalStartIdx = startIdx;
-    const currentAtoms = species[startIdx].atoms;
-    for (let el in currentAtoms) {
-        let countSelf = currentAtoms[el];
-        // 尋找包含此原子的其他物質
-        let relatives = species.filter(s => s.atoms[el] > 0);
-        
-        // 如果是「獨家原子」(只出現在反應前後各一個物質中)
-        if (relatives.length === 2) {
-            let other = relatives.find(s => s.index !== startIdx);
-            let countOther = other.atoms[el];
-            
-            // 如果對方的原子數更多 (例如 2 > 1)，則切換基準到對方身上
-            // 這樣設定對方為 1 時，我方的係數就會是整數 (或至少比例較合理)
-            if (countOther > countSelf) {
-                finalStartIdx = other.index;
-                break; // 找到一個需要修正的原子即可停止
-            }
-        }
-    }
-    startIdx = finalStartIdx;
+        return {
+            index: i,
+            hasUnitCoefficient: nearlyInteger(finalCoeffs[i] - 1),
+            exclusiveIntegerRatios,
+            coreExclusiveElements,
+            exclusiveElements,
+            coefficient: finalCoeffs[i],
+            atomCount: Object.values(s.atoms).reduce((sum, count) => sum + count, 0)
+        };
+    };
+    const reference = species.map(referenceScore).sort((a, b) =>
+        Number(b.hasUnitCoefficient) - Number(a.hasUnitCoefficient) ||
+        b.exclusiveIntegerRatios - a.exclusiveIntegerRatios ||
+        b.coreExclusiveElements - a.coreExclusiveElements ||
+        b.exclusiveElements - a.exclusiveElements ||
+        a.coefficient - b.coefficient ||
+        b.atomCount - a.atomCount ||
+        a.index - b.index
+    )[0];
+    const startIdx = reference ? reference.index : 0;
 
     stp += `<div class="step-box"><div class="step-title">步驟 1：選定基準</div>設定 <span style="color:#fbbf24; font-weight:bold;">${formatFormula(species[startIdx].raw)}</span> 的係數為 <span class="coeff">1</span>。</div>`;
     
@@ -6382,7 +6736,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
                 let target = unk[0]; locked.add(target.index);
                 expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
                 usedConservation.add(el);
-                obsDetails.push(`• 觀察 <span class="highlight-atom">${el}</span> 原子，設定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 的係數為 <span class="coeff">${expressions[target.index]}</span>。`);
+                obsDetails.push(`• 由 <span class="highlight-atom">${el}</span> 原子守恆：<span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 係數為 <span class="coeff">${expressions[target.index]}</span>。`);
                 progressed = true; break;
             }
         }
@@ -6393,13 +6747,13 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
                 let target = unkC[0]; locked.add(target.index);
                 expressions[target.index] = toFraction(finalCoeffs[target.index] / finalCoeffs[startIdx]);
                 usedConservation.add("charge");
-                obsDetails.push(`• 觀察 <span class="highlight-atom">電荷</span>，設定 <span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 的係數為 <span class="coeff">${expressions[target.index]}</span>。`);
+                obsDetails.push(`• 由 <span class="highlight-atom">電荷守恆</span>：<span style="color:#38bdf8;">${formatFormula(target.raw)}</span> 係數為 <span class="coeff">${expressions[target.index]}</span>。`);
                 progressed = true;
             }
         }
     }
-    const obsIntro = nullSpaceDim >= 2 ? "此方程式的係數有無限多種寫法。原子種類與守恆條件不足以唯一決定各物質的係數比；只要滿足原子守恆，就有無窮多組係數都是「正確」的平衡式。本工具從中挑選一組全為正整數且已約分至最簡的係數供參考，因此無法像一般題僅用觀察法逐步鎖定，以下改以代數法。" + (obsDetails.length > 0 ? "<br><br>" : "") : "";
-    const obsBody = obsDetails.length > 0 ? obsDetails.join('<br>') : (nullSpaceDim >= 2 ? "" : "此階段無可直接利用觀察法平衡的原子，將進入代數法設定未知數。");
+    const obsIntro = nullSpaceDim >= 2 ? "守恆條件不足以決定唯一比例；以下列出一組最簡正整數解。" + (obsDetails.length > 0 ? "<br><br>" : "") : "";
+    const obsBody = obsDetails.length > 0 ? obsDetails.join('<br>') : (nullSpaceDim >= 2 ? "" : "沒有可直接由單一元素推出的係數，改用代數法。");
     stp += `<div class="step-box"><div class="step-title">步驟 2：觀察法</div><div style="font-size:1.05rem; line-height:1.8;">${obsIntro}${obsBody}</div></div>`;
     // --- 步驟 3：氧化還原守恆說法 ---
     if (redoxInfo && redoxInfo.h2o2Delta !== 0) {
@@ -6408,16 +6762,15 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         const h2o2Coeff = finalCoeffs[redoxInfo.h2o2Idx] / finalCoeffs[startIdx];
         
         stp += `<div class="step-box" style="border-left-color: #f472b6; background: rgba(244, 114, 182, 0.05);">
-            <div class="step-title" style="color: #f472b6;">步驟 3：氧化還原守恆 (關鍵限制)</div>
-            偵測到 <span style="color:#f472b6; font-weight:bold;">H<sub>2</sub>O<sub>2</sub></span> 參與反應：<br>
-            • 變價夥伴：<span style="color:#38bdf8; font-weight:bold;">${redoxInfo.partnerEl}</span> 氧化數從基點變化了 <span style="color:#facc15;">${redoxInfo.partnerDelta}</span>。<br>
-            • H<sub>2</sub>O<sub>2</sub> 角色：擔任 <span style="color:#f472b6; font-weight:bold;">${h2o2Role}</span>。<br>
-            • 根據電子得失守恆：<br>
+            <div class="step-title" style="color: #f472b6;">步驟 3：電子守恆</div>
+            <span style="color:#38bdf8; font-weight:bold;">${redoxInfo.partnerEl}</span> 氧化數改變 <span style="color:#facc15;">${redoxInfo.partnerDelta}</span>；
+            <span style="color:#f472b6; font-weight:bold;">H<sub>2</sub>O<sub>2</sub></span> 為${h2o2Role}。<br>
+            依失電子數＝得電子數：
             <div class="step-formula-box" style="border-color: #f472b6; color: #f472b6; font-weight:bold;">
                 1 × ${eFlowPerPartner}(e⁻) = a(H<sub>2</sub>O<sub>2</sub>) × 2(e⁻) 
                 &nbsp; → &nbsp; <span style="font-size:1.3rem;">a = ${toFraction(h2o2Coeff)}</span>
             </div>
-            得到 H<sub>2</sub>O<sub>2</sub> 係數後，代數系統即可解出唯一解。
+            再由原子守恆求出其餘係數。
         </div>`;
         locked.add(redoxInfo.h2o2Idx);
         expressions[redoxInfo.h2o2Idx] = toFraction(h2o2Coeff);
@@ -6437,10 +6790,10 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
                 let s1 = pair[0], s2 = pair[1], n1 = s1.atoms[linkEl], n2 = s2.atoms[linkEl];
                 expressions[s1.index] = (n2 === 1 ? "" : n2) + v; expressions[s2.index] = (n1 === 1 ? "" : n1) + v;
                 usedConservation.add(linkEl);
-                algebraicSteps.push(`• 關聯 <span class="highlight-atom">${linkEl}</span> 原子：設定 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 的係數為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，則 <span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 的係數為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
+                algebraicSteps.push(`• 由 <span class="highlight-atom">${linkEl}</span> 原子守恆：<span style="color:#f472b6; font-weight:bold;">${formatFormula(s1.raw)}</span> 係數為 <span style="color:#f472b6;">${expressions[s1.index]}</span>，<span style="color:#f472b6; font-weight:bold;">${formatFormula(s2.raw)}</span> 係數為 <span style="color:#f472b6;">${expressions[s2.index]}</span>。`);
                 locked.add(s1.index); locked.add(s2.index);
             } else {
-                expressions[next.index] = v; algebraicSteps.push(`• 設定 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 的係數為 <span style="color:#f472b6;">${v}</span>。`);
+                expressions[next.index] = v; algebraicSteps.push(`• 令 <span style="color:#f472b6; font-weight:bold;">${formatFormula(next.raw)}</span> 的係數為 <span style="color:#f472b6;">${v}</span>。`);
                 locked.add(next.index);
             }
             remaining = species.filter(s => !locked.has(s.index));
@@ -6453,7 +6806,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
             });
             return `${L.join(' + ') || "0"} = ${R.join(' + ') || "0"}`;
         };
-        algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">利用原子不滅列式：</div>`);
+        algebraicSteps.push(`<div style="margin-top:15px; color:#94a3b8; font-size:0.95rem;">依原子守恆列式：</div>`);
         elements.forEach(el => { if (!usedConservation.has(el)) algebraicSteps.push(`• 根據 <span class="highlight-atom">${el}</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('atom', el)}</span>`); });
         if (!usedConservation.has("charge") && species.some(s => s.charge !== 0)) algebraicSteps.push(`• 根據 <span class="highlight-atom">電荷</span>：<span style="font-family:serif; color:#facc15; font-size:1.1rem; font-weight:bold;">${buildEq('charge')}</span>`);
 
@@ -6467,7 +6820,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
                 solvedVars.push(`<div style="display:flex; align-items:center; gap:8px;"><span style="font-style:italic; color:#f472b6; font-weight:bold; font-size:1.3rem;">${vChar[0]}</span> <span style="color:#94a3b8;">=</span> <span style="color:#facc15; font-weight:900; font-size:1.6rem; text-shadow: 0 0 10px rgba(250,204,21,0.4);">${val}</span></div>`);
             }
         });
-        algebraicSteps.push(`<div style="margin-top:20px; color:#94a3b8;">解聯立方程得：</div><div style="display:flex; flex-wrap:wrap; justify-content:center; gap:25px; margin:15px 0; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px;">${solvedVars.join('')}</div>`);
+        algebraicSteps.push(`<div style="margin-top:20px; color:#94a3b8;">解聯立方程式得：</div><div style="display:flex; flex-wrap:wrap; justify-content:center; gap:25px; margin:15px 0; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px;">${solvedVars.join('')}</div>`);
         stp += `<div class="step-box"><div class="step-title">步驟 3：代數法</div><div style="font-size:1.05rem; line-height:1.8;">${algebraicSteps.join('<br>')}</div></div>`;
     }
 
@@ -6491,7 +6844,7 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
 
     const finalBox = buildModularEq(finalCoeffs);
     const ratioStr = finalCoeffs.map(c => toFractionVertical(c/baseV)).join(' <span style="color:#64748b;">:</span> ');
-    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：整數化 (最簡整數比)</div><div style="margin-bottom:10px;">目前比例：<span style="color:#f472b6; font-family:serif; font-size:1.08rem;">(${ratioStr})</span></div><div style="margin-bottom:10px;">全體乘以 <span style="color:#facc15; font-weight:bold; font-size:1.15em;">${multiplier}</span>，得到最終平衡反應式：</div><div class="step-formula-box">${finalBox}</div></div>`;
+    stp += `<div class="step-box" style="border:none;"><div class="step-title">步驟 4：化為最簡整數比</div><div style="margin-bottom:10px;">係數比例：<span style="color:#f472b6; font-family:serif; font-size:1.08rem;">(${ratioStr})</span></div><div style="margin-bottom:10px;">各係數同乘 <span style="color:#facc15; font-weight:bold; font-size:1.15em;">${multiplier}</span>，得到：</div><div class="step-formula-box">${finalBox}</div></div>`;
     if (!validateBalancedCoefficients(finalCoeffs, species, leftRaw.length, elements)) {
         stp += `<div class="oxidation-note" style="color:#fbbf24; margin-top:8px;">目前輸入的物種與介質條件不足，這組係數尚未通過原子／電荷守恆；請選擇正確介質或補齊 H⁺、OH⁻、H₂O。</div>`;
     }
@@ -6511,13 +6864,15 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         return missing.length ? `${formatFormula(s.raw)}（${missing.join('、')}）` : null;
     }).filter(Boolean);
     const uncertainOxidationHtml = uncertainOxidation.length
-        ? `<div class="oxidation-note">${uncertainOxidation.join('、')} 的價態資料不足，未任意指定氧化數；若只能判定平均值，請補充可靠結構／價態條件。</div>`
+        ? `<div class="oxidation-note">${uncertainOxidation.join('、')} 的氧化數資料不足，未任意指定。</div>`
         : '';
-    const leftEntriesByEl = {}, rightEntriesByEl = {};
+    const leftEntriesByEl = {}, rightEntriesByEl = {}, directElectronNetByElement = {};
     species.forEach((s, i) => {
         speciesEntries[i].forEach(entry => {
             const count = entry.count * (finalCoeffs[i] || 0);
             if (count <= 1e-10) return;
+            const sideSign = i < leftRaw.length ? -1 : 1;
+            directElectronNetByElement[entry.el] = (directElectronNetByElement[entry.el] || 0) + sideSign * entry.ox * count;
             const item = {
                 speciesIdx: i,
                 ox: entry.ox,
@@ -6571,6 +6926,17 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
     const gains = ledger.filter(ev => ev.delta < 0);
     const totalLoss = losses.reduce((sum, ev) => sum + ev.delta * ev.moved, 0);
     const totalGain = gains.reduce((sum, ev) => sum + Math.abs(ev.delta) * ev.moved, 0);
+    const routeElectronNet = totalLoss - totalGain;
+    const directElectronNet = Object.values(directElectronNetByElement).reduce((sum, value) => sum + value, 0);
+    // 路徑必須同時通過兩層檢查：逐支路的失／得電子相等，且由各物種氧化數總和獨立重算也相等。
+    // 任一物種氧化數不完整或兩種算法不一致，就不能把路徑當成正確的氧化數詳解。
+    const oxidationLedgerBalanced = uncertainOxidation.length === 0 &&
+        Math.abs(routeElectronNet) < 1e-8 &&
+        Math.abs(directElectronNet) < 1e-8 &&
+        Math.abs(routeElectronNet - directElectronNet) < 1e-8;
+    const electronBalanceStatusHtml = oxidationLedgerBalanced
+        ? '<div style="color:#86efac; margin-top:4px;">電子數相等，比例通過檢查。</div>'
+        : '<div style="color:#fbbf24; margin-top:4px;">電子帳不守恆，這組氧化數路徑不採用。</div>';
     const lossSpecies = new Set(losses.map(ev => ev.from));
     const gainSpecies = new Set(gains.map(ev => ev.from));
     const speciesLabel = (idx) => formatFormula(species[idx].raw);
@@ -6628,11 +6994,14 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
     };
     const eventHtml = (ev, route) => {
         const kind = ev.delta > 0 ? 'loss' : 'gain';
-        const action = ev.delta > 0 ? '失電子（氧化）' : '得電子（還原）';
+        const action = ev.delta > 0 ? '失去電子（氧化）' : '得到電子（還原）';
         const label = ev.label ? `，${escapeText(ev.label)}` : '';
         return `<div class="oxidation-ledger-row ${kind}">${speciesLabel(route.from)} → ${speciesLabel(route.to)}：<span class="highlight-atom">${ev.el}</span>${label}，${formatOxidation(ev.fromOx)} → ${formatOxidation(ev.toOx)}，${action} <b>${electronExpression(ev)}</b></div>`;
     };
     const routeHtml = routes.map(route => `<div class="oxidation-step-box"><div class="oxidation-step-title">${speciesLabel(route.from)} → ${speciesLabel(route.to)}</div><div class="oxidation-ledger">${route.events.map(ev => eventHtml(ev, route)).join('')}</div></div>`).join('');
+    const routeDisplayHtml = oxidationLedgerBalanced
+        ? routeHtml
+        : '<div class="oxidation-note" style="color:#fbbf24;">目前氧化數路徑未通過電子守恆檢查，暫不顯示不可靠的變化路徑；請確認化學式與各物種。</div>';
     const selfRedoxSources = [...new Set(routes.filter(route => route.from < leftRaw.length).map(route => route.from))]
         .filter(source => {
             const events = routes.filter(route => route.from === source).flatMap(route => route.events);
@@ -6642,53 +7011,54 @@ function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
         const branches = routes.filter(route => route.from === source)
             .flatMap(route => route.events.map(ev => ({ ...ev, to: route.to })));
         const reverseRows = branches.map(ev => `${speciesLabel(ev.to)} → ${speciesLabel(source)}：${formatOxidation(ev.fromOx)} 與 ${formatOxidation(ev.toOx)} 的差值，${electronExpression(ev)}`).join('<br>');
-        return `<div class="oxidation-step-box"><div class="oxidation-step-title">自身氧化還原：反向比較求比例</div><div class="oxidation-note">以下反向箭頭僅用來取得比例；實際氧化／還原方向仍依輸入反應式判定。</div><div style="margin-top:6px;">${reverseRows}</div></div>`;
+        return `<div class="oxidation-step-box"><div class="oxidation-step-title">自身氧化還原：比較比例</div><div class="oxidation-note">反向箭頭只用來比較比例，方向仍以原反應式為準。</div><div style="margin-top:6px;">${reverseRows}</div></div>`;
     }).join('');
-    const roleLines = [
-        ...[...lossSpecies].map(i => `${speciesLabel(i)} 被氧化，作為還原劑。`),
-        ...[...gainSpecies].map(i => `${speciesLabel(i)} 被還原，作為氧化劑。`)
-    ];
+    const roleLines = oxidationLedgerBalanced ? [
+        ...[...lossSpecies].filter(i => !selfRedoxSources.includes(i)).map(i => `${speciesLabel(i)} 被氧化，是還原劑。`),
+        ...[...gainSpecies].filter(i => !selfRedoxSources.includes(i)).map(i => `${speciesLabel(i)} 被還原，是氧化劑。`),
+        ...selfRedoxSources.map(i => `${speciesLabel(i)} 同時發生氧化與還原。`)
+    ] : [];
     const selfRedoxSet = new Set(selfRedoxSources);
     const unitLedgerLines = [
         ...[...lossSpecies].filter(i => !selfRedoxSet.has(i)).map(i => {
             const amount = losses.filter(ev => ev.from === i).reduce((sum, ev) => sum + ev.delta * ev.moved, 0) / (finalCoeffs[i] || 1);
-            return `${speciesLabel(i)} 每 1 個反應單位失 ${formatCount(amount)} e⁻`;
+            return `${speciesLabel(i)} 每 1 單位失 ${formatCount(amount)} e⁻`;
         }),
         ...[...gainSpecies].filter(i => !selfRedoxSet.has(i)).map(i => {
             const amount = gains.filter(ev => ev.from === i).reduce((sum, ev) => sum + Math.abs(ev.delta) * ev.moved, 0) / (finalCoeffs[i] || 1);
-            return `${speciesLabel(i)} 每 1 個反應單位得 ${formatCount(amount)} e⁻`;
+            return `${speciesLabel(i)} 每 1 單位得 ${formatCount(amount)} e⁻`;
         })
     ];
     const chargeDiff = rightCharge - leftCharge;
-    const chargeCalculationHtml = `<div class="oxidation-note">先排除 H⁺／OH⁻，只計算其餘帶電物種：</div><div>反應物電荷：${leftChargeInfo.text}</div><div>生成物電荷：${rightChargeInfo.text}</div>`;
+    const chargeCalculationHtml = `<div class="oxidation-note">先不計 H⁺／OH⁻：</div><div>反應物電荷：${leftChargeInfo.text}</div><div>生成物電荷：${rightChargeInfo.text}</div>`;
     let chargeLine = '';
     if (Math.abs(chargeDiff) < 1e-10) {
         chargeLine = medium === 'neutral'
-            ? '排除 H⁺／OH⁻ 後電荷已平衡；中性介質不補 H⁺／OH⁻。若需補水，最後放在右側。'
-            : '排除 H⁺／OH⁻ 後電荷已平衡，無須補入 H⁺／OH⁻。';
+            ? '核心電荷已平衡；中性介質不補 H⁺／OH⁻。'
+            : '核心電荷已平衡，不需補入 H⁺／OH⁻。';
     } else if (medium === 'neutral') {
-        chargeLine = '中性介質不補 H⁺／OH⁻；若需補水，最後放在右側。核心電荷仍不相等時，請確認介質或補齊必要離子。';
+        chargeLine = '中性介質不補 H⁺／OH⁻；核心電荷不平衡，請確認介質或補齊必要離子。';
     } else {
         const ion = medium === 'acidic' ? 'H⁺' : 'OH⁻';
         const side = medium === 'acidic' ? (chargeDiff < 0 ? '右側' : '左側') : (chargeDiff < 0 ? '左側' : '右側');
-        chargeLine = `依${mediumLabel}應在${side}補 ${ion}（${formatCount(Math.abs(chargeDiff))} 個），再以守恆核對。`;
+        chargeLine = `在${side}補 ${ion}（${formatCount(Math.abs(chargeDiff))} 個），再檢查守恆。`;
     }
     let waterLine = 'H₂O 不需補入。';
-    if (waterIndices.length) waterLine = `最後補 H₂O：${waterIndices.map(x => `${x.side} ${formatCount(x.coeff)}H₂O`).join('；')}，其係數由 H、O 守恆確定。`;
-    else if ((leftTotals.O || 0) !== (rightTotals.O || 0) || (leftTotals.H || 0) !== (rightTotals.H || 0)) waterLine = 'H、O 尚有差異，最後需補 H₂O；目前輸入缺少可補入的水物種。';
+    if (waterIndices.length) waterLine = `配平 H、O：${waterIndices.map(x => `${x.side} ${formatCount(x.coeff)}H₂O`).join('；')}。`;
+    else if ((leftTotals.O || 0) !== (rightTotals.O || 0) || (leftTotals.H || 0) !== (rightTotals.H || 0)) waterLine = 'H、O 尚未平衡，需補入 H₂O。';
     const oxidationAvailable = losses.length > 0 && gains.length > 0;
     const ratioWarningHtml = nullSpaceDim >= 2
         ? '<div class="oxidation-note" style="margin-top:6px;">目前守恆條件留下多組係數比例；以下為其中一組最簡正整數解，不能視為唯一反應比例，請補充反應條件或產物比例。</div>'
         : '';
     const oxidationHtml = `<div class="oxidation-solution"><div style="font-weight:bold; font-size:1.2rem; color:#fff; margin-bottom:14px; text-align:center; border-bottom:2px solid #facc15; padding-bottom:10px;">⚡ 氧化數法解題</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 1：標示變價元素</div>${uncertainOxidationHtml}${routeHtml || '<div class="oxidation-note">本反應沒有可確定的氧化數變化。</div>'}</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 2：氧化、還原與角色</div>${roleLines.length ? roleLines.join('<br>') : '本反應無氧化數改變，請使用觀察＋代數法。'}</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 3：全反應電子守恆</div><div class="oxidation-note">括號內先算一個物質單位的變價量與參與變價的原子數，括號外再乘該支線係數。</div><div>所有失電子：<b style="color:#fb7185;">${formatCount(totalLoss)} e⁻</b>；所有得電子：<b style="color:#60a5fa;">${formatCount(totalGain)} e⁻</b>。</div>${unitLedgerLines.length ? `<div class="oxidation-note" style="margin-top:6px;">${unitLedgerLines.join('；')}。</div>` : ''}${oxidationAvailable && Math.abs(totalLoss - totalGain) < 1e-8 ? '<div style="color:#86efac; margin-top:4px;">電子得失相等，比例通過檢核。</div>' : ''}</div>
-        ${selfRedoxHtml}
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 4：平衡其餘元素</div><div>依最終係數核對非 H、O 元素：${elements.filter(el => el !== 'H' && el !== 'O').map(el => `${el} ${formatCount(leftTotals[el] || 0)}`).join('、') || '無'}；兩側原子數相等。</div>${ratioWarningHtml}</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 5：平衡電荷（${mediumLabel}）</div>${chargeCalculationHtml}<div style="margin-top:6px;">${chargeLine}</div>${mediumWarnings.length ? `<div style="color:#fbbf24; margin-top:6px;">${mediumWarnings.join('<br>')}</div>` : ''}</div>
-        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 6：最後補 H₂O</div><div>${waterLine}</div></div>
-        <div class="oxidation-note" style="margin-top:12px;">最後檢查：原子守恆、總電荷守恆、失電子＝得電子；若價態只能求平均值，詳解會以平均氧化數表示。</div></div>`;
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 1：標示氧化數</div>${uncertainOxidationHtml}${routeDisplayHtml || '<div class="oxidation-note">沒有可確定的氧化數變化。</div>'}</div>
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 2：判斷氧化與還原</div>${roleLines.length ? roleLines.join('<br>') : (oxidationAvailable ? '氧化數路徑未通過守恆檢查，暫不判定反應角色。' : '沒有氧化數變化，請使用觀察＋代數法。')}</div>
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 3：配平電子</div><div class="oxidation-note">失電子總數必須等於得電子總數。</div><div>失電子：<b style="color:#fb7185;">${formatCount(totalLoss)} e⁻</b>；得電子：<b style="color:#60a5fa;">${formatCount(totalGain)} e⁻</b>。</div>${unitLedgerLines.length && oxidationLedgerBalanced ? `<div class="oxidation-note" style="margin-top:6px;">${unitLedgerLines.join('；')}。</div>` : ''}${oxidationAvailable ? electronBalanceStatusHtml : ''}</div>
+        ${oxidationLedgerBalanced ? selfRedoxHtml : ''}
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 4：配平其他元素</div><div>核對非 H、O 元素：${elements.filter(el => el !== 'H' && el !== 'O').map(el => `${el} ${formatCount(leftTotals[el] || 0)}`).join('、') || '無'}；兩側相等。</div>${ratioWarningHtml}</div>
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 5：配平電荷（${mediumLabel}）</div>${chargeCalculationHtml}<div style="margin-top:6px;">${chargeLine}</div>${mediumWarnings.length ? `<div style="color:#fbbf24; margin-top:6px;">${mediumWarnings.join('<br>')}</div>` : ''}</div>
+        <div class="oxidation-step-box"><div class="oxidation-step-title">步驟 6：配平 H、O</div><div>${waterLine}</div></div>
+        <div class="oxidation-note" style="margin-top:12px;">最後檢查：原子守恆、電荷守恆、失電子數＝得電子數。</div></div>`;
 
     let html = buildModularEq(finalCoeffs);
 
