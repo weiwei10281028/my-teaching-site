@@ -721,10 +721,6 @@
         background: linear-gradient(180deg, #253048 0%, #162035 100%);
     }
     .equation-soft-key:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-    .equation-soft-key.key-shift-active {
-        border-color: rgba(100, 200, 255, 0.9);
-        box-shadow: 0 0 0 1px rgba(100, 200, 255, 0.45), 0 0 10px rgba(80, 180, 255, 0.3);
-    }
     .equation-soft-row .key-wide-operator {
         min-height: 44px;
         font-size: 1.38rem;
@@ -804,11 +800,24 @@
         box-shadow: 0 0 12px rgba(220, 60, 60, 0.3);
     }
     .equation-soft-row.row-letters-3 .equation-soft-key.key-shift {
-        background: linear-gradient(180deg, rgba(100, 120, 150, 0.92) 0%, rgba(60, 80, 110, 0.96) 100%);
-        border-color: rgba(180, 200, 230, 0.85);
-        color: #ffffff;
-        text-shadow: none;
-        box-shadow: 0 0 8px rgba(150, 180, 220, 0.2);
+        position: relative;
+        display: inline-grid;
+        place-items: center;
+        padding: 0;
+        font-size: 0;
+        line-height: 1;
+    }
+    .equation-soft-row.row-letters-3 .equation-soft-key.key-shift::before {
+        content: "";
+        display: block;
+        width: 24px;
+        height: 24px;
+        max-width: 74%;
+        max-height: 74%;
+        background: currentColor;
+        clip-path: polygon(50% 0%, 100% 42%, 72% 42%, 72% 100%, 28% 100%, 28% 42%, 0% 42%);
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+        transform: translateY(4px);
     }
     .equation-soft-row .key-clear {
         width: clamp(62px, 15vw, 82px);
@@ -5931,7 +5940,7 @@ function setupEquationEditor() {
                 ${letters2.map(ch => makeBtn(ch, 'insert-letter')).join("")}
             </div>
             <div class="equation-soft-row row-letters-3">
-                ${makeBtn("↑", "toggle-case", `key-icon key-shift ${state.isUppercase ? "key-shift-active" : ""}`, "切換英文字母大小寫")}
+                ${makeBtn("↑", "toggle-case", "key-icon key-shift", "切換英文字母大小寫")}
                 ${letters3.map(ch => makeBtn(ch, 'insert-letter')).join("")}
                 ${makeBtn("清空", "clear", "key-clear", "清空此輸入框")}
             </div>
