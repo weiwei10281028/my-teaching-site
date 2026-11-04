@@ -616,7 +616,7 @@
         line-height: 1;
         font-weight: 800;
         position: relative;
-        top: -0.32em;
+        top: -0.52em;
         font-family: inherit;
         letter-spacing: 0;
         vertical-align: baseline;
@@ -1407,7 +1407,15 @@
         line-height: 1;
         margin-left: 0.04em;
         position: relative;
-        top: -0.40em;
+        top: -0.58em;
+    }
+    #balance-result .chem-charge-minus {
+        display: inline-block;
+        position: relative;
+        top: -0.12em;
+        left: -0.1em;
+        transform: scale(1.45, 1.3);
+        transform-origin: center;
     }
     #balance-help-popup,
     #balance-help-popup * {
@@ -5079,7 +5087,10 @@ function formatFormula(str) {
             chargePart = chargePart[1];
         }
         // 電荷整段維持同一個上標字級，正負號不另設字體或縮放，與電荷數字自然對齊。
-        formattedCharge = `<sup class="chem-sup">${chargePart}</sup>`;
+        const chargeContent = chargePart === '-'
+            ? '<span class="chem-charge-minus">-</span>'
+            : chargePart;
+        formattedCharge = `<sup class="chem-sup">${chargeContent}</sup>`;
     }
 
     return formattedMain + formattedCharge + statePart;
@@ -5160,6 +5171,30 @@ function parseCharge(c) {
     const m = c.match(/^(\d*)([+-])$/);
     if (!m) return 0;
     return parseInt(m[1] || "1") * (m[2] === '+' ? 1 : -1);
+}
+
+function normalizeChemicalEquationInput(value) {
+    return String(value || '')
+        .replace(/[₀-₉]/g, digit => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(digit)))
+        .replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]+)([⁺⁻])/g, (match, digits, sign) => {
+            const magnitude = [...digits].map(digit => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(digit)).join('');
+            return ` ${magnitude}${sign === '⁺' ? '+' : '-'}`;
+        })
+        .replace(/[⁺⁻]/g, sign => sign === '⁺' ? ' 1+' : ' 1-')
+        .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, char => {
+            return String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char));
+        })
+        .replace(/(?:→|⟶|⟹|⇒|->)/g, '=');
+}
+
+function parseEquationSide(input) {
+    const text = String(input || '').trim();
+    if (!text) throw new Error('反應式兩側都需至少有一個物種');
+    // 只把位於獨立分隔位置的加號視為漏寫物種；物種末尾的 H⁺、Fe²⁺ 等電荷不是分隔符。
+    if (/^\s*\+|\s+\+$/.test(text)) throw new Error('反應式中有遺漏的物種，請補齊後再平衡');
+    const parts = text.split(/\s+\+\s+/).map(x => x.trim());
+    if (parts.some(x => !x)) throw new Error('反應式中有空白物種，請補齊後再平衡');
+    return parts;
 }
 
 function parseAtoms(f) {
@@ -5480,9 +5515,9 @@ function setupEquationEditor() {
                 }
                 const sign = superscriptSigns[source[j]] || superscriptSigns[char] || '';
                 if (sign) {
-                    if (j === i) j += 1;
                     tokens.push({ type: 'charge', value: `${digits}${sign}` });
-                    i = j;
+                    // 數字電荷時 j 指向正負號；必須連同正負號一起消耗，否則下一輪會再插入一次電荷。
+                    i = j + 1;
                     continue;
                 }
                 while (digits) {
@@ -6546,17 +6581,10 @@ function setupEquationBalancer() {
 }
 
 function solveChemicalEquationWithSteps(eqn, medium = 'neutral') {
-    const sides = eqn.split('=');
+    const normalizedEqn = normalizeChemicalEquationInput(eqn);
+    const sides = normalizedEqn.split('=');
     if (sides.length !== 2) throw new Error("缺少 '=' 號");
-    const parseSide = (s) => {
-        const text = String(s || '').trim();
-        if (!text) throw new Error('反應式兩側都需至少有一個物種');
-        if (/^\s*\+|\+\s*$/.test(text)) throw new Error('反應式中有遺漏的物種，請補齊後再平衡');
-        const parts = text.split(/\s+\+\s+/).map(x => x.trim());
-        if (parts.some(x => !x)) throw new Error('反應式中有空白物種，請補齊後再平衡');
-        return parts;
-    };
-    let leftRaw = parseSide(sides[0]), rightRaw = parseSide(sides[1]);
+    let leftRaw = parseEquationSide(sides[0]), rightRaw = parseEquationSide(sides[1]);
 
     // 酸／鹼介質下，骨架式也能進入同一個配平器：只在輸入尚未提供
     // 必要的 H₂O 與 H⁺／OH⁻ 時補入輔助物種。水放在氧較少（酸性）或
