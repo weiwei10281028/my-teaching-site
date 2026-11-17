@@ -6594,6 +6594,7 @@ window.CALIBRATION_EXTENSION_CATEGORIES = {
             { id: 'conjugate', label: '共軛酸鹼對', description: '從質子轉移反應判角色、共軛粒子與電荷守恆', required: false },
             { id: 'salt', label: '離子水解與鹽類酸鹼性', description: '追蹤離子來源、水解方向與 Ka／Kb 對溶液酸鹼性的影響', required: true },
             { id: 'pH', label: 'pH 與中和計算', description: '互換 [H₃O⁺]、[OH⁻]、pH、pOH，計算過量中和與混合後 pH', required: true },
+            { id: 'acidNature', label: '酸鹼性判斷與中性基準', description: '依 Kw／pKw 判斷中性點，交叉運用 [H⁺]、[OH⁻]、pH 與 pOH（含非 25°C）', required: true },
             { id: 'indicator', label: '指示劑與變色', description: '綜合多種指示劑觀察結果，推定 pH 範圍並排除不可能值', required: true }
         ]
     },
@@ -6634,6 +6635,7 @@ window.CALIBRATION_EXTENSION_TEMPLATES = {
         conjugate: ['acid-to-conjugate-base-from-reactants', 'base-to-conjugate-acid-from-reactants'],
         salt: ['ion-origin-to-solution-ph', 'hydrolysis-to-major-ion', 'salt-water-reactive-ion'],
         pH: ['[H3O+]-to-pH-and-reverse', '[OH-]-to-[H3O+]-or-pH', 'pH-to-[OH-]', 'pOH-to-pH', 'strong-acid-base-mixture'],
+        acidNature: ['[H+]-vs-sqrtKw', '[OH-]-vs-sqrtKw', 'pH-vs-pKw/2', 'pH-vs-Kw-derived-neutral-pH', 'pOH-vs-pKw/2', 'pH+pOH=pKw', 'ion-product-and-acidity'],
         indicator: ['two-indicator-interval-intersection']
     },
     mole: {
@@ -6728,6 +6730,10 @@ window.CALIBRATION_EXTENSION_DATA = {
         { id:'ph-hno3-1e2', formula:'HNO₃', concentration:0.01, pH:2, condition:'25 °C、強酸完全解離、單元酸' },
         { id:'ph-naoh-1e3', formula:'NaOH', concentration:0.001, pH:11, condition:'25 °C、強鹼完全解離' },
         { id:'ph-koh-1e2', formula:'KOH', concentration:0.01, pH:12, condition:'25 °C、強鹼完全解離' }
+    ],
+    acidNatureConditions: [
+        { id:'water-25c', temperature:25, kw:1.0e-14, kwText:'1.0×10⁻¹⁴', pKw:14, pKwText:'14.00' },
+        { id:'water-50c', temperature:50, kw:5.5e-14, kwText:'5.5×10⁻¹⁴', pKw:-Math.log10(5.5e-14), pKwText:'13.26' }
     ],
     moleSpecies: [
         { id:'sp-water', formula:'H₂O', name:'水', molarMass:18, particle:'分子' },
@@ -7158,6 +7164,140 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         return out;
     }
 
+    function buildAcidNature() {
+        const out = [];
+        const conditions = DATA().acidNatureConditions || [];
+        const classes = ['酸性', '中性', '鹼性'];
+        const fmtPH = value => Number(value.toFixed(2)).toString();
+        const fmtSci = value => {
+            const exponent = Math.floor(Math.log10(value));
+            const mantissa = Number((value / Math.pow(10, exponent)).toPrecision(3));
+            return `${mantissa}×10${superscript(exponent)}`;
+        };
+        const classifyH = (h, threshold) => Math.abs(h - threshold) / threshold < 1e-10 ? '中性' : h > threshold ? '酸性' : '鹼性';
+        const classifyOH = (oh, threshold) => Math.abs(oh - threshold) / threshold < 1e-10 ? '中性' : oh > threshold ? '鹼性' : '酸性';
+        const classWrong = answer => classes.filter(value => value !== answer).concat(['資料不足']);
+        const questionSet = (cfg, stems) => addStyled(out, cfg, stems);
+
+        conditions.forEach(condition => {
+            const threshold = Math.sqrt(condition.kw);
+            const neutralPH = condition.pKw / 2;
+            const temperature = `${condition.temperature} °C`;
+            const kwContext = `${temperature}，K_w=${condition.kwText}`;
+            const pKwContext = `${temperature}，pK_w=${condition.pKwText}`;
+            const factors = [0.05, 0.5, 1, 2, 4];
+
+            factors.forEach((factor, index) => {
+                const h = threshold * factor;
+                const hText = fmtSci(h);
+                const hClass = classifyH(h, threshold);
+                questionSet({
+                    template:'acidity-h-concentration-threshold', factId:`${condition.id}-h-${index}`,
+                    answer:hClass, distractors:classWrong(hClass), type:'酸鹼性判斷｜[H⁺] 與 √Kw 比較',
+                    basis:`中性時 [H⁺]=[OH⁻]=√K_w=√(${condition.kwText})=${fmtSci(threshold)} M。`,
+                    steps:`比較題給的 [H⁺]=${hText} M 與中性基準 ${fmtSci(threshold)} M。${hClass === '酸性' ? '[H⁺] 較大，故溶液偏酸。' : hClass === '鹼性' ? '[H⁺] 較小，故溶液偏鹼。' : '[H⁺] 正好等於中性基準。'}`,
+                    conclusion:`此溶液為${hClass}。`, misconception:'非 25°C 時不能固定使用 1.0×10⁻⁷ M；應以題目溫度下的 √Kw 為比較基準。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [H⁺]=${hText} M。判斷溶液酸鹼性。`,
+                    `已知 ${kwContext}，量得 [H⁺] 為 ${hText} M；此溶液屬於哪一類？`,
+                    `在 ${temperature} 下，水的 K_w 為 ${condition.kwText}。若 [H⁺]=${hText} M，溶液呈何性？`
+                ]);
+
+                const oh = threshold * factor;
+                const ohText = fmtSci(oh);
+                const ohClass = classifyOH(oh, threshold);
+                questionSet({
+                    template:'acidity-oh-concentration-threshold', factId:`${condition.id}-oh-${index}`,
+                    answer:ohClass, distractors:classWrong(ohClass), type:'酸鹼性判斷｜[OH⁻] 與 √Kw 比較',
+                    basis:`中性時 [OH⁻]=√K_w=√(${condition.kwText})=${fmtSci(threshold)} M。`,
+                    steps:`比較 [OH⁻]=${ohText} M 與中性基準 ${fmtSci(threshold)} M。${ohClass === '酸性' ? '[OH⁻] 較小，故 [H⁺] 相對較大，溶液偏酸。' : ohClass === '鹼性' ? '[OH⁻] 較大，故溶液偏鹼。' : '[OH⁻] 正好等於中性基準。'}`,
+                    conclusion:`此溶液為${ohClass}。`, misconception:'用 [OH⁻] 判斷時方向與 [H⁺] 相反；[OH⁻] 大於 √Kw 才是鹼性。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [OH⁻]=${ohText} M。判斷其酸鹼性。`,
+                    `在 ${temperature} 下，一份溶液的氫氧根濃度為 ${ohText} M。其水溶液呈何性？`,
+                    `某水溶液在 ${temperature} 時的 K_w=${condition.kwText}，且 [OH⁻]=${ohText} M。它是酸性、中性還是鹼性？`
+                ]);
+
+                const hPair = threshold * factor;
+                const ohPair = condition.kw / hPair;
+                const pairClass = classifyH(hPair, threshold);
+                questionSet({
+                    template:'acidity-ion-product-and-classification', factId:`${condition.id}-ion-pair-${index}`,
+                    answer:pairClass, distractors:classWrong(pairClass), type:'酸鹼性判斷｜Kw、[H⁺] 與 [OH⁻] 綜合',
+                    basis:`同一溫度下 [H⁺][OH⁻]=K_w；中性時兩者相等，皆為 √K_w。`,
+                    steps:`檢查乘積：(${fmtSci(hPair)})(${fmtSci(ohPair)})=${condition.kwText}。再比較 [H⁺]=${fmtSci(hPair)} M 與 [OH⁻]=${fmtSci(ohPair)} M；${pairClass === '酸性' ? '[H⁺] 較大' : pairClass === '鹼性' ? '[OH⁻] 較大' : '兩者相等'}。`,
+                    conclusion:`符合 K_w 的條件，溶液為${pairClass}。`, misconception:'先用乘積檢查離子濃度是否與 K_w 相符，再以 [H⁺] 和 [OH⁻] 的大小關係判斷酸鹼性。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [H⁺]=${fmtSci(hPair)} M、[OH⁻]=${fmtSci(ohPair)} M。依離子乘積與濃度大小判斷其酸鹼性。`,
+                    `一份溶液在 ${temperature} 時測得 [H⁺]=${fmtSci(hPair)} M、[OH⁻]=${fmtSci(ohPair)} M。若該溫度 K_w=${condition.kwText}，此結果代表何種酸鹼性？`,
+                    `某水溶液在 ${temperature} 的兩種離子濃度分別為 [H⁺]=${fmtSci(hPair)} M 與 [OH⁻]=${fmtSci(ohPair)} M。已知 K_w=${condition.kwText}，判斷溶液性質。`
+                ]);
+            });
+
+            [-0.8, -0.3, 0, 0.35, 0.9].forEach((offset, index) => {
+                const pH = Number((neutralPH + offset).toFixed(2));
+                const pHClass = pH < neutralPH - 0.001 ? '酸性' : pH > neutralPH + 0.001 ? '鹼性' : '中性';
+                questionSet({
+                    template:'acidity-ph-vs-pkw-half', factId:`${condition.id}-ph-${index}`,
+                    answer:pHClass, distractors:classWrong(pHClass), type:'酸鹼性判斷｜pH 與 pKw/2 比較',
+                    basis:`pH+pOH=pK_w；中性時 pH=pOH，因此中性 pH=pK_w/2=${fmtPH(neutralPH)}。`,
+                    steps:`將 pH=${fmtPH(pH)} 與中性基準 pK_w/2=${fmtPH(neutralPH)} 比較。${pHClass === '酸性' ? 'pH 較小，溶液偏酸。' : pHClass === '鹼性' ? 'pH 較大，溶液偏鹼。' : 'pH 等於中性基準。'}`,
+                    conclusion:`此溶液為${pHClass}。`, misconception:'只有在 25°C 且 pKw=14 時中性 pH 才是 7；其他溫度要比較 pH 與 pKw/2。'
+                }, [
+                    `在 ${pKwContext} 下，某溶液 pH=${fmtPH(pH)}。判斷其酸鹼性。`,
+                    `某水溶液在 ${temperature} 的 pH 為 ${fmtPH(pH)}，且該溫度 pK_w=${condition.pKwText}。它呈何性？`,
+                    `已知 ${temperature} 下 pK_w=${condition.pKwText}。一份溶液的 pH=${fmtPH(pH)}，請判斷酸鹼性。`
+                ]);
+
+                questionSet({
+                    template:'acidity-ph-from-kw-derived-neutral-point', factId:`${condition.id}-kw-ph-${index}`,
+                    answer:pHClass, distractors:classWrong(pHClass), type:'酸鹼性判斷｜由 Kw 推得 pKw 與中性 pH',
+                    basis:`先由 pK_w=−log K_w 求出 pK_w，再用中性時 pH=pK_w/2。`,
+                    steps:`pK_w=−log(${condition.kwText})≈${condition.pKwText}；中性 pH≈${condition.pKwText}/2=${fmtPH(neutralPH)}。題給 pH=${fmtPH(pH)}，${pHClass === '酸性' ? '低於' : pHClass === '鹼性' ? '高於' : '等於'}中性 pH，因此判為${pHClass}。`,
+                    conclusion:`該溶液呈${pHClass}。`, misconception:'不要只背中性 pH=7；先由當下溫度的 Kw 求 pKw，再除以 2 得中性點。'
+                }, [
+                    `${temperature} 時 K_w=${condition.kwText}。某溶液 pH=${fmtPH(pH)}，不預設 pK_w，判斷其酸鹼性。`,
+                    `已知 ${temperature} 時 K_w=${condition.kwText}，一份溶液的 pH 為 ${fmtPH(pH)}。先由 K_w 找出中性 pH，再判斷溶液性質。`,
+                    `某溫度下水的離子積為 ${condition.kwText}，溶液 pH=${fmtPH(pH)}。此溶液為酸性、中性或鹼性？`
+                ]);
+
+                const pOH = Number((condition.pKw - pH).toFixed(2));
+                const pOHClass = pOH > neutralPH + 0.001 ? '酸性' : pOH < neutralPH - 0.001 ? '鹼性' : '中性';
+                questionSet({
+                    template:'acidity-poh-vs-pkw-half', factId:`${condition.id}-poh-${index}`,
+                    answer:pOHClass, distractors:classWrong(pOHClass), type:'酸鹼性判斷｜pOH 與 pKw/2 比較',
+                    basis:`中性時 pOH=pK_w/2=${fmtPH(neutralPH)}；pOH 高於此值代表 [OH⁻] 較低。`,
+                    steps:`比較 pOH=${fmtPH(pOH)} 與 pK_w/2=${fmtPH(neutralPH)}。${pOHClass === '酸性' ? 'pOH 較大，[OH⁻] 較小，因此偏酸。' : pOHClass === '鹼性' ? 'pOH 較小，[OH⁻] 較大，因此偏鹼。' : 'pOH 等於中性基準。'}`,
+                    conclusion:`此溶液為${pOHClass}。`, misconception:'pOH 的判斷方向與 pH 相反：pOH 大於 pKw/2 為酸性，小於 pKw/2 為鹼性。'
+                }, [
+                    `在 ${pKwContext} 下，某溶液 pOH=${fmtPH(pOH)}。判斷溶液酸鹼性。`,
+                    `一份溶液在 ${temperature} 時 pOH 為 ${fmtPH(pOH)}，且 pK_w=${condition.pKwText}。此溶液呈何性？`,
+                    `已知 ${temperature} 下 pK_w=${condition.pKwText}；若 pOH=${fmtPH(pOH)}，溶液屬於哪一類？`
+                ]);
+
+                const comboAnswer = `pOH ${fmtPH(pOH)}，${pOHClass}`;
+                const comboWrong = unique([
+                    `pOH ${fmtPH(pH)}，${pOHClass}`,
+                    `pOH ${fmtPH(pOH)}，${pOHClass === '酸性' ? '鹼性' : pOHClass === '鹼性' ? '酸性' : '酸性'}`,
+                    `pOH ${fmtPH(pOH + 1)}，${pOHClass}`,
+                    `pOH ${fmtPH(pOH - 1)}，${pOHClass === '中性' ? '鹼性' : '中性'}`
+                ]);
+                questionSet({
+                    template:'acidity-pH-pOH-pKw-conversion', factId:`${condition.id}-convert-${index}`,
+                    answer:comboAnswer, distractors:comboWrong, type:'酸鹼性判斷｜pH、pOH 與 pKw 互換',
+                    basis:`任一溫度下 pH+pOH=pK_w=${condition.pKwText}；中性點為 pK_w/2=${fmtPH(neutralPH)}。`,
+                    steps:`pOH=pK_w−pH=${condition.pKwText}−${fmtPH(pH)}=${fmtPH(pOH)}。再比較 pOH 與 pK_w/2=${fmtPH(neutralPH)}，判定為${pOHClass}。`,
+                    conclusion:`pOH 約為 ${fmtPH(pOH)}，溶液呈${pOHClass}。`, misconception:'非 25°C 時 pH+pOH=pKw，不一定等於 14；先求 pOH，再與 pKw/2 比較。'
+                }, [
+                    `${temperature} 時某溶液 pH=${fmtPH(pH)}，已知 pK_w=${condition.pKwText}。先求 pOH，再判斷酸鹼性。`,
+                    `在 pK_w=${condition.pKwText} 的溫度下，若 pH=${fmtPH(pH)}，下列哪組 pOH 與酸鹼性判斷正確？`,
+                    `某溫度的 pK_w=${condition.pKwText}。一份溶液 pH=${fmtPH(pH)}，求其 pOH 及溶液性質。`
+                ]);
+            });
+        });
+        return out;
+    }
+
     function buildIndicators() {
         const out = [];
         if (!((DATA().indicators || []).length)) return out;
@@ -7562,6 +7702,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 if (subtype === 'conjugate') generated = buildConjugates();
                 if (subtype === 'salt') generated = buildSalts(subtype);
                 if (subtype === 'pH') generated = buildPH(subtype);
+                if (subtype === 'acidNature') generated = buildAcidNature();
                 if (subtype === 'indicator') generated = buildIndicators();
             } else if (category === 'mole') {
                 if (subtype === 'mole' || subtype === 'particles') generated = buildMoles(subtype);
