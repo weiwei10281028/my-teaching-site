@@ -6326,7 +6326,6 @@ window.KNOWLEDGE_ENGINE = (() => {
 
     return { generate, groupLabels: GROUP_LABELS, typeGroup: TYPE_GROUP };
 })();
-
 // --- Bundled knowledge calibration data (source: calibration_knowledge_data.js) ---
 // 知識校準：常數題庫。
 // 所有數值皆以高中課堂可使用的近似值呈現；條件欄位是答案的一部分，避免
@@ -6585,18 +6584,17 @@ window.KNOWLEDGE_ENGINE = (() => {
     window.CHEM_KNOWLEDGE_CONSTANT_DATA = Object.freeze(facts);
 })();
 
-
 // --- Bundled calibration extension data (source: calibration_extension_data.js) ---
 // 校準新增章節採「概念資料 × 共用模板」；此檔不儲存完整題幹或固定選項。
 window.CALIBRATION_EXTENSION_CATEGORIES = {
     acidBase: {
         label: '酸鹼與鹽類', difficulty: 8,
         subtypes: [
-            { id: 'strength', label: '常見強弱酸鹼', description: '正向辨識、反向辨識與逐物種分類', required: true },
-            { id: 'conjugate', label: '共軛酸鹼對', description: '酸失去質子、鹼接受質子的正反向辨識', required: false },
-            { id: 'salt', label: '離子水解與鹽類酸鹼性', description: '比較離子來源、主要水解粒子與溶液酸鹼性', required: true },
-            { id: 'pH', label: '簡單 pH 與中和', description: '強酸強鹼條件下的濃度、pH 與中和產物', required: true },
-            { id: 'indicator', label: '指示劑與變色', description: '依酸鹼環境判讀顏色，也可由顏色反推環境', required: true }
+            { id: 'strength', label: '常見強弱酸鹼', description: '比較等濃度溶液、解離程度與強弱排序；辨認題僅少量穿插', required: true },
+            { id: 'conjugate', label: '共軛酸鹼對', description: '從質子轉移反應判角色、共軛粒子與電荷守恆', required: false },
+            { id: 'salt', label: '離子水解與鹽類酸鹼性', description: '追蹤離子來源、水解方向與 Ka／Kb 對溶液酸鹼性的影響', required: true },
+            { id: 'pH', label: 'pH 與中和計算', description: '互換 [H₃O⁺]、[OH⁻]、pH、pOH，計算過量中和與混合後 pH', required: true },
+            { id: 'indicator', label: '指示劑與變色', description: '綜合多種指示劑觀察結果，推定 pH 範圍並排除不可能值', required: true }
         ]
     },
     mole: {
@@ -6632,11 +6630,11 @@ window.CALIBRATION_EXTENSION_CATEGORIES = {
 // 模板登錄表。模板 ID 由引擎執行，不為每筆概念資料撰寫專屬題目程式。
 window.CALIBRATION_EXTENSION_TEMPLATES = {
     acidBase: {
-        strength: ['classify-acid', 'classify-base', 'reverse-strength', 'species-strength'],
-        conjugate: ['acid-to-base', 'base-to-acid', 'proton-transfer-check'],
-        salt: ['salt-ph', 'hydrolyzing-ion', 'hydrolysis-effect'],
-        pH: ['concentration-to-ph', 'ph-to-concentration', 'neutralization-ratio'],
-        indicator: ['environment-to-color', 'color-to-environment', 'indicator-range']
+        strength: ['equal-concentration-acid-base-comparison', 'weak-acid-equilibrium-ph', 'weak-base-equilibrium-ph', 'condition-to-strength-class'],
+        conjugate: ['acid-to-conjugate-base-from-reactants', 'base-to-conjugate-acid-from-reactants'],
+        salt: ['ion-origin-to-solution-ph', 'hydrolysis-to-major-ion', 'salt-water-reactive-ion'],
+        pH: ['[H3O+]-to-pH-and-reverse', '[OH-]-to-[H3O+]-or-pH', 'pH-to-[OH-]', 'pOH-to-pH', 'strong-acid-base-mixture'],
+        indicator: ['two-indicator-interval-intersection']
     },
     mole: {
         mole: ['mass-to-moles', 'moles-to-mass'],
@@ -6669,11 +6667,11 @@ window.CALIBRATION_EXTENSION_DATA = {
         { id:'acid-hclo4', formula:'HClO₄', name:'過氯酸', kind:'acid', strength:'strong', rule:'過氯酸列為常見強酸；此題只考定性分類。' },
         { id:'acid-h2so4', formula:'H₂SO₄', name:'硫酸', kind:'acid', strength:'strong', rule:'硫酸第一階段解離視為完全解離；題目不延伸第二階段平衡。' },
         { id:'acid-hf', formula:'HF', name:'氫氟酸', kind:'acid', strength:'weak', rule:'HF 在水中只部分解離，屬弱酸。' },
-        { id:'acid-acetic', formula:'CH₃COOH', name:'醋酸', kind:'acid', strength:'weak', rule:'醋酸在水中只部分解離，屬弱酸。' },
+        { id:'acid-acetic', formula:'CH₃COOH', name:'醋酸', kind:'acid', strength:'weak', Ka:1.8e-5, rule:'醋酸在水中只部分解離，屬弱酸。' },
         { id:'acid-carbonic', formula:'H₂CO₃', name:'碳酸', kind:'acid', strength:'weak', rule:'碳酸在水中只部分解離，屬弱酸。' },
         { id:'acid-phosphoric', formula:'H₃PO₄', name:'磷酸', kind:'acid', strength:'weak', rule:'磷酸屬弱酸；多元解離不在此模板中計算。' },
-        { id:'acid-nitrous', formula:'HNO₂', name:'亞硝酸', kind:'acid', strength:'weak', rule:'亞硝酸在水中部分解離，屬弱酸。' },
-        { id:'acid-hclo', formula:'HClO', name:'次氯酸', kind:'acid', strength:'weak', rule:'次氯酸在水中部分解離，屬弱酸。' }
+        { id:'acid-nitrous', formula:'HNO₂', name:'亞硝酸', kind:'acid', strength:'weak', Ka:4.5e-4, rule:'亞硝酸在水中部分解離，屬弱酸。' },
+        { id:'acid-hclo', formula:'HClO', name:'次氯酸', kind:'acid', strength:'weak', Ka:3.0e-8, rule:'次氯酸在水中部分解離，屬弱酸。' }
     ],
     baseStrength: [
         { id:'base-naoh', formula:'NaOH', name:'氫氧化鈉', strength:'strong', rule:'可溶性 IA 族氫氧化物屬常見強鹼。' },
@@ -6681,9 +6679,9 @@ window.CALIBRATION_EXTENSION_DATA = {
         { id:'base-lioh', formula:'LiOH', name:'氫氧化鋰', strength:'strong', rule:'可溶性 IA 族氫氧化物屬常見強鹼。' },
         { id:'base-baoh', formula:'Ba(OH)₂', name:'氫氧化鋇', strength:'strong', rule:'氫氧化鋇為高中常見強鹼。' },
         { id:'base-caoh', formula:'Ca(OH)₂', name:'氫氧化鈣', strength:'strong', rule:'溶解部分解離出的氫氧根視為強鹼性來源。' },
-        { id:'base-nh3', formula:'NH₃', name:'氨', strength:'weak', rule:'氨與水建立平衡，僅部分生成 OH⁻，屬弱鹼。' },
-        { id:'base-methylamine', formula:'CH₃NH₂', name:'甲胺', strength:'weak', rule:'胺類可接受質子，但在水中通常只部分反應，屬弱鹼。' },
-        { id:'base-pyridine', formula:'C₅H₅N', name:'吡啶', strength:'weak', rule:'吡啶的氮原子可接受質子，在水中呈弱鹼性。' }
+        { id:'base-nh3', formula:'NH₃', name:'氨', strength:'weak', Kb:1.8e-5, rule:'氨與水建立平衡，僅部分生成 OH⁻，屬弱鹼。' },
+        { id:'base-methylamine', formula:'CH₃NH₂', name:'甲胺', strength:'weak', Kb:4.4e-4, rule:'胺類可接受質子，但在水中通常只部分反應，屬弱鹼。' },
+        { id:'base-pyridine', formula:'C₅H₅N', name:'吡啶', strength:'weak', Kb:1.7e-9, rule:'吡啶的氮原子可接受質子，在水中呈弱鹼性。' }
     ],
     conjugates: [
         { id:'conj-hcl', acid:'HCl', base:'Cl⁻', note:'失去一個質子形成共軛鹼。' },
@@ -6712,9 +6710,9 @@ window.CALIBRATION_EXTENSION_DATA = {
     ],
     indicators: [
         { id:'indicator-litmus', name:'石蕊', acid:'紅色', neutral:'紫色', base:'藍色', range:'定性' },
-        { id:'indicator-phenolphthalein', name:'酚酞', acid:'無色', neutral:'無色', base:'粉紅色', range:'酸性至中性無色；鹼性呈粉紅色' },
-        { id:'indicator-methyl-orange', name:'甲基橙', acid:'紅色', neutral:'黃色', base:'黃色', range:'酸性呈紅色；中性與鹼性呈黃色' },
-        { id:'indicator-btb', name:'廣用溴瑞香草酚藍（BTB）', acid:'黃色', neutral:'綠色', base:'藍色', range:'酸性黃、中性綠、鹼性藍' }
+        { id:'indicator-phenolphthalein', name:'酚酞', acid:'無色', neutral:'無色', base:'粉紅色', range:'約 pH 8.2 以下無色，約 pH 8.2–10.0 逐漸變粉紅，較高 pH 呈粉紅' },
+        { id:'indicator-methyl-orange', name:'甲基橙', acid:'紅色', neutral:'黃色', base:'黃色', range:'約 pH 3.1 以下紅色，約 pH 3.1–4.4 橙色過渡，約 pH 4.4 以上黃色' },
+        { id:'indicator-btb', name:'溴瑞香草酚藍（BTB）', acid:'黃色', neutral:'綠色', base:'藍色', range:'約 pH 6.0 以下黃色，約 pH 6.0–7.6 綠色過渡，約 pH 7.6 以上藍色' }
     ],
     neutralizations: [
         { id:'neut-hcl-naoh', acid:'HCl', acidName:'鹽酸', base:'NaOH', baseName:'氫氧化鈉', equation:'HCl＋NaOH→NaCl＋H₂O', salt:'NaCl', ratio:'1:1', condition:'完全中和' },
@@ -6849,7 +6847,6 @@ window.CALIBRATION_EXTENSION_DATA = {
     ]
 };
 
-
 // --- Bundled calibration extension engine (source: calibration_extension_engine.js) ---
 // 四個新增章節的資料×模板引擎。題幹、正解、誘答與詳解在出題時組合。
 window.CALIBRATION_EXTENSION_ENGINE = (() => {
@@ -6888,7 +6885,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
 
     function appendQuestion(out, cfg) {
         const options = unique([cfg.answer, ...itemCandidates(cfg.answer, cfg.distractors, 3)]);
-        if (options.length !== 4) return;
+        if (options.length < 3 || options.length > 4) return;
         out.push({
             id: `${cfg.template}:${cfg.factId}:${cfg.variant || 'a'}`,
             template: cfg.template,
@@ -6900,6 +6897,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             steps: cfg.steps,
             conclusion: cfg.conclusion,
             misconception: cfg.misconception || '先辨認題目指定的條件，再依同一章節規則比較選項。',
+            optionRationales: cfg.optionRationales,
             syllabus: cfg.required === false ? '加深加廣選修' : '必修',
             type: cfg.type
         });
@@ -6913,50 +6911,74 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         const out = [];
         const acid = DATA().acidStrength || [];
         const base = DATA().baseStrength || [];
-        const allClasses = ['強酸', '弱酸', '強鹼', '弱鹼'];
-        for (const item of acid) {
-            const kind = item.strength === 'strong' ? '強酸' : '弱酸';
-            if (subtype === 'strength') {
-                const label = item.strength === 'strong' ? '強酸' : '弱酸';
-                addStyled(out, {
-                    template: `acid-select-${item.strength}`, factId: item.id, answer: item.formula,
-                    distractors: acid.filter(x => x.strength !== item.strength).map(x => x.formula),
-                    type: '強弱酸鹼｜分類辨識', displayMode: 'formula',
-                    basis: `${item.formula}（${item.name}）屬於${label}。`,
-                    steps: item.rule,
-                    conclusion: item.strength === 'strong' ? '強酸與弱酸的判準是水中解離程度，不是含氫數或酸根種類。' : '弱酸仍會解離，只是水中同時存在未解離分子與離子。',
-                    misconception: '不要以分子式中可解離氫的數量推定酸強弱。'
-                }, item.strength === 'strong'
-                    ? [`下列何者為強酸？`, `下列酸中，哪一種在水中近乎完全解離？`, `選出高中常見強酸。`]
-                    : [`下列何者為弱酸？`, `下列酸中，哪一種只在水中部分解離？`, `選出高中常見弱酸。`]);
-                addStyled(out, {
-                    template: 'acid-strength-classify', factId: item.id, answer: kind,
-                    distractors: allClasses.filter(x => x !== kind), type: '強弱酸鹼｜分類判斷',
-                    basis: `${item.formula}是${kind}。`, steps: item.rule,
-                    conclusion: '分類時先確認物種是酸或鹼，再判斷其在水中的解離程度。',
-                    misconception: '不要只憑名稱中有「酸」字判斷強弱。'
-                }, [`${item.formula}在水溶液中屬於何種酸？`, `${item.name}在水溶液中屬於何種酸？`]);
-            }
-        }
-        for (const item of base) {
-            const kind = item.strength === 'strong' ? '強鹼' : '弱鹼';
-            if (subtype !== 'strength') continue;
+        if (subtype !== 'strength') return out;
+        const classPools = [
+            { group: acid, label: '酸', weak: 'weak', distract: acid.filter(x => x.strength === 'weak') },
+            { group: base, label: '鹼', weak: 'weak', distract: base.filter(x => x.strength === 'weak') }
+        ];
+        classPools.forEach(({ group, label, distract }) => group.filter(x => x.strength === 'strong').forEach((item, index) => {
+            const weakChoice = distract[index % distract.length];
+            const options = [item, ...distract.filter(x => x.id !== weakChoice.id).slice(0, 3)];
+            const names = options.map(x => x.formula);
             addStyled(out, {
-                template: `base-select-${item.strength}`, factId: item.id, answer: item.formula,
-                distractors: base.filter(x => x.strength !== item.strength).map(x => x.formula),
-                type: '強弱酸鹼｜分類辨識', displayMode: 'formula',
-                basis: `${item.formula}（${item.name}）屬於${kind}。`, steps: item.rule,
-                conclusion: item.strength === 'strong' ? '強鹼在水中可提供較多 OH⁻；需同時考慮溶解與解離條件。' : '弱鹼與水建立平衡，只部分接受質子。',
-                misconception: '含有 OH 的物質不一定都是強鹼。'
-            }, [`下列何者為${kind}？`, `選出高中常見${kind}。`, `下列鹼中，哪一種在水中的反應程度符合${kind}？`]);
+                template: `equal-concentration-${label}-strength`, factId: item.id, answer: item.formula,
+                distractors: names, type: `強弱酸鹼｜等濃度${label}溶液比較`, displayMode: 'formula',
+                basis: `各溶液的分析濃度相同，且溫度相同；強${label}在水中解離程度較高。`,
+                steps: `先排除只部分反應的弱${label}，再依題目所問的主要離子濃度或酸鹼程度比較。${item.formula}屬強${label}，在本題假設下反應近乎完全。`,
+                conclusion: label === '酸' ? `${item.formula}的 [H₃O⁺] 較高，因此同濃度下 pH 較低。` : `${item.formula}提供的 [OH⁻] 較高，因此同濃度下 pH 較高。`,
+                misconception: label === '酸' ? '比較 pH 時方向相反： [H₃O⁺] 越大，pH 越小；多元酸的可解離氫數不能直接當作解離程度。' : '強弱描述解離程度；溶液濃度相同才可直接比較生成的 OH⁻。'
+            }, label === '酸' ? [
+                `四種酸溶液的分析濃度相同，哪一杯的 pH 最低？`,
+                `若各酸均配成相同濃度，哪一種溶液能建立最高的 [H₃O⁺]？`,
+                `在相同溫度與分析濃度下，哪種酸的解離最接近完全？`
+            ] : [
+                `四種鹼溶液的分析濃度相同，哪一杯的 pH 最高？`,
+                `若各鹼均配成相同濃度，哪一種溶液能建立最高的 [OH⁻]？`,
+                `在相同溫度與分析濃度下，哪種鹼與水反應最完全？`
+            ]);
+        }));
+        const weakSpecies = [
+            ...acid.filter(x => x.strength === 'weak' && x.Ka).map(x => ({ ...x, constant:x.Ka, kind:'acid' })),
+            ...base.filter(x => x.strength === 'weak' && x.Kb).map(x => ({ ...x, constant:x.Kb, kind:'base' }))
+        ];
+        weakSpecies.forEach(item => [0.10, 0.050].forEach((concentration, index) => {
+            const k = item.constant;
+            const ion = (-k + Math.sqrt(k * k + 4 * k * concentration)) / 2;
+            const pH = item.kind === 'acid' ? -Math.log10(ion) : 14 + Math.log10(ion);
+            const answer = Number(pH.toFixed(2)).toString();
+            const [kMantissa, kExponent] = Number(k).toExponential(2).split('e');
+            const hText = `${kMantissa}×10${superscript(Number(kExponent))}`;
+            const cText = concentration.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+            const parameterId = `${item.id}-c${index}`;
+            const kindLabel = item.kind === 'acid' ? '酸' : '鹼';
             addStyled(out, {
-                template: 'base-strength-classify', factId: item.id, answer: kind,
-                distractors: allClasses.filter(x => x !== kind), type: '強弱酸鹼｜分類判斷',
-                basis: `${item.formula}是${kind}。`, steps: item.rule,
-                conclusion: '強弱分類描述水中反應程度，不等同於溶液濃度。',
-                misconception: '不要把濃鹼溶液和強鹼的「強」混為一談。'
-            }, [`${item.formula}在水中屬於何種鹼？`, `${item.name}溶於水後屬於何種鹼？`]);
-        }
+                template: `weak-${item.kind}-equilibrium-ph`, factId:parameterId, answer,
+                distractors:numericDistractors(pH, '', 1), type:`強弱酸鹼｜弱${kindLabel}平衡計算`, displayMode:'number',
+                basis:`${item.formula} 為弱${kindLabel}，在水中部分反應；25 °C 且濃度為 ${cText} M。`,
+                steps: item.kind === 'acid'
+                    ? `設平衡時 [H₃O⁺]=x。Kₐ=x²/(${cText}−x)=${hText}；解 x²+Kₐx−Kₐ(${cText})=0，得 x=${ion.toPrecision(3)} M，pH=−log x=${answer}。`
+                    : `設平衡時 [OH⁻]=x。Kᵦ=x²/(${cText}−x)=${hText}；解 x²+Kᵦx−Kᵦ(${cText})=0，得 x=${ion.toPrecision(3)} M，pOH=−log x；pH=14−pOH=${answer}。`,
+                conclusion:`該溶液的 pH 約為 ${answer}。`,
+                misconception:'弱酸／弱鹼不能把分析濃度直接當成 [H₃O⁺]／[OH⁻]；先用平衡常數求反應量，再取對數。'
+            }, [
+                `${item.formula} 溶液濃度為 ${cText} M，${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}，求 25 °C 下 pH。`,
+                `某 ${kindLabel}以 ${item.formula} 表示，分析濃度 ${cText} M、${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}。溶液 pH 約多少？`,
+                `不假設完全解離。對 ${cText} M 的 ${item.formula} 水溶液，已知 ${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}，估算 pH。`
+            ]);
+        }));
+        // 少量反向分類題保留基本辨識；同一物種仍以共用資料與模板生成。
+        [...acid, ...base].forEach(item => {
+            const label = item.kind === 'acid' || acid.some(x => x.id === item.id) ? '酸' : '鹼';
+            const answer = `${item.strength === 'strong' ? '強' : '弱'}${label}`;
+            appendQuestion(out, {
+                template: 'strength-classification-reverse', factId: item.id, answer,
+                question: `${item.formula} 的水溶液在相同分析濃度下呈現近乎完全解離／反應。此分類最適合哪一項？`,
+                distractors: ['強酸', '弱酸', '強鹼', '弱鹼'], type: '強弱酸鹼｜條件反推分類',
+                basis: `${item.formula}為${answer}；本題用解離程度定義強弱。`,
+                steps: `先依物種接受或提供質子的性質判斷屬${label}，再把近乎完全解離／反應對應到「強」。`,
+                conclusion: `分類為${answer}。`, misconception: '「強」指反應／解離程度，不等於濃度大；酸鹼類別與強弱是兩個判斷步驟。'
+            });
+        });
         return out;
     }
 
@@ -6966,20 +6988,29 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         const acids = facts.map(x => x.acid);
         const bases = facts.map(x => x.base);
         facts.forEach(item => {
+            const reactants = `${item.acid} 與 H₂O`;
             addStyled(out, {
-                template: 'acid-to-conjugate-base', factId: item.id, answer: item.base,
-                question: `${item.acid} 失去一個質子後形成何種共軛粒子？`, distractors: bases,
-                type: '共軛酸鹼｜酸轉共軛鹼', displayMode: 'ion', basis: `${item.acid}／${item.base} 相差一個 H⁺。`,
-                steps: `${item.acid} 失去一個 H⁺，電荷相應減少 1，得到 ${item.base}。`,
-                conclusion: item.note, misconception: '共軛鹼比原酸少一個 H，電荷少一個正電。'
-            }, [`${item.acid} 的共軛鹼為何？`, `由 ${item.acid} 移去一個 H⁺，產物為何？`]);
+                template: 'reaction-acid-role-conjugate-base', factId: item.id, answer: item.base,
+                distractors: bases, type: '共軛酸鹼｜反應式辨認共軛鹼', displayMode: 'ion',
+                basis: `反應中 ${item.acid} 將質子轉移給水，成為共軛鹼。`,
+                steps: `比較反應物與生成物：${item.acid} 少一個 H⁺，電荷也減少 1；所以對應生成粒子為 ${item.base}。`,
+                conclusion: `${item.acid} 的共軛鹼是 ${item.base}。`, misconception: '共軛粒子只差一個質子；寫出粒子後仍要檢查原子數與總電荷。'
+            }, [
+                `在 ${reactants} 的質子轉移反應中，${item.acid} 失去一個質子後形成哪種粒子？`,
+                `只考慮 ${reactants} 互相傳遞一個 H⁺，指出 ${item.acid} 所對應的共軛鹼。`,
+                `${item.acid} 與水作用時，哪一粒子是它失去 H⁺ 後的共軛對象？`
+            ]);
             addStyled(out, {
-                template: 'base-to-conjugate-acid', factId: item.id, answer: item.acid,
-                question: `${item.base} 接受一個質子後形成何種共軛粒子？`, distractors: acids,
-                type: '共軛酸鹼｜鹼轉共軛酸', displayMode: 'ion', basis: `${item.base}／${item.acid} 相差一個 H⁺。`,
-                steps: `${item.base} 接受一個 H⁺，電荷相應增加 1，得到 ${item.acid}。`,
-                conclusion: '共軛酸由原鹼接受一個質子形成。', misconception: '共軛酸比原鹼多一個 H，電荷多一個正電。'
-            }, [`${item.base} 的共軛酸為何？`, `由 ${item.base} 接受一個 H⁺，產物為何？`]);
+                template: 'reaction-base-role-conjugate-acid', factId: item.id, answer: item.acid,
+                distractors: acids, type: '共軛酸鹼｜反應式辨認共軛酸', displayMode: 'ion',
+                basis: `${item.base} 接受一個 H⁺ 後形成 ${item.acid}；兩者只差一個質子。`,
+                steps: `在反應式中比較 ${item.acid} 和 ${item.base}：兩者只差一個 H⁺。逐項核對氫原子數及電荷，排除多／少兩個質子或電荷不符的選項。`,
+                conclusion: `${item.base} 的共軛酸是 ${item.acid}。`, misconception: '鹼的共軛酸需加上一個 H⁺，電荷增加 1；不可以只補氫而漏改電荷。'
+            }, [
+                `若 ${item.base} 參與質子轉移，接受一個 H⁺ 後會形成哪種共軛酸？`,
+                `考慮 ${item.base} 與 H₃O⁺ 的質子轉移，哪種粒子是 ${item.base} 接受一個質子後的產物？`,
+                `若 ${item.base} 反向接受 H⁺，生成物的化學式應是哪一項？`
+            ]);
         });
         return out;
     }
@@ -6991,32 +7022,41 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         const ions = unique(facts.flatMap(x => [x.cation, x.anion, x.activeIon]).filter(x => x && x !== '無'));
         facts.forEach(item => {
             if (subtype === 'salt') {
+                const active = item.activeIon !== '無';
+                const answerProduct = item.product === 'H₃O⁺' ? 'H₃O⁺' : item.product === 'OH⁻' ? 'OH⁻' : '無顯著增加';
+                const distractProduct = ['H₃O⁺', 'OH⁻', 'Na⁺', 'Cl⁻', '無顯著增加'];
                 appendQuestion(out, {
-                    template: 'salt-solution-ph', factId: item.id,
-                    question: `${item.formula} 溶於水後，溶液主要呈何性？`, answer: item.behavior,
-                    distractors: behaviors, type: '鹽類水解｜溶液酸鹼性', displayMode: 'text',
-                    basis: `${item.formula} 溶液判定為${item.behavior}。`, steps: item.rule,
-                    conclusion: item.activeIon === '無' ? '強酸與強鹼來源的離子通常不顯著水解。' : `主要作用粒子為 ${item.activeIon}。`,
-                    misconception: item.excludedFromUniquePH ? '兩種離子都水解時，需比較 Ka 與 Kb，不能只憑鹽式判斷。' : '先判斷離子來自強酸、弱酸、強鹼或弱鹼，再決定是否水解。'
+                    template: 'salt-source-to-ph', factId: item.id, answer: item.behavior,
+                    question: `某鹽由 ${item.cation} 與 ${item.anion} 組成。依其離子來源判斷，稀水溶液的主要酸鹼性為何？`,
+                    distractors: behaviors, type: '離子水解｜來源推論酸鹼性', displayMode: 'text',
+                    basis: `先分別判斷陽、陰離子是否為強酸／強鹼的共軛粒子，再判斷哪些離子與水反應。`,
+                    steps: `${item.rule} ${active ? `本例主要水解粒子為 ${item.activeIon}，其反應使溶液偏向${item.behavior}。` : '兩離子均不顯著水解，水的自解離仍是主要酸鹼來源。'}`,
+                    conclusion: `溶液主要呈${item.behavior}。`,
+                    misconception: '鹽的酸鹼性取決於離子在水中的反應；不能看到金屬陽離子就一律判中性，也不能只看鹽的名稱。'
                 });
-                if (item.activeIon !== '無') {
-                    appendQuestion(out, {
-                        template: 'salt-hydrolyzing-ion', factId: item.id,
-                        question: `${item.formula} 水溶液中，主要與水作用的離子為何？`, answer: item.activeIon,
-                        distractors: ions, type: '鹽類水解｜作用離子', displayMode: 'ion',
-                        basis: `${item.formula} 中主要水解離子為 ${item.activeIon}。`, steps: item.rule,
-                        conclusion: item.product === 'H₃O⁺' ? `此水解作用使 H₃O⁺增加，溶液呈${item.behavior}。` : `此水解作用使 OH⁻增加，溶液呈${item.behavior}。`,
-                        misconception: '旁觀離子不一定會水解；須比較其共軛酸鹼強弱。'
-                    });
-                    const product = item.product;
-                    if (product === 'H₃O⁺' || product === 'OH⁻') appendQuestion(out, {
-                        template: 'salt-hydrolysis-product', factId: item.id,
-                        question: `${item.activeIon} 與水作用時，主要增加哪一種離子？`, answer: product,
-                        distractors: ['H₃O⁺', 'OH⁻', 'Na⁺', 'Cl⁻'], type: '鹽類水解｜作用結果', displayMode: 'ion',
-                        basis: `${item.activeIon} 是${item.behavior}鹽溶液中的主要水解粒子。`, steps: item.rule,
-                        conclusion: `增加 ${product} 使溶液呈${item.behavior}。`, misconception: '酸性水解增加 H₃O⁺；鹼性水解增加 OH⁻。'
-                    });
-                }
+                appendQuestion(out, {
+                    template: 'salt-hydrolysis-effect', factId: item.id, answer: answerProduct,
+                    question: active ? `由 ${item.cation}、${item.anion} 組成的鹽溶於水後，水解作用主要使哪種粒子增加？` : `由 ${item.cation}、${item.anion} 組成的鹽溶於水後，哪一項描述最恰當？`,
+                    distractors: distractProduct, type: '離子水解｜粒子變化推論', displayMode: 'ion',
+                    basis: active ? `${item.activeIon} 是此鹽中主要與水作用的離子。` : `${item.cation}與${item.anion}在高中常見近似下都不顯著水解。`,
+                    steps: active ? `${item.rule} 若水解產生 H₃O⁺，酸性增強；若產生 OH⁻，鹼性增強。` : '兩離子來源分別為強鹼與強酸，水溶液近似中性，沒有單一水解產物顯著增加。',
+                    conclusion: active ? `主要增加 ${answerProduct}，故溶液呈${item.behavior}。` : '不會由鹽離子水解顯著增加 H₃O⁺ 或 OH⁻。',
+                    misconception: '區分水解產物與原本存在的旁觀離子；酸性水解增加 H₃O⁺，鹼性水解增加 OH⁻。'
+                });
+                const correctIon = active ? item.activeIon : '無顯著水解離子';
+                const ionOptions = [...ions, '無顯著水解離子'];
+                addStyled(out, {
+                    template: 'salt-active-ion', factId: item.id, answer: correctIon,
+                    distractors: ionOptions, type: '離子水解｜判別反應粒子', displayMode: 'ion',
+                    basis: active ? `${item.activeIon}為弱鹼／弱酸的共軛粒子，會與水發生反應。` : '由強酸與強鹼形成的離子通常不顯著水解。',
+                    steps: `${item.rule} 逐一檢查陽、陰離子的共軛酸鹼強度，再排除旁觀離子。`,
+                    conclusion: active ? `主要反應粒子為 ${correctIon}。` : '沒有單一離子顯著水解。',
+                    misconception: '弱酸的共軛鹼或弱鹼的共軛酸才會明顯水解；另一離子可能只是旁觀離子。'
+                }, [
+                    `由 ${item.cation}、${item.anion} 組成的鹽進入水中，哪個離子主要參與水解？`,
+                    `若追蹤這種鹽造成溶液偏酸／偏鹼的來源，應先追查哪個粒子？`,
+                    `檢查 ${item.cation} 與 ${item.anion}，何者是此溶液中主要的水解粒子？`
+                ]);
             }
         });
         return out;
@@ -7024,59 +7064,95 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
 
     function buildPH(subtype) {
         const out = [];
-        const cases = DATA().strongPH || [];
-        cases.forEach(item => {
-            [-1, 0, 1].forEach((power, index) => {
-                const c = item.concentration * Math.pow(10, power);
-                const isAcid = item.formula === 'HCl' || item.formula === 'HNO₃';
-                const pH = isAcid ? -Math.log10(c) : 14 + Math.log10(c);
-                const concText = num(c);
-                const label = isAcid ? '[H₃O⁺]' : '[OH⁻]';
-                const correct = `pH ${num(pH)}`;
-                if (subtype === 'pH') {
-                    appendQuestion(out, {
-                        template: 'strong-concentration-to-ph', factId: item.id, variant: String(index),
-                        question: `25 °C 下，${item.formula} 為${isAcid ? '單元強酸' : '強鹼'}且濃度為 ${concText} M，pH 約為何？`,
-                        answer: num(pH), distractors: numericDistractors(pH, '', 1), type: '簡單 pH｜濃度計算',
-                        basis: `此題採 ${item.condition}。`,
-                        steps: isAcid ? `[H₃O⁺]=${concText} M；pH=−log[H₃O⁺]=${num(pH)}。` : `[OH⁻]=${concText} M；pOH=−log[OH⁻]，pH=14−pOH=${num(pH)}。`,
-                        conclusion: `答案為 pH ${num(pH)}。`, misconception: '強鹼先求 pOH，再用 25 °C 下 pH＋pOH=14。'
-                    });
-                    appendQuestion(out, {
-                        template: 'strong-ph-to-concentration', factId: item.id, variant: String(index),
-                        question: `${item.formula} 水溶液在 25 °C 的 pH 為 ${num(pH)}；其 ${label} 約為多少 M？`,
-                        answer: concText, distractors: numericDistractors(c, 'M', c), type: '簡單 pH｜由 pH 反推濃度',
-                        basis: `題目指定 ${item.condition}。`,
-                        steps: isAcid ? `[H₃O⁺]=10^(−pH)=10^(−${num(pH)})=${concText} M。` : `pOH=14−pH=${num(14 - pH)}；[OH⁻]=10^(−pOH)=${concText} M。`,
-                        conclusion: `所求 ${label} 為 ${concText} M。`, misconception: '鹼性溶液的 OH⁻濃度要先由 pOH 求得，不能直接把 pH 當指數。'
-                    });
-                }
-            });
-        });
-        if (subtype === 'pH') (DATA().neutralizations || []).forEach(item => {
-            const reactants = `${item.acid} 與 ${item.base}`;
-            const reactantNames = `${item.acidName} 與 ${item.baseName}`;
+        if (subtype !== 'pH') return out;
+        const powers = [-2, -3, -4, -5];
+        const coefficients = [1, 2, 5];
+        const log10 = c => -Math.log10(c);
+        const sci = c => {
+            const exp = Math.floor(Math.log10(c));
+            const mantissa = Number((c / Math.pow(10, exp)).toPrecision(3));
+            return `${mantissa}×10${superscript(exp)}`;
+        };
+        const fmtPH = value => Number(value.toFixed(2)).toString();
+        const choices = (answer, unit) => {
+            if (unit !== 'M') return unique([answer, ...numericDistractors(Number(answer), '', 1)]);
+            const match = String(answer).match(/^([\d.]+)×10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)$/);
+            if (!match) return [answer, `${answer}×2`, `${answer}÷2`, `${answer}×10`].slice(0, 4);
+            const supMap = { '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁻':'-','⁺':'+' };
+            const mantissa = Number(match[1]), exponent = Number([...match[2]].map(c => supMap[c]).join(''));
+            const fmt = (m, e) => `${Number(m.toPrecision(3))}×10${superscript(e)}`;
+            return unique([answer, fmt(mantissa * 2, exponent), fmt(mantissa / 2, exponent), fmt(mantissa, exponent + 1), fmt(mantissa, exponent - 1)]).map(value => `${value} M`);
+        };
+        const addConversion = (id, givenSpecies, given, target, answer, steps, explainError, stems, unit = 'M') => {
+            const answerText = unit ? `${answer} ${unit}` : answer;
             addStyled(out, {
-                template: 'neutralization-salt', factId: item.id, answer: item.salt,
-                distractors: (DATA().neutralizations || []).map(x => x.salt), type: '中和反應｜產物辨識', displayMode: 'formula',
-                basis: '酸提供陰離子，鹼提供陽離子；依離子電荷組成電中性的鹽。',
-                steps: `完全中和的平衡式為 ${item.equation}。由反應物離子組合並檢查電荷平衡，生成 ${item.salt}。`,
-                conclusion: `反應生成的鹽為 ${item.salt}。`,
-                misconception: '只看酸根或只看金屬離子都不足以決定鹽的化學式；需配對兩者並確認電中性。'
-            }, [
-                `${reactants}完全中和後，生成的鹽為何？`,
-                `${reactantNames}恰好完全反應，產物中的鹽是哪一種？`
-            ]);
+                template: `acidbase-convert-${givenSpecies}-to-${target}`, factId: id,
+                answer: answerText, distractors: choices(answer, unit),
+                type: `pH 計算｜${givenSpecies} 轉 ${target}`, displayMode: 'number',
+                basis: `25 °C 時使用 pH＋pOH＝14、K_w＝1.0×10⁻¹⁴；強酸強鹼假設完全解離。`,
+                steps, conclusion: `所求 ${target} 為 ${answerText}。`, misconception: explainError
+            }, stems);
+        };
+        powers.forEach((power, pIndex) => coefficients.forEach((coef, cIndex) => {
+            const concentration = coef * Math.pow(10, power);
+            const h = concentration;
+            const oh = 1e-14 / h;
+            const pH = log10(h);
+            const pOH = 14 - pH;
+            const hText = sci(h), ohText = sci(oh);
+            const ident = `calculated-${power}-${coef}`;
+            const phText = fmtPH(pH), pohText = fmtPH(pOH);
+            addConversion(ident, '[H₃O⁺]', hText, 'pH', phText,
+                `[H₃O⁺]=${hText} M；pH=−log[H₃O⁺]=−log(${coef}×10^(${power}))=${phText}。`,
+                '先確認科學記號的指數與係數；pH 是負對數，濃度增加時 pH 應降低。',
+                [`已知 [H₃O⁺]=${hText} M，求 pH。`, `一份溶液的氫氧鎓離子濃度為 ${hText} M；其 pH 為多少？`, `若 [H⁺]=${hText} M，這份溶液的 pH 約是多少？`], '');
+            addConversion(ident, 'pH', phText, '[H₃O⁺]', hText,
+                `[H₃O⁺]=10^(−pH)=10^(−${phText})=${hText} M。`,
+                '由 pH 反推濃度要取 10^(−pH)，不能把 pH 數字直接當濃度或指數。',
+                [`某水溶液 pH=${phText}，求 [H₃O⁺]。`, `量得 pH 為 ${phText}，氫氧鎓離子濃度約為多少？`, `若 pH=${phText}，對應的 [H⁺] 是多少 M？`]);
+            addConversion(ident, '[OH⁻]', ohText, '[H₃O⁺]', hText,
+                `[H₃O⁺][OH⁻]=K_w；[H₃O⁺]=(1.0×10⁻¹⁴)/(${ohText})=${hText} M。`,
+                '酸、鹼離子濃度互換應使用 K_w 的乘積關係；不能把兩者濃度直接相減。',
+                [`25 °C 下 [OH⁻]=${ohText} M，求 [H₃O⁺]。`, `已知氫氧根濃度為 ${ohText} M，溶液中的 [H⁺] 約為何？`, `若 [OH⁻]=${ohText} M，水合氫離子濃度是多少？`]);
+            addConversion(ident, '[OH⁻]', ohText, 'pH', phText,
+                `[OH⁻]=${ohText} M；pOH=−log[OH⁻]=${pohText}，故 pH=14−${pohText}=${phText}。`,
+                '先求 pOH 再以 14 相減；把 pOH 當成 pH 會得到互補的錯誤值。',
+                [`25 °C 時 [OH⁻]=${ohText} M，求此溶液的 pH。`, `鹼性溶液的氫氧根濃度為 ${ohText} M，pH 約為何？`, `若 [OH⁻]=${ohText} M，請反推 pH。`], '');
+            addConversion(ident, 'pH', phText, '[OH⁻]', ohText,
+                `pOH=14−${phText}=${pohText}；[OH⁻]=10^(−${pohText})=${ohText} M。`,
+                '已知 pH 時，先用 pOH=14−pH；直接計算 10^(−pH) 會得到 [H₃O⁺] 而非 [OH⁻]。',
+                [`pH=${phText}，求 [OH⁻]。`, `某水溶液 pH 為 ${phText}，其氫氧根濃度約多少？`, `已知 pH=${phText}，反求 [OH⁻]。`]);
+            addConversion(ident, 'pOH', pohText, 'pH', phText,
+                `pH＋pOH=14；pH=14−${pohText}=${phText}。`,
+                '25 °C 下 pH 與 pOH 相加為 14；要以 14 減去已知值。',
+                [`25 °C 時 pOH=${pohText}，求 pH。`, `溶液的 pOH 為 ${pohText}，其 pH 是多少？`, `已知 pOH=${pohText}，反算氫離子指數。`], '');
+        }));
+
+        // 反應物只列酸、鹼與測量資料；不把平衡式或產物寫進題幹。
+        const mixCases = [
+            { id:'mix-acid-excess-a', ca:0.020, va:25, cb:0.010, vb:20, excess:'acid' },
+            { id:'mix-base-excess-b', ca:0.010, va:20, cb:0.020, vb:25, excess:'base' },
+            { id:'mix-acid-excess-c', ca:0.050, va:10, cb:0.020, vb:20, excess:'acid' },
+            { id:'mix-base-excess-d', ca:0.020, va:20, cb:0.050, vb:10, excess:'base' }
+        ];
+        mixCases.forEach(item => {
+            const acidEq = item.ca * item.va / 1000;
+            const baseEq = item.cb * item.vb / 1000;
+            const residual = Math.abs(acidEq - baseEq) / ((item.va + item.vb) / 1000);
+            const pH = item.excess === 'acid' ? -Math.log10(residual) : 14 + Math.log10(residual);
+            const answer = fmtPH(pH);
+            const wrong = [fmtPH(14 - pH), fmtPH(item.excess === 'acid' ? pH + 1 : pH - 1), fmtPH(item.excess === 'acid' ? pH - 1 : pH + 1)];
             addStyled(out, {
-                template: 'neutralization-ratio', factId: item.id, answer: item.ratio,
-                distractors: ['1:1', '1:2', '2:1', '1:3', '3:1'], type: '中和反應｜係數比',
-                basis: '完全中和時，酸提供的 H⁺ 總量等於鹼提供的 OH⁻ 總量。',
-                steps: `平衡反應式為 ${item.equation}；取酸、鹼係數並按「酸：鹼」順序化簡，得到 ${item.ratio}。`,
-                conclusion: `完全中和的莫耳比（酸：鹼）為 ${item.ratio}。`,
-                misconception: '比例順序固定為酸：鹼；多元酸或多元鹼完全中和時不一定是 1:1。'
+                template: 'strong-acid-base-mix-ph', factId: item.id, answer,
+                distractors: wrong, type: '中和計算｜過量反應物與混合後 pH', displayMode: 'number',
+                basis: '假設 HCl、NaOH 完全解離，體積可加成；先比較 H₃O⁺、OH⁻ 莫耳數，過量者除以混合總體積。',
+                steps: `n(H₃O⁺)=${item.ca}×${item.va}/1000=${acidEq.toPrecision(3)} mol；n(OH⁻)=${item.cb}×${item.vb}/1000=${baseEq.toPrecision(3)} mol。${item.excess === 'acid' ? `酸過量，剩餘濃度=${residual.toPrecision(3)} M，pH=−log(${residual.toPrecision(3)})=${answer}。` : `鹼過量，剩餘濃度=${residual.toPrecision(3)} M，pOH=−log(${residual.toPrecision(3)})，pH=14−pOH=${answer}。`}`,
+                conclusion: `混合液 pH 約為 ${answer}。`,
+                misconception: '不可直接平均兩杯溶液的 pH；先用莫耳數做中和，再除以總體積，並辨認最後剩下的是酸或鹼。'
             }, [
-                `${reactants}完全中和時，兩者的莫耳數比（酸：鹼）為何？`,
-                `${reactantNames}恰好完全中和時，酸與鹼應依什麼莫耳比反應？`
+                `將 ${item.va} mL、${item.ca} M HCl 與 ${item.vb} mL、${item.cb} M NaOH 混合，反應後 pH 約為何？`,
+                `取 ${item.ca} M 鹽酸 ${item.va} mL，加入 ${item.cb} M 氫氧化鈉 ${item.vb} mL；假設體積可加，求混合液 pH。`,
+                `一份 ${item.va} mL 的 ${item.ca} M 強酸，與 ${item.vb} mL 的 ${item.cb} M 強鹼混合。完全反應後 pH 約多少？`
             ]);
         });
         return out;
@@ -7084,32 +7160,49 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
 
     function buildIndicators() {
         const out = [];
-        const facts = DATA().indicators || [];
-        const envs = ['酸性', '中性', '鹼性'];
-        facts.forEach(item => {
-            envs.forEach(env => {
-                const color = item[env === '酸性' ? 'acid' : env === '中性' ? 'neutral' : 'base'];
-                appendQuestion(out, {
-                    template: 'indicator-environment-color', factId: item.id, variant: env,
-                    question: `${item.name} 遇到${env}溶液時，呈何種顏色？`, answer: color,
-                    distractors: [item.acid, item.neutral, item.base, '紫色', '無色', '粉紅色', '橙色', '綠色', '藍色', '紅色', '黃色'], type: '指示劑｜環境判色',
-                    basis: `題目採用${item.name}的變色資料（${item.range}）。`,
-                    steps: `${env}環境下，${item.name}呈${color}。`,
-                    conclusion: '顏色需依指示劑種類與溶液酸鹼環境一起判斷。',
-                    misconception: '同一顏色可能對應不只一種環境；反向題只在顏色能唯一判定時出現。'
-                });
+        if (!((DATA().indicators || []).length)) return out;
+        const indicators = DATA().indicators;
+        const methyl = indicators.find(x => x.id === 'indicator-methyl-orange');
+        const btb = indicators.find(x => x.id === 'indicator-btb');
+        const phenol = indicators.find(x => x.id === 'indicator-phenolphthalein');
+        if (!methyl || !btb || !phenol) return out;
+        const ranges = [
+            { label:'pH＜3.1', mid:2.5 }, { label:'3.1＜pH＜4.4', mid:3.7 },
+            { label:'4.4＜pH＜6.0', mid:5.2 }, { label:'6.0＜pH＜7.6', mid:6.8 },
+            { label:'7.6＜pH＜8.2', mid:7.9 }, { label:'8.2＜pH＜10.0', mid:9.0 }, { label:'pH＞10.0', mid:11 }
+        ];
+        const color = (item, pH) => {
+            if (item === methyl) return pH < 3.1 ? '紅色' : pH < 4.4 ? '橙色' : '黃色';
+            if (item === btb) return pH < 6 ? '黃色' : pH < 7.6 ? '綠色' : '藍色';
+            if (item === phenol) return pH < 8.2 ? '無色' : pH < 10 ? '淡粉紅色' : '粉紅色';
+            return '未知';
+        };
+        const triplets = [[methyl, btb], [methyl, phenol], [btb, phenol]];
+        triplets.forEach((pair, pairIndex) => {
+            const signatures = new Map();
+            ranges.forEach((range, index) => {
+                const signature = pair.map(indicator => `${indicator.name}：${color(indicator, range.mid)}`).join('；');
+                if (!signatures.has(signature)) signatures.set(signature, []);
+                signatures.get(signature).push({ range, index });
             });
-            const uniqueColors = unique(envs.map(env => item[env === '酸性' ? 'acid' : env === '中性' ? 'neutral' : 'base']));
-            uniqueColors.forEach(color => {
-                const matched = envs.filter(env => item[env === '酸性' ? 'acid' : env === '中性' ? 'neutral' : 'base'] === color);
-                if (matched.length === 1) appendQuestion(out, {
-                    template: 'indicator-color-environment', factId: item.id, variant: color,
-                    question: `${item.name} 呈${color}時，符合下列哪一種溶液環境？`, answer: matched[0],
-                    distractors: [...envs, '僅憑顏色無法判定'], type: '指示劑｜由顏色反推環境',
-                    basis: `${item.name}在${matched[0]}環境呈${color}。`,
-                    steps: `${item.range}。`, conclusion: `本題條件下可判定為${matched[0]}。`,
-                    misconception: '若同色涵蓋多個酸鹼區間，題目不以單一環境作唯一答案。'
-                });
+            [...signatures.entries()].forEach(([signature, matches], sigIndex) => {
+                // 若同組顏色對應多段 pH，保留為多解區間題，不偽裝成唯一答案。
+                const answer = matches.map(x => x.range.label).join(' 或 ');
+                const plausible = ranges.filter(x => !matches.some(m => m.index === ranges.indexOf(x))).map(x => x.label);
+                const distractors = itemCandidates(answer, plausible, 3);
+                const stems = [
+                    `同一份溶液分別加入 ${pair[0].name}、${pair[1].name}，觀察為「${signature}」。依變色範圍，pH 可能落在哪一區？`,
+                    `實驗記錄顯示 ${signature}。綜合兩項指示劑結果，哪個 pH 範圍與觀察相容？`,
+                    `已知 ${pair[0].range}；另知 ${pair[1].range}。若兩種指示劑呈現 ${signature}，可將 pH 限定在哪個範圍？`
+                ];
+                addStyled(out, {
+                    template:'combined-indicator-interval', factId:`ind-combo-${pairIndex}-${sigIndex}`,
+                    answer, distractors, type:'指示劑｜多觀察條件交集', displayMode:'text',
+                    basis:`每一種指示劑只提供 pH 的區間限制；要取兩項觀察所允許範圍的交集。`,
+                    steps:`依資料表逐一定位：${signature}。${matches.length > 1 ? '這組顏色仍容許多段 pH，因此答案列出所有相容區間。' : `兩項限制的交集為 ${answer}。`}`,
+                    conclusion:`符合觀察的範圍為 ${answer}。`,
+                    misconception:'單一指示劑的顏色通常只限制 pH 區間；不要把顏色直接等同於酸性、中性或鹼性的唯一值。'
+                }, stems);
             });
         });
         return out;
@@ -7481,7 +7574,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 if (subtype === 'rate') generated = buildRate();
                 if (subtype === 'equilibrium') generated = buildEquilibrium();
             } else if (category === 'organic') generated = buildOrganic(subtype);
-            out.push(...generated.filter(q => q && q.options.length === 4 && q.options.filter(v => key(v) === key(q.answer)).length === 1));
+        out.push(...generated.filter(q => q && q.options.length >= 3 && q.options.length <= 4 && q.options.filter(v => key(v) === key(q.answer)).length === 1));
         });
         return out;
     }
@@ -7534,10 +7627,12 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         quizData.showExplanation = true;
         quizData.explanation = explanations;
         quizData.correctReason = [explanations.basis, explanations.steps, explanations.conclusion].join(' ');
-        quizData.optionRationales = Object.fromEntries(item.options.filter(v => key(v) !== key(item.answer)).map(v => [key(v), item.misconception]));
+        quizData.optionRationales = Object.fromEntries(item.options.filter(v => key(v) !== key(item.answer)).map((v, index) => {
+            const specific = item.optionRationales && (item.optionRationales[key(v)] || item.optionRationales[v]);
+            return [key(v), specific || `${item.misconception}（選項 ${v} 未符合上述轉換／條件。）`];
+        }));
         return true;
     }
 
     return { generate, capacity, generatePool };
 })();
-
