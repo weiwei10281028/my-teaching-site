@@ -6592,7 +6592,7 @@ window.CALIBRATION_EXTENSION_CATEGORIES = {
         subtypes:[
             {id:'expressions',label:'濃度表示、計算與換算',description:'公式、單位與各種濃度的正反向換算',required:true},
             {id:'influence',label:'濃度受哪些因素影響',description:'溫度、體積、加水與溶質變動',required:true},
-            {id:'atomicStandard',label:'原子量標準改變',description:'相對原子量標準、原子質量與比值',required:true},
+            {id:'atomicStandard',label:'原子量標準改變',description:'莫耳質量縮放及濃度數值反向換算',required:true},
             {id:'dilution',label:'稀釋與配製',description:'原液、目標濃度、體積與加水量互求',required:true},
             {id:'mixing',label:'同溶質溶液混合',description:'混合濃度、用量與比例互求',required:true},
             {id:'changes',label:'蒸發、加水與增減溶質',description:'溶液質量與質量百分濃度變化',required:true},
@@ -7391,42 +7391,42 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 emit('單位→濃度名稱',f.id,[`「${f.unit}」可表示哪一種濃度？`,`下列何種濃度使用 ${f.unit}？`],f.name,formulas.map(x=>x.name),'逐一比對單位與定義。',`${f.unit} 對應${f.name}。`,'先核對單位中的溶質、溶劑及溶液。');
             });
             const solutes=[{id:'NaCl',name:'食鹽',formula:'NaCl',mw:58.5},{id:'NaOH',name:'氫氧化鈉',formula:'NaOH',mw:40},{id:'glucose',name:'葡萄糖',formula:'C₆H₁₂O₆',mw:180}];
-            solutes.forEach(s=>[0.05,0.1,0.2,0.4].forEach((n,i)=>[0.25,0.5,1].forEach((v,j)=>{
+            solutes.forEach(s=>[0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((v,j)=>{
                 const m=n*s.mw, c=n/v, id=`${s.id}-${i}-${j}`, label=(i+j)%2?s.name:s.formula;
                 calc('質量與體積→莫耳濃度',id,[`${num(m)} g ${label}配成 ${num(v*1000)} mL 溶液，濃度為何？（莫耳質量 ${s.mw} g/mol）`,`溶解 ${num(m)} g ${label}並定容至 ${num(v*1000)} mL，求莫耳濃度。（莫耳質量 ${s.mw} g/mol）`],c,' M',`n=${num(m)}÷${s.mw}=${num(n)} mol；C=${num(n)}÷${v}=${num(c)} M。`,'mL 須換成 L，且應用溶液的最終體積。');
                 calc('莫耳濃度→溶質質量',id,[`配製 ${num(v*1000)} mL、${num(c)} M ${label}溶液需幾克？（莫耳質量 ${s.mw} g/mol）`,`要配製 ${num(v*1000)} mL 的 ${num(c)} M ${label}，應稱取多少克？（莫耳質量 ${s.mw} g/mol）`],m,' g',`n=CV=${num(c)}×${v}=${num(n)} mol；質量=${num(n)}×${s.mw}=${num(m)} g。`,'先由濃度乘以公升數求莫耳數，再乘莫耳質量。');
                 calc('質量與莫耳濃度→體積',id,[`${num(m)} g ${label}配成 ${num(c)} M，需定容至幾 mL？（莫耳質量 ${s.mw} g/mol）`,`將 ${num(m)} g ${label}配為 ${num(c)} M，溶液體積是多少 mL？（莫耳質量 ${s.mw} g/mol）`],v*1000,' mL',`n=${num(m)}÷${s.mw}=${num(n)} mol；V=n/C=${num(n)}÷${num(c)}=${v} L=${v*1000} mL。`,'先以質量除莫耳質量，再以莫耳數除濃度。');
             })));
-            [0.05,0.1,0.2,0.3].forEach((w,i)=>[0.25,0.5,1].forEach((kg,j)=>{
+            [0.07,0.12,0.18,0.27].forEach((w,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
                 const sol=kg*1000*w/(1-w), total=kg*1000+sol, id=`${i}-${j}`;
                 calc('質量→重量百分率',id,[`${num(sol)} g 溶質溶於 ${num(kg*1000)} g 水，重量百分濃度為何？`,`將 ${num(sol)} g 溶質加入 ${num(kg*1000)} g 水，求重量百分濃度。`],w*100,'%',`溶液質量=${num(sol)}+${kg*1000}=${num(total)} g；百分濃度=${num(sol)}÷${num(total)}×100%=${num(w*100)}%。`,'重量百分濃度的分母是溶液總質量。');
                 calc('重量百分率→溶質質量',id,[`${num(total)} g、${num(w*100)}%（w/w）溶液含幾克溶質？`,`重量濃度 ${num(w*100)}% 的溶液 ${num(total)} g，溶質多少克？`],sol,' g',`溶質質量=${num(total)}×${num(w)}=${num(sol)} g。`,'百分比須以溶液總質量為基準。');
             }));
-            [10,20,40].forEach((percent,i)=>[100,250,500].forEach((vol,j)=>{
+            [12,17.5,28,35].forEach((percent,i)=>[125,240,375,650].forEach((vol,j)=>{
                 const amount=percent*vol/100,id=`${i}-${j}`;
                 for(const [kind,u] of [['體積百分濃度','mL'],['質量體積百分濃度','g']]){
                     calc(`${kind}→溶質量`,id,[`${vol} mL 的 ${percent}% ${kind}溶液，含溶質多少 ${u}？`,`要配製 ${vol} mL、${percent}% 的${kind}溶液，需溶質多少 ${u}？`],amount,` ${u}`,`${percent}% 表示每 100 mL 溶液含 ${percent} ${u} 溶質；${vol} mL 含 ${num(amount)} ${u}。`,'百分濃度的分母是最終溶液體積。');
                     calc(`溶質量→${kind}`,id,[`${amount} ${u} 溶質配成 ${vol} mL 溶液，其${kind}為何？`,`將 ${amount} ${u} 溶質配製成 ${vol} mL，求${kind}。`],percent,'%',`${amount}÷${vol}×100%=${percent}%。`,'先確認質量或體積的表示基準。');
                 }
             }));
-            [0.05,0.1,0.2,0.4].forEach((n,i)=>[0.1,0.2,0.5].forEach((kg,j)=>{
+            [0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
                 const molality=n/kg, x=n/(n+kg*1000/18),id=`${i}-${j}`;
                 calc('莫耳數與溶劑→重量莫耳濃度',id,[`${num(n)} mol 溶質溶於 ${kg*1000} g 水，重量莫耳濃度為何？`,`將 ${num(n)} mol 溶質加入 ${kg*1000} g 水，求重量莫耳濃度。`],molality,' mol/kg',`${kg*1000} g=${kg} kg；m=${num(n)}÷${kg}=${num(molality)} mol/kg。`,'重量莫耳濃度用溶劑質量且單位為 kg。');
                 calc('重量莫耳濃度→溶質莫耳數',id,[`${kg*1000} g 水配成 ${num(molality)} mol/kg 溶液，含溶質幾 mol？`,`溶劑為 ${kg*1000} g 水、重量莫耳濃度 ${num(molality)} mol/kg，求溶質莫耳數。`],n,' mol',`n=m×溶劑 kg=${num(molality)}×${kg}=${num(n)} mol。`,'重量莫耳濃度需乘溶劑的公斤數。');
                 calc('重量莫耳濃度→莫耳分率',id,[`水溶液重量莫耳濃度為 ${num(molality)} mol/kg，溶質莫耳分率約為何？（水 18 g/mol）`,`某水溶液為 ${num(molality)} mol/kg，求溶質莫耳分率。（水 18 g/mol）`],x,'',`取 ${kg} kg 水：溶質 ${num(n)} mol，水 ${num(kg*1000/18)} mol；分率=${num(n)}÷(${num(n)}+${num(kg*1000/18)})≈${num(x)}。`,'莫耳分率分母須包含全部成分的莫耳數。');
                 calc('莫耳分率→重量莫耳濃度',id,[`水溶液溶質莫耳分率約 ${num(x)}，重量莫耳濃度約為何？（水 18 g/mol）`,`溶質莫耳分率約 ${num(x)} 的水溶液，重量莫耳濃度約為多少？（水 18 g/mol）`],molality,' mol/kg',`設溶液總量為 1 mol，水為 1−${num(x)} mol；m≈${num(x)}÷[(1−${num(x)})×0.018]=${num(molality)} mol/kg。`,'由分率先還原溶質與溶劑莫耳比，再換算溶劑公斤數。');
             }));
-            [0.1,0.2,0.25,0.4].forEach((x,i)=>[0.5,1,2].forEach((total,j)=>{
+            [0.08,0.17,0.28,0.43].forEach((x,i)=>[0.75,1.4,2.5,3.2].forEach((total,j)=>{
                 const n=x*total,id=`${i}-${j}`;
                 calc('莫耳數→莫耳分率',id,[`溶液含 ${num(n)} mol 溶質及 ${num(total-n)} mol 溶劑，溶質莫耳分率為何？`,`溶質 ${num(n)} mol、溶劑 ${num(total-n)} mol，求溶質莫耳分率。`],x,'',`x=${num(n)}÷(${num(n)}+${num(total-n)})=${num(x)}。`,'分母是溶質與溶劑的莫耳數總和。');
                 calc('莫耳分率→溶質莫耳數',id,[`溶質莫耳分率 ${x}，總莫耳數 ${total} mol；溶質有幾 mol？`,`混合液共 ${total} mol，溶質分率 ${x}，溶質為多少 mol？`],n,' mol',`溶質莫耳數=${x}×${total}=${num(n)} mol。`,'莫耳分率要乘總莫耳數。');
             }));
-            [2,5,10,25].forEach((ppm,i)=>[1,2,5].forEach((kg,j)=>{
+            [3,12,35,120].forEach((ppm,i)=>[0.75,2.4,3.5].forEach((kg,j)=>{
                 const mg=ppm*kg,id=`${i}-${j}`;
                 calc('質量→ppm',id,[`${kg} kg 溶液含 ${mg} mg 溶質，為幾 ppm（質量比）？`,`溶液 ${kg} kg 含溶質 ${mg} mg，求質量 ppm。`],ppm,' ppm',`${mg} mg÷${kg} kg=${ppm} mg/kg=${ppm} ppm。`,'質量 ppm 以溶液的總質量為分母。');
                 calc('ppm→溶質質量',id,[`${kg} kg 溶液為 ${ppm} ppm（質量比），含溶質多少 mg？`,`質量濃度 ${ppm} ppm 的 ${kg} kg 溶液中，溶質為幾 mg？`],mg,' mg',`${ppm} mg/kg×${kg} kg=${mg} mg。`,'1 ppm（質量比）等於 1 mg/kg 溶液。');
             }));
-            [0.1,0.2,0.3].forEach((w,i)=>[1,1.1,1.2].forEach((density,j)=>{
+            [0.12,0.18,0.25,0.32].forEach((w,i)=>[1.03,1.12,1.18,1.25].forEach((density,j)=>{
                 const mw=40, molarity=w*density*1000/mw, molality=w*1000/(mw*(1-w)),id=`${i}-${j}`;
                 calc('重量百分率→莫耳濃度',id,[`NaOH 溶液 ${w*100}%（w/w），密度 ${density} g/mL。求莫耳濃度。（NaOH：40 g/mol）`,`氫氧化鈉水溶液 ${w*100}%（w/w）、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 L 溶液，質量=${density}×1000 g；溶質=${num(w*density*1000)} g；C=${num(w*density*1000)}÷40=${num(molarity)} M。`,'百分率以溶液質量為分母；轉莫耳濃度需使用密度。');
                 calc('莫耳濃度→重量百分率',id,[`NaOH 水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量百分濃度為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`1 L 溶液含 ${num(molarity)} mol，即 ${num(molarity*40)} g；溶液質量 ${density*1000} g，百分率=${num(w*100)}%。`,'質量百分率必須用溶液總質量作分母。');
@@ -7449,44 +7449,76 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             });
         }
         if(subtype==='atomicStandard'){
-            [6,8,16,18,24,30,36].forEach((standard,i)=>{
-                const k=standard/12;
-                [1,12,16,23,35.5].forEach((mass,j)=>{
-                    const n=mass*k,id=`${i}-${j}`;
-                    calc('原子量新標準→相對原子量',id,[`以碳-12 的相對原子量為 ${standard}，原相對原子量 ${mass} 將變為多少？`,`碳-12 新定為 ${standard}，某元素原子量原為 ${mass}，新數值為何？`],n,'',`新原子質量單位為碳-12 質量的 1/${standard}；相對原子量＝${mass}×${standard}/12=${num(n)}。`,'新標準改變的是比較單位，原子本身的質量不變。');
-                    calc('新舊原子量→標準',id,[`某元素相對原子量由 ${mass} 改為 ${num(n)}，碳-12 新標準為多少？`,`改變標準後元素原子量由 ${mass} 變 ${num(n)}；碳-12 定為多少？`],standard,'',`比例=${num(n)}÷${mass}=${num(k)}；碳-12 新值=12×${num(k)}=${standard}。`,'各元素的相對原子量數值按同一比例變化。');
-                });
-                emit('原子量標準→不變物理量',`k${standard}`,[`碳-12 相對原子量改定為 ${standard}，何者不變？`,`將碳-12 原子量標準改成 ${standard}，哪一項不變？`],'單一氧原子的實際質量',['氧的相對原子量數值','氫的相對原子量數值'],'比較標準改變時，原子實際質量不隨之改變。','相對原子量為原子質量除以選定的標準單位；新舊比例會改變數值，實際質量不變。','區分相對數值和原子真實質量。');
+            const shifts=[{old:12,next:24},{old:12,next:18},{old:12,next:36},{old:12,next:30}];
+            shifts.forEach(({old,next},i)=>{
+                const ratio=next/old;
+                emit('原子量標準改變→濃度數值',`affected-${i}`,
+                    [`溶液實際質量不變，原子量標準由 ${old} 改為 ${next}；哪種濃度數值會改變？`,`原子量標準 ${old}→${next}，同一溶液的質量百分率、重量莫耳濃度、質量 ppm，何者數值改變？`],
+                    '重量莫耳濃度',['重量百分率','質量 ppm','質量體積百分率'],
+                    '相對原子量標準改變會按比例改變莫耳質量；質量基準濃度不依賴莫耳數。',
+                    `標準值放大 ${num(ratio)} 倍時，同一溶質質量所代表的莫耳數按反比改變；重量莫耳濃度因此改變。質量百分率與質量 ppm 只由質量比決定。`,
+                    '分清以莫耳數為基準的濃度與以質量比為基準的濃度。');
+            });
+            [{old:12,next:24,m:3},{old:12,next:18,m:2.7},{old:12,next:36,m:4.5},{old:12,next:30,m:3.6}].forEach(({old,next,m},i)=>{
+                const result=m*old/next,id=`molality-${i}`;
+                calc('原子量標準改變→重量莫耳濃度',id,
+                    [`¹²C 原子量標準由 ${old} 改為 ${next}，原重量莫耳濃度 ${num(m)} m。新數值為何？`,`原為 ${num(m)} m；若 ¹²C 標準 ${old}→${next}，重量莫耳濃度變為多少？`],
+                    result,' m',`莫耳質量按標準倍率 ${num(next/old)} 改變；固定溶質質量下，莫耳數反比改變。新 m=${num(m)}×${old}/${next}=${num(result)} m。`,
+                    '莫耳數和重量莫耳濃度都與莫耳質量成反比。');
             });
         }
         if(subtype==='dilution'){
-            [0.5,0.8,1,1.5,2].forEach((c,i)=>[10,20,40,50].forEach((v,j)=>[2,4,5].forEach((factor,k)=>{
-                const finalV=v*factor, c2=c/factor,id=`${i}-${j}-${k}`;
+            const cases=[
+                {c:1.8,v:20,v2:50},{c:1.25,v:48,v2:125},{c:2.4,v:35,v2:90},
+                {c:1.6,v:75,v2:240},{c:0.85,v:120,v2:300},{c:2.75,v:32,v2:140},
+                {c:3.2,v:45,v2:180},{c:0.72,v:85,v2:250},{c:1.35,v:64,v2:160},
+                {c:2.1,v:28,v2:115},{c:0.95,v:150,v2:420},{c:1.45,v:55,v2:210}
+            ];
+            cases.forEach(({c,v,v2:finalV},i)=>{
+                const c2=c*v/finalV,id=`${i}`;
                 calc('稀釋→濃度',id,[`${v} mL、${c} M 原液定容至 ${finalV} mL，濃度為何？`,`將 ${v} mL ${c} M 溶液稀釋至 ${finalV} mL，求濃度。`],c2,' M',`溶質莫耳數不變；C₂=C₁V₁/V₂=${c}×${v}/${finalV}=${num(c2)} M。`,'定容體積是最終體積，並非加水量。');
                 calc('目標濃度→原液體積',id,[`配製 ${finalV} mL、${num(c2)} M 溶液，需取 ${c} M 原液多少 mL？`,`用 ${c} M 原液配成 ${finalV} mL、${num(c2)} M，取原液幾 mL？`],v,' mL',`V₁=C₂V₂/C₁=${num(c2)}×${finalV}/${c}=${v} mL。`,'使用稀釋前後溶質莫耳數相等。');
                 calc('稀釋→加水量',id,[`${v} mL ${c} M 原液稀釋為 ${num(c2)} M，體積可加，需加水多少 mL？`,`將 ${v} mL、${c} M 溶液稀釋至 ${num(c2)} M，體積可加，需加水多少？`],finalV-v,' mL',`V₂=${v}×${c}/${num(c2)}=${finalV} mL；加水量=${finalV}−${v}=${finalV-v} mL。`,'加水量等於最終體積減原液體積。');
-            })));
+            });
         }
         if(subtype==='mixing'){
-            [0.1,0.2,0.4].forEach((c1,i)=>[0.5,0.8,1].forEach((c2,j)=>[1,2,3].forEach((ratioValue,k)=>{
-                const v1=100,v2=100*ratioValue, final=(c1*v1+c2*v2)/(v1+v2),id=`${i}-${j}-${k}`;
+            const cases=[
+                {c1:.8,v1:75,c2:1.4,v2:125},{c1:1.25,v1:120,c2:.65,v2:80},
+                {c1:2.4,v1:35,c2:.9,v2:165},{c1:.72,v1:240,c2:1.85,v2:60},
+                {c1:1.6,v1:85,c2:2.3,v2:115},{c1:.95,v1:140,c2:1.55,v2:90},
+                {c1:2.75,v1:48,c2:.8,v2:152},{c1:1.15,v1:225,c2:2.4,v2:75}
+            ];
+            cases.forEach(({c1,v1,c2,v2},i)=>{
+                const final=(c1*v1+c2*v2)/(v1+v2),id=`${i}`;
                 calc('混合→莫耳濃度',id,[`${v1} mL、${c1} M NaCl 與 ${v2} mL、${c2} M NaCl 混合，體積可加，濃度為何？`,`食鹽水 ${c1} M ${v1} mL 與 ${c2} M ${v2} mL 混合，體積可加，求濃度。`],final,' M',`C=(${c1}×${v1}+${c2}×${v2})/(${v1}+${v2})=${num(final)} M。`,'先加總溶質莫耳數，再除以總體積。');
                 calc('混合濃度→體積',id,[`${v1} mL、${c1} M NaCl 與 ${c2} M NaCl 混合成 ${num(final)} M，體積可加，需後者多少 mL？`,`食鹽水 ${c1} M ${v1} mL 加入 ${c2} M 溶液後為 ${num(final)} M，體積可加，後者幾 mL？`],v2,' mL',`由 ${c1}×${v1}+${c2}V=${num(final)}(${v1}+V)，解得 V≈${v2} mL。`,'需考慮兩溶液體積與溶質莫耳數。');
-            })));
+            });
         }
         if(subtype==='changes'){
-            [100,200,400].forEach((total,i)=>[0.1,0.2,0.3].forEach((w,j)=>[0.1,0.2,0.3].forEach((factor,k)=>{
-                const sol=total*w, water=total*factor, id=`${i}-${j}-${k}`;
+            const cases=[
+                {total:180,w:.12,water:25},{total:275,w:.18,water:45},{total:420,w:.25,water:80},
+                {total:350,w:.14,water:62},{total:240,w:.22,water:36},{total:525,w:.16,water:95},
+                {total:165,w:.28,water:24},{total:460,w:.11,water:72},{total:315,w:.24,water:55}
+            ];
+            cases.forEach(({total,w,water},i)=>{
+                const sol=total*w, id=`${i}`;
                 calc('蒸發→濃度',id,[`${total} g、${w*100}% 食鹽水蒸發 ${water} g 水，全部食鹽仍溶解，濃度為何？`,`將 ${total} g、${w*100}% 食鹽水蒸發 ${water} g 水，無固體析出；求重量百分率。`],sol/(total-water)*100,'%',`溶質=${total}×${w}=${sol} g；溶液剩 ${total-water} g，濃度=${sol}/${total-water}×100%=${num(sol/(total-water)*100)}%。`,'蒸發後分母要扣除水，溶質質量不變。');
                 const target=sol/(total+water)*100;
                 calc('加水→濃度',id,[`${total} g、${w*100}% 食鹽水加 ${water} g 水，濃度為何？`,`重量濃度 ${w*100}% 的 ${total} g 食鹽水，加入 ${water} g 水後為多少％？`],target,'%',`溶質 ${sol} g 不變，溶液質量=${total}+${water}=${total+water} g；濃度=${num(target)}%。`,'加水後溶質不變，溶液總質量增加。');
                 calc('目標濃度→加水量',id,[`${total} g、${w*100}% 食鹽水稀釋至 ${num(target)}%，需加水多少克？`,`將 ${total} g、${w*100}% 食鹽水調為 ${num(target)}%，應加水幾克？`],water,' g',`溶質 ${sol} g；最終溶液約 ${sol}/(${num(target)}/100)=${total+water} g，故加水約 ${water} g。`,'先固定溶質質量，再反求最終溶液質量。');
                 calc('加入溶質→濃度',id,[`${total} g、${w*100}% 食鹽水加入 ${water} g 食鹽並全部溶解，重量百分濃度約為何？`,`向 ${total} g、${w*100}% 食鹽水加入 ${water} g 食鹽並完全溶解，求重量百分率。`],(sol+water)/(total+water)*100,'%',`溶質由 ${sol} g 增至 ${sol+water} g，溶液質量增至 ${total+water} g；濃度≈${num((sol+water)/(total+water)*100)}%。`,'加入溶質時分子與分母都增加。');
-            })));
+            });
         }
         if(subtype==='solubility'||subtype==='saturation'){
-            [20,25,30,40,50].forEach((cold,i)=>[10,20,30].forEach((difference,j)=>[100,150,200].forEach((water,k)=>{
-                const hot=cold+difference, dissolved=cold*water/100, crystal=difference*water/100,id=`${i}-${j}-${k}`;
+            const cases=[
+                {cold:23,difference:7,water:85},{cold:37,difference:13,water:125},
+                {cold:46,difference:18,water:180},{cold:58,difference:27,water:240},
+                {cold:31,difference:16,water:135},{cold:64,difference:11,water:275},
+                {cold:42,difference:23,water:95},{cold:75,difference:19,water:160},
+                {cold:28,difference:9,water:225},{cold:53,difference:32,water:115}
+            ];
+            cases.forEach(({cold,difference,water},i)=>{
+                const hot=cold+difference, dissolved=cold*water/100, crystal=difference*water/100,id=`${i}`;
                 if(subtype==='solubility'){
                     calc('溶解度→飽和溶質量',id,[`某固體溶解度為 ${cold} g／100 g 水。${water} g 水最多溶解多少克？`,`溶解度 ${cold} g／100 g 水，${water} g 水可溶多少克至飽和？`],dissolved,' g',`最大溶解量=${cold}×${water}/100=${num(dissolved)} g。`,'溶解度的分母是水，不是飽和溶液。');
                     calc('飽和溶質量→水量',id,[`某固體溶解度 ${cold} g／100 g 水，溶解 ${num(dissolved)} g 至少需多少克水？`,`溶解 ${num(dissolved)} g 固體，溶解度 ${cold} g／100 g 水；至少需多少克水？`],water,' g',`水量=${num(dissolved)}×100/${cold}=${water} g。`,'用溶質量與溶解度反求水量。');
@@ -7495,10 +7527,12 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 }else{
                     calc('冷卻飽和溶液→析晶量',id,[`溶解度由 ${hot} 降至 ${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻後析出幾克？`,`熱、冷溶解度分別為 ${hot}、${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻析出多少克？`],crystal,' g',`析出量=(${hot}−${cold})×${water}/100=${num(crystal)} g；假設水不蒸發。`,'應用溶解度差，而非直接使用冷卻後溶解度。');
                     calc('析晶量→水量',id,[`熱、冷溶解度為 ${hot}、${cold} g／100 g 水。熱飽和溶液冷卻析出 ${num(crystal)} g，水有幾克？`,`飽和溶液冷卻析出 ${num(crystal)} g，溶解度由 ${hot} 降至 ${cold} g／100 g 水，原含水幾克？`],water,' g',`水量=${num(crystal)}×100/(${hot}−${cold})=${water} g；假設水不蒸發。`,'先求每 100 g 水的溶解度差，再反求水量。');
-                    const added=dissolved*0.5;
-                    emit('溶解度→飽和狀態',id,[`溶解度 ${cold} g／100 g 水。${water} g 水中加入 ${num(added)} g 溶質，充分攪拌後為何？`,`溶解度 ${cold} g／100 g 水，${water} g 水加入 ${num(added)} g 固體，狀態為何？`],'未飽和，固體全溶',['飽和，無固體剩餘','飽和，有固體剩餘'],'先計算該水量可溶的上限。',`最多溶解 ${cold}×${water}/100=${num(dissolved)} g；加入 ${num(added)} g 小於上限，全部溶解且未飽和。`,'比較實際加入量與對應水量的最大溶解量。');
+                    const factor=[.35,.7,1,1.18,1.42,.82,1.08,.55,1.3,.92][i], added=dissolved*factor;
+                    const state=factor<1?'未飽和，固體全溶':factor===1?'恰為飽和，無固體剩餘':'飽和，有固體剩餘';
+                    const otherStates=['未飽和，固體全溶','恰為飽和，無固體剩餘','飽和，有固體剩餘'].filter(s=>s!==state);
+                    emit('溶解度→飽和狀態',id,[`溶解度 ${cold} g／100 g 水。${water} g 水中加入 ${num(added)} g 溶質，充分攪拌後為何？`,`溶解度 ${cold} g／100 g 水，${water} g 水加入 ${num(added)} g 固體，狀態為何？`],state,otherStates,'先依溶解度換算該水量可溶上限，再與加入量比較。',`最多溶解 ${cold}×${water}/100=${num(dissolved)} g；加入 ${num(added)} g，${factor<1?'低於上限，全部溶解且未飽和。':factor===1?'恰等於上限，溶液飽和且無固體剩餘。':'高於上限，溶液飽和並有固體剩餘。'}`,'比較實際加入量與對應水量的最大溶解量。');
                 }
-            })));
+            });
         }
         return out;
     }
