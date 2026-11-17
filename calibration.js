@@ -7917,10 +7917,24 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const least = Math.min(...available.map(id => counts[id] || 0));
             const chosen = shuffle(available.filter(id => (counts[id] || 0) === least))[0];
             candidates = candidates.filter(item => item.subtype === chosen);
+            const recent = window.quizState._concentrationRecentFacts || (window.quizState._concentrationRecentFacts = []);
+            const fresh = candidates.filter(item => !recent.includes(`${item.subtype}:${item.id.split(':')[1]}`));
+            if (fresh.length) candidates = fresh;
+            const templateCounts = window.quizState._concentrationTemplateCounts || (window.quizState._concentrationTemplateCounts = {});
+            const templates = unique(candidates.map(item => item.template));
+            const minimum = Math.min(...templates.map(id => templateCounts[`${chosen}:${id}`] || 0));
+            const template = shuffle(templates.filter(id => (templateCounts[`${chosen}:${id}`] || 0) === minimum))[0];
+            candidates = candidates.filter(item => item.template === template);
+            templateCounts[`${chosen}:${template}`] = (templateCounts[`${chosen}:${template}`] || 0) + 1;
             counts[chosen] = (counts[chosen] || 0) + 1;
         }
         if (!candidates.length) return false;
         const item = candidates[Math.floor(Math.random() * candidates.length)];
+        if (category === 'concentration') {
+            const recent = window.quizState._concentrationRecentFacts;
+            recent.push(`${item.subtype}:${item.id.split(':')[1]}`);
+            if (recent.length > 12) recent.shift();
+        }
         const explanations = explanationStyle(item);
         used.add(item.id);
         quizData._templateId = `extension:${item.id}`;
