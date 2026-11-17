@@ -958,10 +958,29 @@ function openCalibrationModal() {
     const modal = document.getElementById('calibration-modal');
     if (modal) {
         modal.style.display = 'flex';
+        if (window.matchMedia && window.matchMedia('(min-width: 769px)').matches) {
+            window.setCalibrationIntroOpen(false);
+        }
         if (typeof pauseSystem === 'function') pauseSystem();
         resetToDifficultySelection();
     }
 }
+
+window.setCalibrationIntroOpen = function(isOpen) {
+    const card = document.querySelector('#cal-category-area .calibration-intro-card');
+    const button = document.querySelector('#cal-category-area .calibration-intro-toggle');
+    const label = document.getElementById('calibration-intro-toggle-label');
+    if (!card || !button) return;
+    card.classList.toggle('is-open', Boolean(isOpen));
+    button.setAttribute('aria-expanded', String(Boolean(isOpen)));
+    if (label) label.textContent = isOpen ? '收起說明 −' : '展開說明 ＋';
+};
+
+window.toggleCalibrationIntro = function() {
+    const card = document.querySelector('#cal-category-area .calibration-intro-card');
+    if (!card) return;
+    window.setCalibrationIntroOpen(!card.classList.contains('is-open'));
+};
 
 function closeCalibrationModal() {
     const modal = document.getElementById('calibration-modal');

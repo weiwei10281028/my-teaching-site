@@ -3062,6 +3062,37 @@
         scrollbar-color: var(--cal-v1-line-strong) var(--cal-v1-paper) !important;
     }
 
+    #calibration-modal.calibration-theme .calibration-intro-toggle {
+        display: none;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 20px;
+        border: 0;
+        background: var(--cal-v1-paper);
+        color: var(--cal-v1-ink);
+        font-family: var(--cal-v1-sans);
+        font-size: 15px;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-toggle span:last-child {
+        color: var(--cal-v1-green-deep);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    #calibration-modal.calibration-theme .calibration-intro-toggle:hover,
+    #calibration-modal.calibration-theme .calibration-intro-toggle:focus-visible {
+        background: var(--cal-v1-green-soft);
+        outline: 2px solid var(--cal-v1-green);
+        outline-offset: -2px;
+    }
+
     #calibration-modal.calibration-theme .calibration-intro-card * {
         color: var(--cal-v1-ink-soft) !important;
         font-family: var(--cal-v1-sans);
@@ -3773,15 +3804,75 @@
     @media (min-width: 901px) {
         #calibration-modal.calibration-theme .calibration-scroll {
             overscroll-behavior-y: contain;
+            scroll-behavior: auto !important;
+            overflow-anchor: none;
+            scrollbar-gutter: stable;
+            contain: layout paint;
         }
 
         #calibration-modal.calibration-theme .calibration-intro-card {
             max-height: none !important;
             overflow: visible !important;
+            padding: 0 !important;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content {
+            padding: 0 24px 24px;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-toggle {
+            display: flex;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content {
+            display: none;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content > .quiz-system-header {
+            display: none;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-card.is-open .calibration-intro-content {
+            display: block;
         }
 
         #calibration-modal.calibration-theme #cal-category-area {
             align-content: start;
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 900px) {
+        #calibration-modal.calibration-theme .calibration-scroll {
+            scroll-behavior: auto !important;
+            overflow-anchor: none;
+            scrollbar-gutter: stable;
+            contain: layout paint;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-card {
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 0 !important;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-toggle {
+            display: flex;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content {
+            display: none;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content > .quiz-system-header {
+            display: none;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-card.is-open .calibration-intro-content {
+            display: block;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content {
+            padding: 0 20px 20px;
         }
     }
 
@@ -3882,6 +3973,16 @@
         #calibration-modal.calibration-theme #quiz-result-card,
         #calibration-modal.calibration-theme .cal-result-actions {
             padding: 22px 18px !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        #calibration-modal.calibration-theme .calibration-intro-toggle {
+            display: none !important;
+        }
+
+        #calibration-modal.calibration-theme .calibration-intro-content {
+            display: block !important;
         }
     }
 
@@ -4252,6 +4353,10 @@
                 </div>
                 <div id="cal-category-area" style="display:flex; flex-direction:column; gap:15px; padding:20px 15px;">
                     <div class="card calibration-intro-card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
+                        <button type="button" class="calibration-intro-toggle" aria-expanded="false" aria-controls="calibration-intro-content" onclick="toggleCalibrationIntro()">
+                            <span>校準說明</span><span id="calibration-intro-toggle-label">展開說明 ＋</span>
+                        </button>
+                        <div id="calibration-intro-content" class="calibration-intro-content">
                         <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
                             <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
@@ -4318,6 +4423,7 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                     <div class="diff-card diff-f" onclick="selectCalCategory('formula')">
@@ -10881,6 +10987,6 @@ window.closeElementIntro = function() {
 
 </script>
 <script src="calibration_formula_data.js"></script>
-<script src="calibration.js?v=calibration-20261118c"></script>
+<script src="calibration.js?v=calibration-20261118d"></script>
 </body>
 </html>
