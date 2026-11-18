@@ -1620,7 +1620,7 @@
     .diff-e::before { background: #a855f7 !important; }
     .diff-g::before { background: #38bdf8 !important; }
     #hybrid-type-select-area, #electron-type-select-area, #precip-type-select-area, #formula-type-select-area,
-    #knowledge-category-area, #knowledge-constant-type-select-area, #knowledge-mode-select-area, #extension-subtype-select-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
+    #knowledge-category-area, #knowledge-constant-type-select-area, #knowledge-mode-select-area { display: none; padding: 20px 15px; flex-direction: column; gap: 12px; }
     #precip-type-select-area .hybrid-type-card { border-left-color: rgba(168,85,247,0.3); }
     #precip-type-select-area .hybrid-type-card.selected { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.6); border-left-color: #a855f7; }
     #precip-type-select-area .hybrid-type-card:hover { background: rgba(168,85,247,0.08); border-left-color: #a855f7; }
@@ -2085,6 +2085,7 @@
     #calibration-modal.calibration-theme #electron-type-select-area,
     #calibration-modal.calibration-theme #precip-type-select-area,
     #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #compare-type-select-area,
     #calibration-modal.calibration-theme #knowledge-category-area,
     #calibration-modal.calibration-theme #knowledge-constant-type-select-area,
     #calibration-modal.calibration-theme #knowledge-mode-select-area,
@@ -2103,6 +2104,7 @@
     #calibration-modal.calibration-theme #electron-type-select-area,
     #calibration-modal.calibration-theme #precip-type-select-area,
     #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #compare-type-select-area,
     #calibration-modal.calibration-theme #knowledge-category-area,
     #calibration-modal.calibration-theme #knowledge-constant-type-select-area,
     #calibration-modal.calibration-theme #knowledge-mode-select-area,
@@ -2211,12 +2213,6 @@
         color: var(--cal-ink) !important;
         box-shadow: none;
         transition: border-color 0.18s ease, background-color 0.18s ease;
-    }
-
-    #calibration-modal.calibration-theme .setup-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-        outline: none;
     }
 
     #calibration-modal.calibration-theme .hybrid-type-card:hover,
@@ -2734,6 +2730,7 @@
         #calibration-modal.calibration-theme #electron-type-select-area,
         #calibration-modal.calibration-theme #precip-type-select-area,
         #calibration-modal.calibration-theme #formula-type-select-area,
+        #calibration-modal.calibration-theme #compare-type-select-area,
         #calibration-modal.calibration-theme #quiz-result-area {
             padding: 16px !important;
         }
@@ -3034,6 +3031,7 @@
     #calibration-modal.calibration-theme #electron-type-select-area,
     #calibration-modal.calibration-theme #precip-type-select-area,
     #calibration-modal.calibration-theme #formula-type-select-area,
+    #calibration-modal.calibration-theme #compare-type-select-area,
     #calibration-modal.calibration-theme #quiz-result-area {
         padding: 30px 34px 58px !important;
         gap: 18px !important;
@@ -3044,7 +3042,28 @@
     #calibration-modal.calibration-theme #cal-category-area {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: start;
+        grid-auto-rows: 1fr;
+        align-items: stretch;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area > .diff-card {
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area .diff-title {
+        font-size: clamp(23px, 2vw, 27px) !important;
+        line-height: 1.35;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area .diff-range {
+        font-size: clamp(14px, 1.1vw, 17px) !important;
+        line-height: 1.6;
+    }
+
+    #calibration-modal.calibration-theme #cal-category-area .diff-tag {
+        font-size: 14px !important;
+        line-height: 1.45;
     }
 
     #calibration-modal.calibration-theme .calibration-intro-card {
@@ -3060,37 +3079,6 @@
         box-shadow: none !important;
         overflow-y: auto !important;
         scrollbar-color: var(--cal-v1-line-strong) var(--cal-v1-paper) !important;
-    }
-
-    #calibration-modal.calibration-theme .calibration-intro-toggle {
-        display: none;
-        width: 100%;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 14px 20px;
-        border: 0;
-        background: var(--cal-v1-paper);
-        color: var(--cal-v1-ink);
-        font-family: var(--cal-v1-sans);
-        font-size: 15px;
-        font-weight: 700;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    #calibration-modal.calibration-theme .calibration-intro-toggle span:last-child {
-        color: var(--cal-v1-green-deep);
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    #calibration-modal.calibration-theme .calibration-intro-toggle:hover,
-    #calibration-modal.calibration-theme .calibration-intro-toggle:focus-visible {
-        background: var(--cal-v1-green-soft);
-        outline: 2px solid var(--cal-v1-green);
-        outline-offset: -2px;
     }
 
     #calibration-modal.calibration-theme .calibration-intro-card * {
@@ -3683,31 +3671,20 @@
     /* 數學元素由 MathJax 排版；未使用 MathJax 的化學式保留語意上下標。 */
     #calibration-modal.calibration-theme .quiz-question-text sup,
     #calibration-modal.calibration-theme .option-value sup,
-    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line sup,
     #calibration-modal.calibration-theme .quiz-question-text sub,
-    #calibration-modal.calibration-theme .option-value sub,
-    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line sub {
-        position: relative !important;
-        display: inline-block;
-        vertical-align: baseline !important;
-        top: 0;
-        bottom: auto;
+    #calibration-modal.calibration-theme .option-value sub {
+        position: static !important;
+        top: auto !important;
+        bottom: auto !important;
+        vertical-align: super !important;
         line-height: 0 !important;
-        font-size: .74em !important;
-        margin-left: .025em;
-        margin-right: .015em;
-    }
-
-    #calibration-modal.calibration-theme .quiz-question-text sup,
-    #calibration-modal.calibration-theme .option-value sup,
-    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line sup {
-        top: -.38em !important;
+        font-size: .68em !important;
+        margin-left: .04em;
     }
 
     #calibration-modal.calibration-theme .quiz-question-text sub,
-    #calibration-modal.calibration-theme .option-value sub,
-    #calibration-modal.calibration-theme #quiz-feedback .cal-explanation-line sub {
-        top: .18em !important;
+    #calibration-modal.calibration-theme .option-value sub {
+        vertical-align: sub !important;
     }
 
     #calibration-modal.calibration-theme mjx-container {
@@ -3746,17 +3723,6 @@
         font-size: 0.68em;
         line-height: 0;
         font-style: normal;
-        vertical-align: baseline;
-    }
-
-    #calibration-modal.calibration-theme .cal-scientific-exponent {
-        display: inline-block;
-        position: relative;
-        top: -0.4em;
-        margin-left: 0.02em;
-        font-size: 0.86em;
-        line-height: 0;
-        white-space: nowrap;
         vertical-align: baseline;
     }
 
@@ -3801,81 +3767,6 @@
         }
     }
 
-    @media (min-width: 901px) {
-        #calibration-modal.calibration-theme .calibration-scroll {
-            overscroll-behavior-y: contain;
-            scroll-behavior: auto !important;
-            overflow-anchor: none;
-            scrollbar-gutter: stable;
-            contain: layout paint;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-card {
-            max-height: none !important;
-            overflow: visible !important;
-            padding: 0 !important;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content {
-            padding: 0 24px 24px;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-toggle {
-            display: flex;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content {
-            display: none;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content > .quiz-system-header {
-            display: none;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-card.is-open .calibration-intro-content {
-            display: block;
-        }
-
-        #calibration-modal.calibration-theme #cal-category-area {
-            align-content: start;
-        }
-    }
-
-    @media (min-width: 769px) and (max-width: 900px) {
-        #calibration-modal.calibration-theme .calibration-scroll {
-            scroll-behavior: auto !important;
-            overflow-anchor: none;
-            scrollbar-gutter: stable;
-            contain: layout paint;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-card {
-            max-height: none !important;
-            overflow: visible !important;
-            padding: 0 !important;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-toggle {
-            display: flex;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content {
-            display: none;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content > .quiz-system-header {
-            display: none;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-card.is-open .calibration-intro-content {
-            display: block;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content {
-            padding: 0 20px 20px;
-        }
-    }
-
     @media (max-width: 600px) {
         #calibration-modal.calibration-theme .calibration-panel {
             width: 100% !important;
@@ -3914,6 +3805,7 @@
         #calibration-modal.calibration-theme #electron-type-select-area,
         #calibration-modal.calibration-theme #precip-type-select-area,
         #calibration-modal.calibration-theme #formula-type-select-area,
+        #calibration-modal.calibration-theme #compare-type-select-area,
         #calibration-modal.calibration-theme #quiz-result-area,
         #calibration-modal.calibration-theme #quiz-content-area {
             padding: 20px 14px 88px !important;
@@ -3973,16 +3865,6 @@
         #calibration-modal.calibration-theme #quiz-result-card,
         #calibration-modal.calibration-theme .cal-result-actions {
             padding: 22px 18px !important;
-        }
-    }
-
-    @media (max-width: 768px) {
-        #calibration-modal.calibration-theme .calibration-intro-toggle {
-            display: none !important;
-        }
-
-        #calibration-modal.calibration-theme .calibration-intro-content {
-            display: block !important;
         }
     }
 
@@ -4204,7 +4086,7 @@
                         </div>
                         <div class="hybrid-type-card selected" onclick="toggleElectronType(this,'789')" data-type="789">
                             <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
-                            <div><div class="hybrid-type-name">軌域量子</div><div class="hybrid-type-desc">最外層電子數、未成對電子數、軌域電子統計</div></div>
+                            <div><div class="hybrid-type-name">軌域量子</div><div class="hybrid-type-desc">價電子數、未成對電子數、軌域電子統計</div></div>
                         </div>
                         <div class="hybrid-type-card selected" onclick="toggleElectronType(this,'1011')" data-type="1011">
                             <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
@@ -4280,10 +4162,6 @@
                             <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
                             <div><div class="hybrid-type-name">C｜化學式判讀</div><div class="hybrid-type-desc">括號、下標、最簡比、電中性、含氧酸級序與水合物判斷</div></div>
                         </div>
-                        <div class="hybrid-type-card selected" onclick="toggleFormulaType(this,'mass')" data-type="mass">
-                            <div class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></div>
-                            <div><div class="hybrid-type-name">D｜式量與分子量</div><div class="hybrid-type-desc">依共用原子量表計算括號與結晶水式量</div></div>
-                        </div>
                     </div>
                     <button class="start-cal-btn" id="formula-confirm-btn" onclick="confirmFormulaTypes()">確認題型，繼續 ▸</button>
                 </div>
@@ -4351,12 +4229,14 @@
                         <div style="font-size:1.5rem; color:#f59e0b; font-weight:900;">02</div>
                     </div>
                 </div>
+                <div id="compare-type-select-area" style="display:none; flex-direction:column; gap:10px; padding:20px 15px;">
+                    <span class="setup-label">化學性質比較（可複選，至少一種）</span>
+                    <div id="compare-type-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
+                    <small style="color:#94a3b8;line-height:1.6">題目由多組常見化學資料與正反向問法組合；可混合選擇不同子題型。</small>
+                    <button class="start-cal-btn" onclick="confirmCompareTypes()">確認子題型，繼續 ▸</button>
+                </div>
                 <div id="cal-category-area" style="display:flex; flex-direction:column; gap:15px; padding:20px 15px;">
                     <div class="card calibration-intro-card" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.9); padding: 15px; max-height: 175px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #38bdf8 rgba(0,0,0,0.3);">
-                        <button type="button" class="calibration-intro-toggle" aria-expanded="false" aria-controls="calibration-intro-content" onclick="toggleCalibrationIntro()">
-                            <span>校準說明</span><span id="calibration-intro-toggle-label">展開說明 ＋</span>
-                        </button>
-                        <div id="calibration-intro-content" class="calibration-intro-content">
                         <div class="quiz-system-header" style="border:none; padding:0; margin-bottom:10px;">
                             <div class="quiz-status-tag" style="background:#38bdf8;">校準說明</div>
                         </div>
@@ -4389,7 +4269,7 @@
                                     <span style="color:#3b82f6; font-weight: bold; display: block; margin-bottom: 6px;">[ 電子組態 ]</span>
                                     <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.8; padding-left: 5px; border-left: 2px solid #3b82f6;">
                                         ．電子組態辨識元素<br>
-                                        ．最外層電子數計算<br>
+                                        ．價電子數計算<br>
                                         ．未成對電子數計算<br>
                                         ．軌域電子統計<br>
                                         ．區塊判定<br>
@@ -4424,12 +4304,11 @@
                                 </div>
                             </div>
                         </div>
-                        </div>
                     </div>
                     <div class="diff-card diff-f" onclick="selectCalCategory('formula')">
                         <div class="diff-info">
                             <span class="diff-title" style="color:#14b8a6;">化學式</span>
-                            <span class="diff-range">名稱互譯、離子組成、數量比例、式量、括號與水合物</span>
+                            <span class="diff-range">名稱互譯、離子組成、數量比例、括號、級序與水合物</span>
                             <span class="diff-tag" style="border-color:#14b8a6; color:#14b8a6;">需選擇題型 ▸</span>
                         </div>
                     </div>
@@ -4475,23 +4354,14 @@
                             <span class="diff-tag" style="border-color:#38bdf8; color:#38bdf8;">進入常數 ▸</span>
                         </div>
                     </div>
-                    <div class="diff-card diff-a" onclick="selectCalCategory('acidBase')">
-                        <div class="diff-info"><span class="diff-title" style="color:#fb7185;">酸鹼與鹽類</span><span class="diff-range">強弱酸鹼、共軛對、水解、pH/pOH/pKw 判斷、指示劑與中和</span><span class="diff-tag" style="border-color:#fb7185; color:#fb7185;">需選擇子題型 ▸</span></div>
-                    </div>
-                    <div class="diff-card diff-b" onclick="selectCalCategory('mole')">
-                        <div class="diff-info"><span class="diff-title" style="color:#38bdf8;">莫耳、溶液與氣體</span><span class="diff-range">莫耳換算、係數比、濃度、稀釋與氣體</span><span class="diff-tag" style="border-color:#38bdf8; color:#38bdf8;">需選擇子題型 ▸</span></div>
-                    </div>
-                    <div class="diff-card diff-b" onclick="selectCalCategory('concentration')">
-                        <div class="diff-info"><span class="diff-title" style="color:#38bdf8;">濃度與溶解度</span><span class="diff-range">濃度換算、原子量標準、稀釋、混合與溶解度</span><span class="diff-tag" style="border-color:#38bdf8; color:#38bdf8;">需選擇子題型 ▸</span></div>
-                    </div>
-                    <div class="diff-card diff-c" onclick="selectCalCategory('thermo')">
-                        <div class="diff-info"><span class="diff-title" style="color:#fbbf24;">熱化學、速率與平衡</span><span class="diff-range">反應熱、活化能、速率式與平衡移動</span><span class="diff-tag" style="border-color:#fbbf24; color:#fbbf24;">需選擇子題型 ▸</span></div>
-                    </div>
-                    <div class="diff-card diff-d" onclick="selectCalCategory('organic')">
-                        <div class="diff-info"><span class="diff-title" style="color:#c084fc;">有機化學</span><span class="diff-range">高中常見官能基、反應與聚合物</span><span class="diff-tag" style="border-color:#c084fc; color:#c084fc;">需選擇子題型 ▸</span></div>
+                    <div class="diff-card diff-e" onclick="selectCalCategory('compare')">
+                        <div class="diff-info">
+                            <span class="diff-title" style="color:#14b8a6;">化學性質比較</span>
+                            <span class="diff-range">週期趨勢、分子性質、氧化還原能力、酸性、離子檢驗與有機物性質</span>
+                            <span class="diff-tag" style="border-color:#14b8a6; color:#14b8a6;">需選擇子題型 ▸</span>
+                        </div>
                     </div>
                 </div>
-                <div id="extension-subtype-select-area" style="display:none; flex-direction:column; gap:10px;"></div>
                 <div class="difficulty-grid" id="difficulty-grid">
                     <div class="diff-card" onclick="resetToDifficultySelection()" style="padding:12px 20px; background:rgba(255,255,255,0.03);">
                         <span style="color:#94a3b8; font-size:0.9rem; cursor:pointer;">← 返回類別選擇</span>
@@ -4877,7 +4747,7 @@
     </div>
 </div>
 
-<script src="data_static.js?v=calibration-20261118e"></script>
+<script src="data_static.js?v=periodic-20260804b"></script>
 <script src="data_molecules1.js"></script>
 <script src="data_molecules2.js"></script>
 <script src="data_reactions.js"></script>
@@ -10987,6 +10857,7 @@ window.closeElementIntro = function() {
 
 </script>
 <script src="calibration_formula_data.js"></script>
-<script src="calibration.js?v=calibration-20261118e"></script>
+<script src="calibration_knowledge_data.js"></script>
+<script src="calibration.js?v=compare-20261118a"></script>
 </body>
 </html>

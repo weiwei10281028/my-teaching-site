@@ -1,11 +1,6 @@
 // 化學式校準題庫：只保存經人工挑選的中學常見物質。
 // s: j = 國中核心、s = 高中常見、a = 高中進階
 // i: 陽離子符號:電荷:數量 | 陰離子符號:電荷:數量
-window.CALIBRATION_ATOMIC_MASSES = Object.freeze({
-    H: 1, Li: 7, Be: 9, B: 11, C: 12, N: 14, O: 16, F: 19, Na: 23, Mg: 24,
-    Al: 27, Si: 28, P: 31, S: 32, Cl: 35.5, K: 39, Ca: 40, Mn: 55, Fe: 56,
-    Cu: 63.5, Zn: 65, Br: 80, Ag: 108, I: 127, Ba: 137
-});
 window.CHEM_FORMULA_DATA = (() => {
     const M = (f, n, s, g, extra = {}) => ({ f, n, s, g, kind: extra.kind || 'molecular', ...extra });
     const I = (f, n, s, g, cs, cq, cc, as, aq, ac, extra = {}) => ({
