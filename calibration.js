@@ -19,7 +19,7 @@ const PRECIP_ENGINE = (function() {
         {id:'Cu2+',elem:'Cu',ch:2,label:'Cu²⁺'},{id:'Cu+',elem:'Cu',ch:1,label:'Cu⁺'},{id:'Ag+',elem:'Ag',ch:1,label:'Ag⁺'},
         {id:'Zn2+',elem:'Zn',ch:2,label:'Zn²⁺'},{id:'Cd2+',elem:'Cd',ch:2,label:'Cd²⁺'},{id:'Co2+',elem:'Co',ch:2,label:'Co²⁺'},
         {id:'Ni2+',elem:'Ni',ch:2,label:'Ni²⁺'},{id:'Mn2+',elem:'Mn',ch:2,label:'Mn²⁺'},{id:'Cr3+',elem:'Cr',ch:3,label:'Cr³⁺'},
-        {id:'Pb2+',elem:'Pb',ch:2,label:'Pb²⁺'},{id:'Hg22+',elem:'Hg2',ch:2,label:'Hg₂²⁺',special:true},
+        {id:'Pb2+',elem:'Pb',ch:2,label:'Pb²⁺'},
         {id:'Tl+',elem:'Tl',ch:1,label:'Tl⁺'},{id:'Sn2+',elem:'Sn',ch:2,label:'Sn²⁺'}
     ];
     const ANIONS = [
@@ -34,7 +34,6 @@ const PRECIP_ENGINE = (function() {
     const CR_O4_SOL = new Set(['Mg2+','Ca2+','Zn2+','Cu2+','Fe2+','Fe3+','Al3+','Ni2+','Co2+','Mn2+','Cd2+','Sn2+','Cr3+']);
     const FORMULA_OVERRIDES = {
         'Ag+|Cl-':'AgCl','Ag+|Br-':'AgBr','Ag+|I-':'AgI','Ag+|CrO42-':'Ag2CrO4','Ag+|C2O42-':'Ag2C2O4','Ag+|S2-':'Ag2S',
-        'Hg22+|Cl-':'Hg2Cl2','Hg22+|Br-':'Hg2Br2','Hg22+|I-':'Hg2I2','Hg22+|SO42-':'Hg2SO4','Hg22+|CrO42-':'Hg2CrO4',
         'Cu+|Cl-':'CuCl','Pb2+|Cl-':'PbCl2','Pb2+|Br-':'PbBr2','Pb2+|I-':'PbI2','Pb2+|SO42-':'PbSO4','Pb2+|CrO42-':'PbCrO4',
         'Pb2+|CO32-':'PbCO3','Pb2+|S2-':'PbS','Pb2+|OH-':'Pb(OH)2',
         'Ba2+|SO42-':'BaSO4','Ba2+|CrO42-':'BaCrO4','Ba2+|CO32-':'BaCO3','Ba2+|C2O42-':'BaC2O4','Ba2+|PO43-':'Ba3(PO4)2','Ba2+|SO32-':'BaSO3','Ba2+|S2-':'BaS',
@@ -77,7 +76,7 @@ const PRECIP_ENGINE = (function() {
         if(aid==='CH3COO-'){if(ce==='Ag')return{status:'slightly',formula:'CH3COOAg'};return{status:'soluble',formula:buildFormula(cat,an)};}
         if(IA.has(ce)||ce==='H'||cat.id==='NH4+')return{status:'soluble',formula:buildFormula(cat,an)};
         if(['Cl-','Br-','I-'].includes(aid)){
-            if(['Hg22+','Cu+','Pb2+','Ag+','Tl+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
+            if(['Cu+','Pb2+','Ag+','Tl+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
             return{status:'soluble',formula:buildFormula(cat,an)};
         }
         if(aid==='SO42-'){
@@ -87,7 +86,7 @@ const PRECIP_ENGINE = (function() {
         }
         if(aid==='CrO42-'){
             if(cat.id==='Sr2+')return{status:'slightly',formula:'SrCrO4'};
-            if(['Ba2+','Hg22+','Pb2+','Ag+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
+            if(['Ba2+','Pb2+','Ag+'].includes(cat.id))return{status:'insoluble',formula:buildFormula(cat,an)};
             if(CR_O4_SOL.has(cat.id))return{status:'soluble',formula:buildFormula(cat,an)};
             return null;
         }
@@ -118,7 +117,6 @@ const PRECIP_ENGINE = (function() {
     function isHighSchoolPair(cat,an,status){
         if(cat.id==='H+')return false;
         if(cat.id==='Cu+')return['Cl-','Br-','I-'].includes(an.id);
-        if(cat.id==='Hg22+')return['Cl-','Br-','I-','SO42-','CrO42-'].includes(an.id);
         if(an.id==='I-'){
             if(status==='soluble')return IA.has(cat.elem)||cat.id==='NH4+';
             return true;
@@ -701,7 +699,7 @@ const PRECIP_ENGINE = (function() {
             qd.forcedOpts=shuffle(['可溶','沉澱']);
             return true;
         }
-        const solubleCats=CATIONS.filter(c=>IA.has(c.elem)||c.id==='NH4+'||c.id==='H+');
+        const solubleCats=CATIONS.filter(c=>IA.has(c.elem)||c.id==='NH4+');
         const insolCats=CATIONS.filter(c=>!IA.has(c.elem)&&c.id!=='NH4+'&&c.id!=='H+'&&PRECIP_PAIRS.some(p=>p.an.id==='CO32-'&&p.cat.id===c.id));
         if(Math.random()<0.5&&insolCats.length){
             const cat=pick(insolCats);
@@ -960,10 +958,29 @@ function openCalibrationModal() {
     const modal = document.getElementById('calibration-modal');
     if (modal) {
         modal.style.display = 'flex';
+        if (window.matchMedia && window.matchMedia('(min-width: 769px)').matches) {
+            window.setCalibrationIntroOpen(false);
+        }
         if (typeof pauseSystem === 'function') pauseSystem();
         resetToDifficultySelection();
     }
 }
+
+window.setCalibrationIntroOpen = function(isOpen) {
+    const card = document.querySelector('#cal-category-area .calibration-intro-card');
+    const button = document.querySelector('#cal-category-area .calibration-intro-toggle');
+    const label = document.getElementById('calibration-intro-toggle-label');
+    if (!card || !button) return;
+    card.classList.toggle('is-open', Boolean(isOpen));
+    button.setAttribute('aria-expanded', String(Boolean(isOpen)));
+    if (label) label.textContent = isOpen ? '收起說明 −' : '展開說明 ＋';
+};
+
+window.toggleCalibrationIntro = function() {
+    const card = document.querySelector('#cal-category-area .calibration-intro-card');
+    if (!card) return;
+    window.setCalibrationIntroOpen(!card.classList.contains('is-open'));
+};
 
 function closeCalibrationModal() {
     const modal = document.getElementById('calibration-modal');
@@ -974,6 +991,7 @@ function closeCalibrationModal() {
 
 window.resetToDifficultySelection = function() {
     const preserveKnowledge = arguments[0] && arguments[0].preserveKnowledge === true;
+    const preserveExtension = arguments[0] && arguments[0].preserveExtension === true;
     document.getElementById('quiz-result-area').style.display = 'none';
     document.getElementById('quiz-setup-area').style.display = 'none';
     document.getElementById('quiz-content-area').style.display = 'none';
@@ -981,14 +999,14 @@ window.resetToDifficultySelection = function() {
     document.getElementById('electron-type-select-area').style.display = 'none';
     document.getElementById('precip-type-select-area').style.display = 'none';
     document.getElementById('formula-type-select-area').style.display = 'none';
+    const extensionArea = document.getElementById('extension-subtype-select-area');
+    if (extensionArea) extensionArea.style.display = 'none';
     const knowledgeCategoryArea = document.getElementById('knowledge-category-area');
     const knowledgeTypeArea = document.getElementById('knowledge-constant-type-select-area');
     const knowledgeModeArea = document.getElementById('knowledge-mode-select-area');
-    const compareArea = document.getElementById('compare-type-select-area');
     if (knowledgeCategoryArea) knowledgeCategoryArea.style.display = 'none';
     if (knowledgeTypeArea) knowledgeTypeArea.style.display = 'none';
     if (knowledgeModeArea) knowledgeModeArea.style.display = 'none';
-    if (compareArea) compareArea.style.display = 'none';
     const periodicModeSelect = document.getElementById('periodic-mode-select');
     if (periodicModeSelect) periodicModeSelect.style.display = 'none';
     document.getElementById('difficulty-grid').style.setProperty('display', 'none', 'important');
@@ -1004,11 +1022,14 @@ window.resetToDifficultySelection = function() {
         window.quizState.typeDeck = [];
     }
     window.formulaSelectedTypes = null;
-    window.compareSelectedSubtypes = null;
     if (!preserveKnowledge) {
         window.knowledgeSelectedSubtypes = null;
         window.knowledgeMode = null;
         window.knowledgeTopic = null;
+    }
+    if (!preserveExtension) {
+        window.extensionSelectedSubtypes = null;
+        window.extensionCategory = null;
     }
     document.querySelectorAll('#formula-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
     document.querySelectorAll('#knowledge-constant-type-cards .hybrid-type-card').forEach(card => card.classList.add('selected'));
@@ -1074,7 +1095,9 @@ function periodicRandomParticle(element, excludeCharge) {
 }
 
 function periodicParseParticle(value, pool) {
-    const plain = calibrationPlainElement(value)
+    const raw = String(value);
+    const mass = raw.match(/^<sup class="nuclide-mass">(\d+)<\/sup>/);
+    const plain = calibrationPlainElement(mass ? raw.slice(mass[0].length) : raw)
         .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ch => String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(ch)))
         .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)))
         .replace(/\s+/g, '');
@@ -1085,7 +1108,7 @@ function periodicParseParticle(value, pool) {
     if (!element) return null;
     const magnitude = match[3] ? Number(match[2] || 1) : 0;
     const q = match[3] ? (match[3] === '+' ? magnitude : -magnitude) : 0;
-    return periodicMakeParticle(element, q);
+    return periodicMakeParticle(element, q, mass ? Number(mass[1]) : undefined);
 }
 
 function periodicParticleReason(particle) {
@@ -1097,13 +1120,14 @@ function periodicParticleReason(particle) {
 function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn) {
     const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
     const mode = quizData._periodicParticleMode || 'full';
+    const label = mode === 'full' ? periodicNuclideLabel : periodicParticleLabel;
     const allCandidates = [];
-    const seen = new Set([periodicParticleLabel(correctParticle)]);
+    const seen = new Set([label(correctParticle)]);
     for (const element of calibrationShuffle(pool)) {
         for (const q of calibrationShuffle(PERIODIC_PARTICLE_CHARGES)) {
             const particle = periodicMakeParticle(element, q);
-            if (!particle || !predicate(particle) || seen.has(periodicParticleLabel(particle))) continue;
-            seen.add(periodicParticleLabel(particle));
+            if (!particle || !predicate(particle) || seen.has(label(particle))) continue;
+            seen.add(label(particle));
             const pGap = Math.abs(particle.p - correctParticle.p);
             const nGap = Math.abs(particle.n - correctParticle.n);
             const eGap = Math.abs(particle.e - correctParticle.e);
@@ -1125,7 +1149,7 @@ function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn)
                 if (eGap === 1) score += 8;
             }
             allCandidates.push({
-                value: periodicParticleLabel(particle),
+                value: label(particle),
                 reason: reasonFn(particle),
                 _particle: particle,
                 score,
@@ -1152,13 +1176,13 @@ function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn)
     const candidates = selected.slice(0, 3);
     if (candidates.length < 3) return false;
     quizData.forcedOpts = calibrationShuffle([
-        periodicParticleLabel(correctParticle),
+        label(correctParticle),
         ...candidates.map(entry => entry.value)
     ]);
     quizData.optionRationales = {};
     candidates.forEach(entry => { quizData.optionRationales[calibrationOptionKey(entry.value)] = entry.reason; });
     quizData._periodicOptionParticles = {
-        [calibrationOptionKey(periodicParticleLabel(correctParticle))]: correctParticle,
+        [calibrationOptionKey(label(correctParticle))]: correctParticle,
         ...Object.fromEntries(candidates.map(entry => [calibrationOptionKey(entry.value), entry._particle]))
     };
     return true;
@@ -1189,6 +1213,11 @@ window.restartCalibrationSameSettings = function() {
 
 window.adjustCalibrationSettings = function() {
     const category = window.calCategory || 'periodic';
+    if (window.CALIBRATION_EXTENSION_CATEGORIES?.[category]) {
+        window.resetToDifficultySelection({ preserveExtension: true });
+        window.selectCalCategory(category);
+        return;
+    }
     if (category === 'knowledge') {
         window.resetToDifficultySelection({ preserveKnowledge: true });
         window.selectCalCategory(category);
@@ -1200,6 +1229,19 @@ window.adjustCalibrationSettings = function() {
 };
 
 window.handleCalibrationBack = function() {
+    if (window.extensionCategory) {
+        const setup = document.getElementById('quiz-setup-area');
+        const types = document.getElementById('extension-subtype-select-area');
+        if (setup && setup.style.display !== 'none') {
+            setup.style.display = 'none';
+            if (types) types.style.display = 'flex';
+            const cfg = window.CALIBRATION_EXTENSION_CATEGORIES?.[window.extensionCategory];
+            document.getElementById('quiz-status-text').textContent = `${cfg?.label || '新章節'} > 選擇子題型`;
+        } else {
+            window.resetToDifficultySelection();
+        }
+        return;
+    }
     if (window.calCategory !== 'knowledge') {
         window.resetToDifficultySelection();
         return;
@@ -1278,17 +1320,23 @@ window.selectKnowledgeMode = function(mode) {
 window.selectCalCategory = function(cat) {
     window.calCategory = cat;
     document.getElementById('cal-category-area').style.display = 'none';
-    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原', 'precipitation': '沉澱表', 'formula': '化學式', 'knowledge': '知識校準', 'compare':'化學性質比較' };
+    const catNameMap = { 'periodic': '週期表', 'electron': '電子組態', 'hybrid': '混成', 'redox': '氧化還原', 'precipitation': '沉澱表', 'formula': '化學式', 'knowledge': '知識校準', ...(window.CALIBRATION_EXTENSION_CATEGORIES ? Object.fromEntries(Object.entries(window.CALIBRATION_EXTENSION_CATEGORIES).map(([key, value]) => [key, value.label])) : {}) };
     document.getElementById('quiz-cancel-btn').style.display = 'block';
 
-    if (cat === 'compare') {
+    if (window.CALIBRATION_EXTENSION_CATEGORIES?.[cat]) {
         const prevTotal = (window.quizState && window.quizState.totalQ) ? window.quizState.totalQ : 10;
-        window.quizState = { rank:null, difficulty:8, totalQ:prevTotal, currentQ:0, correctCount:0, pool:[], askedZ:[], typeDeck:[], askedQuestions:[] };
+        const cfg = window.CALIBRATION_EXTENSION_CATEGORIES[cat];
+        const sameExtension = window.extensionCategory === cat;
+        window.extensionCategory = cat;
+        window.extensionSelectedSubtypes = sameExtension && window.extensionSelectedSubtypes
+            ? window.extensionSelectedSubtypes
+            : Object.fromEntries(cfg.subtypes.map(item => [item.id, true]));
+        window.quizState = { rank: null, difficulty: cfg.difficulty, totalQ: prevTotal, currentQ: 0, correctCount: 0, pool: [], askedZ: [], typeDeck: [], askedQuestions: [] };
         window.quizState.generateTypeDeck = window._generateTypeDeck;
-        window.compareSelectedSubtypes = window.compareSelectedSubtypes || Object.fromEntries(COMPARE_SUBTYPES.map(x => [x.id, true]));
-        document.getElementById('compare-type-cards').innerHTML = COMPARE_SUBTYPES.map(item => `<button type="button" class="hybrid-type-card ${window.compareSelectedSubtypes[item.id] ? 'selected' : ''}" data-type="${item.id}" aria-pressed="${!!window.compareSelectedSubtypes[item.id]}" onclick="toggleCompareSubtype(this)"><span class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></span><span><span class="hybrid-type-name">${item.label}</span><span class="hybrid-type-desc">${item.description}</span></span></button>`).join('');
-        document.getElementById('compare-type-select-area').style.display = 'flex';
-        document.getElementById('quiz-status-text').textContent = '化學性質比較 > 選擇子題型';
+        const area = document.getElementById('extension-subtype-select-area');
+        area.innerHTML = `<span class="setup-label">${cfg.label}子題型（可複選，至少一種）</span><div id="extension-subtype-cards" style="display:flex;flex-direction:column;gap:10px;">${cfg.subtypes.map(item => `<button type="button" class="hybrid-type-card ${window.extensionSelectedSubtypes[item.id] ? 'selected' : ''}" style="font:inherit;text-align:left;width:100%;" data-type="${item.id}" aria-pressed="${!!window.extensionSelectedSubtypes[item.id]}" onclick="toggleCalibrationExtensionSubtype(this)"><span class="hybrid-type-check"><span class="hybrid-type-check-mark">✓</span></span><span><span class="hybrid-type-name">${item.label}${item.required ? ' <small style="color:#94a3b8">必修</small>' : ' <small style="color:#fbbf24">選修</small>'}</span><span class="hybrid-type-desc">${item.description}</span></span></button>`).join('')}</div><small style="color:#64756f;line-height:1.6">每個子題型都由多種題幹與詳解模板搭配資料生成；可選題數依有效且不重複的組合數開放。</small><button type="button" class="start-cal-btn" id="extension-subtype-confirm-btn" onclick="confirmCalibrationExtensionSubtypes()">確認子題型，繼續 ▸</button>`;
+        area.style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = `${cfg.label} > 選擇子題型`;
         return;
     }
 
@@ -1338,6 +1386,32 @@ window.selectCalCategory = function(cat) {
         document.getElementById('difficulty-grid').style.setProperty('display', 'flex', 'important');
         document.getElementById('quiz-status-text').textContent = `${catNameMap[cat]} > 選擇範圍`;
     }
+};
+
+window.toggleCalibrationExtensionSubtype = function(card) {
+    card.classList.toggle('selected');
+    card.setAttribute('aria-pressed', card.classList.contains('selected') ? 'true' : 'false');
+};
+
+window.confirmCalibrationExtensionSubtypes = function() {
+    const cards = [...document.querySelectorAll('#extension-subtype-cards .hybrid-type-card')];
+    const selected = Object.fromEntries(cards.filter(card => card.classList.contains('selected')).map(card => [card.dataset.type, true]));
+    const button = document.getElementById('extension-subtype-confirm-btn');
+    if (!Object.keys(selected).length) {
+        if (button) { const old = button.textContent; button.textContent = '請至少選擇一項！'; setTimeout(() => { button.textContent = old; }, 1600); }
+        return;
+    }
+    const available = window.CALIBRATION_EXTENSION_ENGINE?.capacity(window.extensionCategory, selected) || 0;
+    if (available < 10) {
+        if (button) { const old = button.textContent; button.textContent = `所選題庫 ${available} 題，請再選子題型`; setTimeout(() => { button.textContent = old; }, 2200); }
+        return;
+    }
+    window.extensionSelectedSubtypes = selected;
+    document.getElementById('extension-subtype-select-area').style.display = 'none';
+    document.getElementById('quiz-setup-area').style.display = 'flex';
+    const label = window.CALIBRATION_EXTENSION_CATEGORIES[window.extensionCategory].label;
+    document.getElementById('quiz-status-text').textContent = `${label} > 選擇題數`;
+    if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons();
 };
 
 // === Quiz Mini 3D Viewer (與主畫面渲染風格一致) ===
@@ -1621,24 +1695,22 @@ window.confirmHybridTypes = function() {
 
 // 沉澱表：加權牌組（溶解/沉澱題多，焰色少）
 function _generatePrecipTypeDeck(total, sub) {
-    window._precipSpecialLeft = 2;
     const W = { 21:10, 22:15, 28:1, 31:5, 24:2, 25:1, 26:6, 27:3, 23:2, 29:2 };
     const pool = [];
     if (sub['A']) pool.push(21, 22, 28, 31);
     if (sub['B']) pool.push(24, 25);
     if (sub['C']) pool.push(26, 27, 23, 29);
+    if (pool.length === 0 && sub['D']) return Array.from({ length: total }, () => 30);
     if (pool.length === 0) pool.push(21, 22, 26, 27);
 
-    const specialN = 2;
     const flameN = sub['D'] ? (total <= 15 ? 1 : Math.min(2, Math.round(total / 10))) : 0;
     const deck = [];
-    for (let i = 0; i < specialN; i++) deck.push(28);
     for (let i = 0; i < flameN; i++) deck.push(30);
 
     const weighted = [];
     pool.forEach(t => { const w = W[t] || 2; for (let i = 0; i < w; i++) weighted.push(t); });
 
-    const remain = total - deck.length;
+    const remain = Math.max(0, total - deck.length);
     for (let i = 0; i < remain; i++) {
         deck.push(weighted[Math.floor(Math.random() * weighted.length)]);
     }
@@ -1660,23 +1732,24 @@ function _generatePrecipTypeDeck(total, sub) {
 function _generateFormulaTypeDeck(total, sub) {
     const selected = Object.keys(sub || {}).filter(k => sub[k]);
     const groups = selected.length ? selected : ['name', 'ions', 'judge'];
-    const tfTotal = Math.max(1, Math.round(total * 0.3));
+    const tfGroups = groups.filter(group => group !== 'mass');
+    const tfTotal = tfGroups.length ? Math.max(1, Math.round(total * 0.3)) : 0;
     const deck = [];
-    const nonTfTypes = { name: [32, 33], ions: [34, 35], judge: [36] };
+    const nonTfTypes = { name: [32, 33], ions: [34, 35], judge: [36], mass: [50] };
     const tfTypes = { name: [37], ions: [38], judge: [39] };
 
-    const distributeByGroup = (count, typeMap) => {
+    const distributeByGroup = (count, typeMap, allowedGroups) => {
         const offsets = {};
-        groups.forEach(g => { offsets[g] = 0; });
+        allowedGroups.forEach(g => { offsets[g] = 0; });
         for (let i = 0; i < count; i++) {
-            const group = groups[i % groups.length];
+            const group = allowedGroups[i % allowedGroups.length];
             const choices = typeMap[group];
             deck.push(choices[offsets[group] % choices.length]);
             offsets[group]++;
         }
     };
-    distributeByGroup(tfTotal, tfTypes);
-    distributeByGroup(total - tfTotal, nonTfTypes);
+    if (tfTotal) distributeByGroup(tfTotal, tfTypes, tfGroups);
+    distributeByGroup(total - tfTotal, nonTfTypes, groups);
 
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -1731,9 +1804,12 @@ window._generateTypeDeck = function(diff, total) {
         7: [40, 41, 42, 43, 44, 45]
     };
     let types;
-    if (diff === 8 && window.compareSelectedSubtypes) return Array.from({ length: total }, () => 54);
     if (diff === 6) {
         return _generateFormulaTypeDeck(total, window.formulaSelectedTypes || {});
+    }
+    if (diff >= 8 && diff <= 15) {
+        const type = diff + 38;
+        return Array.from({ length: total }, () => type);
     }
     if (diff === 5 && window.precipSelectedSubtypes) {
         return _generatePrecipTypeDeck(total, window.precipSelectedSubtypes);
@@ -1880,6 +1956,12 @@ window.updateSetupButtons = function() {
     const countBtns = document.querySelectorAll('.setup-btns button[onclick*="setQuizParam(\'count\'"]');
     countBtns.forEach(btn => {
         const match = btn.getAttribute('onclick').match(/setQuizParam\('count',\s*(\d+)/);
+        const requested = match ? parseInt(match[1]) : 0;
+        const extensionCount = window.extensionCategory
+            ? (window.CALIBRATION_EXTENSION_ENGINE?.capacity(window.extensionCategory, window.extensionSelectedSubtypes || {}) || 0)
+            : Infinity;
+        btn.disabled = requested > extensionCount;
+        btn.title = btn.disabled ? `目前所選子題型可生成 ${extensionCount} 種有效題目` : '';
         if (match && parseInt(match[1]) === window.quizState.totalQ) {
             btn.classList.add('active');
         } else {
@@ -2043,6 +2125,19 @@ function generateQuestionKey(type, quizData, target) {
 }
 
 window.initiateCalibration = function() {
+    const extensionCount = window.extensionCategory
+        ? (window.CALIBRATION_EXTENSION_ENGINE?.capacity(window.extensionCategory, window.extensionSelectedSubtypes || {}) || 0)
+        : Infinity;
+    if (window.extensionCategory && window.quizState.totalQ > extensionCount) {
+        window.handleCalibrationBack();
+        return;
+    }
+    if (window.quizState) window.quizState._extensionAskedIds = new Set();
+    if (window.calCategory === 'redox' || window.calCategory === 'electrochem') {
+        window.quizState._redoxElectrochemAsked = new Set();
+        window.quizState._redoxElectrochemSubtypeCounts = {};
+        window.quizState._redoxElectrochemTemplateCounts = {};
+    }
     // 1. 生成不連續重複的平衡題型牌組
     window.quizState.typeDeck = window.quizState.generateTypeDeck(window.quizState.difficulty, window.quizState.totalQ);
 
@@ -2062,14 +2157,14 @@ window.initiateCalibration = function() {
 };
 
 function getCalibrationTopicLabel(difficulty, type) {
-    if (type === 54 || difficulty === 8) return '化學性質比較';
     if (type === 18) return '氧化數判斷';
     if (type === 19) return '結構圖混成';
     if (type === 16) return '混成軌域';
     if (type === 17) return '分子形狀';
     if (type >= 21 && type <= 31) return '沉澱表';
-    if (type >= 32 && type <= 39) return '化學式';
+    if ((type >= 32 && type <= 39) || type === 50) return '化學式';
     if (type >= 40 && type <= 45) return '知識校準';
+    if ((type >= 46 && type <= 49) || type === 51 || type === 52 || type === 53) return window.CALIBRATION_EXTENSION_CATEGORIES?.[window.extensionCategory]?.label || '新章節';
     const topicMap = {
         1: '週期表',
         2: '電子組態',
@@ -2161,7 +2256,7 @@ const calibrationElementFormulaPattern = new RegExp(
 );
 
 function formatCalibrationChemistryText(text) {
-    return String(text || '').replace(
+    return String(text || '').replace(/(10)([⁺⁻]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, '$1<span class="cal-scientific-exponent">$2</span>').replace(
         calibrationElementFormulaPattern,
         '<span class="cal-chemistry-math">$1</span>'
     );
@@ -2182,7 +2277,16 @@ function formatCalibrationChemistryHtml(html) {
         return part.startsWith('<') ? part : formatCalibrationChemistryText(part);
     }).join('');
 
-    return output.replace(/\uE100(\d+)\uE101/g, (_, index) => protectedSegments[Number(index)]);
+    output = output.replace(/\uE100(\d+)\uE101/g, (_, index) => protectedSegments[Number(index)]);
+    const mathSources = [];
+    output = output.replace(/<span class="cal-math-source">[\s\S]*?<\/span>/g, match => {
+        const token = `\uE200${mathSources.length}\uE201`;
+        mathSources.push(match);
+        return token;
+    });
+    // 畫面字元格式化，不改題庫資料、答案鍵、運算字串或 MathJax 原始碼。
+    output = output.split(/(<[^>]+>)/g).map(part => part.startsWith('<') ? part : part.replace(/[=+\-]/g, symbol => ({ '=': '＝', '+': '＋', '-': '－' })[symbol])).join('');
+    return output.replace(/\uE200(\d+)\uE201/g, (_, index) => mathSources[Number(index)]);
 }
 
 function typesetCalibrationMath(root) {
@@ -2233,117 +2337,6 @@ function calibrationShuffle(values) {
         [out[i], out[j]] = [out[j], out[i]];
     }
     return out;
-}
-
-const COMPARE_SUBTYPES = [
-    {id:'periodicTrend',label:'週期趨勢比較',description:'原子半徑、電負度、游離能與金屬性，含正向及反向排序'},
-    {id:'isoelectronicRadius',label:'等電子粒子半徑',description:'依核電荷比較原子與離子半徑，並由排序反推粒子'},
-    {id:'molecularProperties',label:'分子形狀、極性與分子間作用力',description:'結構與性質互相反推，包含氫鍵、偶極力及分散力'},
-    {id:'redoxStrength',label:'氧化力與還原力比較',description:'常見金屬活動性及對應氧化劑強弱排序'},
-    {id:'acidStrengthTrend',label:'酸性強弱趨勢',description:'常見氫鹵酸與含氧酸強弱比較、正反向排列'},
-    {id:'qualitativeIonTest',label:'離子檢驗與現象判斷',description:'由離子預測反應現象，也由沉澱、氣體及試紙變化反推離子'},
-    {id:'organicProperties',label:'有機物性質比較',description:'同系列烷類與醇類沸點趨勢，正向比較及反向排序'}
-];
-
-window.toggleCompareSubtype = function(card) {
-    card.classList.toggle('selected');
-    card.setAttribute('aria-pressed', card.classList.contains('selected') ? 'true' : 'false');
-};
-
-window.confirmCompareTypes = function() {
-    const selected = [...document.querySelectorAll('#compare-type-cards .hybrid-type-card.selected')].map(card => card.dataset.type);
-    if (!selected.length) { alert('請至少選擇一種化學性質比較子題型。'); return; }
-    window.compareSelectedSubtypes = Object.fromEntries(selected.map(id => [id,true]));
-    document.getElementById('compare-type-select-area').style.display = 'none';
-    document.getElementById('quiz-setup-area').style.display = 'flex';
-    document.getElementById('quiz-status-text').textContent = '化學性質比較 > 選擇題數';
-    if (typeof window.updateSetupButtons === 'function') window.updateSetupButtons();
-};
-
-function generateChemistryComparisonQuestion(quizData) {
-    const selected = Object.keys(window.compareSelectedSubtypes || {}).filter(id => window.compareSelectedSubtypes[id]);
-    const records = [];
-    const add = (subtype, id, template, questions, answer, distractors, rule, reasoning) => questions.forEach((question,index) => records.push({
-        subtype,id:`${subtype}:${id}:${template}:${index}`,template,question,answer:String(answer),distractors:distractors.map(String),rule,reasoning
-    }));
-    const trends = [
-        {id:'p2-radius',p:'原子半徑',o:['Li','Be','B','C','N','O','F'],r:'同一週期由左至右，原子半徑大致減小。'},
-        {id:'p3-radius',p:'原子半徑',o:['Na','Mg','Al','Si','P','S','Cl'],r:'第三週期由左至右，原子半徑大致減小。'},
-        {id:'g1-radius',p:'原子半徑',o:['Rb','K','Na','Li'],r:'同族由上而下，電子層增加，原子半徑增大。'},
-        {id:'g17-en',p:'電負度',o:['F','Cl','Br','I'],r:'同族由上而下，電負度大致降低。'},
-        {id:'g1-ie',p:'第一游離能',o:['Li','Na','K','Rb'],r:'同族由上而下，最外層電子較容易移除，第一游離能大致降低。'},
-        {id:'p3-metal',p:'金屬性',o:['Na','Mg','Al','Si','P','S','Cl'],r:'同週期由左至右，金屬性大致降低。'}
-    ];
-    if (selected.includes('periodicTrend')) trends.forEach(f=>{
-        add('periodicTrend',f.id,'greatest',[`下列元素中，${f.p}最大的是哪一個？（${f.o.join('、')}）`,`比較 ${f.o.join('、')} 的${f.p}，何者最大？`],f.o[0],f.o.slice(1),f.r,`由大至小排列為 ${f.o.join(' ＞ ')}。`);
-        add('periodicTrend',f.id,'reverse-order',[`將 ${f.o.join('、')} 依${f.p}由大至小排列。`,`若比較${f.o.join('、')}的${f.p}，由高至低順序為何？`],f.o.join(' ＞ '),[f.o.slice().reverse().join(' ＞ '),[...f.o.slice(1),f.o[0]].join(' ＞ '),[...f.o.slice(0,-1).reverse(),f.o.at(-1)].join(' ＞ ')],f.r,`正確順序為 ${f.o.join(' ＞ ')}。`);
-    });
-    const iso=[['N³⁻','O²⁻','F⁻','Ne','Na⁺','Mg²⁺','Al³⁺'],['S²⁻','Cl⁻','Ar','K⁺','Ca²⁺'],['H⁻','He','Li⁺'],['O²⁻','F⁻','Na⁺','Mg²⁺'],['S²⁻','Cl⁻','K⁺','Ca²⁺']];
-    if (selected.includes('isoelectronicRadius')) iso.forEach((a,i)=>{
-        const big=a[0], small=a.at(-1), desc='等電子粒子中，質子數越多，核電荷越大，半徑越小。';
-        add('isoelectronicRadius',`iso${i}`,'largest',[`下列等電子粒子中，半徑最大的是哪一個？（${a.join('、')}）`,`比較 ${a.join('、')} 的半徑，何者最大？`],big,a.slice(1),desc,`這些粒子電子數相同；質子數最少的 ${big} 半徑最大。`);
-        add('isoelectronicRadius',`iso${i}`,'smallest',[`${a.join('、')}中，半徑最小的是哪一個？`,`哪個粒子的核電荷最大、半徑最小？（${a.join('、')}）`],small,a.slice(0,-1),desc,`質子數最多的 ${small} 對電子雲吸引最強。`);
-        const order=a.slice().reverse();
-        add('isoelectronicRadius',`iso${i}`,'reverse-order',[`將 ${a.join('、')} 依半徑由大至小排列。`,`哪一個順序符合這組等電子粒子的半徑變化？`],order.join(' ＞ '),[a.join(' ＞ '),[...order.slice(1),order[0]].join(' ＞ '),[...order].reverse().join(' ＞ ')],desc,`由大至小為 ${order.join(' ＞ ')}。`);
-    });
-    const mol=[
-        ['CO₂','直線形、非極性、主要為分散力'],['CH₄','正四面體形、非極性、主要為分散力'],['BF₃','平面三角形、非極性、主要為分散力'],
-        ['H₂O','折線形、極性、可形成氫鍵'],['NH₃','三角錐形、極性、可形成氫鍵'],['HF','直線形、極性、可形成氫鍵'],
-        ['HCl','直線形、極性、主要為偶極－偶極力'],['SO₂','折線形、極性、主要為偶極－偶極力'],['CH₃Cl','四面體形、極性、主要為偶極－偶極力']
-    ];
-    if (selected.includes('molecularProperties')) mol.forEach((m,i)=>{
-        const [formula,desc]=m, other=mol.filter((_,j)=>j!==i);
-        add('molecularProperties',`mol${i}`,'formula-to-properties',[`${formula}的形狀、極性與主要分子間作用力，何者配對正確？`,`關於 ${formula}，下列哪項描述正確？`],desc,other.map(x=>x[1]),'分子極性須同時考慮鍵極性與空間形狀；分子間主要作用力由分子極性與可形成氫鍵的條件判斷。',`${formula}符合「${desc}」。`);
-        add('molecularProperties',`mol${i}`,'properties-to-formula',[`哪個分子符合「${desc}」？`,`某分子為${desc}，最可能是哪一個？`],formula,other.map(x=>x[0]),'分子形狀、整體極性與分子間作用力要一起判斷。',`符合條件的分子為 ${formula}。`);
-    });
-    const redox=[
-        ['還原劑（金屬）','還原力',['Mg','Zn','Fe','Pb','H₂','Cu','Ag'],'金屬越容易失去電子，還原力越強。'],
-        ['氧化劑（離子）','氧化力',['Ag⁺','Cu²⁺','H⁺','Pb²⁺','Fe²⁺','Zn²⁺','Mg²⁺'],'氧化劑越容易得到電子，氧化力越強；與金屬還原力序列方向相反。']
-    ];
-    if (selected.includes('redoxStrength')) redox.forEach((f,i)=>{
-        const [name,prop,o,rule]=f;
-        add('redoxStrength',`redox${i}`,'strongest',[`下列${name}中，${prop}最強的是哪一個？（${o.join('、')}）`,`比較${o.join('、')}，何者${prop}最強？`,`依序列判斷，${o.join('、')}中哪一個最容易進行相應的電子轉移？`],o[0],o.slice(1),rule,`常見${name}由強至弱為 ${o.join(' ＞ ')}。`);
-        add('redoxStrength',`redox${i}`,'reverse-order',[`將 ${o.join('、')} 依${prop}由強至弱排列。`,`哪個順序正確表示${name}能力由強至弱？`,`依常見序列排列${o.join('、')}，從最強${name}排到最弱。`],o.join(' ＞ '),[o.slice().reverse().join(' ＞ '),[...o.slice(1),o[0]].join(' ＞ '),[...o.slice(0,3),...o.slice(3).reverse()].join(' ＞ ')],rule,`正確順序為 ${o.join(' ＞ ')}。`);
-    });
-    const acid=[
-        ['氫鹵酸',['HF','HCl','HBr','HI'],'水溶液中酸性由 HF、HCl、HBr 至 HI 逐漸增強。'],
-        ['氯的含氧酸',['HClO','HClO₂','HClO₃','HClO₄'],'同一中心原子的含氧酸中，氧原子數較多者通常酸性較強。'],
-        ['溴的含氧酸',['HBrO','HBrO₂','HBrO₃','HBrO₄'],'同一中心原子的含氧酸中，氧原子數較多者通常酸性較強。']
-    ];
-    if (selected.includes('acidStrengthTrend')) acid.forEach((f,i)=>{
-        const [name,weakStrong,rule]=f, strong=weakStrong.slice().reverse();
-        add('acidStrengthTrend',`acid${i}`,'strongest',[`${name}中，酸性最強的是哪一種？`,`比較 ${weakStrong.join('、')} 的酸性，何者最強？`],strong[0],strong.slice(1),rule,`由弱至強為 ${weakStrong.join(' ＜ ')}。`);
-        add('acidStrengthTrend',`acid${i}`,'reverse-order',[`將 ${weakStrong.join('、')} 依酸性由弱至強排列。`,`哪個順序表示${name}的酸性逐漸增強？`],weakStrong.join(' ＜ '),[strong.join(' ＜ '),[...weakStrong.slice(1),weakStrong[0]].join(' ＜ '),[...weakStrong.slice(0,2).reverse(),...weakStrong.slice(2)].join(' ＜ ')],rule,`正確順序為 ${weakStrong.join(' ＜ ')}。`);
-    });
-    const ions=[
-        ['Cl⁻','加入 AgNO₃(aq)','白色 AgCl 沉澱，可溶於稀氨水'],['SO₄²⁻','酸化後加入 BaCl₂(aq)','白色 BaSO₄ 沉澱，加入稀酸後仍不溶'],
-        ['CO₃²⁻','加入稀酸並將氣體通入澄清石灰水','產生氣體，使澄清石灰水混濁'],['NH₄⁺','加入 NaOH(aq) 並微熱','產生 NH₃，使濕潤紅色石蕊試紙變藍'],
-        ['Cu²⁺','加入 NaOH(aq)','生成藍色沉澱'],['Fe³⁺','加入 NaOH(aq)','生成紅褐色沉澱']
-    ];
-    if (selected.includes('qualitativeIonTest')) ions.forEach((f,i)=>{
-        const [ion,reagent,obs]=f, rest=ions.filter((_,j)=>j!==i);
-        add('qualitativeIonTest',`ion${i}`,'ion-to-observation',[`檢驗 ${ion} 時，${reagent}，會觀察到哪一種現象？`,`已知溶液含 ${ion}，${reagent}後的特徵為何？`],obs,rest.map(x=>x[2]),'須同時核對試劑、沉澱顏色、溶解性或氣體檢驗結果。',`${ion}的特徵現象為：${obs}。`);
-        add('qualitativeIonTest',`ion${i}`,'observation-to-ion',[`觀察到「${obs}」，最可能含有哪種離子？`,`某溶液${reagent}後出現「${obs}」，待測離子為何？`],ion,rest.map(x=>x[0]),'依特徵反應從現象反推離子；不可只憑「有沉澱」作答。',`上述現象對應 ${ion}。`);
-    });
-    const organic=[
-        ['直鏈烷類','沸點',['CH₄','C₂H₆','C₃H₈','C₄H₁₀','C₅H₁₂'],'同系列直鏈烷類中，碳鏈越長，分散力通常越強，沸點越高。'],
-        ['直鏈一元醇','沸點',['CH₃OH','C₂H₅OH','C₃H₇OH','C₄H₉OH'],'同系列直鏈一元醇均可形成氫鍵；碳鏈增加時分散力增強，沸點整體上升。']
-    ];
-    if (selected.includes('organicProperties')) organic.forEach((f,i)=>{
-        const [series,prop,lowHigh,rule]=f, high=lowHigh.slice().reverse();
-        add('organicProperties',`org${i}`,'highest',[`${series}中，${prop}最高的是哪一個？`,`比較 ${lowHigh.join('、')} 的${prop}，何者最高？`,`依同系列趨勢，哪個分子具有最高${prop}？`],high[0],high.slice(1),rule,`同系列中碳鏈越長，分散力通常越強，因此${prop}越高。`);
-        add('organicProperties',`org${i}`,'reverse-order',[`將 ${lowHigh.join('、')} 依${prop}由低至高排列。`,`哪個順序符合${series}的${prop}逐漸上升？`,`依${prop}遞增排列這組${series}：${lowHigh.join('、')}。`],lowHigh.join(' ＜ '),[high.join(' ＜ '),[...lowHigh.slice(1),lowHigh[0]].join(' ＜ '),[...lowHigh.slice(0,-1).reverse(),lowHigh.at(-1)].join(' ＜ ')],rule,`正確順序為 ${lowHigh.join(' ＜ ')}。`);
-    });
-    if (!records.length) return false;
-    const item=records[Math.floor(Math.random()*records.length)];
-    const options=calibrationShuffle([...new Set([item.answer,...item.distractors])].filter(Boolean)).slice(0,4);
-    if (options.length < 4 || options.filter(x=>calibrationOptionKey(x)===calibrationOptionKey(item.answer)).length!==1) return false;
-    quizData.type=`化學性質比較｜${COMPARE_SUBTYPES.find(x=>x.id===item.subtype)?.label || item.subtype}｜${item.template}`;
-    quizData.question=item.question; quizData.questionHtml=item.question; quizData.answer=item.answer;
-    quizData.forcedOpts=options; quizData.displayMode='text';
-    quizData.explanation={basis:item.rule,steps:item.reasoning,conclusion:`答案：${item.answer}。`};
-    quizData.correctReason=[item.rule,item.reasoning,`答案：${item.answer}。`].join(' ');
-    return true;
 }
 
 function setCalibrationOptions(quizData, correct, entries) {
@@ -2533,11 +2526,12 @@ function renderCalibrationExplanation(quizData, selectedOption, isCorrect) {
         && [explanation.basis, explanation.steps, explanation.conclusion].some(Boolean);
     const reason = [explanation.basis, explanation.steps, explanation.conclusion]
         .filter(Boolean).join(' ') || quizData.correctReason || '本題詳解資料尚未建立。';
+    const labels = explanation.labels || ['核心規則', '判斷依據', '結論'];
     const reasonHtml = structured
         ? [
-            ['核心規則', explanation.basis],
-            ['判斷依據', explanation.steps],
-            ['記憶點', explanation.conclusion]
+            [labels[0], explanation.basis],
+            [labels[1], explanation.steps],
+            [labels[2], explanation.conclusion]
         ].filter(([, value]) => value)
             .map(([label, value]) => `<div class="cal-explanation-line"><strong>${label}：</strong>${value}</div>`)
             .join('')
@@ -2552,8 +2546,8 @@ function renderCalibrationExplanation(quizData, selectedOption, isCorrect) {
         : (isCorrect
             ? `<div class="cal-explanation-line cal-explanation-correct"><strong>判斷正確：</strong>${answer} 符合題目條件。</div>`
             : '');
-    return `<div class="cal-explanation-line"><strong>正確答案：</strong>${answer}</div>`
-        + `${reasonHtml}${wrongNote}`;
+    return formatCalibrationChemistryHtml(`<div class="cal-explanation-line"><strong>正確答案：</strong>${answer}</div>`
+        + `${reasonHtml}${wrongNote}`);
 }
 
 function attachGenericCalibrationReason(type, quizData, target, parsed) {
@@ -2566,6 +2560,10 @@ function attachGenericCalibrationReason(type, quizData, target, parsed) {
         return;
     }
     if (quizData._periodicCustomExplanation && quizData.correctReason) {
+        quizData.showExplanation = true;
+        return;
+    }
+    if (quizData._formulaMassExplanation && quizData.correctReason) {
         quizData.showExplanation = true;
         return;
     }
@@ -2609,8 +2607,9 @@ function attachGenericCalibrationReason(type, quizData, target, parsed) {
             : `核對每個選項的 Z−q；只有 ${answer} 與題目粒子的電子數相同。`;
     } else if (/組態辨識|組態逆推/.test(label)) {
         reason = `依填入順序核對 ${target ? target.noble : answer} 的末端次層與總電子數，因此對應答案為 ${answer}。`;
-    } else if (/價電子數/.test(label)) {
-        reason = `${target.s} 的價電子來自最外層（過渡元素另核對未填滿 d 次層），逐項統計得到 ${answer} 個。`;
+    } else if (/最外層電子數/.test(label)) {
+        const outerShell = Math.max(...(parsed || QUIZ_HELPER.parse(target.c)).map(orbital => orbital.n));
+        reason = `${target.s} 的最大主量子數是 n=${outerShell}；只加總這一層的電子，得到 ${answer} 個。`;
     } else if (/未成對/.test(label)) {
         reason = `依 ${target.s} 的基態電子組態，等能軌域先單獨佔據再配對；依洪德定則得到 ${answer} 個未成對電子。`;
     } else if (/軌域總數統計/.test(label)) {
@@ -3024,7 +3023,7 @@ function calibrationFormulaBinaryRationale(quizData, item) {
 function calibrationFormulaOptionRationale(quizData, value, item) {
     if (!item || calibrationOptionKey(value) === calibrationOptionKey(quizData.answer)) return '';
     const label = quizData.type || '';
-    if (/是非題/.test(label)) return formulaBinaryRationale(quizData, item);
+    if (/是非題/.test(label)) return calibrationFormulaBinaryRationale(quizData, item);
     if (/化學式 → 中文名稱/.test(label)) {
         return calibrationFormulaNameRationale(item, formulaOptionDataEntry(value));
     }
@@ -3418,7 +3417,6 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/元素\s*>\s*分類/.test(label)) {
         // 元素 → 分類要比較「分類標籤」本身，不能把週期表座標當成分類選項。
         const typeValues = [...new Set(pool.map(el => String(el.type || '').trim()).filter(Boolean))];
-        if (!typeValues.includes('以上皆非')) typeValues.push('以上皆非');
         candidates = typeValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素位置可能相近，但金屬／非金屬／類金屬分類不同。' }))
@@ -3431,7 +3429,6 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/元素\s*>\s*常溫狀態/.test(label)) {
         // 元素 → 常溫狀態只有固、液、氣三個合理類別，選項要維持同一表示形式。
         const stateValues = [...new Set(pool.map(el => QUIZ_HELPER.getCleanState(el.state)).filter(Boolean))];
-        if (!stateValues.includes('以上皆非')) stateValues.push('以上皆非');
         candidates = stateValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素可能相鄰，但在 25°C、1 atm 下的物態不同。' }))
@@ -3778,7 +3775,7 @@ function applyPeriodicChallengeVariant(type, quizData, target) {
         if (Math.random() < 0.5) {
             quizData.type = '識別校準：質子／中子／電子反推';
             quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
-            quizData.answer = periodicParticleLabel(particle);
+            quizData.answer = periodicNuclideLabel(particle);
             quizData.displayMode = 'ion';
             quizData._periodicParticle = particle;
             quizData._periodicParticleMode = 'full';
@@ -3880,12 +3877,97 @@ function applyPeriodicChallengeVariant(type, quizData, target) {
     return false;
 }
 
+// [化學式, 目標元素, 個數, 其餘原子的氧化數總和, 總電荷, 列式依據]
+window.CALIBRATION_OXIDATION_FACTS = [
+    ["H2O", "O", 1, 2, 0, "水中 H 各為 +1"],
+    ["H2O2", "O", 2, 2, 0, "過氧化物中的兩個 O 等價，H 各為 +1"],
+    ["OF2", "O", 1, -2, 0, "F 各為 −1"],
+    ["O2F2", "O", 2, -2, 0, "F 各為 −1，兩個 O 等價"],
+    ["NaH", "H", 1, 1, 0, "Na 為 +1"],
+    ["CaH2", "H", 2, 2, 0, "Ca 為 +2"],
+    ["NH3", "N", 1, 3, 0, "H 各為 +1"],
+    ["NH4 +", "N", 1, 4, 1, "H 各為 +1"],
+    ["NO", "N", 1, -2, 0],
+    ["NO2", "N", 1, -4, 0],
+    ["NO2 -", "N", 1, -4, -1],
+    ["NO3 -", "N", 1, -6, -1],
+    ["CO", "C", 1, -2, 0],
+    ["CO2", "C", 1, -4, 0],
+    ["CH4", "C", 1, 4, 0, "H 各為 +1"],
+    ["CO3 2-", "C", 1, -6, -2],
+    ["HCO3 -", "C", 1, -5, -1, "H 為 +1，三個 O 合計 −6"],
+    ["SO2", "S", 1, -4, 0],
+    ["SO3", "S", 1, -6, 0],
+    ["H2S", "S", 1, 2, 0, "H 各為 +1"],
+    ["SO3 2-", "S", 1, -6, -2],
+    ["SO4 2-", "S", 1, -8, -2],
+    ["H2SO4", "S", 1, -6, 0, "兩個 H 合計 +2，四個 O 合計 −8"],
+    ["PO4 3-", "P", 1, -8, -3],
+    ["ClO -", "Cl", 1, -2, -1],
+    ["ClO2 -", "Cl", 1, -4, -1],
+    ["ClO3 -", "Cl", 1, -6, -1],
+    ["ClO4 -", "Cl", 1, -8, -1],
+    ["MnO4 -", "Mn", 1, -8, -1],
+    ["MnO4 2-", "Mn", 1, -8, -2],
+    ["MnO2", "Mn", 1, -4, 0],
+    ["CrO4 2-", "Cr", 1, -8, -2],
+    ["Cr2O7 2-", "Cr", 2, -14, -2, "O 各為 −2，兩個 Cr 等價"],
+    ["FeO", "Fe", 1, -2, 0],
+    ["Fe2O3", "Fe", 2, -6, 0, "O 各為 −2，兩個 Fe 同價"],
+    ["Cu2O", "Cu", 2, -2, 0, "O 為 −2，兩個 Cu 同價"],
+    ["CuO", "Cu", 1, -2, 0]
+].map(([formula, element, count, known, charge, rule = 'O 各為 −2']) =>
+    ({ formula, element, count, known, charge, rule, oxidation: (charge - known) / count }));
+
+function generateCalibrationOxidation(quizData) {
+    const facts = window.CALIBRATION_OXIDATION_FACTS;
+    const selected = facts[Math.floor(Math.random() * facts.length)];
+    const signed = value => value > 0 ? '+' + value : String(value);
+    const label = fact => formatFormula(fact.formula) + ' 中的 ' + fact.element;
+    const explain = fact => fact.rule + '。設 ' + fact.element + ' 的氧化數為 x，由 ' + fact.count +
+        'x＋(' + signed(fact.known) + ')＝' + signed(fact.charge) + '，得 x＝' + signed(fact.oxidation) + '。';
+    if (Math.random() < 0.4) {
+        const errors = calibrationShuffle(facts.filter(fact => fact.oxidation !== selected.oxidation))
+            .sort((a, b) => Math.abs(a.oxidation - selected.oxidation) - Math.abs(b.oxidation - selected.oxidation))
+            .slice(0, 3).map(fact => ({ value:label(fact), reason:explain(fact) }));
+        quizData.type = '氧化數判斷（反向）';
+        quizData.question = '下列何者的氧化數為 ' + signed(selected.oxidation) + '？';
+        quizData.displayMode = 'formula';
+        quizData.answer = label(selected);
+        setCalibrationOptions(quizData, quizData.answer, errors);
+    } else {
+        const { count, known, charge, oxidation } = selected;
+        const errors = [
+            ...(selected.element === 'O' && oxidation !== -2
+                ? [[-2, '把氧一律視為 −2，漏看過氧化物或氧氟化物的例外。']] : []),
+            ...(selected.element === 'H' && oxidation === -1
+                ? [[1, '沿用氫通常為 +1 的規則，漏看金屬氫化物的例外。']] : []),
+            [-known / count, '把多原子離子的氧化數總和當成 0。'],
+            [charge - known, '得到目標元素的氧化數總和後，漏除原子個數。'],
+            [-oxidation, '解方程時把氧化數的正負號顛倒。'],
+            [0, '把化合物中的原子當成游離元素。'],
+            [charge, '把整個粒子的總電荷當成單一原子的氧化數。']
+        ].map(([value, reason]) => ({ value:signed(value), reason }));
+        quizData.type = '氧化數判斷';
+        quizData.question = label(selected) + '，其氧化數為何？';
+        quizData.displayMode = 'text';
+        quizData.answer = signed(oxidation);
+        const uniqueErrors = new Map();
+        for (const error of errors) {
+            if (error.value !== quizData.answer && !uniqueErrors.has(error.value)) uniqueErrors.set(error.value, error);
+        }
+        setCalibrationOptions(quizData, quizData.answer, [...uniqueErrors.values()].slice(0, 3));
+    }
+    quizData._oxidationFact = selected;
+    setCalibrationReason(quizData, explain(selected));
+}
+
 window.renderNextQuestion = function() {
     window.quizState.currentQ++;
     if (window.quizState.currentQ > window.quizState.totalQ) return window.finishCalibration();
     updatePeriodicToggleVisibility();
 
-    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表", 6: "化學式", 7: "知識校準", 8:"化學性質比較" };
+    const catNames = { 1: "週期表", 2: "電子組態", 3: "混成", 4: "氧化還原", 5: "沉澱表", 6: "化學式", 7: "知識校準", 14: "氧化還原", 15: "電化學" };
     const catName = catNames[window.quizState.difficulty] || "未知";
     const isPeriodic = window.calCategory === 'periodic';
     const rankText = window.quizState.rank ? `RANK ${window.quizState.rank}` : '';
@@ -3919,7 +4001,7 @@ window.renderNextQuestion = function() {
     let avail = [];
 
     // 混成/氧化還原/沉澱表/化學式/知識校準不依賴元素 pool，直接跳過元素選擇
-    if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 45)) {
+    if (type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 53)) {
         // 元素均等分佈演算法
         avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
         if (avail.length === 0) {
@@ -3940,7 +4022,7 @@ window.renderNextQuestion = function() {
     while (!questionGenerated && attempts < 60) {
         attempts++;
         // 如果已經嘗試過，重新選擇元素（混成/形狀/結構圖題型跳過）
-        if (attempts > 1 && type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 45)) {
+        if (attempts > 1 && type !== 16 && type !== 17 && type !== 18 && type !== 19 && type < 21 && !(type >= 32 && type <= 50)) {
             avail = window.quizState.pool.filter(el => !window.quizState.askedZ.includes(el.z));
             if (avail.length === 0) {
                 window.quizState.askedZ = [];
@@ -4303,7 +4385,7 @@ if (type === 0) {
     } else if (subType === 4) {
         quizData.type = "識別校準：質子／中子／電子反推";
         quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
-        quizData.answer = particleText;
+        quizData.answer = periodicNuclideLabel(particle);
         quizData.displayMode = "ion";
         quizData._periodicParticleMode = "full";
         if (!periodicParticleOptions(
@@ -4334,9 +4416,10 @@ if (type === 0) {
         )) continue;
     }
 } else if (type === 7) {
-    quizData.type        = "量子結構：價電子數";
-    quizData.question    = [ `${s} 的「價電子數」共有多少個？`, `${s} 最外層殼層的電子數為何？` ][Math.floor(Math.random() * 2)];
-    quizData.answer      = QUIZ_HELPER.getValence(parsed, target).toString();
+    quizData.type        = "量子結構：最外層電子數";
+    quizData.question    = [`${s} 基態原子最外層的電子數為何？`, `${s} 基態原子中，最大主量子數所屬殼層共有幾個電子？`][Math.floor(Math.random() * 2)];
+    const outerShell = Math.max(...parsed.map(orbital => orbital.n));
+    quizData.answer      = String(parsed.filter(orbital => orbital.n === outerShell).reduce((sum, orbital) => sum + orbital.count, 0));
     quizData.displayMode = "number";
 } else if (type === 8) {
     quizData.type        = "量子結構：未成對電子";
@@ -5022,118 +5105,8 @@ if (type === 0) {
         quizData._imgAtomElem = sel19.elem;
     }
 } else if (type === 18) {
-    // 氧化數判斷題型（正向＋反向）
-    const METAL_ELEMS = new Set(["Li","Na","K","Rb","Cs","Be","Mg","Ca","Sr","Ba","Al","Ga","In","Fe","Cu","Ag","Au","Zn","Cd","Hg","Sn","Pb","Ni","Co","Mn","Cr","Ti","V","Pt","Pd"]);
-    const oxItems = [];
-    const _countElem = (atoms, elem) => atoms.filter(a => a.elem === elem).length;
-    const _isComplexOrg = (name) => { const m = name.match(/^C(\d+)/); return m && parseInt(m[1]) > 2; };
-    const _parseCharge = (name) => {
-        const m = name.match(/\s+(\d*)([+-])\s*$/);
-        if (!m) return 0;
-        const num = m[1] ? parseInt(m[1]) : 1;
-        return m[2] === '+' ? num : -num;
-    };
-    for (let mKey in MOLECULE_DB) {
-        const mol = MOLECULE_DB[mKey];
-        if (mol.isIonic || mol.isMetal) continue;
-        if (!mol.atomsRaw || !mol.bondsRaw || mol.atomsRaw.length < 2) continue;
-        const hasOnlyH = mol.atomsRaw.every(a => a.elem === "H");
-        if (hasOnlyH) continue;
-        const hasMetal = mol.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
-        if (hasMetal) continue;
-        const nameParts = (mol.fullKey || mKey).split('|');
-        const mainName = nameParts[0].trim();
-        if (_isComplexOrg(mainName)) continue;
-        const charge = _parseCharge(mainName);
-        mol.atomsRaw.forEach((atom, idx) => {
-            if (_countElem(mol.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
-            const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, mol.atomsRaw, mol.bondsRaw, charge);
-                    oxItems.push({ molKey: mKey, name: mainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(mol.atomsRaw, atom.elem), charge });
-        });
-        if (mol.variants) {
-            for (let vKey in mol.variants) {
-                const variant = mol.variants[vKey];
-                if (variant.isIonic) continue;
-                if (!variant.atomsRaw || !variant.bondsRaw || variant.atomsRaw.length < 2) continue;
-                const vHasMetal = variant.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
-                if (vHasMetal) continue;
-                const vNameParts = (variant.fullKey || vKey).split('|');
-                const vMainName = vNameParts[0].trim();
-                if (_isComplexOrg(vMainName)) continue;
-                const vCharge = _parseCharge(vMainName);
-                variant.atomsRaw.forEach((atom, idx) => {
-                    if (_countElem(variant.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
-                    const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, variant.atomsRaw, variant.bondsRaw, vCharge);
-                    oxItems.push({ molKey: vKey, name: vMainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(variant.atomsRaw, atom.elem), charge: vCharge });
-                });
-            }
-        }
-    }
-    const uniqueOxItems = [];
-    const seenKeys = new Set();
-    oxItems.forEach(item => {
-        const key = `${item.name}-${item.atomElem}-${item.oxidationNumber}`;
-        if (!seenKeys.has(key)) { seenKeys.add(key); uniqueOxItems.push(item); }
-    });
-    const interestingItems = uniqueOxItems.filter(item => item.oxidationNumber !== 0);
-    const finalItems = interestingItems.length > 5 ? interestingItems : uniqueOxItems;
-    if (finalItems.length === 0) {
-        quizData.type = "氧化數判斷";
-        quizData.question = "暫無可用題目";
-        quizData.answer = "0";
-        quizData.displayMode = "text";
-        quizData.forcedOpts = ["-2", "-1", "0", "+1"];
-    } else {
-        const isReverse = Math.random() < 0.4;
-        const _formatOx = (ox) => ox > 0 ? `+${ox}` : `${ox}`;
-        if (isReverse) {
-            const availOx = [...new Set(finalItems.map(m => m.oxidationNumber))];
-            const targetOx = availOx[Math.floor(Math.random() * availOx.length)];
-            const correctPool = finalItems.filter(m => m.oxidationNumber === targetOx);
-            const wrongPool = finalItems.filter(m => m.oxidationNumber !== targetOx);
-            const correctMol = correctPool[Math.floor(Math.random() * correctPool.length)];
-            const correctDisplay = formatFormula(correctMol.name) + ` 中的 ${correctMol.atomElem}`;
-            const wrongOpts = [];
-            const usedNames = new Set([correctMol.name + correctMol.atomElem]);
-            const rankedWrong = [...wrongPool].sort((a, b) => {
-                const da = Math.abs(a.oxidationNumber - targetOx);
-                const db = Math.abs(b.oxidationNumber - targetOx);
-                return da - db || String(a.name).localeCompare(String(b.name));
-            });
-            for (const w of rankedWrong) {
-                if (wrongOpts.length >= 3) break;
-                const wKey = w.name + w.atomElem;
-                if (!usedNames.has(wKey)) { usedNames.add(wKey); wrongOpts.push(formatFormula(w.name) + ` 中的 ${w.atomElem}`); }
-            }
-            quizData.type = "氧化數判斷（反向）";
-            quizData.question = `下列何者的氧化數為 ${_formatOx(targetOx)}？`;
-            quizData.answer = correctDisplay;
-            quizData._oxidationContext = { element: correctMol.atomElem, charge: correctMol.charge || 0, target: targetOx };
-            quizData.displayMode = "formula";
-            quizData.forcedOpts = calibrationShuffle([correctDisplay, ...wrongOpts]);
-        } else {
-            const selected = finalItems[Math.floor(Math.random() * finalItems.length)];
-            const displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formatFormula(selected.name)}</span>`;
-            const correctOx = _formatOx(selected.oxidationNumber);
-            const wrongOxSet = new Set();
-            const candidates = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].filter(x => x !== selected.oxidationNumber);
-            candidates.sort((a, b) => {
-                const aSignFlip = Math.sign(a) !== Math.sign(selected.oxidationNumber) ? 0 : 1;
-                const bSignFlip = Math.sign(b) !== Math.sign(selected.oxidationNumber) ? 0 : 1;
-                return Math.abs(a - selected.oxidationNumber) - Math.abs(b - selected.oxidationNumber) || aSignFlip - bSignFlip || a - b;
-            });
-            for (let i = 0; i < 3 && i < candidates.length; i++) wrongOxSet.add(candidates[i]);
-            const wrongOxArr = [...wrongOxSet].map(x => _formatOx(x));
-            const allOptions = calibrationShuffle([correctOx, ...wrongOxArr]);
-            quizData.type = "氧化數判斷";
-            quizData.question = `${displayName} 中的 ${selected.atomElem} 原子，其氧化數為何？`;
-            quizData.answer = correctOx;
-            quizData._oxidationContext = { element: selected.atomElem, charge: selected.charge || 0, target: selected.oxidationNumber };
-            quizData.displayMode = "text";
-            quizData.forcedOpts = allOptions;
-        }
-    }
-} else if (type >= 32 && type <= 39) {
+    generateCalibrationOxidation(quizData);
+} else if ((type >= 32 && type <= 39) || type === 50) {
     if (!window.FORMULA_ENGINE || !window.FORMULA_ENGINE.generate(type, quizData)) {
         continue;
     }
@@ -5145,8 +5118,10 @@ if (type === 0) {
     if (!window.KNOWLEDGE_ENGINE || !window.KNOWLEDGE_ENGINE.generate(type, quizData)) {
         continue;
     }
-} else if (type === 54) {
-    if (!generateChemistryComparisonQuestion(quizData)) continue;
+} else if ((type >= 46 && type <= 49) || type === 51 || type === 52 || type === 53) {
+    if (!window.CALIBRATION_EXTENSION_ENGINE || !window.CALIBRATION_EXTENSION_ENGINE.generate(quizData)) {
+        continue;
+    }
 }
 
         // 週期表模式在共用題型生成後套用本輪的難度變體；RANK 只影響元素池。
@@ -5184,15 +5159,8 @@ if (type === 0) {
         const uniqueOptionCount = new Set(optionKeys).size;
         const answerKey = calibrationOptionKey(quizData.answer);
         const correctCount = optionKeys.filter(key => key === answerKey).length;
-        const isStateQuestion = /常溫狀態/.test(quizData.type || '');
-        const isClassificationQuestion = /分類/.test(quizData.type || '');
-        const minimumOptions = isStateQuestion
-            ? 4
-            : isClassificationQuestion
-            ? 4
-            : optionKeys.includes('微溶')
-            ? 3
-            : (optionKeys.includes('是') || optionKeys.includes('否') || optionKeys.includes('可溶') || optionKeys.includes('難溶') || optionKeys.includes('沉澱') ? 2 : 4);
+        const binary = optionKeys.length === 2 && optionKeys.some(option => ['是', '否', '可溶', '難溶', '沉澱'].includes(option));
+        const minimumOptions = binary ? 2 : 3;
         if (!Array.isArray(quizData.forcedOpts) || quizData.forcedOpts.length < minimumOptions ||
             uniqueOptionCount !== quizData.forcedOpts.length || correctCount !== 1) {
             continue;
@@ -5219,12 +5187,14 @@ if (type === 0) {
         window.quizState._periodicRenderRetry = (window.quizState._periodicRenderRetry || 0) + 1;
         if (window.quizState._periodicRenderRetry <= 2) return window.renderNextQuestion();
         window.quizState._periodicRenderRetry = 0;
-        // 本題無法在有限次嘗試內取得唯一正解時，改抽一般週期表題，仍維持四選一流程。
-        if (Array.isArray(window.quizState.typeDeck)) {
-            const retryIndex = Math.max(0, window.quizState.currentQ);
-            window.quizState.typeDeck[retryIndex] = 0;
-        }
-        return window.renderNextQuestion();
+        document.getElementById('quiz-content-area').style.display = 'none';
+        document.getElementById('quiz-setup-area').style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '此範圍的有效題目不足，請調整子項目或題數後重試。';
+        window.quizState.currentQ = 0;
+        window.quizState.correctCount = 0;
+        window.quizState.askedZ = [];
+        window.quizState.askedQuestions = [];
+        return;
     }
     window.quizState._periodicRenderRetry = 0;
 
@@ -5249,9 +5219,9 @@ if (type === 0) {
     // 混成軌域交由 MathJax 排版；其他化學式沿用資料相容的語意上下標。
     let htmlQ = formatHybridNotationHtml(quizData.questionHtml || quizData.question);
     if (!quizData.questionHtml) {
-        if (type >= 21 && type <= 31) {
-            htmlQ = htmlQ.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : formatChemLabel(part)).join("");
-        }
+        // 題幹也統一走與選項相同的 Unicode→語意標籤轉換；否則 H₃O⁺ 會保留
+        // 字型內建的小字形，而選項的 <sub>/<sup> 則使用 CSS 排版，造成上下標不一致。
+        htmlQ = htmlQ.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : formatChemLabel(part)).join("");
     }
     htmlQ = formatCalibrationChemistryHtml(htmlQ);
 
@@ -5280,6 +5250,50 @@ if (type === 0) {
         if (quizContentArea) quizContentArea.classList.remove('mol-mode');
         questionEl.innerHTML = htmlQ;
         questionEl.style.fontSize = "1.7rem";
+        if (quizData.showPotentialLookup && window.CALIBRATION_REDCHEM_ENGINE?.standardPotentialTable) {
+            const records = window.CALIBRATION_REDCHEM_ENGINE.standardPotentialTable();
+            const details = document.createElement('details');
+            details.className = 'cal-potential-lookup';
+            const summary = document.createElement('summary');
+            summary.textContent = '展開標準還原電位查詢';
+            details.appendChild(summary);
+
+            const hint = document.createElement('p');
+            hint.className = 'cal-potential-lookup-hint';
+            hint.textContent = '標準狀態、25 °C 的還原電位。先判斷陰極與陽極，再計算 E°cell＝E°red(陰極)－E°red(陽極)。';
+            details.appendChild(hint);
+
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'cal-potential-table-wrap';
+            const table = document.createElement('table');
+            table.className = 'cal-potential-table';
+            const thead = document.createElement('thead');
+            const header = document.createElement('tr');
+            ['半反應（還原方向）', 'E° / V'].forEach(label => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.textContent = label;
+                header.appendChild(th);
+            });
+            thead.appendChild(header);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            records.forEach(record => {
+                const row = document.createElement('tr');
+                [record.half, `${record.E > 0 ? '+' : ''}${record.E.toFixed(2)}`].forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index === 1) cell.className = 'cal-potential-value';
+                    row.appendChild(cell);
+                });
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            tableWrap.appendChild(table);
+            details.appendChild(tableWrap);
+            questionEl.appendChild(details);
+        }
     }
     typesetCalibrationMath(questionEl);
 
@@ -5350,6 +5364,7 @@ if (type === 0) {
         } else if (quizData.displayMode === 'symbol') {
             displayText = formatCalibrationChemistryHtml(displayText);
         }
+        displayText = formatCalibrationChemistryHtml(displayText);
         b.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + optionIndex)}</span><span class="option-value">${displayText}</span><span class="option-state-mark" aria-hidden="true"></span>`;
         b.dataset.value = o; // 儲存選項值（原始值，用於比較答案）
         b.title = String(o).replace(/<[^>]*>/g, '');
@@ -6104,6 +6119,32 @@ window.FORMULA_ENGINE = (() => {
                 quizData.type = '化學式判讀：正誤是非題';
                 Object.assign(quizData, generateJudgeTF(item));
                 break;
+            case 50: {
+                const masses = window.CALIBRATION_ATOMIC_MASSES || {};
+                item = chooseItem(type, entry => {
+                    const counts = parseFormula(entry.f);
+                    if (!Object.keys(counts).every(symbol => Number.isFinite(masses[symbol]))) return false;
+                    return Object.entries(counts).reduce((sum, [symbol, count]) => sum + masses[symbol] * count, 0) >= 12;
+                });
+                if (!item) return false;
+                const counts = parseFormula(item.f);
+                const terms = Object.entries(counts).map(([symbol, count]) => `${count > 1 ? `${count}×` : ''}${masses[symbol]}`);
+                const mass = Object.entries(counts).reduce((sum, [symbol, count]) => sum + masses[symbol] * count, 0);
+                const formatMass = value => String(Number(value.toFixed(2)));
+                const answer = formatMass(mass);
+                const wrongOptions = unique([mass + 1, mass - 1, mass + 2, mass - 2, mass * 2]
+                    .map(formatMass).filter(value => value !== answer)).slice(0, 3);
+                if (wrongOptions.length !== 3) return false;
+                quizData.type = '式量與分子量：式量計算';
+                quizData.question = `${item.f} 的式量約為多少 u？`;
+                quizData.questionHtml = `${formulaHtml(item.f)} 的式量約為多少 u？`;
+                quizData.answer = answer;
+                quizData.forcedOpts = shuffle([answer, ...wrongOptions]);
+                quizData.displayMode = 'number';
+                quizData._formulaMassExplanation = true;
+                quizData.correctReason = `${formulaHtml(item.f)} 中各元素原子量依序為 ${terms.join('＋')}，相加得到 ${answer} u。`;
+                break;
+            }
             default:
                 return false;
         }
@@ -6325,4 +6366,1969 @@ window.KNOWLEDGE_ENGINE = (() => {
     }
 
     return { generate, groupLabels: GROUP_LABELS, typeGroup: TYPE_GROUP };
+})();
+// --- Bundled knowledge calibration data (source: calibration_knowledge_data.js) ---
+// 知識校準：常數題庫。
+// 所有數值皆以高中課堂可使用的近似值呈現；條件欄位是答案的一部分，避免
+// 例如 1 atm／1 bar、0 °C／25 °C 或不同溫度下汽化熱混淆。
+(function () {
+    const facts = [];
+    const add = (id, group, tier, title, value, unit, options, condition, note, extra = {}) => {
+        facts.push({
+            id, group, tier, kind: extra.kind || 'value', title, value, unit: unit || '',
+            options: Array.isArray(options) ? options : [], condition: condition || '',
+            note: note || '', explanation: extra.explanation || note || '',
+            modes: extra.modes || ['value', 'meaning'],
+            questionModes: extra.questionModes || extra.modes || ['value', 'meaning'],
+            distractorGroup: extra.distractorGroup || `${group}:${id}`,
+            semanticGroup: extra.semanticGroup || `${group}:${unit || 'concept'}`,
+            unitOptions: extra.unitOptions || null, reverseTitle: extra.reverseTitle || title,
+            ...extra
+        });
+    };
+    const custom = (id, group, tier, question, answer, options, note) => {
+        facts.push({ id, group, tier, kind: 'custom', question, answer, options, note: note || '',
+            explanation: note || '', modes: ['custom'], questionModes: ['custom'], distractorGroup: `${group}:${id}`,
+            semanticGroup: `${group}:relation` });
+    };
+
+    // 1. 粒子與莫耳 ---------------------------------------------------------
+    add('p-na', 'particles', 'common', '亞佛加厥常數', '6.022×10²³', 'mol⁻¹',
+        ['6.022×10²³', '6.022×10²²', '9.6485×10⁴', '1.602×10⁻¹⁹'], '', '一莫耳含有的基本粒子數。');
+    add('p-e-charge', 'particles', 'common', '基本電荷量的量值', '1.602×10⁻¹⁹', 'C',
+        ['1.602×10⁻¹⁹', '9.109×10⁻³¹', '6.022×10²³', '9.6485×10⁴'], '', '電子帶負號，正電子與質子帶正號。');
+    add('p-e-mass', 'particles', 'common', '電子質量', '9.109×10⁻³¹', 'kg',
+        ['9.109×10⁻³¹', '1.673×10⁻²⁷', '1.675×10⁻²⁷', '1.661×10⁻²⁷'], '', '電子質量遠小於核子。');
+    add('p-p-mass', 'particles', 'common', '質子質量', '1.673×10⁻²⁷', 'kg',
+        ['1.673×10⁻²⁷', '9.109×10⁻³¹', '1.675×10⁻²⁷', '6.645×10⁻²⁷'], '', '質子帶一個正基本電荷。');
+    add('p-n-mass', 'particles', 'common', '中子質量', '1.675×10⁻²⁷', 'kg',
+        ['1.675×10⁻²⁷', '1.673×10⁻²⁷', '9.109×10⁻³¹', '1.661×10⁻²⁷'], '', '中子電量為零。');
+    add('p-u', 'particles', 'common', '統一原子質量單位', '1.661×10⁻²⁷', 'kg',
+        ['1.661×10⁻²⁷', '9.109×10⁻³¹', '1.673×10⁻²⁷', '6.022×10²³'], '', '1 u 定義為碳-12原子質量的十二分之一。');
+    add('p-faraday', 'particles', 'common', '法拉第常數', '9.6485×10⁴', 'C·mol⁻¹ e⁻',
+        ['9.6485×10⁴', '8.314', '6.022×10²³', '1.602×10⁻¹⁹'], '', '一莫耳電子的電量量值。');
+    add('p-e-qm', 'particles', 'common', '電子荷質比', '−1.759×10¹¹', 'C·kg⁻¹',
+        ['−1.759×10¹¹', '9.58×10⁷', '−9.58×10⁷', '1.759×10⁹'], '', '電子電荷為負，常考量值與正負號。');
+    add('p-mass-ratio', 'particles', 'common', '質子與電子的質量比', '1836', '倍',
+        ['1836', '183.6', '18.36', '1.836×10⁵'], '', '質子約為電子的1836倍。');
+    add('p-proton-qm', 'particles', 'deep', '質子荷質比', '+9.58×10⁷', 'C·kg⁻¹',
+        ['+9.58×10⁷', '−1.759×10¹¹', '+4.82×10⁷', '9.58×10⁵'], '', '質子帶一個正基本電荷。');
+    add('p-alpha-mass', 'particles', 'deep', 'α粒子質量', '6.645×10⁻²⁷', 'kg',
+        ['6.645×10⁻²⁷', '1.673×10⁻²⁷', '3.344×10⁻²⁷', '9.109×10⁻³¹'], '', '可視為氦-4原子核。');
+    add('p-alpha-charge', 'particles', 'deep', 'α粒子電量', '+3.204×10⁻¹⁹', 'C',
+        ['+3.204×10⁻¹⁹', '+1.602×10⁻¹⁹', '−3.204×10⁻¹⁹', '0'], '', 'α粒子含兩個質子。');
+    add('p-alpha-qm', 'particles', 'deep', 'α粒子荷質比', '+4.82×10⁷', 'C·kg⁻¹',
+        ['+4.82×10⁷', '+9.58×10⁷', '−1.759×10¹¹', '+4.82×10⁹'], '', '荷質比為電量除以質量。');
+    add('p-deuteron-mass', 'particles', 'deep', '氘核質量', '3.344×10⁻²⁷', 'kg',
+        ['3.344×10⁻²⁷', '6.645×10⁻²⁷', '1.673×10⁻²⁷', '3.344×10⁻²⁹'], '', '氘核含一個質子與一個中子。');
+    add('p-e-u', 'particles', 'deep', '電子質量（以u表示）', '5.486×10⁻⁴', 'u',
+        ['5.486×10⁻⁴', '1.0073', '1.0087', '0.05486'], '', '電子質量以u表示時遠小於1。');
+    add('p-p-u', 'particles', 'deep', '質子質量（以u表示）', '1.0073', 'u',
+        ['1.0073', '1.0087', '0.0005486', '6.022'], '', '自由質子質量的近似值。');
+    add('p-n-u', 'particles', 'deep', '中子質量（以u表示）', '1.0087', 'u',
+        ['1.0087', '1.0073', '0.0005486', '2.0174'], '', '自由中子質量的近似值。');
+    add('p-e-molar-mass', 'particles', 'deep', '一莫耳電子的質量', '5.49×10⁻⁴', 'g',
+        ['5.49×10⁻⁴', '5.49×10⁻¹', '9.65×10⁴', '1.007'], '', '電子雖有一莫耳，總質量仍只有約0.000549 g。');
+    add('p-p-molar-mass', 'particles', 'deep', '一莫耳質子的質量', '1.007', 'g',
+        ['1.007', '0.000549', '1.675×10⁻²⁷', '1836'], '', '以自由質子質量近似。');
+    add('p-n-molar-mass', 'particles', 'deep', '一莫耳中子的質量', '1.009', 'g',
+        ['1.009', '1.007', '0.000549', '1.675×10⁻²⁷'], '', '以自由中子質量近似。');
+    custom('p-f-relation', 'particles', 'deep', '下列哪個關係可用來由基本電荷量與亞佛加厥常數得到法拉第常數？', 'F=N_Ae',
+        ['F=N_Ae', 'F=N_A/e', 'F=e/N_A', 'F=R/N_A'], '法拉第常數等於一莫耳所含電子數乘上單一電子電量的量值。');
+
+    // 2. 氣體基準 -----------------------------------------------------------
+    const gasTemps = [
+        ['g-0k', '0 °C換算的絕對溫度', '273', 'K', ['273', '298', '300', '373'], '攝氏溫度加273。'],
+        ['g-25k', '25 °C換算的絕對溫度', '298', 'K', ['298', '273', '300', '325'], '高中常用近似值。'],
+        ['g-27k', '27 °C換算的絕對溫度', '300', 'K', ['300', '273', '298', '400'], '27 °C常用來形成整數絕對溫度。'],
+        ['g-100k', '100 °C換算的絕對溫度', '373', 'K', ['373', '273', '298', '400'], '高中常用近似值。'],
+        ['g-127k', '127 °C換算的絕對溫度', '400', 'K', ['400', '300', '373', '500'], '127 °C常用來形成400 K。'],
+        ['g-227k', '227 °C換算的絕對溫度', '500', 'K', ['500', '400', '473', '546'], '227 °C常用來形成500 K。'],
+        ['g-273k', '273 °C換算的絕對溫度', '546', 'K', ['546', '500', '573', '273'], '273 °C約為546 K。']
+    ];
+    gasTemps.forEach(x => add(x[0], 'gas', 'common', x[1], x[2], x[3], x[4], '', x[5]));
+    add('g-vm0', 'gas', 'common', '1 atm、0 °C下理想氣體莫耳體積', '22.4', 'L·mol⁻¹',
+        ['22.4', '24.5', '24.6', '32.8'], '1 atm、0 °C', '高中標準狀況的常用近似值。');
+    add('g-vm25', 'gas', 'common', '1 atm、25 °C下理想氣體莫耳體積', '24.5', 'L·mol⁻¹',
+        ['24.5', '22.4', '24.6', '30.6'], '1 atm、25 °C', '室溫附近的常用近似值。');
+    add('g-vm27', 'gas', 'common', '1 atm、27 °C下理想氣體莫耳體積', '24.6', 'L·mol⁻¹',
+        ['24.6', '22.4', '24.5', '32.8'], '1 atm、27 °C', '由莫耳體積與絕對溫度成正比得到。');
+    add('g-vm100', 'gas', 'common', '1 atm、100 °C下理想氣體莫耳體積', '30.6', 'L·mol⁻¹',
+        ['30.6', '22.4', '24.5', '32.8'], '1 atm、100 °C', '由理想氣體關係估算。');
+    add('g-vm127', 'gas', 'common', '1 atm、127 °C下理想氣體莫耳體積', '32.8', 'L·mol⁻¹',
+        ['32.8', '24.6', '30.6', '41.0'], '1 atm、127 °C', '400 K下的理想氣體莫耳體積。');
+    add('g-vm227', 'gas', 'common', '1 atm、227 °C下理想氣體莫耳體積', '41.0', 'L·mol⁻¹',
+        ['41.0', '32.8', '44.8', '24.5'], '1 atm、227 °C', '500 K下的理想氣體莫耳體積。');
+    add('g-vm273', 'gas', 'common', '1 atm、273 °C下理想氣體莫耳體積', '44.8', 'L·mol⁻¹',
+        ['44.8', '41.0', '32.8', '22.4'], '1 atm、273 °C', '約為0 °C時的兩倍。');
+    add('g-r-si', 'gas', 'common', '氣體常數R的SI形式', '8.314', 'J·mol⁻¹·K⁻¹',
+        ['8.314', '0.08206', '62.36', '1.987'], '', '與能量單位J搭配。');
+    add('g-r-atm', 'gas', 'common', '氣體常數R的L·atm形式', '0.08206', 'L·atm·mol⁻¹·K⁻¹',
+        ['0.08206', '8.314', '62.36', '101.325'], '', '與壓力atm、體積L搭配。');
+    add('g-r-kpa', 'gas', 'deep', '氣體常數R的L·kPa形式', '8.314', 'L·kPa·mol⁻¹·K⁻¹',
+        ['8.314', '0.08206', '62.36', '1.987'], '', '因為1 kPa·L=1 J。');
+    add('g-r-torr', 'gas', 'deep', '氣體常數R的L·torr形式', '62.36', 'L·torr·mol⁻¹·K⁻¹',
+        ['62.36', '8.314', '0.08206', '760'], '', '壓力以torr或mmHg表示時使用。');
+    add('g-r-cal', 'gas', 'deep', '氣體常數R的cal形式', '1.987', 'cal·mol⁻¹·K⁻¹',
+        ['1.987', '8.314', '0.08206', '4.184'], '', '與卡路里能量單位搭配。');
+    add('g-atm', 'gas', 'deep', '1 atm的壓力值', '101.325', 'kPa',
+        ['101.325', '100.000', '760', '8.314'], '壓力單位換算', '1 atm=101.325 kPa=760 torr。');
+    add('g-bar', 'gas', 'deep', '1 bar的壓力值', '100', 'kPa',
+        ['100', '101.325', '760', '1.01325'], '壓力單位換算', '1 bar=100 kPa，與1 atm不同。');
+    add('g-vm0bar', 'gas', 'deep', '1 bar、0 °C下理想氣體莫耳體積', '22.71', 'L·mol⁻¹',
+        ['22.71', '22.40', '24.79', '24.50'], '1 bar、0 °C', '採1 bar而非1 atm。');
+    add('g-vm25bar', 'gas', 'deep', '1 bar、25 °C下理想氣體莫耳體積', '24.79', 'L·mol⁻¹',
+        ['24.79', '24.50', '22.71', '25.00'], '1 bar、25 °C', '採1 bar而非1 atm。');
+    add('g-r-j-deep', 'gas', 'deep', '氣體常數R的SI形式', '8.314', 'J·mol⁻¹·K⁻¹',
+        ['8.314', '0.08206', '62.36', '1.987'], '', '與L·kPa形式數值相同，但單位不同。');
+    add('g-atm-torr', 'gas', 'deep', '一標準大氣壓的torr表示', '760', 'torr',
+        ['760', '101.325', '100', '7.60'], '1 atm', '1 atm=760 torr。');
+    add('g-bar-pa', 'gas', 'deep', '一bar的帕斯卡表示', '1.00×10⁵', 'Pa',
+        ['1.00×10⁵', '1.01325×10⁵', '100', '760'], '1 bar', '1 bar=100 kPa。');
+
+    // 3. 物性與相變 ---------------------------------------------------------
+    const phase = (id, title, value, unit, opts, condition, note, tier = 'common') =>
+        add(id, 'phase', tier, title, value, unit, opts, condition, note, { modes: ['value', 'meaning'] });
+    phase('ph-water-mp', '水的熔點', '0', '°C', ['0', '−78.5', '16.6', '100'], '1 atm', '冰與液態水的相變溫度。');
+    phase('ph-water-bp', '水的沸點', '100', '°C', ['100', '0', '78.4', '56.1'], '1 atm', '液態水與水蒸氣的相變溫度。');
+    phase('ph-methanol-bp', '甲醇的正常沸點', '64.7', '°C', ['64.7', '78.4', '56.1', '118.1'], '1 atm', '常見有機溶劑物性。');
+    phase('ph-ethanol-mp', '乙醇的熔點', '−114.1', '°C', ['−114.1', '−97.6', '−78.5', '−38.8'], '1 atm', '乙醇在室溫下為液體。');
+    phase('ph-ethanol-bp', '乙醇的正常沸點', '78.4', '°C', ['78.4', '64.7', '56.1', '100'], '1 atm', '常見酒精的主要物性。');
+    phase('ph-acetone-bp', '丙酮的正常沸點', '56.1', '°C', ['56.1', '64.7', '78.4', '118.1'], '1 atm', '丙酮比乙醇更易揮發。');
+    phase('ph-acetic-mp', '醋酸的熔點', '16.6', '°C', ['16.6', '0', '−16.6', '78.4'], '1 atm', '純醋酸在低於此溫度時凝固。');
+    phase('ph-acetic-bp', '醋酸的正常沸點', '118.1', '°C', ['118.1', '100', '78.4', '56.1'], '1 atm', '醋酸沸點高於水。');
+    phase('ph-bromine-bp', '溴的正常沸點', '58.8', '°C', ['58.8', '−7.2', '78.4', '184.3'], '1 atm', '溴在室溫下為液體。');
+    phase('ph-bromine-mp', '溴的熔點', '−7.2', '°C', ['−7.2', '−38.8', '5.5', '16.6'], '1 atm', '常溫下溴不為固體。');
+    phase('ph-iodine-mp', '碘的熔點', '113.7', '°C', ['113.7', '184.3', '80.2', '78.4'], '1 atm', '碘在常溫下為固體。');
+    phase('ph-iodine-bp', '碘的正常沸點', '184.3', '°C', ['184.3', '113.7', '100', '218'], '1 atm', '可與昇華現象辨析。');
+    phase('ph-mercury-mp', '汞的熔點', '−38.8', '°C', ['−38.8', '−7.2', '−114.1', '0'], '1 atm', '汞在室溫下為液體金屬。');
+    phase('ph-mercury-bp', '汞的沸點', '356.7', '°C', ['356.7', '100', '184.3', '444.7'], '1 atm', '常見液態金屬物性。');
+    phase('ph-dryice', '乾冰在1 atm下的昇華溫度', '−78.5', '°C', ['−78.5', '0', '−196', '−183'], '1 atm', '1 atm下不經液態直接昇華。');
+    phase('ph-n2-bp', '液態氮的正常沸點', '−196', '°C', ['−196', '−183', '−253', '−78.5'], '1 atm', '低溫液體的常見基準。');
+    phase('ph-o2-bp', '液態氧的正常沸點', '−183', '°C', ['−183', '−196', '−253', '−78.5'], '1 atm', '低溫液體的常見基準。');
+    add('ph-water-fusion-mol', 'phase', 'common', '水的莫耳熔化熱', '6.01', 'kJ·mol⁻¹',
+        ['6.01', '40.7', '44.0', '333'], '0 °C附近', '熔化一莫耳冰所需熱量。');
+    add('ph-water-fusion-mass', 'phase', 'common', '水的質量熔化熱', '333', 'J·g⁻¹',
+        ['333', '2257', '4.18', '40.7'], '0 °C附近', '與6.01 kJ/mol互相換算。');
+    add('ph-water-vap-mol', 'phase', 'common', '水在100 °C的莫耳汽化熱', '40.7', 'kJ·mol⁻¹',
+        ['40.7', '6.01', '44.0', '2257'], '100 °C、1 atm', '沸點汽化熱。');
+    add('ph-water-vap-mass', 'phase', 'common', '水在100 °C的質量汽化熱', '2257', 'J·g⁻¹',
+        ['2257', '333', '4.18', '40.7'], '100 °C、1 atm', '與40.7 kJ/mol互相換算。');
+    add('ph-water-cp', 'phase', 'common', '液態水的比熱', '4.18', 'J·g⁻¹·K⁻¹',
+        ['4.18', '2.09', '2.01', '333'], '室溫附近', '常用於q=mcΔT。');
+    add('ph-water-density', 'phase', 'common', '水的密度', '1.00', 'g·mL⁻¹',
+        ['1.00', '0.997', '4.18', '18.0'], '室溫附近', '近似換算mL與g。');
+    phase('ph-ice-cp', '冰的比熱', '2.09', 'J·g⁻¹·K⁻¹', ['2.09', '4.18', '2.01', '333'], '0 °C附近', '深度相變題會用到。', 'deep');
+    phase('ph-steam-cp', '水蒸氣的比熱', '2.01', 'J·g⁻¹·K⁻¹', ['2.01', '2.09', '4.18', '2257'], '100 °C附近', '深度相變題會用到。', 'deep');
+    phase('ph-water-vap25', '水在25 °C的莫耳汽化熱', '44.0', 'kJ·mol⁻¹', ['44.0', '40.7', '6.01', '2257'], '25 °C附近', '汽化熱會隨溫度改變。', 'deep');
+    phase('ph-triple-t', '水的三相點溫度', '273.16', 'K', ['273.16', '273.15', '373.15', '647.10'], '三相點', '固、液、氣三相共存。', 'deep');
+    phase('ph-triple-p', '水的三相點壓力', '611', 'Pa', ['611', '101325', '2206000', '0.0061'], '三相點', '約611 Pa。', 'deep');
+    phase('ph-critical-t', '水的臨界溫度', '647', 'K', ['647', '373', '273', '400'], '臨界點', '高於此溫度無法只靠加壓液化。', 'deep');
+    phase('ph-critical-p', '水的臨界壓力', '22.06', 'MPa', ['22.06', '0.611', '101.325', '220.6'], '臨界點', '約22.06 MPa。', 'deep');
+    phase('ph-benzene-mp', '苯的熔點', '5.5', '°C', ['5.5', '80.1', '16.6', '−5.5'], '1 atm', '深度物性辨識。', 'deep');
+    phase('ph-benzene-bp', '苯的正常沸點', '80.1', '°C', ['80.1', '78.4', '56.1', '100'], '1 atm', '深度物性辨識。', 'deep');
+    phase('ph-naphthalene-mp', '萘的熔點', '80.2', '°C', ['80.2', '5.5', '113.7', '218'], '1 atm', '常見有機固體物性。', 'deep');
+    phase('ph-nacl-mp', '氯化鈉的熔點', '801', '°C', ['801', '100', '444.7', '1465'], '1 atm', '離子晶體物性。', 'deep');
+    phase('ph-sulfur-mp', '硫的熔點', '115', '°C', ['115', '113.7', '80.2', '444.7'], '1 atm', '常見非金屬物性。', 'deep');
+
+    // 4. 單位與量綱 ---------------------------------------------------------
+    const unit = (id, tier, title, answer, options, note, extra = {}) => add(id, 'units', tier, title, answer, '', options, '', note, {
+        kind: 'unit', modes: ['unit', 'unit-context'], unitOptions: options, ...extra
+    });
+    unit('u-specific-heat', 'common', '比熱的常用單位', 'J·g⁻¹·K⁻¹', ['J·g⁻¹·K⁻¹', 'J·mol⁻¹·K⁻¹', 'kJ·mol⁻¹', 'mol·L⁻¹'], 'q=mcΔT中的c。');
+    unit('u-molar-heat', 'common', '莫耳熱容量的常用單位', 'J·mol⁻¹·K⁻¹', ['J·mol⁻¹·K⁻¹', 'J·g⁻¹·K⁻¹', 'kJ·mol⁻¹', 'mol·kg⁻¹'], '以一莫耳物質為基準。');
+    unit('u-enthalpy', 'common', '莫耳反應熱的常用單位', 'kJ·mol⁻¹', ['kJ·mol⁻¹', 'J·g⁻¹·K⁻¹', 'mol·L⁻¹', 'J·mol⁻¹·K⁻¹'], '反應熱常以每莫耳反應表示。');
+    unit('u-molarity', 'common', '莫耳濃度的常用單位', 'mol·L⁻¹', ['mol·L⁻¹', 'mol·kg⁻¹', 'g·mL⁻¹', 'L·mol⁻¹'], '溶質莫耳數除以溶液體積。');
+    unit('u-molality', 'common', '重量莫耳濃度的常用單位', 'mol·kg⁻¹', ['mol·kg⁻¹', 'mol·L⁻¹', 'g·mL⁻¹', 'kg·mol⁻¹'], '溶質莫耳數除以溶劑質量。');
+    unit('u-density', 'common', '密度的常用化學單位', 'g·mL⁻¹', ['g·mL⁻¹', 'mol·L⁻¹', 'J·g⁻¹·K⁻¹', 'g·mol⁻¹'], '也常見kg·L⁻¹。');
+    unit('u-rate', 'common', '溶液反應速率的常用單位', 'mol·L⁻¹·s⁻¹', ['mol·L⁻¹·s⁻¹', 'mol·kg⁻¹', 'L·mol⁻¹·s⁻¹', 'kJ·mol⁻¹'], '濃度變化除以時間。');
+    unit('u-cal-j', 'common', '卡與焦耳的換算', '1 cal=4.184 J', ['1 cal=4.184 J', '1 cal=0.4184 J', '1 cal=41.84 J', '1 cal=101.325 J'], 'cal與J都是能量單位；熱化學中使用1 cal=4.184 J。', { semanticGroup: 'units:energy-conversion' });
+    unit('u-kpal', 'common', '壓力、體積與能量的換算', '1 kPa·L=1 J', ['1 kPa·L=1 J', '1 kPa·L=0.001 J', '1 kPa·L=101.325 J', '1 kPa·L=1 cal'], '由Pa·m³=J得到。');
+    unit('u-latm', 'common', 'L·atm與焦耳的換算', '1 L·atm=101.325 J', ['1 L·atm=101.325 J', '1 L·atm=1 J', '1 L·atm=760 J', '1 L·atm=4.184 J'], '理想氣體與熱力學常見換算。');
+    unit('u-pa', 'common', '帕斯卡的等效單位', 'N·m⁻²', ['N·m⁻²', 'J·s⁻¹', 'C·s⁻¹', 'J·C⁻¹'], 'Pa=N/m²。');
+    unit('u-coulomb', 'common', '庫侖的基本單位', 'A·s', ['A·s', 'J·C⁻¹', 'N·m⁻²', 'J·s⁻¹'], 'C=A·s。');
+    unit('u-watt', 'common', '瓦特的基本關係', 'J·s⁻¹', ['J·s⁻¹', 'N·m⁻²', 'C·s⁻¹', 'J·C⁻¹'], 'W=J/s。');
+    unit('u-volt', 'common', '伏特的基本關係', 'J·C⁻¹', ['J·C⁻¹', 'J·s⁻¹', 'A·s', 'N·m⁻²'], 'V=J/C。');
+    unit('u-ev', 'deep', '電子伏特的能量換算', '1.602×10⁻¹⁹ J', ['1.602×10⁻¹⁹ J', '9.6485×10⁴ J', '1.602×10⁻¹⁹ C', '6.626×10⁻³⁴ J'], '一個電子伏特是單一基本電荷通過1 V的能量。');
+    unit('u-ev-mol', 'deep', '電子伏特與莫耳能量的換算', '1 eV/粒子≈96.485 kJ·mol⁻¹', ['1 eV/粒子≈96.485 kJ·mol⁻¹', '1 eV/粒子≈9.6485 kJ·mol⁻¹', '1 eV/粒子≈1.602 kJ·mol⁻¹', '1 eV/粒子≈1312 kJ·mol⁻¹'], '用亞佛加厥常數換算。');
+    unit('u-angstrom', 'deep', '埃的長度換算', '1 Å=10⁻¹⁰ m', ['1 Å=10⁻¹⁰ m', '1 Å=10⁻⁹ m', '1 Å=10⁻¹² m', '1 Å=10⁻⁸ m'], '原子與鍵長常見單位。');
+    unit('u-nm-a', 'deep', '奈米與埃的換算', '1 nm=10 Å', ['1 nm=10 Å', '1 nm=100 Å', '1 nm=0.1 Å', '1 nm=10⁻¹⁰ Å'], '光譜波長與原子尺度常見換算。');
+    unit('u-wavenumber', 'deep', '光譜波數的常用單位', 'cm⁻¹', ['cm⁻¹', 'nm⁻¹', 's⁻¹', 'J·mol⁻¹'], '紅外光譜常以波數表示。');
+    unit('u-dipole', 'deep', '偶極矩的常用非SI單位', 'D（Debye）', ['D（Debye）', 'Pa', 'Wb', 'mol·L⁻¹'], '分子極性常見單位。');
+    unit('u-capacitance', 'deep', '電容的SI單位', 'F（farad）', ['F（farad）', 'C·mol⁻¹', 'S（siemens）', 'Ω（ohm）'], 'F=C/V，與法拉第常數的符號需辨析。');
+    unit('u-conductance', 'deep', '電導的SI單位', 'S（siemens）', ['S（siemens）', 'F（farad）', 'Ω（ohm）', 'V（volt）'], 'S=Ω⁻¹。');
+    unit('u-hc', 'deep', '光子常數hc的常用形式', '1240 eV·nm', ['1240 eV·nm', '96.485 kJ·mol⁻¹', '8.314 L·kPa·mol⁻¹·K⁻¹', '22.4 L·mol⁻¹'], '方便由波長直接估算光子能量。');
+    unit('u-molar-volume', 'deep', '氣體莫耳體積的單位', 'L·mol⁻¹', ['L·mol⁻¹', 'mol·L⁻¹', 'L·atm', 'L·kPa·mol⁻¹·K⁻¹'], '理想氣體題常以每莫耳體積表示。');
+    unit('u-charge-mass', 'deep', '荷質比的單位', 'C·kg⁻¹', ['C·kg⁻¹', 'C·mol⁻¹', 'kg·C⁻¹', 'J·C⁻¹'], '電荷除以質量的量綱。');
+
+    // 5. 酸鹼常數 -----------------------------------------------------------
+    const acid = (id, tier, title, value, opts, note) => add(id, 'acidBase', tier, title, value, '', opts, '25 °C附近', note, {
+        modes: ['value', 'meaning'], unitOptions: ['Ka', 'Kb', 'pKa', 'pKb']
+    });
+    acid('a-kw', 'common', '水的離子積 Kw', '1.0×10⁻¹⁴', ['1.0×10⁻¹⁴', '1.0×10⁻⁷', '1.0×10⁻¹⁰', '1.0×10⁻²'], '25 °C時。');
+    acid('a-acetic-ka', 'common', '醋酸的 Ka', '1.8×10⁻⁵', ['1.8×10⁻⁵', '5.6×10⁻¹⁰', '6.8×10⁻⁴', '1.8×10⁻⁴'], '弱酸常用基準。');
+    acid('a-ammonia-kb', 'common', '氨的 Kb', '1.8×10⁻⁵', ['1.8×10⁻⁵', '5.6×10⁻¹⁰', '1.8×10⁻⁴', '6.8×10⁻⁴'], '弱鹼常用基準。');
+    acid('a-ammonium-ka', 'common', '銨根的 Ka', '5.6×10⁻¹⁰', ['5.6×10⁻¹⁰', '1.8×10⁻⁵', '1.0×10⁻¹⁴', '5.6×10⁻⁵'], '與氨的Kb互為共軛關係。');
+    acid('a-hf-ka', 'common', '氫氟酸的 Ka', '6.8×10⁻⁴', ['6.8×10⁻⁴', '1.8×10⁻⁵', '4.3×10⁻⁷', '5.0×10⁻¹⁰'], '弱酸但比醋酸強。');
+    acid('a-hcn-ka', 'common', '氫氰酸的 Ka', '5.0×10⁻¹⁰', ['5.0×10⁻¹⁰', '5.6×10⁻¹⁰', '6.8×10⁻⁴', '4.3×10⁻⁷'], '弱酸數值辨析。');
+    acid('a-hclo-ka', 'common', '次氯酸的 Ka', '3.0×10⁻⁸', ['3.0×10⁻⁸', '3.0×10⁻⁴', '1.8×10⁻⁵', '5.0×10⁻¹⁰'], '含氧酸常用弱酸。');
+    acid('a-carbonic-1', 'common', '碳酸第一階 Ka', '4.3×10⁻⁷', ['4.3×10⁻⁷', '4.7×10⁻¹¹', '7.1×10⁻³', '6.3×10⁻⁸'], '碳酸的第一階解離。');
+    acid('a-carbonic-2', 'common', '碳酸第二階 Ka', '4.7×10⁻¹¹', ['4.7×10⁻¹¹', '4.3×10⁻⁷', '4.2×10⁻¹³', '5.0×10⁻¹⁰'], '碳酸的第二階解離。');
+    acid('a-phosphoric-1', 'common', '磷酸第一階 Ka', '7.1×10⁻³', ['7.1×10⁻³', '6.3×10⁻⁸', '4.2×10⁻¹³', '4.3×10⁻⁷'], '磷酸第一階解離。');
+    acid('a-phosphoric-2', 'common', '磷酸第二階 Ka', '6.3×10⁻⁸', ['6.3×10⁻⁸', '7.1×10⁻³', '4.2×10⁻¹³', '4.7×10⁻¹¹'], '磷酸第二階解離。');
+    acid('a-phosphoric-3', 'common', '磷酸第三階 Ka', '4.2×10⁻¹³', ['4.2×10⁻¹³', '6.3×10⁻⁸', '7.1×10⁻³', '5.0×10⁻¹⁰'], '磷酸第三階解離。');
+    custom('a-kakb', 'acidBase', 'common', '對共軛酸鹼對而言，下列哪個關係正確？', 'KₐKᵦ=K𝑤',
+        ['KₐKᵦ=K𝑤', 'Kₐ+Kᵦ=K𝑤', 'Kₐ/Kᵦ=K𝑤', 'KₐKᵦ=1/K𝑤'], '25 °C附近適用。');
+    acid('a-formic-ka', 'deep', '甲酸的 Ka', '1.8×10⁻⁴', ['1.8×10⁻⁴', '1.8×10⁻⁵', '6.3×10⁻⁵', '1.3×10⁻⁵'], '比醋酸強一個數量級。');
+    acid('a-propionic-ka', 'deep', '丙酸的 Ka', '1.3×10⁻⁵', ['1.3×10⁻⁵', '1.8×10⁻⁴', '6.3×10⁻⁵', '4.0×10⁻⁴'], '羧酸強度比較。');
+    acid('a-benzoic-ka', 'deep', '苯甲酸的 Ka', '6.3×10⁻⁵', ['6.3×10⁻⁵', '1.8×10⁻⁴', '1.3×10⁻⁵', '1.0×10⁻¹⁰'], '芳香族弱酸基準。');
+    acid('a-nitrous-ka', 'deep', '亞硝酸的 Ka', '4.0×10⁻⁴', ['4.0×10⁻⁴', '3.0×10⁻⁸', '6.3×10⁻⁵', '4.2×10⁻¹³'], '含氧酸強度比較。');
+    acid('a-oxalic-1', 'deep', '草酸第一階 Ka', '5.9×10⁻²', ['5.9×10⁻²', '6.4×10⁻⁵', '7.4×10⁻⁴', '1.8×10⁻⁴'], '二元酸第一階解離。');
+    acid('a-oxalic-2', 'deep', '草酸第二階 Ka', '6.4×10⁻⁵', ['6.4×10⁻⁵', '5.9×10⁻²', '6.3×10⁻⁵', '4.2×10⁻¹³'], '二元酸第二階解離。');
+    acid('a-phenol-ka', 'deep', '苯酚的 Ka', '1.0×10⁻¹⁰', ['1.0×10⁻¹⁰', '6.3×10⁻⁵', '3.0×10⁻⁸', '1.8×10⁻⁵'], '弱酸強度辨析。');
+    acid('a-h2o2-ka', 'deep', '過氧化氫的 Ka', '2.4×10⁻¹²', ['2.4×10⁻¹²', '2.4×10⁻⁷', '1.0×10⁻¹⁰', '4.7×10⁻¹¹'], '過氧化氫的酸性很弱。');
+    acid('a-methylamine-kb', 'deep', '甲胺的 Kb', '4.4×10⁻⁴', ['4.4×10⁻⁴', '1.8×10⁻⁵', '1.7×10⁻⁹', '5.6×10⁻¹⁰'], '弱鹼數值比較。');
+    acid('a-pyridine-kb', 'deep', '吡啶的 Kb', '1.7×10⁻⁹', ['1.7×10⁻⁹', '4.4×10⁻⁴', '1.8×10⁻⁵', '1.0×10⁻¹⁰'], '有機弱鹼數值。');
+
+    // 6. 氫原子光譜 ---------------------------------------------------------
+    const spectrum = (id, tier, title, value, unit, opts, condition, note) =>
+        add(id, 'hydrogen', tier, title, value, unit, opts, condition, note, { modes: ['value', 'meaning'] });
+    spectrum('h-c', 'common', '真空中光速', '2.998×10⁸', 'm·s⁻¹', ['2.998×10⁸', '3.00×10⁶', '6.626×10⁻³⁴', '1.097×10⁷'], '', '光子關係式中的c。');
+    spectrum('h-planck', 'common', '普朗克常數', '6.626×10⁻³⁴', 'J·s', ['6.626×10⁻³⁴', '2.998×10⁸', '1.602×10⁻¹⁹', '1.097×10⁷'], '', 'E=hν。');
+    spectrum('h-rydberg', 'common', '里德伯常數', '1.097×10⁷', 'm⁻¹', ['1.097×10⁷', '1.097×10⁵', '2.998×10⁸', '6.626×10⁻³⁴'], '', '氫原子光譜波長公式中的常數。');
+    spectrum('h-ground-energy', 'common', '氫原子基態能量', '−13.6', 'eV', ['−13.6', '−3.40', '−1.51', '+13.6'], 'n=1', '波耳能階公式。');
+    spectrum('h-n2-energy', 'common', '氫原子第二能階能量', '−3.40', 'eV', ['−3.40', '−13.6', '−1.51', '−0.850'], 'n=2', '波耳能階公式。');
+    spectrum('h-n3-energy', 'common', '氫原子第三能階能量', '−1.51', 'eV', ['−1.51', '−3.40', '−13.6', '−0.850'], 'n=3', '波耳能階公式。');
+    spectrum('h-n4-energy', 'common', '氫原子第四能階能量', '−0.850', 'eV', ['−0.850', '−1.51', '−3.40', '−13.6'], 'n=4', '波耳能階公式。');
+    spectrum('h-ionization-ev', 'common', '氫原子基態游離能', '13.6', 'eV·atom⁻¹', ['13.6', '10.2', '1.89', '3.40'], 'n=1→∞', '由基態移至游離狀態。');
+    spectrum('h-ionization-mol', 'common', '氫原子基態游離能', '1312', 'kJ·mol⁻¹', ['1312', '96.485', '10.2', '218'], 'n=1→∞', '13.6 eV/atom的莫耳形式。');
+    spectrum('h-lyman-alpha-e', 'common', '來曼系第一條能量差', '10.2', 'eV', ['10.2', '1.89', '12.1', '3.40'], 'n=2→1', '紫外光。');
+    spectrum('h-lyman-alpha-l', 'common', '來曼系第一條波長', '121.6', 'nm', ['121.6', '656.3', '486.1', '91.2'], 'n=2→1', '紫外光。');
+    spectrum('h-lyman-alpha-f', 'common', '來曼系第一條頻率', '2.47×10¹⁵', 'Hz', ['2.47×10¹⁵', '4.57×10¹⁴', '2.47×10¹³', '1.10×10⁷'], 'n=2→1', '由E=hν得到。');
+    spectrum('h-balmer-alpha-e', 'common', '巴耳末系第一條能量差', '1.89', 'eV', ['1.89', '10.2', '3.40', '0.661'], 'n=3→2', '可見光。');
+    spectrum('h-balmer-alpha-l', 'common', '巴耳末系第一條波長', '656.3', 'nm', ['656.3', '121.6', '486.1', '1875'], 'n=3→2', 'Hα，可見紅光。');
+    spectrum('h-balmer-alpha-f', 'common', '巴耳末系第一條頻率', '4.57×10¹⁴', 'Hz', ['4.57×10¹⁴', '2.47×10¹⁵', '4.57×10¹²', '1.10×10⁷'], 'n=3→2', '由E=hν得到。');
+    custom('h-bohr-formula', 'hydrogen', 'common', '下列哪個是氫原子波耳能階的正確表示式？', 'Eₙ=−13.6/n² eV',
+        ['Eₙ=−13.6/n² eV', 'Eₙ=−13.6n² eV', 'Eₙ=+13.6/n² eV', 'Eₙ=−13.6/n eV'], 'n越大，能量越接近0。');
+    spectrum('h-lyman-limit', 'deep', '來曼系極限波長', '91.2', 'nm', ['91.2', '121.6', '364.6', '820.4'], 'n=∞→1', '氫原子系列極限。');
+    spectrum('h-balmer-limit', 'deep', '巴耳末系極限波長', '364.6', 'nm', ['364.6', '91.2', '656.3', '1875'], 'n=∞→2', '氫原子系列極限。');
+    spectrum('h-paschen-alpha', 'deep', '帕申系第一條波長', '1875', 'nm', ['1875', '656.3', '121.6', '486.1'], 'n=4→3', '紅外光。');
+    spectrum('h-lyman-beta', 'deep', '來曼系第二條波長', '102.6', 'nm', ['102.6', '121.6', '97.3', '486.1'], 'n=3→1', '紫外光。');
+    spectrum('h-balmer-beta', 'deep', '巴耳末系第二條波長', '486.1', 'nm', ['486.1', '656.3', '434.0', '364.6'], 'n=4→2', 'Hβ，可見藍綠光。');
+    spectrum('h-balmer-gamma', 'deep', '巴耳末系第三條波長', '434.0', 'nm', ['434.0', '486.1', '410.2', '656.3'], 'n=5→2', 'Hγ，可見光。');
+    spectrum('h-balmer-delta', 'deep', '巴耳末系第四條波長', '410.2', 'nm', ['410.2', '434.0', '486.1', '364.6'], 'n=6→2', 'Hδ，可見紫光。');
+    spectrum('h-paschen-beta', 'deep', '帕申系第二條波長', '1282', 'nm', ['1282', '1875', '1094', '102.6'], 'n=5→3', '近紅外光。');
+    spectrum('h-bohr-radius', 'deep', '波耳半徑', '5.29×10⁻¹¹', 'm', ['5.29×10⁻¹¹', '1.097×10⁷', '2.998×10⁸', '6.626×10⁻³⁴'], '氫原子基態', '原子尺度長度基準。');
+    spectrum('h-hc', 'deep', '光子常數hc', '1.240×10³', 'eV·nm', ['1.240×10³', '96.485', '8.314', '22.4'], '', '常用近似為1240 eV·nm。');
+    spectrum('h-rydberg-energy', 'deep', '里德伯能量', '13.6', 'eV', ['13.6', '1.89', '10.2', '27.2'], '氫原子', '等於基態游離能的近似值。');
+
+    window.CHEM_KNOWLEDGE_CONSTANT_DATA = Object.freeze(facts);
+})();
+
+// --- Bundled calibration extension data (source: calibration_extension_data.js) ---
+// 校準新增章節採「概念資料 × 共用模板」；此檔不儲存完整題幹或固定選項。
+window.CALIBRATION_EXTENSION_CATEGORIES = {
+    concentration: {
+        label:'濃度與溶解度', difficulty:9,
+        subtypes:[
+            {id:'expressions',label:'濃度表示、計算與換算',description:'公式、單位與各種濃度的正反向換算',required:true},
+            {id:'influence',label:'濃度受哪些因素影響',description:'溫度、體積、加水與溶質變動',required:true},
+            {id:'atomicStandard',label:'原子量標準改變',description:'莫耳質量縮放及濃度數值反向換算',required:true},
+            {id:'dilution',label:'稀釋與配製',description:'原液、目標濃度、體積與加水量互求',required:true},
+            {id:'mixing',label:'同溶質溶液混合',description:'混合濃度、用量與比例互求',required:true},
+            {id:'changes',label:'蒸發、加水與增減溶質',description:'溶液質量與質量百分濃度變化',required:true},
+            {id:'solubility',label:'溶解度與飽和溶液',description:'溶解度、水量與飽和溶液濃度互求',required:true},
+            {id:'saturation',label:'飽和狀態與溫度變化',description:'飽和狀態、冷卻析晶及反向計算',required:true}
+        ]
+    },
+    acidBase: {
+        label: '酸鹼與鹽類', difficulty: 8,
+        subtypes: [
+            { id: 'strength', label: '常見強弱酸鹼', description: '比較等濃度溶液、解離程度與強弱排序；辨認題僅少量穿插', required: true },
+            { id: 'conjugate', label: '共軛酸鹼對', description: '從質子轉移反應判角色、共軛粒子與電荷守恆', required: false },
+            { id: 'salt', label: '離子水解與鹽類酸鹼性', description: '追蹤離子來源、水解方向與 Ka／Kb 對溶液酸鹼性的影響', required: true },
+            { id: 'pH', label: 'pH 與中和計算', description: '互換 [H₃O⁺]、[OH⁻]、pH、pOH，計算過量中和與混合後 pH', required: true },
+            { id: 'acidNature', label: '酸鹼性判斷與中性基準', description: '依 Kw／pKw 判斷中性點，交叉運用 [H⁺]、[OH⁻]、pH 與 pOH（含非 25°C）', required: true },
+            { id: 'indicator', label: '指示劑與變色', description: '綜合多種指示劑觀察結果，推定 pH 範圍並排除不可能值', required: true }
+        ]
+    },
+    mole: {
+        label: '莫耳、溶液與氣體', difficulty: 9,
+        subtypes: [
+            { id: 'mole', label: '質量、莫耳與粒子數', description: '依莫耳質量及亞佛加厥常數進行正反向換算', required: true },
+            { id: 'particles', label: '亞佛加厥常數與粒子數', description: '分子、原子與化學式單位的莫耳數正反向換算', required: false },
+            { id: 'stoich', label: '反應係數與莫耳比', description: '由平衡反應式選取反應物或生成物配對計算', required: true },
+            { id: 'solution', label: '濃度與稀釋', description: '莫耳濃度、溶質莫耳數與稀釋計算', required: true },
+            { id: 'gas', label: '氣體體積關係', description: '明確溫壓條件下的莫耳體積與體積比', required: false },
+            { id: 'solubility', label: '溶解度與結晶量', description: '依給定溶解度及溫度計算溶解或析出量', required: false }
+        ]
+    },
+    thermo: {
+        label: '熱化學、速率與平衡', difficulty: 10,
+        subtypes: [
+            { id: 'thermo', label: '熱化學與反應熱', description: '吸放熱符號、量熱關係與熱化學方程式', required: true },
+            { id: 'rate', label: '反應速率與活化能', description: '速率級數、濃度倍數及催化前後的能障判讀', required: true },
+            { id: 'equilibrium', label: '平衡常數與平衡移動', description: 'Kc 式、濃度／壓力／溫度變動與平衡方向', required: true }
+        ]
+    },
+    organic: {
+        label: '有機化學', difficulty: 11,
+        subtypes: [
+            { id: 'functional', label: '官能基與物質分類', description: '由名稱或結構辨認高中常見官能基', required: true },
+            { id: 'name', label: '名稱、結構與簡單異構', description: '常見小分子名稱、分子式與結構特徵', required: true },
+            { id: 'reaction', label: '常見反應與產物', description: '只在反應物與必要條件明確時判斷代表性產物', required: false },
+            { id: 'polymer', label: '單體與聚合物', description: '辨認加成聚合的單體、重複單元與聚合物', required: false }
+        ]
+    },
+    compare: {
+        label: '化學性質比較', difficulty: 13,
+        subtypes: [
+            { id: 'periodicTrend', label: '週期趨勢比較', description: '比較原子半徑、電負度、游離能與金屬性，含正向與反向排序', required: true },
+            { id: 'isoelectronicRadius', label: '等電子粒子半徑', description: '依質子數與電子數比較常見原子、離子半徑', required: true },
+            { id: 'molecularProperties', label: '分子形狀、極性與分子間作用力', description: '由分子結構辨認形狀、極性與主要分子間作用力，並可反向判斷分子', required: true },
+            { id: 'redoxStrength', label: '氧化力與還原力比較', description: '依金屬活動性與常見氧化還原序列比較氧化劑、還原劑', required: true },
+            { id: 'acidStrengthTrend', label: '酸性強弱趨勢', description: '比較常見氫化物與含氧酸的酸性，從趨勢反推物質', required: true },
+            { id: 'qualitativeIonTest', label: '離子檢驗與現象判斷', description: '依常見試劑、沉澱顏色與氣體現象辨認離子，並可由離子反推現象', required: true },
+            { id: 'organicProperties', label: '有機物性質比較', description: '依碳鏈長度與分子間作用力，比較常見同系列物質的沸點趨勢', required: false }
+        ]
+    }
+};
+
+// 模板登錄表。模板 ID 由引擎執行，不為每筆概念資料撰寫專屬題目程式。
+window.CALIBRATION_EXTENSION_TEMPLATES = {
+    acidBase: {
+        strength: ['equal-concentration-acid-base-comparison', 'weak-acid-equilibrium-ph', 'weak-base-equilibrium-ph', 'condition-to-strength-class'],
+        conjugate: ['acid-to-conjugate-base-from-reactants', 'base-to-conjugate-acid-from-reactants'],
+        salt: ['ion-origin-to-solution-ph', 'hydrolysis-to-major-ion', 'salt-water-reactive-ion'],
+        pH: ['[H3O+]-to-pH-and-reverse', '[OH-]-to-[H3O+]-or-pH', 'pH-to-[OH-]', 'pOH-to-pH', 'strong-acid-base-mixture'],
+        acidNature: ['[H+]-vs-sqrtKw', '[OH-]-vs-sqrtKw', 'pH-vs-pKw/2', 'pH-vs-Kw-derived-neutral-pH', 'pOH-vs-pKw/2', 'pH+pOH=pKw', 'ion-product-and-acidity'],
+        indicator: ['two-indicator-interval-intersection']
+    },
+    mole: {
+        mole: ['mass-to-moles', 'moles-to-mass'],
+        particles: ['moles-to-particles', 'particles-to-moles'],
+        stoich: ['coefficient-ratio', 'reactant-to-product', 'product-to-reactant'],
+        solution: ['molarity', 'solute-moles', 'dilution-final-concentration', 'dilution-volume'],
+        gas: ['molar-volume', 'gas-volume-ratio'],
+        solubility: ['solubility-at-temperature', 'crystallization-amount']
+    },
+    thermo: {
+        thermo: ['heat-sign', 'calorimetry-q', 'reverse-heat-sign'],
+        rate: ['rate-law-factor', 'identify-order', 'catalyst-energy-effect'],
+        equilibrium: ['kc-expression', 'concentration-shift', 'pressure-shift', 'temperature-shift']
+    },
+    organic: {
+        functional: ['structure-to-functional-group', 'functional-group-to-family'],
+        name: ['name-to-formula', 'formula-to-name', 'bond-type-classification'],
+        reaction: ['conditioned-product', 'reaction-type'],
+        polymer: ['monomer-to-polymer', 'polymer-to-monomer', 'repeat-unit']
+    },
+    compare: {
+        periodicTrend: ['property-to-greatest-element', 'property-to-descending-order', 'pairwise-trend-reversal'],
+        isoelectronicRadius: ['isoelectronic-to-largest-radius', 'isoelectronic-to-smallest-radius', 'species-to-radius-order'],
+        molecularProperties: ['formula-to-shape-polarity-force', 'shape-polarity-force-to-formula'],
+        redoxStrength: ['sequence-to-strongest-agent', 'agent-set-to-strength-order'],
+        acidStrengthTrend: ['acid-family-to-strongest', 'acid-trend-to-order', 'order-to-acid-family'],
+        qualitativeIonTest: ['ion-to-test-observation', 'test-observation-to-ion'],
+        organicProperties: ['homologous-series-to-highest-boiling-point', 'boiling-point-order-to-series']
+    }
+};
+
+// 概念資料：每筆保存化學事實、條件、誘答依據與詳解規則，不保存題目選項。
+window.CALIBRATION_EXTENSION_DATA = {
+    acidStrength: [
+        { id:'acid-hcl', formula:'HCl', name:'氫氯酸', kind:'acid', strength:'strong', rule:'高中常見強酸在水中近乎完全解離。' },
+        { id:'acid-hbr', formula:'HBr', name:'氫溴酸', kind:'acid', strength:'strong', rule:'高中常見強酸在水中近乎完全解離。' },
+        { id:'acid-hi', formula:'HI', name:'氫碘酸', kind:'acid', strength:'strong', rule:'高中常見強酸在水中近乎完全解離。' },
+        { id:'acid-hno3', formula:'HNO₃', name:'硝酸', kind:'acid', strength:'strong', rule:'硝酸是高中常見強酸。' },
+        { id:'acid-hclo4', formula:'HClO₄', name:'過氯酸', kind:'acid', strength:'strong', rule:'過氯酸列為常見強酸；此題只考定性分類。' },
+        { id:'acid-h2so4', formula:'H₂SO₄', name:'硫酸', kind:'acid', strength:'strong', rule:'硫酸第一階段解離視為完全解離；題目不延伸第二階段平衡。' },
+        { id:'acid-hf', formula:'HF', name:'氫氟酸', kind:'acid', strength:'weak', rule:'HF 在水中只部分解離，屬弱酸。' },
+        { id:'acid-acetic', formula:'CH₃COOH', name:'醋酸', kind:'acid', strength:'weak', Ka:1.8e-5, rule:'醋酸在水中只部分解離，屬弱酸。' },
+        { id:'acid-sulfurous', formula:'H₂SO₃', name:'亞硫酸', kind:'acid', strength:'weak', Ka:1.5e-2, rule:'亞硫酸第一階段在水中部分解離；本題採用 Ka₁ 近似計算。' },
+        { id:'acid-carbonic', formula:'H₂CO₃', name:'碳酸', kind:'acid', strength:'weak', rule:'碳酸在水中只部分解離，屬弱酸。' },
+        { id:'acid-phosphoric', formula:'H₃PO₄', name:'磷酸', kind:'acid', strength:'weak', rule:'磷酸屬弱酸；多元解離不在此模板中計算。' },
+        { id:'acid-nitrous', formula:'HNO₂', name:'亞硝酸', kind:'acid', strength:'weak', Ka:4.5e-4, rule:'亞硝酸在水中部分解離，屬弱酸。' },
+        { id:'acid-hclo', formula:'HClO', name:'次氯酸', kind:'acid', strength:'weak', Ka:3.0e-8, rule:'次氯酸在水中部分解離，屬弱酸。' }
+    ],
+    baseStrength: [
+        { id:'base-naoh', formula:'NaOH', name:'氫氧化鈉', strength:'strong', rule:'可溶性 IA 族氫氧化物屬常見強鹼。' },
+        { id:'base-koh', formula:'KOH', name:'氫氧化鉀', strength:'strong', rule:'可溶性 IA 族氫氧化物屬常見強鹼。' },
+        { id:'base-lioh', formula:'LiOH', name:'氫氧化鋰', strength:'strong', rule:'可溶性 IA 族氫氧化物屬常見強鹼。' },
+        { id:'base-baoh', formula:'Ba(OH)₂', name:'氫氧化鋇', strength:'strong', rule:'氫氧化鋇為高中常見強鹼。' },
+        { id:'base-caoh', formula:'Ca(OH)₂', name:'氫氧化鈣', strength:'strong', rule:'溶解部分解離出的氫氧根視為強鹼性來源。' },
+        { id:'base-nh3', formula:'NH₃', name:'氨', strength:'weak', Kb:1.8e-5, rule:'氨與水建立平衡，僅部分生成 OH⁻，屬弱鹼。' },
+        { id:'base-methylamine', formula:'CH₃NH₂', name:'甲胺', strength:'weak', Kb:4.4e-4, rule:'胺類可接受質子，但在水中通常只部分反應，屬弱鹼。' },
+        { id:'base-pyridine', formula:'C₅H₅N', name:'吡啶', strength:'weak', Kb:1.7e-9, rule:'吡啶的氮原子可接受質子，在水中呈弱鹼性。' }
+    ],
+    conjugates: [
+        { id:'conj-hcl', acid:'HCl', base:'Cl⁻', note:'失去一個質子形成共軛鹼。' },
+        { id:'conj-hf', acid:'HF', base:'F⁻', note:'失去一個質子形成共軛鹼。' },
+        { id:'conj-acetic', acid:'CH₃COOH', base:'CH₃COO⁻', note:'醋酸失去一個質子形成醋酸根。' },
+        { id:'conj-sulfurous-1', acid:'H₂SO₃', base:'HSO₃⁻', note:'亞硫酸失去一個質子形成亞硫酸氫根。' },
+        { id:'conj-sulfurous-2', acid:'HSO₃⁻', base:'SO₃²⁻', note:'亞硫酸氫根再失去一個質子形成亞硫酸根。' },
+        { id:'conj-carbonic-1', acid:'H₂CO₃', base:'HCO₃⁻', note:'碳酸失去一個質子形成碳酸氫根。' },
+        { id:'conj-carbonic-2', acid:'HCO₃⁻', base:'CO₃²⁻', note:'碳酸氫根再失去一個質子形成碳酸根。' },
+        { id:'conj-phosphate-1', acid:'H₃PO₄', base:'H₂PO₄⁻', note:'磷酸失去一個質子形成磷酸二氫根。' },
+        { id:'conj-phosphate-2', acid:'H₂PO₄⁻', base:'HPO₄²⁻', note:'磷酸二氫根失去一個質子形成磷酸氫根。' },
+        { id:'conj-phosphate-3', acid:'HPO₄²⁻', base:'PO₄³⁻', note:'磷酸氫根失去一個質子形成磷酸根。' },
+        { id:'conj-ammonium', acid:'NH₄⁺', base:'NH₃', note:'銨離子失去一個質子形成氨。' },
+        { id:'conj-hydronium', acid:'H₃O⁺', base:'H₂O', note:'水合氫離子失去一個質子形成水。' },
+        { id:'conj-water', acid:'H₂O', base:'OH⁻', note:'水失去一個質子形成氫氧根。' }
+    ],
+    salts: [
+        { id:'salt-nh4cl', formula:'NH₄Cl', cation:'NH₄⁺', anion:'Cl⁻', behavior:'酸性', activeIon:'NH₄⁺', product:'H₃O⁺', rule:'NH₄⁺是弱鹼 NH₃ 的共軛酸，會與水作用；Cl⁻來自強酸，通常不水解。' },
+        { id:'salt-nh4no3', formula:'NH₄NO₃', cation:'NH₄⁺', anion:'NO₃⁻', behavior:'酸性', activeIon:'NH₄⁺', product:'H₃O⁺', rule:'NH₄⁺水解增加 H₃O⁺；NO₃⁻來自強酸，通常不水解。' },
+        { id:'salt-ch3coona', formula:'CH₃COONa', cation:'Na⁺', anion:'CH₃COO⁻', behavior:'鹼性', activeIon:'CH₃COO⁻', product:'OH⁻', rule:'CH₃COO⁻是弱酸的共軛鹼，與水作用可生成 OH⁻。' },
+        { id:'salt-na2co3', formula:'Na₂CO₃', cation:'Na⁺', anion:'CO₃²⁻', behavior:'鹼性', activeIon:'CO₃²⁻', product:'OH⁻', rule:'CO₃²⁻是弱酸的共軛鹼，水解後溶液呈鹼性。' },
+        { id:'salt-k2co3', formula:'K₂CO₃', cation:'K⁺', anion:'CO₃²⁻', behavior:'鹼性', activeIon:'CO₃²⁻', product:'OH⁻', rule:'K⁺來自強鹼、通常不水解；CO₃²⁻是弱酸的共軛鹼，水解後溶液呈鹼性。' },
+        { id:'salt-naf', formula:'NaF', cation:'Na⁺', anion:'F⁻', behavior:'鹼性', activeIon:'F⁻', product:'OH⁻', rule:'F⁻是弱酸 HF 的共軛鹼，水解後溶液呈鹼性。' },
+        { id:'salt-nacl', formula:'NaCl', cation:'Na⁺', anion:'Cl⁻', behavior:'中性', activeIon:'無', product:'無', rule:'Na⁺與 Cl⁻分別來自強鹼與強酸，常見高中近似下不顯著水解。' },
+        { id:'salt-kno3', formula:'KNO₃', cation:'K⁺', anion:'NO₃⁻', behavior:'中性', activeIon:'無', product:'無', rule:'K⁺與 NO₃⁻分別來自強鹼與強酸，常見高中近似下不顯著水解。' },
+        { id:'salt-nahco3', formula:'NaHCO₃', cation:'Na⁺', anion:'HCO₃⁻', behavior:'弱鹼性', activeIon:'HCO₃⁻', product:'OH⁻', rule:'HCO₃⁻為兩性粒子，但水溶液中鹼性作用略占優勢。' },
+        { id:'salt-nahso4', formula:'NaHSO₄', cation:'Na⁺', anion:'HSO₄⁻', behavior:'酸性', activeIon:'HSO₄⁻', product:'H₃O⁺', rule:'HSO₄⁻仍可解離出 H⁺，水溶液呈酸性。' },
+        { id:'salt-nh4acetate', formula:'NH₄CH₃COO', cation:'NH₄⁺', anion:'CH₃COO⁻', behavior:'中性', activeIon:'NH₄⁺、CH₃COO⁻', product:'無', Ka:5.6e-10, Kb:5.6e-10, rule:'NH₄⁺與 CH₃COO⁻都會水解；25 °C附近 Ka(NH₄⁺)≈Kb(CH₃COO⁻)，兩者影響近似抵銷，溶液近似中性。' }
+    ],
+    indicators: [
+        { id:'indicator-litmus', name:'石蕊', acid:'紅色', neutral:'紫色', base:'藍色', range:'定性' },
+        { id:'indicator-phenolphthalein', name:'酚酞', acid:'無色', neutral:'無色', base:'粉紅色', range:'約 pH 8.2 以下無色，約 pH 8.2–10.0 逐漸變粉紅，較高 pH 呈粉紅' },
+        { id:'indicator-methyl-orange', name:'甲基橙', acid:'紅色', neutral:'黃色', base:'黃色', range:'約 pH 3.1 以下紅色，約 pH 3.1–4.4 橙色過渡，約 pH 4.4 以上黃色' },
+        { id:'indicator-btb', name:'溴瑞香草酚藍（BTB）', acid:'黃色', neutral:'綠色', base:'藍色', range:'約 pH 6.0 以下黃色，約 pH 6.0–7.6 綠色過渡，約 pH 7.6 以上藍色' }
+    ],
+    neutralizations: [
+        { id:'neut-hcl-naoh', acid:'HCl', acidName:'鹽酸', base:'NaOH', baseName:'氫氧化鈉', equation:'HCl＋NaOH→NaCl＋H₂O', salt:'NaCl', ratio:'1:1', condition:'完全中和' },
+        { id:'neut-hno3-koh', acid:'HNO₃', acidName:'硝酸', base:'KOH', baseName:'氫氧化鉀', equation:'HNO₃＋KOH→KNO₃＋H₂O', salt:'KNO₃', ratio:'1:1', condition:'完全中和' },
+        { id:'neut-h2so4-naoh', acid:'H₂SO₄', acidName:'硫酸', base:'NaOH', baseName:'氫氧化鈉', equation:'H₂SO₄＋2NaOH→Na₂SO₄＋2H₂O', salt:'Na₂SO₄', ratio:'1:2', condition:'完全中和' },
+        { id:'neut-h2so4-koh', acid:'H₂SO₄', acidName:'硫酸', base:'KOH', baseName:'氫氧化鉀', equation:'H₂SO₄＋2KOH→K₂SO₄＋2H₂O', salt:'K₂SO₄', ratio:'1:2', condition:'完全中和' },
+        { id:'neut-h3po4-naoh', acid:'H₃PO₄', acidName:'磷酸', base:'NaOH', baseName:'氫氧化鈉', equation:'H₃PO₄＋3NaOH→Na₃PO₄＋3H₂O', salt:'Na₃PO₄', ratio:'1:3', condition:'三個可解離質子皆完全中和' },
+        { id:'neut-hcl-caoh', acid:'HCl', acidName:'鹽酸', base:'Ca(OH)₂', baseName:'氫氧化鈣', equation:'2HCl＋Ca(OH)₂→CaCl₂＋2H₂O', salt:'CaCl₂', ratio:'2:1', condition:'完全中和' },
+        { id:'neut-hno3-baoh', acid:'HNO₃', acidName:'硝酸', base:'Ba(OH)₂', baseName:'氫氧化鋇', equation:'2HNO₃＋Ba(OH)₂→Ba(NO₃)₂＋2H₂O', salt:'Ba(NO₃)₂', ratio:'2:1', condition:'完全中和' }
+    ],
+    strongPH: [
+        { id:'ph-hcl-1e3', formula:'HCl', concentration:0.001, pH:3, condition:'25 °C、強酸完全解離、單元酸' },
+        { id:'ph-hno3-1e2', formula:'HNO₃', concentration:0.01, pH:2, condition:'25 °C、強酸完全解離、單元酸' },
+        { id:'ph-naoh-1e3', formula:'NaOH', concentration:0.001, pH:11, condition:'25 °C、強鹼完全解離' },
+        { id:'ph-koh-1e2', formula:'KOH', concentration:0.01, pH:12, condition:'25 °C、強鹼完全解離' }
+    ],
+    acidNatureConditions: [
+        { id:'water-25c', temperature:25, kw:1.0e-14, kwText:'1.0×10⁻¹⁴', pKw:14, pKwText:'14.00' },
+        { id:'water-50c', temperature:50, kw:5.5e-14, kwText:'5.5×10⁻¹⁴', pKw:-Math.log10(5.5e-14), pKwText:'13.26' }
+    ],
+    moleSpecies: [
+        { id:'sp-water', formula:'H₂O', name:'水', molarMass:18, particle:'分子' },
+        { id:'sp-carbon-dioxide', formula:'CO₂', name:'二氧化碳', molarMass:44, particle:'分子' },
+        { id:'sp-oxygen', formula:'O₂', name:'氧氣', molarMass:32, particle:'分子' },
+        { id:'sp-nitrogen', formula:'N₂', name:'氮氣', molarMass:28, particle:'分子' },
+        { id:'sp-carbon-monoxide', formula:'CO', name:'一氧化碳', molarMass:28, particle:'分子' },
+        { id:'sp-ammonia', formula:'NH₃', name:'氨', molarMass:17, particle:'分子' },
+        { id:'sp-methane', formula:'CH₄', name:'甲烷', molarMass:16, particle:'分子' },
+        { id:'sp-sodium-chloride', formula:'NaCl', name:'氯化鈉', molarMass:58.5, particle:'化學式單位' },
+        { id:'sp-calcium-carbonate', formula:'CaCO₃', name:'碳酸鈣', molarMass:100, particle:'化學式單位' },
+        { id:'sp-sodium-carbonate', formula:'Na₂CO₃', name:'碳酸鈉', molarMass:106, particle:'化學式單位' },
+        { id:'sp-sulfuric-acid', formula:'H₂SO₄', name:'硫酸', molarMass:98, particle:'分子' },
+        { id:'sp-hydrogen-chloride', formula:'HCl', name:'氯化氫', molarMass:36.5, particle:'分子' }
+    ],
+    stoichiometry: [
+        { id:'rx-water', equation:'2H₂＋O₂→2H₂O', terms:[['H₂',2],['O₂',1],['H₂O',2]] },
+        { id:'rx-ammonia', equation:'N₂＋3H₂→2NH₃', terms:[['N₂',1],['H₂',3],['NH₃',2]] },
+        { id:'rx-carbon', equation:'C＋O₂→CO₂', terms:[['C',1],['O₂',1],['CO₂',1]] },
+        { id:'rx-methane', equation:'CH₄＋2O₂→CO₂＋2H₂O', terms:[['CH₄',1],['O₂',2],['CO₂',1],['H₂O',2]] },
+        { id:'rx-magnesium', equation:'2Mg＋O₂→2MgO', terms:[['Mg',2],['O₂',1],['MgO',2]] },
+        { id:'rx-aluminum', equation:'4Al＋3O₂→2Al₂O₃', terms:[['Al',4],['O₂',3],['Al₂O₃',2]] },
+        { id:'rx-calcium-carbonate', equation:'CaCO₃→CaO＋CO₂', terms:[['CaCO₃',1],['CaO',1],['CO₂',1]] },
+        { id:'rx-potassium-chlorate', equation:'2KClO₃→2KCl＋3O₂', terms:[['KClO₃',2],['KCl',2],['O₂',3]] },
+        { id:'rx-iron-oxide', equation:'Fe₂O₃＋3CO→2Fe＋3CO₂', terms:[['Fe₂O₃',1],['CO',3],['Fe',2],['CO₂',3]] },
+        { id:'rx-sodium-carbonate', equation:'Na₂CO₃＋2HCl→2NaCl＋H₂O＋CO₂', terms:[['Na₂CO₃',1],['HCl',2],['NaCl',2],['H₂O',1],['CO₂',1]] }
+    ],
+    concentrationCases: [
+        { id:'conc-1', n:0.1, volume:0.5 }, { id:'conc-2', n:0.2, volume:1 },
+        { id:'conc-3', n:0.5, volume:0.25 }, { id:'conc-4', n:0.4, volume:2 },
+        { id:'conc-5', n:0.3, volume:0.15 }, { id:'conc-6', n:1, volume:0.5 },
+        { id:'conc-7', n:0.25, volume:0.5 }, { id:'conc-8', n:0.6, volume:0.3 }
+    ],
+    dilutionCases: [
+        { id:'dil-1', initial:1, v1:100, v2:500 }, { id:'dil-2', initial:2, v1:50, v2:200 },
+        { id:'dil-3', initial:0.8, v1:250, v2:1000 }, { id:'dil-4', initial:1.5, v1:100, v2:300 },
+        { id:'dil-5', initial:0.5, v1:200, v2:500 }, { id:'dil-6', initial:3, v1:25, v2:150 },
+        { id:'dil-7', initial:1.2, v1:250, v2:600 }, { id:'dil-8', initial:2.4, v1:50, v2:400 }
+    ],
+    gasFacts: [
+        { id:'gas-0c-1atm', temp:'0 °C', pressure:'1 atm', molarVolume:22.4 },
+        { id:'gas-25c-1atm', temp:'25 °C', pressure:'1 atm', molarVolume:24.5 },
+        { id:'gas-27c-1atm', temp:'27 °C', pressure:'1 atm', molarVolume:24.6 },
+        { id:'gas-0c-1bar', temp:'0 °C', pressure:'1 bar', molarVolume:22.71 },
+        { id:'gas-25c-1bar', temp:'25 °C', pressure:'1 bar', molarVolume:24.79 }
+    ],
+    solubilities: [
+        { id:'sol-kno3', name:'KNO₃', hot:110, cold:32, unit:'g/100 g 水', hotTemp:60, coldTemp:20 },
+        { id:'sol-kcl', name:'KCl', hot:45, cold:34, unit:'g/100 g 水', hotTemp:60, coldTemp:20 },
+        { id:'sol-nacl', name:'NaCl', hot:37, cold:36, unit:'g/100 g 水', hotTemp:60, coldTemp:20 },
+        { id:'sol-nh4cl', name:'NH₄Cl', hot:55, cold:37, unit:'g/100 g 水', hotTemp:60, coldTemp:20 }
+    ],
+    thermoFacts: [
+        { id:'th-fuel', process:'甲烷完全燃燒', heat:'放熱', deltaH:'負值', rule:'系統將熱傳給環境，系統焓降低。' },
+        { id:'th-ice', process:'冰融化', heat:'吸熱', deltaH:'正值', rule:'系統吸收熱量克服粒子間作用力。' },
+        { id:'th-water-vapor', process:'液態水汽化', heat:'吸熱', deltaH:'正值', rule:'汽化需由環境吸收熱量。' },
+        { id:'th-neutralization', process:'強酸與強鹼中和', heat:'放熱', deltaH:'負值', rule:'形成水的中和過程通常放出熱量。' },
+        { id:'th-condensation', process:'水蒸氣凝結', heat:'放熱', deltaH:'負值', rule:'凝結時系統向外放出熱量。' },
+        { id:'th-sublimation', process:'乾冰昇華', heat:'吸熱', deltaH:'正值', rule:'固體直接轉為氣體需吸收熱量。' },
+        { id:'th-dissolve-naoh', process:'NaOH 固體溶於水', heat:'放熱', deltaH:'負值', rule:'此常見溶解過程放熱；題目採稀溶液條件。' },
+        { id:'th-dissolve-nh4no3', process:'NH₄NO₃ 固體溶於水', heat:'吸熱', deltaH:'正值', rule:'此常見溶解過程吸熱；題目採稀溶液條件。' }
+    ],
+    rateLaws: [
+        { id:'rate-a0', rate:'v=k[A]', order:1, variable:'[A]', power:1 },
+        { id:'rate-a1', rate:'v=k[A]²', order:2, variable:'[A]', power:2 },
+        { id:'rate-b0', rate:'v=k[B]', order:1, variable:'[B]', power:1 },
+        { id:'rate-a-b', rate:'v=k[A][B]', order:2, variable:'[A]', power:1 },
+        { id:'rate-b2', rate:'v=k[B]²', order:2, variable:'[B]', power:2 },
+        { id:'rate-zero-a', rate:'v=k[A]⁰', order:0, variable:'[A]', power:0 },
+        { id:'rate-a2b', rate:'v=k[A]²[B]', order:3, variable:'[A]', power:2 },
+        { id:'rate-ab2', rate:'v=k[A][B]²', order:3, variable:'[B]', power:2 }
+    ],
+    equilibria: [
+        { id:'eq-ammonia', equation:'N₂(g)＋3H₂(g)⇌2NH₃(g)', reactants:4, products:2, endothermic:false, kc:'[NH₃]²/([N₂][H₂]³)' },
+        { id:'eq-iodine', equation:'H₂(g)＋I₂(g)⇌2HI(g)', reactants:2, products:2, endothermic:false, kc:'[HI]²/([H₂][I₂])' },
+        { id:'eq-n2o4', equation:'N₂O₄(g)⇌2NO₂(g)', reactants:1, products:2, endothermic:true, kc:'[NO₂]²/[N₂O₄]' },
+        { id:'eq-so2', equation:'2SO₂(g)＋O₂(g)⇌2SO₃(g)', reactants:3, products:2, endothermic:false, kc:'[SO₃]²/([SO₂]²[O₂])' },
+        { id:'eq-haber', equation:'CO(g)＋2H₂(g)⇌CH₃OH(g)', reactants:3, products:1, endothermic:false, kc:'[CH₃OH]/([CO][H₂]²)' },
+        { id:'eq-watergas', equation:'C(s)＋H₂O(g)⇌CO(g)＋H₂(g)', reactants:1, products:2, endothermic:true, kc:'[CO][H₂]/[H₂O]' },
+        { id:'eq-hcl', equation:'H₂(g)＋Cl₂(g)⇌2HCl(g)', reactants:2, products:2, endothermic:false, kc:'[HCl]²/([H₂][Cl₂])' },
+        { id:'eq-pcl', equation:'PCl₅(g)⇌PCl₃(g)＋Cl₂(g)', reactants:1, products:2, endothermic:true, kc:'[PCl₃][Cl₂]/[PCl₅]' }
+    ],
+    organicCompounds: [
+        { id:'org-ethanol', name:'乙醇', formula:'CH₃CH₂OH', family:'醇', functional:'羥基（−OH）', bond:'單鍵' },
+        { id:'org-methanol', name:'甲醇', formula:'CH₃OH', family:'醇', functional:'羥基（−OH）', bond:'單鍵' },
+        { id:'org-acetic', name:'乙酸', formula:'CH₃COOH', family:'羧酸', functional:'羧基（−COOH）', bond:'單鍵' },
+        { id:'org-ethyl-acetate', name:'乙酸乙酯', formula:'CH₃COOCH₂CH₃', family:'酯', functional:'酯基（−COO−）', bond:'單鍵' },
+        { id:'org-acetone', name:'丙酮', formula:'CH₃COCH₃', family:'酮', functional:'羰基碳兩側各接一個烴基（R−CO−R′）', bond:'單鍵' },
+        { id:'org-ethanal', name:'乙醛', formula:'CH₃CHO', family:'醛', functional:'醛基（−CHO）', bond:'單鍵' },
+        { id:'org-dimethyl-ether', name:'二甲醚', formula:'CH₃OCH₃', family:'醚', functional:'醚鍵（−O−）', bond:'單鍵' },
+        { id:'org-methylamine', name:'甲胺', formula:'CH₃NH₂', family:'胺', functional:'胺基（−NH₂）', bond:'單鍵' },
+        { id:'org-ethene', name:'乙烯', formula:'C₂H₄', structure:'CH₂=CH₂', family:'烯', functional:'碳碳雙鍵（C=C）', bond:'雙鍵' },
+        { id:'org-propene', name:'丙烯', formula:'C₃H₆', structure:'CH₂=CHCH₃', family:'烯', functional:'碳碳雙鍵（C=C）', bond:'雙鍵' },
+        { id:'org-ethyne', name:'乙炔', formula:'C₂H₂', structure:'HC≡CH', family:'炔', functional:'碳碳三鍵（C≡C）', bond:'三鍵' },
+        { id:'org-benzene', name:'苯', formula:'C₆H₆', structure:'C₆H₆（六元共軛環）', family:'芳香烴', functional:'芳香環', bond:'共軛環狀結構' },
+        { id:'org-ethane', name:'乙烷', formula:'C₂H₆', structure:'CH₃CH₃', family:'烷', functional:'無特定官能基', bond:'單鍵' },
+        { id:'org-methane', name:'甲烷', formula:'CH₄', family:'烷', functional:'無特定官能基', bond:'單鍵' },
+        { id:'org-formic', name:'甲酸', formula:'HCOOH', family:'羧酸', functional:'羧基（−COOH）', bond:'單鍵' }
+    ],
+    organicReactions: [
+        { id:'org-add-bromine', reactant:'乙烯', formula:'C₂H₄', condition:'Br₂（適當條件）', product:'1,2-二溴乙烷', type:'加成反應', rule:'溴加到碳碳雙鍵兩端。' },
+        { id:'org-hydrogenation', reactant:'乙烯', formula:'C₂H₄', condition:'H₂、Ni 催化', product:'乙烷', type:'加成反應', rule:'氫加到碳碳雙鍵兩端，使不飽和鍵轉為單鍵。' },
+        { id:'org-esterification', reactant:'乙酸與乙醇', formula:'CH₃COOH＋CH₃CH₂OH', condition:'濃硫酸催化、加熱', product:'乙酸乙酯與水', type:'酯化反應', rule:'羧酸與醇在酸催化下形成酯與水。' },
+        { id:'org-ethanol-combustion', reactant:'乙醇', formula:'C₂H₅OH', condition:'氧氣充足、完全燃燒', product:'二氧化碳與水', type:'完全燃燒', rule:'含碳、氫有機物完全燃燒生成 CO₂ 與 H₂O。' },
+        { id:'org-methane-combustion', reactant:'甲烷', formula:'CH₄', condition:'氧氣充足、完全燃燒', product:'二氧化碳與水', type:'完全燃燒', rule:'烴完全燃燒生成 CO₂ 與 H₂O。' },
+        { id:'org-ethene-polymer', reactant:'乙烯', formula:'C₂H₄', condition:'適當催化與聚合條件', product:'聚乙烯', type:'加成聚合', rule:'乙烯雙鍵開啟後連接成聚合物重複單元。' },
+        { id:'org-propene-polymer', reactant:'丙烯', formula:'C₃H₆', condition:'適當催化與聚合條件', product:'聚丙烯', type:'加成聚合', rule:'丙烯雙鍵開啟後連接成聚合物重複單元。' }
+    ],
+    polymers: [
+        { id:'poly-ethylene', monomer:'乙烯', monomerFormula:'CH₂=CH₂', polymer:'聚乙烯', repeatUnit:'−CH₂−CH₂−' },
+        { id:'poly-propylene', monomer:'丙烯', monomerFormula:'CH₂=CHCH₃', polymer:'聚丙烯', repeatUnit:'−CH₂−CH(CH₃)−' },
+        { id:'poly-vinyl-chloride', monomer:'氯乙烯', monomerFormula:'CH₂=CHCl', polymer:'聚氯乙烯', repeatUnit:'−CH₂−CHCl−' },
+        { id:'poly-styrene', monomer:'苯乙烯', monomerFormula:'CH₂=CHC₆H₅', polymer:'聚苯乙烯', repeatUnit:'−CH₂−CH(C₆H₅)−' },
+        { id:'poly-tetrafluoroethylene', monomer:'四氟乙烯', monomerFormula:'CF₂=CF₂', polymer:'聚四氟乙烯', repeatUnit:'−CF₂−CF₂−' },
+        { id:'poly-acrylonitrile', monomer:'丙烯腈', monomerFormula:'CH₂=CHCN', polymer:'聚丙烯腈', repeatUnit:'−CH₂−CH(CN)−' },
+        { id:'poly-methyl-methacrylate', monomer:'甲基丙烯酸甲酯', monomerFormula:'CH₂=C(CH₃)COOCH₃', polymer:'聚甲基丙烯酸甲酯', repeatUnit:'−CH₂−C(CH₃)(COOCH₃)−' }
+    ]
+};
+
+// --- Bundled calibration extension engine (source: calibration_extension_engine.js) ---
+// 四個新增章節的資料×模板引擎。題幹、正解、誘答與詳解在出題時組合。
+window.CALIBRATION_EXTENSION_ENGINE = (() => {
+    const DATA = () => window.CALIBRATION_EXTENSION_DATA || {};
+    const CATEGORIES = () => window.CALIBRATION_EXTENSION_CATEGORIES || {};
+    const shuffle = values => {
+        const out = [...values];
+        for (let i = out.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+    };
+    const unique = values => [...new Set(values.filter(v => v != null && String(v).trim() !== ''))];
+    const key = value => calibrationOptionKey(value);
+    const num = value => String(Number(Number(value).toPrecision(4)));
+    const superscript = value => String(value).replace(/[0-9+-]/g, char => ({ '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻','+':'⁺' })[char]);
+    const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
+    const ratio = (a, b) => { const g = gcd(a, b) || 1; return `${a / g}:${b / g}`; };
+
+    function itemCandidates(correct, pool, minimum = 3) {
+        const answerKey = key(correct);
+        const values = shuffle(unique(pool).filter(value => key(value) !== answerKey));
+        return values.slice(0, minimum);
+    }
+
+    function calculationErrors(unit, ...errors) {
+        return errors.filter(([value]) => Number.isFinite(value)).map(([value, reason]) => ({
+            value: unit ? `${num(value)} ${unit}` : num(value), reason
+        }));
+    }
+
+    function chemDistractors(pool, answer) {
+        return itemCandidates(answer, pool, 3);
+    }
+
+    function appendQuestion(out, cfg) {
+        const optionRationales = { ...cfg.optionRationales };
+        const seen = new Set([key(cfg.answer)]);
+        const wrongOptions = [];
+        for (const option of shuffle(cfg.distractors || [])) {
+            const value = typeof option === 'object' ? option.value : option;
+            const normalized = key(value);
+            if (!normalized || seen.has(normalized)) continue;
+            seen.add(normalized);
+            wrongOptions.push(String(value));
+            if (option.reason) optionRationales[normalized] = option.reason;
+            if (wrongOptions.length === 3) break;
+        }
+        const options = [String(cfg.answer), ...wrongOptions];
+        if (options.length < 3 || options.length > 4) return;
+        out.push({
+            id: `${cfg.template}:${cfg.factId}:${cfg.variant || 'a'}`,
+            template: cfg.template,
+            question: cfg.question,
+            answer: String(cfg.answer),
+            options: shuffle(options),
+            displayMode: cfg.displayMode || 'text',
+            basis: cfg.basis,
+            steps: cfg.steps,
+            conclusion: cfg.conclusion,
+            misconception: cfg.misconception || '先辨認題目指定的條件，再依同一章節規則比較選項。',
+            optionRationales,
+            syllabus: cfg.required === false ? '加深加廣選修' : '必修',
+            type: cfg.type
+        });
+    }
+
+    function addStyled(out, cfg, stems) {
+        stems.forEach((stem, index) => appendQuestion(out, { ...cfg, question: stem, variant: String(index + 1) }));
+    }
+
+    function buildAcidStrength(subtype) {
+        const out = [];
+        const acid = DATA().acidStrength || [];
+        const base = DATA().baseStrength || [];
+        if (subtype !== 'strength') return out;
+        const classPools = [
+            { group: acid, label: '酸', weak: 'weak', distract: acid.filter(x => x.strength === 'weak') },
+            { group: base, label: '鹼', weak: 'weak', distract: base.filter(x => x.strength === 'weak') }
+        ];
+        classPools.forEach(({ group, label, distract }) => group.filter(x => x.strength === 'strong').forEach((item, index) => {
+            const weakChoice = distract[index % distract.length];
+            const options = [item, ...distract.filter(x => x.id !== weakChoice.id).slice(0, 3)];
+            const names = options.map(x => x.formula);
+            addStyled(out, {
+                template: `equal-concentration-${label}-strength`, factId: item.id, answer: item.formula,
+                distractors: names, type: `強弱酸鹼｜等濃度${label}溶液比較`, displayMode: 'formula',
+                basis: `各溶液的分析濃度相同，且溫度相同；強${label}在水中解離程度較高。`,
+                steps: `先排除只部分反應的弱${label}，再依題目所問的主要離子濃度或酸鹼程度比較。${item.formula}屬強${label}，在本題假設下反應近乎完全。`,
+                conclusion: label === '酸' ? `${item.formula}的 [H₃O⁺] 較高，因此同濃度下 pH 較低。` : `${item.formula}提供的 [OH⁻] 較高，因此同濃度下 pH 較高。`,
+                misconception: label === '酸' ? '比較 pH 時方向相反： [H₃O⁺] 越大，pH 越小；多元酸的可解離氫數不能直接當作解離程度。' : '強弱描述解離程度；溶液濃度相同才可直接比較生成的 OH⁻。'
+            }, label === '酸' ? [
+                `四種酸溶液的分析濃度相同，哪一杯的 pH 最低？`,
+                `若各酸均配成相同濃度，哪一種溶液能建立最高的 [H₃O⁺]？`,
+                `在相同溫度與分析濃度下，哪種酸的解離最接近完全？`
+            ] : [
+                `四種鹼溶液的分析濃度相同，哪一杯的 pH 最高？`,
+                `若各鹼均配成相同濃度，哪一種溶液能建立最高的 [OH⁻]？`,
+                `在相同溫度與分析濃度下，哪種鹼與水反應最完全？`
+            ]);
+        }));
+        const weakSpecies = [
+            ...acid.filter(x => x.strength === 'weak' && x.Ka).map(x => ({ ...x, constant:x.Ka, kind:'acid' })),
+            ...base.filter(x => x.strength === 'weak' && x.Kb).map(x => ({ ...x, constant:x.Kb, kind:'base' }))
+        ];
+        weakSpecies.forEach(item => [0.10, 0.050].forEach((concentration, index) => {
+            const k = item.constant;
+            const ion = (-k + Math.sqrt(k * k + 4 * k * concentration)) / 2;
+            const pH = item.kind === 'acid' ? -Math.log10(ion) : 14 + Math.log10(ion);
+            const answer = Number(pH.toFixed(2)).toString();
+            const [kMantissa, kExponent] = Number(k).toExponential(2).split('e');
+            const hText = `${kMantissa}×10${superscript(Number(kExponent))}`;
+            const cText = concentration.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+            const parameterId = `${item.id}-c${index}`;
+            const kindLabel = item.kind === 'acid' ? '酸' : '鹼';
+            addStyled(out, {
+                template: `weak-${item.kind}-equilibrium-ph`, factId:parameterId, answer,
+                distractors: [
+                    { value:(14-pH).toFixed(2), reason:'混淆 pH 和 pOH，取了正解的互補值。' },
+                    { value:(item.kind === 'acid' ? -Math.log10(concentration) : 14 + Math.log10(concentration)).toFixed(2), reason:'以完全解離計算，直接把分析濃度當作離子濃度。' },
+                    { value:(item.kind === 'acid' ? -Math.log10(k) : 14 + Math.log10(k)).toFixed(2), reason:'將平衡常數當作平衡離子濃度。' }
+                ].map(option => ({ ...option, value: String(Number(option.value)) })),
+                type:`強弱酸鹼｜弱${kindLabel}平衡計算`, displayMode:'number',
+                basis:`${item.formula} 為弱${kindLabel}，在水中部分反應；25 °C 且濃度為 ${cText} M。`,
+                steps: item.kind === 'acid'
+                    ? `設平衡時 [H₃O⁺]=x。Kₐ=x²/(${cText}−x)=${hText}；解 x²+Kₐx−Kₐ(${cText})=0，得 x=${ion.toPrecision(3)} M，pH=−log x=${answer}。`
+                    : `設平衡時 [OH⁻]=x。Kᵦ=x²/(${cText}−x)=${hText}；解 x²+Kᵦx−Kᵦ(${cText})=0，得 x=${ion.toPrecision(3)} M，pOH=−log x；pH=14−pOH=${answer}。`,
+                conclusion:`該溶液的 pH 約為 ${answer}。`,
+                misconception:'弱酸／弱鹼不能把分析濃度直接當成 [H₃O⁺]／[OH⁻]；先用平衡常數求反應量，再取對數。'
+            }, [
+                `${item.formula} 溶液濃度為 ${cText} M，${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}，求 25 °C 下 pH。`,
+                `25 °C 時，${item.formula} 溶液的分析濃度為 ${cText} M，${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}。pH 約多少？`,
+                `估算 25 °C 下 ${cText} M 的 ${item.formula} 水溶液 pH（${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}）。`
+            ]);
+        }));
+        // 少量反向分類題保留基本辨識；同一物種仍以共用資料與模板生成。
+        [...acid, ...base].forEach(item => {
+            const label = item.kind === 'acid' || acid.some(x => x.id === item.id) ? '酸' : '鹼';
+            const answer = `${item.strength === 'strong' ? '強' : '弱'}${label}`;
+            appendQuestion(out, {
+                template: 'strength-classification-reverse', factId: item.id, answer,
+                question: `${item.formula} 的水溶液在相同分析濃度下呈現近乎完全解離／反應。此分類最適合哪一項？`,
+                distractors: ['強酸', '弱酸', '強鹼', '弱鹼'], type: '強弱酸鹼｜條件反推分類',
+                basis: `${item.formula}為${answer}；本題用解離程度定義強弱。`,
+                steps: `先依物種接受或提供質子的性質判斷屬${label}，再把近乎完全解離／反應對應到「強」。`,
+                conclusion: `分類為${answer}。`, misconception: '「強」指反應／解離程度，不等於濃度大；酸鹼類別與強弱是兩個判斷步驟。'
+            });
+        });
+        return out;
+    }
+
+    function buildConjugates() {
+        const out = [];
+        const facts = DATA().conjugates || [];
+        const acids = facts.map(x => x.acid);
+        const bases = facts.map(x => x.base);
+        facts.forEach(item => {
+            const reactants = `${item.acid} 與 H₂O`;
+            addStyled(out, {
+                template: 'reaction-acid-role-conjugate-base', factId: item.id, answer: item.base,
+                distractors: bases, type: '共軛酸鹼｜反應式辨認共軛鹼', displayMode: 'ion',
+                basis: `反應中 ${item.acid} 將質子轉移給水，成為共軛鹼。`,
+                steps: `比較反應物與生成物：${item.acid} 少一個 H⁺，電荷也減少 1；所以對應生成粒子為 ${item.base}。`,
+                conclusion: `${item.acid} 的共軛鹼是 ${item.base}。`, misconception: '共軛粒子只差一個質子；寫出粒子後仍要檢查原子數與總電荷。'
+            }, [
+                `在 ${reactants} 的質子轉移反應中，${item.acid} 失去一個質子後形成哪種粒子？`,
+                `只考慮 ${reactants} 互相傳遞一個 H⁺，指出 ${item.acid} 所對應的共軛鹼。`,
+                `${item.acid} 與水作用時，哪一粒子是它失去 H⁺ 後的共軛對象？`
+            ]);
+            addStyled(out, {
+                template: 'reaction-base-role-conjugate-acid', factId: item.id, answer: item.acid,
+                distractors: acids, type: '共軛酸鹼｜反應式辨認共軛酸', displayMode: 'ion',
+                basis: `${item.base} 接受一個 H⁺ 後形成 ${item.acid}；兩者只差一個質子。`,
+                steps: `在反應式中比較 ${item.acid} 和 ${item.base}：兩者只差一個 H⁺。逐項核對氫原子數及電荷，排除多／少兩個質子或電荷不符的選項。`,
+                conclusion: `${item.base} 的共軛酸是 ${item.acid}。`, misconception: '鹼的共軛酸需加上一個 H⁺，電荷增加 1；不可以只補氫而漏改電荷。'
+            }, [
+                `若 ${item.base} 參與質子轉移，接受一個 H⁺ 後會形成哪種共軛酸？`,
+                `考慮 ${item.base} 與 H₃O⁺ 的質子轉移，哪種粒子是 ${item.base} 接受一個質子後的產物？`,
+                `若 ${item.base} 反向接受 H⁺，生成物的化學式應是哪一項？`
+            ]);
+        });
+        return out;
+    }
+
+    function buildSalts(subtype) {
+        const out = [];
+        const facts = (DATA().salts || []).filter(x => !x.excludedFromUniquePH);
+        const behaviors = ['酸性', '弱鹼性', '鹼性', '中性'];
+        const ions = unique(facts.flatMap(x => [x.cation, x.anion, x.activeIon]).filter(x => x && x !== '無'));
+        facts.forEach(item => {
+            if (subtype === 'salt') {
+                const active = item.activeIon !== '無';
+                const answerProduct = item.product === 'H₃O⁺' ? 'H₃O⁺' : item.product === 'OH⁻' ? 'OH⁻' : active ? '酸鹼影響近似抵銷' : '無顯著增加';
+                const distractProduct = ['H₃O⁺', 'OH⁻', 'Na⁺', 'Cl⁻', '無顯著增加', '酸鹼影響近似抵銷'];
+                appendQuestion(out, {
+                    template: 'salt-source-to-ph', factId: item.id, answer: item.behavior,
+                    question: `某鹽由 ${item.cation} 與 ${item.anion} 組成。依其離子來源判斷，稀水溶液的主要酸鹼性為何？`,
+                    distractors: behaviors, type: '離子水解｜來源推論酸鹼性', displayMode: 'text',
+                    basis: `先分別判斷陽、陰離子是否為強酸／強鹼的共軛粒子，再判斷哪些離子與水反應。`,
+                    steps: `${item.rule} ${active ? `本例主要水解粒子為 ${item.activeIon}，其反應使溶液偏向${item.behavior}。` : '兩離子均不顯著水解，水的自解離仍是主要酸鹼來源。'}`,
+                    conclusion: `溶液主要呈${item.behavior}。`,
+                    misconception: '鹽的酸鹼性取決於離子在水中的反應；不能看到金屬陽離子就一律判中性，也不能只看鹽的名稱。'
+                });
+                appendQuestion(out, {
+                    template: 'salt-hydrolysis-effect', factId: item.id, answer: answerProduct,
+                    question: active ? item.product === '無'
+                        ? `由 ${item.cation}、${item.anion} 組成的鹽溶於水後，兩種離子的水解對酸鹼性的影響如何？`
+                        : `由 ${item.cation}、${item.anion} 組成的鹽溶於水後，水解作用主要使哪種粒子增加？`
+                        : `由 ${item.cation}、${item.anion} 組成的鹽溶於水後，哪一項描述最恰當？`,
+                    distractors: distractProduct, type: '離子水解｜粒子變化推論', displayMode: 'ion',
+                    basis: active ? `${item.activeIon} 是此鹽中主要與水作用的離子。` : `${item.cation}與${item.anion}在高中常見近似下都不顯著水解。`,
+                    steps: active ? item.product === '無'
+                        ? `${item.rule} 比較兩種離子的水解程度後，判斷其影響是否互相抵銷。`
+                        : `${item.rule} 若水解產生 H₃O⁺，酸性增強；若產生 OH⁻，鹼性增強。`
+                        : '兩離子來源分別為強鹼與強酸，水溶液近似中性，沒有單一水解產物顯著增加。',
+                    conclusion: active ? item.product === '無'
+                        ? `兩種離子的水解影響近似抵銷，溶液呈${item.behavior}。`
+                        : `主要增加 ${answerProduct}，故溶液呈${item.behavior}。`
+                        : '不會由鹽離子水解顯著增加 H₃O⁺ 或 OH⁻。',
+                    misconception: '區分水解產物與原本存在的旁觀離子；酸性水解增加 H₃O⁺，鹼性水解增加 OH⁻。'
+                });
+                const correctIon = active ? item.activeIon : '無顯著水解離子';
+                const ionOptions = [...ions, '無顯著水解離子'];
+                addStyled(out, {
+                    template: 'salt-active-ion', factId: item.id, answer: correctIon,
+                    distractors: ionOptions, type: '離子水解｜判別反應粒子', displayMode: 'ion',
+                    basis: active ? `${item.activeIon} 是此鹽中主要與水作用的離子。` : '由強酸與強鹼形成的離子通常不顯著水解。',
+                    steps: `${item.rule} 逐一檢查陽、陰離子的共軛酸鹼強度，再排除旁觀離子。`,
+                    conclusion: active ? `主要反應粒子為 ${correctIon}。` : '沒有單一離子顯著水解。',
+                    misconception: '弱酸的共軛鹼或弱鹼的共軛酸才會明顯水解；另一離子可能只是旁觀離子。'
+                }, [
+                    `由 ${item.cation}、${item.anion} 組成的鹽進入水中，哪個離子主要參與水解？`,
+                    `${item.cation} 與 ${item.anion} 組成的鹽溶於水。哪個離子會顯著水解？`,
+                    `檢查 ${item.cation} 與 ${item.anion}，何者是此溶液中主要的水解粒子？`
+                ]);
+            }
+        });
+        return out;
+    }
+
+    function buildPH(subtype) {
+        const out = [];
+        if (subtype !== 'pH') return out;
+        const powers = [-2, -3, -4, -5];
+        const coefficients = [1, 2, 5];
+        const log10 = c => -Math.log10(c);
+        const sci = c => {
+            const exp = Math.floor(Math.log10(c));
+            const mantissa = Number((c / Math.pow(10, exp)).toPrecision(3));
+            return `${mantissa}×10${superscript(exp)}`;
+        };
+        const fmtPH = value => Number(value.toFixed(2)).toString();
+        const choices = (givenSpecies, given, target, unit) => {
+            const input = Number(given.replace(/×10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)/, (_, exponent) =>
+                'e' + exponent.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, digit => String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(digit))).replace('⁻', '-').replace('⁺', '+')));
+            let errors;
+            if (unit === 'M') {
+                errors = givenSpecies === '[OH⁻]' ? [
+                    [input, '把氫氧根濃度直接當作水合氫離子濃度。'],
+                    [1e-14 * input, '將 K_w 與氫氧根濃度相乘，應以 K_w 除以氫氧根濃度。'],
+                    [1e-7, '把中性水的離子濃度套用到所有溶液。']
+                ] : [
+                    [10 ** (target === '[OH⁻]' ? -input : input - 14), '反算了另一種離子的濃度，混淆 pH 和 pOH。'],
+                    [10 ** (target === '[OH⁻]' ? 14 - input : input), '反求濃度時漏掉指數的負號。'],
+                    [1e-7, '把中性水的離子濃度套用到所有溶液。']
+                ];
+            } else if (givenSpecies === 'pOH') {
+                errors = [[input, '把 pOH 直接當成 pH。'], [7, '套用中性水的 pH。'], [14 + input, '把 pK_w 與 pOH 相加，應取兩者之差。']];
+            } else {
+                const negativeLog = log10(input);
+                errors = [
+                    [givenSpecies === '[OH⁻]' ? negativeLog : 14 - negativeLog, '混淆 pH 與 pOH。'],
+                    [givenSpecies === '[OH⁻]' ? 14 + negativeLog : -negativeLog, '漏掉濃度取對數時的負號。'],
+                    [7, '套用中性水的 pH。']
+                ];
+            }
+            return errors.map(([value, reason]) => ({ value: unit ? `${sci(value)} M` : fmtPH(value), reason }));
+        };
+        const addConversion = (id, givenSpecies, given, target, answer, steps, explainError, stems, unit = 'M') => {
+            const answerText = unit ? `${answer} ${unit}` : answer;
+            const needsKw = givenSpecies === '[OH⁻]' || givenSpecies === 'pOH' || target === '[OH⁻]';
+            addStyled(out, {
+                template: `acidbase-convert-${givenSpecies}-to-${target}`, factId: id,
+                answer: answerText, distractors: choices(givenSpecies, given, target, unit),
+                type: `pH 計算｜${givenSpecies} 轉 ${target}`, displayMode: 'number',
+                basis: `25 °C 時使用 pH＋pOH＝14、K_w＝1.0×10⁻¹⁴；強酸強鹼假設完全解離。`,
+                steps, conclusion: `所求 ${target} 為 ${answerText}。`, misconception: explainError
+            }, stems.map(stem => needsKw && !stem.includes('25 °C') ? `25 °C 下，${stem}` : stem));
+        };
+        powers.forEach((power, pIndex) => coefficients.forEach((coef, cIndex) => {
+            const concentration = coef * Math.pow(10, power);
+            const h = concentration;
+            const oh = 1e-14 / h;
+            const pH = log10(h);
+            const pOH = 14 - pH;
+            const hText = sci(h), ohText = sci(oh);
+            const ident = `calculated-${power}-${coef}`;
+            const phText = String(Number(pH.toFixed(4))), pohText = String(Number(pOH.toFixed(4)));
+            addConversion(ident, '[H₃O⁺]', hText, 'pH', phText,
+                `[H₃O⁺]=${hText} M；pH=−log[H₃O⁺]=−log(${coef}×10^(${power}))=${phText}。`,
+                '先確認科學記號的指數與係數；pH 是負對數，濃度增加時 pH 應降低。',
+                [`已知 [H₃O⁺]=${hText} M，求 pH。`, `一份溶液的氫氧鎓離子濃度為 ${hText} M；其 pH 為多少？`, `若 [H⁺]=${hText} M，這份溶液的 pH 約是多少？`], '');
+            addConversion(ident, 'pH', phText, '[H₃O⁺]', hText,
+                `[H₃O⁺]=10^(−pH)=10^(−${phText})=${hText} M。`,
+                '由 pH 反推濃度要取 10^(−pH)，不能把 pH 數字直接當濃度或指數。',
+                [`某水溶液 pH=${phText}，求 [H₃O⁺]。`, `量得 pH 為 ${phText}，氫氧鎓離子濃度約為多少？`, `若 pH=${phText}，對應的 [H⁺] 是多少 M？`]);
+            addConversion(ident, '[OH⁻]', ohText, '[H₃O⁺]', hText,
+                `[H₃O⁺][OH⁻]=K_w；[H₃O⁺]=(1.0×10⁻¹⁴)/(${ohText})=${hText} M。`,
+                '酸、鹼離子濃度互換應使用 K_w 的乘積關係；不能把兩者濃度直接相減。',
+                [`25 °C 下 [OH⁻]=${ohText} M，求 [H₃O⁺]。`, `已知氫氧根濃度為 ${ohText} M，溶液中的 [H⁺] 約為何？`, `若 [OH⁻]=${ohText} M，水合氫離子濃度是多少？`]);
+            addConversion(ident, '[OH⁻]', ohText, 'pH', phText,
+                `[OH⁻]=${ohText} M；pOH=−log[OH⁻]=${pohText}，故 pH=14−${pohText}=${phText}。`,
+                '先求 pOH 再以 14 相減；把 pOH 當成 pH 會得到互補的錯誤值。',
+                [`25 °C 時 [OH⁻]=${ohText} M，求此溶液的 pH。`, `氫氧根濃度為 ${ohText} M，pH 約為何？`, `若 [OH⁻]=${ohText} M，請反推 pH。`], '');
+            addConversion(ident, 'pH', phText, '[OH⁻]', ohText,
+                `pOH=14−${phText}=${pohText}；[OH⁻]=10^(−${pohText})=${ohText} M。`,
+                '已知 pH 時，先用 pOH=14−pH；直接計算 10^(−pH) 會得到 [H₃O⁺] 而非 [OH⁻]。',
+                [`pH=${phText}，求 [OH⁻]。`, `某水溶液 pH 為 ${phText}，其氫氧根濃度約多少？`, `已知 pH=${phText}，反求 [OH⁻]。`]);
+            addConversion(ident, 'pOH', pohText, 'pH', phText,
+                `pH＋pOH=14；pH=14−${pohText}=${phText}。`,
+                '25 °C 下 pH 與 pOH 相加為 14；要以 14 減去已知值。',
+                [`25 °C 時 pOH=${pohText}，求 pH。`, `溶液的 pOH 為 ${pohText}，其 pH 是多少？`, `已知 pOH=${pohText}，反算氫離子指數。`], '');
+        }));
+
+        // 反應物只列酸、鹼與測量資料；不把平衡式或產物寫進題幹。
+        const mixCases = [
+            { id:'mix-acid-excess-a', ca:0.020, va:25, cb:0.010, vb:20, excess:'acid' },
+            { id:'mix-base-excess-b', ca:0.010, va:20, cb:0.020, vb:25, excess:'base' },
+            { id:'mix-acid-excess-c', ca:0.050, va:10, cb:0.020, vb:20, excess:'acid' },
+            { id:'mix-base-excess-d', ca:0.020, va:20, cb:0.050, vb:10, excess:'base' }
+        ];
+        mixCases.forEach(item => {
+            const acidEq = item.ca * item.va / 1000;
+            const baseEq = item.cb * item.vb / 1000;
+            const residual = Math.abs(acidEq - baseEq) / ((item.va + item.vb) / 1000);
+            const pH = item.excess === 'acid' ? -Math.log10(residual) : 14 + Math.log10(residual);
+            const answer = fmtPH(pH);
+            const acidExcess = item.excess === 'acid';
+            const toPH = c => acidExcess ? -Math.log10(c) : 14 + Math.log10(c);
+            const excessMoles = Math.abs(acidEq - baseEq);
+            const wrong = [
+                [14 - pH, '混淆剩下的是酸或鹼，得到了互補的 pH。'],
+                [toPH(excessMoles / ((acidExcess ? item.va : item.vb) / 1000)), '把剩餘莫耳數除以原液體積，漏算混合後加入的體積。'],
+                [toPH((acidExcess ? acidEq : baseEq) / ((item.va + item.vb) / 1000)), '只算稀釋，漏扣中和反應消耗的莫耳數。']
+            ].map(([value, reason]) => ({ value: fmtPH(value), reason }));
+            addStyled(out, {
+                template: 'strong-acid-base-mix-ph', factId: item.id, answer,
+                distractors: wrong, type: '中和計算｜過量反應物與混合後 pH', displayMode: 'number',
+                basis: '假設 HCl、NaOH 完全解離，體積可加成；先比較 H₃O⁺、OH⁻ 莫耳數，過量者除以混合總體積。',
+                steps: `n(H₃O⁺)=${item.ca}×${item.va}/1000=${acidEq.toPrecision(3)} mol；n(OH⁻)=${item.cb}×${item.vb}/1000=${baseEq.toPrecision(3)} mol。${item.excess === 'acid' ? `酸過量，剩餘濃度=${residual.toPrecision(3)} M，pH=−log(${residual.toPrecision(3)})=${answer}。` : `鹼過量，剩餘濃度=${residual.toPrecision(3)} M，pOH=−log(${residual.toPrecision(3)})，pH=14−pOH=${answer}。`}`,
+                conclusion: `混合液 pH 約為 ${answer}。`,
+                misconception: '不可直接平均兩杯溶液的 pH；先用莫耳數做中和，再除以總體積，並辨認最後剩下的是酸或鹼。'
+            }, [
+                `將 ${item.va} mL、${item.ca} M HCl 與 ${item.vb} mL、${item.cb} M NaOH 混合，反應後 pH 約為何？`,
+                `取 ${item.ca} M 鹽酸 ${item.va} mL，加入 ${item.cb} M 氫氧化鈉 ${item.vb} mL；假設體積可加，求混合液 pH。`,
+                `一份 ${item.va} mL 的 ${item.ca} M 強酸，與 ${item.vb} mL 的 ${item.cb} M 強鹼混合。完全反應後 pH 約多少？`
+            ].map(stem => `25 °C，假設體積可加成。${stem.replace('假設體積可加，', '')}`));
+        });
+        return out;
+    }
+
+    function buildAcidNature() {
+        const out = [];
+        const conditions = DATA().acidNatureConditions || [];
+        const classes = ['酸性', '中性', '鹼性'];
+        const fmtPH = value => Number(value.toFixed(2)).toString();
+        const fmtSci = value => {
+            const exponent = Math.floor(Math.log10(value));
+            const mantissa = Number((value / Math.pow(10, exponent)).toPrecision(3));
+            return `${mantissa}×10${superscript(exponent)}`;
+        };
+        const classifyH = (h, threshold) => Math.abs(h - threshold) / threshold < 1e-10 ? '中性' : h > threshold ? '酸性' : '鹼性';
+        const classifyOH = (oh, threshold) => Math.abs(oh - threshold) / threshold < 1e-10 ? '中性' : oh > threshold ? '鹼性' : '酸性';
+        const classWrong = answer => classes.filter(value => value !== answer).concat(['資料不足']);
+        const questionSet = (cfg, stems) => addStyled(out, cfg, stems);
+
+        conditions.forEach(condition => {
+            const threshold = Math.sqrt(condition.kw);
+            const neutralPH = condition.pKw / 2;
+            const temperature = `${condition.temperature} °C`;
+            const kwContext = `${temperature}，K_w=${condition.kwText}`;
+            const pKwContext = `${temperature}，pK_w=${condition.pKwText}`;
+            const factors = [0.05, 0.5, 1, 2, 4];
+
+            factors.forEach((factor, index) => {
+                const h = threshold * factor;
+                const hText = fmtSci(h);
+                const hClass = classifyH(h, threshold);
+                questionSet({
+                    template:'acidity-h-concentration-threshold', factId:`${condition.id}-h-${index}`,
+                    answer:hClass, distractors:classWrong(hClass), type:'酸鹼性判斷｜[H⁺] 與 √Kw 比較',
+                    basis:`中性時 [H⁺]=[OH⁻]=√K_w=√(${condition.kwText})=${fmtSci(threshold)} M。`,
+                    steps:`比較題給的 [H⁺]=${hText} M 與中性基準 ${fmtSci(threshold)} M。${hClass === '酸性' ? '[H⁺] 較大，故溶液偏酸。' : hClass === '鹼性' ? '[H⁺] 較小，故溶液偏鹼。' : '[H⁺] 正好等於中性基準。'}`,
+                    conclusion:`此溶液為${hClass}。`, misconception:'非 25°C 時不能固定使用 1.0×10⁻⁷ M；應以題目溫度下的 √Kw 為比較基準。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [H⁺]=${hText} M。判斷溶液酸鹼性。`,
+                    `已知 ${kwContext}，量得 [H⁺] 為 ${hText} M；此溶液屬於哪一類？`,
+                    `在 ${temperature} 下，水的 K_w 為 ${condition.kwText}。若 [H⁺]=${hText} M，溶液呈何性？`
+                ]);
+
+                const oh = threshold * factor;
+                const ohText = fmtSci(oh);
+                const ohClass = classifyOH(oh, threshold);
+                questionSet({
+                    template:'acidity-oh-concentration-threshold', factId:`${condition.id}-oh-${index}`,
+                    answer:ohClass, distractors:classWrong(ohClass), type:'酸鹼性判斷｜[OH⁻] 與 √Kw 比較',
+                    basis:`中性時 [OH⁻]=√K_w=√(${condition.kwText})=${fmtSci(threshold)} M。`,
+                    steps:`比較 [OH⁻]=${ohText} M 與中性基準 ${fmtSci(threshold)} M。${ohClass === '酸性' ? '[OH⁻] 較小，故 [H⁺] 相對較大，溶液偏酸。' : ohClass === '鹼性' ? '[OH⁻] 較大，故溶液偏鹼。' : '[OH⁻] 正好等於中性基準。'}`,
+                    conclusion:`此溶液為${ohClass}。`, misconception:'用 [OH⁻] 判斷時方向與 [H⁺] 相反；[OH⁻] 大於 √Kw 才是鹼性。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [OH⁻]=${ohText} M。判斷其酸鹼性。`,
+                    `在 ${temperature} 下，一份溶液的氫氧根濃度為 ${ohText} M。其水溶液呈何性？`,
+                    `某水溶液在 ${temperature} 時的 K_w=${condition.kwText}，且 [OH⁻]=${ohText} M。它是酸性、中性還是鹼性？`
+                ]);
+
+                const hPair = threshold * factor;
+                const ohPair = condition.kw / hPair;
+                const pairClass = classifyH(hPair, threshold);
+                questionSet({
+                    template:'acidity-ion-product-and-classification', factId:`${condition.id}-ion-pair-${index}`,
+                    answer:pairClass, distractors:classWrong(pairClass), type:'酸鹼性判斷｜Kw、[H⁺] 與 [OH⁻] 綜合',
+                    basis:`同一溫度下 [H⁺][OH⁻]=K_w；中性時兩者相等，皆為 √K_w。`,
+                    steps:`檢查乘積：(${fmtSci(hPair)})(${fmtSci(ohPair)})=${condition.kwText}。再比較 [H⁺]=${fmtSci(hPair)} M 與 [OH⁻]=${fmtSci(ohPair)} M；${pairClass === '酸性' ? '[H⁺] 較大' : pairClass === '鹼性' ? '[OH⁻] 較大' : '兩者相等'}。`,
+                    conclusion:`符合 K_w 的條件，溶液為${pairClass}。`, misconception:'先用乘積檢查離子濃度是否與 K_w 相符，再以 [H⁺] 和 [OH⁻] 的大小關係判斷酸鹼性。'
+                }, [
+                    `在 ${kwContext} 下，某溶液 [H⁺]=${fmtSci(hPair)} M、[OH⁻]=${fmtSci(ohPair)} M。依離子乘積與濃度大小判斷其酸鹼性。`,
+                    `一份溶液在 ${temperature} 時測得 [H⁺]=${fmtSci(hPair)} M、[OH⁻]=${fmtSci(ohPair)} M。若該溫度 K_w=${condition.kwText}，此結果代表何種酸鹼性？`,
+                    `某水溶液在 ${temperature} 的兩種離子濃度分別為 [H⁺]=${fmtSci(hPair)} M 與 [OH⁻]=${fmtSci(ohPair)} M。已知 K_w=${condition.kwText}，判斷溶液性質。`
+                ]);
+            });
+
+            [-0.8, -0.3, 0, 0.35, 0.9].forEach((offset, index) => {
+                const pH = Number((neutralPH + offset).toFixed(2));
+                const pHClass = pH < neutralPH - 0.001 ? '酸性' : pH > neutralPH + 0.001 ? '鹼性' : '中性';
+                questionSet({
+                    template:'acidity-ph-vs-pkw-half', factId:`${condition.id}-ph-${index}`,
+                    answer:pHClass, distractors:classWrong(pHClass), type:'酸鹼性判斷｜pH 與 pKw/2 比較',
+                    basis:`pH+pOH=pK_w；中性時 pH=pOH，因此中性 pH=pK_w/2=${fmtPH(neutralPH)}。`,
+                    steps:`將 pH=${fmtPH(pH)} 與中性基準 pK_w/2=${fmtPH(neutralPH)} 比較。${pHClass === '酸性' ? 'pH 較小，溶液偏酸。' : pHClass === '鹼性' ? 'pH 較大，溶液偏鹼。' : 'pH 等於中性基準。'}`,
+                    conclusion:`此溶液為${pHClass}。`, misconception:'只有在 25°C 且 pKw=14 時中性 pH 才是 7；其他溫度要比較 pH 與 pKw/2。'
+                }, [
+                    `在 ${pKwContext} 下，某溶液 pH=${fmtPH(pH)}。判斷其酸鹼性。`,
+                    `某水溶液在 ${temperature} 的 pH 為 ${fmtPH(pH)}，且該溫度 pK_w=${condition.pKwText}。它呈何性？`,
+                    `已知 ${temperature} 下 pK_w=${condition.pKwText}。一份溶液的 pH=${fmtPH(pH)}，請判斷酸鹼性。`
+                ]);
+
+                questionSet({
+                    template:'acidity-ph-from-kw-derived-neutral-point', factId:`${condition.id}-kw-ph-${index}`,
+                    answer:pHClass, distractors:classWrong(pHClass), type:'酸鹼性判斷｜由 Kw 推得 pKw 與中性 pH',
+                    basis:`先由 pK_w=−log K_w 求出 pK_w，再用中性時 pH=pK_w/2。`,
+                    steps:`pK_w=−log(${condition.kwText})≈${condition.pKwText}；中性 pH≈${condition.pKwText}/2=${fmtPH(neutralPH)}。題給 pH=${fmtPH(pH)}，${pHClass === '酸性' ? '低於' : pHClass === '鹼性' ? '高於' : '等於'}中性 pH，因此判為${pHClass}。`,
+                    conclusion:`該溶液呈${pHClass}。`, misconception:'不要只背中性 pH=7；先由當下溫度的 Kw 求 pKw，再除以 2 得中性點。'
+                }, [
+                    `${temperature} 時 K_w=${condition.kwText}。某溶液 pH=${fmtPH(pH)}，不預設 pK_w，判斷其酸鹼性。`,
+                    `已知 ${temperature} 時 K_w=${condition.kwText}，一份溶液的 pH 為 ${fmtPH(pH)}。先由 K_w 找出中性 pH，再判斷溶液性質。`,
+                    `某溫度下水的離子積為 ${condition.kwText}，溶液 pH=${fmtPH(pH)}。此溶液為酸性、中性或鹼性？`
+                ]);
+
+                const pOH = Number((condition.pKw - pH).toFixed(2));
+                const pOHClass = pOH > neutralPH + 0.001 ? '酸性' : pOH < neutralPH - 0.001 ? '鹼性' : '中性';
+                questionSet({
+                    template:'acidity-poh-vs-pkw-half', factId:`${condition.id}-poh-${index}`,
+                    answer:pOHClass, distractors:classWrong(pOHClass), type:'酸鹼性判斷｜pOH 與 pKw/2 比較',
+                    basis:`中性時 pOH=pK_w/2=${fmtPH(neutralPH)}；pOH 高於此值代表 [OH⁻] 較低。`,
+                    steps:`比較 pOH=${fmtPH(pOH)} 與 pK_w/2=${fmtPH(neutralPH)}。${pOHClass === '酸性' ? 'pOH 較大，[OH⁻] 較小，因此偏酸。' : pOHClass === '鹼性' ? 'pOH 較小，[OH⁻] 較大，因此偏鹼。' : 'pOH 等於中性基準。'}`,
+                    conclusion:`此溶液為${pOHClass}。`, misconception:'pOH 的判斷方向與 pH 相反：pOH 大於 pKw/2 為酸性，小於 pKw/2 為鹼性。'
+                }, [
+                    `在 ${pKwContext} 下，某溶液 pOH=${fmtPH(pOH)}。判斷溶液酸鹼性。`,
+                    `一份溶液在 ${temperature} 時 pOH 為 ${fmtPH(pOH)}，且 pK_w=${condition.pKwText}。此溶液呈何性？`,
+                    `已知 ${temperature} 下 pK_w=${condition.pKwText}；若 pOH=${fmtPH(pOH)}，溶液屬於哪一類？`
+                ]);
+
+                const comboAnswer = `pOH ${fmtPH(pOH)}，${pOHClass}`;
+                const comboWrong = unique([
+                    `pOH ${fmtPH(pH)}，${pOHClass}`,
+                    `pOH ${fmtPH(pOH)}，${pOHClass === '酸性' ? '鹼性' : pOHClass === '鹼性' ? '酸性' : '酸性'}`,
+                    `pOH ${fmtPH(pOH + 1)}，${pOHClass}`,
+                    `pOH ${fmtPH(pOH - 1)}，${pOHClass === '中性' ? '鹼性' : '中性'}`
+                ]);
+                questionSet({
+                    template:'acidity-pH-pOH-pKw-conversion', factId:`${condition.id}-convert-${index}`,
+                    answer:comboAnswer, distractors:comboWrong, type:'酸鹼性判斷｜pH、pOH 與 pKw 互換',
+                    basis:`任一溫度下 pH+pOH=pK_w=${condition.pKwText}；中性點為 pK_w/2=${fmtPH(neutralPH)}。`,
+                    steps:`pOH=pK_w−pH=${condition.pKwText}−${fmtPH(pH)}=${fmtPH(pOH)}。再比較 pOH 與 pK_w/2=${fmtPH(neutralPH)}，判定為${pOHClass}。`,
+                    conclusion:`pOH 約為 ${fmtPH(pOH)}，溶液呈${pOHClass}。`, misconception:'非 25°C 時 pH+pOH=pKw，不一定等於 14；先求 pOH，再與 pKw/2 比較。'
+                }, [
+                    `${temperature} 時某溶液 pH=${fmtPH(pH)}，已知 pK_w=${condition.pKwText}。先求 pOH，再判斷酸鹼性。`,
+                    `在 pK_w=${condition.pKwText} 的溫度下，若 pH=${fmtPH(pH)}，下列哪組 pOH 與酸鹼性判斷正確？`,
+                    `某溫度的 pK_w=${condition.pKwText}。一份溶液 pH=${fmtPH(pH)}，求其 pOH 及溶液性質。`
+                ]);
+            });
+        });
+        return out;
+    }
+
+    function buildIndicators() {
+        const out = [];
+        if (!((DATA().indicators || []).length)) return out;
+        const indicators = DATA().indicators;
+        const methyl = indicators.find(x => x.id === 'indicator-methyl-orange');
+        const btb = indicators.find(x => x.id === 'indicator-btb');
+        const phenol = indicators.find(x => x.id === 'indicator-phenolphthalein');
+        if (!methyl || !btb || !phenol) return out;
+        const bounds = ['3.1', '4.4', '6.0', '7.6', '8.2', '10.0'];
+        const ranges = [2.5, 3.7, 5.2, 6.8, 7.9, 9.0, 11];
+        const interval = (first, last) =>
+            [bounds[first - 1], 'pH', bounds[last]].filter(Boolean).join('＜');
+        const color = (item, pH) => {
+            if (item === methyl) return pH < 3.1 ? '紅色' : pH < 4.4 ? '橙色' : '黃色';
+            if (item === btb) return pH < 6 ? '黃色' : pH < 7.6 ? '綠色' : '藍色';
+            if (item === phenol) return pH < 8.2 ? '無色' : pH < 10 ? '淡粉紅色' : '粉紅色';
+            return '未知';
+        };
+        const triplets = [[methyl, btb], [methyl, phenol], [btb, phenol]];
+        triplets.forEach((pair, pairIndex) => {
+            const signatures = new Map();
+            ranges.forEach((midpoint, index) => {
+                const signature = pair.map(indicator => `${indicator.name}：${color(indicator, midpoint)}`).join('；');
+                if (!signatures.has(signature)) signatures.set(signature, []);
+                signatures.get(signature).push(index);
+            });
+            [...signatures.entries()].forEach(([signature, matches], sigIndex) => {
+                const first = matches[0], last = matches[matches.length - 1];
+                if (last - first + 1 !== matches.length) return;
+                const answer = interval(first, last);
+                const distractors = [
+                    ...[first - 1, last + 1].filter(index => index >= 0 && index < ranges.length).map(index => ({
+                        value:interval(index, index),
+                        reason:`在這個區間，${pair.filter(indicator => color(indicator, ranges[index]) !== color(indicator, ranges[first]))
+                            .map(indicator => `${indicator.name} 會呈${color(indicator, ranges[index])}`).join('、')}，與觀察不符。`
+                    })),
+                    { value:interval(Math.max(0, first - 1), Math.min(ranges.length - 1, last + 1)),
+                        reason:'此範圍太寬，有一部分的 pH 無法同時符合兩個顏色條件。' }
+                ];
+                const stems = [
+                    `取同一溶液的兩份試樣，分別加指示劑，結果為 ${signature}。哪個選項是完整的 pH 範圍？`,
+                    `指示劑觀察：${signature}。求同時符合兩項觀察的完整 pH 範圍。`,
+                    `${pair[0].range}；${pair[1].range}。若觀察到 ${signature}，求 pH 的完整範圍。`
+                ];
+                addStyled(out, {
+                    template:'combined-indicator-interval', factId:`ind-combo-${pairIndex}-${sigIndex}`,
+                    answer, distractors, type:'指示劑｜多觀察條件交集', displayMode:'text',
+                    basis:`每一種指示劑只提供 pH 的區間限制；要取兩項觀察所允許範圍的交集。`,
+                    steps:`依變色範圍逐一對照 ${signature}，兩項限制的交集為 ${answer}。以區間近似判讀，略去變色端點。`,
+                    conclusion:`符合觀察的範圍為 ${answer}。`,
+                    misconception:'單一指示劑的顏色通常只限制 pH 區間；不要把顏色直接等同於酸性、中性或鹼性的唯一值。'
+                }, stems);
+            });
+        });
+        return out;
+    }
+
+    function buildConcentration(subtype) {
+        const out = [];
+        const emit = (template, id, stems, answer, wrong, basis, steps, mistake) => {
+            const values = unique(wrong.map(String).filter(v => key(v) !== key(String(answer))));
+            if (values.length < 2) return;
+            const reasons = Object.fromEntries(values.map(v => [key(v), `選擇 ${v} 與題目條件不符。${mistake} ${steps}`]));
+            addStyled(out, {template, factId:id, answer:String(answer), distractors:values, type:`濃度與溶解度｜${template}`, basis, steps, conclusion:`答案為 ${answer}。`, misconception:mistake, optionRationales:reasons}, stems);
+        };
+        const calc = (template, id, stems, answer, unit, steps, mistake, ...errors) => {
+            const display = `${num(answer)}${unit}`;
+            addStyled(out, {
+                template, factId:id, answer:display, distractors:calculationErrors(unit.trim(), ...errors).map(option => ({
+                    ...option, value:unit.startsWith(' ') ? option.value : option.value.replace(' ', '')
+                })),
+                type:`濃度與溶解度｜${template}`, basis:'依題目要求辨認溶質、溶劑與溶液。',
+                steps, conclusion:`答案為 ${display}。`, misconception:mistake
+            }, stems);
+        };
+        if (subtype==='expressions') {
+            const formulas=[
+                {id:'molarity',name:'莫耳濃度', formula:'溶質莫耳數／溶液體積（L）',unit:'mol/L 溶液'},
+                {id:'molality',name:'重量莫耳濃度',formula:'溶質莫耳數／溶劑質量（kg）',unit:'mol/kg 溶劑'},
+                {id:'masspercent',name:'重量百分濃度',formula:'溶質質量／溶液質量×100%',unit:'g 溶質／100 g 溶液'},
+                {id:'volumepercent',name:'體積百分濃度',formula:'溶質體積／溶液體積×100%',unit:'mL 溶質／100 mL 溶液'},
+                {id:'massvolume',name:'質量體積百分濃度',formula:'溶質質量（g）／溶液體積（mL）×100%',unit:'g 溶質／100 mL 溶液'},
+                {id:'massconcentration',name:'質量濃度',formula:'溶質質量（g）／溶液體積（L）',unit:'g 溶質／L 溶液'},
+                {id:'fraction',name:'溶質莫耳分率',formula:'溶質莫耳數／總莫耳數',unit:'無單位'},
+                {id:'ppm',name:'質量 ppm',formula:'溶質質量／溶液質量×10⁶',unit:'mg 溶質／kg 溶液'}
+            ];
+            formulas.forEach(f=>{
+                emit('濃度名稱→公式',f.id,[`${f.name}的公式為何？`,`哪個式子表示${f.name}？`],f.formula,formulas.map(x=>x.formula),'先辨識分子及分母。',`${f.name}＝${f.formula}。`,'溶液與溶劑不同，莫耳數與質量也不可混用。');
+                emit('公式→濃度名稱',f.id,[`${f.formula}，代表何種濃度？`,`哪種濃度可用「${f.formula}」表示？`],f.name,formulas.map(x=>x.name),'由公式的分子、分母與倍率辨認。',`${f.formula} 定義的是${f.name}。`,'注意是每公斤溶劑還是每公升溶液。');
+                emit('濃度名稱→單位',f.id,[`${f.name}可使用哪個單位？`,`下列何者是${f.name}的表示方式？`],f.unit,formulas.map(x=>x.unit),'單位反映公式的分子與分母。',`${f.name}可表示為 ${f.unit}。`,'莫耳分率無單位，溶液體積與溶劑質量不能互換。');
+                emit('單位→濃度名稱',f.id,[`「${f.unit}」可表示哪一種濃度？`,`下列何種濃度使用 ${f.unit}？`],f.name,formulas.map(x=>x.name),'逐一比對單位與定義。',`${f.unit} 對應${f.name}。`,'先核對單位中的溶質、溶劑及溶液。');
+            });
+            const solutes=[{id:'NaCl',name:'食鹽',formula:'NaCl',mw:58.5},{id:'NaOH',name:'氫氧化鈉',formula:'NaOH',mw:40},{id:'glucose',name:'葡萄糖',formula:'C₆H₁₂O₆',mw:180}];
+            solutes.forEach(s=>[0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((v,j)=>{
+                const m=n*s.mw, c=n/v, id=`${s.id}-${i}-${j}`, label=(i+j)%2?s.name:s.formula;
+                calc('質量與體積→莫耳濃度',id,[`${num(m)} g ${label}配成 ${num(v*1000)} mL 溶液，濃度為何？（莫耳質量 ${s.mw} g/mol）`,`溶解 ${num(m)} g ${label}並定容至 ${num(v*1000)} mL，求莫耳濃度。（莫耳質量 ${s.mw} g/mol）`],c,' M',`n=${num(m)}÷${s.mw}=${num(n)} mol；C=${num(n)}÷${v}=${num(c)} M。`,'mL 須換成 L，且應用溶液的最終體積。', [n/(v*1000),'把 mL 當作 L。'],[m/v,'用質量直接除體積，漏換算莫耳數。'],[v/n,'顛倒莫耳數與體積。']);
+                calc('莫耳濃度→溶質質量',id,[`配製 ${num(v*1000)} mL、${num(c)} M ${label}溶液需幾克？（莫耳質量 ${s.mw} g/mol）`,`要配製 ${num(v*1000)} mL 的 ${num(c)} M ${label}，應稱取多少克？（莫耳質量 ${s.mw} g/mol）`],m,' g',`n=CV=${num(c)}×${v}=${num(n)} mol；質量=${num(n)}×${s.mw}=${num(m)} g。`,'先由濃度乘以公升數求莫耳數，再乘莫耳質量。', [m*1000,'直接代入 mL。'],[n,'算到莫耳數便當成質量。'],[n/s.mw,'把莫耳數除以莫耳質量。']);
+                calc('質量與莫耳濃度→體積',id,[`${num(m)} g ${label}配成 ${num(c)} M，需定容至幾 mL？（莫耳質量 ${s.mw} g/mol）`,`將 ${num(m)} g ${label}配為 ${num(c)} M，溶液體積是多少 mL？（莫耳質量 ${s.mw} g/mol）`],v*1000,' mL',`n=${num(m)}÷${s.mw}=${num(n)} mol；V=n/C=${num(n)}÷${num(c)}=${v} L=${v*1000} mL。`,'先以質量除莫耳質量，再以莫耳數除濃度。', [v,'漏把 L 換成 mL。'],[m/c*1000,'把溶質質量當莫耳數。'],[c/n*1000,'顛倒莫耳數與濃度。']);
+            })));
+            [0.07,0.12,0.18,0.27].forEach((w,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
+                const sol=kg*1000*w/(1-w), total=kg*1000+sol, id=`${i}-${j}`;
+                calc('質量→重量百分率',id,[`${num(sol)} g 溶質溶於 ${num(kg*1000)} g 水，重量百分濃度為何？`,`將 ${num(sol)} g 溶質加入 ${num(kg*1000)} g 水，求重量百分濃度。`],w*100,'%',`溶液質量=${num(sol)}+${kg*1000}=${num(total)} g；百分濃度=${num(sol)}÷${num(total)}×100%=${num(w*100)}%。`,'重量百分濃度的分母是溶液總質量。', [sol/(kg*1000)*100,'用溶劑質量作分母。'],[w,'漏乘 100。'],[(1-w)*100,'算成溶劑的質量百分率。']);
+                calc('重量百分率→溶質質量',id,[`${num(total)} g、${num(w*100)}%（w/w）溶液含幾克溶質？`,`重量濃度 ${num(w*100)}% 的溶液 ${num(total)} g，溶質多少克？`],sol,' g',`溶質質量=${num(total)}×${num(w)}=${num(sol)} g。`,'百分比須以溶液總質量為基準。', [total*(1-w),'算的是溶劑質量。'],[total*w*100,'直接乘百分率的數字，漏除 100。'],[total/(w*100),'誤將百分濃度的數字放在分母。']);
+            }));
+            [12,17.5,28,35].forEach((percent,i)=>[125,240,375,650].forEach((vol,j)=>{
+                const amount=percent*vol/100,id=`${i}-${j}`;
+                for(const [kind,u] of [['體積百分濃度','mL'],['質量體積百分濃度','g']]){
+                    calc(`${kind}→溶質量`,id,[`${vol} mL 的 ${percent}% ${kind}溶液，含溶質多少 ${u}？`,`要配製 ${vol} mL、${percent}% 的${kind}溶液，需溶質多少 ${u}？`],amount,` ${u}`,`${percent}% 表示每 100 mL 溶液含 ${percent} ${u} 溶質；${vol} mL 含 ${num(amount)} ${u}。`,'百分濃度的分母是最終溶液體積。', [percent,'沿用每 100 mL 的溶質量，漏依總體積調整。'],[percent*100/vol,'把實際體積與 100 mL 的比例顛倒。'],[percent*vol,'將百分濃度當小數，漏除 100。']);
+                    calc(`溶質量→${kind}`,id,[`${amount} ${u} 溶質配成 ${vol} mL 溶液，其${kind}為何？`,`將 ${amount} ${u} 溶質配製成 ${vol} mL，求${kind}。`],percent,'%',`${amount}÷${vol}×100%=${percent}%。`,'先確認質量或體積的表示基準。', [amount/vol,'求出比值後漏乘 100。'],[100*vol/amount,'把溶質量與溶液體積顛倒。'],[amount,'把溶質量直接當每 100 mL 的量。']);
+                }
+            }));
+            [0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
+                const molality=n/kg, x=n/(n+kg*1000/18),id=`${i}-${j}`;
+                calc('莫耳數與溶劑→重量莫耳濃度',id,[`${num(n)} mol 溶質溶於 ${kg*1000} g 水，重量莫耳濃度為何？`,`將 ${num(n)} mol 溶質加入 ${kg*1000} g 水，求重量莫耳濃度。`],molality,' mol/kg',`${kg*1000} g=${kg} kg；m=${num(n)}÷${kg}=${num(molality)} mol/kg。`,'重量莫耳濃度用溶劑質量且單位為 kg。', [n/(kg*1000),'將 g 當作 kg。'],[n*kg,'把除以溶劑質量寫成乘法。'],[kg/n,'顛倒莫耳數與溶劑公斤數。']);
+                calc('重量莫耳濃度→溶質莫耳數',id,[`${kg*1000} g 水配成 ${num(molality)} mol/kg 溶液，含溶質幾 mol？`,`溶劑為 ${kg*1000} g 水、重量莫耳濃度 ${num(molality)} mol/kg，求溶質莫耳數。`],n,' mol',`n=m×溶劑 kg=${num(molality)}×${kg}=${num(n)} mol。`,'重量莫耳濃度需乘溶劑的公斤數。', [molality*kg*1000,'將 g 當成 kg 直接相乘。'],[molality/kg,'將濃度除以溶劑公斤數。'],[molality,'沿用每 1 kg 溶劑的莫耳數。']);
+                calc('重量莫耳濃度→莫耳分率',id,[`水溶液重量莫耳濃度為 ${num(molality)} mol/kg，溶質莫耳分率約為何？（水 18 g/mol）`,`某水溶液為 ${num(molality)} mol/kg，求溶質莫耳分率。（水 18 g/mol）`],x,'',`取 ${kg} kg 水：溶質 ${num(n)} mol，水 ${num(kg*1000/18)} mol；分率=${num(n)}÷(${num(n)}+${num(kg*1000/18)})≈${num(x)}。`,'莫耳分率分母須包含全部成分的莫耳數。', [1-x,'算出溶劑的莫耳分率。'],[n/(kg*1000/18),'分母只算溶劑莫耳數。'],[n/(n+kg),'把溶劑公斤數當成莫耳數。']);
+                calc('莫耳分率→重量莫耳濃度',id,[`水溶液溶質莫耳分率約 ${num(x)}，重量莫耳濃度約為何？（水 18 g/mol）`,`溶質莫耳分率約 ${num(x)} 的水溶液，重量莫耳濃度約為多少？（水 18 g/mol）`],molality,' mol/kg',`設溶液總量為 1 mol，水為 1−${num(x)} mol；m≈${num(x)}÷[(1−${num(x)})×0.018]=${num(molality)} mol/kg。`,'由分率先還原溶質與溶劑莫耳比，再換算溶劑公斤數。', [x/.018,'以 1 mol 水作分母，漏扣溶質占的比例。'],[molality/1000,'算成 mol/g。'],[(1-x)/(x*.018),'對調溶質和溶劑的分率。']);
+            }));
+            [0.08,0.17,0.28,0.43].forEach((x,i)=>[0.75,1.4,2.5,3.2].forEach((total,j)=>{
+                const n=x*total,id=`${i}-${j}`;
+                calc('莫耳數→莫耳分率',id,[`溶液含 ${num(n)} mol 溶質及 ${num(total-n)} mol 溶劑，溶質莫耳分率為何？`,`溶質 ${num(n)} mol、溶劑 ${num(total-n)} mol，求溶質莫耳分率。`],x,'',`x=${num(n)}÷(${num(n)}+${num(total-n)})=${num(x)}。`,'分母是溶質與溶劑的莫耳數總和。', [1-x,'求出溶劑的莫耳分率。'],[n/(total-n),'分母只算溶劑。'],[total/n,'顛倒溶質莫耳數和總莫耳數。']);
+                calc('莫耳分率→溶質莫耳數',id,[`溶質莫耳分率 ${x}，總莫耳數 ${total} mol；溶質有幾 mol？`,`混合液共 ${total} mol，溶質分率 ${x}，溶質為多少 mol？`],n,' mol',`溶質莫耳數=${x}×${total}=${num(n)} mol。`,'莫耳分率要乘總莫耳數。', [(1-x)*total,'算的是溶劑莫耳數。'],[x,'把莫耳分率直接當莫耳數。'],[total/x,'把乘上莫耳分率寫成除法。']);
+            }));
+            [3,12,35,120].forEach((ppm,i)=>[0.75,2.4,3.5].forEach((kg,j)=>{
+                const mg=ppm*kg,id=`${i}-${j}`;
+                calc('質量→ppm',id,[`${kg} kg 溶液含 ${num(mg)} mg 溶質，為幾 ppm（質量比）？`,`溶液 ${kg} kg 含溶質 ${num(mg)} mg，求質量 ppm。`],ppm,' ppm',`${num(mg)} mg÷${kg} kg=${ppm} mg/kg=${ppm} ppm。`,'質量 ppm 以溶液的總質量為分母。', [mg/(kg*1000),'以 g 為分母後把 mg/g 當作 ppm。'],[kg/mg,'顛倒溶質與溶液。'],[mg,'把溶質毫克數直接當成 ppm。']);
+                calc('ppm→溶質質量',id,[`${kg} kg 溶液為 ${ppm} ppm（質量比），含溶質多少 mg？`,`質量比為 ${ppm} ppm 的 ${kg} kg 溶液中，溶質為幾 mg？`],mg,' mg',`${ppm} mg/kg×${kg} kg=${num(mg)} mg。`,'1 ppm（質量比）等於 1 mg/kg 溶液。', [ppm/kg,'將 ppm 除以溶液質量。'],[ppm*kg*1000,'把溶液克數當作公斤數。'],[ppm,'只報每公斤的毫克數。']);
+            }));
+            [0.12,0.18,0.25,0.32].forEach((w,i)=>[1.03,1.12,1.18,1.25].forEach((density,j)=>{
+                const mw=40, molarity=w*density*1000/mw, molality=w*1000/(mw*(1-w)),id=`${i}-${j}`;
+                calc('重量百分率→莫耳濃度',id,[`某溶液 ${w*100}%（w/w），密度 ${density} g/mL。求莫耳濃度。（莫耳質量 40 g/mol）`,`某水溶液 ${w*100}%（w/w）、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 L 溶液，質量=${density}×1000 g；溶質=${num(w*density*1000)} g；C=${num(w*density*1000)}÷40=${num(molarity)} M。`,'百分率以溶液質量為分母；轉莫耳濃度需使用密度。', [w*1000/40,'代入 1 g/mL，漏用題給密度。'],[w*density*1000,'算出 g/L 後漏除莫耳質量。'],[w*density/40,'算的是 mol/mL。']);
+                calc('莫耳濃度→重量百分率',id,[`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量百分濃度為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`1 L 溶液含 ${num(molarity)} mol，即 ${num(molarity*40)} g；溶液質量 ${density*1000} g，百分率=${num(w*100)}%。`,'質量百分率必須用溶液總質量作分母。', [molarity*40/10,'以 1 g/mL 代替題給密度。'],[100*molarity*40/(density*1000-molarity*40),'以溶劑質量作分母。'],[w,'漏乘 100。']);
+                calc('莫耳濃度→重量莫耳濃度',id,[`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量莫耳濃度約為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 1 L 溶液，溶質 ${num(molarity)} mol，其質量 ${num(molarity*40)} g；水質量=${density*1000}−${num(molarity*40)} g，故 m≈${num(molality)} mol/kg。`,'先用密度求溶液質量，再減去溶質質量以求溶劑公斤數。', [molarity/density,'把溶液公斤數當成溶劑公斤數。'],[molality/1000,'把克數直接當成公斤數。'],[molarity,'混淆 mol/L 和 mol/kg。']);
+                calc('重量莫耳濃度→莫耳濃度',id,[`某水溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，莫耳濃度約為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 kg 水，溶質 ${num(molality)} mol，總質量≈${num(1000+molality*40)} g；除以密度得溶液體積，故 C≈${num(molarity)} M。`,'重量莫耳濃度的分母是溶劑質量，計算莫耳濃度前須用密度轉為溶液體積。', [molality*density,'以溶劑質量當溶液總質量。'],[molarity/1000,'算的是 mol/mL。'],[molality,'混淆兩種濃度。']);
+                calc('重量百分率→重量莫耳濃度',id,[`NaOH 水溶液 ${w*100}%（w/w），重量莫耳濃度為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液重量百分濃度 ${w*100}%，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 100 g 溶液，溶質 ${w*100} g，水 ${(1-w)*100} g；m=(${w*100}÷40)÷${num((1-w)/10)}=${num(molality)} mol/kg。`,'重量莫耳濃度的分母是溶劑質量，不是溶液質量。', [w*1000/40,'用溶液質量當分母。'],[molality/1000,'把溶劑克數當成公斤數。'],[w*100/40,'只算取 100 g 溶液時的溶質莫耳數。']);
+                calc('重量莫耳濃度→重量百分率',id,[`NaOH 水溶液 ${num(molality)} mol/kg，重量百分濃度約為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molality)} mol/kg，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`取 1 kg 水，溶質質量約 ${num(molality)}×40=${num(molality*40)} g；溶質除以溶液總質量，百分率≈${num(w*100)}%。`,'重量百分濃度要除以溶劑和溶質的總質量。', [molality*40/10,'分母用溶劑質量。'],[100*(1-w),'算了溶劑質量百分率。'],[w,'漏乘 100。']);
+            }));
+        }
+        if (subtype==='influence') {
+            const facts=[
+                {id:'heat',condition:'密閉溶液加熱，體積增加且液相組成不變',changed:'莫耳濃度',stable:['重量百分濃度','重量莫耳濃度','莫耳分率'],rule:'溶液體積增加而溶質莫耳數不變，因此莫耳濃度下降；質量、莫耳數及其比值不變。'},
+                {id:'water',condition:'向未飽和水溶液加水',changed:'重量百分濃度',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'加水使溶液總質量增加、溶質質量不變，重量百分濃度下降。'},
+                {id:'evaporate',condition:'未飽和溶液僅蒸發部分水',changed:'重量百分濃度',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'水減少而溶質質量不變，溶液質量下降，重量百分濃度增加。'},
+                {id:'dilute',condition:'溶液加水稀釋且無物質流失',changed:'溶質莫耳分率',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'加水增加溶劑莫耳數，溶質莫耳數不變，因此溶質莫耳分率下降。'}
+            ];
+            facts.forEach(f=>{
+                if (f.id !== 'heat') f.condition += '（溶質不揮發、不解離且維持全溶）';
+                emit('條件→改變',f.id,[`${f.condition}，下列何者改變？`,`${f.condition}時，哪個量會變化？`],f.changed,f.stable,'將改變前後的溶質量與分母逐一比較。',f.rule,'分清增加的是溶劑、溶液體積還是溶質。');
+                f.stable.forEach((s,i)=>emit('條件→不變',`${f.id}-${i}`,[`${f.condition}，下列何者不變？`,`${f.condition}時，哪個量維持不變？`],s,[f.changed, f.id==='heat'?'質量濃度':'溶液總質量',f.id==='heat'?'溶液體積':'溶劑質量'],'依指定變化比較各量。',`${f.rule} ${s}在此條件下保持不變。`,'需依題目條件判斷，不可只依濃度名稱猜測。'));
+            });
+        }
+        if(subtype==='atomicStandard'){
+            const shifts=[{old:12,next:24},{old:12,next:18},{old:12,next:36},{old:12,next:30}];
+            shifts.forEach(({old,next},i)=>{
+                const ratio=next/old;
+                emit('原子量標準改變→濃度數值',`affected-${i}`,
+                    [`假設莫耳質量按新舊標準比縮放，樣品質量固定。原子量標準由 ${old} 改為 ${next}；哪種濃度數值會改變？`,`假設莫耳質量按 ${old}→${next} 的標準比同比縮放，同一溶液的質量百分率、重量莫耳濃度、質量 ppm，何者數值改變？`],
+                    '重量莫耳濃度',['重量百分率','質量 ppm','質量體積百分率'],
+                    '相對原子量標準改變會按比例改變莫耳質量；質量基準濃度不依賴莫耳數。',
+                    `標準值放大 ${num(ratio)} 倍時，同一溶質質量所代表的莫耳數按反比改變；重量莫耳濃度因此改變。質量百分率與質量 ppm 只由質量比決定。`,
+                    '分清以莫耳數為基準的濃度與以質量比為基準的濃度。');
+            });
+            [{old:12,next:24,m:3},{old:12,next:18,m:2.7},{old:12,next:36,m:4.5},{old:12,next:30,m:3.6}].forEach(({old,next,m},i)=>{
+                const result=m*old/next,id=`molality-${i}`;
+                calc('原子量標準改變→重量莫耳濃度',id,
+                    [`假設莫耳質量按 ¹²C 標準 ${old}→${next} 同比縮放，樣品質量不變。原重量莫耳濃度 ${num(m)} m。新數值為何？`,`樣品質量固定，假設莫耳質量隨 ¹²C 標準 ${old}→${next} 同比縮放。原為 ${num(m)} m，新重量莫耳濃度為何？`],
+                    result,' m',`莫耳質量按標準倍率 ${num(next/old)} 改變；固定溶質質量下，莫耳數反比改變。新 m=${num(m)}×${old}/${next}=${num(result)} m。`,
+                    '在此假設下，莫耳數和重量莫耳濃度都與莫耳質量成反比。',
+                    [m*next/old,'誤用正比，應依莫耳質量的倍率取反比。'],
+                    [m,'仍用原本的重量莫耳濃度，未換算莫耳數。'],
+                    [m/next,'只除以新標準值，漏用舊標準值求比例。']);
+            });
+        }
+        if(subtype==='dilution'){
+            const cases=[
+                {c:1.8,v:20,v2:50},{c:1.25,v:48,v2:125},{c:2.4,v:35,v2:90},
+                {c:1.6,v:75,v2:240},{c:0.85,v:120,v2:300},{c:2.75,v:32,v2:140},
+                {c:3.2,v:45,v2:180},{c:0.72,v:85,v2:250},{c:1.35,v:64,v2:160},
+                {c:2.1,v:28,v2:115},{c:0.95,v:150,v2:420},{c:1.45,v:55,v2:210}
+            ];
+            cases.forEach(({c,v,v2:finalV},i)=>{
+                const c2=c*v/finalV,id=`${i}`;
+                calc('稀釋→濃度',id,[`${v} mL、${c} M 原液定容至 ${finalV} mL，濃度為何？`,`將 ${v} mL ${c} M 溶液稀釋至 ${finalV} mL，求濃度。`],c2,' M',`溶質莫耳數不變；C₂=C₁V₁/V₂=${c}×${v}/${finalV}=${num(c2)} M。`,'定容體積是最終體積，並非加水量。', [c*finalV/v,'顛倒原液與定容體積。'],[c*v/(v+finalV),'把定容體積誤認成加水量。'],[c,'沿用原液濃度。']);
+                calc('目標濃度→原液體積',id,[`配製 ${finalV} mL、${num(c2)} M 溶液，需取 ${c} M 原液多少 mL？`,`用 ${c} M 原液配成 ${finalV} mL、${num(c2)} M，取原液幾 mL？`],v,' mL',`V₁=C₂V₂/C₁=${num(c2)}×${finalV}/${c}=${v} mL。`,'使用稀釋前後溶質莫耳數相等。', [c*finalV/c2,'顛倒濃度比。'],[finalV-v,'算了加水量。'],[finalV,'把配製體積當成原液用量。']);
+                calc('稀釋→加水量',id,[`${v} mL ${c} M 原液稀釋為 ${num(c2)} M，體積可加，需加水多少 mL？`,`將 ${v} mL、${c} M 溶液稀釋至 ${num(c2)} M，體積可加，需加水多少？`],finalV-v,' mL',`V₂=${v}×${c}/${num(c2)}=${finalV} mL；加水量=${finalV}−${v}=${finalV-v} mL。`,'加水量等於最終體積減原液體積。', [finalV,'求出總體積後漏減原液。'],[finalV+v,'求完總體積後又加上原液。'],[v,'將原液體積誤作加水量。']);
+            });
+        }
+        if(subtype==='mixing'){
+            const cases=[
+                {c1:.8,v1:75,c2:1.4,v2:125},{c1:1.25,v1:120,c2:.65,v2:80},
+                {c1:2.4,v1:35,c2:.9,v2:165},{c1:.72,v1:240,c2:1.85,v2:60},
+                {c1:1.6,v1:85,c2:2.3,v2:115},{c1:.95,v1:140,c2:1.55,v2:90},
+                {c1:2.75,v1:48,c2:.8,v2:152},{c1:1.15,v1:225,c2:2.4,v2:75}
+            ];
+            cases.forEach(({c1,v1,c2,v2},i)=>{
+                const final=(c1*v1+c2*v2)/(v1+v2),id=`${i}`;
+                calc('混合→莫耳濃度',id,[`${v1} mL、${c1} M NaCl 與 ${v2} mL、${c2} M NaCl 混合，體積可加，濃度為何？`,`食鹽水 ${c1} M ${v1} mL 與 ${c2} M ${v2} mL 混合，體積可加，求濃度。`],final,' M',`C=(${c1}×${v1}+${c2}×${v2})/(${v1}+${v2})=${num(final)} M。`,'先加總溶質莫耳數，再除以總體積。', [(c1+c2)/2,'直接平均兩杯濃度，漏依體積加權。'],[(c1*v1+c2*v2)/v1,'分母只算第一杯體積。'],[(c1*v1+c2*v2)/v2,'分母只算第二杯體積。']);
+                calc('混合濃度→體積',id,[`${v1} mL、${c1} M NaCl 與 ${c2} M NaCl 混合成 ${num(final)} M，體積可加，需後者多少 mL？`,`食鹽水 ${c1} M ${v1} mL 加入 ${c2} M 溶液後為 ${num(final)} M，體積可加，後者幾 mL？`],v2,' mL',`由 ${c1}×${v1}+${c2}V=${num(final)}(${v1}+V)，解得 V≈${v2} mL。`,'需考慮兩溶液體積與溶質莫耳數。', [v1,'把兩杯假設成等體積。'],[v1+v2,'答成混合後的總體積。'],[v1*(final-c1)/c2,'在右側總體積中漏算第二杯的體積。']);
+            });
+        }
+        if(subtype==='changes'){
+            const cases=[
+                {total:180,w:.12,water:25},{total:275,w:.18,water:45},{total:420,w:.25,water:80},
+                {total:350,w:.14,water:62},{total:240,w:.22,water:36},{total:525,w:.16,water:95},
+                {total:165,w:.28,water:24},{total:460,w:.11,water:72},{total:315,w:.24,water:55}
+            ];
+            cases.forEach(({total,w,water},i)=>{
+                const sol=total*w, id=`${i}`;
+                calc('蒸發→濃度',id,[`${total} g、${w*100}% 水溶液蒸發 ${water} g 水，全部原溶質仍溶解，濃度為何？`,`將 ${total} g、${w*100}% 水溶液蒸發 ${water} g 水，無固體析出；求重量百分率。`],sol/(total-water)*100,'%',`溶質=${total}×${w}=${sol} g；溶液剩 ${total-water} g，濃度=${sol}/${total-water}×100%=${num(sol/(total-water)*100)}%。`,'蒸發後分母要扣除水，溶質質量不變。', [100*w,'沒有扣除蒸發的水。'],[sol/(total+water)*100,'把減少的水誤作加水。'],[sol/(total-sol-water)*100,'分母只剩溶劑質量。']);
+                const target=sol/(total+water)*100;
+                calc('加水→濃度',id,[`${total} g、${w*100}% 水溶液加 ${water} g 水，濃度為何？`,`重量濃度 ${w*100}% 的 ${total} g 水溶液，加入 ${water} g 水後為多少％？`],target,'%',`溶質 ${sol} g 不變，溶液質量=${total}+${water}=${total+water} g；濃度=${num(target)}%。`,'加水後溶質不變，溶液總質量增加。', [100*w,'沿用原本的濃度。'],[sol/(total-water)*100,'加入水卻減少分母。'],[sol/(total-sol+water)*100,'分母用加水後的溶劑質量。']);
+                calc('目標濃度→加水量',id,[`${total} g、${w*100}% 水溶液稀釋至 ${num(target)}%，需加水多少克？`,`將 ${total} g、${w*100}% 水溶液調為 ${num(target)}%，應加水幾克？`],water,' g',`溶質 ${sol} g；最終溶液約 ${sol}/(${num(target)}/100)=${total+water} g，故加水約 ${water} g。`,'先固定溶質質量，再反求最終溶液質量。', [total+water,'把最終溶液質量當加水量。'],[total-sol+water,'算的是最後的總水量。'],[sol,'把固定的溶質質量當作加水量。']);
+                calc('加入溶質→濃度',id,[`${total} g、${w*100}% 水溶液加入 ${water} g 原溶質並全部溶解，重量百分濃度約為何？`,`向 ${total} g、${w*100}% 水溶液加入 ${water} g 原溶質並完全溶解，求重量百分率。`],(sol+water)/(total+water)*100,'%',`溶質由 ${sol} g 增至 ${sol+water} g，溶液質量增至 ${total+water} g；濃度≈${num((sol+water)/(total+water)*100)}%。`,'加入溶質時分子與分母都增加。', [(sol+water)/total*100,'增加溶質後分母未加上溶質質量。'],[sol/(total+water)*100,'把加入溶質誤當加水。'],[(sol+water)/(total-sol)*100,'分母使用溶劑質量。']);
+            });
+        }
+        if(subtype==='solubility'||subtype==='saturation'){
+            const cases=[
+                {cold:23,difference:7,water:85},{cold:37,difference:13,water:125},
+                {cold:46,difference:18,water:180},{cold:58,difference:27,water:240},
+                {cold:31,difference:16,water:135},{cold:64,difference:11,water:275},
+                {cold:42,difference:23,water:95},{cold:75,difference:19,water:160},
+                {cold:28,difference:9,water:225},{cold:53,difference:32,water:115}
+            ];
+            cases.forEach(({cold,difference,water},i)=>{
+                const hot=cold+difference, dissolved=cold*water/100, crystal=difference*water/100,id=`${i}`;
+                if(subtype==='solubility'){
+                    calc('溶解度→飽和溶質量',id,[`某固體溶解度為 ${cold} g／100 g 水。${water} g 水最多溶解多少克？`,`溶解度 ${cold} g／100 g 水，${water} g 水可溶多少克至飽和？`],dissolved,' g',`最大溶解量=${cold}×${water}/100=${num(dissolved)} g。`,'溶解度的分母是水，不是飽和溶液。', [cold,'直接報每 100 g 水的可溶量。'],[cold*100/water,'顛倒實際水量和 100 g 的比例。'],[cold*water/(100+cold),'把水量當飽和溶液質量。']);
+                    calc('飽和溶質量→水量',id,[`某固體溶解度 ${cold} g／100 g 水，溶解 ${num(dissolved)} g 至少需多少克水？`,`溶解 ${num(dissolved)} g 固體，溶解度 ${cold} g／100 g 水；至少需多少克水？`],water,' g',`水量=${num(dissolved)}×100/${cold}=${water} g。`,'用溶質量與溶解度反求水量。', [water+dissolved,'算的是飽和溶液質量。'],[dissolved*cold/100,'顛倒水和溶質的比例。'],[100,'沿用溶解度的 100 g 水基準。']);
+                    calc('溶解度→飽和重量百分率',id,[`固體溶解度 ${cold} g／100 g 水，飽和溶液重量百分濃度約為何？`,`溶解度 ${cold} g／100 g 水，求飽和溶液的重量百分率。`],cold/(100+cold)*100,'%',`取 100 g 水與 ${cold} g 溶質；濃度=${cold}/(${cold}+100)×100%≈${num(cold/(100+cold)*100)}%。`,'飽和溶液質量包含水及已溶解溶質。', [cold,'分母只用水的質量。'],[10000/(100+cold),'算成水的質量百分率。'],[cold/(100+cold),'求比值後漏乘 100。']);
+                    calc('飽和重量百分率→溶解度',id,[`飽和溶液為 ${num(cold/(100+cold)*100)}%（w/w），溶解度約為多少 g／100 g 水？`,`飽和水溶液濃度 ${num(cold/(100+cold)*100)}%，溶解度約為多少 g／100 g 水？`],cold,' g',`取 100 g 溶液，溶質 ${num(cold/(100+cold)*100)} g，其餘為水；溶質/水×100≈${cold} g／100 g 水。`,'溶解度分母為溶劑，不能直接取百分率數值。', [cold/(100+cold)*100,'把質量百分率直接當作溶解度。'],[10000/cold,'顛倒溶質和水的比值。'],[cold/100,'寫成每 1 g 水的溶質量。']);
+                }else{
+                    calc('冷卻飽和溶液→析晶量',id,[`溶解度由 ${hot} 降至 ${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻後析出幾克？`,`熱、冷溶解度分別為 ${hot}、${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻析出多少克？`],crystal,' g',`析出量=(${hot}−${cold})×${water}/100=${num(crystal)} g；假設水不蒸發。`,'應用溶解度差，而非直接使用冷卻後溶解度。', [hot*water/100,'算的是高溫下已溶解的量。'],[cold*water/100,'算的是冷卻後仍溶解的量。'],[hot-cold,'漏按實際水量調整。']);
+                    calc('析晶量→水量',id,[`熱、冷溶解度為 ${hot}、${cold} g／100 g 水。熱飽和溶液冷卻析出 ${num(crystal)} g，水有幾克？`,`飽和溶液冷卻析出 ${num(crystal)} g，溶解度由 ${hot} 降至 ${cold} g／100 g 水，原含水幾克？`],water,' g',`水量=${num(crystal)}×100/(${hot}−${cold})=${water} g；假設水不蒸發。`,'先求每 100 g 水的溶解度差，再反求水量。', [100*crystal/hot,'以高溫的溶解度代替溶解度差。'],[100*crystal/cold,'以低溫的溶解度代替溶解度差。'],[water+crystal,'誤把析出的溶質質量計入水量。']);
+                    const factor=[.35,.7,1,1.18,1.42,.82,1.08,.55,1.3,.92][i], added=dissolved*factor;
+                    const state=factor<1?'未飽和，固體全溶':factor===1?'恰為飽和，無固體剩餘':'飽和，有固體剩餘';
+                    const otherStates=['未飽和，固體全溶','恰為飽和，無固體剩餘','飽和，有固體剩餘'].filter(s=>s!==state);
+                    emit('溶解度→飽和狀態',id,[`溶解度 ${cold} g／100 g 水。${water} g 水中加入 ${num(added)} g 溶質，充分攪拌後為何？`,`溶解度 ${cold} g／100 g 水，${water} g 水加入 ${num(added)} g 固體，狀態為何？`],state,otherStates,'先依溶解度換算該水量可溶上限，再與加入量比較。',`最多溶解 ${cold}×${water}/100=${num(dissolved)} g；加入 ${num(added)} g，${factor<1?'低於上限，全部溶解且未飽和。':factor===1?'恰等於上限，溶液飽和且無固體剩餘。':'高於上限，溶液飽和並有固體剩餘。'}`,'比較實際加入量與對應水量的最大溶解量。');
+                }
+            });
+        }
+        return out;
+    }
+
+    function buildMoles(subtype) {
+        const out = [];
+        const species = DATA().moleSpecies || [];
+        const NA = 6.02e23;
+        species.forEach(item => [0.25, 0.5, 1, 2].forEach((n, index) => {
+            if (subtype === 'mole') {
+                const mass = num(item.molarMass * n);
+                appendQuestion(out, {
+                    template: 'moles-to-mass', factId: item.id, variant: String(index),
+                    question: `${n} mol ${item.formula} 的質量約為多少 g？`, answer: mass,
+                    distractors: calculationErrors('g', [n / item.molarMass, '將莫耳數除以莫耳質量，應用乘法。'], [item.molarMass / n, '將莫耳質量除以莫耳數。'], [item.molarMass, '直接使用 1 mol 的質量，漏乘題目莫耳數。']), type: '莫耳計算｜莫耳轉質量', displayMode: 'number',
+                    basis: `${item.formula} 的莫耳質量為 ${item.molarMass} g·mol⁻¹。`,
+                    steps: `m=nM=${n} mol×${item.molarMass} g·mol⁻¹=${mass} g。`, conclusion: `質量為 ${mass} g。`,
+                    misconception: '質量要用莫耳數乘以莫耳質量，不是相除。'
+                });
+                const massInput = item.molarMass * n;
+                appendQuestion(out, {
+                    template: 'mass-to-moles', factId: item.id, variant: String(index),
+                    question: `${massInput} g ${item.formula} 約為幾 mol？`, answer: num(n),
+                    distractors: calculationErrors('mol', [massInput * item.molarMass, '質量乘了莫耳質量，應改用除法。'], [item.molarMass / massInput, '顛倒質量與莫耳質量的分子分母。'], [massInput, '把質量數值直接當成莫耳數。']), type: '莫耳計算｜質量轉莫耳', displayMode: 'number',
+                    basis: `${item.formula} 的莫耳質量為 ${item.molarMass} g·mol⁻¹。`,
+                    steps: `n=m/M=${massInput} g÷${item.molarMass} g·mol⁻¹=${num(n)} mol。`, conclusion: `物質的量為 ${num(n)} mol。`,
+                    misconception: '質量轉莫耳數要以質量除以莫耳質量。'
+                });
+            } else if (subtype === 'particles') {
+                const particleCount = n * NA;
+                const scientific = Number(particleCount).toExponential(2).split('e');
+                const answer = `${Number(scientific[0])}×10${superscript(Number(scientific[1]))}`;
+                const wrongs = [
+                    [n / NA, '把莫耳數除以亞佛加厥常數，方向相反。'],
+                    [NA / n, '顛倒乘法為除法，將亞佛加厥常數除以題給莫耳數。'],
+                    [n * 6.02e22, '把亞佛加厥常數的指數 23 寫成 22。'],
+                    [NA, '直接報 1 mol 的粒子數，未乘以題目莫耳數。']
+                ].map(([value, reason]) => {
+                    const parts = Number(value).toExponential(2).split('e');
+                    return { value:`${Number(parts[0])}×10${superscript(Number(parts[1]))}`, reason };
+                });
+                appendQuestion(out, {
+                    template: 'moles-to-particles', factId: item.id, variant: String(index),
+                    question: `${n} mol ${item.formula} 約含有多少個${item.particle}？`, answer,
+                    distractors: wrongs, type: '莫耳計算｜莫耳轉粒子數', displayMode: 'text',
+                    basis: '一莫耳含有約 6.02×10²³ 個指定粒子。',
+                    steps: `N=nNₐ=${n}×6.02×10²³=${answer}。`, conclusion: `約有 ${answer} 個${item.particle}。`,
+                    misconception: '需先辨認題目問的是分子、原子或化學式單位。'
+                });
+            }
+        }));
+        return out;
+    }
+
+    function buildStoich() {
+        const out = [];
+        (DATA().stoichiometry || []).forEach(reaction => {
+            reaction.terms.forEach(([a, ca], i) => reaction.terms.slice(i + 1).forEach(([b, cb], j) => {
+                const correct = ratio(ca, cb);
+                const coefficientRatios = reaction.terms.map(([, c]) => c);
+                const distractors = unique(['1:1', '1:2', '2:1', '2:3', '3:2', '3:4', ...coefficientRatios.flatMap(x => [`${x}:1`, `1:${x}`])]);
+                appendQuestion(out, {
+                    template: 'stoich-coefficient-ratio', factId: reaction.id, variant: `${i}-${j}`,
+                    question: `依平衡反應式 ${reaction.equation}，${a} 與 ${b} 的莫耳比為何？`, answer: correct,
+                    distractors, type: '反應化學計量｜係數比',
+                    basis: '平衡反應式係數代表各物種的反應莫耳比。',
+                    steps: `${a} 與 ${b} 的係數分別為 ${ca}、${cb}；取最簡整數比為 ${correct}。`,
+                    conclusion: `莫耳比 ${a}:${b}=${correct}。`,
+                    misconception: '配對順序依題目物種順序，最後將係數比約成最簡整數比。'
+                });
+                const given = ca * 1.25;
+                const converted = given * cb / ca;
+                if (ca !== cb) appendQuestion(out, {
+                    template: 'stoich-reverse-ratio', factId: reaction.id, variant: `${i}-${j}`,
+                    question: `依 ${reaction.equation}，若有 ${given} mol ${a} 參與反應，對應多少 mol ${b}？`,
+                    answer: num(converted), distractors: calculationErrors('', [given, '假設兩者的莫耳比為 1：1。'], [given * ca / cb, '把反應係數比顛倒。'], [given * cb, '只乘所求物質的係數，漏除已知物質的係數。']),
+                    type: '反應化學計量｜莫耳量推算', displayMode: 'number',
+                    basis: `${a} 與 ${b} 的係數比為 ${ca}:${cb}。`,
+                    steps: `${given} × ${cb} ÷ ${ca}＝${num(converted)} mol。`,
+                    conclusion: `對應 ${num(converted)} mol ${b}。`, misconception: '反應係數比是物質的量比，不是質量比。'
+                });
+            }));
+        });
+        return out;
+    }
+
+    function buildSolutions(subtype) {
+        const out = [];
+        if (subtype === 'solution') {
+            (DATA().concentrationCases || []).forEach(item => {
+                const M = item.n / item.volume;
+                appendQuestion(out, {
+                    template: 'molarity-calc', factId: item.id,
+                    question: `${item.n} mol 溶質配成 ${num(item.volume * 1000)} mL 溶液，莫耳濃度為何？`, answer: `${num(M)} M`,
+                    distractors: calculationErrors('M', [item.volume / item.n, '顛倒溶質莫耳數與溶液體積。'], [item.n * item.volume, '用莫耳數乘以體積，應用除法。'], [item.n / (1000 * item.volume), '把 mL 當作 L 直接代入。']), type: '溶液計算｜莫耳濃度', displayMode: 'number',
+                    basis: '莫耳濃度定義為溶質莫耳數除以溶液體積。',
+                    steps: `M=n/V=${item.n} mol÷${item.volume} L=${num(M)} mol·L⁻¹。`, conclusion: `濃度為 ${num(M)} M。`,
+                    misconception: '體積須使用溶液體積，並以 L 作為單位。'
+                });
+                appendQuestion(out, {
+                    template: 'molarity-solute-moles', factId: item.id,
+                    question: `${num(M)} M 溶液取 ${num(item.volume * 1000)} mL，含有幾 mol 溶質？`, answer: `${num(item.n)} mol`,
+                    distractors: calculationErrors('mol', [M / item.volume, '以濃度除以體積，應使用乘法。'], [item.volume / M, '誤用體積除以莫耳濃度。'], [M * item.volume * 1000, '將 mL 數值直接代入，應以 L 計算。']), type: '溶液計算｜濃度反推莫耳數', displayMode: 'number',
+                    basis: '由 M=n/V 可得 n=MV。', steps: `n=MV=${num(M)} mol·L⁻¹×${item.volume} L=${num(item.n)} mol。`,
+                    conclusion: `溶質物質的量為 ${num(item.n)} mol。`, misconception: '濃度乘以溶液體積才得到莫耳數。'
+                });
+            });
+            (DATA().dilutionCases || []).forEach(item => {
+                const finalM = item.initial * item.v1 / item.v2;
+                appendQuestion(out, {
+                    template: 'dilution-final-concentration', factId: item.id,
+                    question: `取 ${item.initial} M 溶液 ${item.v1} mL，稀釋至 ${item.v2} mL，最後濃度為何？`, answer: `${num(finalM)} M`,
+                    distractors: calculationErrors('M', [item.initial * item.v2 / item.v1, '把移取體積與定容體積的比值顛倒。'], [item.initial * item.v1 / (item.v2 + item.v1), '把定容體積誤讀為加水量，又加了一次原液體積。'], [item.initial, '沿用原液濃度，漏算稀釋。']), type: '溶液計算｜稀釋濃度', displayMode: 'number',
+                    basis: '稀釋前後溶質莫耳數不變。',
+                    steps: `M₁V₁=M₂V₂；M₂=${item.initial}×${item.v1}/${item.v2}=${num(finalM)} M。`,
+                    conclusion: `稀釋後濃度為 ${num(finalM)} M。`, misconception: '稀釋時體積增加、濃度降低，不能把體積比顛倒。'
+                });
+                appendQuestion(out, {
+                    template: 'dilution-final-volume', factId: item.id,
+                    question: `取 ${item.initial} M 溶液 ${item.v1} mL，稀釋後為 ${num(finalM)} M。最終體積為何？`,
+                    answer: `${num(item.v2)} mL`, distractors: calculationErrors('mL', [item.v2 - item.v1, '算的是體積增加量，題目問最終體積。'], [item.v1 * finalM / item.initial, '顛倒原液和稀釋後濃度的比值。'], [item.v2 + item.v1, '把最終體積當成增加量，又加了一次原液體積。']),
+                    type: '溶液計算｜稀釋體積反推', displayMode: 'number',
+                    basis: '稀釋前後溶質莫耳數不變。',
+                    steps: `V₂=M₁V₁/M₂=${item.initial}×${item.v1}/${num(finalM)}=${num(item.v2)} mL。`,
+                    conclusion: `最終體積為 ${num(item.v2)} mL。`, misconception: '先列 M₁V₁=M₂V₂，再解出要求的體積。'
+                });
+            });
+        }
+        return out;
+    }
+
+    function buildGas() {
+        const out = [];
+        (DATA().gasFacts || []).forEach(fact => [0.5, 1, 2, 3].forEach((n, index) => {
+            const volume = n * fact.molarVolume;
+            appendQuestion(out, {
+                template: 'gas-molar-volume', factId: fact.id, variant: String(index),
+                question: `${fact.pressure}、${fact.temp} 下有 ${n} mol 理想氣體，體積約為多少 L？`,
+                answer: `${num(volume)} L`, distractors: calculationErrors('L', [fact.molarVolume / n, '把莫耳體積除以莫耳數。'], [fact.molarVolume, '只報 1 mol 的體積，漏乘題目莫耳數。'], ...DATA().gasFacts.filter(other => other.id !== fact.id).map(other => [n * other.molarVolume, `誤用 ${other.temp}、${other.pressure} 的莫耳體積。`])),
+                type: '氣體計算｜莫耳體積', displayMode: 'number',
+                basis: `指定條件下莫耳體積為 ${fact.molarVolume} L·mol⁻¹。`,
+                steps: `V=nVₘ=${n} mol×${fact.molarVolume} L·mol⁻¹=${num(volume)} L。`,
+                conclusion: `氣體體積約為 ${num(volume)} L。`, misconception: '莫耳體積只在題目指定的溫度與壓力條件下使用。'
+            });
+        }));
+        return out;
+    }
+
+    function buildSolubility() {
+        const out = [];
+        (DATA().solubilities || []).forEach(fact => [25, 50, 100, 150, 200, 250].forEach((water, index) => {
+            const crystallized = (fact.hot - fact.cold) * water / 100;
+            appendQuestion(out, {
+                template: 'solubility-crystallization', factId: fact.id, variant: String(index),
+                question: `${fact.name} 在 ${fact.hotTemp} °C 的溶解度為 ${fact.hot} ${fact.unit}，降至 ${fact.coldTemp} °C 後為 ${fact.cold} ${fact.unit}。若有 ${water} g 水且熱溶液原已飽和，冷卻析出多少 g 溶質？`,
+                answer: `${num(crystallized)} g`, distractors: calculationErrors('g', [fact.hot * water / 100, '把冷卻前的溶質量當成析出量。'], [fact.cold * water / 100, '算的是冷卻後仍溶解的量。'], [fact.hot - fact.cold, '漏依實際水量調整每 100 g 水的溶解度差。']),
+                type: '溶解度｜結晶量計算', displayMode: 'number',
+                basis: '冷卻析出量等於高溫與低溫溶解度差，乘以實際水量比例。',
+                steps: `ΔS=${fact.hot}−${fact.cold}=${fact.hot - fact.cold} g/100 g 水；析出量=${fact.hot - fact.cold}×${water}/100=${num(crystallized)} g。`,
+                conclusion: `冷卻後析出 ${num(crystallized)} g。`, misconception: '要用溶解度差乘上水量比例；水量不是溶液總質量。'
+            });
+        }));
+        return out;
+    }
+
+    function buildThermo() {
+        const out = [];
+        (DATA().thermoFacts || []).forEach(item => {
+            appendQuestion(out, {
+                template: 'thermo-sign', factId: item.id,
+                question: `以系統為範圍，${item.process}屬於吸熱或放熱？`, answer: item.heat,
+                distractors: ['吸熱', '放熱', '不交換熱量', '僅由催化劑決定'], type: '熱化學｜吸放熱辨識',
+                basis: item.rule, steps: `${item.process}的熱量流向決定系統焓變號誌。`,
+                conclusion: `${item.heat}過程對應 ΔH ${item.deltaH}。`, misconception: '判斷 ΔH 正負時要先指定系統，吸熱為正、放熱為負。'
+            });
+            appendQuestion(out, {
+                template: 'thermo-delta-h', factId: item.id,
+                question: `以系統為範圍，${item.process}的 ΔH 符號為何？`, answer: item.deltaH,
+                distractors: ['正值', '負值', '必為零', '只由反應速率決定'], type: '熱化學｜反應熱符號',
+                basis: item.rule, steps: `${item.heat}時系統焓${item.deltaH === '正值' ? '增加' : '降低'}。`,
+                conclusion: `ΔH 為${item.deltaH}。`, misconception: '吸熱與放熱的符號以系統能量變化為準。'
+            });
+        });
+        const heatCases = [
+            { m:100, c:4.18, dt:10 }, { m:200, c:4.18, dt:5 }, { m:50, c:4.18, dt:20 }, { m:150, c:4.18, dt:4 },
+            { m:100, c:4.18, dt:25 }, { m:250, c:4.18, dt:8 }, { m:80, c:4.18, dt:15 }, { m:120, c:4.18, dt:10 }
+        ];
+        heatCases.forEach((x, i) => {
+            const q = x.m * x.c * x.dt / 1000;
+            appendQuestion(out, {
+                template: 'calorimetry-heat', factId: `water-heat-${i}`,
+                question: `${x.m} g 水的比熱取 4.18 J·g⁻¹·°C⁻¹，溫度上升 ${x.dt} °C，吸收熱量約多少 kJ？`,
+                answer: `${num(q)} kJ`, distractors: calculationErrors('kJ', [q * 1000, '算出 J 後未換算成 kJ。'], [x.m * x.c / 1000, '漏乘溫度變化。'], [x.m * x.dt / 1000, '漏乘水的比熱。']), type: '熱化學｜量熱計算', displayMode: 'number',
+                basis: '定壓比熱計算使用 q=mcΔT。',
+                steps: `q=mcΔT=${x.m}×4.18×${x.dt}=${num(q * 1000)} J=${num(q)} kJ。`,
+                conclusion: `水吸收約 ${num(q)} kJ。`, misconception: '先以 J 計算，再確認是否需要換算成 kJ。'
+            });
+        });
+        return out;
+    }
+
+    function buildRate() {
+        const out = [];
+        (DATA().rateLaws || []).forEach(item => {
+            appendQuestion(out, {
+                template: 'rate-total-order', factId: item.id,
+                question: `速率式為 ${item.rate}，反應總級數為何？`, answer: String(item.order),
+                distractors: ['0', '1', '2', '3', '4'], type: '反應速率｜總級數', displayMode: 'number',
+                basis: '總級數為速率式中所有反應物濃度指數的總和。',
+                steps: `由 ${item.rate} 讀取各濃度指數並相加，得到總級數 ${item.order}。`,
+                conclusion: `此反應為 ${item.order} 級反應。`, misconception: '只看單一反應物指數不一定等於總級數。'
+            });
+            [2, 3, 0.5].forEach((factor, index) => {
+                const speedFactor = Math.pow(factor, item.power);
+                appendQuestion(out, {
+                    template: 'rate-concentration-factor', factId: item.id, variant: String(index),
+                    question: `反應速率式為 ${item.rate}。其他條件不變時，${item.variable}變為原來的 ${factor} 倍，速率變為幾倍？`,
+                    answer: `${num(speedFactor)} 倍`, distractors: calculationErrors('倍', [factor, '一律套用一級反應的倍數。'], [factor ** item.order, '使用總級數，而非改變的反應物級數。'], [1, '認為速率不變，等同使用零級。'], [1 / speedFactor, '顛倒舊速率與新速率的比值。'], [factor ** 2, '一律套用二級反應的倍數。']),
+                    type: '反應速率｜濃度倍數', displayMode: 'number',
+                    basis: `${item.variable}在速率式中的級數為 ${item.power}。`,
+                    steps: `速率倍數=${factor}^${item.power}=${num(speedFactor)}。`,
+                    conclusion: `反應速率變為 ${num(speedFactor)} 倍。`, misconception: '濃度倍數需取該物種的速率級數次方。'
+                });
+            });
+            appendQuestion(out, {
+                template: 'rate-catalyst', factId: item.id,
+                question: `對速率式 ${item.rate} 所代表的反應加入適當催化劑，活化能與平衡常數如何改變？`,
+                answer: '活化能降低，平衡常數不變',
+                distractors: ['活化能降低，平衡常數增加', '活化能增加，平衡常數不變', '活化能不變，平衡常數降低'],
+                type: '反應速率｜催化劑作用',
+                basis: '催化劑提供較低活化能的反應途徑，但不改變反應物與生成物的能量差。',
+                steps: '正、逆反應速率都會加快；固定溫度下的平衡位置與平衡常數不因此改變。',
+                conclusion: '活化能降低，平衡常數不變。', misconception: '催化劑不能改變反應焓或平衡常數。'
+            });
+        });
+        return out;
+    }
+
+    function buildEquilibrium() {
+        const out = [];
+        const shifts = ['向左移動', '向右移動', '不移動'];
+        (DATA().equilibria || []).forEach(item => {
+            appendQuestion(out, {
+                template: 'equilibrium-kc', factId: item.id,
+                question: `反應 ${item.equation} 的 Kc 表示式為何？`, answer: item.kc,
+                distractors: (DATA().equilibria || []).map(x => x.kc), type: '化學平衡｜Kc 表示式', displayMode: 'text',
+                basis: 'Kc 以生成物濃度列於分子、反應物濃度列於分母，指數取平衡係數。',
+                steps: `依 ${item.equation} 列式；純固體不寫入 Kc。`, conclusion: `Kc=${item.kc}。`,
+                misconception: '不要把反應物與生成物位置顛倒，也不要將純固體寫入 Kc。'
+            });
+            appendQuestion(out, {
+                template: 'equilibrium-pressure', factId: item.id,
+                question: `定溫下縮小容器體積，使 ${item.equation} 的平衡氣體受壓。平衡如何移動？`,
+                answer: item.products < item.reactants ? '向右移動' : item.products > item.reactants ? '向左移動' : '不移動',
+                distractors: [...shifts, '須比較氣體莫耳質量'], type: '化學平衡｜壓力影響',
+                basis: '定溫增壓時，平衡傾向移向氣體總莫耳數較少的一側。',
+                steps: `左側氣體係數總和為 ${item.reactants}，右側為 ${item.products}。`,
+                conclusion: `因此平衡${item.products < item.reactants ? '向生成物側' : item.products > item.reactants ? '向反應物側' : '不因壓力改變而'}移動。`,
+                misconception: '比較的是氣體係數總和；純固體不計入氣體莫耳數。'
+            });
+            appendQuestion(out, {
+                template: 'equilibrium-temperature', factId: item.id,
+                question: `反應 ${item.equation} 正向${item.endothermic ? '吸熱' : '放熱'}。升高溫度時，平衡如何移動？`,
+                answer: item.endothermic ? '向右移動' : '向左移動', distractors: shifts,
+                type: '化學平衡｜溫度影響',
+                basis: '升溫相當於加入熱；平衡向吸收熱量的方向移動。',
+                steps: `正向反應${item.endothermic ? '吸熱' : '放熱'}，所以${item.endothermic ? '正向' : '逆向'}是吸熱方向。`,
+                conclusion: `平衡${item.endothermic ? '向右' : '向左'}移動。`,
+                misconception: '溫度改變會影響平衡常數；不要套用只適用於濃度與壓力改變的判斷。'
+            });
+            appendQuestion(out, {
+                template: 'equilibrium-concentration', factId: item.id,
+                question: `在平衡 ${item.equation} 中，增加反應物濃度後，系統初始反應商 Q 與 Kc 比較為何？`,
+                answer: 'Q＜Kc', distractors: ['Q＞Kc', 'Q＝Kc', 'Q與Kc必同時改變'],
+                type: '化學平衡｜反應商與移動',
+                basis: '定溫增加反應物濃度會使反應商 Q 暫時變小，Kc 不變。',
+                steps: '系統接著朝正向反應消耗新增反應物，直到 Q 再次等於 Kc。',
+                conclusion: '改變後立即有 Q＜Kc，平衡向右移動。',
+                misconception: '定溫改變濃度不改變 Kc；要比較的是 Q 與 Kc。'
+            });
+        });
+        return out;
+    }
+
+    function buildOrganic(subtype) {
+        const out = [];
+        const compounds = DATA().organicCompounds || [];
+        compounds.forEach(item => {
+            if (subtype === 'functional') {
+                addStyled(out, {
+                    template: 'organic-structure-to-functional', factId: item.id,
+                    answer: item.functional,
+                    distractors: compounds.map(x => x.functional), type: '有機化學｜官能基辨識', displayMode: 'text',
+                    basis: `${item.name}屬於${item.family}。`, steps: `由結構 ${item.formula} 辨認特徵基團 ${item.functional}。`,
+                    conclusion: `此物質的分類為${item.family}。`, misconception: '先找出特徵基團，再判斷有機物類別。'
+                }, [`${item.name}的代表性官能基或鍵結特徵為何？`, `結構 ${item.structure || item.formula} 中，最具代表性的官能基或鍵結特徵為何？`]);
+                appendQuestion(out, {
+                    template: 'organic-functional-to-family', factId: item.id,
+                    question: `依高中常用分類，${item.structure || item.formula} 屬於哪一類？`,
+                    answer: item.family,
+                    distractors: compounds.map(x => x.family), type: '有機化學｜官能基與分類',
+                    basis: item.family === '烷' ? '烷是開鏈的飽和烴。' : `注意 ${item.functional} 及其相鄰鍵結。`,
+                    steps: `以 ${item.structure || item.formula} 為例，依碳骨架及鍵結可歸為${item.family}。`,
+                    conclusion: `分類為${item.family}。`, misconception: '分子中含氧不代表一定是醇；要看氧所處的鍵結環境。'
+                });
+            }
+            if (subtype === 'name') {
+                appendQuestion(out, {
+                    template: 'organic-name-to-formula', factId: item.id,
+                    question: `「${item.name}」的分子式或簡式為何？`, answer: item.formula,
+                    distractors: compounds.map(x => x.formula), type: '有機化學｜名稱轉結構', displayMode: 'formula',
+                    basis: `${item.name}對應結構表示為 ${item.formula}。`, steps: `核對碳骨架、官能基與不飽和鍵後得到 ${item.formula}。`,
+                    conclusion: `正確表示為 ${item.formula}。`, misconception: '同分異構物可能分子式相同，名稱題須核對結構而非只看分子式。'
+                });
+                appendQuestion(out, {
+                    template: 'organic-formula-to-name', factId: item.id,
+                    question: `結構簡式 ${item.structure || item.formula} 對應的高中常見物質名稱為何？`, answer: item.name,
+                    distractors: compounds.map(x => x.name), type: '有機化學｜結構轉名稱', displayMode: 'formula',
+                    basis: `${item.structure || item.formula}的特徵骨架與官能基對應${item.name}。`, steps: `辨認 ${item.functional}，再核對碳數與連接方式。`,
+                    conclusion: `名稱為${item.name}。`, misconception: '相同分子式可能有不同結構，需依題目給出的連接方式辨認。'
+                });
+            }
+        });
+        if (subtype === 'reaction') (DATA().organicReactions || []).forEach(item => {
+            addStyled(out, {
+                template: 'organic-reaction-product', factId: item.id,
+                answer: item.product, distractors: (DATA().organicReactions || []).map(x => x.product), type: '有機化學｜條件式產物',
+                basis: `題目已提供反應物與必要條件：${item.condition}。`,
+                steps: item.rule, conclusion: `主要產物為${item.product}。`,
+                misconception: '反應條件不足以唯一決定產物時不出題；本題條件已限定反應路徑。'
+            }, [
+                `${item.reactant}在「${item.condition}」下反應，主要產物為何？`,
+                `依反應物 ${item.formula} 與條件「${item.condition}」，判斷主要產物。`
+            ]);
+            addStyled(out, {
+                template: 'organic-reaction-type', factId: item.id,
+                answer: item.type, distractors: ['加成反應', '取代反應', '酯化反應', '加成聚合', '完全燃燒'], type: '有機化學｜反應類型',
+                basis: `${item.rule}`, steps: `依反應物與「${item.condition}」條件判斷鍵結如何改變，再確認反應分類。`,
+                conclusion: `此反應屬於${item.type}。`, misconception: '需看鍵結與產物變化，不能只看反應物名稱。'
+            }, [
+                `${item.reactant}在「${item.condition}」下反應，屬於哪一類反應？`,
+                `依反應物 ${item.formula} 與條件「${item.condition}」，此反應應如何分類？`
+            ]);
+        });
+        if (subtype === 'polymer') (DATA().polymers || []).forEach(item => {
+            for (const direction of ['monomer-to-polymer', 'polymer-to-monomer', 'repeat-unit']) {
+                const map = {
+                    'monomer-to-polymer': { question:`${item.monomer}進行加成聚合後，形成何種聚合物？`, answer:item.polymer, distractors:(DATA().polymers||[]).map(x=>x.polymer), basis:`${item.monomer}的雙鍵開啟後形成${item.polymer}。`, steps:`單體 ${item.monomerFormula} 的雙鍵開啟並重複連接，形成重複單元 ${item.repeatUnit}。`, conclusion:`聚合物為${item.polymer}。` },
+                    'polymer-to-monomer': { question:`${item.polymer}的加成聚合單體為何？`, answer:item.monomer, distractors:(DATA().polymers||[]).map(x=>x.monomer), basis:`${item.polymer}由${item.monomer}加成聚合形成。`, steps:`由重複單元 ${item.repeatUnit} 還原雙鍵，得到單體 ${item.monomerFormula}。`, conclusion:`單體為${item.monomer}。` },
+                    'repeat-unit': { question:`${item.polymer}的重複單元為何？`, answer:item.repeatUnit, distractors:(DATA().polymers||[]).map(x=>x.repeatUnit), basis:`${item.monomer}聚合時碳碳雙鍵開啟。`, steps:`保留單體取代基並將雙鍵轉為主鏈單鍵，得到 ${item.repeatUnit}。`, conclusion:`重複單元為 ${item.repeatUnit}。` }
+                }[direction];
+                appendQuestion(out, { ...map, template:`polymer-${direction}`, factId:item.id, type:'有機化學｜聚合物與單體', displayMode:'text', misconception:'辨認單體雙鍵開啟後形成的主鏈，並保留取代基位置。' });
+            }
+        });
+        return out;
+    }
+
+    function addComparison(out, cfg, stems) {
+        stems.forEach((question, index) => appendQuestion(out, {
+            ...cfg, question, variant: String(index + 1), displayMode: cfg.displayMode || 'text'
+        }));
+    }
+
+    function buildChemistryComparisons(subtype) {
+        const out = [];
+        const trendFacts = [
+            {id:'period2-radius',property:'原子半徑',order:['Li','Be','B','C','N','O','F'],rule:'第二週期由左至右，原子半徑大致減小。'},
+            {id:'period3-radius',property:'原子半徑',order:['Na','Mg','Al','Si','P','S','Cl'],rule:'第三週期由左至右，原子半徑大致減小。'},
+            {id:'alkali-radius',property:'原子半徑',order:['Rb','K','Na','Li'],rule:'同族由上而下，電子層增加，原子半徑增大。'},
+            {id:'halogen-radius',property:'原子半徑',order:['I','Br','Cl','F'],rule:'同族由上而下，原子半徑增大。'},
+            {id:'halogen-en',property:'電負度',order:['F','Cl','Br','I'],rule:'同族由上而下，原子核對共用電子的吸引能力大致減弱。'},
+            {id:'alkali-ie',property:'游離能',order:['Li','Na','K','Rb'],rule:'同族由上而下，最外層電子較容易移除，第一游離能大致降低。'},
+            {id:'period2-metal',property:'金屬性',order:['Li','Be','B','C','N','O','F'],rule:'同週期由左至右，失去電子的傾向大致減弱，金屬性降低。'},
+            {id:'period3-en',property:'電負度',order:['Cl','S','P','Si','Al','Mg','Na'],rule:'第三週期由左至右，電負度大致增加。'}
+        ];
+        if (subtype === 'periodicTrend') trendFacts.forEach(fact => {
+            const items = fact.order;
+            const wrongOrders = [items.slice().reverse(), [...items.slice(1), items[0]], [...items.slice(0, -1).reverse(), items.at(-1)]]
+                .map(order => order.join(' ＞ '));
+            addComparison(out, {
+                template:'compare-periodic-greatest', factId:fact.id, answer:items[0], distractors:items.slice(1),
+                type:`週期趨勢｜${fact.property}比較`, basis:fact.rule,
+                steps:`依同一週期或同一族的變化方向比較${fact.property}；本組由大至小的順序為 ${items.join(' ＞ ')}。`,
+                conclusion:`${items[0]} 的${fact.property}最大。`, misconception:'比較時先確認元素位於同一週期或同一族，再沿正確方向判斷。'
+            }, [`下列元素中，${fact.property}最大的是哪一個？（${items.join('、')}）`, `比較 ${items.join('、')} 的${fact.property}，何者最大？`, `依週期趨勢判斷，${items.join('、')}之中哪個元素的${fact.property}最高？`]);
+            addComparison(out, {
+                template:'compare-periodic-order-reverse', factId:fact.id, answer:items.join(' ＞ '), distractors:wrongOrders,
+                type:`週期趨勢｜反向排序`, basis:fact.rule,
+                steps:`把同一組元素依${fact.property}由大至小排列，得到 ${items.join(' ＞ ')}。`,
+                conclusion:`正確順序為 ${items.join(' ＞ ')}。`, misconception:'不可把同族由上而下的變化方向，誤套到同週期由左至右。'
+            }, [`依${fact.property}由大至小排列：${items.join('、')}。`, `若比較${items.join('、')}的${fact.property}，由高至低的順序為何？`, `將 ${items.join('、')} 按${fact.property}遞減排列。`]);
+        });
+
+        const isoelectronic = [
+            {id:'iso-10e-main',species:['N³⁻','O²⁻','F⁻','Ne','Na⁺','Mg²⁺','Al³⁺'],rule:'此列粒子皆有 10 個電子；質子數越多，電子雲受到的吸引越強，半徑越小。'},
+            {id:'iso-18e-main',species:['S²⁻','Cl⁻','Ar','K⁺','Ca²⁺'],rule:'此列粒子皆有 18 個電子；在等電子粒子中，核電荷越大，半徑越小。'},
+            {id:'iso-10e-short',species:['O²⁻','F⁻','Na⁺','Mg²⁺'],rule:'四種粒子皆有 10 個電子；依質子數增加，半徑遞減。'},
+            {id:'iso-18e-short',species:['S²⁻','Cl⁻','K⁺','Ca²⁺'],rule:'四種粒子皆有 18 個電子；依質子數增加，半徑遞減。'},
+            {id:'iso-2e',species:['H⁻','He','Li⁺'],rule:'三種粒子皆有 2 個電子；核電荷越大，半徑越小。'}
+        ];
+        if (subtype === 'isoelectronicRadius') isoelectronic.forEach(fact => {
+            const largeToSmall = fact.species.slice().reverse();
+            addComparison(out, {
+                template:'isoelectronic-largest-radius', factId:fact.id, answer:fact.species[0], distractors:fact.species.slice(1),
+                type:'等電子粒子｜半徑比較', basis:fact.rule,
+                steps:`確認粒子電子數相同後，比較核電荷；核電荷最小的 ${fact.species[0]} 對電子雲吸引較弱，半徑最大。`,
+                conclusion:`半徑最大的是 ${fact.species[0]}。`, misconception:'等電子粒子不能只看電子數；需比較質子數（核電荷）。'
+            }, [`下列等電子粒子中，半徑最大的是哪一個？（${fact.species.join('、')}）`, `比較 ${fact.species.join('、')} 的粒子半徑，何者最大？`, `哪一個粒子對最外層電子的核吸引較弱、半徑較大？${fact.species.join('、')}`]);
+            addComparison(out, {
+                template:'isoelectronic-smallest-radius', factId:fact.id, answer:fact.species.at(-1), distractors:fact.species.slice(0, -1),
+                type:'等電子粒子｜反向判斷半徑', basis:fact.rule,
+                steps:`等電子粒子中，質子數最多的 ${fact.species.at(-1)} 對電子雲吸引最強，因此半徑最小。`,
+                conclusion:`半徑最小的是 ${fact.species.at(-1)}。`, misconception:'電子數相同時，質子數較多者半徑較小。'
+            }, [`${fact.species.join('、')}中，半徑最小的是哪一個？`, `同為等電子粒子時，哪個粒子的核電荷最大、半徑最小？`, `若由大至小排列為 ${largeToSmall.join(' ＞ ')}，最小者是哪個？`]);
+            addComparison(out, {
+                template:'isoelectronic-radius-order', factId:fact.id, answer:largeToSmall.join(' ＞ '),
+                distractors:[fact.species.join(' ＞ '), [...largeToSmall.slice(1), largeToSmall[0]].join(' ＞ '), [...largeToSmall].reverse().join(' ＞ ')],
+                type:'等電子粒子｜半徑排序', basis:fact.rule,
+                steps:`依核電荷由小到大排列，半徑由大到小為 ${largeToSmall.join(' ＞ ')}。`,
+                conclusion:`半徑由大至小：${largeToSmall.join(' ＞ ')}。`, misconception:'注意粒子所帶電荷的正負與大小，先求質子數，再比較核電荷。'
+            }, [`將 ${fact.species.join('、')} 依半徑由大至小排列。`, `這組等電子粒子的半徑順序何者正確？`, `由大至小排列粒子半徑：${fact.species.join('、')}。`]);
+        });
+
+        const molecules = [
+            {id:'co2',formula:'CO₂',shape:'直線形',polarity:'非極性',force:'分散力',descriptor:'直線形、非極性分子，分子間主要為分散力'},
+            {id:'ch4',formula:'CH₄',shape:'正四面體形',polarity:'非極性',force:'分散力',descriptor:'正四面體形、非極性分子，分子間主要為分散力'},
+            {id:'bf3',formula:'BF₃',shape:'平面三角形',polarity:'非極性',force:'分散力',descriptor:'平面三角形、非極性分子，分子間主要為分散力'},
+            {id:'h2o',formula:'H₂O',shape:'折線形',polarity:'極性',force:'氫鍵',descriptor:'折線形、極性分子，分子間可形成氫鍵'},
+            {id:'nh3',formula:'NH₃',shape:'三角錐形',polarity:'極性',force:'氫鍵',descriptor:'三角錐形、極性分子，分子間可形成氫鍵'},
+            {id:'hf',formula:'HF',shape:'直線形',polarity:'極性',force:'氫鍵',descriptor:'直線形、極性分子，分子間可形成氫鍵'},
+            {id:'hcl',formula:'HCl',shape:'直線形',polarity:'極性',force:'偶極－偶極力',descriptor:'直線形、極性分子，分子間主要為偶極－偶極力'},
+            {id:'so2',formula:'SO₂',shape:'折線形',polarity:'極性',force:'偶極－偶極力',descriptor:'折線形、極性分子，分子間主要為偶極－偶極力'},
+            {id:'ch3cl',formula:'CH₃Cl',shape:'四面體形',polarity:'極性',force:'偶極－偶極力',descriptor:'四面體形、極性分子，分子間主要為偶極－偶極力'},
+        ];
+        if (subtype === 'molecularProperties') molecules.forEach((item, index) => {
+            const alternatives = molecules.filter(x => x.id !== item.id);
+            addComparison(out, {
+                template:'molecule-structure-to-properties', factId:item.id, answer:item.descriptor,
+                distractors:alternatives.map(x => x.descriptor), type:'分子性質｜結構、極性與作用力',
+                basis:`${item.formula}的分子形狀為${item.shape}；鍵極性與空間對稱性共同決定分子極性，${item.polarity}分子間主要作用力為${item.force}。`,
+                steps:`先判斷${item.formula}的形狀為${item.shape}，再看鍵偶極是否互相抵銷；其主要分子間作用力為${item.force}。`,
+                conclusion:`${item.formula}：${item.descriptor}。`, misconception:'鍵有極性不代表整個分子必有極性；須考慮分子形狀與偶極是否抵銷。'
+            }, [`${item.formula}的分子形狀、極性與主要分子間作用力，何者配對正確？`, `關於 ${item.formula}，下列哪一項描述正確？`, `已知中心原子周圍的鍵結與孤電子對形成${item.shape}，對應的分子性質何者正確？（選項含 ${item.formula}）`]);
+            addComparison(out, {
+                template:'molecule-properties-to-structure', factId:item.id, answer:item.formula,
+                distractors:alternatives.map(x => x.formula), type:'分子性質｜由性質反推分子',
+                basis:`${item.descriptor}；符合這組形狀、極性與作用力特徵的分子為 ${item.formula}。`,
+                steps:`先由${item.polarity}判斷分子整體偶極，再用${item.shape}確認對稱性，最後核對${item.force}。`,
+                conclusion:`符合描述的分子是 ${item.formula}。`, misconception:'只看中心原子周圍的鍵角可能忽略孤電子對，造成形狀或極性判斷錯誤。'
+            }, [`哪一個分子為${item.descriptor}？`, `若某分子呈${item.shape}、屬${item.polarity}分子，且主要作用力為${item.force}，它最可能是何者？`, `由「${item.shape}、${item.polarity}、${item.force}」反推分子，答案為何？`]);
+        });
+
+        const redoxSeries = [
+            {id:'metal-series-common',kind:'還原劑（金屬）',property:'還原力',order:['Mg','Zn','Fe','Pb','H₂','Cu','Ag'],rule:'金屬活動性由強至弱可排列為 Mg、Zn、Fe、Pb、H₂、Cu、Ag；金屬越容易失去電子，還原力越強。'},
+            {id:'ion-series-common',kind:'氧化劑（離子）',property:'氧化力',order:['Ag⁺','Cu²⁺','H⁺','Pb²⁺','Fe²⁺','Zn²⁺','Mg²⁺'],rule:'對應的氧化劑強弱與金屬還原力方向相反；越容易得到電子者，氧化力越強。'}
+        ];
+        if (subtype === 'redoxStrength') redoxSeries.forEach(fact => {
+            const reverse = fact.order.slice().reverse();
+            addComparison(out, {
+                template:'redox-agent-strongest', factId:fact.id, answer:fact.order[0], distractors:fact.order.slice(1),
+                type:`氧化還原能力｜${fact.property}比較`, basis:fact.rule,
+                steps:`依${fact.kind}序列比較：${fact.order.join(' ＞ ')}。序列最前者${fact.property}最強。`,
+                conclusion:`${fact.order[0]}的${fact.property}最強。`, misconception:'還原劑越容易失去電子越強；氧化劑越容易得到電子越強，兩種序列方向相反。'
+            }, [`下列物種中，${fact.property}最強的是哪一個？（${fact.order.join('、')}）`, `比較${fact.kind}能力，哪一個最強？`, `依常見氧化還原序列，何者最容易${fact.kind.includes('還原') ? '失去' : '得到'}電子？`]);
+            addComparison(out, {
+                template:'redox-agent-order-reverse', factId:fact.id, answer:fact.order.join(' ＞ '),
+                distractors:[reverse.join(' ＞ '), [...fact.order.slice(1),fact.order[0]].join(' ＞ '), [...fact.order.slice(0,3),...fact.order.slice(3).reverse()].join(' ＞ ')],
+                type:`氧化還原能力｜反向排序`, basis:fact.rule,
+                steps:`由${fact.property}強至弱依序為 ${fact.order.join(' ＞ ')}。`,
+                conclusion:`正確順序：${fact.order.join(' ＞ ')}。`, misconception:'氧化劑與還原劑的強弱方向相反，勿把金屬活動性序列直接套給金屬離子。'
+            }, [`將 ${fact.order.join('、')} 依${fact.property}由強至弱排列。`, `下列哪個順序正確表示${fact.kind}能力由強至弱？`, `依常見氧化還原序列排列：${fact.order.join('、')}。`]);
+        });
+
+        const acidTrends = [
+            {id:'hydrogen-halides',family:'氫鹵酸',weakToStrong:['HF','HCl','HBr','HI'],note:'氫鹵酸在水中的酸性由 HF、HCl、HBr 至 HI 逐漸增強；HF 為弱酸。'},
+            {id:'chlorine-oxoacids',family:'氯的含氧酸',weakToStrong:['HClO','HClO₂','HClO₃','HClO₄'],note:'同一中心原子的含氧酸中，氧原子數較多者通常酸性較強。'},
+            {id:'bromine-oxoacids',family:'溴的含氧酸',weakToStrong:['HBrO','HBrO₂','HBrO₃','HBrO₄'],note:'同一中心原子的含氧酸中，氧原子數增加通常使共軛鹼較穩定、酸性增強。'}
+        ];
+        if (subtype === 'acidStrengthTrend') acidTrends.forEach(fact => {
+            const strongToWeak = fact.weakToStrong.slice().reverse();
+            addComparison(out, {
+                template:'acid-strength-strongest', factId:fact.id, answer:strongToWeak[0], distractors:strongToWeak.slice(1),
+                type:'酸鹼性質｜酸性強弱比較', basis:fact.note,
+                steps:`依${fact.family}的結構趨勢，酸性由弱至強為 ${fact.weakToStrong.join(' ＜ ')}。`,
+                conclusion:`酸性最強的是 ${strongToWeak[0]}。`, misconception:'比較含氧酸時須固定中心原子；比較氫鹵酸時不可把 HF 的鍵能與水中酸性趨勢混淆。'
+            }, [`下列${fact.family}中，酸性最強的是哪一種？`, `比較 ${fact.weakToStrong.join('、')} 的酸性，何者最強？`, `依${fact.family}的酸性趨勢，哪一種最容易提供質子？`]);
+            addComparison(out, {
+                template:'acid-strength-order-reverse', factId:fact.id, answer:fact.weakToStrong.join(' ＜ '),
+                distractors:[strongToWeak.join(' ＜ '), [...fact.weakToStrong.slice(1),fact.weakToStrong[0]].join(' ＜ '), [...fact.weakToStrong.slice(0,2).reverse(),...fact.weakToStrong.slice(2)].join(' ＜ ')],
+                type:'酸鹼性質｜反向排列酸性', basis:fact.note,
+                steps:`由弱至強排列為 ${fact.weakToStrong.join(' ＜ ')}；反向由強至弱則為 ${strongToWeak.join(' ＞ ')}。`,
+                conclusion:`正確的弱至強順序為 ${fact.weakToStrong.join(' ＜ ')}。`, misconception:'題目若要求由弱至強，不能把由強至弱的答案直接照抄。'
+            }, [`將 ${fact.weakToStrong.join('、')} 依酸性由弱至強排列。`, `下列哪個順序正確表示${fact.family}酸性逐漸增強？`, `若酸性由弱排到強，${fact.weakToStrong.join('、')}的順序為何？`]);
+        });
+
+        const ionTests = [
+            {id:'chloride-test',group:'silver-halide',ion:'Cl⁻',reagent:'加入 AgNO₃(aq)，再加稀氨水',observation:'生成白色 AgCl 沉澱，之後可溶於稀氨水。',clue:'AgNO₃ 先產生白色沉澱，加入稀氨水後沉澱溶解。'},
+            {id:'bromide-test',group:'silver-halide',ion:'Br⁻',reagent:'加入 AgNO₃(aq)，再加濃氨水',observation:'生成淡黃色 AgBr 沉澱，僅可溶於濃氨水。',clue:'AgNO₃ 產生淡黃色沉澱，稀氨水中不溶、濃氨水中可溶。'},
+            {id:'iodide-test',group:'silver-halide',ion:'I⁻',reagent:'加入 AgNO₃(aq)，再加氨水',observation:'生成黃色 AgI 沉澱，加入氨水後仍不溶。',clue:'AgNO₃ 產生黃色沉澱，加入氨水後仍不溶。'},
+            {id:'fluoride-test',group:'silver-halide',ion:'F⁻',reagent:'加入 AgNO₃(aq)',observation:'不生成 AgF 沉澱；AgF 可溶於水。',clue:'加入 AgNO₃(aq) 後沒有沉澱，因 AgF 可溶於水。'},
+            {id:'sulfate-test',group:'barium',ion:'SO₄²⁻',reagent:'先酸化，再加入 BaCl₂(aq)',observation:'生成白色 BaSO₄ 沉澱，加入稀酸後仍不溶。',clue:'酸化後加 BaCl₂ 出現白色沉澱，之後加入稀酸仍不溶。'},
+            {id:'carbonate-barium-test',group:'barium',ion:'CO₃²⁻',reagent:'加入 BaCl₂(aq)，再加稀酸',observation:'先生成白色 BaCO₃ 沉澱，加入稀酸後溶解並放出 CO₂。',clue:'加 BaCl₂ 先出現白色沉澱；加稀酸後溶解並產生氣泡。'},
+            {id:'sulfite-barium-test',group:'barium',ion:'SO₃²⁻',reagent:'加入 BaCl₂(aq)，再加稀酸',observation:'先生成白色 BaSO₃ 沉澱，加入稀酸後溶解並放出 SO₂。',clue:'加 BaCl₂ 出現白色沉澱；加稀酸後溶解，逸出氣體可使酸性 KMnO₄ 褪色。'},
+            {id:'carbonate-gas-test',group:'acid-gas',ion:'CO₃²⁻',reagent:'加入稀酸，再將氣體通入澄清石灰水',observation:'產生 CO₂，使澄清石灰水混濁。',clue:'加稀酸產生氣體，通入澄清石灰水後變混濁。'},
+            {id:'sulfite-gas-test',group:'acid-gas',ion:'SO₃²⁻',reagent:'加入稀酸，再將氣體通入酸性 KMnO₄',observation:'產生 SO₂，使紫色酸性 KMnO₄ 溶液褪色。',clue:'加稀酸產生氣體，通入紫色酸性 KMnO₄ 後溶液褪色。'},
+            {id:'sulfide-gas-test',group:'acid-gas',ion:'S²⁻',reagent:'加入稀酸，並以醋酸鉛試紙檢驗氣體',observation:'產生 H₂S，使白色醋酸鉛試紙變黑。',clue:'加稀酸產生氣體，白色醋酸鉛試紙變黑。'},
+            {id:'copper-test',group:'hydroxide',ion:'Cu²⁺',reagent:'加入 NaOH(aq)',observation:'生成藍色 Cu(OH)₂ 沉澱。',clue:'加入 NaOH(aq) 後生成藍色沉澱。'},
+            {id:'iron3-test',group:'hydroxide',ion:'Fe³⁺',reagent:'加入 NaOH(aq)',observation:'生成紅褐色 Fe(OH)₃ 沉澱。',clue:'加入 NaOH(aq) 後生成紅褐色沉澱。'},
+            {id:'iron2-test',group:'hydroxide',ion:'Fe²⁺',reagent:'加入 NaOH(aq)',observation:'生成灰綠色 Fe(OH)₂ 沉澱，久置後逐漸轉為紅褐色。',clue:'加入 NaOH(aq) 先出現灰綠色沉澱，久置逐漸轉褐。'},
+            {id:'magnesium-test',group:'hydroxide',ion:'Mg²⁺',reagent:'加入過量 NaOH(aq)',observation:'生成白色 Mg(OH)₂ 沉澱，過量 NaOH 中不溶。',clue:'加入 NaOH(aq) 產生白色沉澱，加入過量 NaOH 後仍不溶。'},
+            {id:'aluminum-test',group:'hydroxide',ion:'Al³⁺',reagent:'加入 NaOH(aq)，再加過量 NaOH 與氨水',observation:'生成白色 Al(OH)₃ 沉澱；可溶於過量 NaOH，但不溶於過量氨水。',clue:'白色沉澱可溶於過量 NaOH，卻不溶於過量氨水。'},
+            {id:'zinc-test',group:'hydroxide',ion:'Zn²⁺',reagent:'加入 NaOH(aq)，再加過量 NaOH 與氨水',observation:'生成白色 Zn(OH)₂ 沉澱；可溶於過量 NaOH，也可溶於過量氨水。',clue:'白色沉澱可溶於過量 NaOH，也可溶於過量氨水。'},
+            {id:'ammonium-test',group:'hydroxide',ion:'NH₄⁺',reagent:'加入 NaOH(aq) 並微熱',observation:'產生 NH₃，使濕潤紅色石蕊試紙變藍。',clue:'加 NaOH 微熱後，產生的氣體使濕潤紅色石蕊試紙變藍。'}
+        ];
+        if (subtype === 'qualitativeIonTest') ionTests.forEach(item => {
+            const alternatives = ionTests.filter(x => x.group === item.group && x.id !== item.id);
+            addComparison(out, {
+                template:'ion-to-observation', factId:item.id, answer:item.observation,
+                distractors:alternatives.map(x => x.observation), type:'離子檢驗｜由離子判讀現象',
+                basis:`${item.ion}的常見檢驗方式為：${item.reagent}；${item.observation}`,
+                steps:`依試劑與反應特徵判斷：${item.reagent}可使${item.ion}呈現題述現象。`,
+                conclusion:`${item.ion}的觀察結果為：${item.observation}`, misconception:'沉澱顏色及是否溶於稀酸、氨水等條件要一起核對，不能只憑「有沉澱」判斷。'
+            }, [`檢驗 ${item.ion} 時，使用 ${item.reagent}，最可能觀察到什麼？`, `已知溶液含 ${item.ion}，加入指定試劑後會出現哪一種現象？`, `${item.ion}與${item.reagent}反應的特徵為何？`]);
+            addComparison(out, {
+                template:'observation-to-ion', factId:item.id, answer:item.ion,
+                distractors:alternatives.map(x => x.ion), type:'離子檢驗｜由現象反推離子',
+                basis:`${item.clue}這組特徵對應 ${item.ion}。`,
+                steps:`先辨認試劑與現象，再核對${item.ion}的特徵反應：${item.observation}`, conclusion:`可能含有的離子為 ${item.ion}。`,
+                misconception:'單一顏色可能不足以判斷；優先使用題目給出的試劑、沉澱溶解性與氣體檢驗等完整線索。'
+            }, [`某溶液出現以下現象：${item.clue}最可能含有哪一種離子？`, `觀察到「${item.observation}」，最合理的離子判斷為何？`, `依上述檢驗現象，待測溶液中最可能存在的離子是什麼？`]);
+        });
+
+        const organicSeries = [
+            {id:'alkane-boiling',series:'直鏈烷類',property:'沸點',order:['CH₄','C₂H₆','C₃H₈','C₄H₁₀','C₅H₁₂'],rule:'同系列直鏈烷類中，碳鏈越長、分子量越大，分散力通常越強，沸點越高。'},
+            {id:'alcohol-boiling',series:'直鏈一元醇',property:'沸點',order:['CH₃OH','C₂H₅OH','C₃H₇OH','C₄H₉OH'],rule:'同系列直鏈一元醇均可形成氫鍵；碳鏈增加時分散力增強，沸點整體上升。'}
+        ];
+        if (subtype === 'organicProperties') organicSeries.forEach(fact => {
+            const highToLow = fact.order.slice().reverse();
+            addComparison(out, {
+                template:'organic-property-highest', factId:fact.id, answer:highToLow[0], distractors:highToLow.slice(1),
+                type:`有機物性質｜${fact.property}比較`, basis:fact.rule,
+                steps:`同系列、相近結構下，碳鏈較長者分子間分散力通常較強，因此${fact.property}較高。`,
+                conclusion:`本組${fact.property}最高的是 ${highToLow[0]}。`, misconception:'比較物性時應控制官能基與分子型態；此趨勢只用於同系列物質的定性比較。'
+            }, [`下列${fact.series}中，${fact.property}最高的是哪一個？`, `比較 ${fact.order.join('、')} 的${fact.property}，何者最高？`, `依同系列物性趨勢，哪個分子的碳鏈最長、${fact.property}最高？`]);
+            addComparison(out, {
+                template:'organic-property-order-reverse', factId:fact.id, answer:fact.order.join(' ＜ '),
+                distractors:[highToLow.join(' ＜ '), [...fact.order.slice(1),fact.order[0]].join(' ＜ '), [...fact.order.slice(0,-1).reverse(),fact.order.at(-1)].join(' ＜ ')],
+                type:`有機物性質｜反向排列${fact.property}`, basis:fact.rule,
+                steps:`依${fact.property}由低至高排列，碳鏈依序增長：${fact.order.join(' ＜ ')}。`,
+                conclusion:`正確順序為 ${fact.order.join(' ＜ ')}。`, misconception:'先確認是同一同系列，再依碳鏈長度與分子間作用力比較。'
+            }, [`將 ${fact.order.join('、')} 依${fact.property}由低至高排列。`, `哪個順序符合${fact.series}的${fact.property}由低到高變化？`, `依${fact.property}遞增排列：${fact.order.join('、')}。`]);
+        });
+        return out;
+    }
+
+    function generatePool(category, selected) {
+        const out = [];
+        const subtypes = Object.keys(selected || {}).filter(k => selected[k]);
+        subtypes.forEach(subtype => {
+            let generated = [];
+            if (category === 'compare') generated = buildChemistryComparisons(subtype);
+            else if (category === 'acidBase') {
+                if (subtype === 'strength') generated = buildAcidStrength(subtype);
+                if (subtype === 'conjugate') generated = buildConjugates();
+                if (subtype === 'salt') generated = buildSalts(subtype);
+                if (subtype === 'pH') generated = buildPH(subtype);
+                if (subtype === 'acidNature') generated = buildAcidNature();
+                if (subtype === 'indicator') generated = buildIndicators();
+            } else if (category === 'concentration') generated = buildConcentration(subtype).map(q => ({...q, subtype}));
+            else if (category === 'mole') {
+                if (subtype === 'mole' || subtype === 'particles') generated = buildMoles(subtype);
+                if (subtype === 'stoich') generated = buildStoich();
+                if (subtype === 'solution') generated = buildSolutions(subtype);
+                if (subtype === 'gas') generated = buildGas();
+                if (subtype === 'solubility') generated = buildSolubility();
+            } else if (category === 'thermo') {
+                if (subtype === 'thermo') generated = buildThermo();
+                if (subtype === 'rate') generated = buildRate();
+                if (subtype === 'equilibrium') generated = buildEquilibrium();
+            } else if (category === 'organic') generated = buildOrganic(subtype);
+        out.push(...generated.filter(q => q && q.options.length >= 3 && q.options.length <= 4 && q.options.filter(v => key(v) === key(q.answer)).length === 1));
+        });
+        return out;
+    }
+
+    function capacity(category, selected) {
+        return generatePool(category, selected).length;
+    }
+
+    function explanationStyle(question) {
+        const modes = ['guided', 'worked', 'diagnostic'];
+        const mode = modes[Math.floor(Math.random() * modes.length)];
+        if (mode === 'worked') return {
+            basis: question.basis,
+            steps: question.steps,
+            conclusion: question.conclusion,
+            labels: ['已知與所求', '推導過程', '答案檢核']
+        };
+        if (mode === 'diagnostic') return {
+            basis: question.basis,
+            steps: `${question.steps} 常見錯誤：${question.misconception}`,
+            conclusion: question.conclusion,
+            labels: ['核心概念', '判斷與易錯點', '結論']
+        };
+        return {
+            basis: question.basis,
+            steps: question.steps,
+            conclusion: question.conclusion,
+            labels: ['核心規則', '逐步判斷', '結論']
+        };
+    }
+
+    function generate(quizData) {
+        const category = window.extensionCategory;
+        const cfg = CATEGORIES()[category];
+        if (!cfg) return false;
+        const pool = generatePool(category, window.extensionSelectedSubtypes || {});
+        const used = window.quizState._extensionAskedIds || (window.quizState._extensionAskedIds = new Set());
+        let candidates = pool.filter(item => !used.has(item.id));
+        if (category === 'concentration' && candidates.length) {
+            const enabled = Object.keys(window.extensionSelectedSubtypes || {}).filter(id => window.extensionSelectedSubtypes[id]);
+            const counts = window.quizState._concentrationSubtypeCounts || (window.quizState._concentrationSubtypeCounts = {});
+            const available = enabled.filter(id => candidates.some(item => item.subtype === id));
+            const least = Math.min(...available.map(id => counts[id] || 0));
+            const chosen = shuffle(available.filter(id => (counts[id] || 0) === least))[0];
+            candidates = candidates.filter(item => item.subtype === chosen);
+            const recent = window.quizState._concentrationRecentFacts || (window.quizState._concentrationRecentFacts = []);
+            const fresh = candidates.filter(item => !recent.includes(`${item.subtype}:${item.id.split(':')[1]}`));
+            if (fresh.length) candidates = fresh;
+            const templateCounts = window.quizState._concentrationTemplateCounts || (window.quizState._concentrationTemplateCounts = {});
+            const templates = unique(candidates.map(item => item.template));
+            const minimum = Math.min(...templates.map(id => templateCounts[`${chosen}:${id}`] || 0));
+            const template = shuffle(templates.filter(id => (templateCounts[`${chosen}:${id}`] || 0) === minimum))[0];
+            candidates = candidates.filter(item => item.template === template);
+            templateCounts[`${chosen}:${template}`] = (templateCounts[`${chosen}:${template}`] || 0) + 1;
+            counts[chosen] = (counts[chosen] || 0) + 1;
+        }
+        if (!candidates.length) return false;
+        const item = candidates[Math.floor(Math.random() * candidates.length)];
+        if (category === 'concentration') {
+            const recent = window.quizState._concentrationRecentFacts;
+            recent.push(`${item.subtype}:${item.id.split(':')[1]}`);
+            if (recent.length > 12) recent.shift();
+        }
+        const explanations = explanationStyle(item);
+        used.add(item.id);
+        quizData._templateId = `extension:${item.id}`;
+        quizData._extensionRecord = item;
+        quizData.type = `${cfg.label}｜${item.type}`;
+        quizData.question = item.question;
+        quizData.answer = item.answer;
+        quizData.forcedOpts = item.options;
+        quizData.displayMode = item.displayMode || 'text';
+        quizData.showExplanation = true;
+        quizData.explanation = explanations;
+        quizData.correctReason = [explanations.basis, explanations.steps, explanations.conclusion].join(' ');
+        quizData.optionRationales = Object.fromEntries(item.options.filter(v => key(v) !== key(item.answer)).map((v, index) => {
+            const specific = item.optionRationales && (item.optionRationales[key(v)] || item.optionRationales[v]);
+            return [key(v), specific || `${item.misconception}（選項 ${v} 未符合上述轉換／條件。）`];
+        }));
+        return true;
+    }
+
+    return { generate, capacity, generatePool };
 })();
