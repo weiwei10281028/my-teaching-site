@@ -699,7 +699,7 @@ const PRECIP_ENGINE = (function() {
             qd.forcedOpts=shuffle(['可溶','沉澱']);
             return true;
         }
-        const solubleCats=CATIONS.filter(c=>IA.has(c.elem)||c.id==='NH4+'||c.id==='H+');
+        const solubleCats=CATIONS.filter(c=>IA.has(c.elem)||c.id==='NH4+');
         const insolCats=CATIONS.filter(c=>!IA.has(c.elem)&&c.id!=='NH4+'&&c.id!=='H+'&&PRECIP_PAIRS.some(p=>p.an.id==='CO32-'&&p.cat.id===c.id));
         if(Math.random()<0.5&&insolCats.length){
             const cat=pick(insolCats);
@@ -1095,7 +1095,9 @@ function periodicRandomParticle(element, excludeCharge) {
 }
 
 function periodicParseParticle(value, pool) {
-    const plain = calibrationPlainElement(value)
+    const raw = String(value);
+    const mass = raw.match(/^<sup class="nuclide-mass">(\d+)<\/sup>/);
+    const plain = calibrationPlainElement(mass ? raw.slice(mass[0].length) : raw)
         .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, ch => String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(ch)))
         .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, ch => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)))
         .replace(/\s+/g, '');
@@ -1106,7 +1108,7 @@ function periodicParseParticle(value, pool) {
     if (!element) return null;
     const magnitude = match[3] ? Number(match[2] || 1) : 0;
     const q = match[3] ? (match[3] === '+' ? magnitude : -magnitude) : 0;
-    return periodicMakeParticle(element, q);
+    return periodicMakeParticle(element, q, mass ? Number(mass[1]) : undefined);
 }
 
 function periodicParticleReason(particle) {
@@ -1118,13 +1120,14 @@ function periodicParticleReason(particle) {
 function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn) {
     const pool = window.quizState && Array.isArray(window.quizState.pool) ? window.quizState.pool : [];
     const mode = quizData._periodicParticleMode || 'full';
+    const label = mode === 'full' ? periodicNuclideLabel : periodicParticleLabel;
     const allCandidates = [];
-    const seen = new Set([periodicParticleLabel(correctParticle)]);
+    const seen = new Set([label(correctParticle)]);
     for (const element of calibrationShuffle(pool)) {
         for (const q of calibrationShuffle(PERIODIC_PARTICLE_CHARGES)) {
             const particle = periodicMakeParticle(element, q);
-            if (!particle || !predicate(particle) || seen.has(periodicParticleLabel(particle))) continue;
-            seen.add(periodicParticleLabel(particle));
+            if (!particle || !predicate(particle) || seen.has(label(particle))) continue;
+            seen.add(label(particle));
             const pGap = Math.abs(particle.p - correctParticle.p);
             const nGap = Math.abs(particle.n - correctParticle.n);
             const eGap = Math.abs(particle.e - correctParticle.e);
@@ -1146,7 +1149,7 @@ function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn)
                 if (eGap === 1) score += 8;
             }
             allCandidates.push({
-                value: periodicParticleLabel(particle),
+                value: label(particle),
                 reason: reasonFn(particle),
                 _particle: particle,
                 score,
@@ -1173,13 +1176,13 @@ function periodicParticleOptions(quizData, correctParticle, predicate, reasonFn)
     const candidates = selected.slice(0, 3);
     if (candidates.length < 3) return false;
     quizData.forcedOpts = calibrationShuffle([
-        periodicParticleLabel(correctParticle),
+        label(correctParticle),
         ...candidates.map(entry => entry.value)
     ]);
     quizData.optionRationales = {};
     candidates.forEach(entry => { quizData.optionRationales[calibrationOptionKey(entry.value)] = entry.reason; });
     quizData._periodicOptionParticles = {
-        [calibrationOptionKey(periodicParticleLabel(correctParticle))]: correctParticle,
+        [calibrationOptionKey(label(correctParticle))]: correctParticle,
         ...Object.fromEntries(candidates.map(entry => [calibrationOptionKey(entry.value), entry._particle]))
     };
     return true;
@@ -2599,8 +2602,9 @@ function attachGenericCalibrationReason(type, quizData, target, parsed) {
             : `核對每個選項的 Z−q；只有 ${answer} 與題目粒子的電子數相同。`;
     } else if (/組態辨識|組態逆推/.test(label)) {
         reason = `依填入順序核對 ${target ? target.noble : answer} 的末端次層與總電子數，因此對應答案為 ${answer}。`;
-    } else if (/價電子數/.test(label)) {
-        reason = `${target.s} 的價電子來自最外層（過渡元素另核對未填滿 d 次層），逐項統計得到 ${answer} 個。`;
+    } else if (/最外層電子數/.test(label)) {
+        const outerShell = Math.max(...(parsed || QUIZ_HELPER.parse(target.c)).map(orbital => orbital.n));
+        reason = `${target.s} 的最大主量子數是 n=${outerShell}；只加總這一層的電子，得到 ${answer} 個。`;
     } else if (/未成對/.test(label)) {
         reason = `依 ${target.s} 的基態電子組態，等能軌域先單獨佔據再配對；依洪德定則得到 ${answer} 個未成對電子。`;
     } else if (/軌域總數統計/.test(label)) {
@@ -3014,7 +3018,7 @@ function calibrationFormulaBinaryRationale(quizData, item) {
 function calibrationFormulaOptionRationale(quizData, value, item) {
     if (!item || calibrationOptionKey(value) === calibrationOptionKey(quizData.answer)) return '';
     const label = quizData.type || '';
-    if (/是非題/.test(label)) return formulaBinaryRationale(quizData, item);
+    if (/是非題/.test(label)) return calibrationFormulaBinaryRationale(quizData, item);
     if (/化學式 → 中文名稱/.test(label)) {
         return calibrationFormulaNameRationale(item, formulaOptionDataEntry(value));
     }
@@ -3408,7 +3412,6 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/元素\s*>\s*分類/.test(label)) {
         // 元素 → 分類要比較「分類標籤」本身，不能把週期表座標當成分類選項。
         const typeValues = [...new Set(pool.map(el => String(el.type || '').trim()).filter(Boolean))];
-        if (!typeValues.includes('以上皆非')) typeValues.push('以上皆非');
         candidates = typeValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素位置可能相近，但金屬／非金屬／類金屬分類不同。' }))
@@ -3421,7 +3424,6 @@ function refineElementQuestionOptions(type, quizData, target) {
     } else if (/元素\s*>\s*常溫狀態/.test(label)) {
         // 元素 → 常溫狀態只有固、液、氣三個合理類別，選項要維持同一表示形式。
         const stateValues = [...new Set(pool.map(el => QUIZ_HELPER.getCleanState(el.state)).filter(Boolean))];
-        if (!stateValues.includes('以上皆非')) stateValues.push('以上皆非');
         candidates = stateValues
             .filter(value => calibrationOptionKey(value) !== calibrationOptionKey(answer))
             .map(value => ({ value, reason: '元素可能相鄰，但在 25°C、1 atm 下的物態不同。' }))
@@ -3768,7 +3770,7 @@ function applyPeriodicChallengeVariant(type, quizData, target) {
         if (Math.random() < 0.5) {
             quizData.type = '識別校準：質子／中子／電子反推';
             quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
-            quizData.answer = periodicParticleLabel(particle);
+            quizData.answer = periodicNuclideLabel(particle);
             quizData.displayMode = 'ion';
             quizData._periodicParticle = particle;
             quizData._periodicParticleMode = 'full';
@@ -3868,6 +3870,91 @@ function applyPeriodicChallengeVariant(type, quizData, target) {
     }
 
     return false;
+}
+
+// [化學式, 目標元素, 個數, 其餘原子的氧化數總和, 總電荷, 列式依據]
+const CALIBRATION_OXIDATION_FACTS = [
+    ["H2O", "O", 1, 2, 0, "水中 H 各為 +1"],
+    ["H2O2", "O", 2, 2, 0, "過氧化物中的兩個 O 等價，H 各為 +1"],
+    ["OF2", "O", 1, -2, 0, "F 各為 −1"],
+    ["O2F2", "O", 2, -2, 0, "F 各為 −1，兩個 O 等價"],
+    ["NaH", "H", 1, 1, 0, "Na 為 +1"],
+    ["CaH2", "H", 2, 2, 0, "Ca 為 +2"],
+    ["NH3", "N", 1, 3, 0, "H 各為 +1"],
+    ["NH4 +", "N", 1, 4, 1, "H 各為 +1"],
+    ["NO", "N", 1, -2, 0],
+    ["NO2", "N", 1, -4, 0],
+    ["NO2 -", "N", 1, -4, -1],
+    ["NO3 -", "N", 1, -6, -1],
+    ["CO", "C", 1, -2, 0],
+    ["CO2", "C", 1, -4, 0],
+    ["CH4", "C", 1, 4, 0, "H 各為 +1"],
+    ["CO3 2-", "C", 1, -6, -2],
+    ["HCO3 -", "C", 1, -5, -1, "H 為 +1，三個 O 合計 −6"],
+    ["SO2", "S", 1, -4, 0],
+    ["SO3", "S", 1, -6, 0],
+    ["H2S", "S", 1, 2, 0, "H 各為 +1"],
+    ["SO3 2-", "S", 1, -6, -2],
+    ["SO4 2-", "S", 1, -8, -2],
+    ["H2SO4", "S", 1, -6, 0, "兩個 H 合計 +2，四個 O 合計 −8"],
+    ["PO4 3-", "P", 1, -8, -3],
+    ["ClO -", "Cl", 1, -2, -1],
+    ["ClO2 -", "Cl", 1, -4, -1],
+    ["ClO3 -", "Cl", 1, -6, -1],
+    ["ClO4 -", "Cl", 1, -8, -1],
+    ["MnO4 -", "Mn", 1, -8, -1],
+    ["MnO4 2-", "Mn", 1, -8, -2],
+    ["MnO2", "Mn", 1, -4, 0],
+    ["CrO4 2-", "Cr", 1, -8, -2],
+    ["Cr2O7 2-", "Cr", 2, -14, -2, "O 各為 −2，兩個 Cr 等價"],
+    ["FeO", "Fe", 1, -2, 0],
+    ["Fe2O3", "Fe", 2, -6, 0, "O 各為 −2，兩個 Fe 同價"],
+    ["Cu2O", "Cu", 2, -2, 0, "O 為 −2，兩個 Cu 同價"],
+    ["CuO", "Cu", 1, -2, 0]
+].map(([formula, element, count, known, charge, rule = 'O 各為 −2']) =>
+    ({ formula, element, count, known, charge, rule, oxidation: (charge - known) / count }));
+
+function generateCalibrationOxidation(quizData) {
+    const facts = CALIBRATION_OXIDATION_FACTS;
+    const selected = facts[Math.floor(Math.random() * facts.length)];
+    const signed = value => value > 0 ? '+' + value : String(value);
+    const label = fact => formatFormula(fact.formula) + ' 中的 ' + fact.element;
+    const explain = fact => fact.rule + '。設 ' + fact.element + ' 的氧化數為 x，由 ' + fact.count +
+        'x＋(' + signed(fact.known) + ')＝' + signed(fact.charge) + '，得 x＝' + signed(fact.oxidation) + '。';
+    if (Math.random() < 0.4) {
+        const errors = calibrationShuffle(facts.filter(fact => fact.oxidation !== selected.oxidation))
+            .sort((a, b) => Math.abs(a.oxidation - selected.oxidation) - Math.abs(b.oxidation - selected.oxidation))
+            .slice(0, 3).map(fact => ({ value:label(fact), reason:explain(fact) }));
+        quizData.type = '氧化數判斷（反向）';
+        quizData.question = '下列何者的氧化數為 ' + signed(selected.oxidation) + '？';
+        quizData.displayMode = 'formula';
+        quizData.answer = label(selected);
+        setCalibrationOptions(quizData, quizData.answer, errors);
+    } else {
+        const { count, known, charge, oxidation } = selected;
+        const errors = [
+            ...(selected.element === 'O' && oxidation !== -2
+                ? [[-2, '把氧一律視為 −2，漏看過氧化物或氧氟化物的例外。']] : []),
+            ...(selected.element === 'H' && oxidation === -1
+                ? [[1, '沿用氫通常為 +1 的規則，漏看金屬氫化物的例外。']] : []),
+            [-known / count, '把多原子離子的氧化數總和當成 0。'],
+            [charge - known, '得到目標元素的氧化數總和後，漏除原子個數。'],
+            [-oxidation, '解方程時把氧化數的正負號顛倒。'],
+            [0, '把化合物中的原子當成游離元素。'],
+            [charge, '把整個粒子的總電荷當成單一原子的氧化數。']
+        ].map(([value, reason]) => ({ value:signed(value), reason }));
+        quizData.type = '氧化數判斷';
+        quizData.question = label(selected) + '，其氧化數為何？';
+        quizData.displayMode = 'text';
+        quizData.answer = signed(oxidation);
+        const uniqueErrors = new Map();
+        for (const error of errors) {
+            if (error.value !== quizData.answer && !uniqueErrors.has(error.value)) uniqueErrors.set(error.value, error);
+        }
+        setCalibrationOptions(quizData, quizData.answer, [...uniqueErrors.values()].slice(0, 3));
+    }
+    quizData._oxidationFact = selected;
+    setCalibrationReason(quizData, explain(selected));
 }
 
 window.renderNextQuestion = function() {
@@ -4293,7 +4380,7 @@ if (type === 0) {
     } else if (subType === 4) {
         quizData.type = "識別校準：質子／中子／電子反推";
         quizData.question = `某粒子有 ${particle.p} 個質子、${particle.n} 個中子與 ${particle.e} 個電子，該粒子為何？`;
-        quizData.answer = particleText;
+        quizData.answer = periodicNuclideLabel(particle);
         quizData.displayMode = "ion";
         quizData._periodicParticleMode = "full";
         if (!periodicParticleOptions(
@@ -4324,9 +4411,10 @@ if (type === 0) {
         )) continue;
     }
 } else if (type === 7) {
-    quizData.type        = "量子結構：價電子數"; 
-    quizData.question    = [ `${s} 的「價電子數」共有多少個？`, `${s} 最外層殼層的電子數為何？` ][Math.floor(Math.random() * 2)];
-    quizData.answer      = QUIZ_HELPER.getValence(parsed, target).toString();
+    quizData.type        = "量子結構：最外層電子數";
+    quizData.question    = [`${s} 基態原子最外層的電子數為何？`, `${s} 基態原子中，最大主量子數所屬殼層共有幾個電子？`][Math.floor(Math.random() * 2)];
+    const outerShell = Math.max(...parsed.map(orbital => orbital.n));
+    quizData.answer      = String(parsed.filter(orbital => orbital.n === outerShell).reduce((sum, orbital) => sum + orbital.count, 0));
     quizData.displayMode = "number";
 } else if (type === 8) {
     quizData.type        = "量子結構：未成對電子"; 
@@ -5012,117 +5100,7 @@ if (type === 0) {
         quizData._imgAtomElem = sel19.elem;
     }
 } else if (type === 18) {
-    // 氧化數判斷題型（正向＋反向）
-    const METAL_ELEMS = new Set(["Li","Na","K","Rb","Cs","Be","Mg","Ca","Sr","Ba","Al","Ga","In","Fe","Cu","Ag","Au","Zn","Cd","Hg","Sn","Pb","Ni","Co","Mn","Cr","Ti","V","Pt","Pd"]);
-    const oxItems = [];
-    const _countElem = (atoms, elem) => atoms.filter(a => a.elem === elem).length;
-    const _isComplexOrg = (name) => { const m = name.match(/^C(\d+)/); return m && parseInt(m[1]) > 2; };
-    const _parseCharge = (name) => {
-        const m = name.match(/\s+(\d*)([+-])\s*$/);
-        if (!m) return 0;
-        const num = m[1] ? parseInt(m[1]) : 1;
-        return m[2] === '+' ? num : -num;
-    };
-    for (let mKey in MOLECULE_DB) {
-        const mol = MOLECULE_DB[mKey];
-        if (mol.isIonic || mol.isMetal) continue;
-        if (!mol.atomsRaw || !mol.bondsRaw || mol.atomsRaw.length < 2) continue;
-        const hasOnlyH = mol.atomsRaw.every(a => a.elem === "H");
-        if (hasOnlyH) continue;
-        const hasMetal = mol.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
-        if (hasMetal) continue;
-        const nameParts = (mol.fullKey || mKey).split('|');
-        const mainName = nameParts[0].trim();
-        if (_isComplexOrg(mainName)) continue;
-        const charge = _parseCharge(mainName);
-        mol.atomsRaw.forEach((atom, idx) => {
-            if (_countElem(mol.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
-            const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, mol.atomsRaw, mol.bondsRaw, charge);
-                    oxItems.push({ molKey: mKey, name: mainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(mol.atomsRaw, atom.elem), charge });
-        });
-        if (mol.variants) {
-            for (let vKey in mol.variants) {
-                const variant = mol.variants[vKey];
-                if (variant.isIonic) continue;
-                if (!variant.atomsRaw || !variant.bondsRaw || variant.atomsRaw.length < 2) continue;
-                const vHasMetal = variant.atomsRaw.some(a => METAL_ELEMS.has(a.elem));
-                if (vHasMetal) continue;
-                const vNameParts = (variant.fullKey || vKey).split('|');
-                const vMainName = vNameParts[0].trim();
-                if (_isComplexOrg(vMainName)) continue;
-                const vCharge = _parseCharge(vMainName);
-                variant.atomsRaw.forEach((atom, idx) => {
-                    if (_countElem(variant.atomsRaw, atom.elem) > 1 && atom.elem !== "H" && atom.elem !== "O") return;
-                    const ox = QUIZ_HELPER.calculateAtomOxidationNumber(idx, variant.atomsRaw, variant.bondsRaw, vCharge);
-                    oxItems.push({ molKey: vKey, name: vMainName, atomElem: atom.elem, atomIdx: idx, oxidationNumber: ox, atomCount: _countElem(variant.atomsRaw, atom.elem), charge: vCharge });
-                });
-            }
-        }
-    }
-    const uniqueOxItems = [];
-    const seenKeys = new Set();
-    oxItems.forEach(item => {
-        const key = `${item.name}-${item.atomElem}-${item.oxidationNumber}`;
-        if (!seenKeys.has(key)) { seenKeys.add(key); uniqueOxItems.push(item); }
-    });
-    const interestingItems = uniqueOxItems.filter(item => item.oxidationNumber !== 0);
-    const finalItems = interestingItems.length > 5 ? interestingItems : uniqueOxItems;
-    if (finalItems.length === 0) {
-        quizData.type = "氧化數判斷";
-        quizData.question = "暫無可用題目";
-        quizData.answer = "0";
-        quizData.displayMode = "text";
-        quizData.forcedOpts = ["-2", "-1", "0", "+1"];
-    } else {
-        const isReverse = Math.random() < 0.4;
-        const _formatOx = (ox) => ox > 0 ? `+${ox}` : `${ox}`;
-        if (isReverse) {
-            const availOx = [...new Set(finalItems.map(m => m.oxidationNumber))];
-            const targetOx = availOx[Math.floor(Math.random() * availOx.length)];
-            const correctPool = finalItems.filter(m => m.oxidationNumber === targetOx);
-            const wrongPool = finalItems.filter(m => m.oxidationNumber !== targetOx);
-            const correctMol = correctPool[Math.floor(Math.random() * correctPool.length)];
-            const correctDisplay = formatFormula(correctMol.name) + ` 中的 ${correctMol.atomElem}`;
-            const wrongOpts = [];
-            const usedNames = new Set([correctMol.name + correctMol.atomElem]);
-            const rankedWrong = [...wrongPool].sort((a, b) => {
-                const da = Math.abs(a.oxidationNumber - targetOx);
-                const db = Math.abs(b.oxidationNumber - targetOx);
-                return da - db || String(a.name).localeCompare(String(b.name));
-            });
-            for (const w of rankedWrong) {
-                if (wrongOpts.length >= 3) break;
-                const wKey = w.name + w.atomElem;
-                if (!usedNames.has(wKey)) { usedNames.add(wKey); wrongOpts.push(formatFormula(w.name) + ` 中的 ${w.atomElem}`); }
-            }
-            quizData.type = "氧化數判斷（反向）";
-            quizData.question = `下列何者的氧化數為 ${_formatOx(targetOx)}？`;
-            quizData.answer = correctDisplay;
-            quizData._oxidationContext = { element: correctMol.atomElem, charge: correctMol.charge || 0, target: targetOx };
-            quizData.displayMode = "formula";
-            quizData.forcedOpts = calibrationShuffle([correctDisplay, ...wrongOpts]);
-        } else {
-            const selected = finalItems[Math.floor(Math.random() * finalItems.length)];
-            const displayName = `<span style="display: inline; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(56,189,248,0.5); vertical-align: baseline;">${formatFormula(selected.name)}</span>`;
-            const correctOx = _formatOx(selected.oxidationNumber);
-            const wrongOxSet = new Set();
-            const candidates = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].filter(x => x !== selected.oxidationNumber);
-            candidates.sort((a, b) => {
-                const aSignFlip = Math.sign(a) !== Math.sign(selected.oxidationNumber) ? 0 : 1;
-                const bSignFlip = Math.sign(b) !== Math.sign(selected.oxidationNumber) ? 0 : 1;
-                return Math.abs(a - selected.oxidationNumber) - Math.abs(b - selected.oxidationNumber) || aSignFlip - bSignFlip || a - b;
-            });
-            for (let i = 0; i < 3 && i < candidates.length; i++) wrongOxSet.add(candidates[i]);
-            const wrongOxArr = [...wrongOxSet].map(x => _formatOx(x));
-            const allOptions = calibrationShuffle([correctOx, ...wrongOxArr]);
-            quizData.type = "氧化數判斷";
-            quizData.question = `${displayName} 中的 ${selected.atomElem} 原子，其氧化數為何？`;
-            quizData.answer = correctOx;
-            quizData._oxidationContext = { element: selected.atomElem, charge: selected.charge || 0, target: selected.oxidationNumber };
-            quizData.displayMode = "text";
-            quizData.forcedOpts = allOptions;
-        }
-    }
+    generateCalibrationOxidation(quizData);
 } else if ((type >= 32 && type <= 39) || type === 50) {
     if (!window.FORMULA_ENGINE || !window.FORMULA_ENGINE.generate(type, quizData)) {
         continue;
@@ -5176,15 +5154,8 @@ if (type === 0) {
         const uniqueOptionCount = new Set(optionKeys).size;
         const answerKey = calibrationOptionKey(quizData.answer);
         const correctCount = optionKeys.filter(key => key === answerKey).length;
-        const isStateQuestion = /常溫狀態/.test(quizData.type || '');
-        const isClassificationQuestion = /分類/.test(quizData.type || '');
-        const minimumOptions = type >= 46 && type <= 49 ? 3 : isStateQuestion
-            ? 4
-            : isClassificationQuestion
-            ? 4
-            : optionKeys.includes('微溶')
-            ? 3
-            : (optionKeys.includes('是') || optionKeys.includes('否') || optionKeys.includes('可溶') || optionKeys.includes('難溶') || optionKeys.includes('沉澱') ? 2 : 4);
+        const binary = optionKeys.length === 2 && optionKeys.some(option => ['是', '否', '可溶', '難溶', '沉澱'].includes(option));
+        const minimumOptions = binary ? 2 : 3;
         if (!Array.isArray(quizData.forcedOpts) || quizData.forcedOpts.length < minimumOptions ||
             uniqueOptionCount !== quizData.forcedOpts.length || correctCount !== 1) {
             continue;
@@ -5211,12 +5182,14 @@ if (type === 0) {
         window.quizState._periodicRenderRetry = (window.quizState._periodicRenderRetry || 0) + 1;
         if (window.quizState._periodicRenderRetry <= 2) return window.renderNextQuestion();
         window.quizState._periodicRenderRetry = 0;
-        // 本題無法在有限次嘗試內取得唯一正解時，改抽一般週期表題，仍維持四選一流程。
-        if (Array.isArray(window.quizState.typeDeck)) {
-            const retryIndex = Math.max(0, window.quizState.currentQ);
-            window.quizState.typeDeck[retryIndex] = 0;
-        }
-        return window.renderNextQuestion();
+        document.getElementById('quiz-content-area').style.display = 'none';
+        document.getElementById('quiz-setup-area').style.display = 'flex';
+        document.getElementById('quiz-status-text').textContent = '此範圍的有效題目不足，請調整子項目或題數後重試。';
+        window.quizState.currentQ = 0;
+        window.quizState.correctCount = 0;
+        window.quizState.askedZ = [];
+        window.quizState.askedQuestions = [];
+        return;
     }
     window.quizState._periodicRenderRetry = 0;
 
@@ -6523,7 +6496,7 @@ window.KNOWLEDGE_ENGINE = (() => {
     unit('u-cal-j', 'common', '卡與焦耳的換算', '1 cal=4.184 J', ['1 cal=4.184 J', '1 cal=0.4184 J', '1 cal=41.84 J', '1 cal=101.325 J'], 'cal與J都是能量單位；熱化學中使用1 cal=4.184 J。', { semanticGroup: 'units:energy-conversion' });
     unit('u-kpal', 'common', '壓力、體積與能量的換算', '1 kPa·L=1 J', ['1 kPa·L=1 J', '1 kPa·L=0.001 J', '1 kPa·L=101.325 J', '1 kPa·L=1 cal'], '由Pa·m³=J得到。');
     unit('u-latm', 'common', 'L·atm與焦耳的換算', '1 L·atm=101.325 J', ['1 L·atm=101.325 J', '1 L·atm=1 J', '1 L·atm=760 J', '1 L·atm=4.184 J'], '理想氣體與熱力學常見換算。');
-    unit('u-pa', 'common', '帕斯卡的基本單位', 'N·m⁻²', ['N·m⁻²', 'J·s⁻¹', 'C·s⁻¹', 'J·C⁻¹'], 'Pa=N/m²。');
+    unit('u-pa', 'common', '帕斯卡的等效單位', 'N·m⁻²', ['N·m⁻²', 'J·s⁻¹', 'C·s⁻¹', 'J·C⁻¹'], 'Pa=N/m²。');
     unit('u-coulomb', 'common', '庫侖的基本單位', 'A·s', ['A·s', 'J·C⁻¹', 'N·m⁻²', 'J·s⁻¹'], 'C=A·s。');
     unit('u-watt', 'common', '瓦特的基本關係', 'J·s⁻¹', ['J·s⁻¹', 'N·m⁻²', 'C·s⁻¹', 'J·C⁻¹'], 'W=J/s。');
     unit('u-volt', 'common', '伏特的基本關係', 'J·C⁻¹', ['J·C⁻¹', 'J·s⁻¹', 'A·s', 'N·m⁻²'], 'V=J/C。');
@@ -6853,7 +6826,7 @@ window.CALIBRATION_EXTENSION_DATA = {
         { id:'org-methanol', name:'甲醇', formula:'CH₃OH', family:'醇', functional:'羥基（−OH）', bond:'單鍵' },
         { id:'org-acetic', name:'乙酸', formula:'CH₃COOH', family:'羧酸', functional:'羧基（−COOH）', bond:'單鍵' },
         { id:'org-ethyl-acetate', name:'乙酸乙酯', formula:'CH₃COOCH₂CH₃', family:'酯', functional:'酯基（−COO−）', bond:'單鍵' },
-        { id:'org-acetone', name:'丙酮', formula:'CH₃COCH₃', family:'酮', functional:'羰基（>C=O）', bond:'單鍵' },
+        { id:'org-acetone', name:'丙酮', formula:'CH₃COCH₃', family:'酮', functional:'羰基碳兩側各接一個烴基（R−CO−R′）', bond:'單鍵' },
         { id:'org-ethanal', name:'乙醛', formula:'CH₃CHO', family:'醛', functional:'醛基（−CHO）', bond:'單鍵' },
         { id:'org-dimethyl-ether', name:'二甲醚', formula:'CH₃OCH₃', family:'醚', functional:'醚鍵（−O−）', bond:'單鍵' },
         { id:'org-methylamine', name:'甲胺', formula:'CH₃NH₂', family:'胺', functional:'胺基（−NH₂）', bond:'單鍵' },
@@ -6911,10 +6884,10 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         return values.slice(0, minimum);
     }
 
-    function numericDistractors(answer, unit = '', scale = 1) {
-        const a = Number(answer);
-        const offsets = [a * 2, a / 2, a + scale, Math.max(0, a - scale), a + scale * 2, Math.max(0, a - scale * 2)];
-        return unique(offsets.map(num).filter(v => Number(v) !== a).map(v => unit ? `${v} ${unit}` : v));
+    function calculationErrors(unit, ...errors) {
+        return errors.filter(([value]) => Number.isFinite(value)).map(([value, reason]) => ({
+            value: unit ? `${num(value)} ${unit}` : num(value), reason
+        }));
     }
 
     function chemDistractors(pool, answer) {
@@ -6922,7 +6895,19 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
     }
 
     function appendQuestion(out, cfg) {
-        const options = unique([cfg.answer, ...itemCandidates(cfg.answer, cfg.distractors, 3)]);
+        const optionRationales = { ...cfg.optionRationales };
+        const seen = new Set([key(cfg.answer)]);
+        const wrongOptions = [];
+        for (const option of shuffle(cfg.distractors || [])) {
+            const value = typeof option === 'object' ? option.value : option;
+            const normalized = key(value);
+            if (!normalized || seen.has(normalized)) continue;
+            seen.add(normalized);
+            wrongOptions.push(String(value));
+            if (option.reason) optionRationales[normalized] = option.reason;
+            if (wrongOptions.length === 3) break;
+        }
+        const options = [String(cfg.answer), ...wrongOptions];
         if (options.length < 3 || options.length > 4) return;
         out.push({
             id: `${cfg.template}:${cfg.factId}:${cfg.variant || 'a'}`,
@@ -6935,7 +6920,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             steps: cfg.steps,
             conclusion: cfg.conclusion,
             misconception: cfg.misconception || '先辨認題目指定的條件，再依同一章節規則比較選項。',
-            optionRationales: cfg.optionRationales,
+            optionRationales,
             syllabus: cfg.required === false ? '加深加廣選修' : '必修',
             type: cfg.type
         });
@@ -6991,7 +6976,12 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const kindLabel = item.kind === 'acid' ? '酸' : '鹼';
             addStyled(out, {
                 template: `weak-${item.kind}-equilibrium-ph`, factId:parameterId, answer,
-                distractors:numericDistractors(pH, '', 1), type:`強弱酸鹼｜弱${kindLabel}平衡計算`, displayMode:'number',
+                distractors: [
+                    { value:(14-pH).toFixed(2), reason:'混淆 pH 和 pOH，取了正解的互補值。' },
+                    { value:(item.kind === 'acid' ? -Math.log10(concentration) : 14 + Math.log10(concentration)).toFixed(2), reason:'以完全解離計算，直接把分析濃度當作離子濃度。' },
+                    { value:(item.kind === 'acid' ? -Math.log10(k) : 14 + Math.log10(k)).toFixed(2), reason:'將平衡常數當作平衡離子濃度。' }
+                ].map(option => ({ ...option, value: String(Number(option.value)) })),
+                type:`強弱酸鹼｜弱${kindLabel}平衡計算`, displayMode:'number',
                 basis:`${item.formula} 為弱${kindLabel}，在水中部分反應；25 °C 且濃度為 ${cText} M。`,
                 steps: item.kind === 'acid'
                     ? `設平衡時 [H₃O⁺]=x。Kₐ=x²/(${cText}−x)=${hText}；解 x²+Kₐx−Kₐ(${cText})=0，得 x=${ion.toPrecision(3)} M，pH=−log x=${answer}。`
@@ -7000,8 +6990,8 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 misconception:'弱酸／弱鹼不能把分析濃度直接當成 [H₃O⁺]／[OH⁻]；先用平衡常數求反應量，再取對數。'
             }, [
                 `${item.formula} 溶液濃度為 ${cText} M，${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}，求 25 °C 下 pH。`,
-                `某 ${kindLabel}以 ${item.formula} 表示，分析濃度 ${cText} M、${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}。溶液 pH 約多少？`,
-                `不假設完全解離。對 ${cText} M 的 ${item.formula} 水溶液，已知 ${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}，估算 pH。`
+                `25 °C 時，${item.formula} 溶液的分析濃度為 ${cText} M，${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}。pH 約多少？`,
+                `估算 25 °C 下 ${cText} M 的 ${item.formula} 水溶液 pH（${item.kind === 'acid' ? 'Kₐ' : 'Kᵦ'}=${hText}）。`
             ]);
         }));
         // 少量反向分類題保留基本辨識；同一物種仍以共用資料與模板生成。
@@ -7086,13 +7076,13 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 addStyled(out, {
                     template: 'salt-active-ion', factId: item.id, answer: correctIon,
                     distractors: ionOptions, type: '離子水解｜判別反應粒子', displayMode: 'ion',
-                    basis: active ? `${item.activeIon}為弱鹼／弱酸的共軛粒子，會與水發生反應。` : '由強酸與強鹼形成的離子通常不顯著水解。',
+                    basis: active ? `${item.activeIon} 是此鹽中主要與水作用的離子。` : '由強酸與強鹼形成的離子通常不顯著水解。',
                     steps: `${item.rule} 逐一檢查陽、陰離子的共軛酸鹼強度，再排除旁觀離子。`,
                     conclusion: active ? `主要反應粒子為 ${correctIon}。` : '沒有單一離子顯著水解。',
                     misconception: '弱酸的共軛鹼或弱鹼的共軛酸才會明顯水解；另一離子可能只是旁觀離子。'
                 }, [
                     `由 ${item.cation}、${item.anion} 組成的鹽進入水中，哪個離子主要參與水解？`,
-                    `若追蹤這種鹽造成溶液偏酸／偏鹼的來源，應先追查哪個粒子？`,
+                    `${item.cation} 與 ${item.anion} 組成的鹽溶於水。哪個離子會顯著水解？`,
                     `檢查 ${item.cation} 與 ${item.anion}，何者是此溶液中主要的水解粒子？`
                 ]);
             }
@@ -7112,24 +7102,42 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             return `${mantissa}×10${superscript(exp)}`;
         };
         const fmtPH = value => Number(value.toFixed(2)).toString();
-        const choices = (answer, unit) => {
-            if (unit !== 'M') return unique([answer, ...numericDistractors(Number(answer), '', 1)]);
-            const match = String(answer).match(/^([\d.]+)×10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)$/);
-            if (!match) return [answer, `${answer}×2`, `${answer}÷2`, `${answer}×10`].slice(0, 4);
-            const supMap = { '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁻':'-','⁺':'+' };
-            const mantissa = Number(match[1]), exponent = Number([...match[2]].map(c => supMap[c]).join(''));
-            const fmt = (m, e) => `${Number(m.toPrecision(3))}×10${superscript(e)}`;
-            return unique([answer, fmt(mantissa * 2, exponent), fmt(mantissa / 2, exponent), fmt(mantissa, exponent + 1), fmt(mantissa, exponent - 1)]).map(value => `${value} M`);
+        const choices = (givenSpecies, given, target, unit) => {
+            const input = Number(given.replace(/×10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)/, (_, exponent) =>
+                'e' + exponent.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, digit => String('⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(digit))).replace('⁻', '-').replace('⁺', '+')));
+            let errors;
+            if (unit === 'M') {
+                errors = givenSpecies === '[OH⁻]' ? [
+                    [input, '把氫氧根濃度直接當作水合氫離子濃度。'],
+                    [1e-14 * input, '將 K_w 與氫氧根濃度相乘，應以 K_w 除以氫氧根濃度。'],
+                    [1e-7, '把中性水的離子濃度套用到所有溶液。']
+                ] : [
+                    [10 ** (target === '[OH⁻]' ? -input : input - 14), '反算了另一種離子的濃度，混淆 pH 和 pOH。'],
+                    [10 ** (target === '[OH⁻]' ? 14 - input : input), '反求濃度時漏掉指數的負號。'],
+                    [1e-7, '把中性水的離子濃度套用到所有溶液。']
+                ];
+            } else if (givenSpecies === 'pOH') {
+                errors = [[input, '把 pOH 直接當成 pH。'], [7, '套用中性水的 pH。'], [14 + input, '把 pK_w 與 pOH 相加，應取兩者之差。']];
+            } else {
+                const negativeLog = log10(input);
+                errors = [
+                    [givenSpecies === '[OH⁻]' ? negativeLog : 14 - negativeLog, '混淆 pH 與 pOH。'],
+                    [givenSpecies === '[OH⁻]' ? 14 + negativeLog : -negativeLog, '漏掉濃度取對數時的負號。'],
+                    [7, '套用中性水的 pH。']
+                ];
+            }
+            return errors.map(([value, reason]) => ({ value: unit ? `${sci(value)} M` : fmtPH(value), reason }));
         };
         const addConversion = (id, givenSpecies, given, target, answer, steps, explainError, stems, unit = 'M') => {
             const answerText = unit ? `${answer} ${unit}` : answer;
+            const needsKw = givenSpecies === '[OH⁻]' || givenSpecies === 'pOH' || target === '[OH⁻]';
             addStyled(out, {
                 template: `acidbase-convert-${givenSpecies}-to-${target}`, factId: id,
-                answer: answerText, distractors: choices(answer, unit),
+                answer: answerText, distractors: choices(givenSpecies, given, target, unit),
                 type: `pH 計算｜${givenSpecies} 轉 ${target}`, displayMode: 'number',
                 basis: `25 °C 時使用 pH＋pOH＝14、K_w＝1.0×10⁻¹⁴；強酸強鹼假設完全解離。`,
                 steps, conclusion: `所求 ${target} 為 ${answerText}。`, misconception: explainError
-            }, stems);
+            }, stems.map(stem => needsKw && !stem.includes('25 °C') ? `25 °C 下，${stem}` : stem));
         };
         powers.forEach((power, pIndex) => coefficients.forEach((coef, cIndex) => {
             const concentration = coef * Math.pow(10, power);
@@ -7139,7 +7147,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const pOH = 14 - pH;
             const hText = sci(h), ohText = sci(oh);
             const ident = `calculated-${power}-${coef}`;
-            const phText = fmtPH(pH), pohText = fmtPH(pOH);
+            const phText = String(Number(pH.toFixed(4))), pohText = String(Number(pOH.toFixed(4)));
             addConversion(ident, '[H₃O⁺]', hText, 'pH', phText,
                 `[H₃O⁺]=${hText} M；pH=−log[H₃O⁺]=−log(${coef}×10^(${power}))=${phText}。`,
                 '先確認科學記號的指數與係數；pH 是負對數，濃度增加時 pH 應降低。',
@@ -7155,7 +7163,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             addConversion(ident, '[OH⁻]', ohText, 'pH', phText,
                 `[OH⁻]=${ohText} M；pOH=−log[OH⁻]=${pohText}，故 pH=14−${pohText}=${phText}。`,
                 '先求 pOH 再以 14 相減；把 pOH 當成 pH 會得到互補的錯誤值。',
-                [`25 °C 時 [OH⁻]=${ohText} M，求此溶液的 pH。`, `鹼性溶液的氫氧根濃度為 ${ohText} M，pH 約為何？`, `若 [OH⁻]=${ohText} M，請反推 pH。`], '');
+                [`25 °C 時 [OH⁻]=${ohText} M，求此溶液的 pH。`, `氫氧根濃度為 ${ohText} M，pH 約為何？`, `若 [OH⁻]=${ohText} M，請反推 pH。`], '');
             addConversion(ident, 'pH', phText, '[OH⁻]', ohText,
                 `pOH=14−${phText}=${pohText}；[OH⁻]=10^(−${pohText})=${ohText} M。`,
                 '已知 pH 時，先用 pOH=14−pH；直接計算 10^(−pH) 會得到 [H₃O⁺] 而非 [OH⁻]。',
@@ -7179,7 +7187,14 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const residual = Math.abs(acidEq - baseEq) / ((item.va + item.vb) / 1000);
             const pH = item.excess === 'acid' ? -Math.log10(residual) : 14 + Math.log10(residual);
             const answer = fmtPH(pH);
-            const wrong = [fmtPH(14 - pH), fmtPH(item.excess === 'acid' ? pH + 1 : pH - 1), fmtPH(item.excess === 'acid' ? pH - 1 : pH + 1)];
+            const acidExcess = item.excess === 'acid';
+            const toPH = c => acidExcess ? -Math.log10(c) : 14 + Math.log10(c);
+            const excessMoles = Math.abs(acidEq - baseEq);
+            const wrong = [
+                [14 - pH, '混淆剩下的是酸或鹼，得到了互補的 pH。'],
+                [toPH(excessMoles / ((acidExcess ? item.va : item.vb) / 1000)), '把剩餘莫耳數除以原液體積，漏算混合後加入的體積。'],
+                [toPH((acidExcess ? acidEq : baseEq) / ((item.va + item.vb) / 1000)), '只算稀釋，漏扣中和反應消耗的莫耳數。']
+            ].map(([value, reason]) => ({ value: fmtPH(value), reason }));
             addStyled(out, {
                 template: 'strong-acid-base-mix-ph', factId: item.id, answer,
                 distractors: wrong, type: '中和計算｜過量反應物與混合後 pH', displayMode: 'number',
@@ -7191,7 +7206,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 `將 ${item.va} mL、${item.ca} M HCl 與 ${item.vb} mL、${item.cb} M NaOH 混合，反應後 pH 約為何？`,
                 `取 ${item.ca} M 鹽酸 ${item.va} mL，加入 ${item.cb} M 氫氧化鈉 ${item.vb} mL；假設體積可加，求混合液 pH。`,
                 `一份 ${item.va} mL 的 ${item.ca} M 強酸，與 ${item.vb} mL 的 ${item.cb} M 強鹼混合。完全反應後 pH 約多少？`
-            ]);
+            ].map(stem => `25 °C，假設體積可加成。${stem.replace('假設體積可加，', '')}`));
         });
         return out;
     }
@@ -7338,11 +7353,10 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         const btb = indicators.find(x => x.id === 'indicator-btb');
         const phenol = indicators.find(x => x.id === 'indicator-phenolphthalein');
         if (!methyl || !btb || !phenol) return out;
-        const ranges = [
-            { label:'pH＜3.1', mid:2.5 }, { label:'3.1＜pH＜4.4', mid:3.7 },
-            { label:'4.4＜pH＜6.0', mid:5.2 }, { label:'6.0＜pH＜7.6', mid:6.8 },
-            { label:'7.6＜pH＜8.2', mid:7.9 }, { label:'8.2＜pH＜10.0', mid:9.0 }, { label:'pH＞10.0', mid:11 }
-        ];
+        const bounds = ['3.1', '4.4', '6.0', '7.6', '8.2', '10.0'];
+        const ranges = [2.5, 3.7, 5.2, 6.8, 7.9, 9.0, 11];
+        const interval = (first, last) =>
+            [bounds[first - 1], 'pH', bounds[last]].filter(Boolean).join('＜');
         const color = (item, pH) => {
             if (item === methyl) return pH < 3.1 ? '紅色' : pH < 4.4 ? '橙色' : '黃色';
             if (item === btb) return pH < 6 ? '黃色' : pH < 7.6 ? '綠色' : '藍色';
@@ -7352,26 +7366,34 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
         const triplets = [[methyl, btb], [methyl, phenol], [btb, phenol]];
         triplets.forEach((pair, pairIndex) => {
             const signatures = new Map();
-            ranges.forEach((range, index) => {
-                const signature = pair.map(indicator => `${indicator.name}：${color(indicator, range.mid)}`).join('；');
+            ranges.forEach((midpoint, index) => {
+                const signature = pair.map(indicator => `${indicator.name}：${color(indicator, midpoint)}`).join('；');
                 if (!signatures.has(signature)) signatures.set(signature, []);
-                signatures.get(signature).push({ range, index });
+                signatures.get(signature).push(index);
             });
             [...signatures.entries()].forEach(([signature, matches], sigIndex) => {
-                // 若同組顏色對應多段 pH，保留為多解區間題，不偽裝成唯一答案。
-                const answer = matches.map(x => x.range.label).join(' 或 ');
-                const plausible = ranges.filter(x => !matches.some(m => m.index === ranges.indexOf(x))).map(x => x.label);
-                const distractors = itemCandidates(answer, plausible, 3);
+                const first = matches[0], last = matches[matches.length - 1];
+                if (last - first + 1 !== matches.length) return;
+                const answer = interval(first, last);
+                const distractors = [
+                    ...[first - 1, last + 1].filter(index => index >= 0 && index < ranges.length).map(index => ({
+                        value:interval(index, index),
+                        reason:`在這個區間，${pair.filter(indicator => color(indicator, ranges[index]) !== color(indicator, ranges[first]))
+                            .map(indicator => `${indicator.name} 會呈${color(indicator, ranges[index])}`).join('、')}，與觀察不符。`
+                    })),
+                    { value:interval(Math.max(0, first - 1), Math.min(ranges.length - 1, last + 1)),
+                        reason:'此範圍太寬，有一部分的 pH 無法同時符合兩個顏色條件。' }
+                ];
                 const stems = [
-                    `同一份溶液分別加入 ${pair[0].name}、${pair[1].name}，觀察為「${signature}」。依變色範圍，pH 可能落在哪一區？`,
-                    `實驗記錄顯示 ${signature}。綜合兩項指示劑結果，哪個 pH 範圍與觀察相容？`,
-                    `已知 ${pair[0].range}；另知 ${pair[1].range}。若兩種指示劑呈現 ${signature}，可將 pH 限定在哪個範圍？`
+                    `取同一溶液的兩份試樣，分別加指示劑，結果為 ${signature}。哪個選項是完整的 pH 範圍？`,
+                    `指示劑觀察：${signature}。求同時符合兩項觀察的完整 pH 範圍。`,
+                    `${pair[0].range}；${pair[1].range}。若觀察到 ${signature}，求 pH 的完整範圍。`
                 ];
                 addStyled(out, {
                     template:'combined-indicator-interval', factId:`ind-combo-${pairIndex}-${sigIndex}`,
                     answer, distractors, type:'指示劑｜多觀察條件交集', displayMode:'text',
                     basis:`每一種指示劑只提供 pH 的區間限制；要取兩項觀察所允許範圍的交集。`,
-                    steps:`依資料表逐一定位：${signature}。${matches.length > 1 ? '這組顏色仍容許多段 pH，因此答案列出所有相容區間。' : `兩項限制的交集為 ${answer}。`}`,
+                    steps:`依變色範圍逐一對照 ${signature}，兩項限制的交集為 ${answer}。以區間近似判讀，略去變色端點。`,
                     conclusion:`符合觀察的範圍為 ${answer}。`,
                     misconception:'單一指示劑的顏色通常只限制 pH 區間；不要把顏色直接等同於酸性、中性或鹼性的唯一值。'
                 }, stems);
@@ -7388,9 +7410,15 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const reasons = Object.fromEntries(values.map(v => [key(v), `選擇 ${v} 與題目條件不符。${mistake} ${steps}`]));
             addStyled(out, {template, factId:id, answer:String(answer), distractors:values, type:`濃度與溶解度｜${template}`, basis, steps, conclusion:`答案為 ${answer}。`, misconception:mistake, optionRationales:reasons}, stems);
         };
-        const calc = (template, id, stems, answer, unit, steps, mistake) => {
-            const a=Number(answer), fmt=x=>`${num(x)}${unit}`;
-            emit(template,id,stems,fmt(a),[fmt(a*2),fmt(a/2),fmt(a*10),fmt(a/10)],'依題目指定的量綱列式，再核對溶質、溶劑與溶液。',steps,mistake);
+        const calc = (template, id, stems, answer, unit, steps, mistake, ...errors) => {
+            const display = `${num(answer)}${unit}`;
+            addStyled(out, {
+                template, factId:id, answer:display, distractors:calculationErrors(unit.trim(), ...errors).map(option => ({
+                    ...option, value:unit.startsWith(' ') ? option.value : option.value.replace(' ', '')
+                })),
+                type:`濃度與溶解度｜${template}`, basis:'依題目要求辨認溶質、溶劑與溶液。',
+                steps, conclusion:`答案為 ${display}。`, misconception:mistake
+            }, stems);
         };
         if (subtype==='expressions') {
             const formulas=[
@@ -7412,57 +7440,58 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             const solutes=[{id:'NaCl',name:'食鹽',formula:'NaCl',mw:58.5},{id:'NaOH',name:'氫氧化鈉',formula:'NaOH',mw:40},{id:'glucose',name:'葡萄糖',formula:'C₆H₁₂O₆',mw:180}];
             solutes.forEach(s=>[0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((v,j)=>{
                 const m=n*s.mw, c=n/v, id=`${s.id}-${i}-${j}`, label=(i+j)%2?s.name:s.formula;
-                calc('質量與體積→莫耳濃度',id,[`${num(m)} g ${label}配成 ${num(v*1000)} mL 溶液，濃度為何？（莫耳質量 ${s.mw} g/mol）`,`溶解 ${num(m)} g ${label}並定容至 ${num(v*1000)} mL，求莫耳濃度。（莫耳質量 ${s.mw} g/mol）`],c,' M',`n=${num(m)}÷${s.mw}=${num(n)} mol；C=${num(n)}÷${v}=${num(c)} M。`,'mL 須換成 L，且應用溶液的最終體積。');
-                calc('莫耳濃度→溶質質量',id,[`配製 ${num(v*1000)} mL、${num(c)} M ${label}溶液需幾克？（莫耳質量 ${s.mw} g/mol）`,`要配製 ${num(v*1000)} mL 的 ${num(c)} M ${label}，應稱取多少克？（莫耳質量 ${s.mw} g/mol）`],m,' g',`n=CV=${num(c)}×${v}=${num(n)} mol；質量=${num(n)}×${s.mw}=${num(m)} g。`,'先由濃度乘以公升數求莫耳數，再乘莫耳質量。');
-                calc('質量與莫耳濃度→體積',id,[`${num(m)} g ${label}配成 ${num(c)} M，需定容至幾 mL？（莫耳質量 ${s.mw} g/mol）`,`將 ${num(m)} g ${label}配為 ${num(c)} M，溶液體積是多少 mL？（莫耳質量 ${s.mw} g/mol）`],v*1000,' mL',`n=${num(m)}÷${s.mw}=${num(n)} mol；V=n/C=${num(n)}÷${num(c)}=${v} L=${v*1000} mL。`,'先以質量除莫耳質量，再以莫耳數除濃度。');
+                calc('質量與體積→莫耳濃度',id,[`${num(m)} g ${label}配成 ${num(v*1000)} mL 溶液，濃度為何？（莫耳質量 ${s.mw} g/mol）`,`溶解 ${num(m)} g ${label}並定容至 ${num(v*1000)} mL，求莫耳濃度。（莫耳質量 ${s.mw} g/mol）`],c,' M',`n=${num(m)}÷${s.mw}=${num(n)} mol；C=${num(n)}÷${v}=${num(c)} M。`,'mL 須換成 L，且應用溶液的最終體積。', [n/(v*1000),'把 mL 當作 L。'],[m/v,'用質量直接除體積，漏換算莫耳數。'],[v/n,'顛倒莫耳數與體積。']);
+                calc('莫耳濃度→溶質質量',id,[`配製 ${num(v*1000)} mL、${num(c)} M ${label}溶液需幾克？（莫耳質量 ${s.mw} g/mol）`,`要配製 ${num(v*1000)} mL 的 ${num(c)} M ${label}，應稱取多少克？（莫耳質量 ${s.mw} g/mol）`],m,' g',`n=CV=${num(c)}×${v}=${num(n)} mol；質量=${num(n)}×${s.mw}=${num(m)} g。`,'先由濃度乘以公升數求莫耳數，再乘莫耳質量。', [m*1000,'直接代入 mL。'],[n,'算到莫耳數便當成質量。'],[n/s.mw,'把莫耳數除以莫耳質量。']);
+                calc('質量與莫耳濃度→體積',id,[`${num(m)} g ${label}配成 ${num(c)} M，需定容至幾 mL？（莫耳質量 ${s.mw} g/mol）`,`將 ${num(m)} g ${label}配為 ${num(c)} M，溶液體積是多少 mL？（莫耳質量 ${s.mw} g/mol）`],v*1000,' mL',`n=${num(m)}÷${s.mw}=${num(n)} mol；V=n/C=${num(n)}÷${num(c)}=${v} L=${v*1000} mL。`,'先以質量除莫耳質量，再以莫耳數除濃度。', [v,'漏把 L 換成 mL。'],[m/c*1000,'把溶質質量當莫耳數。'],[c/n*1000,'顛倒莫耳數與濃度。']);
             })));
             [0.07,0.12,0.18,0.27].forEach((w,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
                 const sol=kg*1000*w/(1-w), total=kg*1000+sol, id=`${i}-${j}`;
-                calc('質量→重量百分率',id,[`${num(sol)} g 溶質溶於 ${num(kg*1000)} g 水，重量百分濃度為何？`,`將 ${num(sol)} g 溶質加入 ${num(kg*1000)} g 水，求重量百分濃度。`],w*100,'%',`溶液質量=${num(sol)}+${kg*1000}=${num(total)} g；百分濃度=${num(sol)}÷${num(total)}×100%=${num(w*100)}%。`,'重量百分濃度的分母是溶液總質量。');
-                calc('重量百分率→溶質質量',id,[`${num(total)} g、${num(w*100)}%（w/w）溶液含幾克溶質？`,`重量濃度 ${num(w*100)}% 的溶液 ${num(total)} g，溶質多少克？`],sol,' g',`溶質質量=${num(total)}×${num(w)}=${num(sol)} g。`,'百分比須以溶液總質量為基準。');
+                calc('質量→重量百分率',id,[`${num(sol)} g 溶質溶於 ${num(kg*1000)} g 水，重量百分濃度為何？`,`將 ${num(sol)} g 溶質加入 ${num(kg*1000)} g 水，求重量百分濃度。`],w*100,'%',`溶液質量=${num(sol)}+${kg*1000}=${num(total)} g；百分濃度=${num(sol)}÷${num(total)}×100%=${num(w*100)}%。`,'重量百分濃度的分母是溶液總質量。', [sol/(kg*1000)*100,'用溶劑質量作分母。'],[w,'漏乘 100。'],[(1-w)*100,'算成溶劑的質量百分率。']);
+                calc('重量百分率→溶質質量',id,[`${num(total)} g、${num(w*100)}%（w/w）溶液含幾克溶質？`,`重量濃度 ${num(w*100)}% 的溶液 ${num(total)} g，溶質多少克？`],sol,' g',`溶質質量=${num(total)}×${num(w)}=${num(sol)} g。`,'百分比須以溶液總質量為基準。', [total*(1-w),'算的是溶劑質量。'],[total*w*100,'直接乘百分率的數字，漏除 100。'],[total/(w*100),'誤將百分濃度的數字放在分母。']);
             }));
             [12,17.5,28,35].forEach((percent,i)=>[125,240,375,650].forEach((vol,j)=>{
                 const amount=percent*vol/100,id=`${i}-${j}`;
                 for(const [kind,u] of [['體積百分濃度','mL'],['質量體積百分濃度','g']]){
-                    calc(`${kind}→溶質量`,id,[`${vol} mL 的 ${percent}% ${kind}溶液，含溶質多少 ${u}？`,`要配製 ${vol} mL、${percent}% 的${kind}溶液，需溶質多少 ${u}？`],amount,` ${u}`,`${percent}% 表示每 100 mL 溶液含 ${percent} ${u} 溶質；${vol} mL 含 ${num(amount)} ${u}。`,'百分濃度的分母是最終溶液體積。');
-                    calc(`溶質量→${kind}`,id,[`${amount} ${u} 溶質配成 ${vol} mL 溶液，其${kind}為何？`,`將 ${amount} ${u} 溶質配製成 ${vol} mL，求${kind}。`],percent,'%',`${amount}÷${vol}×100%=${percent}%。`,'先確認質量或體積的表示基準。');
+                    calc(`${kind}→溶質量`,id,[`${vol} mL 的 ${percent}% ${kind}溶液，含溶質多少 ${u}？`,`要配製 ${vol} mL、${percent}% 的${kind}溶液，需溶質多少 ${u}？`],amount,` ${u}`,`${percent}% 表示每 100 mL 溶液含 ${percent} ${u} 溶質；${vol} mL 含 ${num(amount)} ${u}。`,'百分濃度的分母是最終溶液體積。', [percent,'沿用每 100 mL 的溶質量，漏依總體積調整。'],[percent*100/vol,'把實際體積與 100 mL 的比例顛倒。'],[percent*vol,'將百分濃度當小數，漏除 100。']);
+                    calc(`溶質量→${kind}`,id,[`${amount} ${u} 溶質配成 ${vol} mL 溶液，其${kind}為何？`,`將 ${amount} ${u} 溶質配製成 ${vol} mL，求${kind}。`],percent,'%',`${amount}÷${vol}×100%=${percent}%。`,'先確認質量或體積的表示基準。', [amount/vol,'求出比值後漏乘 100。'],[100*vol/amount,'把溶質量與溶液體積顛倒。'],[amount,'把溶質量直接當每 100 mL 的量。']);
                 }
             }));
             [0.07,0.12,0.18,0.35,0.48].forEach((n,i)=>[0.24,0.35,0.6,0.85].forEach((kg,j)=>{
                 const molality=n/kg, x=n/(n+kg*1000/18),id=`${i}-${j}`;
-                calc('莫耳數與溶劑→重量莫耳濃度',id,[`${num(n)} mol 溶質溶於 ${kg*1000} g 水，重量莫耳濃度為何？`,`將 ${num(n)} mol 溶質加入 ${kg*1000} g 水，求重量莫耳濃度。`],molality,' mol/kg',`${kg*1000} g=${kg} kg；m=${num(n)}÷${kg}=${num(molality)} mol/kg。`,'重量莫耳濃度用溶劑質量且單位為 kg。');
-                calc('重量莫耳濃度→溶質莫耳數',id,[`${kg*1000} g 水配成 ${num(molality)} mol/kg 溶液，含溶質幾 mol？`,`溶劑為 ${kg*1000} g 水、重量莫耳濃度 ${num(molality)} mol/kg，求溶質莫耳數。`],n,' mol',`n=m×溶劑 kg=${num(molality)}×${kg}=${num(n)} mol。`,'重量莫耳濃度需乘溶劑的公斤數。');
-                calc('重量莫耳濃度→莫耳分率',id,[`水溶液重量莫耳濃度為 ${num(molality)} mol/kg，溶質莫耳分率約為何？（水 18 g/mol）`,`某水溶液為 ${num(molality)} mol/kg，求溶質莫耳分率。（水 18 g/mol）`],x,'',`取 ${kg} kg 水：溶質 ${num(n)} mol，水 ${num(kg*1000/18)} mol；分率=${num(n)}÷(${num(n)}+${num(kg*1000/18)})≈${num(x)}。`,'莫耳分率分母須包含全部成分的莫耳數。');
-                calc('莫耳分率→重量莫耳濃度',id,[`水溶液溶質莫耳分率約 ${num(x)}，重量莫耳濃度約為何？（水 18 g/mol）`,`溶質莫耳分率約 ${num(x)} 的水溶液，重量莫耳濃度約為多少？（水 18 g/mol）`],molality,' mol/kg',`設溶液總量為 1 mol，水為 1−${num(x)} mol；m≈${num(x)}÷[(1−${num(x)})×0.018]=${num(molality)} mol/kg。`,'由分率先還原溶質與溶劑莫耳比，再換算溶劑公斤數。');
+                calc('莫耳數與溶劑→重量莫耳濃度',id,[`${num(n)} mol 溶質溶於 ${kg*1000} g 水，重量莫耳濃度為何？`,`將 ${num(n)} mol 溶質加入 ${kg*1000} g 水，求重量莫耳濃度。`],molality,' mol/kg',`${kg*1000} g=${kg} kg；m=${num(n)}÷${kg}=${num(molality)} mol/kg。`,'重量莫耳濃度用溶劑質量且單位為 kg。', [n/(kg*1000),'將 g 當作 kg。'],[n*kg,'把除以溶劑質量寫成乘法。'],[kg/n,'顛倒莫耳數與溶劑公斤數。']);
+                calc('重量莫耳濃度→溶質莫耳數',id,[`${kg*1000} g 水配成 ${num(molality)} mol/kg 溶液，含溶質幾 mol？`,`溶劑為 ${kg*1000} g 水、重量莫耳濃度 ${num(molality)} mol/kg，求溶質莫耳數。`],n,' mol',`n=m×溶劑 kg=${num(molality)}×${kg}=${num(n)} mol。`,'重量莫耳濃度需乘溶劑的公斤數。', [molality*kg*1000,'將 g 當成 kg 直接相乘。'],[molality/kg,'將濃度除以溶劑公斤數。'],[molality,'沿用每 1 kg 溶劑的莫耳數。']);
+                calc('重量莫耳濃度→莫耳分率',id,[`水溶液重量莫耳濃度為 ${num(molality)} mol/kg，溶質莫耳分率約為何？（水 18 g/mol）`,`某水溶液為 ${num(molality)} mol/kg，求溶質莫耳分率。（水 18 g/mol）`],x,'',`取 ${kg} kg 水：溶質 ${num(n)} mol，水 ${num(kg*1000/18)} mol；分率=${num(n)}÷(${num(n)}+${num(kg*1000/18)})≈${num(x)}。`,'莫耳分率分母須包含全部成分的莫耳數。', [1-x,'算出溶劑的莫耳分率。'],[n/(kg*1000/18),'分母只算溶劑莫耳數。'],[n/(n+kg),'把溶劑公斤數當成莫耳數。']);
+                calc('莫耳分率→重量莫耳濃度',id,[`水溶液溶質莫耳分率約 ${num(x)}，重量莫耳濃度約為何？（水 18 g/mol）`,`溶質莫耳分率約 ${num(x)} 的水溶液，重量莫耳濃度約為多少？（水 18 g/mol）`],molality,' mol/kg',`設溶液總量為 1 mol，水為 1−${num(x)} mol；m≈${num(x)}÷[(1−${num(x)})×0.018]=${num(molality)} mol/kg。`,'由分率先還原溶質與溶劑莫耳比，再換算溶劑公斤數。', [x/.018,'以 1 mol 水作分母，漏扣溶質占的比例。'],[molality/1000,'算成 mol/g。'],[(1-x)/(x*.018),'對調溶質和溶劑的分率。']);
             }));
             [0.08,0.17,0.28,0.43].forEach((x,i)=>[0.75,1.4,2.5,3.2].forEach((total,j)=>{
                 const n=x*total,id=`${i}-${j}`;
-                calc('莫耳數→莫耳分率',id,[`溶液含 ${num(n)} mol 溶質及 ${num(total-n)} mol 溶劑，溶質莫耳分率為何？`,`溶質 ${num(n)} mol、溶劑 ${num(total-n)} mol，求溶質莫耳分率。`],x,'',`x=${num(n)}÷(${num(n)}+${num(total-n)})=${num(x)}。`,'分母是溶質與溶劑的莫耳數總和。');
-                calc('莫耳分率→溶質莫耳數',id,[`溶質莫耳分率 ${x}，總莫耳數 ${total} mol；溶質有幾 mol？`,`混合液共 ${total} mol，溶質分率 ${x}，溶質為多少 mol？`],n,' mol',`溶質莫耳數=${x}×${total}=${num(n)} mol。`,'莫耳分率要乘總莫耳數。');
+                calc('莫耳數→莫耳分率',id,[`溶液含 ${num(n)} mol 溶質及 ${num(total-n)} mol 溶劑，溶質莫耳分率為何？`,`溶質 ${num(n)} mol、溶劑 ${num(total-n)} mol，求溶質莫耳分率。`],x,'',`x=${num(n)}÷(${num(n)}+${num(total-n)})=${num(x)}。`,'分母是溶質與溶劑的莫耳數總和。', [1-x,'求出溶劑的莫耳分率。'],[n/(total-n),'分母只算溶劑。'],[total/n,'顛倒溶質莫耳數和總莫耳數。']);
+                calc('莫耳分率→溶質莫耳數',id,[`溶質莫耳分率 ${x}，總莫耳數 ${total} mol；溶質有幾 mol？`,`混合液共 ${total} mol，溶質分率 ${x}，溶質為多少 mol？`],n,' mol',`溶質莫耳數=${x}×${total}=${num(n)} mol。`,'莫耳分率要乘總莫耳數。', [(1-x)*total,'算的是溶劑莫耳數。'],[x,'把莫耳分率直接當莫耳數。'],[total/x,'把乘上莫耳分率寫成除法。']);
             }));
             [3,12,35,120].forEach((ppm,i)=>[0.75,2.4,3.5].forEach((kg,j)=>{
                 const mg=ppm*kg,id=`${i}-${j}`;
-                calc('質量→ppm',id,[`${kg} kg 溶液含 ${mg} mg 溶質，為幾 ppm（質量比）？`,`溶液 ${kg} kg 含溶質 ${mg} mg，求質量 ppm。`],ppm,' ppm',`${mg} mg÷${kg} kg=${ppm} mg/kg=${ppm} ppm。`,'質量 ppm 以溶液的總質量為分母。');
-                calc('ppm→溶質質量',id,[`${kg} kg 溶液為 ${ppm} ppm（質量比），含溶質多少 mg？`,`質量濃度 ${ppm} ppm 的 ${kg} kg 溶液中，溶質為幾 mg？`],mg,' mg',`${ppm} mg/kg×${kg} kg=${mg} mg。`,'1 ppm（質量比）等於 1 mg/kg 溶液。');
+                calc('質量→ppm',id,[`${kg} kg 溶液含 ${num(mg)} mg 溶質，為幾 ppm（質量比）？`,`溶液 ${kg} kg 含溶質 ${num(mg)} mg，求質量 ppm。`],ppm,' ppm',`${num(mg)} mg÷${kg} kg=${ppm} mg/kg=${ppm} ppm。`,'質量 ppm 以溶液的總質量為分母。', [mg/(kg*1000),'以 g 為分母後把 mg/g 當作 ppm。'],[kg/mg,'顛倒溶質與溶液。'],[mg,'把溶質毫克數直接當成 ppm。']);
+                calc('ppm→溶質質量',id,[`${kg} kg 溶液為 ${ppm} ppm（質量比），含溶質多少 mg？`,`質量比為 ${ppm} ppm 的 ${kg} kg 溶液中，溶質為幾 mg？`],mg,' mg',`${ppm} mg/kg×${kg} kg=${num(mg)} mg。`,'1 ppm（質量比）等於 1 mg/kg 溶液。', [ppm/kg,'將 ppm 除以溶液質量。'],[ppm*kg*1000,'把溶液克數當作公斤數。'],[ppm,'只報每公斤的毫克數。']);
             }));
             [0.12,0.18,0.25,0.32].forEach((w,i)=>[1.03,1.12,1.18,1.25].forEach((density,j)=>{
                 const mw=40, molarity=w*density*1000/mw, molality=w*1000/(mw*(1-w)),id=`${i}-${j}`;
-                calc('重量百分率→莫耳濃度',id,[`NaOH 溶液 ${w*100}%（w/w），密度 ${density} g/mL。求莫耳濃度。（NaOH：40 g/mol）`,`氫氧化鈉水溶液 ${w*100}%（w/w）、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 L 溶液，質量=${density}×1000 g；溶質=${num(w*density*1000)} g；C=${num(w*density*1000)}÷40=${num(molarity)} M。`,'百分率以溶液質量為分母；轉莫耳濃度需使用密度。');
-                calc('莫耳濃度→重量百分率',id,[`NaOH 水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量百分濃度為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`1 L 溶液含 ${num(molarity)} mol，即 ${num(molarity*40)} g；溶液質量 ${density*1000} g，百分率=${num(w*100)}%。`,'質量百分率必須用溶液總質量作分母。');
-                calc('莫耳濃度→重量莫耳濃度',id,[`NaOH 水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量莫耳濃度約為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 1 L 溶液，溶質 ${num(molarity)} mol，其質量 ${num(molarity*40)} g；水質量=${density*1000}−${num(molarity*40)} g，故 m≈${num(molality)} mol/kg。`,'先用密度求溶液質量，再減去溶質質量以求溶劑公斤數。');
-                calc('重量莫耳濃度→莫耳濃度',id,[`NaOH 水溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，莫耳濃度約為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 kg 水，溶質 ${num(molality)} mol，總質量≈${num(1000+molality*40)} g；除以密度得溶液體積，故 C≈${num(molarity)} M。`,'重量莫耳濃度的分母是溶劑質量，計算莫耳濃度前須用密度轉為溶液體積。');
-                calc('重量百分率→重量莫耳濃度',id,[`NaOH 水溶液 ${w*100}%（w/w），重量莫耳濃度為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液重量百分濃度 ${w*100}%，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 100 g 溶液，溶質 ${w*100} g，水 ${(1-w)*100} g；m=(${w*100}÷40)÷${num((1-w)/10)}=${num(molality)} mol/kg。`,'重量莫耳濃度的分母是溶劑質量，不是溶液質量。');
-                calc('重量莫耳濃度→重量百分率',id,[`NaOH 水溶液 ${num(molality)} mol/kg，重量百分濃度約為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molality)} mol/kg，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`取 1 kg 水，溶質質量約 ${num(molality)}×40=${num(molality*40)} g；溶質除以溶液總質量，百分率≈${num(w*100)}%。`,'重量百分濃度要除以溶劑和溶質的總質量。');
+                calc('重量百分率→莫耳濃度',id,[`某溶液 ${w*100}%（w/w），密度 ${density} g/mL。求莫耳濃度。（莫耳質量 40 g/mol）`,`某水溶液 ${w*100}%（w/w）、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 L 溶液，質量=${density}×1000 g；溶質=${num(w*density*1000)} g；C=${num(w*density*1000)}÷40=${num(molarity)} M。`,'百分率以溶液質量為分母；轉莫耳濃度需使用密度。', [w*1000/40,'代入 1 g/mL，漏用題給密度。'],[w*density*1000,'算出 g/L 後漏除莫耳質量。'],[w*density/40,'算的是 mol/mL。']);
+                calc('莫耳濃度→重量百分率',id,[`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量百分濃度為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`1 L 溶液含 ${num(molarity)} mol，即 ${num(molarity*40)} g；溶液質量 ${density*1000} g，百分率=${num(w*100)}%。`,'質量百分率必須用溶液總質量作分母。', [molarity*40/10,'以 1 g/mL 代替題給密度。'],[100*molarity*40/(density*1000-molarity*40),'以溶劑質量作分母。'],[w,'漏乘 100。']);
+                calc('莫耳濃度→重量莫耳濃度',id,[`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，重量莫耳濃度約為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molarity)} M、密度 ${density} g/mL，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 1 L 溶液，溶質 ${num(molarity)} mol，其質量 ${num(molarity*40)} g；水質量=${density*1000}−${num(molarity*40)} g，故 m≈${num(molality)} mol/kg。`,'先用密度求溶液質量，再減去溶質質量以求溶劑公斤數。', [molarity/density,'把溶液公斤數當成溶劑公斤數。'],[molality/1000,'把克數直接當成公斤數。'],[molarity,'混淆 mol/L 和 mol/kg。']);
+                calc('重量莫耳濃度→莫耳濃度',id,[`某水溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，莫耳濃度約為何？（莫耳質量 40 g/mol）`,`某水溶液 ${num(molality)} mol/kg、密度 ${density} g/mL，求莫耳濃度。（莫耳質量 40 g/mol）`],molarity,' M',`取 1 kg 水，溶質 ${num(molality)} mol，總質量≈${num(1000+molality*40)} g；除以密度得溶液體積，故 C≈${num(molarity)} M。`,'重量莫耳濃度的分母是溶劑質量，計算莫耳濃度前須用密度轉為溶液體積。', [molality*density,'以溶劑質量當溶液總質量。'],[molarity/1000,'算的是 mol/mL。'],[molality,'混淆兩種濃度。']);
+                calc('重量百分率→重量莫耳濃度',id,[`NaOH 水溶液 ${w*100}%（w/w），重量莫耳濃度為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液重量百分濃度 ${w*100}%，求重量莫耳濃度。（莫耳質量 40 g/mol）`],molality,' mol/kg',`取 100 g 溶液，溶質 ${w*100} g，水 ${(1-w)*100} g；m=(${w*100}÷40)÷${num((1-w)/10)}=${num(molality)} mol/kg。`,'重量莫耳濃度的分母是溶劑質量，不是溶液質量。', [w*1000/40,'用溶液質量當分母。'],[molality/1000,'把溶劑克數當成公斤數。'],[w*100/40,'只算取 100 g 溶液時的溶質莫耳數。']);
+                calc('重量莫耳濃度→重量百分率',id,[`NaOH 水溶液 ${num(molality)} mol/kg，重量百分濃度約為何？（NaOH：40 g/mol）`,`氫氧化鈉溶液 ${num(molality)} mol/kg，求重量百分率。（莫耳質量 40 g/mol）`],w*100,'%',`取 1 kg 水，溶質質量約 ${num(molality)}×40=${num(molality*40)} g；溶質除以溶液總質量，百分率≈${num(w*100)}%。`,'重量百分濃度要除以溶劑和溶質的總質量。', [molality*40/10,'分母用溶劑質量。'],[100*(1-w),'算了溶劑質量百分率。'],[w,'漏乘 100。']);
             }));
         }
         if (subtype==='influence') {
             const facts=[
-                {id:'heat',condition:'密閉溶液加熱且體積增加',changed:'莫耳濃度',stable:['重量百分濃度','重量莫耳濃度','莫耳分率'],rule:'溶液體積增加而溶質莫耳數不變，因此莫耳濃度下降；質量、莫耳數及其比值不變。'},
+                {id:'heat',condition:'密閉溶液加熱，體積增加且液相組成不變',changed:'莫耳濃度',stable:['重量百分濃度','重量莫耳濃度','莫耳分率'],rule:'溶液體積增加而溶質莫耳數不變，因此莫耳濃度下降；質量、莫耳數及其比值不變。'},
                 {id:'water',condition:'向未飽和水溶液加水',changed:'重量百分濃度',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'加水使溶液總質量增加、溶質質量不變，重量百分濃度下降。'},
                 {id:'evaporate',condition:'未飽和溶液僅蒸發部分水',changed:'重量百分濃度',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'水減少而溶質質量不變，溶液質量下降，重量百分濃度增加。'},
                 {id:'dilute',condition:'溶液加水稀釋且無物質流失',changed:'溶質莫耳分率',stable:['溶質質量','溶質莫耳數','溶質粒子數'],rule:'加水增加溶劑莫耳數，溶質莫耳數不變，因此溶質莫耳分率下降。'}
             ];
             facts.forEach(f=>{
+                if (f.id !== 'heat') f.condition += '（溶質不揮發、不解離且維持全溶）';
                 emit('條件→改變',f.id,[`${f.condition}，下列何者改變？`,`${f.condition}時，哪個量會變化？`],f.changed,f.stable,'將改變前後的溶質量與分母逐一比較。',f.rule,'分清增加的是溶劑、溶液體積還是溶質。');
                 f.stable.forEach((s,i)=>emit('條件→不變',`${f.id}-${i}`,[`${f.condition}，下列何者不變？`,`${f.condition}時，哪個量維持不變？`],s,[f.changed, f.id==='heat'?'質量濃度':'溶液總質量',f.id==='heat'?'溶液體積':'溶劑質量'],'依指定變化比較各量。',`${f.rule} ${s}在此條件下保持不變。`,'需依題目條件判斷，不可只依濃度名稱猜測。'));
             });
@@ -7472,7 +7501,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             shifts.forEach(({old,next},i)=>{
                 const ratio=next/old;
                 emit('原子量標準改變→濃度數值',`affected-${i}`,
-                    [`溶液實際質量不變，原子量標準由 ${old} 改為 ${next}；哪種濃度數值會改變？`,`原子量標準 ${old}→${next}，同一溶液的質量百分率、重量莫耳濃度、質量 ppm，何者數值改變？`],
+                    [`假設莫耳質量按新舊標準比縮放，樣品質量固定。原子量標準由 ${old} 改為 ${next}；哪種濃度數值會改變？`,`假設莫耳質量按 ${old}→${next} 的標準比同比縮放，同一溶液的質量百分率、重量莫耳濃度、質量 ppm，何者數值改變？`],
                     '重量莫耳濃度',['重量百分率','質量 ppm','質量體積百分率'],
                     '相對原子量標準改變會按比例改變莫耳質量；質量基準濃度不依賴莫耳數。',
                     `標準值放大 ${num(ratio)} 倍時，同一溶質質量所代表的莫耳數按反比改變；重量莫耳濃度因此改變。質量百分率與質量 ppm 只由質量比決定。`,
@@ -7481,9 +7510,12 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             [{old:12,next:24,m:3},{old:12,next:18,m:2.7},{old:12,next:36,m:4.5},{old:12,next:30,m:3.6}].forEach(({old,next,m},i)=>{
                 const result=m*old/next,id=`molality-${i}`;
                 calc('原子量標準改變→重量莫耳濃度',id,
-                    [`¹²C 原子量標準由 ${old} 改為 ${next}，原重量莫耳濃度 ${num(m)} m。新數值為何？`,`原為 ${num(m)} m；若 ¹²C 標準 ${old}→${next}，重量莫耳濃度變為多少？`],
+                    [`假設莫耳質量按 ¹²C 標準 ${old}→${next} 同比縮放，樣品質量不變。原重量莫耳濃度 ${num(m)} m。新數值為何？`,`樣品質量固定，假設莫耳質量隨 ¹²C 標準 ${old}→${next} 同比縮放。原為 ${num(m)} m，新重量莫耳濃度為何？`],
                     result,' m',`莫耳質量按標準倍率 ${num(next/old)} 改變；固定溶質質量下，莫耳數反比改變。新 m=${num(m)}×${old}/${next}=${num(result)} m。`,
-                    '莫耳數和重量莫耳濃度都與莫耳質量成反比。');
+                    '在此假設下，莫耳數和重量莫耳濃度都與莫耳質量成反比。',
+                    [m*next/old,'誤用正比，應依莫耳質量的倍率取反比。'],
+                    [m,'仍用原本的重量莫耳濃度，未換算莫耳數。'],
+                    [m/next,'只除以新標準值，漏用舊標準值求比例。']);
             });
         }
         if(subtype==='dilution'){
@@ -7495,9 +7527,9 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             ];
             cases.forEach(({c,v,v2:finalV},i)=>{
                 const c2=c*v/finalV,id=`${i}`;
-                calc('稀釋→濃度',id,[`${v} mL、${c} M 原液定容至 ${finalV} mL，濃度為何？`,`將 ${v} mL ${c} M 溶液稀釋至 ${finalV} mL，求濃度。`],c2,' M',`溶質莫耳數不變；C₂=C₁V₁/V₂=${c}×${v}/${finalV}=${num(c2)} M。`,'定容體積是最終體積，並非加水量。');
-                calc('目標濃度→原液體積',id,[`配製 ${finalV} mL、${num(c2)} M 溶液，需取 ${c} M 原液多少 mL？`,`用 ${c} M 原液配成 ${finalV} mL、${num(c2)} M，取原液幾 mL？`],v,' mL',`V₁=C₂V₂/C₁=${num(c2)}×${finalV}/${c}=${v} mL。`,'使用稀釋前後溶質莫耳數相等。');
-                calc('稀釋→加水量',id,[`${v} mL ${c} M 原液稀釋為 ${num(c2)} M，體積可加，需加水多少 mL？`,`將 ${v} mL、${c} M 溶液稀釋至 ${num(c2)} M，體積可加，需加水多少？`],finalV-v,' mL',`V₂=${v}×${c}/${num(c2)}=${finalV} mL；加水量=${finalV}−${v}=${finalV-v} mL。`,'加水量等於最終體積減原液體積。');
+                calc('稀釋→濃度',id,[`${v} mL、${c} M 原液定容至 ${finalV} mL，濃度為何？`,`將 ${v} mL ${c} M 溶液稀釋至 ${finalV} mL，求濃度。`],c2,' M',`溶質莫耳數不變；C₂=C₁V₁/V₂=${c}×${v}/${finalV}=${num(c2)} M。`,'定容體積是最終體積，並非加水量。', [c*finalV/v,'顛倒原液與定容體積。'],[c*v/(v+finalV),'把定容體積誤認成加水量。'],[c,'沿用原液濃度。']);
+                calc('目標濃度→原液體積',id,[`配製 ${finalV} mL、${num(c2)} M 溶液，需取 ${c} M 原液多少 mL？`,`用 ${c} M 原液配成 ${finalV} mL、${num(c2)} M，取原液幾 mL？`],v,' mL',`V₁=C₂V₂/C₁=${num(c2)}×${finalV}/${c}=${v} mL。`,'使用稀釋前後溶質莫耳數相等。', [c*finalV/c2,'顛倒濃度比。'],[finalV-v,'算了加水量。'],[finalV,'把配製體積當成原液用量。']);
+                calc('稀釋→加水量',id,[`${v} mL ${c} M 原液稀釋為 ${num(c2)} M，體積可加，需加水多少 mL？`,`將 ${v} mL、${c} M 溶液稀釋至 ${num(c2)} M，體積可加，需加水多少？`],finalV-v,' mL',`V₂=${v}×${c}/${num(c2)}=${finalV} mL；加水量=${finalV}−${v}=${finalV-v} mL。`,'加水量等於最終體積減原液體積。', [finalV,'求出總體積後漏減原液。'],[finalV+v,'求完總體積後又加上原液。'],[v,'將原液體積誤作加水量。']);
             });
         }
         if(subtype==='mixing'){
@@ -7509,8 +7541,8 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             ];
             cases.forEach(({c1,v1,c2,v2},i)=>{
                 const final=(c1*v1+c2*v2)/(v1+v2),id=`${i}`;
-                calc('混合→莫耳濃度',id,[`${v1} mL、${c1} M NaCl 與 ${v2} mL、${c2} M NaCl 混合，體積可加，濃度為何？`,`食鹽水 ${c1} M ${v1} mL 與 ${c2} M ${v2} mL 混合，體積可加，求濃度。`],final,' M',`C=(${c1}×${v1}+${c2}×${v2})/(${v1}+${v2})=${num(final)} M。`,'先加總溶質莫耳數，再除以總體積。');
-                calc('混合濃度→體積',id,[`${v1} mL、${c1} M NaCl 與 ${c2} M NaCl 混合成 ${num(final)} M，體積可加，需後者多少 mL？`,`食鹽水 ${c1} M ${v1} mL 加入 ${c2} M 溶液後為 ${num(final)} M，體積可加，後者幾 mL？`],v2,' mL',`由 ${c1}×${v1}+${c2}V=${num(final)}(${v1}+V)，解得 V≈${v2} mL。`,'需考慮兩溶液體積與溶質莫耳數。');
+                calc('混合→莫耳濃度',id,[`${v1} mL、${c1} M NaCl 與 ${v2} mL、${c2} M NaCl 混合，體積可加，濃度為何？`,`食鹽水 ${c1} M ${v1} mL 與 ${c2} M ${v2} mL 混合，體積可加，求濃度。`],final,' M',`C=(${c1}×${v1}+${c2}×${v2})/(${v1}+${v2})=${num(final)} M。`,'先加總溶質莫耳數，再除以總體積。', [(c1+c2)/2,'直接平均兩杯濃度，漏依體積加權。'],[(c1*v1+c2*v2)/v1,'分母只算第一杯體積。'],[(c1*v1+c2*v2)/v2,'分母只算第二杯體積。']);
+                calc('混合濃度→體積',id,[`${v1} mL、${c1} M NaCl 與 ${c2} M NaCl 混合成 ${num(final)} M，體積可加，需後者多少 mL？`,`食鹽水 ${c1} M ${v1} mL 加入 ${c2} M 溶液後為 ${num(final)} M，體積可加，後者幾 mL？`],v2,' mL',`由 ${c1}×${v1}+${c2}V=${num(final)}(${v1}+V)，解得 V≈${v2} mL。`,'需考慮兩溶液體積與溶質莫耳數。', [v1,'把兩杯假設成等體積。'],[v1+v2,'答成混合後的總體積。'],[v1*(final-c1)/c2,'在右側總體積中漏算第二杯的體積。']);
             });
         }
         if(subtype==='changes'){
@@ -7521,11 +7553,11 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             ];
             cases.forEach(({total,w,water},i)=>{
                 const sol=total*w, id=`${i}`;
-                calc('蒸發→濃度',id,[`${total} g、${w*100}% 食鹽水蒸發 ${water} g 水，全部食鹽仍溶解，濃度為何？`,`將 ${total} g、${w*100}% 食鹽水蒸發 ${water} g 水，無固體析出；求重量百分率。`],sol/(total-water)*100,'%',`溶質=${total}×${w}=${sol} g；溶液剩 ${total-water} g，濃度=${sol}/${total-water}×100%=${num(sol/(total-water)*100)}%。`,'蒸發後分母要扣除水，溶質質量不變。');
+                calc('蒸發→濃度',id,[`${total} g、${w*100}% 水溶液蒸發 ${water} g 水，全部原溶質仍溶解，濃度為何？`,`將 ${total} g、${w*100}% 水溶液蒸發 ${water} g 水，無固體析出；求重量百分率。`],sol/(total-water)*100,'%',`溶質=${total}×${w}=${sol} g；溶液剩 ${total-water} g，濃度=${sol}/${total-water}×100%=${num(sol/(total-water)*100)}%。`,'蒸發後分母要扣除水，溶質質量不變。', [100*w,'沒有扣除蒸發的水。'],[sol/(total+water)*100,'把減少的水誤作加水。'],[sol/(total-sol-water)*100,'分母只剩溶劑質量。']);
                 const target=sol/(total+water)*100;
-                calc('加水→濃度',id,[`${total} g、${w*100}% 食鹽水加 ${water} g 水，濃度為何？`,`重量濃度 ${w*100}% 的 ${total} g 食鹽水，加入 ${water} g 水後為多少％？`],target,'%',`溶質 ${sol} g 不變，溶液質量=${total}+${water}=${total+water} g；濃度=${num(target)}%。`,'加水後溶質不變，溶液總質量增加。');
-                calc('目標濃度→加水量',id,[`${total} g、${w*100}% 食鹽水稀釋至 ${num(target)}%，需加水多少克？`,`將 ${total} g、${w*100}% 食鹽水調為 ${num(target)}%，應加水幾克？`],water,' g',`溶質 ${sol} g；最終溶液約 ${sol}/(${num(target)}/100)=${total+water} g，故加水約 ${water} g。`,'先固定溶質質量，再反求最終溶液質量。');
-                calc('加入溶質→濃度',id,[`${total} g、${w*100}% 食鹽水加入 ${water} g 食鹽並全部溶解，重量百分濃度約為何？`,`向 ${total} g、${w*100}% 食鹽水加入 ${water} g 食鹽並完全溶解，求重量百分率。`],(sol+water)/(total+water)*100,'%',`溶質由 ${sol} g 增至 ${sol+water} g，溶液質量增至 ${total+water} g；濃度≈${num((sol+water)/(total+water)*100)}%。`,'加入溶質時分子與分母都增加。');
+                calc('加水→濃度',id,[`${total} g、${w*100}% 水溶液加 ${water} g 水，濃度為何？`,`重量濃度 ${w*100}% 的 ${total} g 水溶液，加入 ${water} g 水後為多少％？`],target,'%',`溶質 ${sol} g 不變，溶液質量=${total}+${water}=${total+water} g；濃度=${num(target)}%。`,'加水後溶質不變，溶液總質量增加。', [100*w,'沿用原本的濃度。'],[sol/(total-water)*100,'加入水卻減少分母。'],[sol/(total-sol+water)*100,'分母用加水後的溶劑質量。']);
+                calc('目標濃度→加水量',id,[`${total} g、${w*100}% 水溶液稀釋至 ${num(target)}%，需加水多少克？`,`將 ${total} g、${w*100}% 水溶液調為 ${num(target)}%，應加水幾克？`],water,' g',`溶質 ${sol} g；最終溶液約 ${sol}/(${num(target)}/100)=${total+water} g，故加水約 ${water} g。`,'先固定溶質質量，再反求最終溶液質量。', [total+water,'把最終溶液質量當加水量。'],[total-sol+water,'算的是最後的總水量。'],[sol,'把固定的溶質質量當作加水量。']);
+                calc('加入溶質→濃度',id,[`${total} g、${w*100}% 水溶液加入 ${water} g 原溶質並全部溶解，重量百分濃度約為何？`,`向 ${total} g、${w*100}% 水溶液加入 ${water} g 原溶質並完全溶解，求重量百分率。`],(sol+water)/(total+water)*100,'%',`溶質由 ${sol} g 增至 ${sol+water} g，溶液質量增至 ${total+water} g；濃度≈${num((sol+water)/(total+water)*100)}%。`,'加入溶質時分子與分母都增加。', [(sol+water)/total*100,'增加溶質後分母未加上溶質質量。'],[sol/(total+water)*100,'把加入溶質誤當加水。'],[(sol+water)/(total-sol)*100,'分母使用溶劑質量。']);
             });
         }
         if(subtype==='solubility'||subtype==='saturation'){
@@ -7539,13 +7571,13 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             cases.forEach(({cold,difference,water},i)=>{
                 const hot=cold+difference, dissolved=cold*water/100, crystal=difference*water/100,id=`${i}`;
                 if(subtype==='solubility'){
-                    calc('溶解度→飽和溶質量',id,[`某固體溶解度為 ${cold} g／100 g 水。${water} g 水最多溶解多少克？`,`溶解度 ${cold} g／100 g 水，${water} g 水可溶多少克至飽和？`],dissolved,' g',`最大溶解量=${cold}×${water}/100=${num(dissolved)} g。`,'溶解度的分母是水，不是飽和溶液。');
-                    calc('飽和溶質量→水量',id,[`某固體溶解度 ${cold} g／100 g 水，溶解 ${num(dissolved)} g 至少需多少克水？`,`溶解 ${num(dissolved)} g 固體，溶解度 ${cold} g／100 g 水；至少需多少克水？`],water,' g',`水量=${num(dissolved)}×100/${cold}=${water} g。`,'用溶質量與溶解度反求水量。');
-                    calc('溶解度→飽和重量百分率',id,[`固體溶解度 ${cold} g／100 g 水，飽和溶液重量百分濃度約為何？`,`溶解度 ${cold} g／100 g 水，求飽和溶液的重量百分率。`],cold/(100+cold)*100,'%',`取 100 g 水與 ${cold} g 溶質；濃度=${cold}/(${cold}+100)×100%≈${num(cold/(100+cold)*100)}%。`,'飽和溶液質量包含水及已溶解溶質。');
-                    calc('飽和重量百分率→溶解度',id,[`飽和溶液為 ${num(cold/(100+cold)*100)}%（w/w），溶解度約為多少 g／100 g 水？`,`飽和水溶液濃度 ${num(cold/(100+cold)*100)}%，溶解度約為多少 g／100 g 水？`],cold,' g',`取 100 g 溶液，溶質 ${num(cold/(100+cold)*100)} g，其餘為水；溶質/水×100≈${cold} g／100 g 水。`,'溶解度分母為溶劑，不能直接取百分率數值。');
+                    calc('溶解度→飽和溶質量',id,[`某固體溶解度為 ${cold} g／100 g 水。${water} g 水最多溶解多少克？`,`溶解度 ${cold} g／100 g 水，${water} g 水可溶多少克至飽和？`],dissolved,' g',`最大溶解量=${cold}×${water}/100=${num(dissolved)} g。`,'溶解度的分母是水，不是飽和溶液。', [cold,'直接報每 100 g 水的可溶量。'],[cold*100/water,'顛倒實際水量和 100 g 的比例。'],[cold*water/(100+cold),'把水量當飽和溶液質量。']);
+                    calc('飽和溶質量→水量',id,[`某固體溶解度 ${cold} g／100 g 水，溶解 ${num(dissolved)} g 至少需多少克水？`,`溶解 ${num(dissolved)} g 固體，溶解度 ${cold} g／100 g 水；至少需多少克水？`],water,' g',`水量=${num(dissolved)}×100/${cold}=${water} g。`,'用溶質量與溶解度反求水量。', [water+dissolved,'算的是飽和溶液質量。'],[dissolved*cold/100,'顛倒水和溶質的比例。'],[100,'沿用溶解度的 100 g 水基準。']);
+                    calc('溶解度→飽和重量百分率',id,[`固體溶解度 ${cold} g／100 g 水，飽和溶液重量百分濃度約為何？`,`溶解度 ${cold} g／100 g 水，求飽和溶液的重量百分率。`],cold/(100+cold)*100,'%',`取 100 g 水與 ${cold} g 溶質；濃度=${cold}/(${cold}+100)×100%≈${num(cold/(100+cold)*100)}%。`,'飽和溶液質量包含水及已溶解溶質。', [cold,'分母只用水的質量。'],[10000/(100+cold),'算成水的質量百分率。'],[cold/(100+cold),'求比值後漏乘 100。']);
+                    calc('飽和重量百分率→溶解度',id,[`飽和溶液為 ${num(cold/(100+cold)*100)}%（w/w），溶解度約為多少 g／100 g 水？`,`飽和水溶液濃度 ${num(cold/(100+cold)*100)}%，溶解度約為多少 g／100 g 水？`],cold,' g',`取 100 g 溶液，溶質 ${num(cold/(100+cold)*100)} g，其餘為水；溶質/水×100≈${cold} g／100 g 水。`,'溶解度分母為溶劑，不能直接取百分率數值。', [cold/(100+cold)*100,'把質量百分率直接當作溶解度。'],[10000/cold,'顛倒溶質和水的比值。'],[cold/100,'寫成每 1 g 水的溶質量。']);
                 }else{
-                    calc('冷卻飽和溶液→析晶量',id,[`溶解度由 ${hot} 降至 ${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻後析出幾克？`,`熱、冷溶解度分別為 ${hot}、${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻析出多少克？`],crystal,' g',`析出量=(${hot}−${cold})×${water}/100=${num(crystal)} g；假設水不蒸發。`,'應用溶解度差，而非直接使用冷卻後溶解度。');
-                    calc('析晶量→水量',id,[`熱、冷溶解度為 ${hot}、${cold} g／100 g 水。熱飽和溶液冷卻析出 ${num(crystal)} g，水有幾克？`,`飽和溶液冷卻析出 ${num(crystal)} g，溶解度由 ${hot} 降至 ${cold} g／100 g 水，原含水幾克？`],water,' g',`水量=${num(crystal)}×100/(${hot}−${cold})=${water} g；假設水不蒸發。`,'先求每 100 g 水的溶解度差，再反求水量。');
+                    calc('冷卻飽和溶液→析晶量',id,[`溶解度由 ${hot} 降至 ${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻後析出幾克？`,`熱、冷溶解度分別為 ${hot}、${cold} g／100 g 水；${water} g 水的熱飽和溶液冷卻析出多少克？`],crystal,' g',`析出量=(${hot}−${cold})×${water}/100=${num(crystal)} g；假設水不蒸發。`,'應用溶解度差，而非直接使用冷卻後溶解度。', [hot*water/100,'算的是高溫下已溶解的量。'],[cold*water/100,'算的是冷卻後仍溶解的量。'],[hot-cold,'漏按實際水量調整。']);
+                    calc('析晶量→水量',id,[`熱、冷溶解度為 ${hot}、${cold} g／100 g 水。熱飽和溶液冷卻析出 ${num(crystal)} g，水有幾克？`,`飽和溶液冷卻析出 ${num(crystal)} g，溶解度由 ${hot} 降至 ${cold} g／100 g 水，原含水幾克？`],water,' g',`水量=${num(crystal)}×100/(${hot}−${cold})=${water} g；假設水不蒸發。`,'先求每 100 g 水的溶解度差，再反求水量。', [100*crystal/hot,'以高溫的溶解度代替溶解度差。'],[100*crystal/cold,'以低溫的溶解度代替溶解度差。'],[water+crystal,'誤把析出的溶質質量計入水量。']);
                     const factor=[.35,.7,1,1.18,1.42,.82,1.08,.55,1.3,.92][i], added=dissolved*factor;
                     const state=factor<1?'未飽和，固體全溶':factor===1?'恰為飽和，無固體剩餘':'飽和，有固體剩餘';
                     const otherStates=['未飽和，固體全溶','恰為飽和，無固體剩餘','飽和，有固體剩餘'].filter(s=>s!==state);
@@ -7566,7 +7598,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 appendQuestion(out, {
                     template: 'moles-to-mass', factId: item.id, variant: String(index),
                     question: `${n} mol ${item.formula} 的質量約為多少 g？`, answer: mass,
-                    distractors: numericDistractors(mass, 'g', item.molarMass), type: '莫耳計算｜莫耳轉質量', displayMode: 'number',
+                    distractors: calculationErrors('g', [n / item.molarMass, '將莫耳數除以莫耳質量，應用乘法。'], [item.molarMass / n, '將莫耳質量除以莫耳數。'], [item.molarMass, '直接使用 1 mol 的質量，漏乘題目莫耳數。']), type: '莫耳計算｜莫耳轉質量', displayMode: 'number',
                     basis: `${item.formula} 的莫耳質量為 ${item.molarMass} g·mol⁻¹。`,
                     steps: `m=nM=${n} mol×${item.molarMass} g·mol⁻¹=${mass} g。`, conclusion: `質量為 ${mass} g。`,
                     misconception: '質量要用莫耳數乘以莫耳質量，不是相除。'
@@ -7575,7 +7607,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 appendQuestion(out, {
                     template: 'mass-to-moles', factId: item.id, variant: String(index),
                     question: `${massInput} g ${item.formula} 約為幾 mol？`, answer: num(n),
-                    distractors: numericDistractors(n, 'mol', Math.max(0.1, n)), type: '莫耳計算｜質量轉莫耳', displayMode: 'number',
+                    distractors: calculationErrors('mol', [massInput * item.molarMass, '質量乘了莫耳質量，應改用除法。'], [item.molarMass / massInput, '顛倒質量與莫耳質量的分子分母。'], [massInput, '把質量數值直接當成莫耳數。']), type: '莫耳計算｜質量轉莫耳', displayMode: 'number',
                     basis: `${item.formula} 的莫耳質量為 ${item.molarMass} g·mol⁻¹。`,
                     steps: `n=m/M=${massInput} g÷${item.molarMass} g·mol⁻¹=${num(n)} mol。`, conclusion: `物質的量為 ${num(n)} mol。`,
                     misconception: '質量轉莫耳數要以質量除以莫耳質量。'
@@ -7584,9 +7616,14 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 const particleCount = n * NA;
                 const scientific = Number(particleCount).toExponential(2).split('e');
                 const answer = `${Number(scientific[0])}×10${superscript(Number(scientific[1]))}`;
-                const wrongs = [particleCount / 2, particleCount * 2, n * 6.02e22, n * 9.65e4].map(value => {
+                const wrongs = [
+                    [n / NA, '把莫耳數除以亞佛加厥常數，方向相反。'],
+                    [NA / n, '顛倒乘法為除法，將亞佛加厥常數除以題給莫耳數。'],
+                    [n * 6.02e22, '把亞佛加厥常數的指數 23 寫成 22。'],
+                    [NA, '直接報 1 mol 的粒子數，未乘以題目莫耳數。']
+                ].map(([value, reason]) => {
                     const parts = Number(value).toExponential(2).split('e');
-                    return `${Number(parts[0])}×10${superscript(Number(parts[1]))}`;
+                    return { value:`${Number(parts[0])}×10${superscript(Number(parts[1]))}`, reason };
                 });
                 appendQuestion(out, {
                     template: 'moles-to-particles', factId: item.id, variant: String(index),
@@ -7617,14 +7654,16 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                     conclusion: `莫耳比 ${a}:${b}=${correct}。`,
                     misconception: '配對順序依題目物種順序，最後將係數比約成最簡整數比。'
                 });
-                if ((ca !== cb) && out.length % 2 === 0) appendQuestion(out, {
+                const given = ca * 1.25;
+                const converted = given * cb / ca;
+                if (ca !== cb) appendQuestion(out, {
                     template: 'stoich-reverse-ratio', factId: reaction.id, variant: `${i}-${j}`,
-                    question: `反應 ${reaction.equation} 中，若 ${a} 為 ${ca} mol，依係數比需多少 mol ${b}？`,
-                    answer: num(ca * cb / ca), distractors: numericDistractors(cb, 'mol', Math.max(1, cb)),
+                    question: `依 ${reaction.equation}，若有 ${given} mol ${a} 參與反應，對應多少 mol ${b}？`,
+                    answer: num(converted), distractors: calculationErrors('', [given, '假設兩者的莫耳比為 1：1。'], [given * ca / cb, '把反應係數比顛倒。'], [given * cb, '只乘所求物質的係數，漏除已知物質的係數。']),
                     type: '反應化學計量｜莫耳量推算', displayMode: 'number',
                     basis: `${a} 與 ${b} 的係數比為 ${ca}:${cb}。`,
-                    steps: `每 ${ca} mol ${a} 對應 ${cb} mol ${b}，所以所需 ${b} 為 ${cb} mol。`,
-                    conclusion: `答案為 ${cb} mol ${b}。`, misconception: '反應係數比是物質的量比，不是質量比。'
+                    steps: `${given} × ${cb} ÷ ${ca}＝${num(converted)} mol。`,
+                    conclusion: `對應 ${num(converted)} mol ${b}。`, misconception: '反應係數比是物質的量比，不是質量比。'
                 });
             }));
         });
@@ -7638,16 +7677,16 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 const M = item.n / item.volume;
                 appendQuestion(out, {
                     template: 'molarity-calc', factId: item.id,
-                    question: `${item.n} mol 溶質配成 ${item.volume} L 溶液，莫耳濃度為何？`, answer: `${num(M)} M`,
-                    distractors: numericDistractors(M, 'M', Math.max(0.1, M)), type: '溶液計算｜莫耳濃度', displayMode: 'number',
+                    question: `${item.n} mol 溶質配成 ${num(item.volume * 1000)} mL 溶液，莫耳濃度為何？`, answer: `${num(M)} M`,
+                    distractors: calculationErrors('M', [item.volume / item.n, '顛倒溶質莫耳數與溶液體積。'], [item.n * item.volume, '用莫耳數乘以體積，應用除法。'], [item.n / (1000 * item.volume), '把 mL 當作 L 直接代入。']), type: '溶液計算｜莫耳濃度', displayMode: 'number',
                     basis: '莫耳濃度定義為溶質莫耳數除以溶液體積。',
                     steps: `M=n/V=${item.n} mol÷${item.volume} L=${num(M)} mol·L⁻¹。`, conclusion: `濃度為 ${num(M)} M。`,
                     misconception: '體積須使用溶液體積，並以 L 作為單位。'
                 });
                 appendQuestion(out, {
                     template: 'molarity-solute-moles', factId: item.id,
-                    question: `${num(M)} M 溶液取 ${item.volume} L，含有幾 mol 溶質？`, answer: `${num(item.n)} mol`,
-                    distractors: numericDistractors(item.n, 'mol', Math.max(0.1, item.n)), type: '溶液計算｜濃度反推莫耳數', displayMode: 'number',
+                    question: `${num(M)} M 溶液取 ${num(item.volume * 1000)} mL，含有幾 mol 溶質？`, answer: `${num(item.n)} mol`,
+                    distractors: calculationErrors('mol', [M / item.volume, '以濃度除以體積，應使用乘法。'], [item.volume / M, '誤用體積除以莫耳濃度。'], [M * item.volume * 1000, '將 mL 數值直接代入，應以 L 計算。']), type: '溶液計算｜濃度反推莫耳數', displayMode: 'number',
                     basis: '由 M=n/V 可得 n=MV。', steps: `n=MV=${num(M)} mol·L⁻¹×${item.volume} L=${num(item.n)} mol。`,
                     conclusion: `溶質物質的量為 ${num(item.n)} mol。`, misconception: '濃度乘以溶液體積才得到莫耳數。'
                 });
@@ -7657,15 +7696,15 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 appendQuestion(out, {
                     template: 'dilution-final-concentration', factId: item.id,
                     question: `取 ${item.initial} M 溶液 ${item.v1} mL，稀釋至 ${item.v2} mL，最後濃度為何？`, answer: `${num(finalM)} M`,
-                    distractors: numericDistractors(finalM, 'M', Math.max(0.1, finalM)), type: '溶液計算｜稀釋濃度', displayMode: 'number',
+                    distractors: calculationErrors('M', [item.initial * item.v2 / item.v1, '把移取體積與定容體積的比值顛倒。'], [item.initial * item.v1 / (item.v2 + item.v1), '把定容體積誤讀為加水量，又加了一次原液體積。'], [item.initial, '沿用原液濃度，漏算稀釋。']), type: '溶液計算｜稀釋濃度', displayMode: 'number',
                     basis: '稀釋前後溶質莫耳數不變。',
                     steps: `M₁V₁=M₂V₂；M₂=${item.initial}×${item.v1}/${item.v2}=${num(finalM)} M。`,
                     conclusion: `稀釋後濃度為 ${num(finalM)} M。`, misconception: '稀釋時體積增加、濃度降低，不能把體積比顛倒。'
                 });
                 appendQuestion(out, {
                     template: 'dilution-final-volume', factId: item.id,
-                    question: `${item.initial} M 溶液取 ${item.v1} mL，稀釋至 ${num(item.initial * item.v1 / finalM)} mL 後濃度為 ${num(finalM)} M；最終體積為何？`,
-                    answer: `${num(item.v2)} mL`, distractors: numericDistractors(item.v2, 'mL', Math.max(10, item.v2 / 5)),
+                    question: `取 ${item.initial} M 溶液 ${item.v1} mL，稀釋後為 ${num(finalM)} M。最終體積為何？`,
+                    answer: `${num(item.v2)} mL`, distractors: calculationErrors('mL', [item.v2 - item.v1, '算的是體積增加量，題目問最終體積。'], [item.v1 * finalM / item.initial, '顛倒原液和稀釋後濃度的比值。'], [item.v2 + item.v1, '把最終體積當成增加量，又加了一次原液體積。']),
                     type: '溶液計算｜稀釋體積反推', displayMode: 'number',
                     basis: '稀釋前後溶質莫耳數不變。',
                     steps: `V₂=M₁V₁/M₂=${item.initial}×${item.v1}/${num(finalM)}=${num(item.v2)} mL。`,
@@ -7683,7 +7722,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             appendQuestion(out, {
                 template: 'gas-molar-volume', factId: fact.id, variant: String(index),
                 question: `${fact.pressure}、${fact.temp} 下有 ${n} mol 理想氣體，體積約為多少 L？`,
-                answer: `${num(volume)} L`, distractors: numericDistractors(volume, 'L', fact.molarVolume),
+                answer: `${num(volume)} L`, distractors: calculationErrors('L', [fact.molarVolume / n, '把莫耳體積除以莫耳數。'], [fact.molarVolume, '只報 1 mol 的體積，漏乘題目莫耳數。'], ...DATA().gasFacts.filter(other => other.id !== fact.id).map(other => [n * other.molarVolume, `誤用 ${other.temp}、${other.pressure} 的莫耳體積。`])),
                 type: '氣體計算｜莫耳體積', displayMode: 'number',
                 basis: `指定條件下莫耳體積為 ${fact.molarVolume} L·mol⁻¹。`,
                 steps: `V=nVₘ=${n} mol×${fact.molarVolume} L·mol⁻¹=${num(volume)} L。`,
@@ -7700,7 +7739,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             appendQuestion(out, {
                 template: 'solubility-crystallization', factId: fact.id, variant: String(index),
                 question: `${fact.name} 在 ${fact.hotTemp} °C 的溶解度為 ${fact.hot} ${fact.unit}，降至 ${fact.coldTemp} °C 後為 ${fact.cold} ${fact.unit}。若有 ${water} g 水且熱溶液原已飽和，冷卻析出多少 g 溶質？`,
-                answer: `${num(crystallized)} g`, distractors: numericDistractors(crystallized, 'g', Math.max(1, crystallized)),
+                answer: `${num(crystallized)} g`, distractors: calculationErrors('g', [fact.hot * water / 100, '把冷卻前的溶質量當成析出量。'], [fact.cold * water / 100, '算的是冷卻後仍溶解的量。'], [fact.hot - fact.cold, '漏依實際水量調整每 100 g 水的溶解度差。']),
                 type: '溶解度｜結晶量計算', displayMode: 'number',
                 basis: '冷卻析出量等於高溫與低溫溶解度差，乘以實際水量比例。',
                 steps: `ΔS=${fact.hot}−${fact.cold}=${fact.hot - fact.cold} g/100 g 水；析出量=${fact.hot - fact.cold}×${water}/100=${num(crystallized)} g。`,
@@ -7737,7 +7776,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             appendQuestion(out, {
                 template: 'calorimetry-heat', factId: `water-heat-${i}`,
                 question: `${x.m} g 水的比熱取 4.18 J·g⁻¹·°C⁻¹，溫度上升 ${x.dt} °C，吸收熱量約多少 kJ？`,
-                answer: `${num(q)} kJ`, distractors: numericDistractors(q, 'kJ', Math.max(0.5, q / 4)), type: '熱化學｜量熱計算', displayMode: 'number',
+                answer: `${num(q)} kJ`, distractors: calculationErrors('kJ', [q * 1000, '算出 J 後未換算成 kJ。'], [x.m * x.c / 1000, '漏乘溫度變化。'], [x.m * x.dt / 1000, '漏乘水的比熱。']), type: '熱化學｜量熱計算', displayMode: 'number',
                 basis: '定壓比熱計算使用 q=mcΔT。',
                 steps: `q=mcΔT=${x.m}×4.18×${x.dt}=${num(q * 1000)} J=${num(q)} kJ。`,
                 conclusion: `水吸收約 ${num(q)} kJ。`, misconception: '先以 J 計算，再確認是否需要換算成 kJ。'
@@ -7762,7 +7801,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 appendQuestion(out, {
                     template: 'rate-concentration-factor', factId: item.id, variant: String(index),
                     question: `反應速率式為 ${item.rate}。其他條件不變時，${item.variable}變為原來的 ${factor} 倍，速率變為幾倍？`,
-                    answer: `${num(speedFactor)} 倍`, distractors: numericDistractors(speedFactor, '倍', Math.max(1, speedFactor / 2)),
+                    answer: `${num(speedFactor)} 倍`, distractors: calculationErrors('倍', [factor, '一律套用一級反應的倍數。'], [factor ** item.order, '使用總級數，而非改變的反應物級數。'], [1, '認為速率不變，等同使用零級。'], [1 / speedFactor, '顛倒舊速率與新速率的比值。'], [factor ** 2, '一律套用二級反應的倍數。']),
                     type: '反應速率｜濃度倍數', displayMode: 'number',
                     basis: `${item.variable}在速率式中的級數為 ${item.power}。`,
                     steps: `速率倍數=${factor}^${item.power}=${num(speedFactor)}。`,
@@ -7797,7 +7836,7 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
             });
             appendQuestion(out, {
                 template: 'equilibrium-pressure', factId: item.id,
-                question: `對平衡 ${item.equation} 加壓（定溫），平衡如何移動？`,
+                question: `定溫下縮小容器體積，使 ${item.equation} 的平衡氣體受壓。平衡如何移動？`,
                 answer: item.products < item.reactants ? '向右移動' : item.products > item.reactants ? '向左移動' : '不移動',
                 distractors: [...shifts, '須比較氣體莫耳質量'], type: '化學平衡｜壓力影響',
                 basis: '定溫增壓時，平衡傾向移向氣體總莫耳數較少的一側。',
@@ -7843,9 +7882,11 @@ window.CALIBRATION_EXTENSION_ENGINE = (() => {
                 }, [`${item.name}的代表性官能基或鍵結特徵為何？`, `結構 ${item.structure || item.formula} 中，最具代表性的官能基或鍵結特徵為何？`]);
                 appendQuestion(out, {
                     template: 'organic-functional-to-family', factId: item.id,
-                    question: `含有「${item.functional}」的有機物，應歸在哪一類？`, answer: item.family,
+                    question: `依高中常用分類，${item.structure || item.formula} 屬於哪一類？`,
+                    answer: item.family,
                     distractors: compounds.map(x => x.family), type: '有機化學｜官能基與分類',
-                    basis: `${item.functional}是${item.family}的辨識特徵。`, steps: `題目物種為 ${item.formula}，與此官能基相符。`,
+                    basis: item.family === '烷' ? '烷是開鏈的飽和烴。' : `注意 ${item.functional} 及其相鄰鍵結。`,
+                    steps: `以 ${item.structure || item.formula} 為例，依碳骨架及鍵結可歸為${item.family}。`,
                     conclusion: `分類為${item.family}。`, misconception: '分子中含氧不代表一定是醇；要看氧所處的鍵結環境。'
                 });
             }

@@ -1910,3 +1910,23 @@ const ELEMENT_PROPS = {
       "\x6e\x6f\x62\x6c\x65": "\x5b\x52\x6e\x5d\x20\x35\x66\x31\x34\x20\x36\x64\x31\x30\x20\x37\x73\x32\x20\x37\x70\x36",
     },
   ];
+
+// 週期表校準用代表性核種質量數。這裡是明確的質量數，不使用平均原子量四捨五入。
+// 穩定元素取高中常用核種；無穩定同位素元素取週期表常用代表核種。
+const PERIODIC_MASS_NUMBERS = Object.freeze({
+    H:1, He:4, Li:7, Be:9, B:11, C:12, N:14, O:16, F:19, Ne:20,
+    Na:23, Mg:24, Al:27, Si:28, P:31, S:32, Cl:35, Ar:40,
+    K:39, Ca:40, Sc:45, Ti:48, V:51, Cr:52, Mn:55, Fe:56, Co:59, Ni:58,
+    Cu:63, Zn:64, Ga:69, Ge:74, As:75, Se:80, Br:79, Kr:84,
+    Rb:85, Sr:88, Y:89, Zr:90, Nb:93, Mo:98, Tc:98, Ru:102, Rh:103, Pd:106,
+    Ag:107, Cd:114, In:115, Sn:120, Sb:121, Te:130, I:127, Xe:132,
+    Cs:133, Ba:138, La:139, Ce:140, Pr:141, Nd:142, Pm:145, Sm:152, Eu:153,
+    Gd:158, Tb:159, Dy:164, Ho:165, Er:166, Tm:169, Yb:174, Lu:175,
+    Hf:180, Ta:181, W:184, Re:187, Os:192, Ir:193, Pt:195, Au:197, Hg:202,
+    Tl:205, Pb:208, Bi:209, Po:209, At:210, Rn:222, Fr:223, Ra:226,
+    Ac:227, Th:232, Pa:231, U:238, Np:237, Pu:244, Am:243, Cm:247,
+    Bk:247, Cf:251, Es:252, Fm:257, Md:258, No:259, Lr:266,
+    Rf:267, Db:268, Sg:269, Bh:270, Hs:269, Mt:278, Ds:281, Rg:282,
+    Cn:285, Nh:286, Fl:289, Mc:290, Lv:293, Ts:294, Og:294
+});
+if (typeof window !== 'undefined') window.PERIODIC_MASS_NUMBERS = PERIODIC_MASS_NUMBERS;
